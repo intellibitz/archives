@@ -64,6 +64,7 @@ Blukit follows the **Clean Architecture** principles, adapted for a modern Andro
 | 2026-08-11 | **Global i18n Expansion** | Expanded i18n support to include Japanese, Russian, German, Urdu, and Arabic, alongside previous support for Spanish, French, Chinese, and 9 major Indian languages. |
 | 2026-08-11 | **Production Hardening** | Enabled R8 minification, resource shrinking, and native debug symbols to resolve Play Console warnings. |
 | 2026-08-11 | **Native Symbol Optimization** | Incremented to Version Code 3 and refined native symbol packaging (`debugSymbolLevel = "full"`) for improved Play Store debuggability. |
+| 2026-08-11 | **AGP 9.3 Gold Standard** | Migrated to the modern `optimization` DSL and aligned with Google's latest app optimization standards for Version Code 4. |
 
 ---
 
