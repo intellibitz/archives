@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="profile_title">আপনার পরিচয় সেট করুন</string>
+    <string name="profile_nickname_label">ডাকনাম</string>
+    <string name="profile_stealth_mode">স্টিলথ থিয়েটার মোড</string>
+    <string name="profile_stealth_desc">OLED পিচ-ব্ল্যাক থিম সহ অন্ধকার পরিবেশের জন্য অপ্টিমাইজ করা হয়েছে।</string>
+    <string name="profile_start_exploring">অন্বেষণ শুরু করুন</string>
+    <string name="discovery_title">রাডার ডিসকভারি</string>
+    <string name="discovery_start_server">সার্ভার শুরু করুন</string>
+    <string name="discovery_connecting">সংযুক্ত হচ্ছে…</string>
+    <string name="discovery_no_devices">কোনো ডিভাইস পাওয়া যায়নি</string>
+    <string name="discovery_paired_devices">পেয়ার করা ডিভাইস</string>
+    <string name="discovery_scanned_devices">স্ক্যান করা ডিভাইস</string>
+    <string name="discovery_unknown_device">(অজানা ডিভাইস)</string>
+    <string name="discovery_select_placeholder">চ্যাট শুরু করতে একটি ডিভাইস নির্বাচন করুন</string>
+    <string name="permission_title">অনুমতি প্রয়োজন</string>
+    <string name="permission_desc">ইন্টারনেট ছাড়াই কাছাকাছি ডিভাইসগুলি খুঁজে পেতে এবং সংযোগ করতে Blukit-এর অনুমতি প্রয়োজন।</string>
+    <string name="permission_grant">অনুমতি দিন</string>
+    <string name="radio_warning_both">ব্লুটুথ এবং লোকেশন নিষ্ক্রিয় করা হয়েছে।</string>
+    <string name="radio_warning_bluetooth">ব্লুটুথ নিষ্ক্রিয়।</string>
+    <string name="radio_warning_location">লোকেশন নিষ্ক্রিয়।</string>
+    <string name="radio_warning_required">কাছাকাছি অনুসন্ধানের জন্য উভয়ই প্রয়োজন।</string>
+    <string name="radio_enable_btn">সক্রিয় করুন</string>
+    <string name="chat_title">স্টেডিয়াম লবি</string>
+    <string name="chat_connected_desc">কাছাকাছি বন্ধুদের সাথে সংযুক্ত</string>
+    <string name="chat_type_placeholder">একটি বার্তা লিখুন</string>
+    <string name="chat_disconnect">বিচ্ছিন্ন করুন</string>
+    <string name="chat_send">পাঠান</string>
+    <string name="mod_report_block_title">ব্যবহারকারীকে রিপোর্ট এবং ব্লক করবেন?</string>
+    <string name="mod_report_block_desc">আপনি কি নিশ্চিত যে আপনি %1$s কে রিপোর্ট এবং ব্লক করতে চান? এটি এই ব্যবহারকারীর কাছ থেকে ভবিষ্যতের সমস্ত বার্তা প্রতিরোধ করবে।</string>
+    <string name="mod_report_block_btn">রিপোর্ট এবং ব্লক</string>
+    <string name="mod_cancel">বাতিল করুন</string>
+    <string name="me">আমি</string>
+    <string name="anonymous">অনামিকা</string>
+    <string name="error_connection_failed">সংযোগ ব্যর্থ হয়েছে: %1$s</string>
+    <string name="error_unknown">অজানা ত্রুটি</string>
+</resources>

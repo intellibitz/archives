@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="profile_title">તમારી ઓળખ સેટ કરો</string>
+    <string name="profile_nickname_label">ઉપનામ</string>
+    <string name="profile_stealth_mode">સ્ટીલ્થ થિયેટર મોડ</string>
+    <string name="profile_stealth_desc">OLED પિચ-બ્લેક થીમ સાથે અંધારાવાળા વાતાવરણ માટે અનુકૂળ.</string>
+    <string name="profile_start_exploring">શોધવાનું શરૂ કરો</string>
+    <string name="discovery_title">રડાર ડિસ્કવરી</string>
+    <string name="discovery_start_server">સર્વર શરૂ કરો</string>
+    <string name="discovery_connecting">કનેક્ટ થઈ રહ્યું છે…</string>
+    <string name="discovery_no_devices">કોઈ ઉપકરણો મળ્યા નથી</string>
+    <string name="discovery_paired_devices">પેર કરેલ ઉપકરણો</string>
+    <string name="discovery_scanned_devices">સ્કેન કરેલ ઉપકરણો</string>
+    <string name="discovery_unknown_device">(અજ્ઞાત ઉપકરણ)</string>
+    <string name="discovery_select_placeholder">ચેટિંગ શરૂ કરવા માટે ઉપકરણ પસંદ કરો</string>
+    <string name="permission_title">પરવાનગીઓ જરૂરી છે</string>
+    <string name="permission_desc">ઇન્ટરનેટ વિના નજીકના ઉપકરણો શોધવા અને કનેક્ટ કરવા માટે Blukit ને પરવાનગીઓની જરૂર છે.</string>
+    <string name="permission_grant">પરવાનગી આપો</string>
+    <string name="radio_warning_both">બ્લૂટૂથ અને લોકેશન અક્ષમ છે.</string>
+    <string name="radio_warning_bluetooth">બ્લૂટૂથ અક્ષમ છે.</string>
+    <string name="radio_warning_location">લોકેશન અક્ષમ છે.</string>
+    <string name="radio_warning_required">નજીકની શોધ માટે બંનેની જરૂર છે.</string>
+    <string name="radio_enable_btn">સક્ષમ કરો</string>
+    <string name="chat_title">સ્ટેડિયમ લોબી</string>
+    <string name="chat_connected_desc">નજીકના સાથીઓ સાથે જોડાયેલ છે</string>
+    <string name="chat_type_placeholder">સંદેશ લખો</string>
+    <string name="chat_disconnect">ડિસ્કનેક્ટ કરો</string>
+    <string name="chat_send">મોકલો</string>
+    <string name="mod_report_block_title">વપરાશકર્તાને રિપોર્ટ અને બ્લોક કરવા છે?</string>
+    <string name="mod_report_block_desc">શું તમે ખરેખર %1$s ને રિપોર્ટ અને બ્લોક કરવા માંગો છો? આ વપરાશકર્તા તરફથી ભવિષ્યના સંદેશા અટકાવશે.</string>
+    <string name="mod_report_block_btn">રિપોર્ટ અને બ્લોક કરો</string>
+    <string name="mod_cancel">રદ કરો</string>
+    <string name="me">હું</string>
+    <string name="anonymous">અનામી</string>
+    <string name="error_connection_failed">કનેક્શન નિષ્ફળ ગયું: %1$s</string>
+    <string name="error_unknown">અજ્ઞાત ભૂલ</string>
+</resources>

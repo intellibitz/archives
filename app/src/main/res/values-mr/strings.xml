@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="profile_title">तुमची ओळख सेट करा</string>
+    <string name="profile_nickname_label">टोपणनाव</string>
+    <string name="profile_stealth_mode">स्टेल्थ थिएटर मोड</string>
+    <string name="profile_stealth_desc">OLED पिच-ब्लॅक थीमसह गडद वातावरणासाठी अनुकूल.</string>
+    <string name="profile_start_exploring">शोध सुरू करा</string>
+    <string name="discovery_title">रडार डिस्कव्हरी</string>
+    <string name="discovery_start_server">सर्व्हर सुरू करा</string>
+    <string name="discovery_connecting">कनेक्ट होत आहे…</string>
+    <string name="discovery_no_devices">कोणतेही डिव्हाइस सापडले नाही</string>
+    <string name="discovery_paired_devices">पेअर केलेली डिव्हाइसेस</string>
+    <string name="discovery_scanned_devices">स्कॅन केलेली डिव्हाइसेस</string>
+    <string name="discovery_unknown_device">(अज्ञात डिव्हाइस)</string>
+    <string name="discovery_select_placeholder">चॅटिंग सुरू करण्यासाठी डिव्हाइस निवडा</string>
+    <string name="permission_title">परवानग्या आवश्यक आहेत</string>
+    <string name="permission_desc">इंटरनेटशिवाय जवळची डिव्हाइसेस शोधण्यासाठी आणि कनेक्ट करण्यासाठी Blukit ला परवानग्या आवश्यक आहेत.</string>
+    <string name="permission_grant">परवानगी द्या</string>
+    <string name="radio_warning_both">ब्लूटूथ आणि लोकेशन बंद आहेत.</string>
+    <string name="radio_warning_bluetooth">ब्लूटूथ बंद आहे.</string>
+    <string name="radio_warning_location">लोकेशन बंद आहे.</string>
+    <string name="radio_warning_required">जवळच्या शोधासाठी दोन्ही आवश्यक आहेत.</string>
+    <string name="radio_enable_btn">सक्षम करा</string>
+    <string name="chat_title">स्टेडियम लॉबी</string>
+    <string name="chat_connected_desc">जवळच्या सहकाऱ्यांशी जोडलेले</string>
+    <string name="chat_type_placeholder">संदेश टाइप करा</string>
+    <string name="chat_disconnect">डिस्कनेक्ट करा</string>
+    <string name="chat_send">पाठवा</string>
+    <string name="mod_report_block_title">वापरकर्त्याची तक्रार आणि ब्लॉक करायचे?</string>
+    <string name="mod_report_block_desc">तुम्हाला खात्री आहे की तुम्ही %1$s ची तक्रार आणि ब्लॉक करू इच्छिता? यामुळे या वापरकर्त्याकडून येणारे पुढील संदेश थांबतील.</string>
+    <string name="mod_report_block_btn">तक्रार आणि ब्लॉक करा</string>
+    <string name="mod_cancel">रद्द करा</string>
+    <string name="me">मी</string>
+    <string name="anonymous">अनामिक</string>
+    <string name="error_connection_failed">कनेक्शन अयशस्वी: %1$s</string>
+    <string name="error_unknown">अज्ञात त्रुटी</string>
+</resources>

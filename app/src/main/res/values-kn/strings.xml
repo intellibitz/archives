@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="profile_title">ನಿಮ್ಮ ಗುರುತನ್ನು ಹೊಂದಿಸಿ</string>
+    <string name="profile_nickname_label">ಅಡ್ಡಹೆಸರು</string>
+    <string name="profile_stealth_mode">ಸ್ಟೆಲ್ತ್ ಥಿಯೇಟರ್ ಮೋಡ್</string>
+    <string name="profile_stealth_desc">OLED ಪಿಚ್-ಬ್ಲಾಕ್ ಥೀಮ್‌ನೊಂದಿಗೆ ಕತ್ತಲೆಯ ವಾತಾವರಣಕ್ಕೆ ಸೂಕ್ತವಾಗಿದೆ.</string>
+    <string name="profile_start_exploring">ಅನ್ವೇಷಿಸಲು ಪ್ರಾರಂಭಿಸಿ</string>
+    <string name="discovery_title">ರಾಡಾರ್ ಡಿಸ್ಕವರಿ</string>
+    <string name="discovery_start_server">ಸರ್ವರ್ ಪ್ರಾರಂಭಿಸಿ</string>
+    <string name="discovery_connecting">ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ…</string>
+    <string name="discovery_no_devices">ಯಾವುದೇ ಸಾಧನಗಳು ಕಂಡುಬಂದಿಲ್ಲ</string>
+    <string name="discovery_paired_devices">ಜೋಡಿಯಾದ ಸಾಧನಗಳು</string>
+    <string name="discovery_scanned_devices">ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಸಾಧನಗಳು</string>
+    <string name="discovery_unknown_device">(ಅಪರಿಚಿತ ಸಾಧನ)</string>
+    <string name="discovery_select_placeholder">ಚಾಟ್ ಮಾಡಲು ಸಾಧನವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="permission_title">ಅನುಮತಿಗಳು ಅಗತ್ಯವಿದೆ</string>
+    <string name="permission_desc">ಇಂಟರ್ನೆಟ್ ಇಲ್ಲದೆ ಹತ್ತಿರದ ಸಾಧನಗಳನ್ನು ಹುಡುಕಲು ಮತ್ತು ಸಂಪರ್ಕಿಸಲು Blukit ಗೆ ಅನುಮತಿಗಳ ಅಗತ್ಯವಿದೆ.</string>
+    <string name="permission_grant">ಅನುಮತಿ ನೀಡಿ</string>
+    <string name="radio_warning_both">ಬ್ಲೂಟೂತ್ ಮತ್ತು ಲೊಕೇಶನ್ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ.</string>
+    <string name="radio_warning_bluetooth">ಬ್ಲೂಟೂತ್ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ.</string>
+    <string name="radio_warning_location">ಲೊಕೇಶನ್ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ.</string>
+    <string name="radio_warning_required">ಹತ್ತಿರದ ಡಿಸ್ಕವರಿಗಾಗಿ ಎರಡೂ ಅಗತ್ಯವಿದೆ.</string>
+    <string name="radio_enable_btn">ಸಕ್ರಿಯಗೊಳಿಸಿ</string>
+    <string name="chat_title">ಸ್ಟೇಡಿಯಂ ಲಾಬಿ</string>
+    <string name="chat_connected_desc">ಹತ್ತಿರದ ಸಾಧನಗಳೊಂದಿಗೆ ಸಂಪರ್ಕ ಹೊಂದಿದೆ</string>
+    <string name="chat_type_placeholder">ಸಂದೇಶ ಟೈಪ್ ಮಾಡಿ</string>
+    <string name="chat_disconnect">ಸಂಪರ್ಕ ಕಡಿತಗೊಳಿಸಿ</string>
+    <string name="chat_send">ಕಳುಹಿಸಿ</string>
+    <string name="mod_report_block_title">ಬಳಕೆದಾರರನ್ನು ವರದಿ ಮಾಡಿ ಮತ್ತು ನಿರ್ಬಂಧಿಸಬೇಕೆ?</string>
+    <string name="mod_report_block_desc">ನೀವು ಖಚಿತವಾಗಿ %1$s ರನ್ನು ವರದಿ ಮಾಡಲು ಮತ್ತು ನಿರ್ಬಂಧಿಸಲು ಬಯಸುವಿರಾ? ಇದು ಈ ಬಳಕೆದಾರರಿಂದ ಬರುವ ಮುಂದಿನ ಸಂದೇಶಗಳನ್ನು ತಡೆಯುತ್ತದೆ.</string>
+    <string name="mod_report_block_btn">ವರದಿ ಮತ್ತು ನಿರ್ಬಂಧಿಸಿ</string>
+    <string name="mod_cancel">ರದ್ದುಗೊಳಿಸಿ</string>
+    <string name="me">ನಾನು</string>
+    <string name="anonymous">ಅನಾಮಧೇಯ</string>
+    <string name="error_connection_failed">ಸಂಪರ್ಕ ವಿಫಲವಾಗಿದೆ: %1$s</string>
+    <string name="error_unknown">ಅಪರಿಚಿತ ದೋಷ</string>
+</resources>
