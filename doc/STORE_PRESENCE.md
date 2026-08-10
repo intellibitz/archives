@@ -22,6 +22,7 @@ Blukit (Blue-Kit) is designed for high-density environments where cellular netwo
 *   **Direct Whisper (Private 1-on-1)**: Establish secure, encrypted channels for private conversations with nearby peers.
 *   **Stealth Theater Mode**: A pitch-black OLED-optimized theme designed for discrete use in dark environments without disturbing others.
 *   **Total Privacy**: All messages are stored only on your device and are automatically purged every 12 hours.
+*   **User Moderation**: Stay safe with built-in **Report & Block** features. Long-press any message to instantly silence malicious peers.
 *   **Hardware Security**: Every message is protected by AES-256-GCM encryption established via Diffie-Hellman key exchange.
 
 **HOW IT WORKS:**

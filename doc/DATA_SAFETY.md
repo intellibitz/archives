@@ -23,7 +23,8 @@ This document outlines how **Blukit** handles user data, privacy, and security i
 ## 3. Local Privacy & Ephemerality
 
 - **No Cloud Sync**: Messages never leave the local device radio range (50-100m).
-- **Automated Purge**: The app includes a background worker that automatically deletes chat history older than 12 hours.
+- **Automated Purge**: All local chat logs are automatically deleted from your device after 12 hours.
+- **UGC Moderation**: The app includes a user-friendly system for **Reporting and Blocking** offensive users and content locally, ensuring a safe decentralized environment.
 - **Stealth Mode**: A dedicated "Theater Mode" uses an OLED-optimized pitch-black theme to prevent screen glare in dark environments.
 
 ## 4. Permissions

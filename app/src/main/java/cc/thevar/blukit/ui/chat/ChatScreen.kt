@@ -48,14 +48,14 @@ fun ChatScreen(
     if (userToBlock != null) {
         AlertDialog(
             onDismissRequest = { userToBlock = null },
-            title = { Text("Block User?") },
-            text = { Text("Are you sure you want to block ${userToBlock?.senderName}? You will no longer receive messages from them.") },
+            title = { Text("Report & Block User?") },
+            text = { Text("Are you sure you want to report and block ${userToBlock?.senderName}? This will prevent all future messages from this user.") },
             confirmButton = {
                 TextButton(onClick = {
                     userToBlock?.let { onBlockUser(it.senderId) }
                     userToBlock = null
                 }) {
-                    Text("BLOCK")
+                    Text("REPORT & BLOCK")
                 }
             },
             dismissButton = {

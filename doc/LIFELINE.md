@@ -57,8 +57,9 @@ Blukit follows the **Clean Architecture** principles, adapted for a modern Andro
 | 2026-08-10 | **Production Engine** | Integrated Google Nearby Connections API (P2P_CLUSTER), implemented Visual Radar, OLED Stealth Mode, and Automated TTL Purge. |
 | 2026-08-10 | **Phase 5 Hardening** | Refined privacy permissions, implemented reactive Radio State Monitoring, optimized Radar animation battery usage, and finalized Data Safety declarations. |
 | 2026-08-10 | **Production Release** | Generated production signing keys, established secure `keystore.properties` workflow, and verified signed Android App Bundle (AAB) generation. |
-| 2026-08-10 | **Compliance & Presence** | Finalized Play Store metadata, Privacy Policy, and implemented UGC moderation (Block/Mute) features. Established a dedicated screenshot generation system via Compose Previews. |
+| 2026-08-10 | **Compliance & Presence** | Finalized Play Store metadata, Privacy Policy, and implemented UGC moderation (Report/Block) features. Established a dedicated screenshot generation system via Compose Previews. |
 | 2026-08-10 | **Remote Sync** | Successfully synchronized the production-ready codebase and comprehensive documentation with the remote GitHub repository at `intellibitz/blukit`. |
+| 2026-08-10 | **Final AAB Ready** | Verified and generated the final production signed Android App Bundle (AAB), ready for Play Console upload and closed testing. |
 
 ---
 
