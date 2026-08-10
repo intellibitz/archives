@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="profile_title">プロフィールの設定</string>
+    <string name="profile_nickname_label">ニックネーム</string>
+    <string name="profile_stealth_mode">ステルスシアターモード</string>
+    <string name="profile_stealth_desc">OLEDピッチブラックテーマによる暗い環境向けに最適化されています。</string>
+    <string name="profile_start_exploring">探索を開始する</string>
+    <string name="discovery_title">レーダー探索</string>
+    <string name="discovery_start_server">サーバーを開始</string>
+    <string name="discovery_connecting">接続中…</string>
+    <string name="discovery_no_devices">デバイスが見つかりません</string>
+    <string name="discovery_paired_devices">ペアリング済みデバイス</string>
+    <string name="discovery_scanned_devices">スキャンされたデバイス</string>
+    <string name="discovery_unknown_device">(不明なデバイス)</string>
+    <string name="discovery_select_placeholder">チャットを開始するデバイスを選択してください</string>
+    <string name="permission_title">権限が必要です</string>
+    <string name="permission_desc">Blukitは、インターネットなしで近くのデバイスを見つけて接続するために権限を必要とします。</string>
+    <string name="permission_grant">権限を許可</string>
+    <string name="radio_warning_both">Bluetoothと位置情報が無効です。</string>
+    <string name="radio_warning_bluetooth">Bluetoothが無効です。</string>
+    <string name="radio_warning_location">位置情報が無効です。</string>
+    <string name="radio_warning_required">近くの探索には両方の有効化が必要です。</string>
+    <string name="radio_enable_btn">有効にする</string>
+    <string name="chat_title">スタジアムロビー</string>
+    <string name="chat_connected_desc">近くのピアに接続済み</string>
+    <string name="chat_type_placeholder">メッセージを入力</string>
+    <string name="chat_disconnect">切断</string>
+    <string name="chat_send">送信</string>
+    <string name="mod_report_block_title">ユーザーを報告してブロックしますか？</string>
+    <string name="mod_report_block_desc">%1$sを報告してブロックしてもよろしいですか？これにより、このユーザーからの今後のメッセージがすべてブロックされます。</string>
+    <string name="mod_report_block_btn">報告してブロック</string>
+    <string name="mod_cancel">キャンセル</string>
+    <string name="me">私</string>
+    <string name="anonymous">匿名</string>
+    <string name="error_connection_failed">接続に失敗しました: %1$s</string>
+    <string name="error_unknown">不明なエラー</string>
+</resources>

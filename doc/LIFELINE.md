@@ -61,7 +61,7 @@ Blukit follows the **Clean Architecture** principles, adapted for a modern Andro
 | 2026-08-10 | **Remote Sync** | Successfully synchronized the production-ready codebase and comprehensive documentation with the remote GitHub repository at `intellibitz/blukit`. |
 | 2026-08-10 | **Final AAB Ready** | Verified and generated the final production signed Android App Bundle (AAB), ready for Play Console upload and closed testing. |
 | 2026-08-10 | **Gold Standards & Testing** | Consolidated domain models, removed legacy Bluetooth components, enforced clean architecture, and added Android Instrumented Tests for security auditing. |
-| 2026-08-11 | **Bharat & Global i18n** | Implemented extensive i18n support, providing full translations for Spanish, French, Chinese, and 9 major Indian languages including Hindi, Tamil, Telugu, Kannada, Malayalam, Marathi, Bengali, Gujarati, and Punjabi. |
+| 2026-08-11 | **Global i18n Expansion** | Expanded i18n support to include Japanese, Russian, German, Urdu, and Arabic, alongside previous support for Spanish, French, Chinese, and 9 major Indian languages. |
 
 ---
 
