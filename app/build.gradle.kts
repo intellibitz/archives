@@ -20,15 +20,13 @@ kotlin {
 
 android {
     namespace = "cc.thevar.blukit"
-    compileSdk {
-        version = release(37)
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "cc.thevar.blukit"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
+        versionCode = 5
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -39,7 +37,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
         jniLibs {
-            useLegacyPackaging = true
+            useLegacyPackaging = false
         }
     }
 
@@ -59,7 +57,7 @@ android {
             }
             signingConfig = signingConfigs.getByName("release")
             ndk {
-                debugSymbolLevel = "full"
+                debugSymbolLevel = "FULL"
             }
         }
     }
