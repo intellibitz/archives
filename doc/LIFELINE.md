@@ -65,7 +65,7 @@ Blukit follows the **Clean Architecture** principles, adapted for a modern Andro
 | 2026-08-11 | **Production Hardening** | Enabled R8 minification, resource shrinking, and native debug symbols to resolve Play Console warnings. |
 | 2026-08-11 | **Native Symbol Optimization** | Incremented to Version Code 3 and refined native symbol packaging (`debugSymbolLevel = "full"`) for improved Play Store debuggability. |
 | 2026-08-11 | **AGP 9.3 Gold Standard** | Migrated to the modern `optimization` DSL and aligned with Google's latest app optimization standards. |
-| 2026-08-11 | **Production Finalization** | Standardized NDK symbols to uppercase `FULL`, disabled legacy JNI packaging for Play Store indexing, and finalized SDK targeting for Version Code 5. |
+| 2026-08-11 | **SDK 36 Stabilization** | Reverted targeting to SDK 36 for improved stability and implemented refined native symbol packaging for Version Code 6. |
 
 ---
 
