@@ -1,0 +1,52 @@
+# Built objects and native libraries
+bin/
+gen/
+obj/
+lib/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration
+local.properties
+.kotlin/
+
+# Logs and databases
+*.log
+*.sqlite
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Secrets
+google-services.json
+
+# Backup files
+*.bak
+*~
+*.swp
+
+# Agent files
+.agent/
+
+# Signing files
+*.jks
+keystore.properties

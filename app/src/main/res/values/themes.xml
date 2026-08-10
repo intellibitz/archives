@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.Blukit" parent="Theme.MaterialComponents.Light" />
+</resources>
