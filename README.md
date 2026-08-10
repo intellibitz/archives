@@ -80,3 +80,4 @@ This project is licensed under the **Apache License 2.0**. See the **[LICENSE](L
 
 ---
 *Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*
+*Support: [muthu.ramadoss@gmail.com](mailto:muthu.ramadoss@gmail.com)*

@@ -32,4 +32,4 @@ Blukit does not use any third-party analytics, advertising SDKs, or cloud servic
 We may update our Privacy Policy from time to time. Any changes will be reflected by updating the "Effective Date" at the top of this document.
 
 ## 7. Contact Us
-If you have any questions about this Privacy Policy, please contact us at: **privacy@intellibitz.cc**
+If you have any questions about this Privacy Policy, please contact us at: **muthu.ramadoss@gmail.com**
