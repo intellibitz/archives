@@ -13,6 +13,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -21,6 +22,7 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import cc.thevar.blukit.R
 import cc.thevar.blukit.data.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.networking.P2PController
@@ -90,8 +92,8 @@ fun BlukitApp(
                             backStack.add(Route.Discovery)
                         }
                     },
-                    icon = { Icon(Icons.Rounded.Search, contentDescription = "Discovery") },
-                    label = { Text("Discovery") }
+                    icon = { Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.discovery_title)) },
+                    label = { Text(stringResource(R.string.discovery_title)) }
                 )
                 item(
                     selected = currentRoute is Route.Profile,
@@ -100,8 +102,8 @@ fun BlukitApp(
                             backStack.add(Route.Profile)
                         }
                     },
-                    icon = { Icon(Icons.Rounded.Person, contentDescription = "Profile") },
-                    label = { Text("Profile") }
+                    icon = { Icon(Icons.Rounded.Person, contentDescription = stringResource(R.string.profile_title)) },
+                    label = { Text(stringResource(R.string.profile_title)) }
                 )
             }
         },
@@ -134,7 +136,7 @@ fun BlukitApp(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    "Select a device to start chatting",
+                                    stringResource(R.string.discovery_select_placeholder),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

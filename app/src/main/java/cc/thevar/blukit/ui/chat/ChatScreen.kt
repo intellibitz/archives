@@ -16,8 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.discovery.BluetoothUiState
 import java.text.SimpleDateFormat
@@ -48,19 +50,19 @@ fun ChatScreen(
     if (userToBlock != null) {
         AlertDialog(
             onDismissRequest = { userToBlock = null },
-            title = { Text("Report & Block User?") },
-            text = { Text("Are you sure you want to report and block ${userToBlock?.senderName}? This will prevent all future messages from this user.") },
+            title = { Text(stringResource(R.string.mod_report_block_title)) },
+            text = { Text(stringResource(R.string.mod_report_block_desc, userToBlock?.senderName ?: "")) },
             confirmButton = {
                 TextButton(onClick = {
                     userToBlock?.let { onBlockUser(it.senderId) }
                     userToBlock = null
                 }) {
-                    Text("REPORT & BLOCK")
+                    Text(stringResource(R.string.mod_report_block_btn))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { userToBlock = null }) {
-                    Text("CANCEL")
+                    Text(stringResource(R.string.mod_cancel))
                 }
             }
         )
@@ -71,10 +73,10 @@ fun ChatScreen(
             TopAppBar(
                 title = { 
                     Column {
-                        Text("Stadium Lobby", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.chat_title), style = MaterialTheme.typography.titleMedium)
                         if (state.isConnected) {
                             Text(
-                                "Connected to nearby peers", 
+                                stringResource(R.string.chat_connected_desc), 
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -83,7 +85,7 @@ fun ChatScreen(
                 },
                 actions = {
                     IconButton(onClick = onDisconnect) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Disconnect")
+                        Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.chat_disconnect))
                     }
                 }
             )
@@ -131,7 +133,7 @@ fun ChatScreen(
                         value = message,
                         onValueChange = { message = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("Type a message") },
+                        placeholder = { Text(stringResource(R.string.chat_type_placeholder)) },
                         maxLines = 4,
                         shape = MaterialTheme.shapes.extraLarge,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -155,7 +157,7 @@ fun ChatScreen(
                         shape = MaterialTheme.shapes.extraLarge,
                         modifier = Modifier.size(56.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Rounded.Send, contentDescription = "Send")
+                        Icon(Icons.AutoMirrored.Rounded.Send, contentDescription = stringResource(R.string.chat_send))
                     }
                 }
             }

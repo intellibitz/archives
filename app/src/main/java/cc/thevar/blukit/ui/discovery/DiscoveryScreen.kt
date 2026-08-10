@@ -14,8 +14,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -56,10 +58,10 @@ fun DiscoveryScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Radar Discovery") },
+                title = { Text(stringResource(R.string.discovery_title)) },
                 actions = {
                     IconButton(onClick = onStartServer) {
-                        Icon(Icons.Rounded.Bluetooth, contentDescription = "Start Server")
+                        Icon(Icons.Rounded.Bluetooth, contentDescription = stringResource(R.string.discovery_start_server))
                     }
                 }
             )
@@ -118,15 +120,15 @@ private fun RadioStateWarning(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 val message = when {
-                    !isBluetoothEnabled && !isLocationEnabled -> "Bluetooth and Location are disabled."
-                    !isBluetoothEnabled -> "Bluetooth is disabled."
-                    else -> "Location is disabled."
+                    !isBluetoothEnabled && !isLocationEnabled -> stringResource(R.string.radio_warning_both)
+                    !isBluetoothEnabled -> stringResource(R.string.radio_warning_bluetooth)
+                    else -> stringResource(R.string.radio_warning_location)
                 }
                 Text(text = message, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                Text(text = "Both are required for nearby discovery.", style = MaterialTheme.typography.labelSmall)
+                Text(text = stringResource(R.string.radio_warning_required), style = MaterialTheme.typography.labelSmall)
             }
             TextButton(onClick = if (!isBluetoothEnabled) onEnableBluetooth else onEnableLocation) {
-                Text("ENABLE")
+                Text(stringResource(R.string.radio_enable_btn))
             }
         }
     }
@@ -144,18 +146,18 @@ private fun PermissionRequestContent(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Permissions Required",
+            text = stringResource(R.string.permission_title),
             style = MaterialTheme.typography.headlineSmall
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "blukit needs permissions to find and connect to nearby devices without internet.",
+            text = stringResource(R.string.permission_desc),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRequestPermissions) {
-            Text("Grant Permissions")
+            Text(stringResource(R.string.permission_grant))
         }
     }
 }

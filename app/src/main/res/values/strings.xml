@@ -1,3 +1,51 @@
 <resources>
     <string name="app_name">Blukit</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">Set Up Your Identity</string>
+    <string name="profile_nickname_label">Nickname</string>
+    <string name="profile_stealth_mode">Stealth Theater Mode</string>
+    <string name="profile_stealth_desc">Optimized for dark environments with OLED pitch-black theme.</string>
+    <string name="profile_start_exploring">Start Exploring</string>
+
+    <!-- Discovery Screen -->
+    <string name="discovery_title">Radar Discovery</string>
+    <string name="discovery_start_server">Start Server</string>
+    <string name="discovery_connecting">Connecting…</string>
+    <string name="discovery_no_devices">No devices found</string>
+    <string name="discovery_paired_devices">Paired Devices</string>
+    <string name="discovery_scanned_devices">Scanned Devices</string>
+    <string name="discovery_unknown_device">(Unknown Device)</string>
+    <string name="discovery_select_placeholder">Select a device to start chatting</string>
+
+    <!-- Permissions -->
+    <string name="permission_title">Permissions Required</string>
+    <string name="permission_desc">Blukit needs permissions to find and connect to nearby devices without internet.</string>
+    <string name="permission_grant">Grant Permissions</string>
+
+    <!-- Radio Warnings -->
+    <string name="radio_warning_both">Bluetooth and Location are disabled.</string>
+    <string name="radio_warning_bluetooth">Bluetooth is disabled.</string>
+    <string name="radio_warning_location">Location is disabled.</string>
+    <string name="radio_warning_required">Both are required for nearby discovery.</string>
+    <string name="radio_enable_btn">ENABLE</string>
+
+    <!-- Chat Screen -->
+    <string name="chat_title">Stadium Lobby</string>
+    <string name="chat_connected_desc">Connected to nearby peers</string>
+    <string name="chat_type_placeholder">Type a message</string>
+    <string name="chat_disconnect">Disconnect</string>
+    <string name="chat_send">Send</string>
+
+    <!-- Moderation -->
+    <string name="mod_report_block_title">Report &amp; Block User?</string>
+    <string name="mod_report_block_desc">Are you sure you want to report and block %1$s? This will prevent all future messages from this user.</string>
+    <string name="mod_report_block_btn">REPORT &amp; BLOCK</string>
+    <string name="mod_cancel">CANCEL</string>
+
+    <!-- Common -->
+    <string name="me">ME</string>
+    <string name="anonymous">Anonymous</string>
+    <string name="error_connection_failed">Connection failed: %1$s</string>
+    <string name="error_unknown">Unknown error</string>
 </resources>

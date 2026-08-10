@@ -13,12 +13,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import kotlinx.coroutines.awaitCancellation
 import kotlin.math.cos
@@ -64,7 +66,7 @@ fun RadarScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                "ME",
+                text = stringResource(R.string.me),
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold
@@ -164,7 +166,7 @@ fun PeerNode(
                 fontSize = 20.sp
             )
             Text(
-                text = device.name ?: "Unknown",
+                text = device.name ?: stringResource(R.string.discovery_unknown_device),
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 1

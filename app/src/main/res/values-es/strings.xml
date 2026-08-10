@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="profile_title">Configura tu Identidad</string>
+    <string name="profile_nickname_label">Apodo</string>
+    <string name="profile_stealth_mode">Modo Teatro Sigiloso</string>
+    <string name="profile_stealth_desc">Optimizado para entornos oscuros con tema negro OLED.</string>
+    <string name="profile_start_exploring">Empezar a Explorar</string>
+    <string name="discovery_title">Descubrimiento por Radar</string>
+    <string name="discovery_start_server">Iniciar Servidor</string>
+    <string name="discovery_connecting">Conectando…</string>
+    <string name="discovery_no_devices">No se encontraron dispositivos</string>
+    <string name="discovery_paired_devices">Dispositivos Emparejados</string>
+    <string name="discovery_scanned_devices">Dispositivos Escaneados</string>
+    <string name="discovery_unknown_device">(Dispositivo Desconocido)</string>
+    <string name="discovery_select_placeholder">Selecciona un dispositivo para chatear</string>
+    <string name="permission_title">Permisos Requeridos</string>
+    <string name="permission_desc">Blukit necesita permisos para encontrar y conectarse a dispositivos cercanos sin internet.</string>
+    <string name="permission_grant">Otorgar Permisos</string>
+    <string name="radio_warning_both">Bluetooth y Ubicación están desactivados.</string>
+    <string name="radio_warning_bluetooth">Bluetooth está desactivado.</string>
+    <string name="radio_warning_location">La ubicación está desactivada.</string>
+    <string name="radio_warning_required">Ambos son necesarios para el descubrimiento cercano.</string>
+    <string name="radio_enable_btn">ACTIVAR</string>
+    <string name="chat_title">Vestíbulo del Estadio</string>
+    <string name="chat_connected_desc">Conectado a pares cercanos</string>
+    <string name="chat_type_placeholder">Escribe un mensaje</string>
+    <string name="chat_disconnect">Desconectar</string>
+    <string name="chat_send">Enviar</string>
+    <string name="mod_report_block_title">¿Reportar y Bloquear Usuario?</string>
+    <string name="mod_report_block_desc">¿Estás seguro de que quieres reportar y bloquear a %1$s? Esto evitará futuros mensajes de este usuario.</string>
+    <string name="mod_report_block_btn">REPORTAR Y BLOQUEAR</string>
+    <string name="mod_cancel">CANCELAR</string>
+    <string name="me">YO</string>
+    <string name="anonymous">Anónimo</string>
+    <string name="error_connection_failed">Error de conexión: %1$s</string>
+    <string name="error_unknown">Error desconocido</string>
+</resources>

@@ -8,8 +8,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cc.thevar.blukit.R
 
 @Composable
 fun ProfileScreen(
@@ -34,7 +36,7 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Set Up Your Identity",
+                text = stringResource(R.string.profile_title),
                 style = MaterialTheme.typography.headlineMedium
             )
             
@@ -67,7 +69,7 @@ fun ProfileScreen(
             OutlinedTextField(
                 value = nickname,
                 onValueChange = { nickname = it },
-                label = { Text("Nickname") },
+                label = { Text(stringResource(R.string.profile_nickname_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -80,7 +82,7 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Stealth Theater Mode",
+                    text = stringResource(R.string.profile_stealth_mode),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -90,7 +92,7 @@ fun ProfileScreen(
                 )
             }
             Text(
-                text = "Optimized for dark environments with OLED pitch-black theme.",
+                text = stringResource(R.string.profile_stealth_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -107,7 +109,7 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = nickname.isNotBlank()
             ) {
-                Text("Start Exploring")
+                Text(stringResource(R.string.profile_start_exploring))
             }
         }
     }

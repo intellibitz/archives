@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="profile_title">Configurez votre Identité</string>
+    <string name="profile_nickname_label">Pseudo</string>
+    <string name="profile_stealth_mode">Mode Théâtre Furtif</string>
+    <string name="profile_stealth_desc">Optimisé pour les environnements sombres avec le thème noir OLED.</string>
+    <string name="profile_start_exploring">Commencer à Explorer</string>
+    <string name="discovery_title">Découverte Radar</string>
+    <string name="discovery_start_server">Démarrer le Serveur</string>
+    <string name="discovery_connecting">Connexion…</string>
+    <string name="discovery_no_devices">Aucun appareil trouvé</string>
+    <string name="discovery_paired_devices">Appareils Appairés</string>
+    <string name="discovery_scanned_devices">Appareils Scannés</string>
+    <string name="discovery_unknown_device">(Appareil Inconnu)</string>
+    <string name="discovery_select_placeholder">Sélectionnez un appareil pour discuter</string>
+    <string name="permission_title">Permissions Requises</string>
+    <string name="permission_desc">Blukit a besoin de permissions pour trouver et se connecter aux appareils à proximité sans internet.</string>
+    <string name="permission_grant">Accorder les Permissions</string>
+    <string name="radio_warning_both">Le Bluetooth et la localisation sont désactivés.</string>
+    <string name="radio_warning_bluetooth">Le Bluetooth est désactivé.</string>
+    <string name="radio_warning_location">La localisation est désactivée.</string>
+    <string name="radio_warning_required">Les deux sont requis pour la découverte à proximité.</string>
+    <string name="radio_enable_btn">ACTIVER</string>
+    <string name="chat_title">Hall du Stade</string>
+    <string name="chat_connected_desc">Connecté aux pairs à proximité</string>
+    <string name="chat_type_placeholder">Écrire un message</string>
+    <string name="chat_disconnect">Déconnecter</string>
+    <string name="chat_send">Envoyer</string>
+    <string name="mod_report_block_title">Signaler et Bloquer l\'utilisateur ?</string>
+    <string name="mod_report_block_desc">Êtes-vous sûr de vouloir signaler et bloquer %1$s ? Cela empêchera tous les futurs messages de cet utilisateur.</string>
+    <string name="mod_report_block_btn">SIGNALER ET BLOQUER</string>
+    <string name="mod_cancel">ANNULER</string>
+    <string name="me">MOI</string>
+    <string name="anonymous">Anonyme</string>
+    <string name="error_connection_failed">Échec de la connexion : %1$s</string>
+    <string name="error_unknown">Erreur inconnue</string>
+</resources>

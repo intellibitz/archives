@@ -1,6 +1,7 @@
 package cc.thevar.blukit.data.networking
 
 import android.content.Context
+import cc.thevar.blukit.R
 import cc.thevar.blukit.data.IdentityRepository
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
@@ -19,7 +20,7 @@ import kotlinx.serialization.json.Json
 import java.util.*
 
 class NearbyP2PController(
-    context: Context,
+    private val context: Context,
     private val repository: IdentityRepository,
     private val messageDao: MessageDao,
 ) : P2PController {
@@ -59,7 +60,11 @@ class NearbyP2PController(
                 _isConnected.value = true
             } else {
                 CoroutineScope(Dispatchers.IO).launch {
-                    _errors.emit("Connection failed: ${result.status.statusMessage ?: "Unknown error"}")
+                    val errorMsg = context.getString(
+                        R.string.error_connection_failed,
+                        result.status.statusMessage ?: context.getString(R.string.error_unknown)
+                    )
+                    _errors.emit(errorMsg)
                 }
             }
         }
@@ -125,7 +130,7 @@ class NearbyP2PController(
     override fun startAdvertising() {
         val options = AdvertisingOptions.Builder().setStrategy(strategy).build()
         CoroutineScope(Dispatchers.IO).launch {
-            val nickname = repository.getNickname() ?: "Anonymous"
+            val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
             connectionsClient.startAdvertising(nickname, serviceId, connectionLifecycleCallback, options)
         }
     }
@@ -136,14 +141,14 @@ class NearbyP2PController(
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
         CoroutineScope(Dispatchers.IO).launch {
-            val nickname = repository.getNickname() ?: "Anonymous"
+            val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
             connectionsClient.requestConnection(nickname, device.address, connectionLifecycleCallback)
         }
         return MutableSharedFlow() 
     }
 
     override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload {
-        val nickname = repository.getNickname() ?: "Anonymous"
+        val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
         val senderId = repository.getDeviceId()
         val payloadObj = MessagePayload(
             messageId = UUID.randomUUID().toString(),
