@@ -50,3 +50,6 @@ google-services.json
 # Signing files
 *.jks
 keystore.properties
+
+# Play Store Assets (Binaries)
+doc/assets/store/

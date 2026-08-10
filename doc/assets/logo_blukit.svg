@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#000000"/>
+
+  <!-- Outer Pulse Rings -->
+  <circle cx="256" cy="256" r="180" stroke="#FFB300" stroke-width="4" stroke-opacity="0.2"/>
+  <circle cx="256" cy="256" r="140" stroke="#FFB300" stroke-width="4" stroke-opacity="0.4"/>
+
+  <!-- Stylized "B" + Bluetooth + Mesh Core -->
+  <path d="M220 140V372M220 140H280C310 140 330 160 330 190C330 220 310 240 280 240H220M220 240H280C315 240 340 260 340 300C340 340 315 372 280 372H220" stroke="#FFB300" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Bluetooth Nodes Overlay -->
+  <circle cx="220" cy="140" r="12" fill="#FFB300"/>
+  <circle cx="220" cy="372" r="12" fill="#FFB300"/>
+  <circle cx="330" cy="190" r="12" fill="#FFB300"/>
+  <circle cx="340" cy="300" r="12" fill="#FFB300"/>
+
+  <!-- Mesh Connector Lines -->
+  <path d="M220 140L330 190L220 240L340 300L220 372" stroke="#FFB300" stroke-width="8" stroke-dasharray="8 8" stroke-opacity="0.6"/>
+</svg>
