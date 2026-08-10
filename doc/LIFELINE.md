@@ -62,6 +62,7 @@ Blukit follows the **Clean Architecture** principles, adapted for a modern Andro
 | 2026-08-10 | **Final AAB Ready** | Verified and generated the final production signed Android App Bundle (AAB), ready for Play Console upload and closed testing. |
 | 2026-08-10 | **Gold Standards & Testing** | Consolidated domain models, removed legacy Bluetooth components, enforced clean architecture, and added Android Instrumented Tests for security auditing. |
 | 2026-08-11 | **Global i18n Expansion** | Expanded i18n support to include Japanese, Russian, German, Urdu, and Arabic, alongside previous support for Spanish, French, Chinese, and 9 major Indian languages. |
+| 2026-08-11 | **Production Hardening** | Enabled R8 minification, resource shrinking, and native debug symbols to resolve Play Console warnings and optimize for production. |
 
 ---
 
