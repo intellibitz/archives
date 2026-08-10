@@ -3,8 +3,8 @@ package cc.thevar.blukit.ui.discovery
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cc.thevar.blukit.data.networking.P2PController
-import cc.thevar.blukit.data.bluetooth.BluetoothDeviceDomain
-import cc.thevar.blukit.data.bluetooth.ConnectionResult
+import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.data.system.RadioStateManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class BluetoothViewModel(
     private val p2pController: P2PController,
-    private val radioStateManager: RadioStateManager
+    radioStateManager: RadioStateManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BluetoothUiState())
@@ -32,11 +32,11 @@ class BluetoothViewModel(
 
     init {
         p2pController.isConnected.onEach { isConnected ->
-            _state.update { it.copy(isConnected = isConnected) }
+            _state.update { it.copy(isConnected = isConnected, isConnecting = false) }
         }.launchIn(viewModelScope)
 
         p2pController.errors.onEach { error ->
-            _state.update { it.copy(errorMessage = error) }
+            _state.update { it.copy(errorMessage = error, isConnecting = false) }
         }.launchIn(viewModelScope)
 
         p2pController.messages.onEach { messages ->
@@ -54,7 +54,7 @@ class BluetoothViewModel(
         p2pController.stopAdvertising()
     }
 
-    fun connectToDevice(device: BluetoothDeviceDomain) {
+    fun connectToDevice(device: P2PDevice) {
         _state.update { it.copy(isConnecting = true) }
         deviceConnectionJob = p2pController
             .connectToDevice(device)
@@ -78,26 +78,27 @@ class BluetoothViewModel(
         _state.update { it.copy(isConnected = false, isConnecting = false) }
     }
 
-    private fun Flow<ConnectionResult>.listen(): Job {
+    private fun Flow<ConnectionStatus>.listen(): Job {
         return onEach { result ->
             when(result) {
-                ConnectionResult.ConnectionEstablished -> {
+                ConnectionStatus.Connected -> {
                     _state.update { it.copy(
                         isConnected = true,
                         isConnecting = false,
                         errorMessage = null
                     ) }
                 }
-                is ConnectionResult.TransferSucceeded -> {
+                is ConnectionStatus.Received -> {
                     // Handled by controller updating messages state flow
                 }
-                is ConnectionResult.Error -> {
+                is ConnectionStatus.Error -> {
                     _state.update { it.copy(
                         isConnected = false,
                         isConnecting = false,
                         errorMessage = result.message
                     ) }
                 }
+                else -> {}
             }
         }.catch { e ->
             p2pController.closeConnection()

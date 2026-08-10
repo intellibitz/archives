@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import cc.thevar.blukit.data.bluetooth.BluetoothDeviceDomain
+import cc.thevar.blukit.domain.model.P2PDevice
 import kotlinx.coroutines.awaitCancellation
 import kotlin.math.cos
 import kotlin.math.sin
@@ -27,7 +27,7 @@ import kotlin.math.sin
 @Composable
 fun RadarScreen(
     state: BluetoothUiState,
-    onDeviceClick: (BluetoothDeviceDomain) -> Unit,
+    onDeviceClick: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -53,11 +53,9 @@ fun RadarScreen(
         if (isVisible) {
             RadarBackground()
         } else {
-            // Static background when not visible to save battery
             RadarStaticBackground()
         }
 
-        // Local User Indicator
         Box(
             modifier = Modifier
                 .size(40.dp)
@@ -73,7 +71,6 @@ fun RadarScreen(
             )
         }
 
-        // Peer Nodes
         state.scannedDevices.forEachIndexed { index, device ->
             PeerNode(
                 device = device,
@@ -104,7 +101,6 @@ fun RadarBackground() {
         val center = center
         val maxRadius = size.minDimension / 2.2f
 
-        // Static Circles
         for (i in 1..4) {
             drawCircle(
                 color = primaryColor.copy(alpha = 0.2f),
@@ -114,7 +110,6 @@ fun RadarBackground() {
             )
         }
 
-        // Animated Pulse
         drawCircle(
             color = primaryColor.copy(alpha = 1f - radiusRatio),
             radius = maxRadius * radiusRatio,
@@ -143,7 +138,7 @@ fun RadarStaticBackground() {
 
 @Composable
 fun PeerNode(
-    device: BluetoothDeviceDomain,
+    device: P2PDevice,
     index: Int,
     total: Int,
     onClick: () -> Unit

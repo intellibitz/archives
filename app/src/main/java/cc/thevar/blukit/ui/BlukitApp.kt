@@ -13,9 +13,6 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -27,9 +24,6 @@ import androidx.navigation3.ui.NavDisplay
 import cc.thevar.blukit.data.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.networking.P2PController
-import cc.thevar.blukit.data.bluetooth.BluetoothDeviceDomain
-import cc.thevar.blukit.data.bluetooth.BluetoothPayload
-import cc.thevar.blukit.data.bluetooth.ConnectionResult
 import cc.thevar.blukit.navigation.Route
 import cc.thevar.blukit.ui.chat.ChatScreen
 import cc.thevar.blukit.ui.discovery.BluetoothViewModel
@@ -37,8 +31,6 @@ import cc.thevar.blukit.ui.discovery.DiscoveryScreen
 import cc.thevar.blukit.ui.discovery.RadarScreen
 import cc.thevar.blukit.ui.profile.ProfileScreen
 import cc.thevar.blukit.ui.theme.BlukitTheme
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable

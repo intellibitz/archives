@@ -1,8 +1,8 @@
 package cc.thevar.blukit.data.local.entities
 
-import cc.thevar.blukit.data.bluetooth.BluetoothPayload
+import cc.thevar.blukit.domain.model.MessagePayload
 
-fun BluetoothPayload.toMessageEntity(isFromLocalUser: Boolean): MessageEntity {
+fun MessagePayload.toMessageEntity(isFromLocalUser: Boolean): MessageEntity {
     return MessageEntity(
         messageId = messageId,
         senderId = senderId,
@@ -16,8 +16,8 @@ fun BluetoothPayload.toMessageEntity(isFromLocalUser: Boolean): MessageEntity {
     )
 }
 
-fun MessageEntity.toBluetoothPayload(): BluetoothPayload {
-    return BluetoothPayload(
+fun MessageEntity.toBluetoothPayload(): MessagePayload {
+    return MessagePayload(
         messageId = messageId,
         senderId = senderId,
         senderName = senderName,

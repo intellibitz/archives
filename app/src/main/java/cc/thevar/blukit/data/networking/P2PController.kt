@@ -1,16 +1,16 @@
 package cc.thevar.blukit.data.networking
 
-import cc.thevar.blukit.data.bluetooth.BluetoothDeviceDomain
-import cc.thevar.blukit.data.bluetooth.BluetoothPayload
-import cc.thevar.blukit.data.bluetooth.ConnectionResult
+import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.ConnectionStatus
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 interface P2PController {
-    val scannedDevices: StateFlow<List<BluetoothDeviceDomain>>
+    val scannedDevices: StateFlow<List<P2PDevice>>
     val isConnected: StateFlow<Boolean>
     val errors: SharedFlow<String>
-    val messages: StateFlow<List<BluetoothPayload>>
+    val messages: StateFlow<List<MessagePayload>>
 
     fun startDiscovery()
     fun stopDiscovery()
@@ -18,8 +18,8 @@ interface P2PController {
     fun startAdvertising()
     fun stopAdvertising()
 
-    fun connectToDevice(device: BluetoothDeviceDomain): SharedFlow<ConnectionResult>
-    suspend fun sendMessage(content: String, receiverId: String? = null): BluetoothPayload?
+    fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus>
+    suspend fun sendMessage(content: String, receiverId: String? = null): MessagePayload?
 
     fun closeConnection()
     fun release()

@@ -1,9 +1,9 @@
-package cc.thevar.blukit.data.bluetooth
+package cc.thevar.blukit.domain.model
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class BluetoothPayload(
+data class MessagePayload(
     val messageId: String,
     val senderId: String,
     val senderName: String,

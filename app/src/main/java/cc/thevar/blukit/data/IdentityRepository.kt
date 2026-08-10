@@ -2,16 +2,11 @@ package cc.thevar.blukit.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import java.util.UUID
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -46,12 +41,14 @@ class IdentityRepository(private val context: Context) {
 
     val deviceId: Flow<String> = context.dataStore.data
         .map { preferences ->
-            preferences[deviceIdKey] ?: run {
+            val id = preferences[deviceIdKey]
+            if (id == null) {
                 val newId = UUID.randomUUID().toString()
-                runBlocking {
-                    setDeviceId(newId)
-                }
+                // Side effect in map is generally discouraged, but here it's for initialization
+                // A better way would be an initialize() function
                 newId
+            } else {
+                id
             }
         }
 
@@ -86,12 +83,19 @@ class IdentityRepository(private val context: Context) {
         }
     }
 
-    fun getNickname(): String? = runBlocking {
-        context.dataStore.data.map { it[nicknameKey] }.first()
+    suspend fun getNickname(): String? {
+        return nickname.first()
     }
 
-    fun getDeviceId(): String = runBlocking {
-        deviceId.first()
+    suspend fun getDeviceId(): String {
+        val current = deviceId.first()
+        // Ensure it's persisted if it was just generated
+        context.dataStore.edit { preferences ->
+            if (preferences[deviceIdKey] == null) {
+                preferences[deviceIdKey] = current
+            }
+        }
+        return current
     }
 
     suspend fun clearNickname() {

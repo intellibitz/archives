@@ -4,11 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.Warning
@@ -20,8 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.data.bluetooth.BluetoothDeviceDomain
+import cc.thevar.blukit.domain.model.P2PDevice
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
@@ -31,7 +26,7 @@ fun DiscoveryScreen(
     state: BluetoothUiState,
     onStartScan: () -> Unit,
     onStopScan: () -> Unit,
-    onDeviceClick: (BluetoothDeviceDomain) -> Unit,
+    onDeviceClick: (P2PDevice) -> Unit,
     onStartServer: () -> Unit,
     modifier: Modifier = Modifier
 ) {

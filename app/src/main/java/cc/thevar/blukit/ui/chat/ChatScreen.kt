@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import cc.thevar.blukit.data.bluetooth.BluetoothPayload
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.discovery.BluetoothUiState
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -37,7 +37,7 @@ fun ChatScreen(
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
 
-    var userToBlock by remember { mutableStateOf<BluetoothPayload?>(null) }
+    var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
 
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
@@ -166,7 +166,7 @@ fun ChatScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatMessage(
-    payload: BluetoothPayload,
+    payload: MessagePayload,
     isFromLocalUser: Boolean,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
