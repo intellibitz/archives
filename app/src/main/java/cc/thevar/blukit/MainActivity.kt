@@ -1,5 +1,6 @@
 package cc.thevar.blukit
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,6 +43,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
         setContent {
             val isStealthMode by repository.stealthMode.collectAsStateWithLifecycle(initialValue = false)
             
@@ -49,7 +53,12 @@ class MainActivity : ComponentActivity() {
                 BlukitApp(
                     repository = repository,
                     radioStateManager = radioStateManager,
-                    p2pController = p2pController
+                    p2pController = p2pController,
+                    onEnterPip = {
+                        enterPictureInPictureMode(
+                            android.app.PictureInPictureParams.Builder().build()
+                        )
+                    }
                 )
             }
         }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,7 +34,8 @@ fun ChatScreen(
     localDeviceId: String,
     onDisconnect: () -> Unit,
     onSendMessage: (String) -> Unit,
-    onBlockUser: (String) -> Unit
+    onBlockUser: (String) -> Unit,
+    onEnterPip: () -> Unit
 ) {
     var message by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
@@ -84,16 +86,21 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onEnterPip) {
+                        Icon(Icons.Rounded.PictureInPicture, contentDescription = "Enter PiP")
+                    }
                     IconButton(onClick = onDisconnect) {
                         Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.chat_disconnect))
                     }
                 }
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.safeDrawing // Handle all safe areas including IME
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
         ) {
             LazyColumn(
@@ -124,9 +131,7 @@ fun ChatScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .navigationBarsPadding()
-                        .imePadding(),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedTextField(

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -40,6 +41,7 @@ fun BlukitApp(
     repository: IdentityRepository,
     radioStateManager: RadioStateManager,
     p2pController: P2PController,
+    onEnterPip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel: MainViewModel = viewModel(
@@ -158,7 +160,8 @@ fun BlukitApp(
                         localDeviceId = deviceId,
                         onDisconnect = bluetoothViewModel::disconnect,
                         onSendMessage = bluetoothViewModel::sendMessage,
-                        onBlockUser = viewModel::blockUser
+                        onBlockUser = viewModel::blockUser,
+                        onEnterPip = onEnterPip
                     )
                 }
                 else -> NavEntry(key) {

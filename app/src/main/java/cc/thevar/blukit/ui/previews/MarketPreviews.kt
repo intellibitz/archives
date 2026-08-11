@@ -68,7 +68,8 @@ fun PreviewChatPhone() {
             localDeviceId = "me",
             onDisconnect = {},
             onSendMessage = {},
-            onBlockUser = {}
+            onBlockUser = {},
+            onEnterPip = {}
         )
     }
 }

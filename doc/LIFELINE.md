@@ -10,10 +10,11 @@
 | 2026-08-11 | **Global i18n Expansion** | Added support for 18+ languages including Tamil, Hindi, Japanese, and Arabic. |
 | 2026-08-11 | **Production Hardening** | Enabled R8 fullMode, resource shrinking, and native debug symbols. |
 | 2026-08-11 | **Release 1.0.0 (v6)** | First release uploaded to Play Console Closed Testing. |
-| 2026-08-11 | **Critical P2P Fix (v7)** | Resolved a production issue where discovery failed on Android 13+ due to missing `NEARBY_WIFI_DEVICES` permission and strict Location requirements. Hardened `NearbyP2PController` with failure listeners. |
+| 2026-08-11 | **Critical P2P Fix (v7)** | Resolved critical discovery failures on Android 13+; added `NEARBY_WIFI_DEVICES` support. |
+| 2026-08-11 | **UX Gold Standard (v8)** | Aligned with Android 15 Edge-to-Edge standards, migrated to modern Material 3 themes, and implemented **Picture-in-Picture (PiP)** for seamless multitasking. |
 
 ## 🔗 Architectural Backbone
 - **P2P Engine**: `Nearby Connections API` (`P2P_CLUSTER` strategy).
 - **Cryptography**: `AES-256-GCM` (authenticated encryption).
 - **UI State**: `Kotlin Flow` + `StateFlow` (reactive streams).
-- **Compliance**: `Report & Block` + `Auto-Purge` (UGC moderation).
+- **Compliance**: `Edge-to-Edge` (Android 15) + `UGC moderation`.

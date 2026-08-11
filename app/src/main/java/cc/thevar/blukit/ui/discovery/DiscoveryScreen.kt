@@ -68,46 +68,55 @@ fun DiscoveryScreen(
                     }
                 }
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0) // We want to manage insets ourselves for Radar
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            if (!state.isBluetoothEnabled || !state.isLocationEnabled) {
-                RadioStateWarning(
-                    isBluetoothEnabled = state.isBluetoothEnabled,
-                    isLocationEnabled = state.isLocationEnabled,
-                    onEnableBluetooth = {
-                        context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
-                    },
-                    onEnableLocation = {
-                        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                    }
-                )
-            }
-
             if (!permissionState.allPermissionsGranted) {
                 PermissionRequestContent(
-                    onRequestPermissions = { permissionState.launchMultiplePermissionRequest() }
+                    onRequestPermissions = { permissionState.launchMultiplePermissionRequest() },
+                    modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                 )
             } else {
                 RadarScreen(
                     state = state,
                     onDeviceClick = onDeviceClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxSize()
                 )
-            }
-
-            // Error display
-            state.errorMessage?.let { error ->
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                
+                // Overlay warnings/errors on top of Radar
+                Column(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .consumeWindowInsets(innerPadding)
+                        .fillMaxWidth()
                 ) {
-                    Text(text = error)
+                    if (!state.isBluetoothEnabled || !state.isLocationEnabled) {
+                        RadioStateWarning(
+                            isBluetoothEnabled = state.isBluetoothEnabled,
+                            isLocationEnabled = state.isLocationEnabled,
+                            onEnableBluetooth = {
+                                context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+                            },
+                            onEnableLocation = {
+                                context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                            }
+                        )
+                    }
+
+                    // Error display
+                    state.errorMessage?.let { error ->
+                        Snackbar(
+                            modifier = Modifier.padding(16.dp),
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ) {
+                            Text(text = error)
+                        }
+                    }
                 }
             }
         }
@@ -124,7 +133,9 @@ private fun RadioStateWarning(
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        tonalElevation = 4.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -150,10 +161,11 @@ private fun RadioStateWarning(
 
 @Composable
 private fun PermissionRequestContent(
-    onRequestPermissions: () -> Unit
+    onRequestPermissions: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

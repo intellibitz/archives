@@ -27,10 +27,14 @@ fun ProfileScreen(
     var nickname by remember(currentNickname) { mutableStateOf(currentNickname ?: "") }
     val emojis = listOf("👤", "🐱", "🐶", "🦊", "🦁", "🤖", "👽", "👻")
 
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets.safeDrawing
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
