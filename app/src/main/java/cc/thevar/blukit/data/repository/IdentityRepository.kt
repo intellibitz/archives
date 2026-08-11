@@ -17,7 +17,7 @@ import java.util.UUID
  * Identity Repository with 100% Hardware-Backed Encrypted Storage for ALL profile data.
  * Migrated from standard DataStore to EncryptedSharedPreferences for military-grade persistence.
  */
-class IdentityRepository(private val context: Context) {
+class IdentityRepository(context: Context) {
 
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -62,15 +62,15 @@ class IdentityRepository(private val context: Context) {
         }
     }
 
-    suspend fun setNickname(name: String) {
+    fun setNickname(name: String) {
         securePrefs.edit().putString(KEY_NICKNAME, name).apply()
     }
 
-    suspend fun setEmojiAvatar(emoji: String) {
+    fun setEmojiAvatar(emoji: String) {
         securePrefs.edit().putString(KEY_EMOJI, emoji).apply()
     }
 
-    suspend fun setStealthMode(enabled: Boolean) {
+    fun setStealthMode(enabled: Boolean) {
         securePrefs.edit().putString(KEY_STEALTH, enabled.toString()).apply()
     }
 
@@ -84,10 +84,11 @@ class IdentityRepository(private val context: Context) {
 
     suspend fun getDeviceId(): String = deviceId.first()
 
-    suspend fun clearNickname() {
+    fun clearNickname() {
         securePrefs.edit().remove(KEY_NICKNAME).apply()
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun <T> observeKey(key: String, transform: (String?) -> T = { it as T }): Flow<T> = callbackFlow {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { prefs, changedKey ->
             if (key == changedKey) {

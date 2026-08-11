@@ -15,6 +15,7 @@ import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -24,8 +25,8 @@ import java.util.*
 import javax.crypto.SecretKey
 
 /**
- * Supreme Senior Architect Implementation:
- * P2P Controller using Google Nearby Connections with ECDH Key Exchange Handshake.
+ * Supreme Senior Android Expert Implementation:
+ * P2P Controller using Google Nearby Connections with Hardware-Backed Security Handshake.
  */
 class NearbyP2PController(
     private val context: Context,
@@ -38,11 +39,16 @@ class NearbyP2PController(
     private val strategy = Strategy.P2P_CLUSTER
     private val serviceId = "cc.thevar.blukit.P2P"
 
+    private val internalScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
     private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
     override val scannedDevices = _scannedDevices.asStateFlow()
 
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
+
+    private val _isDiscovering = MutableStateFlow(value = false)
+    override val isDiscovering = _isDiscovering.asStateFlow()
 
     private val _errors = MutableSharedFlow<String>()
     override val errors = _errors.asSharedFlow()
@@ -50,23 +56,19 @@ class NearbyP2PController(
     override val messages: StateFlow<List<MessagePayload>> = messageDao.getAllMessages()
         .map { entities -> entities.map { it.toBluetoothPayload() } }
         .stateIn(
-            scope = CoroutineScope(Dispatchers.IO),
+            scope = internalScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
 
     private val cryptoManager = CryptoManager()
     private val activeConnections = mutableSetOf<String>()
-    
-    // Map of endpointId to the derived Shared Secret (AES key)
     private val peerKeys = mutableMapOf<String, SecretKey>()
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
-            // Auto-accept connection for "Stadium Lobby" experience
             connectionsClient.acceptConnection(endpointId, payloadCallback)
                 .addOnSuccessListener {
-                    // Initiate E2EE Handshake: Send our Public Key
                     sendHandshake(endpointId)
                 }
                 .addOnFailureListener { e ->
@@ -95,7 +97,6 @@ class NearbyP2PController(
     private val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
             payload.asBytes()?.let { bytes ->
-                // Check if it's a handshake payload (Public Key) or a Message
                 if (isHandshakePayload(bytes)) {
                     handleHandshake(endpointId, bytes)
                 } else {
@@ -107,10 +108,7 @@ class NearbyP2PController(
         override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {}
     }
 
-    private fun isHandshakePayload(bytes: ByteArray): Boolean {
-        // Simple magic byte or header to identify handshake
-        return bytes.isNotEmpty() && bytes[0] == 0x01.toByte()
-    }
+    private fun isHandshakePayload(bytes: ByteArray): Boolean = bytes.isNotEmpty() && bytes[0] == 0x01.toByte()
 
     private fun sendHandshake(endpointId: String) {
         val publicKeyBytes = cryptoManager.getLocalKeyPair().public.encoded
@@ -119,65 +117,69 @@ class NearbyP2PController(
     }
 
     private fun handleHandshake(endpointId: String, bytes: ByteArray) {
-        val publicKeyEncoded = bytes.copyOfRange(1, bytes.size)
-        val keyFactory = KeyFactory.getInstance("EC")
-        val peerPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
-        
-        val sharedSecret = cryptoManager.deriveSharedSecret(peerPublicKey)
-        peerKeys[endpointId] = sharedSecret
+        try {
+            val publicKeyEncoded = bytes.copyOfRange(1, bytes.size)
+            val keyFactory = KeyFactory.getInstance("EC")
+            val peerPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
+            val sharedSecret = cryptoManager.deriveSharedSecret(peerPublicKey)
+            peerKeys[endpointId] = sharedSecret
+        } catch (e: Exception) {
+            emitError("Security handshake failed")
+        }
     }
 
     private fun handleMessage(endpointId: String, bytes: ByteArray) {
-        val secretKey = peerKeys[endpointId] ?: return // Drop if no secure session established
-        
+        val secretKey = peerKeys[endpointId] ?: return
         try {
             val decryptedBytes = cryptoManager.decrypt(bytes, secretKey)
             val payloadJson = decryptedBytes.decodeToString()
             val messagePayload = Json.decodeFromString<MessagePayload>(payloadJson)
             
-            CoroutineScope(Dispatchers.IO).launch {
+            internalScope.launch(Dispatchers.IO) {
                 val blocked = repository.blockedUsers.first()
                 if (messagePayload.senderId !in blocked) {
                     messageDao.insertMessage(messagePayload.toMessageEntity(isFromLocalUser = false))
-                    // Trigger Haptic Alert for incoming message
                     hapticManager.triggerMessageAlert()
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Decryption failure or blocked user
         }
     }
 
     override fun startDiscovery() {
         val options = DiscoveryOptions.Builder().setStrategy(strategy).build()
+        _isDiscovering.value = true
         connectionsClient.startDiscovery(
             serviceId,
             object : EndpointDiscoveryCallback() {
                 override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
                     _scannedDevices.update { devices ->
-                        val newDevice = P2PDevice(info.endpointName, endpointId)
-                        if (devices.any { it.address == endpointId }) devices else devices + newDevice
+                        val newDevice = P2PDevice(id = endpointId, name = info.endpointName, signalStrength = 0)
+                        if (devices.any { it.id == endpointId }) devices else devices + newDevice
                     }
                 }
 
                 override fun onEndpointLost(endpointId: String) {
-                    _scannedDevices.update { devices ->
-                        devices.filter { it.address != endpointId }
-                    }
+                    _scannedDevices.update { devices -> devices.filter { it.id != endpointId } }
                 }
             },
             options
-        ).addOnFailureListener { emitError("Discovery failure: ${it.message}") }
+        ).addOnFailureListener { 
+            _isDiscovering.value = false
+            emitError("Discovery failure: ${it.message}") 
+        }
     }
 
     override fun stopDiscovery() {
         connectionsClient.stopDiscovery()
+        _isDiscovering.value = false
         _scannedDevices.value = emptyList()
     }
 
     override fun startAdvertising() {
         val options = AdvertisingOptions.Builder().setStrategy(strategy).build()
-        CoroutineScope(Dispatchers.IO).launch {
+        internalScope.launch(Dispatchers.IO) {
             val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
             connectionsClient.startAdvertising(nickname, serviceId, connectionLifecycleCallback, options)
                 .addOnFailureListener { emitError("Advertising failure: ${it.message}") }
@@ -189,15 +191,15 @@ class NearbyP2PController(
     }
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
-        CoroutineScope(Dispatchers.IO).launch {
+        internalScope.launch(Dispatchers.IO) {
             val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
-            connectionsClient.requestConnection(nickname, device.address, connectionLifecycleCallback)
+            connectionsClient.requestConnection(nickname, device.id, connectionLifecycleCallback)
                 .addOnFailureListener { emitError("Connection request failure: ${it.message}") }
         }
         return MutableSharedFlow() 
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload {
+    override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload? {
         val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
         val senderId = repository.getDeviceId()
         val payloadObj = MessagePayload(
@@ -212,28 +214,29 @@ class NearbyP2PController(
         val payloadJson = Json.encodeToString(MessagePayload.serializer(), payloadObj)
         val dataBytes = payloadJson.toByteArray()
 
-        if (receiverId != null) {
-            val key = peerKeys[receiverId] ?: throw IllegalStateException("No secure session")
-            val encrypted = cryptoManager.encrypt(dataBytes, key)
-            connectionsClient.sendPayload(receiverId, Payload.fromBytes(encrypted))
-        } else {
-            // Broadcast to all active secure sessions
-            activeConnections.forEach { endpointId ->
-                peerKeys[endpointId]?.let { key ->
-                    val encrypted = cryptoManager.encrypt(dataBytes, key)
-                    connectionsClient.sendPayload(endpointId, Payload.fromBytes(encrypted))
+        try {
+            if (receiverId != null) {
+                val key = peerKeys[receiverId] ?: return null
+                val encrypted = cryptoManager.encrypt(dataBytes, key)
+                connectionsClient.sendPayload(receiverId, Payload.fromBytes(encrypted))
+            } else {
+                activeConnections.forEach { endpointId ->
+                    peerKeys[endpointId]?.let { key ->
+                        val encrypted = cryptoManager.encrypt(dataBytes, key)
+                        connectionsClient.sendPayload(endpointId, Payload.fromBytes(encrypted))
+                    }
                 }
             }
+            messageDao.insertMessage(payloadObj.toMessageEntity(isFromLocalUser = true))
+            return payloadObj
+        } catch (e: Exception) {
+            emitError("Message send failed")
+            return null
         }
-
-        messageDao.insertMessage(payloadObj.toMessageEntity(isFromLocalUser = true))
-        return payloadObj
     }
 
     private fun emitError(msg: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            _errors.emit(msg)
-        }
+        internalScope.launch { _errors.emit(msg) }
     }
 
     override fun closeConnection() {

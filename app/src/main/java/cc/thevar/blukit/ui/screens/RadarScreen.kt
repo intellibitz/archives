@@ -3,27 +3,27 @@ package cc.thevar.blukit.ui.screens
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import kotlinx.coroutines.awaitCancellation
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -33,60 +33,193 @@ fun RadarScreen(
     onDeviceClick: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var isVisible by remember { mutableStateOf(true) }
-
-    LaunchedEffect(lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            isVisible = true
-            try {
-                awaitCancellation()
-            } finally {
-                isVisible = false
-            }
-        }
-    }
-
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        if (isVisible) {
-            RadarBackground()
-        } else {
-            RadarStaticBackground()
-        }
+        RadarBackground()
 
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.me),
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
+        // Me (center)
+        CenterNode()
+
+        // Discovered devices as peers
+        if (state.scannedDevices.isNotEmpty()) {
+            PeerNodes(
+                devices = state.scannedDevices,
+                onDeviceClick = onDeviceClick
             )
+        } else if (!state.isConnecting && state.errorMessage == null) {
+            EmptyRadarHint()
+        } else {
+            LoadingRadarHint(state.isConnecting, state.errorMessage)
+        }
+    }
+}
+
+@Composable
+private fun CenterNode() {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.me),
+            color = MaterialTheme.colorScheme.onPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun PeerNodes(
+    devices: List<P2PDevice>,
+    onDeviceClick: (P2PDevice) -> Unit
+) {
+    val totalDevices = devices.size
+    
+    devices.forEachIndexed { index, device ->
+        val proximityGroup = when {
+            device.signalStrength > -50 -> "Very Close"
+            device.signalStrength > -70 -> "Close"
+            device.signalStrength > -80 -> "Moderate"
+            else -> "Far"
         }
 
-        state.scannedDevices.forEachIndexed { index, device ->
-            PeerNode(
-                device = device,
-                index = index,
-                total = state.scannedDevices.size,
-                onClick = { onDeviceClick(device) }
+        val radius = when (proximityGroup) {
+            "Very Close" -> 80.dp
+            "Close" -> 120.dp
+            "Moderate" -> 160.dp
+            else -> 200.dp
+        }
+
+        val angle = (index.toDouble() / totalDevices) * 2 * Math.PI
+        val xOff = (radius.value * cos(angle)).toFloat()
+        val yOff = (radius.value * sin(angle)).toFloat()
+
+        PeerNode(
+            device = device,
+            xOffset = xOff.dp,
+            yOffset = yOff.dp,
+            proximityGroup = proximityGroup,
+            onClick = { onDeviceClick(device) }
+        )
+    }
+}
+
+@Composable
+private fun PeerNode(
+    device: P2PDevice,
+    xOffset: androidx.compose.ui.unit.Dp,
+    yOffset: androidx.compose.ui.unit.Dp,
+    proximityGroup: String,
+    onClick: () -> Unit
+) {
+    val nodeSize = when (proximityGroup) {
+        "Very Close" -> 56.dp
+        "Close" -> 50.dp
+        else -> 44.dp
+    }
+
+    Box(
+        modifier = Modifier
+            .offset(xOffset, yOffset)
+            .size(nodeSize)
+            .clip(CircleShape)
+            .background(colorForProximity(proximityGroup))
+            .border(
+                width = if (device.isConnecting) 2.dp else 1.dp,
+                color = if (device.isConnecting) Color.Yellow.copy(alpha = 0.6f) else Color.Transparent,
+                shape = CircleShape
+            )
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = when {
+                    device.isConnecting -> "🔗"
+                    device.isConnected -> "✅"
+                    else -> "👤"
+                },
+                fontSize = 18.sp
+            )
+            val displayName = device.name ?: stringResource(R.string.discovery_unknown_device)
+            Text(
+                text = if (displayName.length > 12) "${displayName.take(12)}..." else displayName,
+                fontSize = 9.sp,
+                color = Color.White.copy(alpha = 0.8f),
+                maxLines = 1
             )
         }
     }
 }
 
 @Composable
-fun RadarBackground() {
+private fun colorForProximity(group: String): Color {
+    return when (group) {
+        "Very Close" -> Color.Green.copy(alpha = 0.6f)
+        "Close" -> Color.Green.copy(alpha = 0.4f)
+        "Moderate" -> Color.Yellow.copy(alpha = 0.5f)
+        else -> Color.Red.copy(alpha = 0.3f)
+    }
+}
+
+@Composable
+private fun EmptyRadarHint() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "📡", fontSize = 48.sp)
+            Text(
+                text = "No devices found",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoadingRadarHint(isConnecting: Boolean, errorMessage: String?) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (isConnecting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(32.dp),
+                    strokeWidth = 3.dp
+                )
+                Text(
+                    text = "Searching for devices...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            } else {
+                Text(
+                    text = errorMessage ?: "Searching for devices...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RadarBackground() {
     val infiniteTransition = rememberInfiniteTransition(label = "RadarTransition")
     val radiusRatio by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -102,76 +235,38 @@ fun RadarBackground() {
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val center = center
-        val maxRadius = size.minDimension / 2.2f
+        val maxRadius = size.minDimension / 2.5f
 
+        // Concentric circles
         for (i in 1..4) {
             drawCircle(
-                color = primaryColor.copy(alpha = 0.2f),
+                color = primaryColor.copy(alpha = 0.15f),
                 radius = maxRadius * (i / 4f),
                 center = center,
                 style = Stroke(width = 1.dp.toPx())
             )
         }
 
+        // Radial lines
+        for (angle in 0 until 360 step 45) {
+            val radAngle = Math.toRadians(angle.toDouble())
+            val x1 = cos(radAngle).toFloat() * maxRadius + center.x
+            val y1 = sin(radAngle).toFloat() * maxRadius + center.y
+            
+            drawLine(
+                color = primaryColor.copy(alpha = 0.1f),
+                start = Offset(center.x, center.y),
+                end = Offset(x1, y1),
+                strokeWidth = 1.dp.toPx()
+            )
+        }
+
+        // Radar sweep circle
         drawCircle(
-            color = primaryColor.copy(alpha = 1f - radiusRatio),
+            color = primaryColor.copy(alpha = (1 - radiusRatio) * 0.4f),
             radius = maxRadius * radiusRatio,
             center = center,
             style = Stroke(width = 2.dp.toPx())
         )
-    }
-}
-
-@Composable
-fun RadarStaticBackground() {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val center = center
-        val maxRadius = size.minDimension / 2.2f
-        for (i in 1..4) {
-            drawCircle(
-                color = primaryColor.copy(alpha = 0.2f),
-                radius = maxRadius * (i / 4f),
-                center = center,
-                style = Stroke(width = 1.dp.toPx())
-            )
-        }
-    }
-}
-
-@Composable
-fun PeerNode(
-    device: P2PDevice,
-    index: Int,
-    total: Int,
-    onClick: () -> Unit
-) {
-    val angle = (index.toFloat() / total) * 2 * Math.PI
-    val distance = 100.dp + (index * 20).dp
-
-    Box(
-        modifier = Modifier
-            .offset(
-                x = (distance.value * cos(angle)).dp,
-                y = (distance.value * sin(angle)).dp
-            )
-            .size(60.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "👤",
-                fontSize = 20.sp
-            )
-            Text(
-                text = device.name ?: stringResource(R.string.discovery_unknown_device),
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                maxLines = 1
-            )
-        }
     }
 }

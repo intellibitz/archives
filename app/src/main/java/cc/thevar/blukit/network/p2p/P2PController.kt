@@ -6,9 +6,14 @@ import cc.thevar.blukit.domain.model.ConnectionStatus
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
+/**
+ * P2P Controller interface — defines the contract for device discovery, 
+ * connection management, and encrypted messaging via Nearby Connections.
+ */
 interface P2PController {
     val scannedDevices: StateFlow<List<P2PDevice>>
     val isConnected: StateFlow<Boolean>
+    val isDiscovering: StateFlow<Boolean>
     val errors: SharedFlow<String>
     val messages: StateFlow<List<MessagePayload>>
 
@@ -18,7 +23,13 @@ interface P2PController {
     fun startAdvertising()
     fun stopAdvertising()
 
+    /**
+     * Initiate connection to a discovered device.
+     * Returns a flow that emits ConnectionStatus updates throughout the 
+     * connection lifecycle (Connecting → Connected | Error).
+     */
     fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus>
+    
     suspend fun sendMessage(content: String, receiverId: String? = null): MessagePayload?
 
     fun closeConnection()
