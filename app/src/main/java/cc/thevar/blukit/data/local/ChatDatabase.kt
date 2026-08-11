@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import cc.thevar.blukit.data.local.dao.ContactDao
 import cc.thevar.blukit.data.local.dao.MessageDao
 import cc.thevar.blukit.data.local.dao.PeerDao
 import cc.thevar.blukit.data.local.entities.ContactEntity
@@ -18,6 +19,7 @@ import cc.thevar.blukit.data.local.entities.PeerEntity
 abstract class ChatDatabase : RoomDatabase() {
     abstract val messageDao: MessageDao
     abstract val peerDao: PeerDao
+    abstract val contactDao: ContactDao
 
     companion object {
         @Volatile
@@ -29,8 +31,7 @@ abstract class ChatDatabase : RoomDatabase() {
                     context.applicationContext,
                     ChatDatabase::class.java,
                     "chat.db"
-                ).fallbackToDestructiveMigration() // Reset during alpha testing if schema changes
-                .build()
+                ).build()
                 INSTANCE = instance
                 instance
             }

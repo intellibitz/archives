@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PictureInPicture
@@ -20,6 +21,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -32,7 +34,10 @@ import java.util.Locale
 fun ChatScreen(
     state: BluetoothUiState,
     localDeviceId: String,
+    peerName: String?,
+    peerEmoji: String?,
     onDisconnect: () -> Unit,
+    onNavigateBack: () -> Unit,
     onSendMessage: (String) -> Unit,
     onBlockUser: (String) -> Unit,
     onEnterPip: () -> Unit
@@ -74,15 +79,23 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = { 
-                    Column {
-                        Text(stringResource(R.string.chat_title), style = MaterialTheme.typography.titleMedium)
-                        if (state.isConnected) {
-                            Text(
-                                stringResource(R.string.chat_connected_desc), 
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(peerEmoji ?: "👤", modifier = Modifier.padding(end = 8.dp))
+                        Column {
+                            Text(peerName ?: stringResource(R.string.chat_title), style = MaterialTheme.typography.titleMedium)
+                            if (state.isConnected) {
+                                Text(
+                                    stringResource(R.string.chat_connected_desc), 
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -131,7 +144,8 @@ fun ChatScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .imePadding(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedTextField(
@@ -139,7 +153,7 @@ fun ChatScreen(
                         onValueChange = { message = it },
                         modifier = Modifier.weight(1f),
                         placeholder = { Text(stringResource(R.string.chat_type_placeholder)) },
-                        maxLines = 4,
+                        maxLines = 6,
                         shape = MaterialTheme.shapes.extraLarge,
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.Transparent,
@@ -229,15 +243,33 @@ fun ChatMessage(
                     else 
                         MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    text = timeString,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = (if (isFromLocalUser) 
-                        MaterialTheme.colorScheme.onPrimary 
-                    else 
-                        MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f),
-                    modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
-                )
+                Row(
+                    modifier = Modifier.align(Alignment.End).padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = timeString,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = (if (isFromLocalUser) 
+                            MaterialTheme.colorScheme.onPrimary 
+                        else 
+                            MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f)
+                    )
+                    if (isFromLocalUser) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        val statusIcon = when (payload.status) {
+                            MessagePayload.STATUS_PENDING -> "⏳"
+                            MessagePayload.STATUS_SENT -> "✓"
+                            MessagePayload.STATUS_DELIVERED -> "✓✓"
+                            else -> ""
+                        }
+                        Text(
+                            text = statusIcon,
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                        )
+                    }
+                }
             }
         }
     }

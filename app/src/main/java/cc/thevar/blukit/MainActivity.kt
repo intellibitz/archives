@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cc.thevar.blukit.data.repository.IdentityRepository
+import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.local.ChatDatabase
@@ -32,11 +33,16 @@ class MainActivity : ComponentActivity() {
     private val database by lazy {
         ChatDatabase.getInstance(applicationContext)
     }
+
+    private val contactRepository by lazy {
+        ContactRepository(database.contactDao)
+    }
     
     private val p2pController by lazy {
         NearbyP2PController(
             applicationContext,
             repository,
+            contactRepository,
             database.messageDao,
             database.peerDao,
             hapticManager
@@ -55,6 +61,8 @@ class MainActivity : ComponentActivity() {
             BlukitTheme(stealthMode = isStealthMode) {
                 BlukitApp(
                     repository = repository,
+                    contactRepository = contactRepository,
+                    messageDao = database.messageDao,
                     radioStateManager = radioStateManager,
                     p2pController = p2pController,
                     onEnterPip = {

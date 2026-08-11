@@ -34,4 +34,24 @@
     <string name="anonymous">Anonyme</string>
     <string name="error_connection_failed">Échec de la connexion : %1$s</string>
     <string name="error_unknown">Erreur inconnue</string>
+
+    <!-- Chat Screen Additions -->
+    <string name="chat_stadium_lobby">Hall du Stade</string>
+    <string name="chat_broadcast_desc">%1$d pairs connectés</string>
+
+    <!-- Contacts Screen -->
+    <string name="contacts_title">Pairs Connus</string>
+    <string name="contacts_empty_hint">Aucun pair connu pour le moment. Commencez à scanner pour trouver quelqu\'un !</string>
+    <string name="contacts_last_seen">Dernière fois vu : %1$s</string>
+    <string name="contacts_chat_now">DISCUTER</string>
+
+    <!-- Profile Screen Additions -->
+    <string name="profile_clear_history">Effacer tout l\'historique des discussions</string>
+    <string name="profile_logout">Déconnexion / Réinitialiser le profil</string>
+    <string name="profile_clear_history_confirm_title">Effacer l\'historique ?</string>
+    <string name="profile_clear_history_confirm_desc">Cela supprimera définitivement tous vos messages de discussion.</string>
+    <string name="profile_logout_confirm_title">Réinitialiser le profil ?</string>
+    <string name="profile_logout_confirm_desc">Cela effacera votre identité et vous devrez la configurer à nouveau.</string>
+    <string name="profile_clear_btn">EFFACER</string>
+    <string name="profile_reset_btn">RÉINITIALISER</string>
 </resources>

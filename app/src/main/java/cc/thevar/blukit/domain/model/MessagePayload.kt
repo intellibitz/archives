@@ -10,10 +10,15 @@ data class MessagePayload(
     val receiverId: String? = null,
     val content: String,
     val timestamp: Long,
-    val type: Int = TYPE_TEXT
+    val type: Int = TYPE_TEXT,
+    val status: Int = STATUS_SENT
 ) {
     companion object {
         const val TYPE_TEXT = 1
         const val TYPE_IMAGE = 2
+
+        const val STATUS_PENDING = 0
+        const val STATUS_SENT = 1
+        const val STATUS_DELIVERED = 2
     }
 }

@@ -92,23 +92,19 @@ private fun PeerNodes(
     val totalDevices = devices.size
     
     devices.forEachIndexed { index, device ->
-        val proximityGroup = when {
-            device.signalStrength > -50 -> "Very Close"
-            device.signalStrength > -70 -> "Close"
-            device.signalStrength > -80 -> "Moderate"
-            else -> "Far"
-        }
-
-        val radius = when (proximityGroup) {
-            "Very Close" -> 80.dp
-            "Close" -> 120.dp
-            "Moderate" -> 160.dp
-            else -> 200.dp
-        }
+        val proximityGroup = device.proximityLabel
+        val proximityFactor = device.proximityFactor
+        
+        // Use proximityFactor for continuous radius
+        // maxRadius is around 200.dp (based on RadarBackground)
+        // If proximityFactor is 1.0 (Very Close), radius should be small (e.g. 60.dp)
+        // If proximityFactor is 0.0 (Far), radius should be large (e.g. 200.dp)
+        val radiusValue = (1f - proximityFactor) * 140f + 60f
+        val radius = radiusValue.dp
 
         val angle = (index.toDouble() / totalDevices) * 2 * Math.PI
-        val xOff = (radius.value * cos(angle)).toFloat()
-        val yOff = (radius.value * sin(angle)).toFloat()
+        val xOff = (radiusValue * cos(angle)).toFloat()
+        val yOff = (radiusValue * sin(angle)).toFloat()
 
         PeerNode(
             device = device,

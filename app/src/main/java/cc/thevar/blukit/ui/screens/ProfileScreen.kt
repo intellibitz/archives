@@ -22,10 +22,19 @@ fun ProfileScreen(
     onSaveEmoji: (String) -> Unit,
     onToggleStealth: (Boolean) -> Unit,
     onNavigateNext: () -> Unit,
+    onClearHistory: () -> Unit = {},
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var nickname by remember(currentNickname) { mutableStateOf(currentNickname ?: "") }
-    val emojis = listOf("👤", "🐱", "🐶", "🦊", "🦁", "🤖", "👽", "👻")
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    val emojis = listOf(
+        "👤", "🐱", "🐶", "🦊", "🦁", "🤖", "👽", "👻",
+        "🐯", "🐨", "🐼", "🐹", "🐸", "🐷", "🦄", "🐲",
+        "🚀", "🌈", "🔥", "💎", "🎸", "🍕", "🎮", "🏀"
+    )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -103,6 +112,27 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.weight(1f))
             
+            // P4: Additional actions
+            if (currentNickname != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                
+                TextButton(
+                    onClick = { showClearHistoryDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.profile_clear_history), color = MaterialTheme.colorScheme.error)
+                }
+                
+                TextButton(
+                    onClick = { showLogoutDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.profile_logout))
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             Button(
                 onClick = { 
                     if (nickname.isNotBlank()) {
@@ -116,5 +146,52 @@ fun ProfileScreen(
                 Text(stringResource(R.string.profile_start_exploring))
             }
         }
+    }
+
+    // Confirmation Dialogs
+    if (showClearHistoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearHistoryDialog = false },
+            title = { Text(stringResource(R.string.profile_clear_history_confirm_title)) },
+            text = { Text(stringResource(R.string.profile_clear_history_confirm_desc)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onClearHistory()
+                        showClearHistoryDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.profile_clear_btn), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearHistoryDialog = false }) {
+                    Text(stringResource(R.string.mod_cancel))
+                }
+            }
+        )
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text(stringResource(R.string.profile_logout_confirm_title)) },
+            text = { Text(stringResource(R.string.profile_logout_confirm_desc)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onLogout()
+                        showLogoutDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.profile_reset_btn), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text(stringResource(R.string.mod_cancel))
+                }
+            }
+        )
     }
 }

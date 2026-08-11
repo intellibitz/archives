@@ -12,4 +12,10 @@ sealed interface Route : NavKey {
     
     @Serializable
     data object Chat : Route
+
+    @Serializable
+    data object Lobby : Route
+
+    @Serializable
+    data object Contacts : Route
 }

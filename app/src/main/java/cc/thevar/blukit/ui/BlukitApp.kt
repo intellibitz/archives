@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
@@ -28,16 +29,21 @@ import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.screens.ChatScreen
+import cc.thevar.blukit.ui.screens.LobbyScreen
 import cc.thevar.blukit.ui.screens.DiscoveryScreen
 import cc.thevar.blukit.ui.screens.RadarScreen
 import cc.thevar.blukit.ui.screens.ProfileScreen
+import cc.thevar.blukit.ui.screens.ContactsScreen
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
+import cc.thevar.blukit.ui.viewmodels.ContactsViewModel
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun BlukitApp(
     repository: IdentityRepository,
+    contactRepository: cc.thevar.blukit.data.repository.ContactRepository,
+    messageDao: cc.thevar.blukit.data.local.dao.MessageDao,
     radioStateManager: RadioStateManager,
     p2pController: P2PController,
     onEnterPip: () -> Unit,
@@ -46,7 +52,15 @@ fun BlukitApp(
     val viewModel: MainViewModel = viewModel(
         factory = viewModelFactory {
             initializer {
-                MainViewModel(repository)
+                MainViewModel(repository, messageDao)
+            }
+        }
+    )
+
+    val contactsViewModel: ContactsViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                ContactsViewModel(contactRepository)
             }
         }
     )
@@ -97,6 +111,16 @@ fun BlukitApp(
                     label = { Text(stringResource(R.string.discovery_title)) }
                 )
                 item(
+                    selected = currentRoute is Route.Contacts,
+                    onClick = { 
+                        if (currentRoute !is Route.Contacts) {
+                            backStack.add(Route.Contacts)
+                        }
+                    },
+                    icon = { Icon(Icons.Rounded.Face, contentDescription = stringResource(R.string.contacts_title)) },
+                    label = { Text(stringResource(R.string.contacts_title)) }
+                )
+                item(
                     selected = currentRoute is Route.Profile,
                     onClick = { 
                         if (currentRoute !is Route.Profile) {
@@ -125,7 +149,9 @@ fun BlukitApp(
                         onSaveNickname = viewModel::saveNickname,
                         onSaveEmoji = { viewModel.saveEmoji(it) },
                         onToggleStealth = { viewModel.toggleStealth(it) },
-                        onNavigateNext = { backStack.add(Route.Discovery) }
+                        onNavigateNext = { backStack.add(Route.Discovery) },
+                        onClearHistory = viewModel::clearChatHistory,
+                        onLogout = viewModel::logout
                     )
                 }
                 Route.Discovery -> NavEntry(
@@ -145,9 +171,13 @@ fun BlukitApp(
                         }
                     )
                 ) {
-                    RadarScreen(
+                    DiscoveryScreen(
                         state = bluetoothState,
-                        onDeviceClick = bluetoothViewModel::connectToDevice
+                        onStartScan = bluetoothViewModel::startScan,
+                        onStopScan = bluetoothViewModel::stopScan,
+                        onDeviceClick = bluetoothViewModel::connectToDevice,
+                        onStartServer = bluetoothViewModel::startAdvertising,
+                        onNavigateToLobby = { backStack.add(Route.Lobby) }
                     )
                 }
                 Route.Chat -> NavEntry(
@@ -157,10 +187,45 @@ fun BlukitApp(
                     ChatScreen(
                         state = bluetoothState,
                         localDeviceId = deviceId,
+                        peerName = bluetoothState.connectedPeer?.name,
+                        peerEmoji = bluetoothState.connectedPeer?.emoji,
                         onDisconnect = bluetoothViewModel::disconnect,
+                        onNavigateBack = { backStack.removeLastOrNull() },
                         onSendMessage = bluetoothViewModel::sendMessage,
                         onBlockUser = viewModel::blockUser,
                         onEnterPip = onEnterPip
+                    )
+                }
+                Route.Lobby -> NavEntry(
+                    key = key,
+                    metadata = ListDetailSceneStrategy.detailPane()
+                ) {
+                    LobbyScreen(
+                        state = bluetoothState,
+                        localDeviceId = deviceId,
+                        onNavigateBack = { backStack.removeLastOrNull() },
+                        onBroadcastMessage = bluetoothViewModel::broadcastMessage,
+                        onBlockUser = viewModel::blockUser,
+                        onEnterPip = onEnterPip
+                    )
+                }
+                Route.Contacts -> NavEntry(key) {
+                    val contacts by contactsViewModel.allContacts.collectAsStateWithLifecycle()
+                    ContactsScreen(
+                        contacts = contacts,
+                        onNavigateBack = { backStack.removeLastOrNull() },
+                        onStartChat = { contact ->
+                            // Here we should initiate connection to the contact
+                            // For simplicity, we navigate to discovery/chat
+                            // but usually it means we need to find the device again if not connected.
+                            // If they are in scannedDevices, we connect.
+                            val device = bluetoothState.scannedDevices.find { it.id == contact.contactId }
+                            if (device != null) {
+                                bluetoothViewModel.connectToDevice(device)
+                            } else {
+                                // Maybe show a message that the peer is not nearby
+                            }
+                        }
                     )
                 }
                 else -> NavEntry(key) {

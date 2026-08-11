@@ -14,5 +14,5 @@ data class MessageEntity(
     val timestamp: Long,
     val type: Int, // 1 for text, 2 for image, etc.
     val isFromLocalUser: Boolean,
-    val status: Int // 1: Sent, 2: Received, 3: Read
+    val status: Int // 0: Pending, 1: Sent, 2: Delivered
 )

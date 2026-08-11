@@ -34,4 +34,24 @@
     <string name="anonymous">अनाम</string>
     <string name="error_connection_failed">कनेक्शन विफल: %1$s</string>
     <string name="error_unknown">अज्ञात त्रुटि</string>
+
+    <!-- Chat Screen Additions -->
+    <string name="chat_stadium_lobby">स्टेडियम लॉबी</string>
+    <string name="chat_broadcast_desc">%1$d साथी जुड़े हुए हैं</string>
+
+    <!-- Contacts Screen -->
+    <string name="contacts_title">ज्ञात साथी</string>
+    <string name="contacts_empty_hint">अभी तक कोई ज्ञात साथी नहीं है। किसी को खोजने के लिए स्कैनिंग शुरू करें!</string>
+    <string name="contacts_last_seen">पिछली बार देखा गया: %1$s</string>
+    <string name="contacts_chat_now">चैट</string>
+
+    <!-- Profile Screen Additions -->
+    <string name="profile_clear_history">सभी चैट इतिहास मिटाएं</string>
+    <string name="profile_logout">लॉगआउट / प्रोफ़ाइल रीसेट करें</string>
+    <string name="profile_clear_history_confirm_title">इतिहास मिटाएं?</string>
+    <string name="profile_clear_history_confirm_desc">यह आपके सभी चैट संदेशों को स्थायी रूप से हटा देगा।</string>
+    <string name="profile_logout_confirm_title">प्रोफ़ाइल रीसेट करें?</string>
+    <string name="profile_logout_confirm_desc">यह आपकी पहचान मिटा देगा और आपको इसे फिर से सेट करना होगा।</string>
+    <string name="profile_clear_btn">मिटाएं</string>
+    <string name="profile_reset_btn">रीसेट करें</string>
 </resources>

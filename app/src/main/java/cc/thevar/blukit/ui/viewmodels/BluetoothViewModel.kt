@@ -23,12 +23,15 @@ class BluetoothViewModel(
     val state: StateFlow<BluetoothUiState> = combine(
         p2pController.scannedDevices,
         radioStateManager.radioStates,
+        p2pController.connectedPeers,
         _state
-    ) { scannedDevices, radioStates, currentState ->
+    ) { scannedDevices, radioStates, connectedPeers, currentState ->
+        val connectedDevice = scannedDevices.find { it.id in connectedPeers } ?: currentState.connectedPeer
         currentState.copy(
             scannedDevices = scannedDevices,
             isBluetoothEnabled = radioStates.isBluetoothEnabled,
-            isLocationEnabled = radioStates.isLocationEnabled
+            isLocationEnabled = radioStates.isLocationEnabled,
+            connectedPeer = connectedDevice
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BluetoothUiState())
 
@@ -58,6 +61,14 @@ class BluetoothViewModel(
         p2pController.stopAdvertising()
     }
 
+    fun startAdvertising() {
+        p2pController.startAdvertising()
+    }
+
+    fun stopAdvertising() {
+        p2pController.stopAdvertising()
+    }
+
     fun connectToDevice(device: P2PDevice) {
         _state.update { it.copy(isConnecting = true) }
         connectionJob?.cancel()
@@ -77,6 +88,12 @@ class BluetoothViewModel(
     fun sendMessage(message: String) {
         viewModelScope.launch {
             p2pController.sendMessage(message)
+        }
+    }
+
+    fun broadcastMessage(message: String) {
+        viewModelScope.launch {
+            p2pController.broadcastMessage(message)
         }
     }
 

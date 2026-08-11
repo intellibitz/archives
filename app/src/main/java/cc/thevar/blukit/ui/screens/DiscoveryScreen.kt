@@ -4,9 +4,15 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -31,6 +37,7 @@ fun DiscoveryScreen(
     onStopScan: () -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
     onStartServer: () -> Unit,
+    onNavigateToLobby: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -69,6 +76,21 @@ fun DiscoveryScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            AnimatedVisibility(
+                visible = state.isConnected,
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut()
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToLobby,
+                    icon = { Icon(Icons.Rounded.Campaign, contentDescription = null) },
+                    text = { Text("📢 Lobby") },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0) // We want to manage insets ourselves for Radar
     ) { innerPadding ->

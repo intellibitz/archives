@@ -53,20 +53,25 @@ fun PreviewChatPhone() {
                         senderId = "user1",
                         senderName = "Peer 1",
                         content = "Hello!",
-                        timestamp = 1628610000000
+                        timestamp = 1628610000000,
+                        status = MessagePayload.STATUS_DELIVERED
                     ),
                     MessagePayload(
                         messageId = "2",
                         senderId = "me",
                         senderName = "Me",
                         content = "Hey there!",
-                        timestamp = 1628610060000
+                        timestamp = 1628610060000,
+                        status = MessagePayload.STATUS_SENT
                     )
                 ),
                 isConnected = true
             ),
             localDeviceId = "me",
+            peerName = "Peer 1",
+            peerEmoji = "👤",
             onDisconnect = {},
+            onNavigateBack = {},
             onSendMessage = {},
             onBlockUser = {},
             onEnterPip = {}

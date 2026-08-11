@@ -26,6 +26,7 @@ local.properties
 # Logs and databases
 *.log
 *.sqlite
+*.hprof
 
 # OS generated files
 .DS_Store

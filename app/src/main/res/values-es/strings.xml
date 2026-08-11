@@ -34,4 +34,24 @@
     <string name="anonymous">Anónimo</string>
     <string name="error_connection_failed">Error de conexión: %1$s</string>
     <string name="error_unknown">Error desconocido</string>
+
+    <!-- Chat Screen Additions -->
+    <string name="chat_stadium_lobby">Vestíbulo del Estadio</string>
+    <string name="chat_broadcast_desc">%1$d pares conectados</string>
+
+    <!-- Contacts Screen -->
+    <string name="contacts_title">Pares Conocidos</string>
+    <string name="contacts_empty_hint">Aún no hay pares conocidos. ¡Empieza a escanear para encontrar a alguien!</string>
+    <string name="contacts_last_seen">Última vez visto: %1$s</string>
+    <string name="contacts_chat_now">CHATEAR</string>
+
+    <!-- Profile Screen Additions -->
+    <string name="profile_clear_history">Borrar Todo el Historial de Chat</string>
+    <string name="profile_logout">Cerrar Sesión / Restablecer Perfil</string>
+    <string name="profile_clear_history_confirm_title">¿Borrar Historial?</string>
+    <string name="profile_clear_history_confirm_desc">Esto eliminará permanentemente todos tus mensajes de chat.</string>
+    <string name="profile_logout_confirm_title">¿Restablecer Perfil?</string>
+    <string name="profile_logout_confirm_desc">Esto borrará tu identidad y necesitarás configurarla de nuevo.</string>
+    <string name="profile_clear_btn">BORRAR</string>
+    <string name="profile_reset_btn">RESTABLECER</string>
 </resources>

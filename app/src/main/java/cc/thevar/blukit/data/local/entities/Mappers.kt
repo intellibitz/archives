@@ -12,7 +12,7 @@ fun MessagePayload.toMessageEntity(isFromLocalUser: Boolean): MessageEntity {
         timestamp = timestamp,
         type = type,
         isFromLocalUser = isFromLocalUser,
-        status = if (isFromLocalUser) 1 else 2 // 1: Sent, 2: Received
+        status = status
     )
 }
 
@@ -24,6 +24,7 @@ fun MessageEntity.toBluetoothPayload(): MessagePayload {
         receiverId = receiverId,
         content = content,
         timestamp = timestamp,
-        type = type
+        type = type,
+        status = status
     )
 }

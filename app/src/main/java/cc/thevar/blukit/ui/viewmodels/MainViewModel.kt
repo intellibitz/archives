@@ -10,14 +10,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MainViewModel(
-    private val repository: IdentityRepository
+    private val repository: IdentityRepository,
+    private val messageDao: cc.thevar.blukit.data.local.dao.MessageDao
 ) : ViewModel() {
 
     val nickname = repository.nickname
     val emojiAvatar = repository.emojiAvatar
     val isStealthMode = repository.stealthMode
     val deviceId = repository.deviceId
-
     val isUserRegistered: StateFlow<Boolean> = repository.nickname
         .map { it != null }
         .stateIn(
@@ -47,6 +47,18 @@ class MainViewModel(
     fun blockUser(userId: String) {
         viewModelScope.launch {
             repository.blockUser(userId)
+        }
+    }
+
+    fun clearChatHistory() {
+        viewModelScope.launch {
+            messageDao.clearAllMessages()
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            repository.clearNickname()
         }
     }
 }

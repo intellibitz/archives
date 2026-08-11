@@ -3,11 +3,13 @@ package cc.thevar.blukit.network.p2p
 import android.content.Context
 import cc.thevar.blukit.R
 import cc.thevar.blukit.data.repository.IdentityRepository
+import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.data.local.dao.MessageDao
 import cc.thevar.blukit.data.local.dao.PeerDao
+import cc.thevar.blukit.data.local.entities.ContactEntity
 import cc.thevar.blukit.data.local.entities.PeerEntity
 import cc.thevar.blukit.data.local.entities.toBluetoothPayload
 import cc.thevar.blukit.data.local.entities.toMessageEntity
@@ -36,6 +38,7 @@ import kotlin.time.Duration.Companion.seconds
 class NearbyP2PController(
     private val context: Context,
     private val repository: IdentityRepository,
+    private val contactRepository: ContactRepository,
     private val messageDao: MessageDao,
     private val peerDao: PeerDao,
     private val hapticManager: HapticManager
@@ -52,6 +55,9 @@ class NearbyP2PController(
 
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
+
+    private val _connectedPeers = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedPeers = _connectedPeers.asStateFlow()
 
     private val _isDiscovering = MutableStateFlow(value = false)
     override val isDiscovering = _isDiscovering.asStateFlow()
@@ -71,6 +77,9 @@ class NearbyP2PController(
     private val activeConnections = mutableSetOf<String>()
     private val peerKeys = mutableMapOf<String, SecretKey>()
 
+    // Message deduplication cache: keeps track of recent message IDs to avoid duplicates in mesh
+    private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
+
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
             connectionsClient.acceptConnection(endpointId, payloadCallback)
@@ -85,7 +94,24 @@ class NearbyP2PController(
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
             if (result.status.isSuccess) {
                 activeConnections.add(endpointId)
+                _connectedPeers.update { it + endpointId }
                 _isConnected.value = true
+                
+                // P4: Automatically insert or update contact
+                val device = _scannedDevices.value.find { it.id == endpointId }
+                device?.let { 
+                    internalScope.launch(Dispatchers.IO) {
+                        contactRepository.saveContact(
+                            ContactEntity(
+                                contactId = it.id,
+                                name = it.name ?: context.getString(R.string.discovery_unknown_device),
+                                bluetoothAddress = "nearby://${it.id}",
+                                lastSeen = System.currentTimeMillis(),
+                                avatarUri = it.emoji ?: "👤"
+                            )
+                        )
+                    }
+                }
             } else {
                 emitError(context.getString(R.string.error_connection_failed, result.status.statusMessage ?: "Unknown"))
             }
@@ -93,6 +119,7 @@ class NearbyP2PController(
 
         override fun onDisconnected(endpointId: String) {
             activeConnections.remove(endpointId)
+            _connectedPeers.update { it - endpointId }
             peerKeys.remove(endpointId)
             if (activeConnections.isEmpty()) {
                 _isConnected.value = false
@@ -140,6 +167,12 @@ class NearbyP2PController(
                         lastSeen = System.currentTimeMillis()
                     )
                 )
+
+                // P4: Update contact last seen if it exists
+                val contact = contactRepository.getContact(endpointId)
+                if (contact != null) {
+                    contactRepository.saveContact(contact.copy(lastSeen = System.currentTimeMillis()))
+                }
             }
         } catch (e: Exception) {
             emitError("Security handshake failed")
@@ -153,11 +186,20 @@ class NearbyP2PController(
             val payloadJson = decryptedBytes.decodeToString()
             val messagePayload = Json.decodeFromString<MessagePayload>(payloadJson)
             
+            // Deduplication logic: ignore if message ID already processed
+            if (!isNewMessage(messagePayload.messageId)) return
+
             internalScope.launch(Dispatchers.IO) {
                 val blocked = repository.blockedUsers.first()
                 if (messagePayload.senderId !in blocked) {
                     messageDao.insertMessage(messagePayload.toMessageEntity(isFromLocalUser = false))
                     hapticManager.triggerMessageAlert()
+
+                    // P4: Update contact last seen
+                    val contact = contactRepository.getContact(endpointId)
+                    if (contact != null) {
+                        contactRepository.saveContact(contact.copy(lastSeen = System.currentTimeMillis()))
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -173,7 +215,18 @@ class NearbyP2PController(
             object : EndpointDiscoveryCallback() {
                 override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
                     _scannedDevices.update { devices ->
-                        val newDevice = P2PDevice(id = endpointId, name = info.endpointName, signalStrength = 0)
+                        // P4: Unpack emoji and name
+                        val parts = info.endpointName.split("|", limit = 2)
+                        val emoji = if (parts.size == 2) parts[0] else "👤"
+                        val name = if (parts.size == 2) parts[1] else info.endpointName
+
+                        val simulatedRssi = ((-70..-45).random())
+                        val newDevice = P2PDevice(
+                            id = endpointId, 
+                            name = name,
+                            emoji = emoji,
+                            signalStrength = simulatedRssi
+                        )
                         if (devices.any { it.id == endpointId }) devices else devices + newDevice
                     }
                 }
@@ -199,7 +252,9 @@ class NearbyP2PController(
         val options = AdvertisingOptions.Builder().setStrategy(strategy).build()
         internalScope.launch(Dispatchers.IO) {
             val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
-            connectionsClient.startAdvertising(nickname, serviceId, connectionLifecycleCallback, options)
+            val emoji = repository.emojiAvatar.first()
+            val endpointName = "$emoji|$nickname"
+            connectionsClient.startAdvertising(endpointName, serviceId, connectionLifecycleCallback, options)
                 .addOnFailureListener { emitError("Advertising failure: ${it.message}") }
         }
     }
@@ -269,6 +324,21 @@ class NearbyP2PController(
         } catch (e: Exception) {
             emitError("Message transmission failed")
             return null
+        }
+    }
+
+    override suspend fun broadcastMessage(content: String): MessagePayload? {
+        return sendMessage(content, null)
+    }
+
+    private fun isNewMessage(messageId: String): Boolean {
+        synchronized(messageIdHistory) {
+            if (messageIdHistory.contains(messageId)) return false
+            messageIdHistory.add(messageId)
+            if (messageIdHistory.size > 100) {
+                messageIdHistory.removeAt(0)
+            }
+            return true
         }
     }
 

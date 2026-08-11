@@ -6,8 +6,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -20,8 +22,8 @@ data class RadioStates(
 
 class RadioStateManager(private val context: Context) {
 
-    private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothAdapter = bluetoothManager.adapter
+    private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
+    private val bluetoothAdapter = bluetoothManager?.adapter
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     val radioStates: Flow<RadioStates> = callbackFlow {
@@ -52,8 +54,23 @@ class RadioStateManager(private val context: Context) {
     }
 
     fun getCurrentStates(): RadioStates {
+        val hasConnectPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+
+        val isBluetoothEnabled = if (hasConnectPermission) {
+            bluetoothAdapter?.isEnabled ?: false
+        } else {
+            false
+        }
+
         return RadioStates(
-            isBluetoothEnabled = bluetoothAdapter?.isEnabled ?: false,
+            isBluetoothEnabled = isBluetoothEnabled,
             isLocationEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                     locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
         )
