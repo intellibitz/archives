@@ -18,6 +18,7 @@ import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.data.system.HapticManager
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,7 +44,8 @@ class NearbyP2PController(
     private val messageDao: MessageDao,
     private val peerDao: PeerDao,
     private val hapticManager: HapticManager,
-    private val cryptoManager: CryptoManager = CryptoManager() // Injected for testability
+    private val cryptoManager: CryptoManager = CryptoManager(),
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : P2PController {
 
     private val TAG = "BlukitP2P"
@@ -76,8 +78,8 @@ class NearbyP2PController(
             initialValue = emptyList()
         )
 
-    private val activeConnections = mutableSetOf<String>()
-    private val peerKeys = mutableMapOf<String, SecretKey>()
+    private val activeConnections = Collections.synchronizedSet(mutableSetOf<String>())
+    private val peerKeys = Collections.synchronizedMap(mutableMapOf<String, SecretKey>())
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
@@ -99,7 +101,7 @@ class NearbyP2PController(
                 
                 val device = _scannedDevices.value.find { it.id == endpointId }
                 device?.let { 
-                    internalScope.launch(Dispatchers.IO) {
+                    internalScope.launch(ioDispatcher) {
                         contactRepository.saveContact(
                             ContactEntity(
                                 contactId = it.id,
@@ -156,7 +158,7 @@ class NearbyP2PController(
             val sharedSecret = cryptoManager.deriveSharedSecret(peerPublicKey)
             peerKeys[endpointId] = sharedSecret
             
-            internalScope.launch(Dispatchers.IO) {
+            internalScope.launch(ioDispatcher) {
                 peerDao.insertPeer(
                     PeerEntity(
                         endpointId = endpointId,
@@ -180,7 +182,7 @@ class NearbyP2PController(
             
             if (!isNewMessage(messagePayload.messageId)) return
 
-            internalScope.launch(Dispatchers.IO) {
+            internalScope.launch(ioDispatcher) {
                 val blocked = repository.blockedUsers.first()
                 if (messagePayload.senderId !in blocked) {
                     messageDao.insertMessage(messagePayload.toMessageEntity(isFromLocalUser = false))
@@ -233,7 +235,7 @@ class NearbyP2PController(
         if (isAdvertising) return
         stopAdvertising()
         val options = AdvertisingOptions.Builder().setStrategy(strategy).build()
-        internalScope.launch(Dispatchers.IO) {
+        internalScope.launch(ioDispatcher) {
             val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
             val emoji = repository.emojiAvatar.first()
             val endpointName = "$emoji|$nickname"
@@ -253,7 +255,7 @@ class NearbyP2PController(
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
         val progress = MutableSharedFlow<ConnectionStatus>(replay = 1)
-        internalScope.launch(Dispatchers.IO) {
+        internalScope.launch(ioDispatcher) {
             try {
                 progress.emit(ConnectionStatus.Connecting)
                 val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)

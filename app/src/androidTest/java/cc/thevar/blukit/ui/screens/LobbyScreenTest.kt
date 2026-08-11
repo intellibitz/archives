@@ -37,7 +37,6 @@ class LobbyScreenTest {
                 LobbyScreen(
                     state = BluetoothUiState(messages = messages, isConnected = true),
                     localDeviceId = "me",
-                    onNavigateBack = {},
                     onBroadcastMessage = {},
                     onBlockUser = {},
                     onEnterPip = {}
