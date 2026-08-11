@@ -107,7 +107,7 @@ class CryptoManager {
         val encryptedPart = encryptedData.copyOfRange(1 + 12, encryptedData.size)
         
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128 * authTagLen, ivPart))
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(8 * authTagLen, ivPart))
         
         return cipher.doFinal(encryptedPart)
     }

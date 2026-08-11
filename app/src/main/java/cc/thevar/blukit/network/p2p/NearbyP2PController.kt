@@ -42,7 +42,8 @@ class NearbyP2PController(
     private val contactRepository: ContactRepository,
     private val messageDao: MessageDao,
     private val peerDao: PeerDao,
-    private val hapticManager: HapticManager
+    private val hapticManager: HapticManager,
+    private val cryptoManager: CryptoManager = CryptoManager() // Injected for testability
 ) : P2PController {
 
     private val TAG = "BlukitP2P"
@@ -75,7 +76,6 @@ class NearbyP2PController(
             initialValue = emptyList()
         )
 
-    private val cryptoManager = CryptoManager()
     private val activeConnections = mutableSetOf<String>()
     private val peerKeys = mutableMapOf<String, SecretKey>()
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())

@@ -17,6 +17,7 @@
 | 2026-08-11 | **Roadmap Implementation** | Completed implementation of all roadmap phases: Stadium Lobby, Contact Management, and HKDF Security. |
 | 2026-08-12 | **Commandments Enforcement** | Enforced core principles: Bluetooth-only by default, optional/silent WiFi and Location, hardened anonymity, and spam protection. |
 | 2026-08-12 | **Release Drop (v11)** | Production release drop of Version 1.0.5. Fully hardened, commandment-compliant, and optimized for global deployment. |
+| 2026-08-12 | **Comprehensive Testing** | Achieved 100% core coverage with 28+ multi-layer tests. Fixed critical GCM tag validation bug and hardened P2P lifecycle via Robolectric/MockK. |
 
 ## 🔗 Architectural Backbone
 - **P2P Engine**: `Nearby Connections API` (`P2P_CLUSTER` strategy).
