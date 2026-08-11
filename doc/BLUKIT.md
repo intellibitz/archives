@@ -1,4 +1,5 @@
-BLUKIT
+BLUKIT - Offline Mesh Chat - Instant offline chat for stadiums, movie theaters & venues without internet.
+
 Blukit is a decentralized, privacy-first offline messaging application for instant local peer-to-peer
 (P2P) communication in high-density environments where cellular or Wi-Fi connectivity is
 unavailable or unreliable — stadiums, movie theaters, concert venues, transit hubs,
