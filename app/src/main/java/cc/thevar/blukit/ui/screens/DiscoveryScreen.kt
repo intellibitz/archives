@@ -1,4 +1,4 @@
-package cc.thevar.blukit.ui.discovery
+package cc.thevar.blukit.ui.screens
 
 import android.Manifest
 import android.content.Intent
@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 

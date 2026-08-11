@@ -1,8 +1,8 @@
-package cc.thevar.blukit.ui.discovery
+package cc.thevar.blukit.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cc.thevar.blukit.data.networking.P2PController
+import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.data.system.RadioStateManager

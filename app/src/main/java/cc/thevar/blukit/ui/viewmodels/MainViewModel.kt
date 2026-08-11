@@ -1,15 +1,13 @@
-package cc.thevar.blukit.ui
+package cc.thevar.blukit.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cc.thevar.blukit.data.IdentityRepository
+import cc.thevar.blukit.data.repository.IdentityRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.rememberNavBackStack
 
 class MainViewModel(
     private val repository: IdentityRepository
@@ -22,7 +20,11 @@ class MainViewModel(
 
     val isUserRegistered: StateFlow<Boolean> = repository.nickname
         .map { it != null }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
 
     fun saveNickname(name: String) {
         viewModelScope.launch {

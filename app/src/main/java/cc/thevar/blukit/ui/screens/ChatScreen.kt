@@ -1,4 +1,4 @@
-package cc.thevar.blukit.ui.chat
+package cc.thevar.blukit.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.ui.discovery.BluetoothUiState
+import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

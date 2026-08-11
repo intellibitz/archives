@@ -1,4 +1,4 @@
-package cc.thevar.blukit.ui.discovery
+package cc.thevar.blukit.ui.screens
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import kotlinx.coroutines.awaitCancellation
 import kotlin.math.cos
 import kotlin.math.sin

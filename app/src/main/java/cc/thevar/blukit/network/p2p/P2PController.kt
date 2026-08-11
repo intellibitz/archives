@@ -1,4 +1,4 @@
-package cc.thevar.blukit.data.networking
+package cc.thevar.blukit.network.p2p
 
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload

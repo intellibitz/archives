@@ -1,12 +1,12 @@
-package cc.thevar.blukit.navigation
+package cc.thevar.blukit.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
-@Serializable
 sealed interface Route : NavKey {
     @Serializable
     data object Profile : Route
+    
     @Serializable
     data object Discovery : Route
     

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -24,16 +23,16 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import cc.thevar.blukit.R
-import cc.thevar.blukit.data.IdentityRepository
+import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
-import cc.thevar.blukit.data.networking.P2PController
-import cc.thevar.blukit.navigation.Route
-import cc.thevar.blukit.ui.chat.ChatScreen
-import cc.thevar.blukit.ui.discovery.BluetoothViewModel
-import cc.thevar.blukit.ui.discovery.DiscoveryScreen
-import cc.thevar.blukit.ui.discovery.RadarScreen
-import cc.thevar.blukit.ui.profile.ProfileScreen
-import cc.thevar.blukit.ui.theme.BlukitTheme
+import cc.thevar.blukit.network.p2p.P2PController
+import cc.thevar.blukit.ui.navigation.Route
+import cc.thevar.blukit.ui.screens.ChatScreen
+import cc.thevar.blukit.ui.screens.DiscoveryScreen
+import cc.thevar.blukit.ui.screens.RadarScreen
+import cc.thevar.blukit.ui.screens.ProfileScreen
+import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
+import cc.thevar.blukit.ui.viewmodels.MainViewModel
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -118,7 +117,7 @@ fun BlukitApp(
             modifier = Modifier.fillMaxSize()
         ) { key ->
             when (key) {
-                is Route.Profile -> NavEntry(key) {
+                Route.Profile -> NavEntry(key) {
                     ProfileScreen(
                         currentNickname = nickname,
                         currentEmoji = emojiAvatar,
@@ -129,7 +128,7 @@ fun BlukitApp(
                         onNavigateNext = { backStack.add(Route.Discovery) }
                     )
                 }
-                is Route.Discovery -> NavEntry(
+                Route.Discovery -> NavEntry(
                     key = key,
                     metadata = ListDetailSceneStrategy.listPane(
                         detailPlaceholder = {
@@ -151,7 +150,7 @@ fun BlukitApp(
                         onDeviceClick = bluetoothViewModel::connectToDevice
                     )
                 }
-                is Route.Chat -> NavEntry(
+                Route.Chat -> NavEntry(
                     key = key,
                     metadata = ListDetailSceneStrategy.detailPane()
                 ) {

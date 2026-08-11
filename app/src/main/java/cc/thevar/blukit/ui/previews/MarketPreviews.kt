@@ -18,10 +18,10 @@ import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.ui.chat.ChatScreen
-import cc.thevar.blukit.ui.discovery.BluetoothUiState
-import cc.thevar.blukit.ui.discovery.RadarScreen
-import cc.thevar.blukit.ui.profile.ProfileScreen
+import cc.thevar.blukit.ui.screens.ChatScreen
+import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
+import cc.thevar.blukit.ui.screens.RadarScreen
+import cc.thevar.blukit.ui.screens.ProfileScreen
 import cc.thevar.blukit.ui.theme.BlukitTheme
 
 @Preview(name = "Radar - Phone", device = Devices.PHONE, showBackground = true)

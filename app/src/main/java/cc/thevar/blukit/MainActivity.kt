@@ -8,14 +8,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.room.Room
-import cc.thevar.blukit.data.IdentityRepository
+import cc.thevar.blukit.data.repository.IdentityRepository
+import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.local.ChatDatabase
-import cc.thevar.blukit.data.networking.NearbyP2PController
+import cc.thevar.blukit.network.p2p.NearbyP2PController
 import cc.thevar.blukit.ui.BlukitApp
 import cc.thevar.blukit.ui.theme.BlukitTheme
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     
@@ -28,6 +27,10 @@ class MainActivity : ComponentActivity() {
         RadioStateManager(applicationContext)
     }
 
+    private val hapticManager by lazy {
+        HapticManager(applicationContext)
+    }
+
     private val database by lazy {
         Room.databaseBuilder(
             applicationContext,
@@ -37,7 +40,12 @@ class MainActivity : ComponentActivity() {
     }
     
     private val p2pController by lazy {
-        NearbyP2PController(applicationContext, repository, database.messageDao)
+        NearbyP2PController(
+            applicationContext,
+            repository,
+            database.messageDao,
+            hapticManager
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
