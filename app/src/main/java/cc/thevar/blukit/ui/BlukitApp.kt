@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Radar
+import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -81,7 +84,7 @@ fun BlukitApp(
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
     
     val initialRoute = remember(isUserRegistered) {
-        if (isUserRegistered) Route.Discovery else Route.Profile
+        if (isUserRegistered) Route.Lobby else Route.Profile
     }
     
     val backStack = rememberNavBackStack(initialRoute)
@@ -101,14 +104,24 @@ fun BlukitApp(
         navigationSuiteItems = {
             if (isUserRegistered) {
                 item(
-                    selected = currentRoute is Route.Discovery || currentRoute is Route.Chat,
+                    selected = currentRoute is Route.Lobby || currentRoute is Route.Chat,
+                    onClick = { 
+                        if (currentRoute !is Route.Lobby) {
+                            backStack.add(Route.Lobby)
+                        }
+                    },
+                    icon = { Icon(Icons.Rounded.Forum, contentDescription = stringResource(R.string.chat_stadium_lobby)) },
+                    label = { Text(stringResource(R.string.chat_stadium_lobby)) }
+                )
+                item(
+                    selected = currentRoute is Route.Discovery,
                     onClick = { 
                         if (currentRoute !is Route.Discovery) {
                             backStack.add(Route.Discovery)
                         }
                     },
-                    icon = { Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.discovery_title)) },
-                    label = { Text(stringResource(R.string.discovery_title)) }
+                    icon = { Icon(Icons.Rounded.Radar, contentDescription = "Radar") },
+                    label = { Text("Radar") }
                 )
                 item(
                     selected = currentRoute is Route.Contacts,
@@ -203,7 +216,6 @@ fun BlukitApp(
                     LobbyScreen(
                         state = bluetoothState,
                         localDeviceId = deviceId,
-                        onNavigateBack = { backStack.removeLastOrNull() },
                         onBroadcastMessage = bluetoothViewModel::broadcastMessage,
                         onBlockUser = viewModel::blockUser,
                         onEnterPip = onEnterPip

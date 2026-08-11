@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,7 +24,6 @@ import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 fun LobbyScreen(
     state: BluetoothUiState,
     localDeviceId: String,
-    onNavigateBack: () -> Unit,
     onBroadcastMessage: (String) -> Unit,
     onBlockUser: (String) -> Unit,
     onEnterPip: () -> Unit
@@ -69,6 +67,7 @@ fun LobbyScreen(
                 title = { 
                     Column {
                         Text(stringResource(R.string.chat_stadium_lobby), style = MaterialTheme.typography.titleMedium)
+                        // Power 4: Mesh is the context.
                         Text(
                             stringResource(R.string.chat_broadcast_desc, state.scannedDevices.size), 
                             style = MaterialTheme.typography.labelSmall,
@@ -80,9 +79,7 @@ fun LobbyScreen(
                     IconButton(onClick = onEnterPip) {
                         Icon(Icons.Rounded.PictureInPicture, contentDescription = "Enter PiP")
                     }
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.chat_disconnect))
-                    }
+                    // Lobby is intentional, no disconnect needed here as it's the landing hub
                 }
             )
         },
@@ -146,6 +143,7 @@ fun LobbyScreen(
                     FloatingActionButton(
                         onClick = {
                             if (message.isNotBlank()) {
+                                // Power 2: User can chat even without peers.
                                 onBroadcastMessage(message)
                                 message = ""
                                 focusManager.clearFocus()
