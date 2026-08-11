@@ -1,117 +1,19 @@
-# Blukit: Project Lifeline
+# Blukit Decision Log & Project Lifeline
 
-This document serves as the authoritative source for the **Blukit** project's history, architectural decisions, and future roadmap. It is a living document that tracks the soul and evolution of the project.
-
----
-
-## 🌟 Project Essence
-
-**Blukit** is a modern Android framework and toolkit designed to simplify and standardize Bluetooth-based identity exchange and data transfer. Our goal is to provide a "plug-and-play" experience for developers needing secure, reliable, and standardized proximity-based interactions.
-
----
-
-## 🏗️ Architectural Backbone
-
-Blukit follows the **Clean Architecture** principles, adapted for a modern Android/Compose environment:
-
-### 1. UI Layer (Jetpack Compose)
-- **State-Driven**: UI reacts to `StateFlow` emitted by ViewModels.
-- **Navigation 3**: Utilizing the latest Jetpack Navigation 3 for a declarative, type-safe navigation experience.
-- **Material 3**: Themed using Material Design 3 for a modern look and feel.
-
-### 2. Domain Layer
-- **Controllers**: Interfaces like `BluetoothController` define the capabilities without being tied to specific implementations.
-- **Models**: Domain models (e.g., `BluetoothDeviceDomain`, `BluetoothMessage`) encapsulate the business logic.
-
-### 3. Data Layer
-- **Repositories**: `IdentityRepository` manages user identity and local state via Encrypted DataStore.
-- **Implementations**: `NearbyP2PController` utilizes the **Google Nearby Connections API** for robust, multi-point decentralized communication.
-- **Persistence**: **Room Database** caches messages and contacts with automated TTL purging.
-- **Security**: `CryptoManager` provides AES-256-GCM encryption leveraging the Android Keystore.
-
----
-
-## 🛠️ Technical Keypoints
-
-### Bluetooth & P2P Mesh
-- **Production Engine**: Transitioned from manual RFCOMM sockets to the **Google Nearby Connections API** (`P2P_CLUSTER`) for superior reliability and automatic radio switching (BLE, Classic, Wi-Fi).
-- **Smart Radar**: Interactive UI for peer discovery using RSSI metrics and animated visual feedback.
-- **Privacy-First Discovery**: Uses `neverForLocation` permission flags to protect user data.
-
-### Build System & Portability
-- **Self-Contained**: The project uses Gradle Toolchains (Java 17) and `android.auto-download=true` to ensure zero-config builds on new machines.
-- **CI/CD**: A GitHub Actions workflow (`android.yml`) validates every commit against a clean build environment.
-
----
-
-## 📜 Decision Log (The "Why")
-
-| Date | Decision | Rationale |
+| Date | Milestone | Technical Context / Decision |
 | :--- | :--- | :--- |
-| 2026-08-10 | **Git Readiness** | Adopted Google Standards (README, LICENSE, etc.) to ensure the project is ready for open-source contribution and follows industry best practices. |
-| 2026-08-10 | **Java 17 / AGP 8.x** | Standardized on Java 17 to leverage modern Kotlin features and stay aligned with the latest Android Gradle Plugin requirements. |
-| 2026-08-10 | **Navigation 3** | Chose Navigation 3 (Alpha) to future-proof the app's navigation logic and benefit from better State/ViewModel integration. |
-| 2026-08-10 | **JDK Toolchain Alignment** | Removed forced `jbr-25` dependency in favor of a stable, external JDK 17 toolchain for better Android/Kotlin compatibility. |
-| 2026-08-10 | **Memory Optimization** | Increased Gradle/Kotlin heap limits to 8GB/4GB to ensure build stability and AI responsiveness during development. |
-| 2026-08-10 | **Decentralized Core** | Implemented Room persistence, AES-256 encryption via Keystore, and Kotlin Serialization for a high-performance, secure P2P chat engine. |
-| 2026-08-10 | **Production Engine** | Integrated Google Nearby Connections API (P2P_CLUSTER), implemented Visual Radar, OLED Stealth Mode, and Automated TTL Purge. |
-| 2026-08-10 | **Phase 5 Hardening** | Refined privacy permissions, implemented reactive Radio State Monitoring, optimized Radar animation battery usage, and finalized Data Safety declarations. |
-| 2026-08-10 | **Production Release** | Generated production signing keys, established secure `keystore.properties` workflow, and verified signed Android App Bundle (AAB) generation. |
-| 2026-08-10 | **Compliance & Presence** | Finalized Play Store metadata, Privacy Policy, and implemented UGC moderation (Report/Block) features. Established a dedicated screenshot generation system via Compose Previews. |
-| 2026-08-10 | **Remote Sync** | Successfully synchronized the production-ready codebase and comprehensive documentation with the remote GitHub repository at `intellibitz/blukit`. |
-| 2026-08-10 | **Final AAB Ready** | Verified and generated the final production signed Android App Bundle (AAB), ready for Play Console upload and closed testing. |
-| 2026-08-10 | **Gold Standards & Testing** | Consolidated domain models, removed legacy Bluetooth components, enforced clean architecture, and added Android Instrumented Tests for security auditing. |
-| 2026-08-11 | **Global i18n Expansion** | Expanded i18n support to include Japanese, Russian, German, Urdu, and Arabic, alongside previous support for Spanish, French, Chinese, and 9 major Indian languages. |
-| 2026-08-11 | **Production Hardening** | Enabled R8 minification, resource shrinking, and native debug symbols to resolve Play Console warnings. |
-| 2026-08-11 | **Native Symbol Optimization** | Incremented to Version Code 3 and refined native symbol packaging (`debugSymbolLevel = "full"`) for improved Play Store debuggability. |
-| 2026-08-11 | **AGP 9.3 Gold Standard** | Migrated to the modern `optimization` DSL and aligned with Google's latest app optimization standards. |
-| 2026-08-11 | **SDK 36 Stabilization** | Reverted targeting to SDK 36 for improved stability and implemented refined native symbol packaging for Version Code 6. |
+| 2026-08-09 | **Project Birth** | Initialized as "blukit", a decentralized offline P2P chat. |
+| 2026-08-10 | **Core Architecture** | Selected Navigation 3, Material 3 Adaptive, and Google Nearby Connections API. |
+| 2026-08-10 | **Security Hardening** | Implemented AES-256-GCM encryption with Android Keystore + ECDH key exchange. |
+| 2026-08-10 | **Persistence & Purge** | Established Room DB with automated 12-hour TTL purge via WorkManager. |
+| 2026-08-10 | **Compliance & Presence** | Finalized Play Store metadata, Privacy Policy, and UGC moderation (Report/Block). |
+| 2026-08-11 | **Global i18n Expansion** | Added support for 18+ languages including Tamil, Hindi, Japanese, and Arabic. |
+| 2026-08-11 | **Production Hardening** | Enabled R8 fullMode, resource shrinking, and native debug symbols. |
+| 2026-08-11 | **Release 1.0.0 (v6)** | First release uploaded to Play Console Closed Testing. |
+| 2026-08-11 | **Critical P2P Fix (v7)** | Resolved a production issue where discovery failed on Android 13+ due to missing `NEARBY_WIFI_DEVICES` permission and strict Location requirements. Hardened `NearbyP2PController` with failure listeners. |
 
----
-
-## ⏳ Historical Timeline
-
-- **Phase 0: The Spark**: Project initialization with core Bluetooth and Identity classes.
-- **Phase 1: Foundation**: Established the MVVM architecture and basic UI screens (Discovery, Chat, Profile).
-- **Phase 2: Standardization**:
-    - Initialized Git and renamed default branch to `main`.
-    - Added `LICENSE`, `README`, `CONTRIBUTING`, and `CODE_OF_CONDUCT`.
-    - Configured a robust `.gitignore`.
-- **Phase 3: Portability**:
-    - Integrated GitHub Actions CI.
-    - Enabled Gradle auto-SDK download.
-    - Updated to Java 17 toolchains.
-- **Phase 4: Advanced Persistence**: Established Room database, AES-256 encryption, and the Automated TTL Purge engine.
-- **Phase 5: Production Readiness (Current)**:
-    - Integrated Google Nearby Connections API.
-    - Implemented Visual Radar and Stealth Theater Mode.
-    - Refined privacy permissions and reactive Radio State Monitoring.
-    - Finalized `doc/LIFELINE.md` and `doc/DATA_SAFETY.md`.
-
----
-
-## ⚡ Resource Allocation
-
-To ensure peak performance for the IDE, Build System, and AI Agent, the following resource allocations are recommended:
-
-### 1. Gradle & Kotlin (Project Level)
-Configured in `gradle.properties`:
-- **Gradle Daemon**: 8GB Heap (`-Xmx8g`), 2GB Min (`-Xms2g`).
-- **Kotlin Daemon**: 4GB Heap (`-Xmx4g`).
-- **Optimization**: Parallel Garbage Collection enabled.
-
-### 2. IDE & AI Agent (Manual Adjustment)
-The AI agent shares memory with the IDE. To increase allocation:
-1. Go to **Help > Change Memory Settings**.
-2. Set the **Maximum Heap Size** to at least **8GB** (12GB recommended for large projects).
-3. Restart Android Studio.
-This ensures the AI has enough headroom to process large context windows and the IDE remains responsive during background indexing.
-
----
-
-## 🚀 Roadmap (Future Aspirations)
-
-- [ ] **Multi-Platform Support**: Explore Kotlin Multiplatform (KMP) for sharing the domain and data logic with iOS.
-- [ ] **File & Image Exchange**: Leverage the existing encrypted payload structure for binary data transfers.
-- [ ] **Extended Mesh Range**: Implement multi-hop message routing to cover larger venues.
-- [ ] **Unit Test Coverage**: Expand coverage to 90%+ for the P2P networking logic.
+## 🔗 Architectural Backbone
+- **P2P Engine**: `Nearby Connections API` (`P2P_CLUSTER` strategy).
+- **Cryptography**: `AES-256-GCM` (authenticated encryption).
+- **UI State**: `Kotlin Flow` + `StateFlow` (reactive streams).
+- **Compliance**: `Report & Block` + `Auto-Purge` (UGC moderation).

@@ -51,7 +51,13 @@ class NearbyP2PController(
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
+            // Auto-accept connection for "Stadium Lobby" experience
             connectionsClient.acceptConnection(endpointId, payloadCallback)
+                .addOnFailureListener { e ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        _errors.emit("Accept connection failed: ${e.message}")
+                    }
+                }
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
@@ -87,7 +93,12 @@ class NearbyP2PController(
                     return@let
                 }
                 val payloadJson = decryptedBytes.decodeToString()
-                val bluetoothPayload = Json.decodeFromString<MessagePayload>(payloadJson)
+                val bluetoothPayload = try {
+                    Json.decodeFromString<MessagePayload>(payloadJson)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return@let
+                }
                 
                 CoroutineScope(Dispatchers.IO).launch {
                     val blocked = repository.blockedUsers.first()
@@ -109,7 +120,7 @@ class NearbyP2PController(
                 override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
                     _scannedDevices.update { devices ->
                         val newDevice = P2PDevice(info.endpointName, endpointId)
-                        if (newDevice in devices) devices else devices + newDevice
+                        if (devices.any { it.address == endpointId }) devices else devices + newDevice
                     }
                 }
 
@@ -120,11 +131,16 @@ class NearbyP2PController(
                 }
             },
             options
-        )
+        ).addOnFailureListener { e ->
+            CoroutineScope(Dispatchers.IO).launch {
+                _errors.emit("Discovery start failed: ${e.message}")
+            }
+        }
     }
 
     override fun stopDiscovery() {
         connectionsClient.stopDiscovery()
+        _scannedDevices.value = emptyList()
     }
 
     override fun startAdvertising() {
@@ -132,6 +148,11 @@ class NearbyP2PController(
         CoroutineScope(Dispatchers.IO).launch {
             val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
             connectionsClient.startAdvertising(nickname, serviceId, connectionLifecycleCallback, options)
+                .addOnFailureListener { e ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        _errors.emit("Advertising start failed: ${e.message}")
+                    }
+                }
         }
     }
 
@@ -143,6 +164,11 @@ class NearbyP2PController(
         CoroutineScope(Dispatchers.IO).launch {
             val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
             connectionsClient.requestConnection(nickname, device.address, connectionLifecycleCallback)
+                .addOnFailureListener { e ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        _errors.emit("Connect request failed: ${e.message}")
+                    }
+                }
         }
         return MutableSharedFlow() 
     }
