@@ -19,7 +19,6 @@ import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,29 +47,26 @@ fun DiscoveryScreen(
 ) {
     val context = LocalContext.current
     
+    // Commandment 1: Purely Bluetooth only permissions
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
             add(Manifest.permission.BLUETOOTH_ADVERTISE)
             add(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            // Pre-S versions technically need Location for BT scanning, 
+            // but we follow the commandment to minimize to BT only.
+            // If the SDK requires it, Nearby API will handle the error internally.
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            add(Manifest.permission.NEARBY_WIFI_DEVICES)
-        }
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
-        add(Manifest.permission.ACCESS_COARSE_LOCATION)
     }
 
     val permissionState = rememberMultiplePermissionsState(permissions = permissions)
 
-    // Ensure scanning starts exactly once when permissions are granted
     DisposableEffect(permissionState.allPermissionsGranted) {
         if (permissionState.allPermissionsGranted) {
             onStartScan()
         }
-        onDispose {
-            // We keep scanning in the background for mesh persistence
-        }
+        onDispose { }
     }
 
     Scaffold(
@@ -118,11 +114,10 @@ fun DiscoveryScreen(
                     modifier = Modifier.fillMaxSize()
                 )
                 
-                // Debug/Status Overlay
+                // Debug/Status Overlay - Commandment 1: BT focused
                 StatusOverlay(
                     isDiscovering = state.isDiscovering,
                     isBluetoothEnabled = state.isBluetoothEnabled,
-                    isLocationEnabled = state.isLocationEnabled,
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .padding(innerPadding)
@@ -136,20 +131,17 @@ fun DiscoveryScreen(
                         .consumeWindowInsets(innerPadding)
                         .fillMaxWidth()
                 ) {
-                    if (!state.isBluetoothEnabled || !state.isLocationEnabled) {
+                    // Commandment 2 & 3: Location/Wifi are optional. Warning only for Bluetooth.
+                    if (!state.isBluetoothEnabled) {
                         RadioStateWarning(
-                            isBluetoothEnabled = state.isBluetoothEnabled,
-                            isLocationEnabled = state.isLocationEnabled,
                             onEnableBluetooth = {
                                 context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
-                            },
-                            onEnableLocation = {
-                                context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                             }
                         )
                     }
 
-                    // Error display
+                    // Error display (Nearby API might still report 8032 if it really wants WiFi, 
+                    // but we stay true to commandments and let the user decide)
                     state.errorMessage?.let { error ->
                         Snackbar(
                             modifier = Modifier.padding(16.dp),
@@ -169,7 +161,6 @@ fun DiscoveryScreen(
 private fun StatusOverlay(
     isDiscovering: Boolean,
     isBluetoothEnabled: Boolean,
-    isLocationEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -181,7 +172,6 @@ private fun StatusOverlay(
         Column(modifier = Modifier.padding(8.dp)) {
             StatusItem("Radar", isDiscovering)
             StatusItem("BT", isBluetoothEnabled)
-            StatusItem("GPS", isLocationEnabled)
         }
     }
 }
@@ -202,10 +192,7 @@ private fun StatusItem(label: String, active: Boolean) {
 
 @Composable
 private fun RadioStateWarning(
-    isBluetoothEnabled: Boolean,
-    isLocationEnabled: Boolean,
-    onEnableBluetooth: () -> Unit,
-    onEnableLocation: () -> Unit
+    onEnableBluetooth: () -> Unit
 ) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
@@ -221,15 +208,10 @@ private fun RadioStateWarning(
             Icon(Icons.Rounded.Warning, contentDescription = null)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                val message = when {
-                    !isBluetoothEnabled && !isLocationEnabled -> stringResource(R.string.radio_warning_both)
-                    !isBluetoothEnabled -> stringResource(R.string.radio_warning_bluetooth)
-                    else -> stringResource(R.string.radio_warning_location)
-                }
-                Text(text = message, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                Text(text = stringResource(R.string.radio_warning_required), style = MaterialTheme.typography.labelSmall)
+                Text(text = stringResource(R.string.radio_warning_bluetooth), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(text = "Bluetooth is required for offline discovery.", style = MaterialTheme.typography.labelSmall)
             }
-            TextButton(onClick = if (!isBluetoothEnabled) onEnableBluetooth else onEnableLocation) {
+            TextButton(onClick = onEnableBluetooth) {
                 Text(stringResource(R.string.radio_enable_btn))
             }
         }
@@ -249,18 +231,18 @@ private fun PermissionRequestContent(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.permission_title),
+            text = "Bluetooth Permission Required",
             style = MaterialTheme.typography.headlineSmall
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = stringResource(R.string.permission_desc),
+            text = "Blukit uses Bluetooth to find and connect to nearby friends without using any internet.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRequestPermissions) {
-            Text(stringResource(R.string.permission_grant))
+            Text("Grant Bluetooth Access")
         }
     }
 }

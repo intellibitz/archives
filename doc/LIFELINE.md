@@ -13,8 +13,9 @@
 | 2026-08-11 | **Critical P2P Fix (v7)** | Resolved critical discovery failures on Android 13+; added `NEARBY_WIFI_DEVICES` support. |
 | 2026-08-11 | **UX Gold Standard (v8)** | Aligned with Android 15 Edge-to-Edge standards and implemented PiP multitasking. |
 | 2026-08-11 | **Zero-Warning Alignment** | Standardized NDK strategy to `FULL` and explicit R8 rule packaging for Version Code 10. |
-| 2026-08-11 | **Supreme Architect Refinement** | Fixed critical scope mismatches, constructor misalignments, and SDK API signatures. Hardened the P2P engine with coroutine timeouts and verified 100% clean build. |
-| 2026-08-11 | **Roadmap Implementation** | Completed implementation of all roadmap phases: Stadium Lobby, UX Polish, Contact Management, and Production Hardening (HKDF, deduplication). |
+| 2026-08-11 | **Supreme Architect Refinement** | Fixed critical scope mismatches, constructor misalignments, and SDK API signatures. |
+| 2026-08-11 | **Roadmap Implementation** | Completed implementation of all roadmap phases: Stadium Lobby, Contact Management, and HKDF Security. |
+| 2026-08-12 | **Commandments Enforcement** | Enforced core principles: Bluetooth-only by default, optional/silent WiFi and Location, hardened anonymity, and spam protection. |
 
 ## 🔗 Architectural Backbone
 - **P2P Engine**: `Nearby Connections API` (`P2P_CLUSTER` strategy).

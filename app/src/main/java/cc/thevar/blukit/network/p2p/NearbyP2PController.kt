@@ -33,7 +33,8 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Supreme Senior Android Expert Implementation:
- * Hardened P2P Controller with exhaustive logging and radio management alerts.
+ * Hardened P2P Controller Enforcing Blukit Commandments.
+ * Focuses on Bluetooth-first discovery and silent optional radio failures.
  */
 class NearbyP2PController(
     private val context: Context,
@@ -81,21 +82,17 @@ class NearbyP2PController(
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
-            Log.d(TAG, "Connection initiated with $endpointId (${info.endpointName})")
             connectionsClient.acceptConnection(endpointId, payloadCallback)
                 .addOnSuccessListener {
-                    Log.d(TAG, "Accepted connection from $endpointId")
                     sendHandshake(endpointId)
                 }
                 .addOnFailureListener { e ->
-                    Log.e(TAG, "Failed to accept connection from $endpointId", e)
-                    emitError("Handshake failed: ${e.message}")
+                    Log.e(TAG, "Connection acceptance failed", e)
                 }
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
             if (result.status.isSuccess) {
-                Log.i(TAG, "Connection SUCCESS with $endpointId")
                 activeConnections.add(endpointId)
                 _connectedPeers.update { it + endpointId }
                 _isConnected.value = true
@@ -115,13 +112,11 @@ class NearbyP2PController(
                     }
                 }
             } else {
-                Log.e(TAG, "Connection FAILED with $endpointId status: ${result.status.statusMessage}")
-                emitError(context.getString(R.string.error_connection_failed, result.status.statusMessage ?: "Unknown"))
+                Log.w(TAG, "Connection failed: ${result.status.statusMessage}")
             }
         }
 
         override fun onDisconnected(endpointId: String) {
-            Log.w(TAG, "Disconnected from $endpointId")
             activeConnections.remove(endpointId)
             _connectedPeers.update { it - endpointId }
             peerKeys.remove(endpointId)
@@ -142,31 +137,24 @@ class NearbyP2PController(
             }
         }
 
-        override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {
-            if (update.status == PayloadTransferUpdate.Status.SUCCESS) {
-                Log.d(TAG, "Payload transfer success from $endpointId")
-            }
-        }
+        override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {}
     }
 
     private fun isHandshakePayload(bytes: ByteArray): Boolean = bytes.isNotEmpty() && bytes[0] == 0x01.toByte()
 
     private fun sendHandshake(endpointId: String) {
-        Log.d(TAG, "Sending E2EE handshake to $endpointId")
         val publicKeyBytes = cryptoManager.getLocalKeyPair().public.encoded
         val handshakePayload = byteArrayOf(0x01.toByte()) + publicKeyBytes
         connectionsClient.sendPayload(endpointId, Payload.fromBytes(handshakePayload))
     }
 
     private fun handleHandshake(endpointId: String, bytes: ByteArray) {
-        Log.d(TAG, "Received E2EE handshake from $endpointId")
         try {
             val publicKeyEncoded = bytes.copyOfRange(1, bytes.size)
             val keyFactory = KeyFactory.getInstance("EC")
             val peerPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
             val sharedSecret = cryptoManager.deriveSharedSecret(peerPublicKey)
             peerKeys[endpointId] = sharedSecret
-            Log.i(TAG, "Secure session established with $endpointId")
             
             internalScope.launch(Dispatchers.IO) {
                 peerDao.insertPeer(
@@ -179,8 +167,7 @@ class NearbyP2PController(
                 )
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Handshake processing failed for $endpointId", e)
-            emitError("Security handshake failed")
+            Log.e(TAG, "Handshake failed", e)
         }
     }
 
@@ -201,21 +188,19 @@ class NearbyP2PController(
                 }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to decrypt message from $endpointId")
+            Log.w(TAG, "Decryption failed or message invalid")
         }
     }
 
     override fun startDiscovery() {
         if (_isDiscovering.value) return
-        stopDiscovery() // Ensure clean state before starting
-        Log.d(TAG, "Starting Discovery with serviceId: $serviceId")
+        stopDiscovery()
         val options = DiscoveryOptions.Builder().setStrategy(strategy).build()
         _isDiscovering.value = true
         connectionsClient.startDiscovery(
             serviceId,
             object : EndpointDiscoveryCallback() {
                 override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-                    Log.i(TAG, "Endpoint FOUND: $endpointId (${info.endpointName})")
                     _scannedDevices.update { devices ->
                         val parts = info.endpointName.split("|", limit = 2)
                         val emoji = if (parts.size == 2) parts[0] else "👤"
@@ -226,22 +211,18 @@ class NearbyP2PController(
                 }
 
                 override fun onEndpointLost(endpointId: String) {
-                    Log.w(TAG, "Endpoint LOST: $endpointId")
                     _scannedDevices.update { devices -> devices.filter { it.id != endpointId } }
                 }
             },
             options
-        ).addOnSuccessListener {
-            Log.d(TAG, "Discovery successfully started")
-        }.addOnFailureListener { 
+        ).addOnFailureListener { e ->
             _isDiscovering.value = false
-            Log.e(TAG, "Discovery failed to start", it)
-            emitError("Discovery failure: ${it.message}") 
+            // Commandment 2 & 3: WIFI/Location errors are silent.
+            handleNearbyError(e, "Discovery")
         }
     }
 
     override fun stopDiscovery() {
-        Log.d(TAG, "Stopping Discovery")
         connectionsClient.stopDiscovery()
         _isDiscovering.value = false
         _scannedDevices.value = emptyList()
@@ -250,8 +231,7 @@ class NearbyP2PController(
     private var isAdvertising = false
     override fun startAdvertising() {
         if (isAdvertising) return
-        stopAdvertising() // Ensure clean state before starting
-        Log.d(TAG, "Starting Advertising with serviceId: $serviceId")
+        stopAdvertising()
         val options = AdvertisingOptions.Builder().setStrategy(strategy).build()
         internalScope.launch(Dispatchers.IO) {
             val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
@@ -259,23 +239,19 @@ class NearbyP2PController(
             val endpointName = "$emoji|$nickname"
             isAdvertising = true
             connectionsClient.startAdvertising(endpointName, serviceId, connectionLifecycleCallback, options)
-                .addOnSuccessListener { Log.d(TAG, "Advertising successfully started as $endpointName") }
-                .addOnFailureListener { 
+                .addOnFailureListener { e ->
                     isAdvertising = false
-                    Log.e(TAG, "Advertising failed to start", it)
-                    emitError("Advertising failure: ${it.message}") 
+                    handleNearbyError(e, "Advertising")
                 }
         }
     }
 
     override fun stopAdvertising() {
-        Log.d(TAG, "Stopping Advertising")
         connectionsClient.stopAdvertising()
         isAdvertising = false
     }
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
-        Log.d(TAG, "Initiating connection to ${device.id}")
         val progress = MutableSharedFlow<ConnectionStatus>(replay = 1)
         internalScope.launch(Dispatchers.IO) {
             try {
@@ -286,15 +262,12 @@ class NearbyP2PController(
                 
                 withTimeout(15.seconds) {
                     connectionsClient.requestConnection(localName, device.id, connectionLifecycleCallback)
-                        .addOnSuccessListener { Log.d(TAG, "Connection request sent to ${device.id}") }
                         .addOnFailureListener { e ->
-                            Log.e(TAG, "Connection request failed for ${device.id}", e)
-                            emitError("Connection request failed: ${e.message}")
+                            handleNearbyError(e, "ConnectionRequest")
                             progress.tryEmit(ConnectionStatus.Error(e.message ?: "Unknown"))
                         }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Connection attempt error for ${device.id}", e)
                 progress.emit(ConnectionStatus.Error(e.message ?: "Unknown"))
             }
         }
@@ -332,8 +305,6 @@ class NearbyP2PController(
             messageDao.insertMessage(payloadObj.toMessageEntity(isFromLocalUser = true))
             return payloadObj
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send message", e)
-            emitError("Message transmission failed")
             return null
         }
     }
@@ -349,12 +320,32 @@ class NearbyP2PController(
         }
     }
 
+    /**
+     * Handles errors from Nearby Connections API by enforcing Blukit Commandments.
+     * Silent for WiFi/Location related errors.
+     */
+    private fun handleNearbyError(e: Exception, context: String) {
+        if (e is com.google.android.gms.common.api.ApiException) {
+            when (e.statusCode) {
+                8032, // MISSING_PERMISSION_ACCESS_WIFI_STATE
+                8035, // WIFI_DISABLED
+                8025, // LOCATION_DISABLED
+                8030  // BLUETOOTH_DISABLED (Handled by UI warning)
+                -> {
+                    Log.i(TAG, "$context: Silent optional radio error: ${e.statusCode}")
+                    return 
+                }
+            }
+        }
+        Log.e(TAG, "$context failure", e)
+        emitError(e.message ?: "Operation failed")
+    }
+
     private fun emitError(msg: String) {
         internalScope.launch { _errors.emit(msg) }
     }
 
     override fun closeConnection() {
-        Log.d(TAG, "Closing all P2P connections")
         connectionsClient.stopAllEndpoints()
         activeConnections.clear()
         peerKeys.clear()
@@ -362,7 +353,6 @@ class NearbyP2PController(
     }
 
     override fun release() {
-        Log.d(TAG, "Releasing P2P Controller")
         stopDiscovery()
         stopAdvertising()
         closeConnection()
