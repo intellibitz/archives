@@ -23,8 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -58,10 +56,10 @@ fun RadarScreen(
                 devices = state.scannedDevices,
                 onDeviceClick = onDeviceClick
             )
-        } else if (!state.isConnecting && state.errorMessage == null) {
+        } else if (!state.isConnecting) {
             EmptyRadarHint()
         } else {
-            LoadingRadarHint(state.isConnecting, state.errorMessage)
+            LoadingRadarHint(state.isConnecting)
         }
     }
 }
@@ -95,10 +93,6 @@ private fun PeerNodes(
         val proximityGroup = device.proximityLabel
         val proximityFactor = device.proximityFactor
         
-        // Use proximityFactor for continuous radius
-        // maxRadius is around 200.dp (based on RadarBackground)
-        // If proximityFactor is 1.0 (Very Close), radius should be small (e.g. 60.dp)
-        // If proximityFactor is 0.0 (Far), radius should be large (e.g. 200.dp)
         val radiusValue = (1f - proximityFactor) * 140f + 60f
         val radius = radiusValue.dp
 
@@ -193,31 +187,23 @@ private fun EmptyRadarHint() {
 }
 
 @Composable
-private fun LoadingRadarHint(isConnecting: Boolean, errorMessage: String?) {
+private fun LoadingRadarHint(isConnecting: Boolean) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            if (isConnecting) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(32.dp),
-                    strokeWidth = 3.dp
-                )
-                Text(
-                    text = "Searching for devices...",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            } else {
-                Text(
-                    text = errorMessage ?: "Searching for devices...",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
+            CircularProgressIndicator(
+                modifier = Modifier.size(32.dp),
+                strokeWidth = 3.dp
+            )
+            val text = if (isConnecting) "Connecting..." else "Searching for devices..."
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }

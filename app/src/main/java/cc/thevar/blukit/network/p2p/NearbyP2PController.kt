@@ -327,6 +327,7 @@ class NearbyP2PController(
     private fun handleNearbyError(e: Exception, context: String) {
         if (e is com.google.android.gms.common.api.ApiException) {
             when (e.statusCode) {
+                8029, // MISSING_PERMISSION_NEARBY_WIFI_DEVICES
                 8032, // MISSING_PERMISSION_ACCESS_WIFI_STATE
                 8035, // WIFI_DISABLED
                 8025, // LOCATION_DISABLED

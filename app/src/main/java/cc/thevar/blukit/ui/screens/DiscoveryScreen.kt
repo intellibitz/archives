@@ -47,16 +47,16 @@ fun DiscoveryScreen(
 ) {
     val context = LocalContext.current
     
-    // Commandment 1: Purely Bluetooth only permissions
+    // Commandment 1: Minimized to "Nearby Discovery" group permissions.
+    // On Android 13+, NEARBY_WIFI_DEVICES is part of the same system toggle as Bluetooth for P2P.
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
             add(Manifest.permission.BLUETOOTH_ADVERTISE)
             add(Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
-            // Pre-S versions technically need Location for BT scanning, 
-            // but we follow the commandment to minimize to BT only.
-            // If the SDK requires it, Nearby API will handle the error internally.
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.NEARBY_WIFI_DEVICES)
         }
     }
 
@@ -114,7 +114,7 @@ fun DiscoveryScreen(
                     modifier = Modifier.fillMaxSize()
                 )
                 
-                // Debug/Status Overlay - Commandment 1: BT focused
+                // Debug/Status Overlay - Commandment 1: Purely P2P status
                 StatusOverlay(
                     isDiscovering = state.isDiscovering,
                     isBluetoothEnabled = state.isBluetoothEnabled,
@@ -131,7 +131,6 @@ fun DiscoveryScreen(
                         .consumeWindowInsets(innerPadding)
                         .fillMaxWidth()
                 ) {
-                    // Commandment 2 & 3: Location/Wifi are optional. Warning only for Bluetooth.
                     if (!state.isBluetoothEnabled) {
                         RadioStateWarning(
                             onEnableBluetooth = {
@@ -140,8 +139,7 @@ fun DiscoveryScreen(
                         )
                     }
 
-                    // Error display (Nearby API might still report 8032 if it really wants WiFi, 
-                    // but we stay true to commandments and let the user decide)
+                    // Error display - Only show non-silent errors
                     state.errorMessage?.let { error ->
                         Snackbar(
                             modifier = Modifier.padding(16.dp),
@@ -208,8 +206,8 @@ private fun RadioStateWarning(
             Icon(Icons.Rounded.Warning, contentDescription = null)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = stringResource(R.string.radio_warning_bluetooth), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                Text(text = "Bluetooth is required for offline discovery.", style = MaterialTheme.typography.labelSmall)
+                Text(text = "Bluetooth is disabled.", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(text = "Enable it to start find nearby devices.", style = MaterialTheme.typography.labelSmall)
             }
             TextButton(onClick = onEnableBluetooth) {
                 Text(stringResource(R.string.radio_enable_btn))
@@ -231,18 +229,18 @@ private fun PermissionRequestContent(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Bluetooth Permission Required",
+            text = "Grant Device Access",
             style = MaterialTheme.typography.headlineSmall
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Blukit uses Bluetooth to find and connect to nearby friends without using any internet.",
+            text = "Blukit needs permission to see other devices around you for offline messaging.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRequestPermissions) {
-            Text("Grant Bluetooth Access")
+            Text("Allow Access")
         }
     }
 }
