@@ -7,6 +7,8 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.data.local.dao.MessageDao
+import cc.thevar.blukit.data.local.dao.PeerDao
+import cc.thevar.blukit.data.local.entities.PeerEntity
 import cc.thevar.blukit.data.local.entities.toBluetoothPayload
 import cc.thevar.blukit.data.local.entities.toMessageEntity
 import cc.thevar.blukit.data.crypto.CryptoManager
@@ -18,20 +20,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.serialization.json.Json
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import javax.crypto.SecretKey
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Supreme Senior Android Expert Implementation:
- * P2P Controller using Google Nearby Connections with Hardware-Backed Security Handshake.
+ * P2P Controller using Google Nearby Connections with Hardware-Backed Security Handshake and Peer Persistence.
  */
 class NearbyP2PController(
     private val context: Context,
     private val repository: IdentityRepository,
     private val messageDao: MessageDao,
+    private val peerDao: PeerDao,
     private val hapticManager: HapticManager
 ) : P2PController {
 
@@ -72,7 +78,7 @@ class NearbyP2PController(
                     sendHandshake(endpointId)
                 }
                 .addOnFailureListener { e ->
-                    emitError("Handshake failed: ${e.message}")
+                    emitError("Handshake initialization failed: ${e.message}")
                 }
         }
 
@@ -123,6 +129,18 @@ class NearbyP2PController(
             val peerPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
             val sharedSecret = cryptoManager.deriveSharedSecret(peerPublicKey)
             peerKeys[endpointId] = sharedSecret
+            
+            // Persist peer public key for future reconnection safety
+            internalScope.launch(Dispatchers.IO) {
+                peerDao.insertPeer(
+                    PeerEntity(
+                        endpointId = endpointId,
+                        name = null, // Will be updated if info becomes available
+                        publicKey = Base64.getEncoder().encodeToString(publicKeyEncoded),
+                        lastSeen = System.currentTimeMillis()
+                    )
+                )
+            }
         } catch (e: Exception) {
             emitError("Security handshake failed")
         }
@@ -143,7 +161,7 @@ class NearbyP2PController(
                 }
             }
         } catch (e: Exception) {
-            // Decryption failure or blocked user
+            // Decryption failure
         }
     }
 
@@ -191,12 +209,31 @@ class NearbyP2PController(
     }
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
+        val progress = MutableSharedFlow<ConnectionStatus>(replay = 1)
         internalScope.launch(Dispatchers.IO) {
-            val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
-            connectionsClient.requestConnection(nickname, device.id, connectionLifecycleCallback)
-                .addOnFailureListener { emitError("Connection request failure: ${it.message}") }
+            try {
+                progress.emit(ConnectionStatus.Connecting)
+                val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
+                
+                withTimeout(15.seconds) {
+                    connectionsClient.requestConnection(nickname, device.id, connectionLifecycleCallback)
+                        .addOnSuccessListener {
+                            // Handled via lifecycle callback
+                        }
+                        .addOnFailureListener { e ->
+                            emitError("Connection request failed: ${e.message}")
+                            progress.tryEmit(ConnectionStatus.Error(e.message ?: "Unknown"))
+                        }
+                }
+            } catch (e: TimeoutCancellationException) {
+                emitError("Connection attempt timed out")
+                progress.emit(ConnectionStatus.Error("Timeout"))
+            } catch (e: Exception) {
+                emitError("Connection error: ${e.message}")
+                progress.emit(ConnectionStatus.Error(e.message ?: "Unknown"))
+            }
         }
-        return MutableSharedFlow() 
+        return progress.asSharedFlow()
     }
 
     override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload? {
@@ -230,7 +267,7 @@ class NearbyP2PController(
             messageDao.insertMessage(payloadObj.toMessageEntity(isFromLocalUser = true))
             return payloadObj
         } catch (e: Exception) {
-            emitError("Message send failed")
+            emitError("Message transmission failed")
             return null
         }
     }

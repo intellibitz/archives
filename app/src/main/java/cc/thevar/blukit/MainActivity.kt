@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.room.Room
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
@@ -18,7 +17,6 @@ import cc.thevar.blukit.ui.theme.BlukitTheme
 
 class MainActivity : ComponentActivity() {
     
-    // Simple repository instance for the foundation
     private val repository by lazy {
         IdentityRepository(applicationContext)
     }
@@ -32,11 +30,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val database by lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            ChatDatabase::class.java,
-            "chat.db"
-        ).build()
+        ChatDatabase.getInstance(applicationContext)
     }
     
     private val p2pController by lazy {
@@ -44,6 +38,7 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             repository,
             database.messageDao,
+            database.peerDao,
             hapticManager
         )
     }

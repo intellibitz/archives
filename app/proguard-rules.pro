@@ -1,10 +1,30 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /path/to/android-sdk/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
+# Blukit Production ProGuard Rules
 
-# For more details, see
-# http://developer.android.com/guide/developing/tools/proguard.html
+# Google Nearby Connections
+-keep class com.google.android.gms.nearby.** { *; }
+-keep interface com.google.android.gms.nearby.** { *; }
 
-# Add any custom keep rules here that are specific to your project.
+# Room
+-keep class * extends androidx.room.RoomDatabase
+-keep class *_*Impl { *; }
+
+# Kotlin Serialization
+-keepattributes *Annotation*, EnclosingMethod, Signature
+-keepclassmembers class * {
+    @kotlinx.serialization.Serializable <fields>;
+}
+
+# AndroidX Navigation
+-keep class androidx.navigation.** { *; }
+
+# Datastore & Security
+-keep class androidx.datastore.** { *; }
+-keep class androidx.security.crypto.** { *; }
+
+# Internal Crypto & Networking (Ensure handshakes work)
+-keep class cc.thevar.blukit.data.crypto.** { *; }
+-keep class cc.thevar.blukit.network.p2p.** { *; }
+-keep class cc.thevar.blukit.domain.model.** { *; }
+
+# Android Keystore
+-keep class android.security.keystore.** { *; }
