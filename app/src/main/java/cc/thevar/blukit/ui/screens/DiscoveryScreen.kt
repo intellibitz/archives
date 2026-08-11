@@ -9,20 +9,26 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -42,7 +48,6 @@ fun DiscoveryScreen(
 ) {
     val context = LocalContext.current
     
-    // Comprehensive permission list for Nearby Connections
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
@@ -52,16 +57,19 @@ fun DiscoveryScreen(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             add(Manifest.permission.NEARBY_WIFI_DEVICES)
         }
-        // Always request location for maximum compatibility with Nearby Connections API on real hardware
         add(Manifest.permission.ACCESS_FINE_LOCATION)
         add(Manifest.permission.ACCESS_COARSE_LOCATION)
     }
 
     val permissionState = rememberMultiplePermissionsState(permissions = permissions)
 
-    LaunchedEffect(permissionState.allPermissionsGranted) {
+    // Ensure scanning starts exactly once when permissions are granted
+    DisposableEffect(permissionState.allPermissionsGranted) {
         if (permissionState.allPermissionsGranted) {
             onStartScan()
+        }
+        onDispose {
+            // We keep scanning in the background for mesh persistence
         }
     }
 
@@ -92,7 +100,7 @@ fun DiscoveryScreen(
                 )
             }
         },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0) // We want to manage insets ourselves for Radar
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -110,6 +118,17 @@ fun DiscoveryScreen(
                     modifier = Modifier.fillMaxSize()
                 )
                 
+                // Debug/Status Overlay
+                StatusOverlay(
+                    isDiscovering = state.isDiscovering,
+                    isBluetoothEnabled = state.isBluetoothEnabled,
+                    isLocationEnabled = state.isLocationEnabled,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(innerPadding)
+                        .padding(16.dp)
+                )
+
                 // Overlay warnings/errors on top of Radar
                 Column(
                     modifier = Modifier
@@ -143,6 +162,41 @@ fun DiscoveryScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StatusOverlay(
+    isDiscovering: Boolean,
+    isBluetoothEnabled: Boolean,
+    isLocationEnabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = Color.Black.copy(alpha = 0.5f),
+        contentColor = Color.White,
+        shape = RoundedCornerShape(8.dp),
+        modifier = modifier
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            StatusItem("Radar", isDiscovering)
+            StatusItem("BT", isBluetoothEnabled)
+            StatusItem("GPS", isLocationEnabled)
+        }
+    }
+}
+
+@Composable
+private fun StatusItem(label: String, active: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (active) Color.Green else Color.Red)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = label, fontSize = 10.sp, fontWeight = FontWeight.Bold)
     }
 }
 

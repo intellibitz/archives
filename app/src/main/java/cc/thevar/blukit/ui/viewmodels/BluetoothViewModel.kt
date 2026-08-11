@@ -24,13 +24,15 @@ class BluetoothViewModel(
         p2pController.scannedDevices,
         radioStateManager.radioStates,
         p2pController.connectedPeers,
+        p2pController.isDiscovering,
         _state
-    ) { scannedDevices, radioStates, connectedPeers, currentState ->
+    ) { scannedDevices, radioStates, connectedPeers, isDiscovering, currentState ->
         val connectedDevice = scannedDevices.find { it.id in connectedPeers } ?: currentState.connectedPeer
         currentState.copy(
             scannedDevices = scannedDevices,
             isBluetoothEnabled = radioStates.isBluetoothEnabled,
             isLocationEnabled = radioStates.isLocationEnabled,
+            isDiscovering = isDiscovering,
             connectedPeer = connectedDevice
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BluetoothUiState())
