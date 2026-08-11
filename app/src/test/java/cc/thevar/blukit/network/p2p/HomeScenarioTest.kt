@@ -143,7 +143,15 @@ class HomeScenarioTest {
 
         responses.forEach { (peerId, data) ->
             val (name, content) = data
-            val payload = MessagePayload("msg-$peerId", "id-$name", name, null, content, System.currentTimeMillis())
+            val payload = MessagePayload(
+                messageId = "msg-$peerId",
+                senderId = "id-$name",
+                senderName = name,
+                senderEmoji = "🏠",
+                receiverId = null,
+                content = content,
+                timestamp = System.currentTimeMillis()
+            )
             val encryptedBytes = "enc-$content".toByteArray()
             val msgPayload = mockk<Payload>()
             every { msgPayload.asBytes() } returns encryptedBytes
@@ -158,12 +166,20 @@ class HomeScenarioTest {
         controller.sendMessage("yes love", receiverId = husbandId)
         testDispatcher.scheduler.advanceUntilIdle()
         
-        // Verify specifically sent to husband (this would be the 2nd sendPayload call to him: 1 broadcast + 1 whisper)
-        verify(exactly = 2) { connectionsClient.sendPayload(eq(husbandId), any()) }
+        // Verify specifically sent to husband (1 broadcast + relays + 1 whisper)
+        verify(atLeast = 2) { connectionsClient.sendPayload(eq(husbandId), any()) }
         coVerify { messageDao.insertMessage(match { it.content == "yes love" && it.receiverId == husbandId }) }
 
         // 6. Husband continues 1-on-1
-        val whisperResponse = MessagePayload("whisper-1", "id-Husband", "Husband", "mom-device-id", "can't wait", System.currentTimeMillis())
+        val whisperResponse = MessagePayload(
+            messageId = "whisper-1",
+            senderId = "id-Husband",
+            senderName = "Husband",
+            senderEmoji = "🧔",
+            receiverId = "mom-device-id",
+            content = "can't wait",
+            timestamp = System.currentTimeMillis()
+        )
         val encryptedWhisper = "enc-whisper".toByteArray()
         val whisperPayload = mockk<Payload>()
         every { whisperPayload.asBytes() } returns encryptedWhisper

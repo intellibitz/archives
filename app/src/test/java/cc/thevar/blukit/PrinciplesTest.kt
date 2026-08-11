@@ -47,7 +47,11 @@ class PrinciplesTest {
         every { android.util.Log.w(any<String>(), any<String>()) } returns 0
         every { android.util.Log.e(any<String>(), any<String>(), any<Throwable>()) } returns 0
         
+        every { repository.emojiAvatar } returns flowOf("👤")
+        coEvery { repository.getNickname() } returns "TestUser"
+        coEvery { repository.getDeviceId() } returns "test-device-id"
         every { messageDao.getAllMessages() } returns flowOf(emptyList())
+        
         controller = NearbyP2PController(
             io.mockk.mockk(relaxed = true), repository, contactRepository, messageDao, peerDao, hapticManager, cryptoManager, testDispatcher
         )

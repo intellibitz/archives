@@ -47,8 +47,6 @@ fun DiscoveryScreen(
 ) {
     val context = LocalContext.current
     
-    // Commandment 1: Minimized to "Nearby Discovery" group permissions.
-    // On Android 13+, NEARBY_WIFI_DEVICES is part of the same system toggle as Bluetooth for P2P.
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
@@ -90,7 +88,7 @@ fun DiscoveryScreen(
                 ExtendedFloatingActionButton(
                     onClick = onNavigateToLobby,
                     icon = { Icon(Icons.Rounded.Campaign, contentDescription = null) },
-                    text = { Text("📢 Lobby") },
+                    text = { Text("📢 Square") },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -114,7 +112,6 @@ fun DiscoveryScreen(
                     modifier = Modifier.fillMaxSize()
                 )
                 
-                // Debug/Status Overlay - Commandment 1: Purely P2P status
                 StatusOverlay(
                     isDiscovering = state.isDiscovering,
                     isBluetoothEnabled = state.isBluetoothEnabled,
@@ -124,7 +121,6 @@ fun DiscoveryScreen(
                         .padding(16.dp)
                 )
 
-                // Overlay warnings/errors on top of Radar
                 Column(
                     modifier = Modifier
                         .padding(innerPadding)
@@ -139,7 +135,6 @@ fun DiscoveryScreen(
                         )
                     }
 
-                    // Error display - Only show non-silent errors
                     state.errorMessage?.let { error ->
                         Snackbar(
                             modifier = Modifier.padding(16.dp),
@@ -206,8 +201,8 @@ private fun RadioStateWarning(
             Icon(Icons.Rounded.Warning, contentDescription = null)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Bluetooth is disabled.", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                Text(text = "Enable it to start find nearby devices.", style = MaterialTheme.typography.labelSmall)
+                Text(text = stringResource(R.string.radio_warning_bluetooth), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.radio_warning_required), style = MaterialTheme.typography.labelSmall)
             }
             TextButton(onClick = onEnableBluetooth) {
                 Text(stringResource(R.string.radio_enable_btn))
@@ -229,18 +224,18 @@ private fun PermissionRequestContent(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Grant Device Access",
+            text = stringResource(R.string.permission_title),
             style = MaterialTheme.typography.headlineSmall
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Blukit needs permission to see other devices around you for offline messaging.",
+            text = stringResource(R.string.permission_desc),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRequestPermissions) {
-            Text("Allow Access")
+            Text(stringResource(R.string.permission_grant))
         }
     }
 }

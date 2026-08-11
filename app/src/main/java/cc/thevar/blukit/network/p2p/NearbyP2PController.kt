@@ -182,6 +182,26 @@ class NearbyP2PController(
             
             if (!isNewMessage(messagePayload.messageId)) return
 
+            // Mesh Forwarding: If broadcast, send to all other connected peers
+            if (messagePayload.receiverId.isNullOrEmpty()) {
+                internalScope.launch(ioDispatcher) {
+                    val currentDeviceId = repository.getDeviceId()
+                    // Don't forward our own messages if they somehow looped back
+                    if (messagePayload.senderId != currentDeviceId) {
+                        activeConnections.filter { it != endpointId }.forEach { targetEndpointId ->
+                            peerKeys[targetEndpointId]?.let { key ->
+                                try {
+                                    val encrypted = cryptoManager.encrypt(decryptedBytes, key)
+                                    connectionsClient.sendPayload(targetEndpointId, Payload.fromBytes(encrypted))
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Failed to forward mesh message to $targetEndpointId", e)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             internalScope.launch(ioDispatcher) {
                 val blocked = repository.blockedUsers.first()
                 if (messagePayload.senderId !in blocked) {
@@ -190,7 +210,7 @@ class NearbyP2PController(
                 }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Decryption failed or message invalid")
+            Log.w(TAG, "Decryption failed or message invalid from $endpointId")
         }
     }
 
@@ -278,11 +298,13 @@ class NearbyP2PController(
 
     override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload? {
         val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
+        val emoji = repository.emojiAvatar.first()
         val senderId = repository.getDeviceId()
         val payloadObj = MessagePayload(
             messageId = UUID.randomUUID().toString(),
             senderId = senderId,
             senderName = nickname,
+            senderEmoji = emoji,
             receiverId = receiverId,
             content = content,
             timestamp = System.currentTimeMillis()
@@ -304,6 +326,11 @@ class NearbyP2PController(
                     }
                 }
             }
+            synchronized(messageIdHistory) {
+                messageIdHistory.add(payloadObj.messageId)
+                if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
+            }
+            
             messageDao.insertMessage(payloadObj.toMessageEntity(isFromLocalUser = true))
             return payloadObj
         } catch (e: Exception) {

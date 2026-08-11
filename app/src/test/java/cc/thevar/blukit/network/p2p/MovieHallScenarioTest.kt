@@ -126,7 +126,15 @@ class MovieHallScenarioTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // 1. StrangerA broadcasts
-        val strangerAPayload = MessagePayload("m1", "id-StrangerA", "StrangerA", null, "That opening scene was intense!", System.currentTimeMillis())
+        val strangerAPayload = MessagePayload(
+            messageId = "m1",
+            senderId = "id-StrangerA",
+            senderName = "StrangerA",
+            senderEmoji = "👤",
+            receiverId = null,
+            content = "That opening scene was intense!",
+            timestamp = System.currentTimeMillis()
+        )
         val encryptedS1 = "enc-s1".toByteArray()
         val p1 = mockk<Payload>()
         every { p1.asBytes() } returns encryptedS1
@@ -138,7 +146,15 @@ class MovieHallScenarioTest {
         testDispatcher.scheduler.advanceUntilIdle()
         
         // 3. Friend whispers
-        val friendWhisper = MessagePayload("m2", peerIds[0], "Friend", "my-device-id", "Did you see that cameo?", System.currentTimeMillis())
+        val friendWhisper = MessagePayload(
+            messageId = "m2",
+            senderId = peerIds[0],
+            senderName = "Friend",
+            senderEmoji = "🤝",
+            receiverId = "my-device-id",
+            content = "Did you see that cameo?",
+            timestamp = System.currentTimeMillis()
+        )
         val encryptedF1 = "enc-f1".toByteArray()
         val p2 = mockk<Payload>()
         every { p2.asBytes() } returns encryptedF1

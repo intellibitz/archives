@@ -20,6 +20,8 @@ class ChatScreenTest {
                 messageId = "1",
                 senderId = "user-1",
                 senderName = "Peer A",
+                senderEmoji = "🐱",
+                receiverId = "me",
                 content = "Hello from Peer A",
                 timestamp = System.currentTimeMillis(),
                 status = MessagePayload.STATUS_DELIVERED
@@ -28,6 +30,8 @@ class ChatScreenTest {
                 messageId = "2",
                 senderId = "me",
                 senderName = "Me",
+                senderEmoji = "😎",
+                receiverId = "user-1",
                 content = "My local message",
                 timestamp = System.currentTimeMillis(),
                 status = MessagePayload.STATUS_SENT
@@ -39,6 +43,7 @@ class ChatScreenTest {
                 ChatScreen(
                     state = BluetoothUiState(messages = messages, isConnected = true),
                     localDeviceId = "me",
+                    peerId = "user-1",
                     peerName = "Peer A",
                     peerEmoji = "🐱",
                     onDisconnect = {},

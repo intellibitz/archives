@@ -118,21 +118,32 @@ private fun PeerNode(
     proximityGroup: String,
     onClick: () -> Unit
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "NodePulse")
+    val pulse by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "PulseScale"
+    )
+
     val nodeSize = when (proximityGroup) {
-        "Very Close" -> 56.dp
-        "Close" -> 50.dp
-        else -> 44.dp
-    }
+        "Very Close" -> 64.dp
+        "Close" -> 56.dp
+        else -> 48.dp
+    } * pulse
 
     Box(
         modifier = Modifier
             .offset(xOffset, yOffset)
             .size(nodeSize)
             .clip(CircleShape)
-            .background(colorForProximity(proximityGroup))
+            .background(colorForProximity(proximityGroup).copy(alpha = 0.6f))
             .border(
-                width = if (device.isConnecting) 2.dp else 1.dp,
-                color = if (device.isConnecting) Color.Yellow.copy(alpha = 0.6f) else Color.Transparent,
+                width = if (device.isConnecting) 3.dp else 1.dp,
+                color = if (device.isConnecting) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.3f),
                 shape = CircleShape
             )
             .clickable { onClick() },
@@ -143,15 +154,16 @@ private fun PeerNode(
                 text = when {
                     device.isConnecting -> "🔗"
                     device.isConnected -> "✅"
-                    else -> "👤"
+                    else -> device.emoji ?: "👤"
                 },
-                fontSize = 18.sp
+                fontSize = (nodeSize.value / 2.5f).sp
             )
             val displayName = device.name ?: stringResource(R.string.discovery_unknown_device)
             Text(
-                text = if (displayName.length > 12) "${displayName.take(12)}..." else displayName,
-                fontSize = 9.sp,
-                color = Color.White.copy(alpha = 0.8f),
+                text = if (displayName.length > 8) "${displayName.take(8)}..." else displayName,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White,
                 maxLines = 1
             )
         }
@@ -177,10 +189,16 @@ private fun EmptyRadarHint() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text = "📡", fontSize = 48.sp)
             Text(
-                text = "No devices found",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "Looking for friends nearby...",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+            Text(
+                text = "Anyone with Blukit open will show up here.",
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
     }
@@ -194,15 +212,16 @@ private fun LoadingRadarHint(isConnecting: Boolean) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(
-                modifier = Modifier.size(32.dp),
-                strokeWidth = 3.dp
+                modifier = Modifier.size(48.dp),
+                strokeWidth = 4.dp,
+                color = MaterialTheme.colorScheme.primary
             )
-            val text = if (isConnecting) "Connecting..." else "Searching for devices..."
+            val text = if (isConnecting) "Reaching out..." else "Finding friends..."
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
-                modifier = Modifier.padding(top = 8.dp)
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 16.dp)
             )
         }
     }

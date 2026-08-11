@@ -4,11 +4,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Radar
-import androidx.compose.material.icons.rounded.Campaign
-import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
@@ -18,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -34,7 +33,6 @@ import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.screens.ChatScreen
 import cc.thevar.blukit.ui.screens.LobbyScreen
 import cc.thevar.blukit.ui.screens.DiscoveryScreen
-import cc.thevar.blukit.ui.screens.RadarScreen
 import cc.thevar.blukit.ui.screens.ProfileScreen
 import cc.thevar.blukit.ui.screens.ContactsScreen
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
@@ -162,7 +160,7 @@ fun BlukitApp(
                         onSaveNickname = viewModel::saveNickname,
                         onSaveEmoji = { viewModel.saveEmoji(it) },
                         onToggleStealth = { viewModel.toggleStealth(it) },
-                        onNavigateNext = { backStack.add(Route.Discovery) },
+                        onNavigateNext = { backStack.add(Route.Lobby) },
                         onClearHistory = viewModel::clearChatHistory,
                         onLogout = viewModel::logout
                     )
@@ -178,7 +176,8 @@ fun BlukitApp(
                                 Text(
                                     stringResource(R.string.discovery_select_placeholder),
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
@@ -200,6 +199,7 @@ fun BlukitApp(
                     ChatScreen(
                         state = bluetoothState,
                         localDeviceId = deviceId,
+                        peerId = bluetoothState.connectedPeer?.id,
                         peerName = bluetoothState.connectedPeer?.name,
                         peerEmoji = bluetoothState.connectedPeer?.emoji,
                         onDisconnect = bluetoothViewModel::disconnect,
@@ -227,15 +227,9 @@ fun BlukitApp(
                         contacts = contacts,
                         onNavigateBack = { backStack.removeLastOrNull() },
                         onStartChat = { contact ->
-                            // Here we should initiate connection to the contact
-                            // For simplicity, we navigate to discovery/chat
-                            // but usually it means we need to find the device again if not connected.
-                            // If they are in scannedDevices, we connect.
                             val device = bluetoothState.scannedDevices.find { it.id == contact.contactId }
                             if (device != null) {
                                 bluetoothViewModel.connectToDevice(device)
-                            } else {
-                                // Maybe show a message that the peer is not nearby
                             }
                         }
                     )

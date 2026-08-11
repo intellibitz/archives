@@ -20,6 +20,7 @@ class LobbyScreenTest {
                 messageId = "1",
                 senderId = "user-1",
                 senderName = "Peer A",
+                senderEmoji = "👤",
                 content = "Lobby message 1",
                 timestamp = System.currentTimeMillis()
             ),
@@ -27,6 +28,7 @@ class LobbyScreenTest {
                 messageId = "2",
                 senderId = "user-2",
                 senderName = "Peer B",
+                senderEmoji = "👤",
                 content = "Lobby message 2",
                 timestamp = System.currentTimeMillis()
             )
@@ -44,7 +46,7 @@ class LobbyScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Stadium Lobby").assertExists()
+        composeTestRule.onNodeWithText("Stadium Square").assertExists()
         composeTestRule.onNodeWithText("Peer A").assertExists()
         composeTestRule.onNodeWithText("Peer B").assertExists()
         composeTestRule.onNodeWithText("Lobby message 1").assertExists()

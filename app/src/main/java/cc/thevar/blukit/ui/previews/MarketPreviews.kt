@@ -68,6 +68,7 @@ fun PreviewChatPhone() {
                 isConnected = true
             ),
             localDeviceId = "me",
+            peerId = "user1",
             peerName = "Peer 1",
             peerEmoji = "👤",
             onDisconnect = {},

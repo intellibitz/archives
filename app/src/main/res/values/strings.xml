@@ -2,68 +2,73 @@
     <string name="app_name">Blukit</string>
 
     <!-- Profile Screen -->
-    <string name="profile_title">Set Up Your Identity</string>
-    <string name="profile_nickname_label">Nickname</string>
-    <string name="profile_stealth_mode">Stealth Theater Mode</string>
-    <string name="profile_stealth_desc">Optimized for dark environments with OLED pitch-black theme.</string>
-    <string name="profile_start_exploring">Start Exploring</string>
+    <string name="profile_title">Who are you?</string>
+    <string name="profile_nickname_label">Choose a name</string>
+    <string name="profile_stealth_mode">Stealth Mode</string>
+    <string name="profile_stealth_desc">A darker theme for stadiums and theaters.</string>
+    <string name="profile_start_exploring">Start Chatting</string>
 
     <!-- Discovery Screen -->
-    <string name="discovery_title">Radar Discovery</string>
-    <string name="discovery_start_server">Start Server</string>
-    <string name="discovery_connecting">Connecting…</string>
-    <string name="discovery_no_devices">No devices found</string>
-    <string name="discovery_paired_devices">Paired Devices</string>
-    <string name="discovery_scanned_devices">Scanned Devices</string>
-    <string name="discovery_unknown_device">(Unknown Device)</string>
-    <string name="discovery_select_placeholder">Select a device to start chatting</string>
+    <string name="discovery_title">People Nearby</string>
+    <string name="discovery_start_server">Make Me Visible</string>
+    <string name="discovery_connecting">Joining…</string>
+    <string name="discovery_no_devices">No one around yet</string>
+    <string name="discovery_paired_devices">Recent Friends</string>
+    <string name="discovery_scanned_devices">People Around You</string>
+    <string name="discovery_unknown_device">(Someone Nearby)</string>
+    <string name="discovery_select_placeholder">Tap someone on the radar to whisper privately</string>
 
     <!-- Permissions -->
-    <string name="permission_title">Permissions Required</string>
-    <string name="permission_desc">Blukit needs permissions to find and connect to nearby devices without internet.</string>
-    <string name="permission_grant">Grant Permissions</string>
+    <string name="permission_title">Device Access</string>
+    <string name="permission_desc">Blukit uses Bluetooth to find and talk to people around you without needing the internet.</string>
+    <string name="permission_grant">Allow Access</string>
 
     <!-- Radio Warnings -->
-    <string name="radio_warning_both">Bluetooth and Location are disabled.</string>
-    <string name="radio_warning_bluetooth">Bluetooth is disabled.</string>
-    <string name="radio_warning_location">Location is disabled.</string>
-    <string name="radio_warning_required">Both are required for nearby discovery.</string>
-    <string name="radio_enable_btn">ENABLE</string>
+    <string name="radio_warning_both">Bluetooth is off.</string>
+    <string name="radio_warning_bluetooth">Bluetooth is off.</string>
+    <string name="radio_warning_location">Location services are off.</string>
+    <string name="radio_warning_required">Bluetooth is needed for offline chat.</string>
+    <string name="radio_enable_btn">TURN ON</string>
 
     <!-- Chat Screen -->
-    <string name="chat_title">Whisper Chat</string>
-    <string name="chat_stadium_lobby">Stadium Lobby</string>
-    <string name="chat_broadcast_desc">%1$d peers connected</string>
-    <string name="chat_connected_desc">Connected to nearby peers</string>
-    <string name="chat_type_placeholder">Type a message</string>
-    <string name="chat_disconnect">Disconnect</string>
+    <string name="chat_title">Private Whisper</string>
+    <string name="chat_stadium_lobby">The Square</string>
+    <string name="chat_broadcast_desc">%1$d friends in the Square</string>
+    <string name="chat_connected_desc">Whispering privately</string>
+    <string name="chat_type_placeholder">Shout to everyone…</string>
+    <string name="chat_disconnect">Leave Whisper</string>
     <string name="chat_send">Send</string>
 
     <!-- Moderation -->
-    <string name="mod_report_block_title">Report &amp; Block User?</string>
-    <string name="mod_report_block_desc">Are you sure you want to report and block %1$s? This will prevent all future messages from this user.</string>
-    <string name="mod_report_block_btn">REPORT &amp; BLOCK</string>
+    <string name="mod_report_block_title">Block this person?</string>
+    <string name="mod_report_block_desc">You won\u0027t see messages from %1$s anymore.</string>
+    <string name="mod_report_block_btn">BLOCK</string>
     <string name="mod_cancel">CANCEL</string>
 
     <!-- Common -->
     <string name="me">ME</string>
     <string name="anonymous">Anonymous</string>
-    <string name="error_connection_failed">Connection failed: %1$s</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="error_connection_failed">Could not connect: %1$s</string>
+    <string name="error_unknown">Something went wrong</string>
 
-    <!-- Contacts Screen -->
-    <string name="contacts_title">Known Peers</string>
-    <string name="contacts_empty_hint">No known peers yet. Start scanning to find someone!</string>
+    <!-- History Screen -->
+    <string name="contacts_title">History</string>
+    <string name="contacts_empty_hint">No history yet. Head to the radar to meet people!</string>
     <string name="contacts_last_seen">Last seen: %1$s</string>
-    <string name="contacts_chat_now">CHAT</string>
+    <string name="contacts_chat_now">WHISPER</string>
 
     <!-- Profile Screen Additions -->
-    <string name="profile_clear_history">Clear All Chat History</string>
-    <string name="profile_logout">Logout / Reset Profile</string>
-    <string name="profile_clear_history_confirm_title">Clear History?</string>
-    <string name="profile_clear_history_confirm_desc">This will permanently delete all your chat messages.</string>
-    <string name="profile_logout_confirm_title">Reset Profile?</string>
-    <string name="profile_logout_confirm_desc">This will clear your identity and you will need to set it up again.</string>
-    <string name="profile_clear_btn">CLEAR</string>
+    <string name="profile_clear_history">Clear All Chats</string>
+    <string name="profile_logout">Reset Profile</string>
+    <string name="profile_clear_history_confirm_title">Delete Everything?</string>
+    <string name="profile_clear_history_confirm_desc">This will permanently delete all your messages.</string>
+    <string name="profile_logout_confirm_title">Reset Identity?</string>
+    <string name="profile_logout_confirm_desc">This will clear your profile and device data.</string>
+    <string name="profile_clear_btn">DELETE ALL</string>
     <string name="profile_reset_btn">RESET</string>
+
+    <!-- Square Empty State -->
+    <string name="square_welcome_title">Welcome to the Square!</string>
+    <string name="square_welcome_desc">This is the heart of the mesh. Shout something, and everyone nearby will see it. Even if no one is here, your message will be heard as soon as friends come in range.</string>
+    <string name="square_empty_hint">Start the conversation below!</string>
 </resources>

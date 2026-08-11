@@ -136,6 +136,7 @@ class StadiumSurgeTest {
                 messageId = "msg-$index",
                 senderId = "id-$user",
                 senderName = user,
+                senderEmoji = "👤",
                 content = content,
                 timestamp = System.currentTimeMillis()
             )

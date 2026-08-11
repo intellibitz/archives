@@ -89,7 +89,8 @@ class BluetoothViewModel(
 
     fun sendMessage(message: String) {
         viewModelScope.launch {
-            p2pController.sendMessage(message)
+            val peerId = state.value.connectedPeer?.id
+            p2pController.sendMessage(message, peerId)
         }
     }
 

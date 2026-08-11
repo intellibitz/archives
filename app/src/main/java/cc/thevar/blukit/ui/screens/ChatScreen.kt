@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -34,6 +35,7 @@ import java.util.Locale
 fun ChatScreen(
     state: BluetoothUiState,
     localDeviceId: String,
+    peerId: String?,
     peerName: String?,
     peerEmoji: String?,
     onDisconnect: () -> Unit,
@@ -48,9 +50,19 @@ fun ChatScreen(
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
 
-    LaunchedEffect(state.messages.size) {
-        if (state.messages.isNotEmpty()) {
-            listState.animateScrollToItem(state.messages.size - 1)
+    val chatMessages = remember(state.messages, peerId, localDeviceId) {
+        if (peerId == null) emptyList()
+        else {
+            state.messages.filter { 
+                (it.senderId == localDeviceId && it.receiverId == peerId) ||
+                (it.senderId == peerId && it.receiverId == localDeviceId)
+            }
+        }
+    }
+
+    LaunchedEffect(chatMessages.size) {
+        if (chatMessages.isNotEmpty()) {
+            listState.animateScrollToItem(chatMessages.size - 1)
         }
     }
 
@@ -124,7 +136,7 @@ fun ChatScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(state.messages) { payload ->
+                items(chatMessages, key = { it.messageId }) { payload ->
                     ChatMessage(
                         payload = payload,
                         isFromLocalUser = payload.senderId == localDeviceId,
@@ -195,15 +207,28 @@ fun ChatMessage(
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
     val timeString = remember(payload.timestamp) { timeFormatter.format(Date(payload.timestamp)) }
 
-    Column(
+    Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = if (isFromLocalUser) Alignment.End else Alignment.Start
+        horizontalArrangement = if (isFromLocalUser) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Bottom
     ) {
-        val arrangement = if (isFromLocalUser) Arrangement.End else Arrangement.Start
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = arrangement,
-            modifier = Modifier.fillMaxWidth()
+        if (!isFromLocalUser) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier
+                    .size(32.dp)
+                    .padding(bottom = 4.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(text = payload.senderEmoji ?: "👤", fontSize = 16.sp)
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
+        Column(
+            horizontalAlignment = if (isFromLocalUser) Alignment.End else Alignment.Start
         ) {
             if (!isFromLocalUser) {
                 Text(
@@ -214,61 +239,76 @@ fun ChatMessage(
                     modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
                 )
             }
-        }
-        
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = if (isFromLocalUser) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.surfaceVariant
-            ),
-            shape = MaterialTheme.shapes.large.copy(
-                bottomEnd = if (isFromLocalUser) CornerSize(0.dp) else CornerSize(16.dp),
-                bottomStart = if (isFromLocalUser) CornerSize(16.dp) else CornerSize(0.dp)
-            ),
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .combinedClickable(
-                    onClick = {},
-                    onLongClick = onLongClick
-                )
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = payload.content,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (isFromLocalUser) 
-                        MaterialTheme.colorScheme.onPrimary 
+            
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isFromLocalUser) 
+                        MaterialTheme.colorScheme.primary 
                     else 
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(
-                    modifier = Modifier.align(Alignment.End).padding(top = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                        MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = MaterialTheme.shapes.large.copy(
+                    bottomEnd = if (isFromLocalUser) CornerSize(0.dp) else CornerSize(16.dp),
+                    bottomStart = if (isFromLocalUser) CornerSize(16.dp) else CornerSize(0.dp)
+                ),
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .combinedClickable(
+                        onClick = {},
+                        onLongClick = onLongClick
+                    )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = timeString,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = (if (isFromLocalUser) 
+                        text = payload.content,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (isFromLocalUser) 
                             MaterialTheme.colorScheme.onPrimary 
                         else 
-                            MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f)
+                            MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (isFromLocalUser) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        val statusIcon = when (payload.status) {
-                            MessagePayload.STATUS_PENDING -> "⏳"
-                            MessagePayload.STATUS_SENT -> "✓"
-                            MessagePayload.STATUS_DELIVERED -> "✓✓"
-                            else -> ""
-                        }
+                    Row(
+                        modifier = Modifier.align(Alignment.End).padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = statusIcon,
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                            text = timeString,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = (if (isFromLocalUser) 
+                                MaterialTheme.colorScheme.onPrimary 
+                            else 
+                                MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f)
                         )
+                        if (isFromLocalUser) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            val statusIcon = when (payload.status) {
+                                MessagePayload.STATUS_PENDING -> "⏳"
+                                MessagePayload.STATUS_SENT -> "✓"
+                                MessagePayload.STATUS_DELIVERED -> "✓✓"
+                                else -> ""
+                            }
+                            Text(
+                                text = statusIcon,
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                            )
+                        }
                     }
+                }
+            }
+        }
+
+        if (isFromLocalUser) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                modifier = Modifier
+                    .size(32.dp)
+                    .padding(bottom = 4.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(text = payload.senderEmoji ?: "👤", fontSize = 16.sp)
                 }
             }
         }

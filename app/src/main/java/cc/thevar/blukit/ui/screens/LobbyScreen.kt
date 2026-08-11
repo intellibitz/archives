@@ -14,7 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -34,9 +37,13 @@ fun LobbyScreen(
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
 
-    LaunchedEffect(state.messages.size) {
-        if (state.messages.isNotEmpty()) {
-            listState.animateScrollToItem(state.messages.size - 1)
+    val lobbyMessages = remember(state.messages) {
+        state.messages.filter { it.receiverId.isNullOrBlank() }
+    }
+
+    LaunchedEffect(lobbyMessages.size) {
+        if (lobbyMessages.isNotEmpty()) {
+            listState.animateScrollToItem(lobbyMessages.size - 1)
         }
     }
 
@@ -67,7 +74,6 @@ fun LobbyScreen(
                 title = { 
                     Column {
                         Text(stringResource(R.string.chat_stadium_lobby), style = MaterialTheme.typography.titleMedium)
-                        // Power 4: Mesh is the context.
                         Text(
                             stringResource(R.string.chat_broadcast_desc, state.scannedDevices.size), 
                             style = MaterialTheme.typography.labelSmall,
@@ -79,7 +85,6 @@ fun LobbyScreen(
                     IconButton(onClick = onEnterPip) {
                         Icon(Icons.Rounded.PictureInPicture, contentDescription = "Enter PiP")
                     }
-                    // Lobby is intentional, no disconnect needed here as it's the landing hub
                 }
             )
         },
@@ -99,18 +104,75 @@ fun LobbyScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Filter messages to show only those in the lobby (receiverId == null)
-                val lobbyMessages = state.messages.filter { it.receiverId == null }
-                items(lobbyMessages) { payload ->
-                    ChatMessage(
-                        payload = payload,
-                        isFromLocalUser = payload.senderId == localDeviceId,
-                        onLongClick = { 
-                            if (payload.senderId != localDeviceId) {
-                                userToBlock = payload
+                if (lobbyMessages.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillParentMaxSize()
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(text = "🏙️", fontSize = 64.sp)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.square_welcome_title),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.square_welcome_desc),
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                ),
+                                shape = MaterialTheme.shapes.medium
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "✨ Autonomous Chat ✨",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Shout something! Your message will automatically find its way to others, even after you leave.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        textAlign = TextAlign.Center,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = stringResource(R.string.square_empty_hint),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
-                    )
+                    }
+                } else {
+                    items(lobbyMessages, key = { it.messageId }) { payload ->
+                        ChatMessage(
+                            payload = payload,
+                            isFromLocalUser = payload.senderId == localDeviceId,
+                            onLongClick = { 
+                                if (payload.senderId != localDeviceId) {
+                                    userToBlock = payload
+                                }
+                            }
+                        )
+                    }
                 }
             }
             
@@ -143,7 +205,6 @@ fun LobbyScreen(
                     FloatingActionButton(
                         onClick = {
                             if (message.isNotBlank()) {
-                                // Power 2: User can chat even without peers.
                                 onBroadcastMessage(message)
                                 message = ""
                                 focusManager.clearFocus()
