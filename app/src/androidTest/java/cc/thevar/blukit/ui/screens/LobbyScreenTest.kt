@@ -46,7 +46,7 @@ class LobbyScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Stadium Square").assertExists()
+        composeTestRule.onNodeWithText("The Square").assertExists()
         composeTestRule.onNodeWithText("Peer A").assertExists()
         composeTestRule.onNodeWithText("Peer B").assertExists()
         composeTestRule.onNodeWithText("Lobby message 1").assertExists()

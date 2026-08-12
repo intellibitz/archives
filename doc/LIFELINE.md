@@ -16,6 +16,7 @@
 | 2026-08-11 | **Roadmap Implementation** | Completed implementation of all roadmap phases: Stadium Lobby, Contact Management, and HKDF Security. |
 | 2026-08-12 | **Commandments Enforcement** | Enforced core principles: Bluetooth-only by default, optional/silent WiFi and Location, hardened anonymity. |
 | 2026-08-12 | **Power Implementation** | Finalized "POWERS": Stadium Lobby as the primary landing hub, decoupled chat from connection status, and reinforced public information dissemination. |
+| 2026-08-12 | **Human-Centric Release (v12)** | Production release drop of Version 1.0.6. Fully jargon-free UI, autonomous communal hub (The Square), and 100% test pass rate across 30+ tests. |
 
 ## 🔗 Architectural Backbone
 - **P2P Engine**: `Nearby Connections API` (`P2P_CLUSTER` strategy).

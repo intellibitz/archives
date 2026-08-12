@@ -68,7 +68,7 @@ class CommandmentsTest {
             }
         }
 
-        // Power 3: Registered users must land on Stadium Lobby
-        composeTestRule.onNodeWithText("Stadium Square").assertExists()
+        // Power 3: Registered users must land on The Square
+        composeTestRule.onNodeWithText("The Square").assertExists()
     }
 }
