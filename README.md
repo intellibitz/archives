@@ -6,14 +6,14 @@
 
 ## 🌟 What is Blukit?
 
-Blukit (`cc.thevar.blukit`) enables instant local peer-to-peer communication in stadiums, movie theaters, concert venues, transit hubs, and crowded malls — **without any internet, cellular, or Wi-Fi connectivity**. It uses your device's radio hardware (Bluetooth LE + Bluetooth Classic + Wi-Fi Direct) to create a self-organizing mesh network.
+Blukit (`cc.thevar.blukit`) is an AI-powered smart mesh chat that enables instant local peer-to-peer communication in stadiums, movie theaters, and crowded malls — **without any internet, cellular, or Wi-Fi connectivity**.
 
 ### Key Capabilities
 
 | Feature | Status |
 |---------|--------|
-| 📡 Stadium Lobby (Public Broadcast) | ✅ Implemented |
-| 💬 Direct Whisper (1-on-1 Encrypted Chat) | ✅ Implemented |
+| 📡 The Square (Public Hub) | ✅ Autonomous Landing Hub |
+| 💬 Direct Whisper (Private) | ✅ Smart AI-powered Flow |
 | 🔄 Mesh History Sync | ✅ 20-message auto-recovery |
 | 📩 Delivery Badges (✓✓) | ✅ Real-time P2P ACK |
 | 🎯 Visual Radar (Real RSSI Proximity Display) | ✅ Implemented |

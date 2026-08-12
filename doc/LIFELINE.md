@@ -18,9 +18,9 @@
 | 2026-08-12 | **Power Implementation** | Finalized "POWERS": Stadium Lobby as the primary landing hub, decoupled chat from connection status, and reinforced public information dissemination. |
 | 2026-08-12 | **Human-Centric Release (v12)** | Production release drop of Version 1.0.6. Fully jargon-free UI, autonomous communal hub (The Square), and 100% test pass rate across 30+ tests. |
 | 2026-08-12 | **Hardware Verification** | Successfully validated decentralized mesh on Moto G82 and Xiaomi physical devices. Hardened handshake retries, autonomous history sync, and P2P delivery ACKs. |
+| 2026-08-12 | **API & UX Hardening** | Refactored deprecated Room and BroadcastReceiver APIs. Enforced smart AI-powered mesh flows and aligned with the "Blukit Powers" (Watch, Whisper, Shout). |
 
 ## 🔗 Architectural Backbone
 - **P2P Engine**: `Nearby Connections API` (`P2P_STAR` strategy).
-- **Cryptography**: `AES-256-GCM` (authenticated encryption).
-- **UI State**: `Kotlin Flow` + `StateFlow` (reactive streams).
-- **Hub**: `Stadium Lobby` (Default Group Context).
+- **Cryptography**: `AES-256-GCM` (authenticated hardware-backed encryption).
+- **UX Hub**: `The Square` (Autonomous Landing Hub).
