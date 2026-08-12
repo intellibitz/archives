@@ -27,10 +27,27 @@ import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 fun LobbyScreen(
     state: BluetoothUiState,
     localDeviceId: String,
+    onAutoConnectPeer: (String) -> Unit,
     onBroadcastMessage: (String) -> Unit,
     onBlockUser: (String) -> Unit,
     onEnterPip: () -> Unit
 ) {
+    // Auto-connect to the first discovered peer who isn't connected yet (Power 5 - whisper)
+    var triedPeers by remember { mutableStateOf<Set<String>>(emptySet()) }
+    
+    LaunchedEffect(state.isConnected, state.scannedDevices) {
+        if (state.isConnected) {
+            triedPeers = emptySet()
+        } else if (state.scannedDevices.isNotEmpty()) {
+            val pendingPeer = state.scannedDevices.firstOrNull { 
+                !state.connectedPeers.contains(it.id) && !triedPeers.contains(it.id) 
+            }
+            pendingPeer?.let {
+                triedPeers = triedPeers + it.id
+                onAutoConnectPeer(it.id)
+            }
+        }
+    }
     var message by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()

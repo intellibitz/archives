@@ -20,4 +20,7 @@ interface MessageDao {
 
     @Query("DELETE FROM messages WHERE timestamp < :threshold")
     suspend fun deleteOldMessages(threshold: Long)
+
+    @Query("UPDATE messages SET status = :status WHERE messageId = :messageId")
+    suspend fun updateMessageStatus(messageId: String, status: Int)
 }

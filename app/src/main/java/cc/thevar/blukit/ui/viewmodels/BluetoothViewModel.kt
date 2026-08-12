@@ -30,6 +30,7 @@ class BluetoothViewModel(
         val connectedDevice = scannedDevices.find { it.id in connectedPeers } ?: currentState.connectedPeer
         currentState.copy(
             scannedDevices = scannedDevices,
+            connectedPeers = connectedPeers,
             isBluetoothEnabled = radioStates.isBluetoothEnabled,
             isLocationEnabled = radioStates.isLocationEnabled,
             isDiscovering = isDiscovering,

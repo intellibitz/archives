@@ -6,13 +6,14 @@ unavailable or unreliable — stadiums, movie theaters, concert venues, transit 
 crowded malls, and large events.
 
 POWERS
-1. Broadcast chat - all users in the mesh become part of the default group.
-2. User can chat in default group, without any peers connected. 
-3. Stadium Lobby is the landing screen - all users chat here, the mesh is the context. 
-4. Messages are decentralized, users see every messages by all users in stadium lobby. 
-5. Lobby chat is intentional - a shoutout or a whisper, one on one peer is user discretionary, optional.
-6. Blukit is social communication tool, not a private secret tool. Design must ensure this power.
-7. 
+1. Shout: Broadcast chat - all users in the mesh become part of the default group.
+2. Whisper: one on one peer is user discretionary, optional.
+3. User can shout in the Square, the Lobby, without any peers connected. 
+4. User can Whisper to any connected user, selected, one on one.
+5. Lobby Square is the landing screen - all users chat here, the mesh is the context. 
+6. Messages are decentralized, users see every messages by all users in lobby square. 
+7. Blukit is social communication tool, not a private secret tool. Design must ensure this power.
+8. 
 COMMANDMENTS
 1. Must work purely on Bluetooth only. The only permission user must grant for Blukit.
 2. Location - optional, no errors if location is denied.

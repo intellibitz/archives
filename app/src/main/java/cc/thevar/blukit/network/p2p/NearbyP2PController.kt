@@ -18,13 +18,8 @@ import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.data.system.HapticManager
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
@@ -50,7 +45,8 @@ class NearbyP2PController(
 
     private val TAG = "BlukitP2P"
     private val connectionsClient = Nearby.getConnectionsClient(context)
-    private val strategy = Strategy.P2P_CLUSTER
+    // P2P_STAR: Bluetooth LE for discovery + WiFi Direct/USB for data (more reliable than P2P_CLUSTER on Android 14+)
+    private val strategy = Strategy.P2P_STAR
     private val serviceId = "cc.thevar.blukit.P2P"
 
     private val internalScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -84,12 +80,13 @@ class NearbyP2PController(
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
+            // Accept all incoming connections automatically (mesh relay)
             connectionsClient.acceptConnection(endpointId, payloadCallback)
                 .addOnSuccessListener {
-                    sendHandshake(endpointId)
+                    Log.d(TAG, "Accepted connection from $endpointId (${info.endpointName})")
                 }
                 .addOnFailureListener { e ->
-                    Log.e(TAG, "Connection acceptance failed", e)
+                    Log.e(TAG, "Connection acceptance failed for $endpointId: ${e.message}")
                 }
         }
 
@@ -98,6 +95,10 @@ class NearbyP2PController(
                 activeConnections.add(endpointId)
                 _connectedPeers.update { it + endpointId }
                 _isConnected.value = true
+                Log.d(TAG, "Connected successfully to $endpointId")
+                
+                // Secure the channel immediately
+                sendHandshake(endpointId)
                 
                 val device = _scannedDevices.value.find { it.id == endpointId }
                 device?.let { 
@@ -113,8 +114,10 @@ class NearbyP2PController(
                         )
                     }
                 }
+                // Power 2: Sync autonomous mesh history upon connection
+                syncMeshHistory(endpointId)
             } else {
-                Log.w(TAG, "Connection failed: ${result.status.statusMessage}")
+                Log.w(TAG, "Connection failed for $endpointId: ${result.status.statusMessage}")
             }
         }
 
@@ -125,6 +128,7 @@ class NearbyP2PController(
             if (activeConnections.isEmpty()) {
                 _isConnected.value = false
             }
+            Log.d(TAG, "Disconnected from $endpointId")
         }
     }
 
@@ -148,6 +152,7 @@ class NearbyP2PController(
         val publicKeyBytes = cryptoManager.getLocalKeyPair().public.encoded
         val handshakePayload = byteArrayOf(0x01.toByte()) + publicKeyBytes
         connectionsClient.sendPayload(endpointId, Payload.fromBytes(handshakePayload))
+            .addOnFailureListener { e -> Log.e(TAG, "Failed to send handshake to $endpointId", e) }
     }
 
     private fun handleHandshake(endpointId: String, bytes: ByteArray) {
@@ -174,13 +179,40 @@ class NearbyP2PController(
     }
 
     private fun handleMessage(endpointId: String, bytes: ByteArray) {
-        val secretKey = peerKeys[endpointId] ?: return
+        val secretKey = peerKeys[endpointId] ?: run {
+            Log.w(TAG, "Received message from $endpointId but no secret key found")
+            return
+        }
         try {
             val decryptedBytes = cryptoManager.decrypt(bytes, secretKey)
             val payloadJson = decryptedBytes.decodeToString()
             val messagePayload = Json.decodeFromString<MessagePayload>(payloadJson)
             
+            if (messagePayload.type == MessagePayload.TYPE_ACK) {
+                internalScope.launch(ioDispatcher) {
+                    messageDao.updateMessageStatus(messagePayload.messageId, MessagePayload.STATUS_DELIVERED)
+                }
+                return
+            }
+
             if (!isNewMessage(messagePayload.messageId)) return
+
+            // Send delivery ACK back to sender
+            internalScope.launch(ioDispatcher) {
+                val ack = MessagePayload(
+                    messageId = messagePayload.messageId,
+                    senderId = repository.getDeviceId(),
+                    senderName = "",
+                    content = "",
+                    timestamp = System.currentTimeMillis(),
+                    type = MessagePayload.TYPE_ACK,
+                    receiverId = messagePayload.senderId
+                )
+                val ackJson = Json.encodeToString(MessagePayload.serializer(), ack)
+                cryptoManager.encrypt(ackJson.toByteArray(), secretKey).let { encryptedAck ->
+                    connectionsClient.sendPayload(endpointId, Payload.fromBytes(encryptedAck))
+                }
+            }
 
             // Mesh Forwarding: If broadcast, send to all other connected peers
             if (messagePayload.receiverId.isNullOrEmpty()) {
@@ -217,30 +249,58 @@ class NearbyP2PController(
     override fun startDiscovery() {
         if (_isDiscovering.value) return
         stopDiscovery()
-        val options = DiscoveryOptions.Builder().setStrategy(strategy).build()
         _isDiscovering.value = true
-        connectionsClient.startDiscovery(
-            serviceId,
-            object : EndpointDiscoveryCallback() {
-                override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-                    _scannedDevices.update { devices ->
-                        val parts = info.endpointName.split("|", limit = 2)
-                        val emoji = if (parts.size == 2) parts[0] else "👤"
-                        val name = if (parts.size == 2) parts[1] else info.endpointName
-                        val newDevice = P2PDevice(id = endpointId, name = name, emoji = emoji, signalStrength = -50)
-                        if (devices.any { it.id == endpointId }) devices else devices + newDevice
+        
+        // Retry up to 3 times with 1s delay (handles Google Play Services init delay)
+        var attempts = 0
+        val maxAttempts = 3
+        val delayMs = 1000L
+
+        internalScope.launch(ioDispatcher) {
+            while (attempts < maxAttempts && _isDiscovering.value) {
+                attempts++
+                try {
+                    val options = DiscoveryOptions.Builder().setStrategy(strategy).build()
+                    connectionsClient.startDiscovery(
+                        serviceId,
+                        object : EndpointDiscoveryCallback() {
+                            override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
+                                Log.i(TAG, "Endpoint found: $endpointId (${info.endpointName})")
+                                _scannedDevices.update { devices ->
+                                    val parts = info.endpointName.split("|", limit = 2)
+                                    val emoji = if (parts.size == 2) parts[0] else "👤"
+                                    val name = if (parts.size == 2) parts[1] else info.endpointName
+                                    val newDevice = P2PDevice(id = endpointId, name = name, emoji = emoji, signalStrength = -50)
+                                    if (devices.any { it.id == endpointId }) devices else devices + newDevice
+                                }
+                            }
+
+                            override fun onEndpointLost(endpointId: String) {
+                                _scannedDevices.update { devices -> devices.filter { it.id != endpointId } }
+                            }
+                        },
+                        options
+                    ).addOnSuccessListener {
+                        Log.i(TAG, "Discovery started successfully")
+                    }.addOnFailureListener { e ->
+                        if (attempts < maxAttempts) {
+                            Log.w(TAG, "Discovery attempt $attempts failed, retrying in ${delayMs}ms: ${e.message}")
+                            internalScope.launch { kotlinx.coroutines.delay(delayMs); startDiscovery() }
+                        } else {
+                            _isDiscovering.value = false
+                            handleNearbyError(e, "Discovery")
+                        }
+                    }
+                } catch (ex: Exception) {
+                    if (attempts < maxAttempts) {
+                        Log.w(TAG, "Discovery exception $attempts: ${ex.message}")
+                        internalScope.launch { kotlinx.coroutines.delay(delayMs); startDiscovery() }
+                    } else {
+                        _isDiscovering.value = false
+                        handleNearbyError(ex, "Discovery")
                     }
                 }
-
-                override fun onEndpointLost(endpointId: String) {
-                    _scannedDevices.update { devices -> devices.filter { it.id != endpointId } }
-                }
-            },
-            options
-        ).addOnFailureListener { e ->
-            _isDiscovering.value = false
-            // Commandment 2 & 3: WIFI/Location errors are silent.
-            handleNearbyError(e, "Discovery")
+            }
         }
     }
 
@@ -254,17 +314,45 @@ class NearbyP2PController(
     override fun startAdvertising() {
         if (isAdvertising) return
         stopAdvertising()
-        val options = AdvertisingOptions.Builder().setStrategy(strategy).build()
+        
+        // Retry up to 3 times with 1s delay
+        var attempts = 0
+        val maxAttempts = 3
+        val delayMs = 1000L
+
         internalScope.launch(ioDispatcher) {
-            val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
-            val emoji = repository.emojiAvatar.first()
-            val endpointName = "$emoji|$nickname"
-            isAdvertising = true
-            connectionsClient.startAdvertising(endpointName, serviceId, connectionLifecycleCallback, options)
-                .addOnFailureListener { e ->
+            while (!isAdvertising && attempts < maxAttempts) {
+                attempts++
+                try {
+                    val options = AdvertisingOptions.Builder().setStrategy(strategy).build()
+                    val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
+                    val emoji = repository.emojiAvatar.first()
+                    val endpointName = "$emoji|$nickname"
+                    isAdvertising = true
+                    
+                    connectionsClient.startAdvertising(endpointName, serviceId, connectionLifecycleCallback, options)
+                        .addOnSuccessListener {
+                            Log.i(TAG, "Advertising started: $endpointName (attempt $attempts)")
+                        }
+                        .addOnFailureListener { e ->
+                            isAdvertising = false
+                            if (attempts < maxAttempts) {
+                                Log.w(TAG, "Advertising attempt $attempts failed, retrying: ${e.message}")
+                                internalScope.launch { kotlinx.coroutines.delay(delayMs); startAdvertising() }
+                            } else {
+                                handleNearbyError(e, "Advertising")
+                            }
+                        }
+                } catch (ex: Exception) {
                     isAdvertising = false
-                    handleNearbyError(e, "Advertising")
+                    if (attempts < maxAttempts) {
+                        Log.w(TAG, "Advertising exception $attempts: ${ex.message}")
+                        internalScope.launch { kotlinx.coroutines.delay(delayMs); startAdvertising() }
+                    } else {
+                        handleNearbyError(ex, "Advertising")
+                    }
                 }
+            }
         }
     }
 
@@ -296,6 +384,39 @@ class NearbyP2PController(
         return progress.asSharedFlow()
     }
 
+    private suspend fun getPeerKeyWithRetry(endpointId: String): SecretKey? {
+        var attempts = 0
+        while (peerKeys[endpointId] == null && attempts < 30) { // Wait up to 3 seconds
+            delay(100)
+            attempts++
+        }
+        return peerKeys[endpointId]
+    }
+
+    private fun syncMeshHistory(endpointId: String) {
+        internalScope.launch(ioDispatcher) {
+            val key = getPeerKeyWithRetry(endpointId) ?: run {
+                Log.w(TAG, "Sync failed: No key for $endpointId after waiting")
+                return@launch
+            }
+            
+            val history = messageDao.getAllMessages().first()
+                .filter { it.receiverId.isNullOrEmpty() }
+                .takeLast(20) // Sync last 20 messages for mesh context
+
+            history.forEach { entity ->
+                try {
+                    val payloadObj = entity.toBluetoothPayload()
+                    val payloadJson = Json.encodeToString(MessagePayload.serializer(), payloadObj)
+                    val encrypted = cryptoManager.encrypt(payloadJson.toByteArray(), key)
+                    connectionsClient.sendPayload(endpointId, Payload.fromBytes(encrypted))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to sync message ${entity.messageId} to $endpointId", e)
+                }
+            }
+        }
+    }
+
     override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload? {
         val nickname = repository.getNickname() ?: context.getString(R.string.anonymous)
         val emoji = repository.emojiAvatar.first()
@@ -315,14 +436,28 @@ class NearbyP2PController(
 
         try {
             if (receiverId != null) {
-                val key = peerKeys[receiverId] ?: return null
+                val key = getPeerKeyWithRetry(receiverId) ?: return null
                 val encrypted = cryptoManager.encrypt(dataBytes, key)
                 connectionsClient.sendPayload(receiverId, Payload.fromBytes(encrypted))
+                Log.d(TAG, "Sent private payload to $receiverId")
             } else {
+                if (activeConnections.isEmpty()) {
+                    Log.w(TAG, "No active connections to broadcast to")
+                }
                 activeConnections.forEach { endpointId ->
-                    peerKeys[endpointId]?.let { key ->
-                        val encrypted = cryptoManager.encrypt(dataBytes, key)
-                        connectionsClient.sendPayload(endpointId, Payload.fromBytes(encrypted))
+                    internalScope.launch(ioDispatcher) {
+                        val key = getPeerKeyWithRetry(endpointId)
+                        if (key != null) {
+                            try {
+                                val encrypted = cryptoManager.encrypt(dataBytes, key)
+                                connectionsClient.sendPayload(endpointId, Payload.fromBytes(encrypted))
+                                Log.d(TAG, "Sent broadcast payload to $endpointId")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Encryption/Send error for $endpointId", e)
+                            }
+                        } else {
+                            Log.w(TAG, "Skipping broadcast to $endpointId: No key available")
+                        }
                     }
                 }
             }
@@ -334,6 +469,7 @@ class NearbyP2PController(
             messageDao.insertMessage(payloadObj.toMessageEntity(isFromLocalUser = true))
             return payloadObj
         } catch (e: Exception) {
+            Log.e(TAG, "Send failed", e)
             return null
         }
     }
@@ -356,13 +492,15 @@ class NearbyP2PController(
     private fun handleNearbyError(e: Exception, context: String) {
         if (e is com.google.android.gms.common.api.ApiException) {
             when (e.statusCode) {
+                8003, // STATUS_ALREADY_CONNECTED_TO_ENDPOINT
+                8012, // STATUS_ENDPOINT_IO_ERROR (Collision/Race)
                 8029, // MISSING_PERMISSION_NEARBY_WIFI_DEVICES
                 8032, // MISSING_PERMISSION_ACCESS_WIFI_STATE
                 8035, // WIFI_DISABLED
                 8025, // LOCATION_DISABLED
                 8030  // BLUETOOTH_DISABLED (Handled by UI warning)
                 -> {
-                    Log.i(TAG, "$context: Silent optional radio error: ${e.statusCode}")
+                    Log.i(TAG, "$context: Silent/Expected nearby error: ${e.statusCode}")
                     return 
                 }
             }

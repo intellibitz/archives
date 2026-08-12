@@ -8,6 +8,7 @@ data class BluetoothUiState(
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false,
     val isDiscovering: Boolean = false,
+    val connectedPeers: Set<String> = emptySet(),
     val connectedPeer: P2PDevice? = null,
     val errorMessage: String? = null,
     val messages: List<MessagePayload> = emptyList(),

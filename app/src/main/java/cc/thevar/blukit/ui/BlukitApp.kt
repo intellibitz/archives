@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import android.util.Log
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -88,6 +89,18 @@ fun BlukitApp(
     val backStack = rememberNavBackStack(initialRoute)
     val currentRoute = backStack.lastOrNull()
     
+    // Start P2P scanning once when user registers (keeps running persistently)
+    var scanStarted by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(isUserRegistered) {
+        if (isUserRegistered && !scanStarted) {
+            Log.d("BlukitApp", "Starting P2P scan on first registration")
+            bluetoothViewModel.startScan()
+            scanStarted = true
+        }
+    }
+
+    // Handle auto-navigation between Lobby and Chat based on connection state
     LaunchedEffect(bluetoothState.isConnected) {
         if (bluetoothState.isConnected && currentRoute !is Route.Chat) {
             backStack.add(Route.Chat)
@@ -216,6 +229,13 @@ fun BlukitApp(
                     LobbyScreen(
                         state = bluetoothState,
                         localDeviceId = deviceId,
+                        onAutoConnectPeer = { peerId ->
+                            // Auto-connect to the discovered peer (Power 5 - whisper)
+                            if (!bluetoothState.isConnected || !bluetoothState.connectedPeers.contains(peerId)) {
+                                val peer = bluetoothState.scannedDevices.firstOrNull { it.id == peerId }
+                                peer?.let { bluetoothViewModel.connectToDevice(it) }
+                            }
+                        },
                         onBroadcastMessage = bluetoothViewModel::broadcastMessage,
                         onBlockUser = viewModel::blockUser,
                         onEnterPip = onEnterPip
