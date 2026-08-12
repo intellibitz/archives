@@ -14,6 +14,8 @@ Blukit (`cc.thevar.blukit`) enables instant local peer-to-peer communication in 
 |---------|--------|
 | 📡 Stadium Lobby (Public Broadcast) | ✅ Implemented |
 | 💬 Direct Whisper (1-on-1 Encrypted Chat) | ✅ Implemented |
+| 🔄 Mesh History Sync | ✅ 20-message auto-recovery |
+| 📩 Delivery Badges (✓✓) | ✅ Real-time P2P ACK |
 | 🎯 Visual Radar (Real RSSI Proximity Display) | ✅ Implemented |
 | 🔐 AES-256-GCM + ECDH + HKDF Encryption | ✅ Hardened hardware-backed |
 | 🌑 Stealth Theater Mode (OLED pitch-black) | ✅ #000000 background, amber accents |
