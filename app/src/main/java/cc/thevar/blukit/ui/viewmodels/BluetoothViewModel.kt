@@ -108,7 +108,6 @@ class BluetoothViewModel(
     }
 
     override fun onCleared() {
-        super.onCleared()
         p2pController.release()
     }
 }

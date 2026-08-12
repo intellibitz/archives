@@ -43,7 +43,7 @@ fun LobbyScreen(
                 !state.connectedPeers.contains(it.id) && !triedPeers.contains(it.id) 
             }
             pendingPeer?.let {
-                triedPeers = triedPeers + it.id
+                triedPeers += it.id
                 onAutoConnectPeer(it.id)
             }
         }

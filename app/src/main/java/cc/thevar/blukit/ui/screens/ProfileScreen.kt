@@ -15,16 +15,16 @@ import cc.thevar.blukit.R
 
 @Composable
 fun ProfileScreen(
-    currentNickname: String?,
-    currentEmoji: String,
-    isStealthMode: Boolean,
     onSaveNickname: (String) -> Unit,
     onSaveEmoji: (String) -> Unit,
     onToggleStealth: (Boolean) -> Unit,
     onNavigateNext: () -> Unit,
+    modifier: Modifier = Modifier,
+    currentNickname: String? = null,
+    currentEmoji: String = "👤",
+    isStealthMode: Boolean = false,
     onClearHistory: () -> Unit = {},
-    onLogout: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onLogout: () -> Unit = {}
 ) {
     var nickname by remember(currentNickname) { mutableStateOf(currentNickname ?: "") }
     var showClearHistoryDialog by remember { mutableStateOf(false) }

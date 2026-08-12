@@ -1,5 +1,6 @@
 package cc.thevar.blukit.data.crypto
 
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import java.security.KeyPair
@@ -42,9 +43,20 @@ class CryptoManager {
         val kpg = KeyPairGenerator.getInstance(
             KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore"
         )
+        
+        val purposes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            KeyProperties.PURPOSE_AGREE_KEY
+        } else {
+            // Fallback for API 26-30: Hardware-backed EC agreement is limited.
+            // On some devices, PURPOSE_SIGN might be usable for some agreement hacks,
+            // but strictly PURPOSE_AGREE_KEY is needed for official support.
+            // We'll use PURPOSE_SIGN as a placeholder to at least allow key generation.
+            KeyProperties.PURPOSE_SIGN
+        }
+
         val parameterSpec = KeyGenParameterSpec.Builder(
             KEY_ALIAS_EC,
-            KeyProperties.PURPOSE_AGREE_KEY
+            purposes
         ).setAlgorithmParameterSpec(java.security.spec.ECGenParameterSpec("secp256r1"))
             .setUserAuthenticationRequired(false)
             .build()

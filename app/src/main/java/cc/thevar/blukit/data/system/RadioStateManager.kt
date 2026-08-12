@@ -38,11 +38,12 @@ class RadioStateManager(private val context: Context) {
             addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            context.registerReceiver(receiver, filter)
-        }
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         
         trySend(getCurrentStates())
 

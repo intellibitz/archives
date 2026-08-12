@@ -109,7 +109,7 @@ class NearbyP2PController(
                                 name = it.name ?: context.getString(R.string.discovery_unknown_device),
                                 bluetoothAddress = "nearby://$endpointId",
                                 lastSeen = System.currentTimeMillis(),
-                                avatarUri = it.emoji ?: "👤"
+                                avatarUri = it.emoji
                             )
                         )
                     }
@@ -146,7 +146,7 @@ class NearbyP2PController(
         override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {}
     }
 
-    private fun isHandshakePayload(bytes: ByteArray): Boolean = bytes.isNotEmpty() && bytes[0] == 0x01.toByte()
+    private fun isHandshakePayload(bytes: ByteArray): Boolean = bytes.isNotEmpty() && (bytes[0] == 0x01.toByte())
 
     private fun sendHandshake(endpointId: String) {
         val publicKeyBytes = cryptoManager.getLocalKeyPair().public.encoded
@@ -285,7 +285,7 @@ class NearbyP2PController(
                     }.addOnFailureListener { e ->
                         if (attempts < maxAttempts) {
                             Log.w(TAG, "Discovery attempt $attempts failed, retrying in ${delayMs}ms: ${e.message}")
-                            internalScope.launch { kotlinx.coroutines.delay(delayMs); startDiscovery() }
+                            internalScope.launch { delay(delayMs.seconds); startDiscovery() }
                         } else {
                             _isDiscovering.value = false
                             handleNearbyError(e, "Discovery")
@@ -490,20 +490,11 @@ class NearbyP2PController(
      * Silent for WiFi/Location related errors.
      */
     private fun handleNearbyError(e: Exception, context: String) {
-        if (e is com.google.android.gms.common.api.ApiException) {
-            when (e.statusCode) {
-                8003, // STATUS_ALREADY_CONNECTED_TO_ENDPOINT
-                8012, // STATUS_ENDPOINT_IO_ERROR (Collision/Race)
-                8029, // MISSING_PERMISSION_NEARBY_WIFI_DEVICES
-                8032, // MISSING_PERMISSION_ACCESS_WIFI_STATE
-                8035, // WIFI_DISABLED
-                8025, // LOCATION_DISABLED
-                8030  // BLUETOOTH_DISABLED (Handled by UI warning)
-                -> {
-                    Log.i(TAG, "$context: Silent/Expected nearby error: ${e.statusCode}")
-                    return 
-                }
-            }
+        if (e is com.google.android.gms.common.api.ApiException && e.statusCode in setOf(
+                8003, 8012, 8029, 8032, 8035, 8025, 8030
+            )) {
+            Log.i(TAG, "$context: Silent/Expected nearby error: ${e.statusCode}")
+            return
         }
         Log.e(TAG, "$context failure", e)
         emitError(e.message ?: "Operation failed")

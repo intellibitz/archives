@@ -167,13 +167,13 @@ fun BlukitApp(
             when (key) {
                 Route.Profile -> NavEntry(key) {
                     ProfileScreen(
-                        currentNickname = nickname,
-                        currentEmoji = emojiAvatar,
-                        isStealthMode = isStealthMode,
                         onSaveNickname = viewModel::saveNickname,
                         onSaveEmoji = { viewModel.saveEmoji(it) },
                         onToggleStealth = { viewModel.toggleStealth(it) },
                         onNavigateNext = { backStack.add(Route.Lobby) },
+                        currentNickname = nickname,
+                        currentEmoji = emojiAvatar,
+                        isStealthMode = isStealthMode,
                         onClearHistory = viewModel::clearChatHistory,
                         onLogout = viewModel::logout
                     )
@@ -247,10 +247,8 @@ fun BlukitApp(
                         contacts = contacts,
                         onNavigateBack = { backStack.removeLastOrNull() },
                         onStartChat = { contact ->
-                            val device = bluetoothState.scannedDevices.find { it.id == contact.contactId }
-                            if (device != null) {
-                                bluetoothViewModel.connectToDevice(device)
-                            }
+                            bluetoothState.scannedDevices.find { it.id == contact.contactId }
+                                ?.let { bluetoothViewModel.connectToDevice(it) }
                         }
                     )
                 }

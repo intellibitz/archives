@@ -25,17 +25,12 @@ class HapticManager(context: Context) {
      */
     fun triggerMessageAlert() {
         if (vibrator.hasVibrator()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // Short double pulse: [wait, vibrate, wait, vibrate]
-                val effect = VibrationEffect.createWaveform(
-                    longArrayOf(0, 100, 50, 100),
-                    -1 // No repeat
-                )
-                vibrator.vibrate(effect)
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(250)
-            }
+            // Short double pulse: [wait, vibrate, wait, vibrate]
+            val effect = VibrationEffect.createWaveform(
+                longArrayOf(0, 100, 50, 100),
+                -1 // No repeat
+            )
+            vibrator.vibrate(effect)
         }
     }
 }
