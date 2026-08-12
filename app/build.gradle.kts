@@ -40,6 +40,8 @@ android {
         }
         jniLibs {
             useLegacyPackaging = false
+            keepDebugSymbols += "**/libandroidx.graphics.path.so"
+            keepDebugSymbols += "**/libdatastore_shared_counter.so"
         }
     }
 
