@@ -15,7 +15,8 @@ interface P2PController {
     val isConnected: StateFlow<Boolean>
     val connectedPeers: StateFlow<Set<String>>
     val isDiscovering: StateFlow<Boolean>
-    val errors: SharedFlow<String>
+    val isAdvertising: StateFlow<Boolean>
+    val errors: StateFlow<String>
     val messages: StateFlow<List<MessagePayload>>
 
     fun startDiscovery()

@@ -3,7 +3,7 @@ package cc.thevar.blukit.domain.model
 data class P2PDevice(
     val id: String,
     val name: String?,
-    val emoji: String = "👤",
+    val emoji: String = "🎭",
     val signalStrength: Int = 0, // RSSI value in dBm (-100 to 0)
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false

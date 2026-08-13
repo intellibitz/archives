@@ -7,7 +7,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 
 /**
- * Supreme Senior Architect Implementation:
+ * Elite Senior Architect Implementation:
  * Haptic Silent Alerts for discrete venue messaging.
  */
 class HapticManager(context: Context) {
@@ -20,17 +20,30 @@ class HapticManager(context: Context) {
         context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
 
-    /**
-     * Triggers a discrete double-pulse haptic alert for incoming messages.
-     */
-    fun triggerMessageAlert() {
-        if (vibrator.hasVibrator()) {
-            // Short double pulse: [wait, vibrate, wait, vibrate]
-            val effect = VibrationEffect.createWaveform(
-                longArrayOf(0, 100, 50, 100),
-                -1 // No repeat
-            )
-            vibrator.vibrate(effect)
-        }
+    enum class VibeType {
+        MESSAGE, // Short double vibe
+        CONNECTION, // Strong single vibe
+        ERROR, // Long intense vibe
+        SHOUT // Rippling vibe
     }
+
+    /**
+     * Triggers a discrete haptic alert based on system events.
+     */
+    fun triggerVibe(type: VibeType) {
+        if (!vibrator.hasVibrator()) return
+
+        val effect = when (type) {
+            VibeType.MESSAGE -> VibrationEffect.createWaveform(longArrayOf(0, 40, 60, 40), -1)
+            VibeType.CONNECTION -> VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
+            VibeType.ERROR -> VibrationEffect.createWaveform(longArrayOf(0, 200, 100, 200), -1)
+            VibeType.SHOUT -> VibrationEffect.createWaveform(longArrayOf(0, 30, 30, 30, 30, 30), -1)
+        }
+        vibrator.vibrate(effect)
+    }
+
+    /**
+     * Legacy compatibility wrapper.
+     */
+    fun triggerMessageAlert() = triggerVibe(VibeType.MESSAGE)
 }

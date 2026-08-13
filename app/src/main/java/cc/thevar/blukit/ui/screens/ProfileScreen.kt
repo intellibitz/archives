@@ -1,43 +1,85 @@
 package cc.thevar.blukit.ui.screens
 
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
+import cc.thevar.blukit.ui.theme.StealthPrimary
+import cc.thevar.blukit.ui.theme.StealthSurface
 
 @Composable
 fun ProfileScreen(
     onSaveNickname: (String) -> Unit,
     onSaveEmoji: (String) -> Unit,
     onToggleStealth: (Boolean) -> Unit,
-    onNavigateNext: () -> Unit,
     modifier: Modifier = Modifier,
     currentNickname: String? = null,
-    currentEmoji: String = "👤",
+    currentEmoji: String = "🎭",
     isStealthMode: Boolean = false,
     onClearHistory: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
-    var nickname by remember(currentNickname) { mutableStateOf(currentNickname ?: "") }
+    var nickname by remember(currentNickname) { mutableStateOf(currentNickname ?: "vibe") }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     val emojis = listOf(
-        "👤", "🐱", "🐶", "🦊", "🦁", "🤖", "👽", "👻",
-        "🐯", "🐨", "🐼", "🐹", "🐸", "🐷", "🦄", "🐲",
-        "🚀", "🌈", "🔥", "💎", "🎸", "🍕", "🎮", "🏀"
+        "🎭", "🏟️", "🛍️", "✈️", "🚗", "✨", "🧿", "💠", "🎡", "🌬️"
     )
+
+    // Vibing Aura Animation
+    val infiniteTransition = rememberInfiniteTransition(label = "Aura")
+    val auraScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.4f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "AuraScale"
+    )
+    val auraAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 0.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "AuraAlpha"
+    )
+
+    val haptics = LocalHapticFeedback.current
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
+        topBar = {
+            // Space for global badge
+            Spacer(modifier = Modifier.statusBarsPadding().height(64.dp))
+        },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         Column(
@@ -45,115 +87,182 @@ fun ProfileScreen(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = stringResource(R.string.profile_title),
-                style = MaterialTheme.typography.headlineMedium
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Emoji Selection
-            Text(
-                text = currentEmoji,
-                fontSize = 80.sp,
-                modifier = Modifier.padding(16.dp)
-            )
-
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(vertical = 16.dp)
-            ) {
-                items(emojis) { emoji ->
-                    Text(
-                        text = emoji,
-                        fontSize = 32.sp,
-                        modifier = Modifier
-                            .clickable { onSaveEmoji(emoji) }
-                            .padding(8.dp)
-                    )
+            // Identity Ritual: Central Avatar
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
+                // Vibing Aura
+                Box(
+                    modifier = Modifier
+                        .size(120.dp * auraScale)
+                        .blur(20.dp)
+                        .background(StealthPrimary.copy(alpha = auraAlpha), CircleShape)
+                )
+                
+                Surface(
+                    shape = CircleShape,
+                    color = StealthSurface,
+                    border = BorderStroke(2.dp, StealthPrimary),
+                    modifier = Modifier.size(120.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = currentEmoji,
+                            fontSize = 64.sp
+                        )
+                    }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(32.dp))
             
             OutlinedTextField(
                 value = nickname,
-                onValueChange = { nickname = it },
-                label = { Text(stringResource(R.string.profile_nickname_label)) },
+                onValueChange = { 
+                    nickname = it
+                    onSaveNickname(it.ifBlank { "vibe" })
+                },
+                label = { Text("NAME YOUR VIBE", color = StealthPrimary.copy(alpha = 0.5f)) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                placeholder = { Text("ANONYMOUS", color = StealthPrimary.copy(alpha = 0.2f)) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = StealthPrimary,
+                    unfocusedBorderColor = StealthPrimary.copy(alpha = 0.3f),
+                    focusedLabelColor = StealthPrimary,
+                    cursorColor = StealthPrimary
+                ),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold)
             )
             
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Emoji Selection Grid
+            Text(
+                text = "PICK YOUR MOOD",
+                style = MaterialTheme.typography.labelSmall,
+                color = StealthPrimary.copy(alpha = 0.7f),
+                modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+            )
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 48.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.height(120.dp)
+            ) {
+                items(emojis) { emoji ->
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (currentEmoji == emoji) StealthPrimary.copy(alpha = 0.2f) else Color.Transparent)
+                            .border(
+                                1.dp, 
+                                if (currentEmoji == emoji) StealthPrimary else StealthPrimary.copy(alpha = 0.1f), 
+                                RoundedCornerShape(8.dp)
+                            )
+                            .clickable { 
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onSaveEmoji(emoji) 
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = emoji, fontSize = 24.sp)
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+
             // Stealth Mode Toggle
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                color = StealthSurface.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = stringResource(R.string.profile_stealth_mode),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
-                )
-                Switch(
-                    checked = isStealthMode,
-                    onCheckedChange = onToggleStealth
-                )
-            }
-            Text(
-                text = stringResource(R.string.profile_stealth_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // P4: Additional actions
-            if (currentNickname != null) {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-                
-                TextButton(
-                    onClick = { showClearHistoryDialog = true },
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(16.dp)
                 ) {
-                    Text(stringResource(R.string.profile_clear_history), color = MaterialTheme.colorScheme.error)
-                }
-                
-                TextButton(
-                    onClick = { showLogoutDialog = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.profile_logout))
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            Button(
-                onClick = { 
-                    if (nickname.isNotBlank()) {
-                        onSaveNickname(nickname)
-                        onNavigateNext()
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.mask_stealth_mode),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = stringResource(R.string.mask_stealth_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StealthPrimary.copy(alpha = 0.6f)
+                        )
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = nickname.isNotBlank()
+                    Switch(
+                        checked = isStealthMode,
+                        onCheckedChange = onToggleStealth,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = StealthPrimary,
+                            checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(48.dp))
+            
+            // STILLNESS (Formerly Danger Zone)
+            var showStillness by remember { mutableStateOf(false) }
+            
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+                    .clickable { showStillness = !showStillness },
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(stringResource(R.string.profile_start_exploring))
+                Text(
+                    text = if (showStillness) "▼ STILLNESS" else "▶ STILLNESS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (showStillness) StealthPrimary else StealthPrimary.copy(alpha = 0.3f),
+                    fontWeight = FontWeight.Bold
+                )
+                
+                if (showStillness) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { showClearHistoryDialog = true },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
+                        ) {
+                            Text("CLEAR WHISPERS", fontSize = 10.sp)
+                        }
+                        OutlinedButton(
+                            onClick = { showLogoutDialog = true },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
+                        ) {
+                            Text("DISSOLVE VIBE", fontSize = 10.sp)
+                        }
+                    }
+                }
             }
         }
     }
+
 
     // Confirmation Dialogs
     if (showClearHistoryDialog) {
         AlertDialog(
             onDismissRequest = { showClearHistoryDialog = false },
-            title = { Text(stringResource(R.string.profile_clear_history_confirm_title)) },
-            text = { Text(stringResource(R.string.profile_clear_history_confirm_desc)) },
+            title = { Text(stringResource(R.string.conf_delete_whispers_title)) },
+            text = { Text(stringResource(R.string.conf_delete_whispers_desc)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -161,12 +270,12 @@ fun ProfileScreen(
                         showClearHistoryDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.profile_clear_btn), color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.conf_delete_btn), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearHistoryDialog = false }) {
-                    Text(stringResource(R.string.mod_cancel))
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )
@@ -175,8 +284,8 @@ fun ProfileScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text(stringResource(R.string.profile_logout_confirm_title)) },
-            text = { Text(stringResource(R.string.profile_logout_confirm_desc)) },
+            title = { Text(stringResource(R.string.conf_reset_identity_title)) },
+            text = { Text(stringResource(R.string.conf_reset_identity_desc)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -184,12 +293,12 @@ fun ProfileScreen(
                         showLogoutDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.profile_reset_btn), color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.conf_reset_btn), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text(stringResource(R.string.mod_cancel))
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )

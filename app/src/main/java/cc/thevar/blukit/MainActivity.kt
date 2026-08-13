@@ -12,6 +12,9 @@ import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.local.ChatDatabase
+import cc.thevar.blukit.data.power.SupremePowerManager
+import cc.thevar.blukit.network.p2p.BleFallbackController
+import cc.thevar.blukit.network.p2p.CompositeP2PController
 import cc.thevar.blukit.network.p2p.NearbyP2PController
 import cc.thevar.blukit.ui.BlukitApp
 import cc.thevar.blukit.ui.theme.BlukitTheme
@@ -39,7 +42,7 @@ class MainActivity : ComponentActivity() {
     }
     
     private val p2pController by lazy {
-        NearbyP2PController(
+        val nearby = NearbyP2PController(
             applicationContext,
             repository,
             contactRepository,
@@ -47,6 +50,12 @@ class MainActivity : ComponentActivity() {
             database.peerDao,
             hapticManager
         )
+        val ble = BleFallbackController(applicationContext)
+        CompositeP2PController(nearby, ble)
+    }
+
+    private val supremePowerManager by lazy {
+        SupremePowerManager(p2pController, database.messageDao)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +74,7 @@ class MainActivity : ComponentActivity() {
                     messageDao = database.messageDao,
                     radioStateManager = radioStateManager,
                     p2pController = p2pController,
+                    supremePowerManager = supremePowerManager,
                     onEnterPip = {
                         enterPictureInPictureMode(
                             android.app.PictureInPictureParams.Builder().build()

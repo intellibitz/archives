@@ -32,10 +32,14 @@ val BlukitDarkOnTertiary = Color(0xFF3B2948)
 val BlukitDarkTertiaryContainer = Color(0xFF523F5F)
 val BlukitDarkOnTertiaryContainer = Color(0xFFF2DAFF)
 
-// Stealth Theater Mode (OLED Optimized)
-val StealthBackground = Color(0xFF000000)
-val StealthSurface = Color(0xFF121212)
-val StealthPrimary = Color(0xFFFFB300) // High-contrast Amber
+// Blukit OLED Stealth Design System (Mandated by AGENTS.md)
+val StealthBlack = Color(0xFF000000)
+val StealthAmber = Color(0xFFFFB300) // High-contrast Amber
+val StealthRose = Color(0xFFFF4081)  // Rose accent
+val StealthSurface = Color(0xFF0A0C14)
+val StealthPrimary = StealthAmber
 val StealthOnPrimary = Color(0xFF000000)
-val StealthSecondary = Color(0xFFFF80AB) // Rose accent
-val StealthOnSecondary = Color(0xFF000000)
+val StealthSecondary = StealthRose
+val StealthOnSecondary = Color(0xFFFFFFFF)
+val StealthError = Color(0xFFFF1744)
+val StealthGray = Color(0xFF1C1C1E)

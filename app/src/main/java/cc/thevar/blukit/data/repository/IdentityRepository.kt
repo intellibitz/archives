@@ -1,21 +1,17 @@
 package cc.thevar.blukit.data.repository
 
 import android.content.Context
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
 /**
  * Supreme Senior Architect Implementation:
- * Identity Repository with 100% Hardware-Backed Encrypted Storage for ALL profile data.
- * Migrated from standard DataStore to EncryptedSharedPreferences for military-grade persistence.
+ * Secure Identity Repository using Android KeyStore and EncryptedSharedPreferences.
  */
 class IdentityRepository(context: Context) {
 
@@ -25,86 +21,81 @@ class IdentityRepository(context: Context) {
 
     private val securePrefs = EncryptedSharedPreferences.create(
         context,
-        "blukit_secure_prefs",
+        "blukit_identity_secure",
         masterKey,
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
     )
 
-    /**
-     * Reactive stream for Nickname updates.
-     */
-    val nickname: Flow<String?> = observeKey(KEY_NICKNAME)
+    private companion object {
+        const val KEY_NICKNAME = "nickname"
+        const val KEY_EMOJI = "emoji_avatar"
+        const val KEY_STEALTH = "stealth_mode"
+        const val KEY_DEVICE_ID = "device_id"
+        const val KEY_BLOCKED_USERS = "blocked_users"
+    }
 
-    /**
-     * Reactive stream for Emoji Avatar updates.
-     */
-    val emojiAvatar: Flow<String> = observeKey(KEY_EMOJI) { it ?: "👤" }
+    private val _nickname = MutableStateFlow(securePrefs.getString(KEY_NICKNAME, null))
+    val nickname: StateFlow<String?> = _nickname.asStateFlow()
 
-    /**
-     * Reactive stream for Stealth Mode updates.
-     */
-    val stealthMode: Flow<Boolean> = observeKey(KEY_STEALTH) { it?.toBoolean() ?: false }
+    private val _emojiAvatar = MutableStateFlow(getSanitizedEmoji())
+    val emojiAvatar: StateFlow<String> = _emojiAvatar.asStateFlow()
 
-    /**
-     * Reactive stream for Blocked Users set.
-     */
-    val blockedUsers: Flow<Set<String>> = observeKey(KEY_BLOCKED) { it?.split(",")?.toSet() ?: emptySet() }
-
-    /**
-     * Reactive stream for Device ID. Automatically generates if missing.
-     */
-    val deviceId: Flow<String> = observeKey(KEY_DEVICE_ID) {
-        it ?: run {
-            val newId = UUID.randomUUID().toString()
-            securePrefs.edit().putString(KEY_DEVICE_ID, newId).apply()
-            newId
+    private fun getSanitizedEmoji(): String {
+        val stored = securePrefs.getString(KEY_EMOJI, "🎭") ?: "🎭"
+        return if (stored == "🌬️" || stored == "👤" || stored == "💓") {
+            "🎭" // Migrate old defaults to the Mask
+        } else {
+            stored
         }
     }
 
-    fun setNickname(name: String) {
-        securePrefs.edit().putString(KEY_NICKNAME, name).apply()
-    }
+    private val _stealthMode = MutableStateFlow(securePrefs.getBoolean(KEY_STEALTH, true))
+    val stealthMode: StateFlow<Boolean> = _stealthMode.asStateFlow()
 
-    fun setEmojiAvatar(emoji: String) {
-        securePrefs.edit().putString(KEY_EMOJI, emoji).apply()
-    }
+    private val _blockedUsers = MutableStateFlow(
+        securePrefs.getStringSet(KEY_BLOCKED_USERS, emptySet()) ?: emptySet()
+    )
+    val blockedUsers: StateFlow<Set<String>> = _blockedUsers.asStateFlow()
 
-    fun setStealthMode(enabled: Boolean) {
-        securePrefs.edit().putString(KEY_STEALTH, enabled.toString()).apply()
-    }
-
-    suspend fun blockUser(userId: String) {
-        val current = blockedUsers.first()
-        val updated = (current + userId).joinToString(",")
-        securePrefs.edit().putString(KEY_BLOCKED, updated).apply()
-    }
-
-    suspend fun getNickname(): String? = nickname.first()
-
-    suspend fun getDeviceId(): String = deviceId.first()
-
-    fun clearNickname() {
-        securePrefs.edit().remove(KEY_NICKNAME).apply()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> observeKey(key: String, transform: (String?) -> T = { it as T }): Flow<T> = callbackFlow {
-        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { prefs, changedKey ->
-            if (key == changedKey) {
-                trySend(transform(prefs.getString(key, null)))
-            }
+    fun getDeviceId(): String {
+        var id = securePrefs.getString(KEY_DEVICE_ID, null)
+        if (id == null) {
+            id = UUID.randomUUID().toString()
+            securePrefs.edit { putString(KEY_DEVICE_ID, id) }
         }
-        securePrefs.registerOnSharedPreferenceChangeListener(listener)
-        trySend(transform(securePrefs.getString(key, null)))
-        awaitClose { securePrefs.unregisterOnSharedPreferenceChangeListener(listener) }
-    }.onStart { emit(transform(securePrefs.getString(key, null))) }.flowOn(Dispatchers.IO)
+        return id
+    }
 
-    companion object {
-        private const val KEY_NICKNAME = "nickname"
-        private const val KEY_EMOJI = "emoji"
-        private const val KEY_STEALTH = "stealth_mode"
-        private const val KEY_DEVICE_ID = "device_id"
-        private const val KEY_BLOCKED = "blocked_users"
+    fun saveNickname(name: String) {
+        securePrefs.edit { putString(KEY_NICKNAME, name) }
+        _nickname.value = name
+    }
+
+    fun getNickname(): String = securePrefs.getString(KEY_NICKNAME, null) ?: "vibe"
+
+    fun saveEmoji(emoji: String) {
+        securePrefs.edit { putString(KEY_EMOJI, emoji) }
+        _emojiAvatar.value = emoji
+    }
+
+    fun toggleStealth(enabled: Boolean) {
+        securePrefs.edit { putBoolean(KEY_STEALTH, enabled) }
+        _stealthMode.value = enabled
+    }
+
+    fun blockUser(deviceId: String) {
+        val current = _blockedUsers.value.toMutableSet()
+        current.add(deviceId)
+        securePrefs.edit { putStringSet(KEY_BLOCKED_USERS, current) }
+        _blockedUsers.value = current
+    }
+
+    fun logout() {
+        securePrefs.edit { clear() }
+        _nickname.value = null
+        _emojiAvatar.value = "🎭"
+        _stealthMode.value = false
+        _blockedUsers.value = emptySet()
     }
 }

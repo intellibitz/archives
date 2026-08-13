@@ -18,7 +18,7 @@
         android:fillColor="#FFB300"
         android:pathData="M45,28 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M45,80 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M72,40 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M74,66 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
 
-    <!-- Pulse Ring Fragment -->
+    <!-- Vibe Ring Fragment -->
     <path
         android:strokeWidth="1.5"
         android:strokeColor="#FFB300"

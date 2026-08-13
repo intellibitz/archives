@@ -18,9 +18,10 @@ import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.ui.screens.ChatScreen
+import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.screens.RadarScreen
+import cc.thevar.blukit.ui.viewmodels.MeshConnectionState
+import cc.thevar.blukit.ui.screens.RipplesField
 import cc.thevar.blukit.ui.screens.ProfileScreen
 import cc.thevar.blukit.ui.theme.BlukitTheme
 
@@ -28,15 +29,19 @@ import cc.thevar.blukit.ui.theme.BlukitTheme
 @Composable
 fun PreviewRadarPhone() {
     BlukitTheme {
-        RadarScreen(
+        RipplesField(
             state = BluetoothUiState(
                 scannedDevices = listOf(
-                    P2PDevice("Peer 1", "1"),
-                    P2PDevice("Peer 2", "2"),
-                    P2PDevice("Peer 3", "3")
+                    P2PDevice("1", "Peer 1"),
+                    P2PDevice("2", "Peer 2"),
+                    P2PDevice("3", "Peer 3")
                 )
             ),
-            onDeviceClick = {}
+            localDeviceId = "me",
+            localEmoji = "🎭",
+            activeBubbles = emptyList(),
+            onDeviceClick = {},
+            onStartScan = {}
         )
     }
 }
@@ -45,7 +50,7 @@ fun PreviewRadarPhone() {
 @Composable
 fun PreviewChatPhone() {
     BlukitTheme {
-        ChatScreen(
+        TieScreen(
             state = BluetoothUiState(
                 messages = listOf(
                     MessagePayload(
@@ -65,9 +70,10 @@ fun PreviewChatPhone() {
                         status = MessagePayload.STATUS_SENT
                     )
                 ),
-                isConnected = true
+                connectionState = MeshConnectionState.Connected(P2PDevice("user1", "Peer 1"))
             ),
             localDeviceId = "me",
+            localEmoji = "🎭",
             peerId = "user1",
             peerName = "Peer 1",
             peerEmoji = "👤",
@@ -90,8 +96,7 @@ fun PreviewProfileStealth() {
             isStealthMode = true,
             onSaveNickname = {},
             onSaveEmoji = {},
-            onToggleStealth = {},
-            onNavigateNext = {}
+            onToggleStealth = {}
         )
     }
 }
@@ -100,16 +105,20 @@ fun PreviewProfileStealth() {
 @Composable
 fun PreviewRadarTablet() {
     BlukitTheme {
-        RadarScreen(
+        RipplesField(
             state = BluetoothUiState(
                 scannedDevices = listOf(
-                    P2PDevice("Peer 1", "1"),
-                    P2PDevice("Peer 2", "2"),
-                    P2PDevice("Peer 3", "3"),
-                    P2PDevice("Peer 4", "4")
+                    P2PDevice("1", "Peer 1"),
+                    P2PDevice("2", "Peer 2"),
+                    P2PDevice("3", "Peer 3"),
+                    P2PDevice("4", "Peer 4")
                 )
             ),
-            onDeviceClick = {}
+            localDeviceId = "me",
+            localEmoji = "🎭",
+            activeBubbles = emptyList(),
+            onDeviceClick = {},
+            onStartScan = {}
         )
     }
 }

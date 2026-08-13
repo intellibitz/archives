@@ -29,14 +29,14 @@ class ProfileScreenTest {
             }
         }
 
-        // Use a more generic matcher or check for the specific title text
-        composeTestRule.onNodeWithText("Who are you?").assertExists()
+        // Title is now MASK
+        composeTestRule.onNodeWithText("MASK").assertExists()
         
-        // Find by label text
-        composeTestRule.onNodeWithText("Choose a name").assertExists()
+        // Label is now PROTOCOL DESIGNATION
+        composeTestRule.onNodeWithText("PROTOCOL DESIGNATION").assertExists()
         
-        // Find button by text and check enabled state
-        composeTestRule.onNodeWithText("Start Chatting").assertIsNotEnabled()
+        // Button is now DON THE MASK
+        composeTestRule.onNodeWithText("DON THE MASK").assertIsNotEnabled()
     }
 
     @Test
@@ -57,7 +57,7 @@ class ProfileScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Choose a name").performTextInput("BlukitUser")
-        composeTestRule.onNodeWithText("Start Chatting").assertIsEnabled()
+        composeTestRule.onNodeWithText("PROTOCOL DESIGNATION").performTextInput("BlukitUser")
+        composeTestRule.onNodeWithText("DON THE MASK").assertIsEnabled()
     }
 }

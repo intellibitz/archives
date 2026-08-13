@@ -21,15 +21,16 @@ Blukit follows a "Reliability First" philosophy, ensuring that decentralized, of
 
 ## 3. Detailed Test Breakdown
 
-### 3.1 Data Layer (Instrumented)
-- **Room Database (`ChatDatabaseTest`)**: Verifies message insertion, ordering, and the automated 12-hour TTL purge logic.
-- **Identity Repository (`IdentityRepositoryTest`)**: Ensures persistent user profiles and device IDs are correctly stored in hardware-backed `EncryptedSharedPreferences`.
-- **Contact Repository (`ContactRepositoryTest`)**: Verifies peer persistence and last-seen tracking.
+### 3.1 Unit Tests (Local JVM)
+Located in `app/src/test/`. These tests run on the JVM using Robolectric when Android dependencies are required.
+- **MainViewModelTest**: Business logic for user identity and chat history management.
+- **BluetoothViewModelTest**: Reactive UI state transitions for discovery and connectivity.
+- **PrinciplesTest**: Verifies that the app adheres to its "Powers" and "Commandments" (e.g., decentralized broadcasts).
 
-### 3.2 Logic & Networking (Unit + Robolectric)
-- **ViewModels (`MainViewModelTest`, `BluetoothViewModelTest`)**: Verifies UI state management, navigation triggers, and proper interaction with repositories.
-- **P2P Controller (`NearbyP2PControllerTest`)**: Mocks Google Nearby Connections API to ensure discovery and advertising lifecycles are correctly managed.
-- **Mappers (`MappersTest`)**: Validates the conversion between Domain models (`MessagePayload`) and Data entities (`MessageEntity`).
+### 3.2 Integration & Data Layer (Instrumented)
+Located in `app/src/androidTest/`. These tests run on an Android device or emulator.
+- **Room Database (`MessageDaoTest`, `PeerDaoTest`, `ContactDaoTest`)**: Verifies message insertion, ordering, and the automated 12-hour TTL purge logic.
+- **Identity Repository (`IdentityRepositoryTest`)**: Ensures persistent user profiles and device IDs are correctly stored in hardware-backed `EncryptedSharedPreferences`.
 
 ### 3.3 Security & Cryptography (Instrumented)
 - **Crypto Manager (`CryptoManagerTest`)**: Verifies the end-to-end encryption pipeline.
@@ -37,9 +38,10 @@ Blukit follows a "Reliability First" philosophy, ensuring that decentralized, of
     - ✅ ECDH Shared Secret derivation.
     - ✅ AES-256-GCM authenticated encryption/decryption with tag validation.
 
-### 3.4 User Interface (Compose Test)
-- **Onboarding Flow (`ProfileScreenTest`)**: Ensures nickname validation and "Start Exploring" logic.
-- **Messaging Experience (`ChatScreenTest`, `LobbyScreenTest`)**: Verifies message rendering, multi-peer identity display, and UI state consistency.
+### 3.4 Functional & UI (Compose Test)
+- **FlowsTest**: Verifies **"Smart Vibes"** flow (contextual connection requests triggered by first vibes), initial landing on The Air, and persona customization.
+- **NavigationTest**: Verifies that all bottom navigation tabs (Air, Ties, Vibe) correctly switch screens.
+- **CommandmentsTest**: Ensures no invasive permissions are requested and verified architecture constraints.
 
 ---
 
@@ -47,13 +49,21 @@ Blukit follows a "Reliability First" philosophy, ensuring that decentralized, of
 
 ### Local Unit Tests
 ```bash
-./gradlew testDebugUnitTest
+./gradlew :app:testDebugUnitTest
 ```
 
 ### Instrumented Tests (on device/emulator)
 ```bash
-./gradlew connectedDebugAndroidTest
+./gradlew :app:connectedDebugAndroidTest
 ```
+
+---
+
+## 5. Maintenance
+When adding new features:
+1. **Unit Test** the logic in ViewModels or Repositories.
+2. **Integration Test** any new database entities or network protocols.
+3. **UI Test** the user flow if there's a significant change in navigation or smart flows.
 
 ---
 

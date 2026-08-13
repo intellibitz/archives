@@ -8,28 +8,28 @@ import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import org.junit.Rule
 import org.junit.Test
 
-class ChatScreenTest {
+class WhisperScreenTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
     @Test
-    fun testChatScreenDisplaysMessages() {
+    fun testWhisperScreenDisplaysMessages() {
         val messages = listOf(
             MessagePayload(
                 messageId = "1",
                 senderId = "user-1",
                 senderName = "Peer A",
                 senderEmoji = "🐱",
-                receiverId = "me",
+                receiverId = "mask-1",
                 content = "Hello from Peer A",
                 timestamp = System.currentTimeMillis(),
                 status = MessagePayload.STATUS_DELIVERED
             ),
             MessagePayload(
                 messageId = "2",
-                senderId = "me",
-                senderName = "Me",
+                senderId = "mask-1",
+                senderName = "Mask",
                 senderEmoji = "😎",
                 receiverId = "user-1",
                 content = "My local message",
@@ -40,9 +40,9 @@ class ChatScreenTest {
 
         composeTestRule.setContent {
             BlukitTheme {
-                ChatScreen(
+                WhisperScreen(
                     state = BluetoothUiState(messages = messages, isConnected = true),
-                    localDeviceId = "me",
+                    localDeviceId = "mask-1",
                     peerId = "user-1",
                     peerName = "Peer A",
                     peerEmoji = "🐱",
@@ -58,7 +58,9 @@ class ChatScreenTest {
         composeTestRule.onNodeWithText("Hello from Peer A").assertExists()
         composeTestRule.onNodeWithText("My local message").assertExists()
         
-        // Peer A appears in TopAppBar AND as sender name in bubble
-        composeTestRule.onAllNodesWithText("Peer A").assertCountEquals(2)
+        // Peer A appears in TopAppBar
+        composeTestRule.onNodeWithText("🐱Peer A").assertExists()
+        // And as sender name in bubble (UPPERCASE)
+        composeTestRule.onNodeWithText("PEER A").assertExists()
     }
 }

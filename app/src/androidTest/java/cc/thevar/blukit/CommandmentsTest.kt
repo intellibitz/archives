@@ -11,7 +11,6 @@ import cc.thevar.blukit.ui.BlukitApp
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import io.mockk.mockk
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,7 +18,7 @@ import org.junit.runner.RunWith
 /**
  * Supreme Senior Android Expert Implementation:
  * Instrumented Commandments Test Suite.
- * Verifies permission constraints and Power 3 (Landing Screen).
+ * Verifies permission constraints and Power 1 (Landing Screen).
  */
 @RunWith(AndroidJUnit4::class)
 class CommandmentsTest {
@@ -46,14 +45,26 @@ class CommandmentsTest {
     }
 
     @Test
-    fun testPower3_LandingScreenIsStadiumLobbyForRegisteredUsers() {
-        // Mock a registered user repository
+    fun testPower1_LandingScreenIsTheSquare() {
+        // Mock a repository
         val repository: cc.thevar.blukit.data.repository.IdentityRepository = mockk(relaxed = true)
-        val nicknameFlow = kotlinx.coroutines.flow.flowOf("Tester")
+        val nicknameFlow = kotlinx.coroutines.flow.MutableStateFlow("vibe")
         io.mockk.every { repository.nickname } returns nicknameFlow
-        io.mockk.every { repository.emojiAvatar } returns kotlinx.coroutines.flow.flowOf("👤")
-        io.mockk.every { repository.stealthMode } returns kotlinx.coroutines.flow.flowOf(false)
-        io.mockk.every { repository.deviceId } returns kotlinx.coroutines.flow.flowOf("id-123")
+        io.mockk.every { repository.emojiAvatar } returns kotlinx.coroutines.flow.MutableStateFlow("🟦")
+        io.mockk.every { repository.stealthMode } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        io.mockk.every { repository.getDeviceId() } returns "id-123"
+
+        val p2p: cc.thevar.blukit.network.p2p.P2PController = mockk(relaxed = true)
+        io.mockk.every { p2p.scannedDevices } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+        io.mockk.every { p2p.connectedPeers } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet())
+        io.mockk.every { p2p.isDiscovering } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        io.mockk.every { p2p.isAdvertising } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        io.mockk.every { p2p.isConnected } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        io.mockk.every { p2p.messages } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+        io.mockk.every { p2p.errors } returns kotlinx.coroutines.flow.MutableSharedFlow()
+
+        val spm: cc.thevar.blukit.data.power.SupremePowerManager = mockk(relaxed = true)
+        io.mockk.every { spm.report } returns kotlinx.coroutines.flow.MutableStateFlow(cc.thevar.blukit.domain.power.SupremePowerReport())
 
         composeTestRule.setContent {
             BlukitTheme {
@@ -62,13 +73,14 @@ class CommandmentsTest {
                     contactRepository = mockk(relaxed = true),
                     messageDao = mockk(relaxed = true),
                     radioStateManager = mockk(relaxed = true),
-                    p2pController = mockk(relaxed = true),
+                    p2pController = p2p,
+                    supremePowerManager = spm,
                     onEnterPip = {}
                 )
             }
         }
 
-        // Power 3: Registered users must land on The Square
-        composeTestRule.onNodeWithText("The Square").assertExists()
+        // Power 1: Users must land on THE AIR
+        composeTestRule.onNodeWithText("THE AIR").assertExists()
     }
 }
