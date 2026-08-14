@@ -22,11 +22,11 @@ class SupremePowerManagerTest {
         val messageDao: MessageDao = mockk(relaxed = true)
 
         val scannedDevicesFlow = MutableStateFlow(emptyList<P2PDevice>())
-        val connectedTiesFlow = MutableStateFlow(emptySet<String>())
+        val connectedLinksFlow = MutableStateFlow(emptySet<String>())
         val allMessagesFlow = MutableStateFlow(emptyList<cc.thevar.blukit.data.local.entities.MessageEntity>())
 
         every { p2pController.scannedDevices } returns scannedDevicesFlow
-        every { p2pController.connectedTies } returns connectedTiesFlow
+        every { p2pController.connectedLinks } returns connectedLinksFlow
         every { messageDao.getAllMessages() } returns allMessagesFlow
 
         val manager = SupremePowerManager(p2pController, messageDao)
@@ -45,11 +45,11 @@ class SupremePowerManagerTest {
             
             assertEquals(2, current.userCount)
             
-            // Trigger Tie: Connect to one
-            connectedTiesFlow.value = setOf("1")
+            // Trigger Link: Connect to one
+            connectedLinksFlow.value = setOf("1")
             
             current = awaitItem()
-            while (current.connectedTiesCount != 1) { current = awaitItem() }
+            while (current.connectedLinksCount != 1) { current = awaitItem() }
             
             // Verify Harmony (Ties / Users + 0.2) => 1/2 + 0.2 = 0.7
             assertEquals(0.7f, current.harmony, 0.01f)

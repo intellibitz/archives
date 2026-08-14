@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 interface P2PController {
     val scannedDevices: StateFlow<List<P2PDevice>>
     val isConnected: StateFlow<Boolean>
-    val connectedTies: StateFlow<Set<String>>
-    val incomingTieRequests: StateFlow<Set<P2PDevice>>
+    val connectedLinks: StateFlow<Set<String>>
+    val incomingLinkRequests: StateFlow<Set<P2PDevice>>
     val isDiscovering: StateFlow<Boolean>
     val isAdvertising: StateFlow<Boolean>
     val errors: StateFlow<String>
@@ -33,9 +33,9 @@ interface P2PController {
      */
     fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus>
     
-    fun requestTie(device: P2PDevice)
-    fun acceptTie(device: P2PDevice)
-    fun denyTie(device: P2PDevice)
+    fun requestLink(device: P2PDevice)
+    fun acceptLink(device: P2PDevice)
+    fun denyLink(device: P2PDevice)
 
     suspend fun sendMessage(content: String, receiverId: String? = null): MessagePayload?
 

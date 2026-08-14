@@ -29,14 +29,14 @@ class NavigationTest {
     @Before
     fun setUp() {
         every { repository.nicknameFlow } returns MutableStateFlow("vibe")
-        every { repository.emojiAvatar } returns MutableStateFlow("🎭")
+        every { repository.emojiAvatar } returns MutableStateFlow("👤")
         every { repository.stealthMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { repository.getDeviceId() } returns "test-device-id"
         every { repository.getCurrentNickname() } returns "vibe"
         
         every { p2pController.scannedDevices } returns MutableStateFlow(emptyList())
-        every { p2pController.connectedTies } returns MutableStateFlow(emptySet())
+        every { p2pController.connectedLinks } returns MutableStateFlow(emptySet())
         every { p2pController.isDiscovering } returns MutableStateFlow(false)
         every { p2pController.isAdvertising } returns MutableStateFlow(false)
         every { p2pController.errors } returns MutableStateFlow("")

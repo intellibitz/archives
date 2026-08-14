@@ -30,7 +30,7 @@ class IdentityRepositoryTest {
             assertEquals(null, awaitItem()) 
         }
         repository.emojiAvatar.test {
-            assertEquals("🎭", awaitItem())
+            assertEquals("👤", awaitItem())
         }
     }
 

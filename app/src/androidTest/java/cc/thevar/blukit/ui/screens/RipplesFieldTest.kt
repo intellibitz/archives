@@ -25,7 +25,7 @@ class RipplesFieldTest {
                 RipplesField(
                     state = BluetoothUiState(scannedDevices = peers),
                     localDeviceId = "me",
-                    localEmoji = "🎭",
+                    localEmoji = "👤",
                     activeBubbles = emptyList(),
                     onDeviceClick = {},
                     onStartScan = {}
@@ -48,7 +48,7 @@ class RipplesFieldTest {
                 RipplesField(
                     state = BluetoothUiState(scannedDevices = peers),
                     localDeviceId = "me",
-                    localEmoji = "🎭",
+                    localEmoji = "👤",
                     activeBubbles = listOf(bubble),
                     onDeviceClick = {},
                     onStartScan = {}

@@ -53,11 +53,11 @@ class BleFallbackController(
     private val _isConnected = MutableStateFlow(false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedTies = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedTies = _connectedTies.asStateFlow()
+    private val _connectedLinks = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedLinks = _connectedLinks.asStateFlow()
 
-    private val _incomingTieRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
-    override val incomingTieRequests = _incomingTieRequests.asStateFlow()
+    private val _incomingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val incomingLinkRequests = _incomingLinkRequests.asStateFlow()
 
     private val _isDiscovering = MutableStateFlow(false)
     override val isDiscovering = _isDiscovering.asStateFlow()
@@ -133,7 +133,7 @@ class BleFallbackController(
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i(tag, "GATT: Disconnected from $address")
                 activeGatts.remove(address)
-                _connectedTies.update { it - address }
+                _connectedLinks.update { it - address }
                 if (activeGatts.isEmpty()) _isConnected.value = false
             }
         }
@@ -142,7 +142,7 @@ class BleFallbackController(
             val address = gatt.device.address
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 activeGatts[address] = gatt
-                _connectedTies.update { it + address }
+                _connectedLinks.update { it + address }
                 _isConnected.value = true
                 sendHandshake(address)
             }
@@ -338,19 +338,19 @@ class BleFallbackController(
         } catch (e: SecurityException) {}
     }
 
-    override fun requestTie(device: P2PDevice) {
-        // BLE implementation of Tie Request
+    override fun requestLink(device: P2PDevice) {
+        // BLE implementation of Link Request
         sendHandshake(device.id)
     }
 
-    override fun acceptTie(device: P2PDevice) {
-        _incomingTieRequests.update { it - device }
-        _connectedTies.update { it + device.id }
+    override fun acceptLink(device: P2PDevice) {
+        _incomingLinkRequests.update { it - device }
+        _connectedLinks.update { it + device.id }
         _isConnected.value = true
     }
 
-    override fun denyTie(device: P2PDevice) {
-        _incomingTieRequests.update { it - device }
+    override fun denyLink(device: P2PDevice) {
+        _incomingLinkRequests.update { it - device }
     }
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
@@ -429,7 +429,7 @@ class BleFallbackController(
         activeGatts.clear()
         vibeKeys.clear()
         _isConnected.value = false
-        _connectedTies.value = emptySet()
+        _connectedLinks.value = emptySet()
     }
 
     override fun release() {

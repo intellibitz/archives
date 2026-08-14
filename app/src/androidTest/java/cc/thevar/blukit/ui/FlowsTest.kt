@@ -33,7 +33,7 @@ class FlowsTest {
     private val supremePowerManager: SupremePowerManager = mockk(relaxed = true)
 
     private val nicknameFlow = MutableStateFlow<String?>("vibe")
-    private val emojiFlow = MutableStateFlow("🎭")
+    private val emojiFlow = MutableStateFlow("👤")
     private val scannedDevicesFlow = MutableStateFlow(emptyList<P2PDevice>())
     private val incomingRequestsFlow = MutableStateFlow(emptySet<P2PDevice>())
     private val radioStatesFlow = MutableStateFlow(RadioStates(true, true))
@@ -45,8 +45,8 @@ class FlowsTest {
         every { repository.getDeviceId() } returns "test-device-id"
         
         every { p2pController.scannedDevices } returns scannedDevicesFlow
-        every { p2pController.incomingTieRequests } returns incomingRequestsFlow
-        every { p2pController.connectedTies } returns MutableStateFlow(emptySet())
+        every { p2pController.incomingLinkRequests } returns incomingRequestsFlow
+        every { p2pController.connectedLinks } returns MutableStateFlow(emptySet())
         every { p2pController.isDiscovering } returns MutableStateFlow(false)
         every { p2pController.errors } returns MutableStateFlow("")
         every { p2pController.isConnected } returns MutableStateFlow(false)
@@ -58,25 +58,25 @@ class FlowsTest {
     }
 
     @Test
-    fun testTieRitual_AcceptanceFlow() {
+    fun testLinkRitual_AcceptanceFlow() {
         startApp()
         
-        // Mock an incoming vibe wanting to tie
-        val incomingVibe = P2PDevice("id-123", "Mystic Vibe", "🔮")
+        // Mock an incoming vibe wanting to link
+        val incomingVibe = P2PDevice("id-123", "Mystic Vibe", "👤")
         incomingRequestsFlow.value = setOf(incomingVibe)
         
         // Ensure the hub expands to reveal the ritual
         composeTestRule.onNodeWithTag("BlukitBadge").performClick()
         
-        // Wait for the Vibes Ritual to appear in the Magic Bar
-        composeTestRule.waitUntilAtLeastOneExists(hasText("NEW VIBES RITUAL", substring = true), 10000)
+        // Wait for the Incoming Vibe to appear in the Magic Bar
+        composeTestRule.waitUntilAtLeastOneExists(hasText("INCOMING VIBE", substring = true), 10000)
         composeTestRule.onNodeWithText("MYSTIC VIBE", substring = true).assertIsDisplayed()
         
         // Accept the ritual
         composeTestRule.onNodeWithText("ACCEPT").performClick()
         
         // Verify P2P Controller is notified
-        verify { p2pController.acceptTie(incomingVibe) }
+        verify { p2pController.acceptLink(incomingVibe) }
     }
 
     @Test
@@ -110,9 +110,9 @@ class FlowsTest {
         startApp()
         
         // Mock a device in range and a connection
-        val device = P2PDevice("vibe-1", "Aura Vibe", "✨")
+        val device = P2PDevice("vibe-1", "Aura Vibe", "👤")
         scannedDevicesFlow.value = listOf(device)
-        every { p2pController.connectedTies } returns MutableStateFlow(setOf("vibe-1"))
+        every { p2pController.connectedLinks } returns MutableStateFlow(setOf("vibe-1"))
         
         // Click to navigate to the Tie screen - match the 6-char display limit
         composeTestRule.onNodeWithText("AURA V", substring = true).performClick()

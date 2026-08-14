@@ -59,11 +59,11 @@ class NearbyP2PController(
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedTies = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedTies = _connectedTies.asStateFlow()
+    private val _connectedLinks = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedLinks = _connectedLinks.asStateFlow()
 
-    private val _incomingTieRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
-    override val incomingTieRequests = _incomingTieRequests.asStateFlow()
+    private val _incomingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val incomingLinkRequests = _incomingLinkRequests.asStateFlow()
 
     private val _isDiscovering = MutableStateFlow(value = false)
     override val isDiscovering = _isDiscovering.asStateFlow()
@@ -161,7 +161,7 @@ class NearbyP2PController(
         override fun onDisconnected(endpointId: String) {
             Log.i(tag, "UNLINKED: $endpointId")
             activeConnections.remove(endpointId)
-            _connectedTies.update { it - endpointId }
+            _connectedLinks.update { it - endpointId }
             vibeKeys.remove(endpointId)
             if (activeConnections.isEmpty()) _isConnected.value = false
         }
@@ -206,15 +206,15 @@ class NearbyP2PController(
                 return
             }
 
-            if (payload.type == MessagePayload.TYPE_TIE_REQUEST) {
+            if (payload.type == MessagePayload.TYPE_LINK_REQUEST) {
                 val device = _scannedDevices.value.find { it.id == endpointId } 
-                    ?: P2PDevice(endpointId, payload.senderName, payload.senderEmoji ?: "🎭")
-                _incomingTieRequests.update { it + device }
+                    ?: P2PDevice(endpointId, payload.senderName, payload.senderEmoji ?: "👤")
+                _incomingLinkRequests.update { it + device }
                 return
             }
 
-            if (payload.type == MessagePayload.TYPE_TIE_ACCEPT) {
-                _connectedTies.update { it + endpointId }
+            if (payload.type == MessagePayload.TYPE_LINK_ACCEPT) {
+                _connectedLinks.update { it + endpointId }
                 _isConnected.value = true
                 return
             }
@@ -329,24 +329,24 @@ class NearbyP2PController(
         return flow.asSharedFlow()
     }
 
-    override fun requestTie(device: P2PDevice) {
+    override fun requestLink(device: P2PDevice) {
         internalScope.launch(ioDispatcher) {
             val payload = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = repository.getCurrentNickname(),
                 senderEmoji = repository.emojiAvatar.value,
-                content = "TIE_REQUEST",
+                content = "LINK_REQUEST",
                 timestamp = System.currentTimeMillis(),
-                type = MessagePayload.TYPE_TIE_REQUEST
+                type = MessagePayload.TYPE_LINK_REQUEST
             )
             sendMessagePayload(device.id, payload)
         }
     }
 
-    override fun acceptTie(device: P2PDevice) {
-        _incomingTieRequests.update { it - device }
-        _connectedTies.update { it + device.id }
+    override fun acceptLink(device: P2PDevice) {
+        _incomingLinkRequests.update { it - device }
+        _connectedLinks.update { it + device.id }
         _isConnected.value = true
         internalScope.launch(ioDispatcher) {
             val payload = MessagePayload(
@@ -354,16 +354,16 @@ class NearbyP2PController(
                 senderId = repository.getDeviceId(),
                 senderName = repository.getCurrentNickname(),
                 senderEmoji = repository.emojiAvatar.value,
-                content = "TIE_ACCEPT",
+                content = "LINK_ACCEPT",
                 timestamp = System.currentTimeMillis(),
-                type = MessagePayload.TYPE_TIE_ACCEPT
+                type = MessagePayload.TYPE_LINK_ACCEPT
             )
             sendMessagePayload(device.id, payload)
         }
     }
 
-    override fun denyTie(device: P2PDevice) {
-        _incomingTieRequests.update { it - device }
+    override fun denyLink(device: P2PDevice) {
+        _incomingLinkRequests.update { it - device }
     }
 
     private suspend fun sendMessagePayload(endpointId: String, payload: MessagePayload) {

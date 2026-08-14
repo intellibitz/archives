@@ -112,7 +112,7 @@ fun BlukitApp(
     )
     
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
-    val emojiAvatar by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "🎭")
+    val emojiAvatar by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
     val isStealthMode by viewModel.isStealthMode.collectAsStateWithLifecycle(initialValue = false)
     val deviceId by viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "")
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
@@ -157,7 +157,7 @@ fun BlukitApp(
                         onStartScan = bluetoothViewModel::startScan,
                         onStopScan = bluetoothViewModel::stopScan,
                         onDeviceClick = { device ->
-                            if (device.id !in bluetoothState.connectedTies) {
+                            if (device.id !in bluetoothState.connectedLinks) {
                                 bluetoothViewModel.connectToDevice(device)
                             } else {
                                 backStack.add(Route.Chat)
@@ -202,7 +202,7 @@ fun BlukitApp(
 
 
         val globalSubtitle = when {
-            bluetoothState.connectedTies.isNotEmpty() -> "${bluetoothState.connectedTies.size} TIED TOGETHER"
+            bluetoothState.connectedLinks.isNotEmpty() -> "${bluetoothState.connectedLinks.size} TIED TOGETHER"
             bluetoothState.connectionState is AirConnectionState.Scanning -> "FEELING THE VIBES..."
             bluetoothState.connectionState is AirConnectionState.Connecting -> "BRIDGING THE DISTANCE..."
             else -> "FEEL THE VIBES"
@@ -218,7 +218,7 @@ fun BlukitApp(
             currentRoute = (currentRoute as? Route) ?: initialRoute,
             emojiAvatar = emojiAvatar,
             nickname = nickname ?: "vibe",
-            incomingTieRequests = bluetoothState.incomingTieRequests,
+            incomingLinkRequests = bluetoothState.incomingLinkRequests,
             onNavigate = { route ->
                 if (currentRoute != route) {
                     backStack.add(route)
@@ -231,8 +231,8 @@ fun BlukitApp(
             onToggleStealth = viewModel::toggleStealth,
             onClearHistory = viewModel::clearChatHistory,
             onLogout = viewModel::logout,
-            onAcceptTie = bluetoothViewModel::acceptTie,
-            onDenyTie = bluetoothViewModel::denyTie,
+            onAcceptLink = bluetoothViewModel::acceptLink,
+            onDenyLink = bluetoothViewModel::denyLink,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 24.dp)
@@ -251,7 +251,7 @@ fun UnifiedBlukitBadge(
     currentRoute: Route,
     emojiAvatar: String,
     nickname: String,
-    incomingTieRequests: Set<P2PDevice>,
+    incomingLinkRequests: Set<P2PDevice>,
     onNavigate: (Route) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
@@ -260,8 +260,8 @@ fun UnifiedBlukitBadge(
     onToggleStealth: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
-    onAcceptTie: (P2PDevice) -> Unit,
-    onDenyTie: (P2PDevice) -> Unit,
+    onAcceptLink: (P2PDevice) -> Unit,
+    onDenyLink: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -342,13 +342,13 @@ fun UnifiedBlukitBadge(
                         Text(
                             text = (if (airIsStill) "THE VIBES ARE STILL" 
                                     else if (report.currentBreeze != null) report.currentBreeze.orEmpty() 
-                                    else if (incomingTieRequests.isNotEmpty()) "NEW VIBES RITUAL"
+                                    else if (incomingLinkRequests.isNotEmpty()) "INCOMING VIBE"
                                     else subtitle).uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 7.sp,
                                 fontWeight = FontWeight.Black,
                                 color = (if (airIsStill) StealthAmber 
-                                        else if (report.currentBreeze != null || incomingTieRequests.isNotEmpty()) StealthPrimary 
+                                        else if (report.currentBreeze != null || incomingLinkRequests.isNotEmpty()) StealthPrimary 
                                         else Color.White).copy(alpha = 0.6f),
                                 letterSpacing = 0.5.sp
                             )
@@ -409,7 +409,7 @@ fun UnifiedBlukitBadge(
                         )
                         
                         Icon(
-                            imageVector = if (currentRoute is Route.Ties) Icons.Rounded.Person else Icons.Rounded.Groups,
+                            imageVector = if (currentRoute is Route.Ties) Icons.Rounded.Person else Icons.Rounded.Diversity3,
                             contentDescription = null,
                             tint = if (airIsStill) StealthAmber else StealthPrimary,
                             modifier = Modifier.size(20.dp)
@@ -435,8 +435,8 @@ fun UnifiedBlukitBadge(
                 exit = shrinkVertically() + fadeOut()
             ) {
                 Column {
-                    if (airIsStill || hasBreeze || incomingTieRequests.isNotEmpty()) {
-                        val requests = incomingTieRequests
+                    if (airIsStill || hasBreeze || incomingLinkRequests.isNotEmpty()) {
+                        val requests = incomingLinkRequests
                         Spacer(modifier = Modifier.height(16.dp))
                         MagicBarContent(
                             isBluetoothOff = !isBluetoothEnabled,
@@ -444,8 +444,8 @@ fun UnifiedBlukitBadge(
                             isPermissionMissing = !permissionsGranted,
                             currentBreeze = report.currentBreeze,
                             incomingRequests = requests,
-                            onAcceptTie = onAcceptTie,
-                            onDenyTie = onDenyTie,
+                            onAcceptLink = onAcceptLink,
+                            onDenyLink = onDenyLink,
                             onAwakenBluetooth = onAwakenBluetooth,
                             onAwakenLocation = onAwakenLocation,
                             onGrantPermissions = onGrantPermissions
@@ -508,7 +508,7 @@ fun UnifiedBlukitBadge(
                         
                         Column(modifier = Modifier.testTag("IntelSection")) {
                             IntelRow(
-                                label = "VIBES", 
+                                label = "VOICES", 
                                 value = report.userCount.toString(),
                                 icon = Icons.Rounded.Groups,
                                 modifier = Modifier.testTag("VibesStat"),
@@ -519,7 +519,7 @@ fun UnifiedBlukitBadge(
                             )
                             IntelRow(
                                 label = "TIES", 
-                                value = report.connectedTiesCount.toString(),
+                                value = report.connectedLinksCount.toString(),
                                 icon = Icons.Rounded.Person,
                                 modifier = Modifier.testTag("TiesStat"),
                                 onClick = { 
@@ -591,20 +591,20 @@ fun UnifiedBlukitBadge(
                                     OutlinedButton(
                                         onClick = { showClearHistoryDialog = true },
                                         modifier = Modifier.weight(1f),
-                                        border = BorderStroke(0.5.dp, Color.Red.copy(alpha = 0.3f)),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red.copy(alpha = 0.7f)),
+                                        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
-                                        Text("DISSOLVE TIES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                        Text("FORGET TIES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                                     }
                                     OutlinedButton(
                                         onClick = { showLogoutDialog = true },
                                         modifier = Modifier.weight(1f),
-                                        border = BorderStroke(0.5.dp, Color.Red.copy(alpha = 0.3f)),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red.copy(alpha = 0.7f)),
+                                        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
-                                        Text("RESET VIBE", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                        Text("NEW IDENTITY", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -634,8 +634,8 @@ fun UnifiedBlukitBadge(
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White.copy(alpha = 0.7f),
-            title = { Text("Dissolve all Ties?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("This will permanently dissolve all your private ties and moments.", fontSize = 12.sp) },
+            title = { Text("Forget all Ties?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
+            text = { Text("This will permanently remove all your private ties and shared history.", fontSize = 12.sp) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -643,7 +643,7 @@ fun UnifiedBlukitBadge(
                         showClearHistoryDialog = false
                     }
                 ) {
-                    Text("DISSOLVE", color = Color.Red, fontWeight = FontWeight.Bold)
+                    Text("REMOVE", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -660,8 +660,8 @@ fun UnifiedBlukitBadge(
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White.copy(alpha = 0.7f),
-            title = { Text("Reset Identity?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("This will clear your profile and device data.", fontSize = 12.sp) },
+            title = { Text("New Identity?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
+            text = { Text("This will clear your local profile and start a fresh ritual.", fontSize = 12.sp) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -669,7 +669,7 @@ fun UnifiedBlukitBadge(
                         showLogoutDialog = false
                     }
                 ) {
-                    Text("RESET", color = Color.Red, fontWeight = FontWeight.Bold)
+                    Text("START FRESH", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -688,8 +688,8 @@ private fun MagicBarContent(
     isPermissionMissing: Boolean,
     currentBreeze: String?,
     incomingRequests: Set<P2PDevice>,
-    onAcceptTie: (P2PDevice) -> Unit,
-    onDenyTie: (P2PDevice) -> Unit,
+    onAcceptLink: (P2PDevice) -> Unit,
+    onDenyLink: (P2PDevice) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onGrantPermissions: () -> Unit
@@ -726,7 +726,7 @@ private fun MagicBarContent(
                         isBluetoothOff && isLocationOff -> "AWAKEN RADIOS"
                         isBluetoothOff -> "AWAKEN BLUETOOTH"
                         isLocationOff -> "AWAKEN LOCATION"
-                        hasRequests -> "NEW VIBES RITUAL"
+                        hasRequests -> "INCOMING VIBE"
                         !currentBreeze.isNullOrBlank() -> "ATMOSPHERIC BREEZE"
                         else -> "THE VIBES ARE PURE"
                     },
@@ -770,7 +770,7 @@ private fun MagicBarContent(
                 isPermissionMissing -> "Blukit needs permission to feel the vibes around you."
                 isBluetoothOff -> "Your Bluetooth must be awake to feel the vibes around you."
                 isLocationOff -> "Location must be awake to feel nearby ripples on this device."
-                hasRequests -> "${(incomingRequests.first().name ?: "Vibe").uppercase()} wants to bridge a tie."
+                hasRequests -> "${(incomingRequests.first().name ?: "Vibe").uppercase()} wants to bridge a link."
                 !currentBreeze.isNullOrBlank() -> currentBreeze
                 else -> null
             }
@@ -796,14 +796,14 @@ private fun MagicBarContent(
                                 color = StealthPrimary,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 8.sp,
-                                modifier = Modifier.clickable { onAcceptTie(incomingRequests.first()) }
+                                modifier = Modifier.clickable { onAcceptLink(incomingRequests.first()) }
                             )
                             Text(
                                 "DENY",
                                 color = Color.White.copy(alpha = 0.3f),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 8.sp,
-                                modifier = Modifier.clickable { onDenyTie(incomingRequests.first()) }
+                                modifier = Modifier.clickable { onDenyLink(incomingRequests.first()) }
                             )
                         }
                     }

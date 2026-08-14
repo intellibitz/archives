@@ -57,7 +57,7 @@ class CommandmentsTest {
 
                 val p2p: cc.thevar.blukit.network.p2p.P2PController = mockk(relaxed = true)
         io.mockk.every { p2p.scannedDevices } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
-        io.mockk.every { p2p.connectedTies } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet())
+        io.mockk.every { p2p.connectedLinks } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet())
         io.mockk.every { p2p.isDiscovering } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         io.mockk.every { p2p.isAdvertising } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         io.mockk.every { p2p.isConnected } returns kotlinx.coroutines.flow.MutableStateFlow(false)
@@ -82,6 +82,6 @@ class CommandmentsTest {
         }
 
         // Power 1: Users must land on THE VIBES
-        composeTestRule.onNodeWithText("THE VIBES").assertExists()
+        composeTestRule.onNodeWithText("THE VIBES", ignoreCase = true).assertExists()
     }
 }

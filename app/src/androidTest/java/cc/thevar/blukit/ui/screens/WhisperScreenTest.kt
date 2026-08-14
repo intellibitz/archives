@@ -43,7 +43,7 @@ class WhisperScreenTest {
                 TieScreen(
                     state = BluetoothUiState(messages = messages),
                     localDeviceId = "mask-1",
-                    localEmoji = "🎭",
+                    localEmoji = "👤",
                     vibeId = "user-1",
                     vibeName = "Vibe A",
                     vibeEmoji = "🐱",

@@ -155,7 +155,7 @@ fun RipplesField(
             RelayLayer(relayEvents)
             // Filter devices if only ties are requested
             val displayDevices = if (onlyTies) {
-                state.scannedDevices.filter { it.id in state.connectedTies }
+                state.scannedDevices.filter { it.id in state.connectedLinks }
             } else {
                 state.scannedDevices
             }
@@ -544,7 +544,7 @@ private fun EmptyRadarHint(onlyTies: Boolean) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.Rounded.Groups, 
+            imageVector = Icons.Rounded.Diversity3, 
             contentDescription = null,
             tint = StealthAmber.copy(alpha = 0.3f),
             modifier = Modifier.size(32.dp)

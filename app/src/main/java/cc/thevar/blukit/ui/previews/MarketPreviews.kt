@@ -37,7 +37,7 @@ fun PreviewRadarPhone() {
                 )
             ),
             localDeviceId = "me",
-            localEmoji = "🎭",
+            localEmoji = "👤",
             activeBubbles = emptyList(),
             onDeviceClick = {},
             onStartScan = {}
@@ -74,7 +74,7 @@ fun PreviewChatPhone() {
                 connectionState = AirConnectionState.Connected(P2PDevice("user1", "Vibe 1"))
             ),
             localDeviceId = "me",
-            localEmoji = "🎭",
+            localEmoji = "👤",
             vibeId = "user1",
             vibeName = "Vibe 1",
             vibeEmoji = "👤",
@@ -101,7 +101,7 @@ fun PreviewRadarTablet() {
                 )
             ),
             localDeviceId = "me",
-            localEmoji = "🎭",
+            localEmoji = "👤",
             activeBubbles = emptyList(),
             onDeviceClick = {},
             onStartScan = {}

@@ -18,7 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.Diversity3
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Warning

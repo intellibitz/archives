@@ -44,8 +44,8 @@ class BluetoothViewModel(
     val state: StateFlow<BluetoothUiState> = combine(
         p2pController.scannedDevices,
         radioStateManager.radioStates,
-        p2pController.connectedTies,
-        p2pController.incomingTieRequests,
+        p2pController.connectedLinks,
+        p2pController.incomingLinkRequests,
         p2pController.isConnected,
         p2pController.isDiscovering,
         p2pController.isAdvertising,
@@ -55,8 +55,8 @@ class BluetoothViewModel(
     ) { args: Array<Any?> ->
         val scannedDevices = args[0] as List<P2PDevice>
         val radioStates = args[1] as cc.thevar.blukit.data.system.RadioStates
-        val connectedTies = args[2] as Set<String>
-        val incomingTieRequests = args[3] as Set<P2PDevice>
+        val connectedLinks = args[2] as Set<String>
+        val incomingLinkRequests = args[3] as Set<P2PDevice>
         val isConnected = args[4] as Boolean
         val isDiscovering = args[5] as Boolean
         val isAdvertising = args[6] as Boolean
@@ -68,8 +68,8 @@ class BluetoothViewModel(
             manualState != null -> manualState
             error.isNotEmpty() -> AirConnectionState.Error(error)
             isConnected -> {
-                val vibe = scannedDevices.find { it.id in connectedTies }
-                    ?: P2PDevice(id = connectedTies.firstOrNull() ?: "", name = "vibe", emoji = "🎭")
+                val vibe = scannedDevices.find { it.id in connectedLinks }
+                    ?: P2PDevice(id = connectedLinks.firstOrNull() ?: "", name = "vibe", emoji = "👤")
                 AirConnectionState.Connected(vibe)
             }
             isDiscovering || isAdvertising -> AirConnectionState.Scanning
@@ -79,8 +79,8 @@ class BluetoothViewModel(
         BluetoothUiState(
             scannedDevices = scannedDevices,
             connectionState = connectionState,
-            connectedTies = connectedTies,
-            incomingTieRequests = incomingTieRequests,
+            connectedLinks = connectedLinks,
+            incomingLinkRequests = incomingLinkRequests,
             isBluetoothEnabled = radioStates.isBluetoothEnabled,
             isLocationEnabled = radioStates.isLocationEnabled,
             isDiscovering = isDiscovering,
@@ -117,7 +117,7 @@ class BluetoothViewModel(
                 when (status) {
                     is ConnectionStatus.Connected -> {
                         _manualConnectionState.value = null
-                        p2pController.requestTie(device)
+                        p2pController.requestLink(device)
                     }
                     is ConnectionStatus.Error -> _manualConnectionState.value = AirConnectionState.Error(status.message)
                     else -> {}
@@ -125,12 +125,12 @@ class BluetoothViewModel(
             }.launchIn(viewModelScope)
     }
 
-    fun acceptTie(device: P2PDevice) {
-        p2pController.acceptTie(device)
+    fun acceptLink(device: P2PDevice) {
+        p2pController.acceptLink(device)
     }
 
-    fun denyTie(device: P2PDevice) {
-        p2pController.denyTie(device)
+    fun denyLink(device: P2PDevice) {
+        p2pController.denyLink(device)
     }
 
     fun sendMessage(message: String) {

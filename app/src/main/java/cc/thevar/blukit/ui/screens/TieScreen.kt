@@ -207,7 +207,7 @@ fun ChatMessage(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         // Dynamic Emoji: override for local or use stored with fallback
-                        val displayEmoji = if (isFromLocalUser) localEmoji else (payload.senderEmoji ?: "🎭")
+                        val displayEmoji = if (isFromLocalUser) localEmoji else (payload.senderEmoji ?: "👤")
                         Text(text = displayEmoji, fontSize = 14.sp)
                     }
                 }

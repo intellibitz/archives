@@ -30,19 +30,19 @@
 
     <!-- Vibe Screen (Persona) -->
     <string name="mask_title">Vibe</string>
-    <string name="mask_nickname_label">Your Name</string>
-    <string name="mask_stealth_mode">Quiet Light</string>
-    <string name="mask_stealth_desc">A gentle glow for stadiums and theaters.</string>
-    <string name="mask_start_exploring">Enter the Vibes</string>
-    <string name="mask_clear_whispers">Clear My Ties</string>
-    <string name="mask_reset_profile">Start Afresh</string>
+    <string name="mask_nickname_label">YOUR NAME</string>
+    <string name="mask_stealth_mode">QUIET LIGHT</string>
+    <string name="mask_stealth_desc">GENTLE STADIUM GLOW</string>
+    <string name="mask_start_exploring">JOIN THE VIBES</string>
+    <string name="mask_clear_whispers">FORGET TIES</string>
+    <string name="mask_reset_profile">NEW IDENTITY</string>
 
     <!-- Confirmation Dialogs -->
-    <string name="conf_delete_whispers_title">Dissolve all Ties?</string>
-    <string name="conf_delete_whispers_desc">This will permanently dissolve all your private ties and moments.</string>
-    <string name="conf_reset_identity_title">Reset Identity?</string>
-    <string name="conf_reset_identity_desc">This will clear your profile and device data.</string>
-    <string name="conf_delete_btn">DELETE ALL</string>
+    <string name="conf_delete_whispers_title">FORGET ALL TIES?</string>
+    <string name="conf_delete_whispers_desc">THIS WILL PERMANENTLY REMOVE YOUR PRIVATE TIES AND HISTORY.</string>
+    <string name="conf_reset_identity_title">NEW IDENTITY?</string>
+    <string name="conf_reset_identity_desc">THIS WILL CLEAR YOUR LOCAL PROFILE.</string>
+    <string name="conf_delete_btn">REMOVE</string>
     <string name="conf_reset_btn">RESET</string>
 
     <!-- Technical/System -->

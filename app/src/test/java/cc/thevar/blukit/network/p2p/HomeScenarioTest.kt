@@ -126,13 +126,13 @@ class HomeScenarioTest {
             lifecycleCallback.onConnectionResult(peerId, mockk<ConnectionResolution>().apply { every { status.isSuccess } returns true })
             advanceUntilIdle()
 
-            // Tie Ritual: Explicitly accept the tie
-            controller.acceptTie(cc.thevar.blukit.domain.model.P2PDevice(peerId, pair.first, pair.second))
+            // Link Ritual: Explicitly accept the link
+            controller.acceptLink(cc.thevar.blukit.domain.model.P2PDevice(peerId, pair.first, pair.second))
             advanceUntilIdle()
         }
 
         advanceUntilIdle()
-        assertEquals(3, controller.connectedTies.value.size)
+        assertEquals(3, controller.connectedLinks.value.size)
 
         controller.broadcastMessage("dinner ready")
         advanceUntilIdle()

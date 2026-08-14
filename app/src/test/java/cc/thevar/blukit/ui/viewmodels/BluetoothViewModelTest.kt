@@ -40,8 +40,8 @@ class BluetoothViewModelTest {
         
         every { radioStateManager.radioStates } returns harmonyFlow
         every { p2pController.scannedDevices } returns MutableStateFlow(emptyList())
-        every { p2pController.connectedTies } returns MutableStateFlow(emptySet())
-        every { p2pController.incomingTieRequests } returns MutableStateFlow(emptySet())
+        every { p2pController.connectedLinks } returns MutableStateFlow(emptySet())
+        every { p2pController.incomingLinkRequests } returns MutableStateFlow(emptySet())
         every { p2pController.isDiscovering } returns MutableStateFlow(false)
         every { p2pController.isAdvertising } returns MutableStateFlow(false)
         every { p2pController.errors } returns errorFlow

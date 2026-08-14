@@ -159,12 +159,12 @@ class NearbyP2PControllerTest {
             lifecycleCallback.onConnectionResult(peerId, resultSuccess)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // Tie Ritual: Explicitly accept the tie to move from activeConnections to connectedTies
-            controller.acceptTie(cc.thevar.blukit.domain.model.P2PDevice(peerId, "Vibe", "🎭"))
+            // Link Ritual: Explicitly accept the link to move from activeConnections to connectedLinks
+            controller.acceptLink(cc.thevar.blukit.domain.model.P2PDevice(peerId, "Vibe", "👤"))
             testDispatcher.scheduler.advanceUntilIdle()
         }
 
-        assertEquals(2, controller.connectedTies.value.size)
+        assertEquals(2, controller.connectedLinks.value.size)
 
         val result = controller.broadcastMessage("Hello Vibes!")
         assertNotNull(result)

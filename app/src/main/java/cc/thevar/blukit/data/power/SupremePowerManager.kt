@@ -36,7 +36,7 @@ class SupremePowerManager(
         scope.launch {
             combine(
                 p2pController.scannedDevices,
-                p2pController.connectedTies,
+                p2pController.connectedLinks,
                 messageDao.getAllMessages(),
                 _breezeFlow.onStart { emit("") }
             ) { args ->
@@ -45,21 +45,21 @@ class SupremePowerManager(
                 val messages = args[2] as List<*>
                 
                 val userCount = scanned.size
-                val tiesCount = connected.size
+                val linksCount = connected.size
                 val msgCount = messages.size
                 
                 // Logic for Vibe Harmony
                 val vibeHarmony = if (userCount > 0) {
-                    min(1.0f, (tiesCount.toFloat() / userCount.toFloat()) + 0.2f)
+                    min(1.0f, (linksCount.toFloat() / userCount.toFloat()) + 0.2f)
                 } else 0f
 
                 // AI Insight Generation (Heuristic-based)
-                val insight = generateAiInsight(userCount, tiesCount, msgCount, vibeHarmony)
+                val insight = generateAiInsight(userCount, linksCount, msgCount, vibeHarmony)
                 val breeze = args.getOrNull(3) as? String
 
                 SupremePowerReport(
                     userCount = userCount,
-                    connectedTiesCount = tiesCount,
+                    connectedLinksCount = linksCount,
                     totalMessages = msgCount,
                     harmony = vibeHarmony,
                     aiInsight = insight,
@@ -80,16 +80,16 @@ class SupremePowerManager(
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("A new vibe joined The Vibes")
+                if (new > old) emitBreeze("A new voice joined The Vibes")
             }.launchIn(scope)
 
-        // Tie Formed
-        p2pController.connectedTies
+        // Link Formed
+        p2pController.connectedLinks
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("A new tie has been formed")
+                if (new > old) emitBreeze("A new link has been established")
             }.launchIn(scope)
 
         // Messages Relayed
@@ -113,14 +113,14 @@ class SupremePowerManager(
         }
     }
 
-    private fun generateAiInsight(users: Int, peers: Int, msgs: Int, health: Float): String {
+    private fun generateAiInsight(users: Int, links: Int, msgs: Int, harmony: Float): String {
         return when {
-            users == 0 -> "Listening for nearby vibes..."
-            health < 0.3f -> "The connection is faint. Vibes may take time to travel."
-            users > 10 && health > 0.8f -> "The atmosphere is vibrant. Everyone is connected."
-            peers == 0 && users > 0 -> "Vibes are near. Form a tie to bridge the distance."
-            msgs > 100 -> "The air is full of life. Our invisible web is strong."
-            else -> "The air is steady. Watching for new arrivals."
+            users == 0 -> "Listening for the vibes..."
+            harmony < 0.3f -> "The connection is light. Vibes may take time to travel."
+            users > 10 && harmony > 0.8f -> "The atmosphere is vibrant. Everyone is in sync."
+            links == 0 && users > 0 -> "Vibes are near. Wave to bridge a link."
+            msgs > 100 -> "The collective pulse is strong. Our invisible network is active."
+            else -> "The vibes are steady. Watching for new voices."
         }
     }
 }

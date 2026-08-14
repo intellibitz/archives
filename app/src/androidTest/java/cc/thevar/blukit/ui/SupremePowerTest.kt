@@ -21,7 +21,7 @@ class SupremePowerTest {
     fun testSupremePowerBadge_ExpandAndCollapse() {
         val report = SupremePowerReport(
             userCount = 10,
-            connectedTiesCount = 2,
+            connectedLinksCount = 2,
             totalMessages = 5,
             harmony = 0.4f,
             aiInsight = "The Vibes are healthy",
@@ -39,9 +39,9 @@ class SupremePowerTest {
                         permissionsGranted = true,
                         isStealthMode = false,
                     currentRoute = cc.thevar.blukit.ui.navigation.Route.Shout,
-                    emojiAvatar = "🎭",
+                    emojiAvatar = "👤",
                     nickname = "vibe",
-                    incomingTieRequests = emptySet<P2PDevice>(),
+                    incomingLinkRequests = emptySet<P2PDevice>(),
                     onNavigate = {},
                     onAwakenBluetooth = {},
                     onAwakenLocation = {},
@@ -50,8 +50,8 @@ class SupremePowerTest {
                     onToggleStealth = {},
                     onClearHistory = {},
                     onLogout = {},
-                    onAcceptTie = {},
-                    onDenyTie = {}
+                    onAcceptLink = {},
+                    onDenyLink = {}
                 )
                 }
             }
