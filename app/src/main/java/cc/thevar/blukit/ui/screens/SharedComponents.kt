@@ -217,6 +217,7 @@ fun BlukitInput(
                         if (value.isNotBlank()) StealthPrimary else Color.White.copy(alpha = 0.05f),
                         CircleShape
                     )
+                    .semantics { contentDescription = "Send" }
             ) {
                 Text(
                     text = "🌬️",
@@ -225,7 +226,6 @@ fun BlukitInput(
                         .graphicsLayer {
                             alpha = if (value.isNotBlank()) 1f else 0.4f
                         }
-                        .semantics { contentDescription = "Send" }
                 )
             }
         }

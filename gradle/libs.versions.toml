@@ -38,10 +38,11 @@ material = "1.4.+"
 hilt = "2.51.1"
 androidxHiltWork = "1.2.0"
 androidxHiltCompiler = "1.2.0"
-mockk = "1.13.12"
+mockk = "1.14.11"
 turbine = "1.1.0"
 archCoreTesting = "2.2.0"
 robolectric = "4.12.1"
+dexmaker = "2.28.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -92,6 +93,8 @@ androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref 
 androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidxHiltCompiler" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
+mockk-agent-android = { group = "io.mockk", name = "mockk-agent-android", version.ref = "mockk" }
+dexmaker = { group = "com.linkedin.dexmaker", name = "dexmaker-mockito-inline", version.ref = "dexmaker" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
