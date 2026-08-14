@@ -6,12 +6,12 @@
 
 ## 🌟 What is Blukit?
 
-Blukit (`cc.thevar.blukit`) is a sentient P2P experience. It is **The Vibes**—a collective pulse where you can feel the energy of everyone around you instantly. Ties are intentional, secure bonds formed through a shared ritual of connection.
+Blukit (`cc.thevar.blukit`) is a sentient P2P experience. It is **The Vibes**—a collective pulse where you can hear the energy of everyone around you instantly. Ties are intentional, secure links established through a shared ritual of connection.
 
 ### Key Capabilities
 
-| 🫂 **The Vibes** | ✅ High-fidelity stadium visualization with sentient vibes ticker |
-| 🤝 **Your Ties** | ✅ Bi-directional, permission-based secure bonds with real-time reflection |
+| 🫂 **The Vibes** | ✅ High-fidelity stadium visualization with sentient voices ticker |
+| 🤝 **Your Ties** | ✅ Bi-directional, permission-based secure links with real-time reflection |
 | 👤 **Your Vibe** | ✅ Minimalist anonymous identity ritual integrated into the hub |
 | 🧠 **Sentient Hub** | ✅ Bottom-anchored brain for branding, navigation, and diagnostics |
 | 🔐 **Stealth Security** | ✅ AES-256-GCM + ECDH hardware-backed encryption with auto-recovery |
@@ -74,9 +74,9 @@ Blukit (`cc.thevar.blukit`) is a sentient P2P experience. It is **The Vibes**—
 
 ## 🛡️ Data Safety & Compliance
 
-Blukit follows the **Vibes Ritual Commandments**:
+Blukit follows the **Voices Ritual Commandments**:
 1. **Bluetooth Only**: Your radio is the only bridge.
-2. **Mutual Consent**: Ties require explicit permission ritual.
+2. **Mutual Consent**: Ties require explicit link ritual.
 3. **Total Anonymity**: No tracking, no accounts, just pure vibes.
 4. **Absolute Stealth**: All data vanishes every 12 hours.
 

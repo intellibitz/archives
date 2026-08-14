@@ -7,11 +7,11 @@ Instant human connection for stadiums, movie theaters, and festivals. Feel the v
 ## ⚖️ THE COMMANDMENTS
 *The sentient source of truth for Blukit.*
 
-1.  **Vibes Only**: Bluetooth is the only bridge. Blukit exists in the space between hearts.
-2.  **Bi-directional Consent**: Ties are a mutual ritual. Tying requires explicit permission.
+1.  **Vibes Only**: Bluetooth is the only bridge. Blukit exists in the space between voices.
+2.  **Bi-directional Consent**: Ties are a mutual link ritual. Linking requires explicit permission.
 3.  **Human Language**: Designed for everyone. No tech jargon, only connection.
 4.  **Anonymous Always**: Identity is ephemeral. Your visage is a person (👤), never a profile.
-5.  **Secure Space**: End-to-end encryption for every vibe and tie.
+5.  **Secure Space**: End-to-end encryption for every vibe and link.
 6.  **Absolute Stealth**: Data vanishes like a memory every 12 hours.
 
 ---
@@ -21,11 +21,11 @@ Instant human connection for stadiums, movie theaters, and festivals. Feel the v
 ### 🫂 THE VIBES
 Step into the stadium. Feel the collective pulse of everyone around you in a high-fidelity visual field. Watch vibes bubble up, uniquely identifying every soul in the field.
 *   **The Visualizer**: High-density stadium visualization with sentient ripples.
-*   **The Ticker**: An atmospheric stream where public vibes flow, glow, and surge.
-*   **Presence**: Feel exactly how many hearts are connected in your space.
+*   **The Ticker**: An atmospheric stream where public voices flow, glow, and surge.
+*   **Presence**: Feel exactly how many voices are connected in your space.
 
 ### 🤝 THE TIES
-Form an intentional bond. When the crowd is too loud, create a quiet space for secure, one-on-one vibes. Ties are established through a shared **Ritual of Acceptance**.
+Form an intentional link. When the crowd is too loud, create a quiet space for secure, one-on-one vibes. Ties are established through a shared **Link Ritual**.
 *   **Private Stadium**: A focused visual field showing only you and your mutual tie.
 *   **Vibe Reflection**: Real-time sync of your friend's latest visage within your tie.
 *   **History Sync**: Automatically recover shared moments when the vibes return.
@@ -42,14 +42,14 @@ The core of your identity. Your Vibe is your anonymous presence—a combination 
 ### 📍 THE LANDING
 Open your eyes directly to the stadium. There are no technical hurdles or accounts. You land immediately in **The Vibes**, ready to feel the pulse of the crowd.
 
-### 🕯️ THE RITUAL (TIES)
-Click a heart in the field to request a tie. The request appears in their **Sentient Magic Bar**. A tie is bridged ONLY when they explicitly **ACCEPT**.
+### 🕯️ THE LINK RITUAL
+Click a voice in the field to request a link. The request appears in their **Sentient Magic Bar**. A tie is bridged ONLY when they explicitly **ACCEPT**.
 
 ### 🧬 THE DISCOVERY
-Ripples of presence appear as hearts join the collective. Tapping a ripple transitions you from the public stadium into a private tie—a shift from the group pulse to a secure, private moment.
+Ripples of presence appear as voices join the collective. Tapping a ripple transitions you from the public stadium into a private tie—a shift from the group pulse to a secure, private moment.
 
 ### 🧠 THE SENTIENT BRAIN
-The **Unified Blukit Badge** at the bottom is the brain of the experience. It handles branding, interactive stats (Vibes & Ties), diagnostics, and identity rituals in one sleek, sentient widget.
+The **Unified Blukit Badge** at the bottom is the brain of the experience. It handles branding, interactive stats (Voices & Ties), diagnostics, and identity rituals in one sleek, sentient widget.
 
 ---
 

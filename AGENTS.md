@@ -25,10 +25,10 @@ You are the Lead Implementation Engineer inside Android Studio. Your task is to 
 
 2. **Navigation & Layout Architecture:**
    * Single-Hub Experience: All controls, navigation, and identity rituals are integrated into the bottom hub.
-   * Terminology: **The Vibes** (Collective), **Vibes** (Chronological Ticker), **Ties** (Connective Bonds), **Vibe** (Individual Persona).
+   * Terminology: **The Vibes** (Collective), **Vibes** (Chronological Ticker), **Ties** (Connective Links), **Vibe** (Individual Persona).
 
 3. **The Vibes (Visual Field):**
-   * High-fidelity animated stadium visualizer with concentric ripples and real-time Energy Surges.
+   * High-fidelity animated stadium visualizer with concentric ripples and real-time Energy Surges and Voices ticker.
 
 ---
 

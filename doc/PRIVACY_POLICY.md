@@ -7,17 +7,17 @@ Blukit ("we", "us", or "our") is committed to protecting your privacy. This Priv
 ## 1. Zero Data Collection
 Blukit is a sentient, decentralized experience. **We do not collect, store, or transmit any of your personal data to any external servers.**
 
-*   **User Identity**: Your nickname is stored strictly on your local device and is only shared with nearby hearts via local radio links (Bluetooth).
-*   **Vibes**: Your history is stored in a local encrypted database on your device and is never uploaded to a cloud.
+*   **User Identity**: Your nickname is stored strictly on your local device and is only shared with nearby voices via local radio links (Bluetooth).
+*   **Voices**: Your history is stored in a local encrypted database on your device and is never uploaded to a cloud.
 *   **Location Data**: While the app requires location permissions to perform Bluetooth scanning (on certain Android versions), **we never access, store, or share your actual GPS location.**
 
-## 2. Pervasive Vibe Communication
-All communications occur directly between devices within radio range (typically 50–100 meters). Vibes are transmitted over local radio frequencies and do not pass through the internet or any third-party infrastructure.
+## 2. Pervasive Voice Communication
+All communications occur directly between devices within radio range (typically 50–100 meters). Voices are transmitted over local radio frequencies and do not pass through the internet or any third-party infrastructure.
 
 ## 3. Encryption & Safety
 To ensure the privacy of your private Ties, Blukit uses:
 *   **AES-256-GCM** encryption for all data in transit.
-*   **Diffie-Hellman (ECDH)** key exchange to establish secure sessions between vibes.
+*   **Diffie-Hellman (ECDH)** key exchange to establish secure sessions between voices.
 *   Keys are stored securely in the **Android Keystore System**.
 
 ## 4. Data Retention (Ephemeral Ritual)

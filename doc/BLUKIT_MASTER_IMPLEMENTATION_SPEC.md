@@ -41,13 +41,13 @@ Blukit is a **sentient, offline ritual of connection** for high-density environm
 
 ### Phase P3: Extraordinary UI
 - **Single-Hub Nav**: Removed all redundant tabs/icons. Branding section and Intel stats act as the primary brain. ✅
-- **Interactive Intel**: Clickable "Vibes" and "Ties" stats rows with contextual animations and direct navigation. ✅
+- **Interactive Intel**: Clickable "VOICES" and "TIES" stats rows with contextual animations and direct navigation. ✅
 - **Identity Ritual**: Minimalist "YOU" field integrated directly into the sentient hub expansion. ✅
 - **Flowing B Logo**: Custom Canvas animation representing vibes travelling through the heart of Blukit. ✅
 
-### Phase P4: Bi-directional Ties
-- **The Tie Ritual**: Permission-based messaging established via explicit ACCEPT/DENY from the Magic Bar. ✅
-- **Tie Filtering**: Stadium field intelligently filters to show only mutual connections when in Tie mode. ✅
+### Phase P4: Bi-directional Links
+- **The Link Ritual**: Permission-based messaging established via explicit ACCEPT/DENY from the Magic Bar. ✅
+- **Link Filtering**: Stadium field intelligently filters to show only mutual connections when in Tie mode. ✅
 
 ---
 
