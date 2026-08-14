@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -216,11 +218,14 @@ fun BlukitInput(
                         CircleShape
                     )
             ) {
-                Icon(
-                    Icons.AutoMirrored.Rounded.Send,
-                    contentDescription = "Send",
-                    tint = if (value.isNotBlank()) Color.Black else Color.White.copy(alpha = 0.2f),
-                    modifier = Modifier.size(20.dp)
+                Text(
+                    text = "🌬️",
+                    fontSize = 18.sp,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = if (value.isNotBlank()) 1f else 0.4f
+                        }
+                        .semantics { contentDescription = "Send" }
                 )
             }
         }

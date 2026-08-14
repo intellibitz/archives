@@ -29,7 +29,12 @@ class SupremePowerTest {
                     subtitle = "FEEL THE VIBES",
                     report = report,
                     isDiscovering = true,
-                    isBluetoothEnabled = true
+                    isBluetoothEnabled = true,
+                    isLocationEnabled = true,
+                    permissionsGranted = true,
+                    onAwakenBluetooth = {},
+                    onAwakenLocation = {},
+                    onGrantPermissions = {}
                 )
             }
         }

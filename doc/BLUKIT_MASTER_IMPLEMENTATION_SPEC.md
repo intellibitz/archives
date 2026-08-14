@@ -36,7 +36,8 @@ Blukit is a **decentralized, privacy-first offline messaging application** for h
 
 ### Phase P2: The Air (Merged Experience)
 - **Primary Hub**: Merged chronological "Vibes" ticker into the visual stadium "Air" screen. ✅
-- **Unified Badge**: Global top-left anchor integrating branding, screen titles, and vibe diagnostics. ✅
+- **Unified Badge**: Global full-width top anchor integrating branding, screen titles, and vibe diagnostics. ✅
+- **The Magic Bar**: Integrated status line within the badge that surfaces atmospheric descriptions and "AWAKEN" actions for radio states. ✅
 - **Atmospheric Ticker**: Dynamic list that expands (up to 400dp) and "vibes" when new hearts join. ✅
 
 ### Phase P3: Immersive Design

@@ -1,7 +1,12 @@
 package cc.thevar.blukit.ui
 
-import androidx.compose.animation.animateColorAsState
+import android.Manifest
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,9 +23,12 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,10 +48,16 @@ import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.screens.*
+import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
+import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.*
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import java.util.Date
+import java.util.Locale
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun BlukitApp(
     repository: IdentityRepository,
@@ -55,6 +69,7 @@ fun BlukitApp(
     onEnterPip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val viewModel: MainViewModel = viewModel(
         factory = viewModelFactory {
             initializer {
@@ -93,6 +108,21 @@ fun BlukitApp(
     val deviceId by viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "")
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
     val supremeReport by supremePowerViewModel.report.collectAsStateWithLifecycle()
+
+    // Global Permission State for the Magic Bar
+    val permissions = buildList {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            add(Manifest.permission.BLUETOOTH_SCAN)
+            add(Manifest.permission.BLUETOOTH_ADVERTISE)
+            add(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        }
+    }
+    val permissionState = rememberMultiplePermissionsState(permissions = permissions)
     
     val initialRoute = Route.Shout
     val backStack = rememberNavBackStack(initialRoute)
@@ -172,7 +202,6 @@ fun BlukitApp(
                                 bluetoothViewModel.connectToDevice(device)
                                 backStack.add(Route.Chat)
                             },
-                            onStartServer = bluetoothViewModel::startAdvertising,
                             onBroadcastMessage = bluetoothViewModel::broadcastMessage
                         )
                     }
@@ -228,7 +257,12 @@ fun BlukitApp(
                 subtitle = globalSubtitle,
                 report = supremeReport,
                 isDiscovering = bluetoothState.isDiscovering,
-                isBluetoothEnabled = bluetoothState.isBluetoothEnabled
+                isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
+                isLocationEnabled = bluetoothState.isLocationEnabled,
+                permissionsGranted = permissionState.allPermissionsGranted,
+                onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
+                onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
+                onGrantPermissions = { permissionState.launchMultiplePermissionRequest() }
             )
         }
     }
@@ -240,23 +274,35 @@ fun UnifiedBlukitBadge(
     subtitle: String,
     report: cc.thevar.blukit.domain.power.SupremePowerReport,
     isDiscovering: Boolean,
-    isBluetoothEnabled: Boolean
+    isBluetoothEnabled: Boolean,
+    isLocationEnabled: Boolean,
+    permissionsGranted: Boolean,
+    onAwakenBluetooth: () -> Unit,
+    onAwakenLocation: () -> Unit,
+    onGrantPermissions: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    
+    val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+    val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .statusBarsPadding()
-            .padding(top = 8.dp, start = 16.dp),
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp),
         contentAlignment = Alignment.TopStart
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 320.dp)
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(Color.Black.copy(alpha = 0.85f))
-                .border(0.5.dp, StealthPrimary.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                .border(
+                    width = 0.5.dp, 
+                    color = (if (airIsStill) StealthAmber else StealthPrimary).copy(alpha = 0.4f), 
+                    shape = RoundedCornerShape(16.dp)
+                )
                 .clickable { expanded = !expanded }
                 .padding(12.dp)
         ) {
@@ -268,7 +314,7 @@ fun UnifiedBlukitBadge(
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = 2.sp,
-                                color = StealthPrimary
+                                color = if (airIsStill) StealthAmber else StealthPrimary
                             )
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -284,11 +330,11 @@ fun UnifiedBlukitBadge(
                         )
                     }
                     Text(
-                        text = subtitle.uppercase(),
+                        text = (if (airIsStill) "THE AIR IS STILL" else subtitle).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 7.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.5f),
+                            color = (if (airIsStill) StealthAmber else Color.White).copy(alpha = 0.5f),
                             letterSpacing = 0.5.sp
                         )
                     )
@@ -305,31 +351,148 @@ fun UnifiedBlukitBadge(
                 Spacer(modifier = Modifier.width(8.dp))
                 
                 Icon(
-                    Icons.Rounded.Bolt,
+                    if (airIsStill) Icons.Rounded.Warning else Icons.Rounded.Bolt,
                     contentDescription = null,
-                    tint = StealthPrimary,
+                    tint = if (airIsStill) StealthAmber else StealthPrimary,
                     modifier = Modifier.size(16.dp)
                 )
             }
 
-            if (expanded) {
-                Spacer(modifier = Modifier.height(12.dp))
-                IntelRow("HEARTS", report.userCount.toString())
-                IntelRow("TIES", report.connectedPeerCount.toString())
-                IntelRow("ENERGY", report.trafficDensity)
-                IntelRow("FLOW", report.signalStability)
-                
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    color = StealthPrimary.copy(alpha = 0.1f)
-                )
-                
+            // --- THE MAGIC BAR (Invisible Status Line) ---
+            AnimatedVisibility(
+                visible = airIsStill || expanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    if (airIsStill) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        MagicBarContent(
+                            isBluetoothOff = !isBluetoothEnabled,
+                            isLocationOff = isLocationMandatory && !isLocationEnabled,
+                            isPermissionMissing = !permissionsGranted,
+                            onAwakenBluetooth = onAwakenBluetooth,
+                            onAwakenLocation = onAwakenLocation,
+                            onGrantPermissions = onGrantPermissions
+                        )
+                    }
+
+                    if (expanded) {
+                        if (!airIsStill) Spacer(modifier = Modifier.height(12.dp))
+                        IntelRow("HEARTS", report.userCount.toString())
+                        IntelRow("TIES", report.connectedPeerCount.toString())
+                        IntelRow("ENERGY", report.trafficDensity)
+                        IntelRow("FLOW", report.signalStability)
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = StealthPrimary.copy(alpha = 0.1f)
+                        )
+                        
+                        Text(
+                            text = report.aiInsight.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.8f),
+                            lineHeight = 14.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MagicBarContent(
+    isBluetoothOff: Boolean,
+    isLocationOff: Boolean,
+    isPermissionMissing: Boolean,
+    onAwakenBluetooth: () -> Unit,
+    onAwakenLocation: () -> Unit,
+    onGrantPermissions: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "AwakenPulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Alpha"
+    )
+
+    Surface(
+        color = StealthAmber.copy(alpha = 0.05f),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(0.5.dp, StealthAmber.copy(alpha = 0.2f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = report.aiInsight.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.8f),
-                    lineHeight = 14.sp,
-                    letterSpacing = 0.5.sp
+                    text = when {
+                        isPermissionMissing -> "AWAKEN PERMISSIONS"
+                        isBluetoothOff && isLocationOff -> "AWAKEN RADIOS"
+                        isBluetoothOff -> "AWAKEN BLUETOOTH"
+                        isLocationOff -> "AWAKEN LOCATION"
+                        else -> "THE AIR IS STILL"
+                    },
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    ),
+                    color = StealthAmber.copy(alpha = pulseAlpha),
+                    modifier = Modifier.weight(1f)
+                )
+
+                val action = when {
+                    isPermissionMissing -> onGrantPermissions
+                    isBluetoothOff -> onAwakenBluetooth
+                    isLocationOff -> onAwakenLocation
+                    else -> null
+                }
+
+                if (action != null) {
+                    Text(
+                        text = "AWAKEN",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.Black
+                        ),
+                        modifier = Modifier
+                            .graphicsLayer { alpha = pulseAlpha }
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(StealthAmber)
+                            .clickable { action() }
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
+            
+            val description = when {
+                isPermissionMissing -> "Blukit needs permission to feel the vibes around you."
+                isBluetoothOff -> "Your Bluetooth must be awake to feel the vibes in the air."
+                isLocationOff -> "Location must be awake to feel nearby ripples on this device."
+                else -> null
+            }
+
+            if (description != null) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 10.sp
+                    ),
+                    color = Color.White.copy(alpha = 0.5f)
                 )
             }
         }

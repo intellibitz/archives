@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
@@ -58,11 +57,9 @@ fun RipplesScreen(
     onStartScan: () -> Unit,
     onStopScan: () -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
-    onStartServer: () -> Unit,
     onBroadcastMessage: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var message by remember { mutableStateOf("") }
     var isInputVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -117,23 +114,8 @@ fun RipplesScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = Color.Transparent,
         topBar = {
-            // Uniform Global Header Actions only (Title moved to Badge)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(
-                    onClick = onStartServer,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = StealthPrimary.copy(alpha = 0.1f)
-                    )
-                ) {
-                    Icon(Icons.Rounded.Bolt, contentDescription = null, tint = StealthAmber)
-                }
-            }
+            // Space for global badge
+            Spacer(modifier = Modifier.statusBarsPadding().height(64.dp))
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
@@ -157,12 +139,14 @@ fun RipplesScreen(
             )
             
             // Full Screen Vibes Ticker
+            val effectiveInputVisible = isInputVisible || vibes.isEmpty()
             VibingVibesTicker(
                 vibes = vibes,
                 localDeviceId = localDeviceId,
                 localEmoji = localEmoji,
                 scannedDevices = state.scannedDevices,
-                onSendVibeClick = { isInputVisible = true }, // Explicitly show input
+                isInputVisible = effectiveInputVisible,
+                onSendVibeClick = { isInputVisible = true },
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -172,9 +156,6 @@ fun RipplesScreen(
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Input is visible if triggered OR if air is still (to let users start the vibe)
-                val effectiveInputVisible = isInputVisible || vibes.isEmpty()
-                
                 AnimatedVisibility(
                     visible = effectiveInputVisible,
                     enter = expandVertically() + fadeIn(),
@@ -200,35 +181,9 @@ fun RipplesScreen(
                 }
             }
 
-                Column(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .consumeWindowInsets(innerPadding)
-                        .fillMaxWidth()
-                        .padding(top = 80.dp) // Offset below the global badge
-                        .align(Alignment.TopStart)
-                ) {
-                    val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-                    val showWarning = !state.isBluetoothEnabled || 
-                                    (isLocationMandatory && !state.isLocationEnabled) || 
-                                    !permissionState.allPermissionsGranted
-                    
-                    if (showWarning) {
-                        RadioStateWarning(
-                            isBluetoothOff = !state.isBluetoothEnabled,
-                            isLocationOff = isLocationMandatory && !state.isLocationEnabled,
-                            isPermissionMissing = !permissionState.allPermissionsGranted,
-                            onEnableBluetooth = {
-                                context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
-                            },
-                            onEnableLocation = {
-                                context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                            },
-                            onRequestPermissions = { permissionState.launchMultiplePermissionRequest() }
-                        )
-                    }
-
-                    state.errorMessage?.let { error ->
+            // Error Snackbar
+            state.errorMessage?.let { error ->
+                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
                     Snackbar(
                         modifier = Modifier.padding(16.dp),
                         containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -275,6 +230,7 @@ private fun VibingVibesTicker(
     localDeviceId: String,
     localEmoji: String,
     scannedDevices: List<cc.thevar.blukit.domain.model.P2PDevice>,
+    isInputVisible: Boolean,
     onSendVibeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -432,100 +388,25 @@ private fun VibingVibesTicker(
         }
         
         // Floating Nudge button fixed at bottom right
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(24.dp)
-                .padding(bottom = 16.dp)
-        ) {
-            IconButton(
-                onClick = onSendVibeClick,
+        if (!isInputVisible) {
+            Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(StealthAmber, CircleShape)
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp)
+                    .padding(bottom = 16.dp)
             ) {
-                Icon(
-                    Icons.Rounded.Forum, 
-                    contentDescription = null, 
-                    tint = Color.Black,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RadioStateWarning(
-    isBluetoothOff: Boolean,
-    isLocationOff: Boolean,
-    isPermissionMissing: Boolean,
-    onEnableBluetooth: () -> Unit,
-    onEnableLocation: () -> Unit,
-    onRequestPermissions: () -> Unit
-) {
-    Surface(
-        color = Color.Black.copy(alpha = 0.95f),
-        contentColor = Color.White,
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, StealthAmber.copy(alpha = 0.3f))
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.Warning, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "THE AIR IS STILL",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp,
-                    color = Color.White
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Text(
-                text = when {
-                    isPermissionMissing -> "Blukit needs permission to feel the vibes around you."
-                    isBluetoothOff && isLocationOff -> "Bluetooth and Location must be awake to join the Vibing Air."
-                    isBluetoothOff -> "Your signal is quiet. Awaken Bluetooth to vibe with the crowd."
-                    isLocationOff -> "Location must be awake to feel nearby ripples on this device."
-                    else -> "Vibe with the crowd to join the Vibing Air."
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.6f),
-                lineHeight = 16.sp
-            )
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (isPermissionMissing) {
-                    Button(
-                        onClick = onRequestPermissions,
-                        colors = ButtonDefaults.buttonColors(containerColor = StealthAmber, contentColor = Color.Black),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("ALLOW ACCESS", fontWeight = FontWeight.Black, fontSize = 10.sp)
-                    }
-                } else {
-                    if (isBluetoothOff) {
-                        TextButton(onClick = onEnableBluetooth) {
-                            Text("AWAKEN BT", fontWeight = FontWeight.Black, color = StealthAmber, fontSize = 10.sp)
-                        }
-                    }
-                    if (isLocationOff) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        TextButton(onClick = onEnableLocation) {
-                            Text("AWAKEN GPS", fontWeight = FontWeight.Black, color = StealthAmber, fontSize = 10.sp)
-                        }
-                    }
+                IconButton(
+                    onClick = onSendVibeClick,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(StealthAmber, CircleShape)
+                ) {
+                    Icon(
+                        Icons.Rounded.Forum, 
+                        contentDescription = null, 
+                        tint = Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
