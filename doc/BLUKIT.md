@@ -1,56 +1,55 @@
-# BLUKIT: The Vibing Air
+# BLUKIT: Feel The Vibes
 
-Instant human connection for stadiums, movie theaters, and packs. Feel the vibes. Pure proximity. No internet. No tracking. 
+Instant human connection for stadiums, movie theaters, and festivals. Feel the vibes. Pure proximity. No internet. No tracking. 
 
 ---
 
 ## ⚖️ THE COMMANDMENTS
-*The source of truth for the Vibing Air.*
+*The sentient source of truth for Blukit.*
 
-1.  **Air Required**: Bluetooth is the only bridge. Blukit vibes in the space between us.
-2.  **Optional Breezes**: Location and Wi-Fi are optional. Denying them must never break the bond.
-3.  **Human Language**: Designed for everyone, everywhere. No jargon, just feelings.
-4.  **Anonymous Only**: Identity is a mask, local and ephemeral. You are never tracked.
-5.  **Safe Space**: Robust filters and "Stillness" triggers protect our shared ground.
-6.  **Absolute Stealth**: All vibes encrypted. Data vanishes like a memory every 12 hours.
+1.  **Vibes Only**: Bluetooth is the only bridge. Blukit exists in the space between hearts.
+2.  **Bi-directional Consent**: Ties are a mutual ritual. Tying requires explicit permission.
+3.  **Human Language**: Designed for everyone. No tech jargon, only connection.
+4.  **Anonymous Always**: Identity is ephemeral. Your visage is a person (👤), never a profile.
+5.  **Secure Space**: End-to-end encryption for every vibe and tie.
+6.  **Absolute Stealth**: Data vanishes like a memory every 12 hours.
 
 ---
 
 ## ⚡ THE POWERS
 
-### 🌬️ THE AIR
-Step into the stadium. Feel the collective energy of everyone around you in a vibing, visual field. Watch vibes bubble up from the floor, uniquely identifying every soul in the mesh.
-*   **The Field**: A high-fidelity visualization of nearby ripples.
-*   **The Ticker**: A full-screen stream where public vibes flow and glow.
-*   **Presence**: Feel exactly how many hearts are vibing together in your space.
+### 🫂 THE VIBES
+Step into the stadium. Feel the collective pulse of everyone around you in a high-fidelity visual field. Watch vibes bubble up, uniquely identifying every soul in the field.
+*   **The Visualizer**: High-density stadium visualization with sentient ripples.
+*   **The Ticker**: An atmospheric stream where public vibes flow, glow, and surge.
+*   **Presence**: Feel exactly how many hearts are connected in your space.
 
-### 👥 THE TIES
-Form a private bond. When the crowd is too loud, create a quiet space for secure, one-on-one vibes. Ties are the side effects of moments shared in the air.
-*   **Private Bubbles**: End-to-end encrypted moments between two hearts.
-*   **Vibe Reflection**: See your friend's latest mood update instantly within your tie.
-*   **History Sync**: Automatically recover the last few vibes shared when you reconnect.
+### 🤝 THE TIES
+Form an intentional bond. When the crowd is too loud, create a quiet space for secure, one-on-one vibes. Ties are established through a shared **Ritual of Acceptance**.
+*   **Private Stadium**: A focused visual field showing only you and your mutual tie.
+*   **Vibe Reflection**: Real-time sync of your friend's latest visage within your tie.
+*   **History Sync**: Automatically recover shared moments when the vibes return.
 
-### 🎭 THE VIBE
-Choose your visage. Your vibe is your anonymous mask—a combination of a name and a mood that reflects how you feel right now. Change it as often as the air shifts.
-*   **The Mask**: Your default anonymous visage.
-*   **Scenario Moods**: Specific icons for the Stadium, the Theater, the Plane, or the Home.
-*   **Instant Projection**: Your new vibe radiates to everyone in the air the moment you change it.
+### 👤 THE VIBE
+The core of your identity. Your Vibe is your anonymous presence—a combination of a name and a sentient ritual. Change your name instantly from the heart of the hub.
+*   **The Identity Ritual**: Integrated directly into the sentient hub expansion.
+*   **Instant Projection**: Your new identity radiates through the field the moment it shifts.
 
 ---
 
 ## 🌊 THE SMART FLOWS
 
 ### 📍 THE LANDING
-Open your eyes directly to the stadium. There are no technical hurdles or accounts to create. You land immediately in **The Air**, with your default mask ready to vibe with the crowd.
+Open your eyes directly to the stadium. There are no technical hurdles or accounts. You land immediately in **The Vibes**, ready to feel the pulse of the crowd.
 
-### 🕯️ THE RITUAL
-A single, mindful tap to join the circle. The access request is an invitation to vibe with the mesh. Once granted, the air connects itself silently and never asks again.
+### 🕯️ THE RITUAL (TIES)
+Click a heart in the field to request a tie. The request appears in their **Sentient Magic Bar**. A tie is bridged ONLY when they explicitly **ACCEPT**.
 
 ### 🧬 THE DISCOVERY
-Ripples of presence appear as vibes join the mesh. Tapping a ripple transitions you seamlessly from the collective stadium into a private tie—a shift from the public air to a quiet, secure space.
+Ripples of presence appear as hearts join the collective. Tapping a ripple transitions you from the public stadium into a private tie—a shift from the group pulse to a secure, private moment.
 
-### 💎 THE UNIFIED ANCHOR
-Max real estate for the vibes. The global badge at the top-left is your singular source of truth—holding the brand, your location, and the health of the air in one sleek, unobtrusive widget.
+### 🧠 THE SENTIENT BRAIN
+The **Unified Blukit Badge** at the bottom is the brain of the experience. It handles branding, interactive stats (Vibes & Ties), diagnostics, and identity rituals in one sleek, sentient widget.
 
 ---
 

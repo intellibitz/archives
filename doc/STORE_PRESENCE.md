@@ -8,31 +8,31 @@ This document contains the finalized text for the **Blukit** Play Store listing.
 
 | Field | Recommended Value |
 | :--- | :--- |
-| **App Name** | Blukit - Offline Mesh Chat |
-| **Short Description** | Instant offline chat for stadiums, movie theaters & venues without internet. |
+| **App Name** | Blukit — Feel The Vibes |
+| **Short Description** | Instant offline ritual for stadiums, movie theaters & venues. Feel the vibes. |
 
 ### Full Description
-**Experience the power of a truly decentralized, serverless chat.**
+**Experience the pulse of a truly sentient, serverless connection.**
 
-Blukit is designed for high-density environments where cellular networks fail and Wi-Fi is unavailable. Whether you’re at a sold-out stadium, inside a movie theater, or navigating a crowded transit hub, Blukit keeps you connected using a local peer-to-peer mesh.
+Blukit is designed for high-density environments where cellular networks fail and internet is a luxury. Whether you’re at a sold-out stadium, inside a dark theater, or navigating a crowded transit hub, Blukit keeps you connected using purely local vibes.
 
-**THE POWERS:**
-*   **Air (Public)**: Observe the vibe chronological stream of the crowd. A public hub for everyone within radio range (50-100m).
-*   **Ripples (Radar)**: Visualize the mesh in real-time. Vibes pop as chat bubbles across a 100k-person crowd simulation.
-*   **Ties (Private)**: Establish secure, encrypted 1-on-1 channels for private conversations with discretionary peers.
-*   **Vibe (Identity)**: No accounts, no phone numbers. Elect your identity with a custom Vibe (Emoji + Name) that stays local and ephemeral.
+**THE RITUALS:**
+*   **The Vibes**: Feel the collective energy of the crowd. A public hub for everyone within range to radiate their pulse.
+*   **Stadium Visualizer**: Watch vibes bubble up in real-time across a high-fidelity visual field. Feel the surges as hearts join the collective.
+*   **Your Ties**: Establish secure, intentional bonds. Bridge private channels only when both hearts accept the ritual.
+*   **Identity**: No accounts, no phone numbers. Your identity is your vibe—a local, ephemeral name that stays in your control.
 
-**KEY FEATURES:**
-*   **Stealth Mode**: A pitch-black OLED-optimized theme designed for discrete use in dark environments like theaters and stadiums.
-*   **Total Privacy**: All messages are stored only on your device and are automatically purged every 12 hours.
-*   **User Moderation**: Built-in **Report & Block** features to ensure a safe space. Long-press any message to instantly silence peers.
-*   **Hardware Security**: Military-grade encryption (AES-256-GCM) established via hardware-backed key exchange.
+**SENTIENT FEATURES:**
+*   **Quiet Light**: A pitch-black OLED-optimized theme designed for discrete stadium use without screen glare.
+*   **Total Privacy**: All vibes are stored only on your device and are automatically purged every 12 hours.
+*   **Bi-directional Ties**: Privacy by design. Private messaging requires mutual acceptance from the Magic Bar.
+*   **Hardware Security**: Military-grade encryption (AES-256-GCM) established via hardware-backed sentient handshakes.
 
-**NO INTERNET. NO CLOUD. NO TRACKING.**
+**NO INTERNET. NO CLOUD. NO TRACKING. JUST VIBES.**
 
 ---
 
 ## 🖼️ Graphical Asset Checklist
-- [ ] **App Icon**: 512x512 PNG.
-- [ ] **Feature Graphic**: 1024x500 PNG/JPG.
-- [ ] **Screenshots**: Highlighting the Air, the Ripples, and the Vibe ritual.
+- [x] **App Icon**: 512x512 PNG (Flowing B).
+- [x] **Feature Graphic**: 1024x500 PNG (OLED Stealth).
+- [ ] **Screenshots**: Highlighting The Vibes field and the Tie rituals.

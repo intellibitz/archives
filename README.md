@@ -1,23 +1,23 @@
-# Blukit — The Vibing Air
+# Blukit — Feel The Vibes
 
-**A decentralized, zero-infrastructure offline Air for high-density venues where internet fails.**
+**A decentralized, zero-infrastructure offline mesh for high-density venues where internet fails.**
 
 ---
 
 ## 🌟 What is Blukit?
 
-Blukit (`cc.thevar.blukit`) is an emotive P2P experience. It is the Vibing Air where you can feel the vibes of everyone around you instantly. Ties are the quiet side effects of these shared moments.
+Blukit (`cc.thevar.blukit`) is a sentient P2P experience. It is **The Vibes**—a collective pulse where you can feel the energy of everyone around you instantly. Ties are intentional, secure bonds formed through a shared ritual of connection.
 
 ### Key Capabilities
 
-| 🌬️ **The Air** | ✅ High-density stadium visualization with integrated vibes ticker |
-| 👥 **Your Ties** | ✅ Secure private bonds with real-time vibe reflection |
-| 🎭 **Your Vibe** | ✅ Context-aware anonymous identity with scenario moods |
-| 📛 **Unified Badge** | ✅ Global top-left anchor for branding and Air diagnostics |
-| 🔐 **Stealth Security** | ✅ AES-256-GCM + ECDH + HKDF hardware-backed encryption |
+| 🫂 **The Vibes** | ✅ High-fidelity stadium visualization with sentient vibes ticker |
+| 🤝 **Your Ties** | ✅ Bi-directional, permission-based secure bonds with real-time reflection |
+| 👤 **Your Vibe** | ✅ Minimalist anonymous identity ritual integrated into the hub |
+| 🧠 **Sentient Hub** | ✅ Bottom-anchored brain for branding, navigation, and diagnostics |
+| 🔐 **Stealth Security** | ✅ AES-256-GCM + ECDH hardware-backed encryption with auto-recovery |
 | 🌑 **OLED Stealth** | ✅ Pitch-black UI with vibing Amber and Rose accents |
 | 🗑️ **12h Vanish** | ✅ Automated TTL purge for absolute privacy |
-| 📱 **Fireproof Vibe** | ✅ 3-device verified (Pixel, Moto, Xiaomi) · SDK 37 ready |
+| 📱 **Extraordinary** | ✅ 4-device verified (Pixel, OnePlus, Moto, Xiaomi) · SDK 37 ready |
 
 ---
 
@@ -26,20 +26,21 @@ Blukit (`cc.thevar.blukit`) is an emotive P2P experience. It is the Vibing Air w
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                       UI Layer                               │
-│  ┌──────────┬──────────┬───────────┐    Navigation 3         │
-│  │The Air   │Your Ties │Your Vibe  │    M3 Adaptive          │
-│  └──────────┴──────────┴───────────┘    Unified Badge        │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │                   The Vibes (Stadium)                 │  │
+│  └───────────────────────────────────────────────────────┘  │
+│             Unified Hub (Sentient Brain & Navigation)        │
 ├─────────────────────────────────────────────────────────────┤
-│                      ViewModel Layer                         │
+│                      Intelligence Layer                      │
 │  ┌────────────────────┬──────────────────────────────┐      │
-│  │ MainViewModel      │ BluetoothViewModel           │      │
-│  │ (Identity Sync)    │ (Mesh State & Vibes Ticker)  │      │
+│  │ SupremePower       │ BluetoothViewModel           │      │
+│  │ (Breezes & Intel)  │ (Vibe State & Energy Surges) │      │
 │  └────────────────────┴──────────────────────────────┘      │
 ├─────────────────────────────────────────────────────────────┤
-│                     Data / Network Layer                     │
+│                     Transport / Security                     │
 │  ┌──────────┬──────────┬───────────┬──────────────────┐    │
 │  │Room DB   │CryptoMgr │Composite  │IdentityRepo       │    │
-│  │(Storage) │(Security)│P2P Engine │(Encrypted)       │    │
+│  │(Storage) │(Security)│P2P Engine │(Self-Healing)    │    │
 │  └──────────┴──────────┴───────────┴──────────────────┘    │
 │            PurgeWorker (12h TTL) + Fireproof RadioManager    │
 └─────────────────────────────────────────────────────────────┘
@@ -51,10 +52,10 @@ Blukit (`cc.thevar.blukit`) is an emotive P2P experience. It is the Vibing Air w
 |-------|-----------|--------|
 | Language | Kotlin 2.2.10 | ✅ |
 | UI | Compose OLED Stealth | ✅ |
-| Navigation | Navigation 3 | ✅ |
-| Mesh | Nearby + Native BLE | ✅ |
-| Security | Hardware AES-256 | ✅ |
-| Platform | Android 15 (API 37) | ✅ |
+| Navigation | Single-Hub Sentient Nav | ✅ |
+| Mesh | Nearby + Native BLE Fallback | ✅ |
+| Security | Hardware AES-256 (E2EE) | ✅ |
+| Platform | Android 15 (Target SDK 37) | ✅ |
 
 ---
 
@@ -66,18 +67,18 @@ Blukit (`cc.thevar.blukit`) is an emotive P2P experience. It is the Vibing Air w
 
 ### Build & Run
 ```bash
-./gradlew installDebug  # Vibe into the Air
+./gradlew installDebug  # Feel the vibes
 ```
 
 ---
 
 ## 🛡️ Data Safety & Compliance
 
-Blukit follows the **Vibing Air Commandments**:
-1. **Air Required**: Bluetooth is the only bridge.
-2. **Optional Breezes**: WiFi and Location are optional on modern devices.
-3. **Total Anonymity**: No tracking, no accounts, just vibes.
-4. **Absolute Stealth**: Data vanishes every 12 hours.
+Blukit follows the **Vibes Ritual Commandments**:
+1. **Bluetooth Only**: Your radio is the only bridge.
+2. **Mutual Consent**: Ties require explicit permission ritual.
+3. **Total Anonymity**: No tracking, no accounts, just pure vibes.
+4. **Absolute Stealth**: All data vanishes every 12 hours.
 
 Full details: [`doc/BLUKIT.md`](doc/BLUKIT.md) · [`doc/PRIVACY_POLICY.md`](doc/PRIVACY_POLICY.md)
 

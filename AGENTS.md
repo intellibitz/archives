@@ -9,9 +9,9 @@ You are the Lead Implementation Engineer inside Android Studio. Your task is to 
 * **Package Name:** `cc.thevar.blukit`
 * **Target / Compile SDK:** `37` | **Min SDK:** `26` (Android 8.0+)
 * **Language & Runtime:** Kotlin 2.2.x with Gradle Kotlin DSL (`build.gradle.kts`) | Java 17
-* **UI & Nav:** Jetpack Compose (OLED Stealth) + Navigation 3 (`@Serializable NavKey`)
+* **UI & Nav:** Jetpack Compose (OLED Stealth) + Navigation 3
 * **Transport Engine:** The Connection (Nearby Connections + Native BLE fallback)
-* **Data & Security:** Vibing Persistence (12-hour vanish TTL) + Hardware Keystore (ECDH + AES-256-GCM)
+* **Data & Security:** Vibing Persistence (12-hour vanish TTL) + Hardware Keystore (ECDH + AES-256-GCM) with Self-Healing Recovery.
 
 ---
 
@@ -19,63 +19,63 @@ You are the Lead Implementation Engineer inside Android Studio. Your task is to 
 
 ### Guidelines for Gemini:
 1. **OLED Stealth Design System:**
-   * Implement a pitch-black background (`#000000`) for dark theaters and stadiums.
+   * Implement a pitch-black background (`#000000`) for immersive stadium environments.
    * Use high-contrast amber (`#FFB300`) and rose (`#FF4081`) vibing accents.
-   * **Unified Blukit Badge:** Global visual anchor in top-left integrating brand and vibe diagnostics.
+   * **Unified Blukit Badge:** Sentient global anchor at the bottom integrating branding, identity, and diagnostics.
 
 2. **Navigation & Layout Architecture:**
-   * Implement Jetpack Navigation 3 using serializable routes.
-   * Terminology: **The Air** (Collective), **Vibes** (Chronological Hub), **Ties** (Connective Bonds), **Vibe** (Individual Persona).
+   * Single-Hub Experience: All controls, navigation, and identity rituals are integrated into the bottom hub.
+   * Terminology: **The Vibes** (Collective), **Vibes** (Chronological Ticker), **Ties** (Connective Bonds), **Vibe** (Individual Persona).
 
-3. **The Air (Visual Field):**
-   * High-fidelity animated stadium visualizer with concentric ripples representing proximity and energy surges.
+3. **The Vibes (Visual Field):**
+   * High-fidelity animated stadium visualizer with concentric ripples and real-time Energy Surges.
 
 ---
 
 ## 3. PHASE 2: CODE IMPLEMENTATION PROTOCOL
 
 ### Step 1: Fireproof Vibe & Manifest
-* **`RadioStateManager.kt`:** Hardened sensing that decouples permission state from hardware state to prevent false negatives.
-* **`AndroidManifest.xml`:** Declare Bluetooth and Location permissions (Location optional on Android 12+).
+* **`RadioStateManager.kt`:** Hardened sensing that decouples permission state from hardware state.
+* **`AndroidManifest.xml`:** Declare Bluetooth and Location permissions.
    * **CRITICAL:** Use `android:usesPermissionFlags="neverForLocation"` for Bluetooth scanning.
 
 ### Step 2: Security & Local Persistence Layer
-* **`CryptoManager.kt`:** Hardware Keystore key pair generator (SecP256r1), ECDH shared secret derivation, and AES-256-GCM flows.
+* **`CryptoManager.kt`:** Hardware Keystore key pair generator (SecP256r1) and AES-256-GCM authenticated encryption.
+* **`IdentityRepository.kt`:** Self-healing secure vault for anonymous "vibe" identity (👤 default).
 * **`Room Database`:** Automated 12-hour Time-To-Live (TTL) DAO cleanup.
-* **`IdentityRepository.kt`:** Manage anonymous "vibe" name and "Mask (🎭)" default visage.
 
-### Step 3: P2P Air Engine
-* **`NearbyP2PController.kt`:** Wrap Nearby Connections (`P2P_CLUSTER`) inside Kotlin `StateFlow`. Implement **Sequential Vibe Queue** for reliability.
-* **`BleFallbackController.kt`:** Provide native BLE advertiser/scanner fallback.
+### Step 3: P2P Vibes Engine
+* **`NearbyP2PController.kt`:** Reliable `P2P_CLUSTER` transport with **Sequential Vibe Queue**.
+* **`BleFallbackController.kt`:** Native BLE GATT advertiser/scanner fallback with automated handshake.
 
 ### Step 4: Jetpack Compose UI
-* **`RipplesScreen.kt` (The Air):** Integrated visual field and expanding scrollable Vibes ticker (up to 400dp).
-* **`TieScreen.kt` (Bonds):** Secure encrypted thread with real-time pervasive vibe reflection.
-* **`ProfileScreen.kt` (Vibe):** Scenario-based mood selection and the "Stillness" (destructive) zone.
+* **`RipplesScreen.kt` (The Vibes):** Immersive visual field and atmospheric Vibes ticker with focus-tuning.
+* **`TieScreen.kt` (Bonds):** Secure encrypted threads showing only mutual ties in the stadium field.
+* **`UnifiedBlukitBadge` (The Brain):** Sentient "Magic Bar" with interactive stats, live Breezes, and Haptic Resonance.
 
 ---
 
 ## 4. PHASE 3: PHYSICAL DEVICE TESTING & VERIFICATION
 
-Guide the developer through testing on a **3-device physical Air** (e.g., Pixel, Moto, Xiaomi).
+Guide the developer through testing on a **4-device physical fleet** (Pixel, OnePlus, Moto, Xiaomi).
 
 ### Instruction Checklist for Physical Testing:
 
 1. **Multi-Device Setup:**
    * Deploy debug builds simultaneously via Android Studio (`Run on Multiple Devices`).
-   * Verify "Allow Access" ritual on new installs.
+   * Verify "New Vibes Ritual" (Bi-directional Tie requests) between devices.
 
-2. **Vibe & Vibes Verification:**
-   * Change vibe icon on Device A -> Verify instant reflection on Device B and C.
-   * Send vibes from Device B -> Verify it "jumps" into the ticker on A and C with energy surges.
+2. **Vibe & Energy Verification:**
+   * Send vibes -> Verify real-time **Energy Surges** across the visual stadium field.
+   * Observe **Atmospheric Breezes** in the Magic Bar as vibes join the collective.
 
 3. **Fireproof Radio Testing:**
-   * Turn off Bluetooth/GPS -> Verify "The Air is Still" warning appears accurately.
-   * Deny location on Android 12+ -> Verify Air still functions via Bluetooth.
+   * Turn off Bluetooth -> Verify "The Vibes are Still" warning and sentient "AWAKEN" actions.
+   * Verify self-healing Keystore logic on devices like OnePlus.
 
 ---
 
 ## 5. RESPONSE RULES
 - **Efficiency:** Zero conversation fluff. Jump directly to solutions.
-- **Max Real Estate:** Prioritize UI space Gain (Unified Badge architecture).
-- **Human-Centric:** Use "Vibing Air" terminology consistently.
+- **Max Real Estate:** Single-Hub architecture only. No redundant screens.
+- **Human-Centric:** Use "The Vibes" terminology exclusively.

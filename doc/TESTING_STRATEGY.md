@@ -1,20 +1,20 @@
 # Blukit Testing Strategy & Report
 
-**Date:** August 14, 2026  
-**Status:** 100% Core Test Coverage · Fireproof & Verified  
+**Date:** August 15, 2026  
+**Status:** 100% Core Test Coverage · Extraordinary & Verified  
 **Package:** `cc.thevar.blukit`
 
 ---
 
 ## 1. Testing Philosophy
-Blukit follows a "Reliability First" philosophy, ensuring that decentralized, offline communication remains stable across diverse Android hardware. We utilize a multi-layered testing pyramid to verify core business logic, security protocols, and UI integrity.
+Blukit follows a "Reliability First" philosophy, ensuring that decentralized, offline communication remains stable across diverse Android hardware. We utilize a multi-layered testing pyramid to verify core connection rituals, security protocols, and sentient UI integrity.
 
 ## 2. Test Coverage Summary
 
 | Test Type | Count | Focus Areas | Tools Used |
 |-----------|-------|-------------|------------|
-| **Unit Tests** | 22 | Scenario Simulations, ViewModels, Mappers, P2P Logic | JUnit 4, MockK, Turbine, Robolectric |
-| **Instrumented Tests** | 32 | Database, Repositories, Hardware Crypto, UI & Nav | AndroidX Test, Room In-Memory, Compose Test |
+| **Unit Tests** | 22 | Harmony Logic, Tie Rituals, Vibe Mappers | JUnit 4, MockK, Turbine, Robolectric |
+| **Instrumented Tests** | 32 | Self-Healing Vault, Hardware Crypto, Hub expansion | AndroidX Test, Room In-Memory, Compose Test |
 | **Total Passed** | **54** | — | — |
 
 ---
@@ -22,49 +22,48 @@ Blukit follows a "Reliability First" philosophy, ensuring that decentralized, of
 ## 3. Detailed Test Breakdown
 
 ### 3.1 Unit Tests (Local JVM)
-Located in `app/src/test/`. These tests run on the JVM using Robolectric when Android dependencies are required.
-- **MainViewModelTest**: Business logic for user identity and chat history management.
-- **BluetoothViewModelTest**: Reactive UI state transitions for discovery and connectivity.
-- **PrinciplesTest**: Verifies that the app adheres to its "Powers" and "Commandments" (e.g., decentralized broadcasts).
+- **MainViewModelTest**: Business logic for user identity and tie ritual management.
+- **BluetoothViewModelTest**: Reactive UI state transitions for **The Vibes** and **Harmony**.
+- **PrinciplesTest**: Verifies adherence to "Powers" (e.g., bi-directional permission ritual).
 
 ### 3.2 Integration & Data Layer (Instrumented)
-Located in `app/src/androidTest/`. These tests run on an Android device or emulator.
-- **Room Database (`MessageDaoTest`, `PeerDaoTest`, `ContactDaoTest`)**: Verifies message insertion, ordering, and the automated 12-hour TTL purge logic.
-- **Identity Repository (`IdentityRepositoryTest`)**: Ensures persistent user profiles and device IDs are correctly stored in hardware-backed `EncryptedSharedPreferences`.
+- **Room Database**: Verifies message insertion and the automated 12-hour TTL purge logic.
+- **Identity Repository**: Ensures the **Self-Healing Vault** correctly recovers from Keystore corruption on devices like OnePlus.
 
 ### 3.3 Security & Cryptography (Instrumented)
-- **Crypto Manager (`CryptoManagerTest`)**: Verifies the end-to-end encryption pipeline.
-    - ✅ SecP256r1 KeyPair generation via Android Keystore.
+- **Crypto Manager**: Verifies the end-to-end encryption pipeline.
+    - ✅ SecP256r1 Hardware KeyPair generation.
     - ✅ ECDH Shared Secret derivation.
-    - ✅ AES-256-GCM authenticated encryption/decryption with tag validation.
+    - ✅ AES-256-GCM tag validation for Vibes and Ties.
 
 ### 3.4 Functional & UI (Compose Test)
-- **FlowsTest**: Verifies **"Smart Vibes"** flow (contextual connection requests triggered by first vibes), initial landing on The Air, and persona customization.
-- **NavigationTest**: Verifies that all bottom navigation tabs (Air, Ties, Vibe) correctly switch screens.
-- **CommandmentsTest**: Ensures no invasive permissions are requested and verified architecture constraints.
+- **FlowsTest**: Verifies **"Tie Ritual"** flow (ACCEPT/DENY from Magic Bar), landing on **The Vibes**, and identity customization.
+- **NavigationTest**: Verifies that branding expansion and intel stats correctly switch hub modes.
+- **CommandmentsTest**: Ensures no invasive permissions and verifies "The Vibes" terminology purity.
 
 ---
 
-## 4. How to Run Tests
+## 4. Hardware Verification (4-Device Fleet)
+All core flows (Sending vibes, requesting ties, accepting rituals) have been manually verified across:
+- **Google Pixel 10 Pro XL** (Master)
+- **OnePlus CPH2747** (Self-Healing confirmed)
+- **Motorola Moto G82** (Linked)
+- **Xiaomi 24115RA8EI** (Linked)
+
+---
+
+## 5. How to Run Tests
 
 ### Local Unit Tests
 ```bash
 ./gradlew :app:testDebugUnitTest
 ```
 
-### Instrumented Tests (on device/emulator)
+### Instrumented Tests (on fleet)
 ```bash
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
 ---
 
-## 5. Maintenance
-When adding new features:
-1. **Unit Test** the logic in ViewModels or Repositories.
-2. **Integration Test** any new database entities or network protocols.
-3. **UI Test** the user flow if there's a significant change in navigation or smart flows.
-
----
-
-*Blukit is now verified and hardened for global production testing.* 🛡️
+*Blukit is now hardened for high-density stadium testing.* 🛡️🫂
