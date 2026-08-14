@@ -20,34 +20,35 @@ class IdentityRepositoryTest {
 
     @Before
     fun setUp() {
-        repository = IdentityRepository(ApplicationProvider.getApplicationContext())
+        repository = IdentityRepositoryImpl(ApplicationProvider.getApplicationContext())
+        repository.logout()
     }
 
     @Test
-    fun `test default identity values`() = runTest {
-        repository.nickname.test {
-            assertEquals(null, awaitItem()) // Default is null for "Watch first" flow
+    fun testDefaultIdentityValues() = runTest {
+        repository.nicknameFlow.test {
+            assertEquals(null, awaitItem()) 
         }
         repository.emojiAvatar.test {
-            assertEquals("🟦", awaitItem())
+            assertEquals("🎭", awaitItem())
         }
     }
 
     @Test
-    fun `test saving and resetting identity`() = runTest {
+    fun testSavingAndResettingIdentity() = runTest {
         repository.saveNickname("NewName")
-        repository.nickname.test {
+        repository.nicknameFlow.test {
             assertEquals("NewName", awaitItem())
         }
         
         repository.logout()
-        repository.nickname.test {
+        repository.nicknameFlow.test {
             assertEquals(null, awaitItem())
         }
     }
 
     @Test
-    fun `test stealth mode toggle`() = runTest {
+    fun testStealthModeToggle() = runTest {
         repository.stealthMode.test {
             assertFalse(awaitItem())
         }
@@ -59,7 +60,7 @@ class IdentityRepositoryTest {
     }
 
     @Test
-    fun `test device id generation and persistence`() = runTest {
+    fun testDeviceIdGeneration() = runTest {
         val id1 = repository.getDeviceId()
         assertTrue(id1.isNotEmpty())
         
@@ -68,7 +69,7 @@ class IdentityRepositoryTest {
     }
 
     @Test
-    fun `test blocking users`() = runTest {
+    fun testBlockingUsers() = runTest {
         repository.blockedUsers.test {
             assertTrue(awaitItem().isEmpty())
         }

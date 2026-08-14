@@ -10,6 +10,7 @@ import cc.thevar.blukit.network.p2p.NearbyP2PController
 import cc.thevar.blukit.domain.model.MessagePayload
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -23,13 +24,14 @@ import org.robolectric.annotation.Config
 /**
  * Supreme Senior Android Expert Implementation:
  * Principles Test Suite verifying the "Powers" and "Commandments" of Blukit.
+ * Aligned with the "Vibing Air" philosophy.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = TestBlukitApplication::class)
 class PrinciplesTest {
 
-    private val repository: IdentityRepository = mockk(relaxed = true)
+    private lateinit var repository: IdentityRepository
     private val contactRepository: ContactRepository = mockk(relaxed = true)
     private val messageDao: MessageDao = mockk(relaxed = true)
     private val peerDao: PeerDao = mockk(relaxed = true)
@@ -47,10 +49,16 @@ class PrinciplesTest {
         every { android.util.Log.w(any<String>(), any<String>()) } returns 0
         every { android.util.Log.e(any<String>(), any<String>(), any<Throwable>()) } returns 0
         
-        every { repository.emojiAvatar } returns flowOf("👤")
-        coEvery { repository.getNickname() } returns "TestUser"
-        coEvery { repository.getDeviceId() } returns "test-device-id"
+        repository = mockk(relaxed = true)
+        
+        every { repository.nicknameFlow } returns MutableStateFlow(null)
+        every { repository.emojiAvatar } returns MutableStateFlow("👤")
+        every { repository.stealthMode } returns MutableStateFlow(false)
+        every { repository.blockedUsers } returns MutableStateFlow(emptySet())
+        every { repository.getCurrentNickname() } returns "TestUser"
+        every { repository.getDeviceId() } returns "test-device-id"
         every { messageDao.getAllMessages() } returns flowOf(emptyList())
+        every { contactRepository.allContacts } returns flowOf(emptyList())
         
         controller = NearbyP2PController(
             io.mockk.mockk(relaxed = true), repository, contactRepository, messageDao, peerDao, hapticManager, cryptoManager, testDispatcher
@@ -60,13 +68,13 @@ class PrinciplesTest {
     // --- POWER TESTS ---
 
     @Test
-    fun `Power 1 & 4 - Messages are decentralized and broadcast to all users`() = runTest {
+    fun `Power 1 & 4 - Vibes are decentralized and broadcast to everyone in the air`() = runTest {
         controller.broadcastMessage("Public Info")
         coVerify { messageDao.insertMessage(match { it.content == "Public Info" && it.receiverId == null }) }
     }
 
     @Test
-    fun `Power 2 - User can chat in default group without any peers connected`() = runTest {
+    fun `Power 2 - User can feel the vibes in the air without any ties connected`() = runTest {
         val result = controller.broadcastMessage("Lone Shoutout")
         assertNotNull(result)
         assertEquals("Lone Shoutout", result?.content)

@@ -16,6 +16,7 @@ import com.google.android.gms.tasks.Tasks
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -43,7 +44,7 @@ import javax.crypto.spec.SecretKeySpec
 class StadiumSurgeTest {
 
     private lateinit var context: Context
-    private val repository: IdentityRepository = mockk(relaxed = true)
+    private lateinit var repository: IdentityRepository
     private val contactRepository: ContactRepository = mockk(relaxed = true)
     private val messageDao: MessageDao = mockk(relaxed = true)
     private val peerDao: PeerDao = mockk(relaxed = true)
@@ -59,6 +60,8 @@ class StadiumSurgeTest {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
         
+        repository = mockk(relaxed = true)
+        
         mockkStatic(Nearby::class)
         every { Nearby.getConnectionsClient(any<Context>()) } returns connectionsClient
         
@@ -69,9 +72,11 @@ class StadiumSurgeTest {
         every { connectionsClient.sendPayload(any<String>(), any()) } returns Tasks.forResult<Void>(null)
         
         every { messageDao.getAllMessages() } returns flowOf(emptyList())
-        coEvery { repository.getNickname() } returns "StadiumUser"
-        every { repository.emojiAvatar } returns flowOf("⚽")
-        every { repository.blockedUsers } returns flowOf(emptySet())
+        every { repository.getCurrentNickname() } returns "StadiumUser"
+        every { repository.getDeviceId() } returns "stadium-id"
+        every { repository.nicknameFlow } returns MutableStateFlow("StadiumUser")
+        every { repository.emojiAvatar } returns MutableStateFlow("⚽")
+        every { repository.blockedUsers } returns MutableStateFlow(emptySet())
 
         controller = NearbyP2PController(
             context, repository, contactRepository, messageDao, peerDao, hapticManager, cryptoManager, testDispatcher
@@ -131,6 +136,10 @@ class StadiumSurgeTest {
             payloadCallbackSlot.captured.onPayloadReceived(peerId, handshakePayload)
             testDispatcher.scheduler.advanceUntilIdle()
 
+            // Simulate the peer having a successful connection result (linked)
+            lifecycleCallback.onConnectionResult(peerId, mockk<ConnectionResolution>().apply { every { status.isSuccess } returns true })
+            testDispatcher.scheduler.advanceUntilIdle()
+
             // Simulate the peer "Blukitting" their message
             val messagePayload = MessagePayload(
                 messageId = "msg-$index",
@@ -160,7 +169,7 @@ class StadiumSurgeTest {
             }
         }
 
-        // 6. Verify Haptic Alerts triggered for every stadium shoutout
-        verify(exactly = stadiumScenarios.size) { hapticManager.triggerMessageAlert() }
+        // 6. Verify Haptic Vibes triggered for every stadium shoutout
+        verify(exactly = stadiumScenarios.size) { hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE) }
     }
 }

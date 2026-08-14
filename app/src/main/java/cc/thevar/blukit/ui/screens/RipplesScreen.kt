@@ -82,6 +82,7 @@ fun RipplesScreen(
     }
 
     val permissionState = rememberMultiplePermissionsState(permissions = permissions)
+    var showSmartFlowPrompt by remember { mutableStateOf(false) }
 
     // Chat Bubbles logic for Radar visualization
     val activeBubbles = remember { mutableStateListOf<BubbleData>() }
@@ -184,10 +185,14 @@ fun RipplesScreen(
                         onValueChange = { message = it },
                         onSend = {
                             if (message.isNotBlank()) {
-                                onBroadcastMessage(message)
-                                message = ""
-                                isInputVisible = false
-                                focusManager.clearFocus()
+                                if (state.isDiscovering || state.isAdvertising) {
+                                    onBroadcastMessage(message)
+                                    message = ""
+                                    isInputVisible = false
+                                    focusManager.clearFocus()
+                                } else {
+                                    showSmartFlowPrompt = true
+                                }
                             }
                         },
                         placeholder = stringResource(R.string.shout_type_placeholder)
@@ -234,6 +239,33 @@ fun RipplesScreen(
                 }
             }
         }
+    }
+
+    if (showSmartFlowPrompt) {
+        AlertDialog(
+            onDismissRequest = { showSmartFlowPrompt = false },
+            title = { Text(stringResource(R.string.smart_flow_title)) },
+            text = { Text(stringResource(R.string.smart_flow_desc)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSmartFlowPrompt = false
+                        if (permissionState.allPermissionsGranted) {
+                            onStartScan()
+                        } else {
+                            permissionState.launchMultiplePermissionRequest()
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.smart_flow_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSmartFlowPrompt = false }) {
+                    Text(stringResource(R.string.btn_cancel))
+                }
+            }
+        )
     }
 }
 

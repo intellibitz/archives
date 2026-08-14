@@ -45,13 +45,14 @@ class CommandmentsTest {
     }
 
     @Test
-    fun testPower1_LandingScreenIsTheSquare() {
+    fun testPower1_LandingScreenIsTheAir() {
         // Mock a repository
         val repository: cc.thevar.blukit.data.repository.IdentityRepository = mockk(relaxed = true)
-        val nicknameFlow = kotlinx.coroutines.flow.MutableStateFlow("vibe")
-        io.mockk.every { repository.nickname } returns nicknameFlow
+        val nicknameFlow = kotlinx.coroutines.flow.MutableStateFlow<String?>("vibe")
+        io.mockk.every { repository.nicknameFlow } returns nicknameFlow
         io.mockk.every { repository.emojiAvatar } returns kotlinx.coroutines.flow.MutableStateFlow("🟦")
         io.mockk.every { repository.stealthMode } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        io.mockk.every { repository.blockedUsers } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet())
         io.mockk.every { repository.getDeviceId() } returns "id-123"
 
         val p2p: cc.thevar.blukit.network.p2p.P2PController = mockk(relaxed = true)
@@ -61,7 +62,7 @@ class CommandmentsTest {
         io.mockk.every { p2p.isAdvertising } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         io.mockk.every { p2p.isConnected } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         io.mockk.every { p2p.messages } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
-        io.mockk.every { p2p.errors } returns kotlinx.coroutines.flow.MutableSharedFlow()
+        io.mockk.every { p2p.errors } returns kotlinx.coroutines.flow.MutableStateFlow("")
 
         val spm: cc.thevar.blukit.data.power.SupremePowerManager = mockk(relaxed = true)
         io.mockk.every { spm.report } returns kotlinx.coroutines.flow.MutableStateFlow(cc.thevar.blukit.domain.power.SupremePowerReport())

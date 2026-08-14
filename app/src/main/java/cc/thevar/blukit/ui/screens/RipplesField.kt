@@ -95,25 +95,7 @@ fun RipplesField(
     val processedRelayIds = remember { mutableSetOf<String>() }
     var collectiveEnergy by remember { mutableStateOf(0f) }
 
-    // 2. Permissions Management - Bluetooth only as per Commandment 1
-    val permissionsState = rememberMultiplePermissionsState(
-        permissions = buildList {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                add(Manifest.permission.BLUETOOTH_SCAN)
-                add(Manifest.permission.BLUETOOTH_ADVERTISE)
-                add(Manifest.permission.BLUETOOTH_CONNECT)
-            } else {
-                add(Manifest.permission.BLUETOOTH)
-                add(Manifest.permission.BLUETOOTH_ADMIN)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                add(Manifest.permission.NEARBY_WIFI_DEVICES)
-            }
-        }
-    )
-    var showSmartFlowPrompt by remember { mutableStateOf(value = false) }
-
-    // 3. Logic: Trigger Relay Lines & Vibe Ripples when a new bubble appears
+    // 2. Logic: Trigger Relay Lines & Vibe Ripples when a new bubble appears
     LaunchedEffect(activeBubbles.size) {
         if (activeBubbles.isNotEmpty()) {
             val last = activeBubbles.last()
@@ -155,33 +137,6 @@ fun RipplesField(
             }
             delay(100)
         }
-    }
-
-    if (showSmartFlowPrompt) {
-        AlertDialog(
-            onDismissRequest = { showSmartFlowPrompt = false },
-            title = { Text(stringResource(R.string.smart_flow_title)) },
-            text = { Text(stringResource(R.string.smart_flow_desc)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showSmartFlowPrompt = false
-                        if (permissionsState.allPermissionsGranted) {
-                            onStartScan()
-                        } else {
-                            permissionsState.launchMultiplePermissionRequest()
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.smart_flow_action))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSmartFlowPrompt = false }) {
-                    Text(stringResource(R.string.btn_cancel))
-                }
-            }
-        )
     }
 
     Column(

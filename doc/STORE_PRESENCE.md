@@ -17,10 +17,10 @@ This document contains the finalized text for the **Blukit** Play Store listing.
 Blukit is designed for high-density environments where cellular networks fail and Wi-Fi is unavailable. Whether you’re at a sold-out stadium, inside a movie theater, or navigating a crowded transit hub, Blukit keeps you connected using a local peer-to-peer mesh.
 
 **THE POWERS:**
-*   **Watch (The Square)**: Observe the vibe chronological stream of the crowd. A public hub for everyone within radio range (50-100m).
-*   **Shout (Radar)**: Visualize the mesh in real-time. Shouts pop as chat bubbles across a 100k-person crowd simulation.
-*   **Whisper (Private)**: Establish secure, encrypted 1-on-1 channels for private conversations with discretionary peers.
-*   **Mask (Identity)**: No accounts, no phone numbers. Elect your identity with a custom Mask (Emoji + Name) that stays local and ephemeral.
+*   **Air (Public)**: Observe the vibe chronological stream of the crowd. A public hub for everyone within radio range (50-100m).
+*   **Ripples (Radar)**: Visualize the mesh in real-time. Vibes pop as chat bubbles across a 100k-person crowd simulation.
+*   **Ties (Private)**: Establish secure, encrypted 1-on-1 channels for private conversations with discretionary peers.
+*   **Vibe (Identity)**: No accounts, no phone numbers. Elect your identity with a custom Vibe (Emoji + Name) that stays local and ephemeral.
 
 **KEY FEATURES:**
 *   **Stealth Mode**: A pitch-black OLED-optimized theme designed for discrete use in dark environments like theaters and stadiums.
@@ -35,4 +35,4 @@ Blukit is designed for high-density environments where cellular networks fail an
 ## 🖼️ Graphical Asset Checklist
 - [ ] **App Icon**: 512x512 PNG.
 - [ ] **Feature Graphic**: 1024x500 PNG/JPG.
-- [ ] **Screenshots**: Highlighting the Square, the Battle Map (Radar), and the Mask ritual.
+- [ ] **Screenshots**: Highlighting the Air, the Ripples, and the Vibe ritual.

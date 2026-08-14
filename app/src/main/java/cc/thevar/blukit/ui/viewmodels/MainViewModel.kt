@@ -11,7 +11,7 @@ class MainViewModel(
     private val messageDao: cc.thevar.blukit.data.local.dao.MessageDao,
 ) : ViewModel() {
 
-    val nickname: Flow<String?> = repository.nickname
+    val nickname: Flow<String?> = repository.nicknameFlow
     val emojiAvatar: Flow<String> = repository.emojiAvatar
     val isStealthMode: Flow<Boolean> = repository.stealthMode
     

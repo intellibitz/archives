@@ -14,7 +14,7 @@ class WhisperScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun testWhisperScreenDisplaysMessages() {
+    fun testTieScreenDisplaysMessages() {
         val messages = listOf(
             MessagePayload(
                 messageId = "1",
@@ -40,9 +40,10 @@ class WhisperScreenTest {
 
         composeTestRule.setContent {
             BlukitTheme {
-                WhisperScreen(
-                    state = BluetoothUiState(messages = messages, isConnected = true),
+                TieScreen(
+                    state = BluetoothUiState(messages = messages),
                     localDeviceId = "mask-1",
+                    localEmoji = "🎭",
                     peerId = "user-1",
                     peerName = "Peer A",
                     peerEmoji = "🐱",
@@ -58,9 +59,7 @@ class WhisperScreenTest {
         composeTestRule.onNodeWithText("Hello from Peer A").assertExists()
         composeTestRule.onNodeWithText("My local message").assertExists()
         
-        // Peer A appears in TopAppBar
-        composeTestRule.onNodeWithText("🐱Peer A").assertExists()
-        // And as sender name in bubble (UPPERCASE)
+        // Peer A name in bubble (UPPERCASE)
         composeTestRule.onNodeWithText("PEER A").assertExists()
     }
 }

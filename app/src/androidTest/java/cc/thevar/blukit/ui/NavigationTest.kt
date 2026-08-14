@@ -28,16 +28,18 @@ class NavigationTest {
 
     @Before
     fun setUp() {
-        every { repository.nickname } returns MutableStateFlow("vibe")
-        every { repository.emojiAvatar } returns MutableStateFlow("🟦")
+        every { repository.nicknameFlow } returns MutableStateFlow("vibe")
+        every { repository.emojiAvatar } returns MutableStateFlow("🎭")
         every { repository.stealthMode } returns MutableStateFlow(false)
-        every { repository.deviceId } returns MutableStateFlow("test-device-id")
+        every { repository.blockedUsers } returns MutableStateFlow(emptySet())
+        every { repository.getDeviceId() } returns "test-device-id"
+        every { repository.getCurrentNickname() } returns "vibe"
         
         every { p2pController.scannedDevices } returns MutableStateFlow(emptyList())
         every { p2pController.connectedPeers } returns MutableStateFlow(emptySet())
         every { p2pController.isDiscovering } returns MutableStateFlow(false)
         every { p2pController.isAdvertising } returns MutableStateFlow(false)
-        every { p2pController.errors } returns MutableSharedFlow()
+        every { p2pController.errors } returns MutableStateFlow("")
         every { p2pController.isConnected } returns MutableStateFlow(false)
         every { p2pController.messages } returns MutableStateFlow(emptyList())
         
@@ -48,27 +50,27 @@ class NavigationTest {
     fun testBottomNavigation() {
         startApp()
         
-        // 1. Air (The Air) - Initial
-        composeTestRule.onNodeWithText("The Air").assertIsDisplayed()
+        // 1. Air (THE AIR) - Initial
+        // The title is in the badge
+        composeTestRule.onNodeWithText("THE AIR").assertIsDisplayed()
         
-        // 2. Nearby (Presence)
-        composeTestRule.onNodeWithText("Nearby").performClick()
-        composeTestRule.onNodeWithText("Nearby").assertIsDisplayed()
+        // 2. Ties (YOUR TIES)
+        composeTestRule.onNodeWithText("Ties").performClick()
+        composeTestRule.onNodeWithText("YOUR TIES").assertIsDisplayed()
         
-        // 3. Whispers
-        composeTestRule.onNodeWithText("Whispers").performClick()
-        composeTestRule.onNodeWithText("Whispers").assertIsDisplayed()
-        
-        // 4. Vibe
+        // 3. Vibe (YOUR VIBE)
         composeTestRule.onNodeWithText("Vibe").performClick()
-        composeTestRule.onNodeWithText("Vibe").assertIsDisplayed()
+        composeTestRule.onNodeWithText("YOUR VIBE").assertIsDisplayed()
         
-        // 5. Back to Air
+        // 4. Back to Air
         composeTestRule.onNodeWithText("Air").performClick()
-        composeTestRule.onNodeWithText("The Air").assertIsDisplayed()
+        composeTestRule.onNodeWithText("THE AIR").assertIsDisplayed()
     }
 
     private fun startApp() {
+        val spm: cc.thevar.blukit.data.power.SupremePowerManager = mockk(relaxed = true)
+        every { spm.report } returns MutableStateFlow(cc.thevar.blukit.domain.power.SupremePowerReport())
+
         composeTestRule.setContent {
             BlukitTheme {
                 BlukitApp(
@@ -77,6 +79,7 @@ class NavigationTest {
                     messageDao = messageDao,
                     radioStateManager = radioStateManager,
                     p2pController = p2pController,
+                    supremePowerManager = spm,
                     onEnterPip = {}
                 )
             }

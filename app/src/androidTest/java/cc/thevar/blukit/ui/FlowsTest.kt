@@ -30,24 +30,26 @@ class FlowsTest {
     private val p2pController: P2PController = mockk(relaxed = true)
     private val supremePowerManager: SupremePowerManager = mockk(relaxed = true)
 
-    private val nicknameFlow = MutableStateFlow("vibe")
-    private val emojiFlow = MutableStateFlow("🟦")
+    private val nicknameFlow = MutableStateFlow<String?>("vibe")
+    private val emojiFlow = MutableStateFlow("🎭")
     private val stealthModeFlow = MutableStateFlow(false)
-    private val deviceIdFlow = MutableStateFlow("test-device-id")
+    private val blockedUsersFlow = MutableStateFlow(emptySet<String>())
     
     private val scannedDevicesFlow = MutableStateFlow(emptyList<cc.thevar.blukit.domain.model.P2PDevice>())
     private val radioStatesFlow = MutableStateFlow(RadioStates(false, false))
     private val connectedPeersFlow = MutableStateFlow(emptySet<String>())
     private val isDiscoveringFlow = MutableStateFlow(false)
     private val messagesFlow = MutableStateFlow(emptyList<cc.thevar.blukit.domain.model.MessagePayload>())
-    private val errorsFlow = MutableSharedFlow<String>()
+    private val errorsFlow = MutableStateFlow("")
 
     @Before
     fun setUp() {
-        every { repository.nickname } returns nicknameFlow
+        every { repository.nicknameFlow } returns nicknameFlow
         every { repository.emojiAvatar } returns emojiFlow
         every { repository.stealthMode } returns stealthModeFlow
-        every { repository.deviceId } returns deviceIdFlow
+        every { repository.blockedUsers } returns blockedUsersFlow
+        every { repository.getDeviceId() } returns "test-device-id"
+        every { repository.getCurrentNickname() } returns "vibe"
         
         every { p2pController.scannedDevices } returns scannedDevicesFlow
         every { p2pController.connectedPeers } returns connectedPeersFlow
@@ -74,7 +76,8 @@ class FlowsTest {
         startApp()
         
         // Type a shout
-        composeTestRule.onNodeWithText("SEND VIBES TO EVERYONE...").performTextInput("Hello Mesh!")
+        // Use substring match to avoid ellipsis issues
+        composeTestRule.onNodeWithText("SEND VIBES", substring = true).performTextInput("Hello Mesh!")
         
         // Click Send
         composeTestRule.onNodeWithContentDescription("Send").performClick()
@@ -92,14 +95,13 @@ class FlowsTest {
         composeTestRule.onNodeWithText("Vibe").performClick()
         
         // Should be on Vibe screen
-        composeTestRule.onNodeWithText("VIBE").assertIsDisplayed()
+        // "YOUR VIBE" is the title in the badge, but screen has "NAME YOUR VIBE" label
+        composeTestRule.onNodeWithText("NAME YOUR VIBE").assertIsDisplayed()
         
         // Change nickname
         composeTestRule.onAllNodesWithText("vibe")[0].performTextReplacement("NewUser")
         
-        // Save
-        composeTestRule.onNodeWithText("ENTER THE VIBES").performClick()
-        
+        // It saves automatically in the current implementation
         verify { repository.saveNickname("NewUser") }
     }
 

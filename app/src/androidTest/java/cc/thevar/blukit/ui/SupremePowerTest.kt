@@ -13,35 +13,42 @@ class SupremePowerTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun testSupremePowerOverlay_ExpandAndCollapse() {
+    fun testSupremePowerBadge_ExpandAndCollapse() {
         val report = SupremePowerReport(
             userCount = 10,
             connectedPeerCount = 2,
             trafficDensity = "ACTIVE",
-            aiInsight = "Mesh is healthy"
+            aiInsight = "Mesh is healthy",
+            signalStability = "STABLE"
         )
 
         composeTestRule.setContent {
             BlukitTheme {
-                SupremePowerOverlay(report = report)
+                UnifiedBlukitBadge(
+                    title = "THE AIR",
+                    subtitle = "FEEL THE VIBES",
+                    report = report,
+                    isDiscovering = true,
+                    isBluetoothEnabled = true
+                )
             }
         }
 
-        // Check closed state (only icon and label)
-        composeTestRule.onNodeWithText("MESH INTEL").assertIsDisplayed()
-        composeTestRule.onNodeWithText("ACTIVE").assertDoesNotExist()
+        // Check closed state
+        composeTestRule.onNodeWithText("BLUKIT").assertIsDisplayed()
+        composeTestRule.onNodeWithText("HEARTS").assertDoesNotExist()
 
         // Click to expand
-        composeTestRule.onNodeWithText("MESH INTEL").performClick()
+        composeTestRule.onNodeWithText("BLUKIT").performClick()
 
         // Check expanded state
-        composeTestRule.onNodeWithText("NODES").assertIsDisplayed()
+        composeTestRule.onNodeWithText("HEARTS").assertIsDisplayed()
         composeTestRule.onNodeWithText("10").assertIsDisplayed()
         composeTestRule.onNodeWithText("ACTIVE").assertIsDisplayed()
         composeTestRule.onNodeWithText("MESH IS HEALTHY").assertIsDisplayed() // Uppercase check
 
         // Click to collapse
-        composeTestRule.onNodeWithText("MESH INTEL").performClick()
-        composeTestRule.onNodeWithText("NODES").assertDoesNotExist()
+        composeTestRule.onNodeWithText("BLUKIT").performClick()
+        composeTestRule.onNodeWithText("HEARTS").assertDoesNotExist()
     }
 }

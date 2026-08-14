@@ -12,52 +12,46 @@ class ProfileScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun testProfileScreenDisplaysTitleAndNicknameField() {
+    fun testProfileScreenDisplaysNicknameField() {
         composeTestRule.setContent {
             BlukitTheme {
                 ProfileScreen(
-                    currentNickname = null,
-                    currentEmoji = "👤",
+                    currentNickname = "vibe",
+                    currentEmoji = "🎭",
                     isStealthMode = false,
                     onSaveNickname = {},
                     onSaveEmoji = {},
                     onToggleStealth = {},
-                    onNavigateNext = {},
                     onClearHistory = {},
                     onLogout = {}
                 )
             }
         }
 
-        // Title is now MASK
-        composeTestRule.onNodeWithText("MASK").assertExists()
+        // Label is now NAME YOUR VIBE
+        composeTestRule.onNodeWithText("NAME YOUR VIBE").assertIsDisplayed()
         
-        // Label is now PROTOCOL DESIGNATION
-        composeTestRule.onNodeWithText("PROTOCOL DESIGNATION").assertExists()
-        
-        // Button is now DON THE MASK
-        composeTestRule.onNodeWithText("DON THE MASK").assertIsNotEnabled()
+        // Emoji section
+        composeTestRule.onNodeWithText("PICK YOUR MOOD").assertIsDisplayed()
     }
 
     @Test
-    fun testStartExploringEnabledWhenNicknameEntered() {
+    fun testStillnessSection() {
         composeTestRule.setContent {
             BlukitTheme {
                 ProfileScreen(
-                    currentNickname = "",
-                    currentEmoji = "👤",
-                    isStealthMode = false,
                     onSaveNickname = {},
                     onSaveEmoji = {},
-                    onToggleStealth = {},
-                    onNavigateNext = {},
-                    onClearHistory = {},
-                    onLogout = {}
+                    onToggleStealth = {}
                 )
             }
         }
 
-        composeTestRule.onNodeWithText("PROTOCOL DESIGNATION").performTextInput("BlukitUser")
-        composeTestRule.onNodeWithText("DON THE MASK").assertIsEnabled()
+        // Click to expand Stillness
+        composeTestRule.onNodeWithText("▶ STILLNESS").performClick()
+        
+        // Buttons should appear
+        composeTestRule.onNodeWithText("CLEAR WHISPERS").assertIsDisplayed()
+        composeTestRule.onNodeWithText("DISSOLVE VIBE").assertIsDisplayed()
     }
 }

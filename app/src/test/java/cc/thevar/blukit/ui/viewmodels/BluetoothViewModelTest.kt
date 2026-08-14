@@ -9,7 +9,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
@@ -29,17 +28,19 @@ class BluetoothViewModelTest {
     private val radioStatesFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = false, isLocationEnabled = false))
     private val connectedPeersFlow = MutableStateFlow(emptySet<String>())
     private val isDiscoveringFlow = MutableStateFlow(false)
-    private val errorsFlow = MutableSharedFlow<String>()
+    private val errorsFlow = MutableStateFlow("")
     
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         
         every { p2pController.scannedDevices } returns scannedDevicesFlow
+        every { radioStateManager.radioStates } returns radioStatesFlow
         every { p2pController.connectedPeers } returns connectedPeersFlow
         every { p2pController.isDiscovering } returns isDiscoveringFlow
+        every { p2pController.isAdvertising } returns MutableStateFlow(false)
         every { p2pController.errors } returns errorsFlow
         every { p2pController.isConnected } returns MutableStateFlow(false)
         every { p2pController.messages } returns MutableStateFlow(emptyList())
@@ -54,10 +55,15 @@ class BluetoothViewModelTest {
     }
 
     @Test
-    fun `test state updates when radios enabled`() = runTest {
-        radioStatesFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true)
-        
+    fun `test state updates when radios enabled`() = runTest(testDispatcher) {
         viewModel.state.test {
+            // Initial default state
+            assertEquals(false, awaitItem().isBluetoothEnabled)
+
+            radioStatesFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true)
+            advanceUntilIdle()
+            
+            // Wait for combine and stateIn to catch up
             val state = awaitItem()
             assertTrue(state.isBluetoothEnabled)
             assertTrue(state.isLocationEnabled)
@@ -79,10 +85,11 @@ class BluetoothViewModelTest {
     }
 
     @Test
-    fun `test error flow updates state`() = runTest {
+    fun `test error flow updates state`() = runTest(testDispatcher) {
         viewModel.state.test {
             awaitItem() // Initial
-            errorsFlow.emit("Discovery failed")
+            errorsFlow.value = "Discovery failed"
+            advanceUntilIdle()
             assertEquals("Discovery failed", awaitItem().errorMessage)
         }
     }

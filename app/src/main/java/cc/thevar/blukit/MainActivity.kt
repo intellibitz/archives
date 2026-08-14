@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cc.thevar.blukit.data.repository.IdentityRepository
+import cc.thevar.blukit.data.repository.IdentityRepositoryImpl
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
@@ -21,8 +22,8 @@ import cc.thevar.blukit.ui.theme.BlukitTheme
 
 class MainActivity : ComponentActivity() {
     
-    private val repository by lazy {
-        IdentityRepository(applicationContext)
+    private val repository: IdentityRepository by lazy {
+        IdentityRepositoryImpl(applicationContext)
     }
 
     private val radioStateManager by lazy {

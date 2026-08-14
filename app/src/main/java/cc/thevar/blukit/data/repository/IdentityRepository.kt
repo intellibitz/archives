@@ -13,7 +13,26 @@ import java.util.UUID
  * Supreme Senior Architect Implementation:
  * Secure Identity Repository using Android KeyStore and EncryptedSharedPreferences.
  */
-class IdentityRepository(context: Context) {
+interface IdentityRepository {
+    val nicknameFlow: StateFlow<String?>
+    val emojiAvatar: StateFlow<String>
+    val stealthMode: StateFlow<Boolean>
+    val blockedUsers: StateFlow<Set<String>>
+    
+    fun getDeviceId(): String
+    fun saveNickname(name: String)
+    fun getCurrentNickname(): String
+    fun saveEmoji(emoji: String)
+    fun toggleStealth(enabled: Boolean)
+    fun blockUser(deviceId: String)
+    fun logout()
+}
+
+/**
+ * Supreme Senior Architect Implementation:
+ * Secure Identity Repository using Android KeyStore and EncryptedSharedPreferences.
+ */
+class IdentityRepositoryImpl(context: Context) : IdentityRepository {
 
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -36,10 +55,10 @@ class IdentityRepository(context: Context) {
     }
 
     private val _nickname = MutableStateFlow(securePrefs.getString(KEY_NICKNAME, null))
-    val nickname: StateFlow<String?> = _nickname.asStateFlow()
+    override val nicknameFlow: StateFlow<String?> = _nickname.asStateFlow()
 
     private val _emojiAvatar = MutableStateFlow(getSanitizedEmoji())
-    val emojiAvatar: StateFlow<String> = _emojiAvatar.asStateFlow()
+    override val emojiAvatar: StateFlow<String> = _emojiAvatar.asStateFlow()
 
     private fun getSanitizedEmoji(): String {
         val stored = securePrefs.getString(KEY_EMOJI, "🎭") ?: "🎭"
@@ -51,14 +70,14 @@ class IdentityRepository(context: Context) {
     }
 
     private val _stealthMode = MutableStateFlow(securePrefs.getBoolean(KEY_STEALTH, true))
-    val stealthMode: StateFlow<Boolean> = _stealthMode.asStateFlow()
+    override val stealthMode: StateFlow<Boolean> = _stealthMode.asStateFlow()
 
     private val _blockedUsers = MutableStateFlow(
         securePrefs.getStringSet(KEY_BLOCKED_USERS, emptySet()) ?: emptySet()
     )
-    val blockedUsers: StateFlow<Set<String>> = _blockedUsers.asStateFlow()
+    override val blockedUsers: StateFlow<Set<String>> = _blockedUsers.asStateFlow()
 
-    fun getDeviceId(): String {
+    override fun getDeviceId(): String {
         var id = securePrefs.getString(KEY_DEVICE_ID, null)
         if (id == null) {
             id = UUID.randomUUID().toString()
@@ -67,31 +86,31 @@ class IdentityRepository(context: Context) {
         return id
     }
 
-    fun saveNickname(name: String) {
+    override fun saveNickname(name: String) {
         securePrefs.edit { putString(KEY_NICKNAME, name) }
         _nickname.value = name
     }
 
-    fun getNickname(): String = securePrefs.getString(KEY_NICKNAME, null) ?: "vibe"
+    override fun getCurrentNickname(): String = securePrefs.getString(KEY_NICKNAME, null) ?: "vibe"
 
-    fun saveEmoji(emoji: String) {
+    override fun saveEmoji(emoji: String) {
         securePrefs.edit { putString(KEY_EMOJI, emoji) }
         _emojiAvatar.value = emoji
     }
 
-    fun toggleStealth(enabled: Boolean) {
+    override fun toggleStealth(enabled: Boolean) {
         securePrefs.edit { putBoolean(KEY_STEALTH, enabled) }
         _stealthMode.value = enabled
     }
 
-    fun blockUser(deviceId: String) {
+    override fun blockUser(deviceId: String) {
         val current = _blockedUsers.value.toMutableSet()
         current.add(deviceId)
         securePrefs.edit { putStringSet(KEY_BLOCKED_USERS, current) }
         _blockedUsers.value = current
     }
 
-    fun logout() {
+    override fun logout() {
         securePrefs.edit { clear() }
         _nickname.value = null
         _emojiAvatar.value = "🎭"

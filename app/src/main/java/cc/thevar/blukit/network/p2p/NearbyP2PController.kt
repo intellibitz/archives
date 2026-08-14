@@ -96,7 +96,7 @@ class NearbyP2PController(
 
     private fun observeIdentityChanges() {
         internalScope.launch {
-            combine(repository.nickname, repository.emojiAvatar) { n, e -> n to e }
+            combine(repository.nicknameFlow, repository.emojiAvatar) { n, e -> n to e }
                 .drop(1) // Avoid initial trigger
                 .collect {
                     if (_isAdvertising.value) {
@@ -264,7 +264,7 @@ class NearbyP2PController(
                     
                     if (myDeviceId < peerDeviceId && !activeConnections.contains(endpointId)) {
                         Log.i(tag, "MESH: Requesting $endpointId")
-                        val localName = "${repository.emojiAvatar.value}|${repository.getNickname()}|$myDeviceId"
+                        val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId"
                         connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback)
                             .addOnFailureListener { e -> Log.w(tag, "REQ FAIL: ${e.message}") }
                     }
@@ -291,7 +291,7 @@ class NearbyP2PController(
             val options = AdvertisingOptions.Builder()
                 .setStrategy(strategy)
                 .build()
-            val name = "${repository.emojiAvatar.value}|${repository.getNickname()}|${repository.getDeviceId()}"
+            val name = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
             connectionsClient.startAdvertising(name, serviceId, connectionLifecycleCallback, options)
                 .addOnSuccessListener { Log.i(tag, "ADVERTISING START SUCCESS") }
                 .addOnFailureListener { e -> _isAdvertising.value = false; Log.e(tag, "ADVERTISING FAIL: ${e.message}") }
@@ -307,7 +307,7 @@ class NearbyP2PController(
         val flow = MutableSharedFlow<ConnectionStatus>(replay = 1)
         internalScope.launch(ioDispatcher) {
             flow.emit(ConnectionStatus.Connecting)
-            val name = "${repository.emojiAvatar.value}|${repository.getNickname()}|${repository.getDeviceId()}"
+            val name = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
             connectionsClient.requestConnection(name, device.id, connectionLifecycleCallback)
                 .addOnFailureListener { e -> flow.tryEmit(ConnectionStatus.Error(e.message ?: "Fail")) }
         }
@@ -336,7 +336,7 @@ class NearbyP2PController(
         val payload = MessagePayload(
             messageId = UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
-            senderName = repository.getNickname(),
+            senderName = repository.getCurrentNickname(),
             senderEmoji = repository.emojiAvatar.value,
             receiverId = receiverId, content = content, timestamp = System.currentTimeMillis()
         )

@@ -38,8 +38,8 @@
     <string name="mask_reset_profile">Start Afresh</string>
 
     <!-- Confirmation Dialogs -->
-    <string name="conf_delete_whispers_title">Delete Everything?</string>
-    <string name="conf_delete_whispers_desc">This will permanently delete all your private moments and ties.</string>
+    <string name="conf_delete_whispers_title">Dissolve all Ties?</string>
+    <string name="conf_delete_whispers_desc">This will permanently dissolve all your private ties and moments.</string>
     <string name="conf_reset_identity_title">Reset Identity?</string>
     <string name="conf_reset_identity_desc">This will clear your profile and device data.</string>
     <string name="conf_delete_btn">DELETE ALL</string>

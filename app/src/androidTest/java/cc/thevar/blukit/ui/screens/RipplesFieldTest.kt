@@ -25,6 +25,7 @@ class RipplesFieldTest {
                 RipplesField(
                     state = BluetoothUiState(scannedDevices = peers),
                     localDeviceId = "me",
+                    localEmoji = "🎭",
                     activeBubbles = emptyList(),
                     onDeviceClick = {},
                     onStartScan = {}
@@ -32,9 +33,9 @@ class RipplesFieldTest {
             }
         }
 
-        // Verify Peer nodes (shortened names in UI)
-        composeTestRule.onNodeWithText("GHOSTA..", substring = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("GHOSTB..", substring = true).assertIsDisplayed()
+        // Verify Peer nodes
+        composeTestRule.onNodeWithText("GHOSTA").assertIsDisplayed()
+        composeTestRule.onNodeWithText("GHOSTB").assertIsDisplayed()
     }
 
     @Test
@@ -47,6 +48,7 @@ class RipplesFieldTest {
                 RipplesField(
                     state = BluetoothUiState(scannedDevices = peers),
                     localDeviceId = "me",
+                    localEmoji = "🎭",
                     activeBubbles = listOf(bubble),
                     onDeviceClick = {},
                     onStartScan = {}
