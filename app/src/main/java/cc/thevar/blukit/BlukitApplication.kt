@@ -19,8 +19,8 @@ class BlukitApplication : Application() {
     }
 
     /**
-     * Supreme Senior Architect Implementation:
-     * Schedules a background worker to periodically purge ephemeral chat data (12h TTL).
+     * Schedules a periodic background worker to enforce ephemeral data retention policies.
+     * Chat logs are purged every 12 hours to maintain "Vibing Persistence" and ensure user privacy.
      */
     private fun setupPurgeWorker() {
         val constraints = Constraints.Builder()

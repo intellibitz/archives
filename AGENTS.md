@@ -44,8 +44,8 @@ You are the Lead Implementation Engineer inside Android Studio. Your task is to 
 * **`Room Database`:** Automated 12-hour Time-To-Live (TTL) DAO cleanup.
 * **`IdentityRepository.kt`:** Manage anonymous "vibe" name and "Mask (🎭)" default visage.
 
-### Step 3: P2P Mesh Engine
-* **`NearbyP2PController.kt`:** Wrap Nearby Connections (`P2P_CLUSTER`) inside Kotlin `StateFlow`. Implement **Sequential Payload Queue** for reliability.
+### Step 3: P2P Air Engine
+* **`NearbyP2PController.kt`:** Wrap Nearby Connections (`P2P_CLUSTER`) inside Kotlin `StateFlow`. Implement **Sequential Vibe Queue** for reliability.
 * **`BleFallbackController.kt`:** Provide native BLE advertiser/scanner fallback.
 
 ### Step 4: Jetpack Compose UI
@@ -57,7 +57,7 @@ You are the Lead Implementation Engineer inside Android Studio. Your task is to 
 
 ## 4. PHASE 3: PHYSICAL DEVICE TESTING & VERIFICATION
 
-Guide the developer through testing on a **3-device physical mesh** (e.g., Pixel, Moto, Xiaomi).
+Guide the developer through testing on a **3-device physical Air** (e.g., Pixel, Moto, Xiaomi).
 
 ### Instruction Checklist for Physical Testing:
 
@@ -71,7 +71,7 @@ Guide the developer through testing on a **3-device physical mesh** (e.g., Pixel
 
 3. **Fireproof Radio Testing:**
    * Turn off Bluetooth/GPS -> Verify "The Air is Still" warning appears accurately.
-   * Deny location on Android 12+ -> Verify mesh still functions via Bluetooth.
+   * Deny location on Android 12+ -> Verify Air still functions via Bluetooth.
 
 ---
 

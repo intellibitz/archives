@@ -1,6 +1,6 @@
 # Blukit — The Vibing Air
 
-**A decentralized, zero-infrastructure offline mesh for high-density venues where internet fails.**
+**A decentralized, zero-infrastructure offline Air for high-density venues where internet fails.**
 
 ---
 
@@ -13,7 +13,7 @@ Blukit (`cc.thevar.blukit`) is an emotive P2P experience. It is the Vibing Air w
 | 🌬️ **The Air** | ✅ High-density stadium visualization with integrated vibes ticker |
 | 👥 **Your Ties** | ✅ Secure private bonds with real-time vibe reflection |
 | 🎭 **Your Vibe** | ✅ Context-aware anonymous identity with scenario moods |
-| 📛 **Unified Badge** | ✅ Global top-left anchor for branding and mesh diagnostics |
+| 📛 **Unified Badge** | ✅ Global top-left anchor for branding and Air diagnostics |
 | 🔐 **Stealth Security** | ✅ AES-256-GCM + ECDH + HKDF hardware-backed encryption |
 | 🌑 **OLED Stealth** | ✅ Pitch-black UI with vibing Amber and Rose accents |
 | 🗑️ **12h Vanish** | ✅ Automated TTL purge for absolute privacy |
@@ -66,7 +66,7 @@ Blukit (`cc.thevar.blukit`) is an emotive P2P experience. It is the Vibing Air w
 
 ### Build & Run
 ```bash
-./gradlew installDebug  # Vibe into the mesh
+./gradlew installDebug  # Vibe into the Air
 ```
 
 ---

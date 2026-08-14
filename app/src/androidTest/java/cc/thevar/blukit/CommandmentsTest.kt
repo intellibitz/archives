@@ -16,9 +16,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Supreme Senior Android Expert Implementation:
- * Instrumented Commandments Test Suite.
- * Verifies permission constraints and Power 1 (Landing Screen).
+ * Instrumented test suite for validating core application commandments.
+ * This verifies permission constraints (Commandment 1) and ensures that
+ * users correctly land on 'The Vibes' (Power 1) upon application start.
  */
 @RunWith(AndroidJUnit4::class)
 class CommandmentsTest {
@@ -45,7 +45,7 @@ class CommandmentsTest {
     }
 
     @Test
-    fun testPower1_LandingScreenIsTheAir() {
+    fun testPower1_LandingScreenIsTheVibes() {
         // Mock a repository
         val repository: cc.thevar.blukit.data.repository.IdentityRepository = mockk(relaxed = true)
         val nicknameFlow = kotlinx.coroutines.flow.MutableStateFlow<String?>("vibe")
@@ -55,9 +55,9 @@ class CommandmentsTest {
         io.mockk.every { repository.blockedUsers } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet())
         io.mockk.every { repository.getDeviceId() } returns "id-123"
 
-        val p2p: cc.thevar.blukit.network.p2p.P2PController = mockk(relaxed = true)
+                val p2p: cc.thevar.blukit.network.p2p.P2PController = mockk(relaxed = true)
         io.mockk.every { p2p.scannedDevices } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
-        io.mockk.every { p2p.connectedPeers } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet())
+        io.mockk.every { p2p.connectedTies } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet())
         io.mockk.every { p2p.isDiscovering } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         io.mockk.every { p2p.isAdvertising } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         io.mockk.every { p2p.isConnected } returns kotlinx.coroutines.flow.MutableStateFlow(false)
@@ -81,7 +81,7 @@ class CommandmentsTest {
             }
         }
 
-        // Power 1: Users must land on THE AIR
-        composeTestRule.onNodeWithText("THE AIR").assertExists()
+        // Power 1: Users must land on THE VIBES
+        composeTestRule.onNodeWithText("THE VIBES").assertExists()
     }
 }

@@ -31,9 +31,9 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Supreme Senior Android Expert Implementation:
- * Hardened Mesh Controller.
- * Focused on high-reliability Bluetooth-first mesh connectivity.
+ * Controller for the Peer-to-Peer (P2P) network within The Air using Google Nearby Connections.
+ * Implements the P2P_CLUSTER strategy for high-reliability, Bluetooth-first connectivity.
+ * Manages discovery, advertising, and secure relaying of vibes through The Air.
  */
 class NearbyP2PController(
     private val context: Context,
@@ -49,7 +49,7 @@ class NearbyP2PController(
     private val tag = "BlukitP2P"
     private val connectionsClient = Nearby.getConnectionsClient(context)
     private val strategy = Strategy.P2P_CLUSTER
-    private val serviceId = "cc.thevar.blukit.MESH_ID"
+    private val serviceId = "cc.thevar.blukit.AIR_ID"
 
     private val internalScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -59,8 +59,11 @@ class NearbyP2PController(
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedPeers = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedPeers = _connectedPeers.asStateFlow()
+    private val _connectedTies = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedTies = _connectedTies.asStateFlow()
+
+    private val _incomingTieRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val incomingTieRequests = _incomingTieRequests.asStateFlow()
 
     private val _isDiscovering = MutableStateFlow(value = false)
     override val isDiscovering = _isDiscovering.asStateFlow()
@@ -80,14 +83,14 @@ class NearbyP2PController(
         )
 
     private val activeConnections = Collections.synchronizedSet(mutableSetOf<String>())
-    private val peerKeys = Collections.synchronizedMap(mutableMapOf<String, SecretKey>())
+    private val vibeKeys = Collections.synchronizedMap(mutableMapOf<String, SecretKey>())
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
 
-    // Sequential Payload Queue
-    private sealed class OutgoingPayload {
-        data class Single(val endpointId: String, val payload: Payload) : OutgoingPayload()
+    // Sequential Vibe Queue
+    private sealed class OutgoingVibe {
+        data class Single(val endpointId: String, val payload: Payload) : OutgoingVibe()
     }
-    private val outgoingQueue = kotlinx.coroutines.channels.Channel<OutgoingPayload>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+    private val outgoingQueue = kotlinx.coroutines.channels.Channel<OutgoingVibe>(kotlinx.coroutines.channels.Channel.UNLIMITED)
 
     init {
         processOutgoingQueue()
@@ -113,7 +116,7 @@ class NearbyP2PController(
             for (item in outgoingQueue) {
                 try {
                     when (item) {
-                        is OutgoingPayload.Single -> {
+                        is OutgoingVibe.Single -> {
                             suspendCancellableCoroutine<Unit> { continuation ->
                                 connectionsClient.sendPayload(item.endpointId, item.payload)
                                     .addOnCompleteListener { 
@@ -129,8 +132,8 @@ class NearbyP2PController(
         }
     }
 
-    private fun queuePayload(endpointId: String, payload: Payload) {
-        outgoingQueue.trySend(OutgoingPayload.Single(endpointId, payload))
+    private fun queueVibe(endpointId: String, payload: Payload) {
+        outgoingQueue.trySend(OutgoingVibe.Single(endpointId, payload))
     }
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
@@ -145,11 +148,10 @@ class NearbyP2PController(
             if (result.status.isSuccess) {
                 Log.i(tag, "LINKED: $endpointId")
                 activeConnections.add(endpointId)
-                _connectedPeers.update { it + endpointId }
-                _isConnected.value = true
+                // Low-level linked, but not yet "Tied" by the user
                 hapticManager.triggerVibe(HapticManager.VibeType.CONNECTION)
                 sendHandshake(endpointId)
-                syncMeshHistory(endpointId)
+                syncAirHistory(endpointId)
             } else {
                 Log.w(tag, "LINK FAIL $endpointId: ${result.status.statusMessage}")
                 handleNearbyError(Exception(result.status.statusMessage), "LINK")
@@ -159,8 +161,8 @@ class NearbyP2PController(
         override fun onDisconnected(endpointId: String) {
             Log.i(tag, "UNLINKED: $endpointId")
             activeConnections.remove(endpointId)
-            _connectedPeers.update { it - endpointId }
-            peerKeys.remove(endpointId)
+            _connectedTies.update { it - endpointId }
+            vibeKeys.remove(endpointId)
             if (activeConnections.isEmpty()) _isConnected.value = false
         }
     }
@@ -179,28 +181,41 @@ class NearbyP2PController(
     private fun sendHandshake(endpointId: String) {
         val publicKeyBytes = cryptoManager.getLocalKeyPair().public.encoded
         val handshakePayload = byteArrayOf(0x01.toByte()) + publicKeyBytes
-        queuePayload(endpointId, Payload.fromBytes(handshakePayload))
+        queueVibe(endpointId, Payload.fromBytes(handshakePayload))
     }
 
     private fun handleHandshake(endpointId: String, bytes: ByteArray) {
         try {
             val publicKeyEncoded = bytes.copyOfRange(1, bytes.size)
             val keyFactory = KeyFactory.getInstance("EC")
-            val peerPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
-            val sharedSecret = cryptoManager.deriveSharedSecret(peerPublicKey)
-            peerKeys[endpointId] = sharedSecret
+            val vibePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
+            val sharedSecret = cryptoManager.deriveSharedSecret(vibePublicKey)
+            vibeKeys[endpointId] = sharedSecret
             Log.i(tag, "SECURE: Channel ready for $endpointId")
         } catch (e: Exception) { Log.e(tag, "SECURE FAIL: ${e.message}") }
     }
 
     private fun handleMessage(endpointId: String, bytes: ByteArray) {
-        val secretKey = peerKeys[endpointId] ?: return
+        val secretKey = vibeKeys[endpointId] ?: return
         try {
             val decryptedBytes = cryptoManager.decrypt(bytes, secretKey)
             val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
             
             if (payload.type == MessagePayload.TYPE_ACK) {
                 internalScope.launch(ioDispatcher) { messageDao.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED) }
+                return
+            }
+
+            if (payload.type == MessagePayload.TYPE_TIE_REQUEST) {
+                val device = _scannedDevices.value.find { it.id == endpointId } 
+                    ?: P2PDevice(endpointId, payload.senderName, payload.senderEmoji ?: "🎭")
+                _incomingTieRequests.update { it + device }
+                return
+            }
+
+            if (payload.type == MessagePayload.TYPE_TIE_ACCEPT) {
+                _connectedTies.update { it + endpointId }
+                _isConnected.value = true
                 return
             }
 
@@ -215,7 +230,7 @@ class NearbyP2PController(
                     type = MessagePayload.TYPE_ACK, receiverId = payload.senderId
                 )
                 val encAck = cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), ack).toByteArray(), secretKey)
-                queuePayload(endpointId, Payload.fromBytes(encAck))
+                queueVibe(endpointId, Payload.fromBytes(encAck))
             }
 
             // Relay
@@ -224,8 +239,8 @@ class NearbyP2PController(
                     val myId = repository.getDeviceId()
                     if (payload.senderId != myId) {
                         activeConnections.filter { it != endpointId }.forEach { target ->
-                            peerKeys[target]?.let { key ->
-                                try { queuePayload(target, Payload.fromBytes(cryptoManager.encrypt(decryptedBytes, key))) } catch (e: Exception) {}
+                            vibeKeys[target]?.let { key ->
+                                try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(decryptedBytes, key))) } catch (e: Exception) {}
                             }
                         }
                     }
@@ -246,24 +261,24 @@ class NearbyP2PController(
         if (_isDiscovering.value) return
         _isDiscovering.value = true
         internalScope.launch(ioDispatcher) {
-            // Hardened: Ensure strategy is Cluster for best Bluetooth mesh performance
+            // Hardened: Ensure strategy is Cluster for best Bluetooth performance within The Air
             val options = DiscoveryOptions.Builder()
                 .setStrategy(strategy)
                 .build()
             
             connectionsClient.startDiscovery(serviceId, object : EndpointDiscoveryCallback() {
                 override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-                    Log.i(tag, "PEER FOUND: $endpointId (${info.endpointName})")
+                    Log.i(tag, "VIBE FOUND: $endpointId (${info.endpointName})")
                     val parts = info.endpointName.split("|", limit = 3)
                     if (parts.size < 3) return
-                    val peerDeviceId = parts[2]
+                    val vibeDeviceId = parts[2]
                     val myDeviceId = repository.getDeviceId()
 
                     val newDevice = P2PDevice(id = endpointId, name = parts[1], emoji = parts[0])
                     _scannedDevices.update { it.filter { d -> d.id != endpointId } + newDevice }
                     
-                    if (myDeviceId < peerDeviceId && !activeConnections.contains(endpointId)) {
-                        Log.i(tag, "MESH: Requesting $endpointId")
+                    if (myDeviceId < vibeDeviceId && !activeConnections.contains(endpointId)) {
+                        Log.i(tag, "THE AIR: Requesting $endpointId")
                         val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId"
                         connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback)
                             .addOnFailureListener { e -> Log.w(tag, "REQ FAIL: ${e.message}") }
@@ -314,19 +329,62 @@ class NearbyP2PController(
         return flow.asSharedFlow()
     }
 
-    private suspend fun getPeerKeyWithRetry(id: String): SecretKey? {
-        var a = 0
-        while (peerKeys[id] == null && a < 30) { delay(100); a++ }
-        return peerKeys[id]
+    override fun requestTie(device: P2PDevice) {
+        internalScope.launch(ioDispatcher) {
+            val payload = MessagePayload(
+                messageId = UUID.randomUUID().toString(),
+                senderId = repository.getDeviceId(),
+                senderName = repository.getCurrentNickname(),
+                senderEmoji = repository.emojiAvatar.value,
+                content = "TIE_REQUEST",
+                timestamp = System.currentTimeMillis(),
+                type = MessagePayload.TYPE_TIE_REQUEST
+            )
+            sendMessagePayload(device.id, payload)
+        }
     }
 
-    private fun syncMeshHistory(endpointId: String) {
+    override fun acceptTie(device: P2PDevice) {
+        _incomingTieRequests.update { it - device }
+        _connectedTies.update { it + device.id }
+        _isConnected.value = true
         internalScope.launch(ioDispatcher) {
-            val key = getPeerKeyWithRetry(endpointId) ?: return@launch
+            val payload = MessagePayload(
+                messageId = UUID.randomUUID().toString(),
+                senderId = repository.getDeviceId(),
+                senderName = repository.getCurrentNickname(),
+                senderEmoji = repository.emojiAvatar.value,
+                content = "TIE_ACCEPT",
+                timestamp = System.currentTimeMillis(),
+                type = MessagePayload.TYPE_TIE_ACCEPT
+            )
+            sendMessagePayload(device.id, payload)
+        }
+    }
+
+    override fun denyTie(device: P2PDevice) {
+        _incomingTieRequests.update { it - device }
+    }
+
+    private suspend fun sendMessagePayload(endpointId: String, payload: MessagePayload) {
+        val secretKey = vibeKeys[endpointId] ?: return
+        val json = Json.encodeToString(MessagePayload.serializer(), payload)
+        queueVibe(endpointId, Payload.fromBytes(cryptoManager.encrypt(json.toByteArray(), secretKey)))
+    }
+
+    private suspend fun getVibeKeyWithRetry(id: String): SecretKey? {
+        var a = 0
+        while (vibeKeys[id] == null && a < 30) { delay(100); a++ }
+        return vibeKeys[id]
+    }
+
+    private fun syncAirHistory(endpointId: String) {
+        internalScope.launch(ioDispatcher) {
+            val key = getVibeKeyWithRetry(endpointId) ?: return@launch
             messageDao.getAllMessages().first().filter { it.receiverId.isNullOrBlank() }.takeLast(10).forEach { entity ->
                 try {
                     val json = Json.encodeToString(MessagePayload.serializer(), entity.toBluetoothPayload())
-                    queuePayload(endpointId, Payload.fromBytes(cryptoManager.encrypt(json.toByteArray(), key)))
+                    queueVibe(endpointId, Payload.fromBytes(cryptoManager.encrypt(json.toByteArray(), key)))
                 } catch (e: Exception) {}
             }
         }
@@ -345,14 +403,14 @@ class NearbyP2PController(
 
         try {
             if (receiverId != null) {
-                val key = getPeerKeyWithRetry(receiverId) ?: return null
-                queuePayload(receiverId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
+                val key = getVibeKeyWithRetry(receiverId) ?: return null
+                queueVibe(receiverId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
             } else {
-                if (activeConnections.isEmpty()) Log.w(tag, "MESH EMPTY: Cannot Shout")
+                if (activeConnections.isEmpty()) Log.w(tag, "THE AIR IS STILL: Cannot Shout")
                 activeConnections.forEach { target ->
                     internalScope.launch(ioDispatcher) {
-                        peerKeys[target]?.let { key ->
-                            try { queuePayload(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {}
+                        vibeKeys[target]?.let { key ->
+                            try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {}
                         }
                     }
                 }
@@ -378,13 +436,13 @@ class NearbyP2PController(
                 8001, 8002, 8003, 8011, 8012, 8029, 8032, 8035, 8025, 8030
             )
         ) return
-        internalScope.launch { _errors.emit(e.message ?: "Mesh Error") }
+        internalScope.launch { _errors.emit(e.message ?: "The Air is Still") }
     }
 
     override fun closeConnection() {
         connectionsClient.stopAllEndpoints()
         activeConnections.clear()
-        peerKeys.clear()
+        vibeKeys.clear()
         _isConnected.value = false
     }
 

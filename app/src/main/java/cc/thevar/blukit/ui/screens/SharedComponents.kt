@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material3.*
@@ -22,6 +23,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -105,7 +107,7 @@ fun VibingVibesAnimation(modifier: Modifier = Modifier) {
             modifier = Modifier.size(64.dp * vibeScale)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                // Heart is pure, no text or icons
+                // Vibe is pure, no text or icons
             }
         }
     }
@@ -184,7 +186,7 @@ fun BlukitInput(
             TextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).testTag("SendVibeInput"),
                 placeholder = { 
                     Text(
                         placeholder.uppercase(), 
@@ -219,10 +221,12 @@ fun BlukitInput(
                     )
                     .semantics { contentDescription = "Send" }
             ) {
-                Text(
-                    text = "🌬️",
-                    fontSize = 18.sp,
+                Icon(
+                    imageVector = Icons.Rounded.Groups,
+                    contentDescription = null,
+                    tint = if (value.isNotBlank()) Color.Black else StealthPrimary,
                     modifier = Modifier
+                        .size(20.dp)
                         .graphicsLayer {
                             alpha = if (value.isNotBlank()) 1f else 0.4f
                         }

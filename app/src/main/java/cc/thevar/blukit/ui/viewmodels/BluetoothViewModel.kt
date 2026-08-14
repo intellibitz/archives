@@ -7,24 +7,45 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.data.system.RadioStateManager
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.launch
 
 /**
- * Supreme Senior Android Expert Implementation:
- * Bluetooth ViewModel with Reactive UI State and nearby discovery control.
+ * ViewModel responsible for managing connectivity within The Air and UI states.
+ * Coordinates between the P2PController and RadioStateManager to provide
+ * a reactive stream of Bluetooth and Vibing Air statuses.
  */
 class BluetoothViewModel(
     private val p2pController: P2PController,
     private val radioStateManager: RadioStateManager,
 ) : ViewModel() {
 
-    private val _manualConnectionState = MutableStateFlow<MeshConnectionState?>(null)
+    private val _manualConnectionState = MutableStateFlow<AirConnectionState?>(null)
+    private val _energySurge = MutableStateFlow(0f)
+    val energySurge = _energySurge.asStateFlow()
+
+    init {
+        // Observe messages to trigger energy surges
+        p2pController.messages
+            .onEach { if (it.isNotEmpty()) triggerEnergySurge() }
+            .launchIn(viewModelScope)
+    }
+
+    private fun triggerEnergySurge() {
+        viewModelScope.launch {
+            _energySurge.value = 1f
+            delay(100.milliseconds)
+            _energySurge.value = 0f
+        }
+    }
 
     val state: StateFlow<BluetoothUiState> = combine(
         p2pController.scannedDevices,
         radioStateManager.radioStates,
-        p2pController.connectedPeers,
+        p2pController.connectedTies,
+        p2pController.incomingTieRequests,
         p2pController.isConnected,
         p2pController.isDiscovering,
         p2pController.isAdvertising,
@@ -34,30 +55,32 @@ class BluetoothViewModel(
     ) { args: Array<Any?> ->
         val scannedDevices = args[0] as List<P2PDevice>
         val radioStates = args[1] as cc.thevar.blukit.data.system.RadioStates
-        val connectedPeers = args[2] as Set<String>
-        val isConnected = args[3] as Boolean
-        val isDiscovering = args[4] as Boolean
-        val isAdvertising = args[5] as Boolean
-        val error = args[6] as String
-        val messages = args[7] as List<cc.thevar.blukit.domain.model.MessagePayload>
-        val manualState = args[8] as? MeshConnectionState
+        val connectedTies = args[2] as Set<String>
+        val incomingTieRequests = args[3] as Set<P2PDevice>
+        val isConnected = args[4] as Boolean
+        val isDiscovering = args[5] as Boolean
+        val isAdvertising = args[6] as Boolean
+        val error = args[7] as String
+        val messages = args[8] as List<cc.thevar.blukit.domain.model.MessagePayload>
+        val manualState = args[9] as? AirConnectionState
 
         val connectionState = when {
             manualState != null -> manualState
-            error.isNotEmpty() -> MeshConnectionState.Error(error)
+            error.isNotEmpty() -> AirConnectionState.Error(error)
             isConnected -> {
-                val peer = scannedDevices.find { it.id in connectedPeers }
-                    ?: P2PDevice(id = connectedPeers.firstOrNull() ?: "", name = "vibe", emoji = "🎭")
-                MeshConnectionState.Connected(peer)
+                val vibe = scannedDevices.find { it.id in connectedTies }
+                    ?: P2PDevice(id = connectedTies.firstOrNull() ?: "", name = "vibe", emoji = "🎭")
+                AirConnectionState.Connected(vibe)
             }
-            isDiscovering || isAdvertising -> MeshConnectionState.Scanning
-            else -> MeshConnectionState.Disconnected
+            isDiscovering || isAdvertising -> AirConnectionState.Scanning
+            else -> AirConnectionState.Disconnected
         }
 
         BluetoothUiState(
             scannedDevices = scannedDevices,
             connectionState = connectionState,
-            connectedPeers = connectedPeers,
+            connectedTies = connectedTies,
+            incomingTieRequests = incomingTieRequests,
             isBluetoothEnabled = radioStates.isBluetoothEnabled,
             isLocationEnabled = radioStates.isLocationEnabled,
             isDiscovering = isDiscovering,
@@ -88,21 +111,32 @@ class BluetoothViewModel(
     }
 
     fun connectToDevice(device: P2PDevice) {
-        _manualConnectionState.value = MeshConnectionState.Connecting
+        _manualConnectionState.value = AirConnectionState.Connecting
         p2pController.connectToDevice(device)
             .onEach { status ->
                 when (status) {
-                    is ConnectionStatus.Connected -> _manualConnectionState.value = null 
-                    is ConnectionStatus.Error -> _manualConnectionState.value = MeshConnectionState.Error(status.message)
+                    is ConnectionStatus.Connected -> {
+                        _manualConnectionState.value = null
+                        p2pController.requestTie(device)
+                    }
+                    is ConnectionStatus.Error -> _manualConnectionState.value = AirConnectionState.Error(status.message)
                     else -> {}
                 }
             }.launchIn(viewModelScope)
     }
 
+    fun acceptTie(device: P2PDevice) {
+        p2pController.acceptTie(device)
+    }
+
+    fun denyTie(device: P2PDevice) {
+        p2pController.denyTie(device)
+    }
+
     fun sendMessage(message: String) {
         viewModelScope.launch {
-            val peerId = state.value.connectedPeer?.id
-            p2pController.sendMessage(message, peerId)
+            val vibeId = state.value.connectedVibe?.id
+            p2pController.sendMessage(message, vibeId)
         }
     }
 
@@ -114,7 +148,7 @@ class BluetoothViewModel(
 
     fun disconnect() {
         p2pController.closeConnection()
-        _manualConnectionState.value = MeshConnectionState.Disconnected
+        _manualConnectionState.value = AirConnectionState.Disconnected
     }
 
     override fun onCleared() {

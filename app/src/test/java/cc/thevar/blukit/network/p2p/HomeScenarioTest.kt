@@ -32,9 +32,9 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Supreme Senior Android Expert Implementation:
- * "Home Air" Scenario Test.
- * Simulates a family environment with transition from public Air broadcasts to private 1-on-1 Ties.
+ * Integration test simulating the "Home Vibes" scenario.
+ * Validates the transition from public broadcasts in 'The Vibes' to secure,
+ * encrypted 1-on-1 'Ties' within a family context.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -95,7 +95,7 @@ class HomeScenarioTest {
     }
 
     @Test
-    fun `home air simulation - from dinner broadcast to private husband tie`() = runTest(testDispatcher) {
+    fun `home vibes simulation - from dinner broadcast to private husband tie`() = runTest(testDispatcher) {
         val lifecycleCallbackSlot = slot<ConnectionLifecycleCallback>()
         val payloadCallbackSlot = slot<PayloadCallback>()
         every { connectionsClient.startAdvertising(any<String>(), any<String>(), capture(lifecycleCallbackSlot), any<AdvertisingOptions>()) } returns Tasks.forResult<Void>(null)
@@ -111,7 +111,7 @@ class HomeScenarioTest {
         val family = listOf("Son" to "🧒", "Daughter" to "👧", "Husband" to "🧔")
         val peerIds = family.mapIndexed { index, pair -> "id-${pair.first}-$index" }
         
-        family.forEachIndexed { index, _ ->
+        family.forEachIndexed { index, pair ->
             val peerId = peerIds[index]
             lifecycleCallback.onConnectionInitiated(peerId, mockk(relaxed = true))
             advanceUntilIdle()
@@ -125,10 +125,14 @@ class HomeScenarioTest {
             
             lifecycleCallback.onConnectionResult(peerId, mockk<ConnectionResolution>().apply { every { status.isSuccess } returns true })
             advanceUntilIdle()
+
+            // Tie Ritual: Explicitly accept the tie
+            controller.acceptTie(cc.thevar.blukit.domain.model.P2PDevice(peerId, pair.first, pair.second))
+            advanceUntilIdle()
         }
 
         advanceUntilIdle()
-        assertEquals(3, controller.connectedPeers.value.size)
+        assertEquals(3, controller.connectedTies.value.size)
 
         controller.broadcastMessage("dinner ready")
         advanceUntilIdle()

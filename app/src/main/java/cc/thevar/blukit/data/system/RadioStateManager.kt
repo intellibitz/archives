@@ -89,7 +89,7 @@ class RadioStateManager(private val context: Context) {
             false
         }
 
-        // Location is an optional breeze on Android 12+, but mandatory for mesh on older devices
+        // Location is an optional breeze on Android 12+, but mandatory for the Air on older devices
         val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
         Log.d(tag, "Vibe Check: Bluetooth=$isBtEnabled (Required), GPS=$isLocationEnabled (Optional=${!isLocationMandatory}), Wi-Fi=Optional")
 

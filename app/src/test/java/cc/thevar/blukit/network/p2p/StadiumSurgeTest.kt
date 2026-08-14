@@ -34,9 +34,9 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Supreme Senior Android Expert Implementation:
- * High-Density Mesh "Stadium Surge" Test.
- * Simulates a large-scale venue environment where multiple users are "blukitting" simultaneously.
+ * Performance and reliability test simulating a high-density "Stadium Surge" environment.
+ * Validates the mesh network's capability to handle multiple concurrent users
+ * and ensure reliable relaying of vibes through The Air in large-scale venues.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -90,7 +90,7 @@ class StadiumSurgeTest {
     }
 
     @Test
-    fun `stadium surge simulation - multiple users blukitting in the mesh`() = runTest {
+    fun `stadium surge simulation - multiple users blukitting in the air`() = runTest {
         // 1. Capture the payload callback to simulate incoming messages
         val payloadCallbackSlot = slot<PayloadCallback>()
         every { 

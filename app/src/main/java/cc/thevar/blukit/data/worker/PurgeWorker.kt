@@ -6,9 +6,8 @@ import androidx.work.WorkerParameters
 import cc.thevar.blukit.data.local.ChatDatabase
 
 /**
- * Supreme Senior Android Expert Implementation:
- * Background worker to enforce the 12-hour TTL (Time-To-Live) for chat logs.
- * Uses the ChatDatabase singleton for efficient data purging.
+ * Background worker responsible for the automated 12-hour cleanup of the local Room database.
+ * Ensures that "Vibing Persistence" is maintained by deleting messages older than the TTL threshold.
  */
 class PurgeWorker(
     context: Context,

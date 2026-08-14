@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.MeshConnectionState
+import cc.thevar.blukit.ui.viewmodels.AirConnectionState
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
 import cc.thevar.blukit.ui.theme.StealthPrimary
@@ -37,7 +37,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Ties: Secure private moments between hearts.
+ * Ties: Secure private moments between vibes.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,9 +45,9 @@ fun TieScreen(
     state: BluetoothUiState,
     localDeviceId: String,
     localEmoji: String,
-    peerId: String?,
-    peerName: String?,
-    peerEmoji: String?,
+    vibeId: String?,
+    vibeName: String?,
+    vibeEmoji: String?,
     onDisconnect: () -> Unit,
     onNavigateBack: () -> Unit,
     onSendMessage: (String) -> Unit,
@@ -60,13 +60,13 @@ fun TieScreen(
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
 
-    val chatMessages = remember(state.messages, peerId, localDeviceId) {
-        if (peerId == null) {
+    val chatMessages = remember(state.messages, vibeId, localDeviceId) {
+        if (vibeId == null) {
             emptyList()
         } else {
             state.messages.filter { 
-                (it.senderId == localDeviceId && it.receiverId == peerId) ||
-                (it.senderId == peerId && it.receiverId == localDeviceId)
+                (it.senderId == localDeviceId && it.receiverId == vibeId) ||
+                (it.senderId == vibeId && it.receiverId == localDeviceId)
             }
         }
     }

@@ -15,11 +15,10 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Supreme Senior Architect Implementation:
- * End-to-End Encryption using ECDH (Curve SecP256r1) for key exchange
- * and AES-256-GCM for payload confidentiality.
- *
- * Production Hardening: Uses HKDF (RFC 5869) for key derivation.
+ * Manages End-to-End Encryption (E2EE) for vibes in The Air.
+ * Implements Elliptic Curve Diffie-Hellman (ECDH) on SecP256r1 for secure key exchange
+ * and AES-256-GCM for authenticated payload confidentiality.
+ * Key derivation follows HKDF (RFC 5869) to ensure high entropy for session keys.
  */
 class CryptoManager {
 
@@ -66,13 +65,13 @@ class CryptoManager {
     }
 
     /**
-     * Derives a shared AES-256 key from our private key and a peer's public key using ECDH.
+     * Derives a shared AES-256 key from our private key and a vibe's public key using ECDH.
      * Uses HKDF (HMAC-based Extract-and-Expand Key Derivation Function) for security hardening.
      */
-    fun deriveSharedSecret(peerPublicKey: PublicKey): SecretKey {
+    fun deriveSharedSecret(vibePublicKey: PublicKey): SecretKey {
         val keyAgreement = KeyAgreement.getInstance("ECDH")
         keyAgreement.init(getLocalKeyPair().private)
-        keyAgreement.doPhase(peerPublicKey, true)
+        keyAgreement.doPhase(vibePublicKey, true)
         val sharedSecret = keyAgreement.generateSecret()
         
         // HKDF Implementation (RFC 5869) using HMAC-SHA256

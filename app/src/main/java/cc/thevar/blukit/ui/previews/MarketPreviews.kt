@@ -20,9 +20,8 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.MeshConnectionState
+import cc.thevar.blukit.ui.viewmodels.AirConnectionState
 import cc.thevar.blukit.ui.screens.RipplesField
-import cc.thevar.blukit.ui.screens.ProfileScreen
 import cc.thevar.blukit.ui.theme.BlukitTheme
 
 @Preview(name = "Radar - Phone", device = Devices.PHONE, showBackground = true)
@@ -32,9 +31,9 @@ fun PreviewRadarPhone() {
         RipplesField(
             state = BluetoothUiState(
                 scannedDevices = listOf(
-                    P2PDevice("1", "Peer 1"),
-                    P2PDevice("2", "Peer 2"),
-                    P2PDevice("3", "Peer 3")
+                    P2PDevice("1", "Vibe 1"),
+                    P2PDevice("2", "Vibe 2"),
+                    P2PDevice("3", "Vibe 3")
                 )
             ),
             localDeviceId = "me",
@@ -56,7 +55,8 @@ fun PreviewChatPhone() {
                     MessagePayload(
                         messageId = "1",
                         senderId = "user1",
-                        senderName = "Peer 1",
+                        senderName = "Vibe 1",
+                        receiverId = "me",
                         content = "Hello!",
                         timestamp = 1628610000000,
                         status = MessagePayload.STATUS_DELIVERED
@@ -65,38 +65,24 @@ fun PreviewChatPhone() {
                         messageId = "2",
                         senderId = "me",
                         senderName = "Me",
+                        receiverId = "user1",
                         content = "Hey there!",
                         timestamp = 1628610060000,
                         status = MessagePayload.STATUS_SENT
                     )
                 ),
-                connectionState = MeshConnectionState.Connected(P2PDevice("user1", "Peer 1"))
+                connectionState = AirConnectionState.Connected(P2PDevice("user1", "Vibe 1"))
             ),
             localDeviceId = "me",
             localEmoji = "🎭",
-            peerId = "user1",
-            peerName = "Peer 1",
-            peerEmoji = "👤",
+            vibeId = "user1",
+            vibeName = "Vibe 1",
+            vibeEmoji = "👤",
             onDisconnect = {},
             onNavigateBack = {},
             onSendMessage = {},
             onBlockUser = {},
             onEnterPip = {}
-        )
-    }
-}
-
-@Preview(name = "Profile - Stealth", device = Devices.PHONE, showBackground = true)
-@Composable
-fun PreviewProfileStealth() {
-    BlukitTheme(stealthMode = true) {
-        ProfileScreen(
-            currentNickname = "StealthUser",
-            currentEmoji = "🦊",
-            isStealthMode = true,
-            onSaveNickname = {},
-            onSaveEmoji = {},
-            onToggleStealth = {}
         )
     }
 }
@@ -108,10 +94,10 @@ fun PreviewRadarTablet() {
         RipplesField(
             state = BluetoothUiState(
                 scannedDevices = listOf(
-                    P2PDevice("1", "Peer 1"),
-                    P2PDevice("2", "Peer 2"),
-                    P2PDevice("3", "Peer 3"),
-                    P2PDevice("4", "Peer 4")
+                    P2PDevice("1", "Vibe 1"),
+                    P2PDevice("2", "Vibe 2"),
+                    P2PDevice("3", "Vibe 3"),
+                    P2PDevice("4", "Vibe 4")
                 )
             ),
             localDeviceId = "me",
@@ -163,7 +149,7 @@ fun PreviewFeatureGraphic() {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Decentralized Offline Mesh Chat",
+                    text = "Offline Air Chat",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.7f)
                 )

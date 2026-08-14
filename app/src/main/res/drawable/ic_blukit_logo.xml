@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Stylized "B" + Bluetooth Mesh (Amber #FFB300) -->
+    <path
+        android:strokeWidth="6"
+        android:strokeColor="#FFB300"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M45,28 V80 M45,28 H58 C65,28 72,33 72,40 C72,47 65,52 58,52 H45 M45,52 H58 C66,52 74,58 74,66 C74,74 66,80 58,80 H45" />
+
+    <!-- Mesh Nodes -->
+    <path
+        android:fillColor="#FFB300"
+        android:pathData="M45,28 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M45,80 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M72,40 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M74,66 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+
+    <!-- Vibe Ring Fragment -->
+    <path
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFB300"
+        android:strokeAlpha="0.4"
+        android:pathData="M85,54 A31,31 0 0,1 54,85" />
+</vector>

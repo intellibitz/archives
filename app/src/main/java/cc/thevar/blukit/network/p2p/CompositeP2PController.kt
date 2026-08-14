@@ -33,10 +33,17 @@ class CompositeP2PController(
         bleController.isConnected
     ) { nearby, ble -> nearby || ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
 
-    override val connectedPeers: StateFlow<Set<String>> = combine(
-        nearbyController.connectedPeers,
-        bleController.connectedPeers
+    override val connectedTies: StateFlow<Set<String>> = combine(
+        nearbyController.connectedTies,
+        bleController.connectedTies
     ) { nearby, ble -> nearby + ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    override val incomingTieRequests: StateFlow<Set<P2PDevice>> = combine(
+        nearbyController.incomingTieRequests,
+        bleController.incomingTieRequests
+    ) { nearby, ble ->
+        (nearby + ble).distinctBy { it.id }.toSet()
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     override val isDiscovering: StateFlow<Boolean> = combine(
         nearbyController.isDiscovering,
@@ -93,6 +100,30 @@ class CompositeP2PController(
         val nearby = nearbyController.broadcastMessage(content)
         val ble = bleController.broadcastMessage(content)
         return nearby ?: ble
+    }
+
+    override fun requestTie(device: P2PDevice) {
+        if (device.id.startsWith("nearby:")) {
+            nearbyController.requestTie(device)
+        } else {
+            bleController.requestTie(device)
+        }
+    }
+
+    override fun acceptTie(device: P2PDevice) {
+        if (device.id.startsWith("nearby:")) {
+            nearbyController.acceptTie(device)
+        } else {
+            bleController.acceptTie(device)
+        }
+    }
+
+    override fun denyTie(device: P2PDevice) {
+        if (device.id.startsWith("nearby:")) {
+            nearbyController.denyTie(device)
+        } else {
+            bleController.denyTie(device)
+        }
     }
 
     override fun closeConnection() {

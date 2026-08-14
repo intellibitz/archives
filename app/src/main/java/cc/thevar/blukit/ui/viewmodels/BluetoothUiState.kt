@@ -4,30 +4,31 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
 
 /**
- * Supreme Senior Expert Implementation:
- * Typed State Machine for Mesh Connections.
+ * Represents the UI state for connectivity within The Air.
+ * Uses a sealed interface to model a robust state machine for the Vibing Air lifecycle.
  */
-sealed interface MeshConnectionState {
-    data object Disconnected : MeshConnectionState
-    data object Scanning : MeshConnectionState
-    data object Connecting : MeshConnectionState
-    data class Connected(val device: P2PDevice) : MeshConnectionState
-    data class Error(val message: String) : MeshConnectionState
+sealed interface AirConnectionState {
+    data object Disconnected : AirConnectionState
+    data object Scanning : AirConnectionState
+    data object Connecting : AirConnectionState
+    data class Connected(val device: P2PDevice) : AirConnectionState
+    data class Error(val message: String) : AirConnectionState
 }
 
 data class BluetoothUiState(
     val scannedDevices: List<P2PDevice> = emptyList(),
-    val connectionState: MeshConnectionState = MeshConnectionState.Disconnected,
+    val connectionState: AirConnectionState = AirConnectionState.Disconnected,
     val isDiscovering: Boolean = false,
     val isAdvertising: Boolean = false,
-    val connectedPeers: Set<String> = emptySet(),
+    val connectedTies: Set<String> = emptySet(),
+    val incomingTieRequests: Set<P2PDevice> = emptySet(),
     val errorMessage: String? = null,
     val messages: List<MessagePayload> = emptyList(),
     val isBluetoothEnabled: Boolean = false,
     val isLocationEnabled: Boolean = false
 ) {
     // Helper properties for legacy UI compatibility or convenience
-    val isConnected: Boolean get() = connectionState is MeshConnectionState.Connected
-    val isConnecting: Boolean get() = connectionState is MeshConnectionState.Connecting
-    val connectedPeer: P2PDevice? get() = (connectionState as? MeshConnectionState.Connected)?.device
+    val isConnected: Boolean get() = connectionState is AirConnectionState.Connected
+    val isConnecting: Boolean get() = connectionState is AirConnectionState.Connecting
+    val connectedVibe: P2PDevice? get() = (connectionState as? AirConnectionState.Connected)?.device
 }

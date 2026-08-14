@@ -19,10 +19,10 @@ class WhisperScreenTest {
             MessagePayload(
                 messageId = "1",
                 senderId = "user-1",
-                senderName = "Peer A",
+                senderName = "Vibe A",
                 senderEmoji = "🐱",
                 receiverId = "mask-1",
-                content = "Hello from Peer A",
+                content = "Hello from Vibe A",
                 timestamp = System.currentTimeMillis(),
                 status = MessagePayload.STATUS_DELIVERED
             ),
@@ -44,9 +44,9 @@ class WhisperScreenTest {
                     state = BluetoothUiState(messages = messages),
                     localDeviceId = "mask-1",
                     localEmoji = "🎭",
-                    peerId = "user-1",
-                    peerName = "Peer A",
-                    peerEmoji = "🐱",
+                    vibeId = "user-1",
+                    vibeName = "Vibe A",
+                    vibeEmoji = "🐱",
                     onDisconnect = {},
                     onNavigateBack = {},
                     onSendMessage = {},
@@ -56,10 +56,10 @@ class WhisperScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Hello from Peer A").assertExists()
+        composeTestRule.onNodeWithText("Hello from Vibe A").assertExists()
         composeTestRule.onNodeWithText("My local message").assertExists()
         
-        // Peer A name in bubble (UPPERCASE)
-        composeTestRule.onNodeWithText("PEER A").assertExists()
+        // Vibe A name in bubble (UPPERCASE)
+        composeTestRule.onNodeWithText("VIBE A").assertExists()
     }
 }

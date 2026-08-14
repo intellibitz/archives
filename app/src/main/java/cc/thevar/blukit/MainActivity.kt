@@ -51,12 +51,18 @@ class MainActivity : ComponentActivity() {
             database.peerDao,
             hapticManager
         )
-        val ble = BleFallbackController(applicationContext)
+        val ble = BleFallbackController(
+            applicationContext,
+            repository,
+            database.messageDao,
+            database.peerDao,
+            hapticManager
+        )
         CompositeP2PController(nearby, ble)
     }
 
     private val supremePowerManager by lazy {
-        SupremePowerManager(p2pController, database.messageDao)
+        SupremePowerManager(p2pController, database.messageDao, hapticManager)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

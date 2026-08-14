@@ -8,23 +8,23 @@
     <string name="nav_mask">Vibe</string>
 
     <!-- Vibes Screen (The Gathering) -->
-    <string name="watch_title">Vibes</string>
+    <string name="watch_title">The Vibes</string>
     <string name="watch_broadcast_desc">%1$d vibes radiating nearby</string>
-    <string name="watch_welcome_title">Welcome to the Vibes!</string>
-    <string name="watch_welcome_desc">This is the vibing vibe of everyone around you. Send vibes, and the crowd will feel it. Even in the quietest moments, your voice stays in the air for those who arrive.</string>
+    <string name="watch_welcome_title">Feel the Vibes!</string>
+    <string name="watch_welcome_desc">This is the collective pulse of everyone around you. Send a vibe, and the crowd will feel it.</string>
     <string name="watch_empty_hint">Start the vibe below!</string>
 
     <!-- Ripples Screen (Presence) -->
-    <string name="shout_title">The Current</string>
+    <string name="shout_title">THE VIBES</string>
     <string name="shout_radar_subtitle">Feel the Vibes</string>
-    <string name="shout_make_visible">Vibe with the Crowd</string>
-    <string name="shout_type_placeholder">Send vibes to everyone…</string>
-    <string name="shout_empty_radar">Stillness in the Air…</string>
-    <string name="shout_scan_hint">Feeling for ripples in the air…</string>
+    <string name="shout_make_visible">Join the Vibes</string>
+    <string name="shout_type_placeholder">Send a vibe to everyone…</string>
+    <string name="shout_empty_radar">Waiting for the vibes…</string>
+    <string name="shout_scan_hint">Feeling the vibes…</string>
 
     <!-- Ties Screen (Private History) -->
     <string name="whispers_title">Ties</string>
-    <string name="whispers_empty_hint">No ties yet. Find a peer in the field to connect!</string>
+    <string name="whispers_empty_hint">No ties yet. Find a vibe in the field to connect!</string>
     <string name="whispers_last_seen">Last seen: %1$s</string>
     <string name="whispers_label">Connected privately</string>
 
@@ -49,16 +49,16 @@
     <string name="permission_title">Device Access</string>
     <string name="permission_desc">Blukit uses Bluetooth to find and talk to people around you without needing the internet.</string>
     <string name="permission_grant">Allow Access</string>
-    <string name="radio_warning_bluetooth">Your signal is quiet.</string>
-    <string name="radio_warning_required">To vibe with the crowd and send vibes, your Bluetooth must be awake.</string>
+    <string name="radio_warning_bluetooth">The vibes are quiet.</string>
+    <string name="radio_warning_required">To feel the crowd, your Bluetooth must be awake.</string>
     <string name="radio_enable_btn">AWAKEN</string>
-    <string name="anonymous">Anonymous</string>
-    <string name="error_connection_failed">Could not connect: %1$s</string>
+    <string name="anonymous">vibe</string>
+    <string name="error_connection_failed">Could not tie: %1$s</string>
 
     <!-- Smart Flow -->
-    <string name="smart_flow_title">Connect with others?</string>
+    <string name="smart_flow_title">Feel the Vibes?</string>
     <string name="smart_flow_desc">To feel the vibes of people around you, Blukit needs to use the air. This lets your device join the invisible circle.</string>
-    <string name="smart_flow_action">Join the Circle</string>
+    <string name="smart_flow_action">Join the Vibes</string>
 
     <!-- Shared UI -->
     <string name="btn_send">Send</string>

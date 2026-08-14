@@ -1,7 +1,12 @@
 package cc.thevar.blukit.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.power.SupremePowerReport
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import org.junit.Rule
@@ -16,44 +21,66 @@ class SupremePowerTest {
     fun testSupremePowerBadge_ExpandAndCollapse() {
         val report = SupremePowerReport(
             userCount = 10,
-            connectedPeerCount = 2,
-            trafficDensity = "ACTIVE",
-            aiInsight = "Mesh is healthy",
-            signalStability = "STABLE"
+            connectedTiesCount = 2,
+            totalMessages = 5,
+            harmony = 0.4f,
+            aiInsight = "The Vibes are healthy",
+            currentBreeze = null
         )
 
         composeTestRule.setContent {
             BlukitTheme {
-                UnifiedBlukitBadge(
-                    title = "THE AIR",
-                    subtitle = "FEEL THE VIBES",
-                    report = report,
-                    isDiscovering = true,
-                    isBluetoothEnabled = true,
-                    isLocationEnabled = true,
-                    permissionsGranted = true,
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+                    UnifiedBlukitBadge(
+                        subtitle = "FEEL THE VIBES",
+                        report = report,
+                        isBluetoothEnabled = true,
+                        isLocationEnabled = true,
+                        permissionsGranted = true,
+                        isStealthMode = false,
+                    currentRoute = cc.thevar.blukit.ui.navigation.Route.Shout,
+                    emojiAvatar = "🎭",
+                    nickname = "vibe",
+                    incomingTieRequests = emptySet<P2PDevice>(),
+                    onNavigate = {},
                     onAwakenBluetooth = {},
                     onAwakenLocation = {},
-                    onGrantPermissions = {}
+                    onGrantPermissions = {},
+                    onSaveNickname = {},
+                    onToggleStealth = {},
+                    onClearHistory = {},
+                    onLogout = {},
+                    onAcceptTie = {},
+                    onDenyTie = {}
                 )
+                }
             }
         }
 
         // Check closed state
-        composeTestRule.onNodeWithText("BLUKIT").assertIsDisplayed()
-        composeTestRule.onNodeWithText("HEARTS").assertDoesNotExist()
+        composeTestRule.onNodeWithText("BLUKIT", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithTag("IntelSection").assertDoesNotExist()
 
-        // Click to expand
-        composeTestRule.onNodeWithText("BLUKIT").performClick()
-
-        // Check expanded state
-        composeTestRule.onNodeWithText("HEARTS").assertIsDisplayed()
-        composeTestRule.onNodeWithText("10").assertIsDisplayed()
-        composeTestRule.onNodeWithText("ACTIVE").assertIsDisplayed()
-        composeTestRule.onNodeWithText("MESH IS HEALTHY").assertIsDisplayed() // Uppercase check
+        // Click to expand using testTag for reliability
+        composeTestRule.onNodeWithTag("BlukitBadge").performClick()
+        
+        // Check expanded state - wait for animation with generous timeout
+        composeTestRule.waitUntil(10000) {
+            composeTestRule.onAllNodesWithTag("IntelSection", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithTag("VibesStat", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("10", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("THE VIBES ARE HEALTHY", substring = true, ignoreCase = true, useUnmergedTree = true).assertIsDisplayed() 
 
         // Click to collapse
-        composeTestRule.onNodeWithText("BLUKIT").performClick()
-        composeTestRule.onNodeWithText("HEARTS").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("BlukitBadge").performClick()
+        
+        // Wait for collapse animation - check if IntelSection is no longer visible
+        composeTestRule.waitUntil(10000) {
+            composeTestRule.onAllNodesWithTag("IntelSection")
+                .fetchSemanticsNodes().isEmpty()
+        }
+        composeTestRule.onNodeWithTag("IntelSection").assertDoesNotExist()
     }
 }

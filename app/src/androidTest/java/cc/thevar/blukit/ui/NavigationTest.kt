@@ -36,7 +36,7 @@ class NavigationTest {
         every { repository.getCurrentNickname() } returns "vibe"
         
         every { p2pController.scannedDevices } returns MutableStateFlow(emptyList())
-        every { p2pController.connectedPeers } returns MutableStateFlow(emptySet())
+        every { p2pController.connectedTies } returns MutableStateFlow(emptySet())
         every { p2pController.isDiscovering } returns MutableStateFlow(false)
         every { p2pController.isAdvertising } returns MutableStateFlow(false)
         every { p2pController.errors } returns MutableStateFlow("")
@@ -50,21 +50,20 @@ class NavigationTest {
     fun testBottomNavigation() {
         startApp()
         
-        // 1. Air (THE AIR) - Initial
-        // The title is in the badge
-        composeTestRule.onNodeWithText("THE AIR").assertIsDisplayed()
-        
-        // 2. Ties (YOUR TIES)
-        composeTestRule.onNodeWithText("Ties").performClick()
+        // 1. Initial State - Feel the vibes
+        composeTestRule.onNodeWithText("FEEL THE VIBES").assertIsDisplayed()
+
+        // 2. Expand Hub
+        composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
+
+        // 3. Ties (YOUR TIES) - Click Ties stat row in expanded hub
+        composeTestRule.onNodeWithTag("TiesStat").performClick()
         composeTestRule.onNodeWithText("YOUR TIES").assertIsDisplayed()
         
-        // 3. Vibe (YOUR VIBE)
-        composeTestRule.onNodeWithText("Vibe").performClick()
-        composeTestRule.onNodeWithText("YOUR VIBE").assertIsDisplayed()
-        
-        // 4. Back to Air
-        composeTestRule.onNodeWithText("Air").performClick()
-        composeTestRule.onNodeWithText("THE AIR").assertIsDisplayed()
+        // 4. Back to Vibes - Click Branding Section then Vibes stat
+        composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
+        composeTestRule.onNodeWithTag("VibesStat").performClick()
+        composeTestRule.onNodeWithText("FEEL THE VIBES").assertIsDisplayed()
     }
 
     private fun startApp() {

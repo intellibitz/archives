@@ -10,19 +10,23 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.math.min
+import kotlin.time.Duration.Companion.seconds
 
 /**
- * The Supreme Power: Background Intelligence Service.
- * Monitors mesh health, crowd density, and provides AI-driven insights.
+ * The Supreme Power: Intelligence Service.
+ * Monitors vibes, ties, and provides human-centric insights.
  */
 class SupremePowerManager(
     private val p2pController: P2PController,
-    private val messageDao: MessageDao
+    private val messageDao: MessageDao,
+    private val hapticManager: cc.thevar.blukit.data.system.HapticManager? = null
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _report = MutableStateFlow(SupremePowerReport())
     val report: StateFlow<SupremePowerReport> = _report.asStateFlow()
+
+    private val _breezeFlow = MutableSharedFlow<String>(replay = 1)
 
     init {
         startIntelligenceGathering()
@@ -32,42 +36,80 @@ class SupremePowerManager(
         scope.launch {
             combine(
                 p2pController.scannedDevices,
-                p2pController.connectedPeers,
-                messageDao.getAllMessages()
-            ) { scanned, connected, messages ->
+                p2pController.connectedTies,
+                messageDao.getAllMessages(),
+                _breezeFlow.onStart { emit("") }
+            ) { args ->
+                val scanned = args[0] as List<*>
+                val connected = args[1] as Set<*>
+                val messages = args[2] as List<*>
+                
                 val userCount = scanned.size
-                val peerCount = connected.size
+                val tiesCount = connected.size
                 val msgCount = messages.size
                 
-                // Logic for Mesh Health
-                val health = if (userCount > 0) {
-                    min(1.0f, (peerCount.toFloat() / userCount.toFloat()) + 0.2f)
+                // Logic for Vibe Harmony
+                val vibeHarmony = if (userCount > 0) {
+                    min(1.0f, (tiesCount.toFloat() / userCount.toFloat()) + 0.2f)
                 } else 0f
 
-                // Logic for Traffic Density
-                val density = when {
-                    userCount > 50 -> "CRITICAL MASS"
-                    userCount > 20 -> "HIGH DENSITY"
-                    userCount > 5 -> "ACTIVE"
-                    userCount > 0 -> "SPARSE"
-                    else -> "IDLE"
-                }
-
                 // AI Insight Generation (Heuristic-based)
-                val insight = generateAiInsight(userCount, peerCount, msgCount, health)
+                val insight = generateAiInsight(userCount, tiesCount, msgCount, vibeHarmony)
+                val breeze = args.getOrNull(3) as? String
 
                 SupremePowerReport(
                     userCount = userCount,
-                    connectedPeerCount = peerCount,
+                    connectedTiesCount = tiesCount,
                     totalMessages = msgCount,
-                    meshHealth = health,
-                    trafficDensity = density,
+                    harmony = vibeHarmony,
                     aiInsight = insight,
-                    signalStability = if (health > 0.7f) "STABLE" else "FLUCTUATING"
+                    currentBreeze = breeze,
                 )
             }.collect {
                 _report.value = it
             }
+        }
+
+        observeEventsForBreezes()
+    }
+
+    private fun observeEventsForBreezes() {
+        // Vibe Detected
+        p2pController.scannedDevices
+            .map { it.size }
+            .distinctUntilChanged()
+            .scan(0 to 0) { acc, new -> acc.second to new }
+            .onEach { (old, new) ->
+                if (new > old) emitBreeze("A new vibe joined The Vibes")
+            }.launchIn(scope)
+
+        // Tie Formed
+        p2pController.connectedTies
+            .map { it.size }
+            .distinctUntilChanged()
+            .scan(0 to 0) { acc, new -> acc.second to new }
+            .onEach { (old, new) ->
+                if (new > old) emitBreeze("A new tie has been formed")
+            }.launchIn(scope)
+
+        // Messages Relayed
+        p2pController.messages
+            .onEach { msgs ->
+                if (msgs.isNotEmpty()) {
+                    val last = msgs.last()
+                    if (System.currentTimeMillis() - last.timestamp < 1000) {
+                        emitBreeze("Vibe relayed through the web")
+                    }
+                }
+            }.launchIn(scope)
+    }
+
+    private suspend fun emitBreeze(text: String) {
+        _breezeFlow.emit(text)
+        hapticManager?.triggerVibe(cc.thevar.blukit.data.system.HapticManager.VibeType.CONNECTION)
+        delay(5.seconds)
+        if (_breezeFlow.replayCache.firstOrNull() == text) {
+            _breezeFlow.emit("")
         }
     }
 

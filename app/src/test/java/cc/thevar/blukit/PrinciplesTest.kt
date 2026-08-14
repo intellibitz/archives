@@ -22,9 +22,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Supreme Senior Android Expert Implementation:
- * Principles Test Suite verifying the "Powers" and "Commandments" of Blukit.
- * Aligned with the "Vibing Air" philosophy.
+ * Unit test suite for verifying the fundamental "Powers" and "Commandments" of Blukit.
+ * Ensures the decentralized nature of vibes and strict adherence to privacy-first identity management.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -68,13 +67,13 @@ class PrinciplesTest {
     // --- POWER TESTS ---
 
     @Test
-    fun `Power 1 & 4 - Vibes are decentralized and broadcast to everyone in the air`() = runTest {
+    fun `Power 1 & 4 - Vibes are decentralized and broadcast to everyone in The Vibes`() = runTest {
         controller.broadcastMessage("Public Info")
         coVerify { messageDao.insertMessage(match { it.content == "Public Info" && it.receiverId == null }) }
     }
 
     @Test
-    fun `Power 2 - User can feel the vibes in the air without any ties connected`() = runTest {
+    fun `Power 2 - User can feel the vibes in The Vibes without any ties connected`() = runTest {
         val result = controller.broadcastMessage("Lone Shoutout")
         assertNotNull(result)
         assertEquals("Lone Shoutout", result?.content)

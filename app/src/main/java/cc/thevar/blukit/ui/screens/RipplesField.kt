@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -73,8 +73,8 @@ data class VibeRipple(
 )
 
 /**
- * Ripples Field: A high-fidelity mesh visualization for projected displays.
- * Animates mesh relays, atmospheric ripples, and peer-specific vibes.
+ * The Air: A high-fidelity vibe visualization for projected displays.
+ * Animates vibe relays, atmospheric ripples, and peer-specific vibes.
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -83,6 +83,8 @@ fun RipplesField(
     localDeviceId: String,
     localEmoji: String,
     activeBubbles: List<BubbleData>,
+    externalEnergy: Float = 0f,
+    onlyTies: Boolean = false,
     onDeviceClick: (P2PDevice) -> Unit,
     onStartScan: () -> Unit,
     modifier: Modifier = Modifier
@@ -139,6 +141,8 @@ fun RipplesField(
         }
     }
 
+    val finalEnergy = (collectiveEnergy + externalEnergy).coerceAtMost(1.0f)
+
     Column(
         modifier = modifier.fillMaxSize().background(Color.Transparent) 
     ) {
@@ -146,11 +150,18 @@ fun RipplesField(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            StadiumBackground(energy = collectiveEnergy)
+            StadiumBackground(energy = finalEnergy)
             RadarBackground()
             RelayLayer(relayEvents)
+            // Filter devices if only ties are requested
+            val displayDevices = if (onlyTies) {
+                state.scannedDevices.filter { it.id in state.connectedTies }
+            } else {
+                state.scannedDevices
+            }
+
             VibeRippleLayer(vibeRipples)
-            MeshConnectivity(state.scannedDevices)
+            VibesConnectivity(displayDevices)
             
             // Center "Me" Node + Own Bubble
             Box(contentAlignment = Alignment.Center) {
@@ -159,15 +170,15 @@ fun RipplesField(
                 BubbleWrapper(activeBubble = myBubble, color = Color.White)
             }
 
-            // Peer nodes and bubbles
-            if (state.scannedDevices.isNotEmpty()) {
-                PeerNodes(
-                    devices = state.scannedDevices,
+            // Vibe nodes and bubbles
+            if (displayDevices.isNotEmpty()) {
+                VibeNodes(
+                    devices = displayDevices,
                     activeBubbles = activeBubbles,
                     onDeviceClick = onDeviceClick
                 )
             } else if (!state.isConnecting) {
-                EmptyRadarHint()
+                EmptyRadarHint(onlyTies)
             } else {
                 LoadingRadarHint(state.isConnecting)
             }
@@ -350,10 +361,10 @@ private fun RelayLayer(events: List<RelayEvent>) {
 }
 
 @Composable
-private fun MeshConnectivity(devices: List<P2PDevice>) {
+private fun VibesConnectivity(devices: List<P2PDevice>) {
     val connectedDevices = devices.filter { it.isConnected }
     if (connectedDevices.isEmpty()) return
-    val infiniteTransition = rememberInfiniteTransition(label = "Mesh")
+    val infiniteTransition = rememberInfiniteTransition(label = "TheVibes")
     val flow by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "F")
 
     Canvas(modifier = Modifier.fillMaxSize()) {
@@ -400,7 +411,7 @@ private fun CenterNode(emoji: String) {
             )
         }
         
-        // Inner Heart Body
+        // Inner Vibe Body
         Surface(
             shape = CircleShape,
             color = Color.Black.copy(alpha = 0.4f),
@@ -408,10 +419,11 @@ private fun CenterNode(emoji: String) {
             modifier = Modifier.size(64.dp * vibeScale)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = emoji,
-                    fontSize = 32.sp, // Bigger icon
-                    modifier = Modifier.graphicsLayer {
+                Icon(
+                    imageVector = Icons.Rounded.Person, 
+                    contentDescription = null,
+                    tint = StealthAmber,
+                    modifier = Modifier.size(32.dp).graphicsLayer {
                         scaleX = vibeScale
                         scaleY = vibeScale
                     }
@@ -422,18 +434,18 @@ private fun CenterNode(emoji: String) {
 }
 
 @Composable
-private fun PeerNodes(devices: List<P2PDevice>, activeBubbles: List<BubbleData>, onDeviceClick: (P2PDevice) -> Unit) {
+private fun VibeNodes(devices: List<P2PDevice>, activeBubbles: List<BubbleData>, onDeviceClick: (P2PDevice) -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         devices.forEachIndexed { index, device ->
             val radiusValue = (1f - device.proximityFactor) * 140f + 60f
             val angle = (index.toDouble() / devices.size) * 2 * PI
-            PeerNode(device = device, xOffset = (radiusValue * cos(angle)).toFloat().dp, yOffset = (radiusValue * sin(angle)).toFloat().dp, activeBubble = activeBubbles.findLast { it.senderId == device.id }, onClick = { onDeviceClick(device) })
+            VibeNode(device = device, xOffset = (radiusValue * cos(angle)).toFloat().dp, yOffset = (radiusValue * sin(angle)).toFloat().dp, activeBubble = activeBubbles.findLast { it.senderId == device.id }, onClick = { onDeviceClick(device) })
         }
     }
 }
 
 @Composable
-private fun PeerNode(device: P2PDevice, xOffset: Dp, yOffset: Dp, activeBubble: BubbleData?, onClick: () -> Unit) {
+private fun VibeNode(device: P2PDevice, xOffset: Dp, yOffset: Dp, activeBubble: BubbleData?, onClick: () -> Unit) {
     val vibeDuration = (3000 - (device.proximityFactor * 2200)).toInt().coerceIn(500, 3000)
     val infiniteTransition = rememberInfiniteTransition(label = "Node")
     val vibeScale by infiniteTransition.animateFloat(
@@ -492,10 +504,11 @@ private fun PeerNode(device: P2PDevice, xOffset: Dp, yOffset: Dp, activeBubble: 
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = if (device.isConnecting) "⏳" else if (device.isConnected) "✨" else device.emoji,
-                    fontSize = (nodeSize.value / 2.2f).sp,
-                    modifier = Modifier.graphicsLayer {
+                Icon(
+                    imageVector = if (device.isConnecting) Icons.Rounded.HourglassEmpty else Icons.Rounded.Person,
+                    contentDescription = null,
+                    tint = if (device.isConnected) Color.Black else Color.White,
+                    modifier = Modifier.size((nodeSize.value / 2.2f).dp).graphicsLayer {
                         if (device.isConnected) {
                             scaleX = vibeScale
                             scaleY = vibeScale
@@ -525,19 +538,20 @@ private fun colorForProximity(group: String): Color {
 }
 
 @Composable
-private fun EmptyRadarHint() {
+private fun EmptyRadarHint(onlyTies: Boolean) {
     Column(
-        modifier = Modifier.padding(top = 280.dp), // Positioned well below the central heart
+        modifier = Modifier.padding(top = 280.dp), // Positioned well below the central vibe
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "🌬️", 
-            fontSize = 32.sp, 
-            modifier = Modifier.graphicsLayer { alpha = 0.3f }
+        Icon(
+            imageVector = Icons.Rounded.Groups, 
+            contentDescription = null,
+            tint = StealthAmber.copy(alpha = 0.3f),
+            modifier = Modifier.size(32.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.shout_empty_radar).uppercase(), 
+            text = (if (onlyTies) "NO TIES FOUND…" else stringResource(R.string.shout_empty_radar)).uppercase(), 
             style = MaterialTheme.typography.labelSmall,
             color = StealthAmber.copy(alpha = 0.4f), 
             fontWeight = FontWeight.Black, 
@@ -550,6 +564,6 @@ private fun EmptyRadarHint() {
 private fun LoadingRadarHint(isConnecting: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         CircularProgressIndicator(modifier = Modifier.size(32.dp), color = StealthAmber, strokeWidth = 2.dp)
-        Text(text = (if (isConnecting) "BRIDGING..." else "SYNCING THE AIR..."), style = MaterialTheme.typography.labelSmall, color = StealthAmber, modifier = Modifier.padding(top = 12.dp), letterSpacing = 2.sp)
+        Text(text = (if (isConnecting) "BRIDGING…" else "SYNCING THE VIBES…"), style = MaterialTheme.typography.labelSmall, color = StealthAmber, modifier = Modifier.padding(top = 12.dp), letterSpacing = 2.sp)
     }
 }

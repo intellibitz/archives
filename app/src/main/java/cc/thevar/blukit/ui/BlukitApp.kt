@@ -1,6 +1,8 @@
 package cc.thevar.blukit.ui
 
 import android.Manifest
+import androidx.compose.foundation.Image
+import cc.thevar.blukit.domain.model.P2PDevice
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
@@ -19,16 +21,21 @@ import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,7 +54,9 @@ import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.screens.*
+import cc.thevar.blukit.ui.screens.ContactsScreen
+import cc.thevar.blukit.ui.screens.RipplesScreen
+import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -108,6 +117,7 @@ fun BlukitApp(
     val deviceId by viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "")
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
     val supremeReport by supremePowerViewModel.report.collectAsStateWithLifecycle()
+    val energySurge by bluetoothViewModel.energySurge.collectAsStateWithLifecycle()
 
     // Global Permission State for the Magic Bar
     val permissions = buildList {
@@ -130,247 +140,312 @@ fun BlukitApp(
 
     val listDetailSceneStrategy = rememberListDetailSceneStrategy<NavKey>()
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            item(
-                selected = currentRoute is Route.Shout,
-                onClick = { if (currentRoute !is Route.Shout) backStack.add(Route.Shout) },
-                icon = { 
-                    VibesTabIcon(
-                        icon = "🌬️", 
-                        label = stringResource(R.string.nav_shout), 
-                        selected = currentRoute is Route.Shout 
-                    ) 
-                },
-                label = { Text(stringResource(R.string.nav_shout)) }
-            )
-            item(
-                selected = currentRoute is Route.Ties,
-                onClick = { if (currentRoute !is Route.Ties) backStack.add(Route.Ties) },
-                icon = { 
-                    VibesTabIcon(
-                        icon = Icons.Rounded.Diversity1, 
-                        label = stringResource(R.string.nav_whispers), 
-                        selected = currentRoute is Route.Ties 
-                    ) 
-                },
-                label = { Text(stringResource(R.string.nav_whispers)) }
-            )
-            item(
-                selected = currentRoute is Route.Mask,
-                onClick = { if (currentRoute !is Route.Mask) backStack.add(Route.Mask) },
-                icon = { 
-                    VibesTabIcon(
-                        icon = emojiAvatar, 
-                        label = stringResource(R.string.nav_mask), 
-                        selected = currentRoute is Route.Mask 
-                    ) 
-                },
-                label = { Text(stringResource(R.string.nav_mask)) }
-            )
-        },
-        modifier = modifier
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            NavDisplay(
-                backStack = backStack,
-                onBack = { backStack.removeLastOrNull() },
-                sceneStrategy = listDetailSceneStrategy,
-                modifier = Modifier.fillMaxSize()
-            ) { key ->
-                when (key) {
-                    Route.Mask -> NavEntry(key) {
-                        ProfileScreen(
-                            onSaveNickname = viewModel::saveNickname,
-                            onSaveEmoji = { viewModel.saveEmoji(it) },
-                            onToggleStealth = { viewModel.toggleStealth(it) },
-                            currentNickname = nickname,
-                            currentEmoji = emojiAvatar,
-                            isStealthMode = isStealthMode,
-                            onClearHistory = viewModel::clearChatHistory,
-                            onLogout = viewModel::logout
-                        )
-                    }
-                    Route.Shout -> NavEntry(key, metadata = ListDetailSceneStrategy.listPane()) {
-                        RipplesScreen(
-                            state = bluetoothState,
-                            localDeviceId = deviceId,
-                            localEmoji = emojiAvatar,
-                            onStartScan = bluetoothViewModel::startScan,
-                            onStopScan = bluetoothViewModel::stopScan,
-                            onDeviceClick = { device ->
+    Box(modifier = modifier.fillMaxSize()) {
+        NavDisplay(
+            backStack = backStack,
+            onBack = { backStack.removeLastOrNull() },
+            sceneStrategy = listDetailSceneStrategy,
+            modifier = Modifier.fillMaxSize()
+        ) { key ->
+            when (key) {
+                Route.Shout -> NavEntry(key, metadata = ListDetailSceneStrategy.listPane()) {
+                    RipplesScreen(
+                        state = bluetoothState,
+                        localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
+                        localEmoji = emojiAvatar,
+                        energySurge = energySurge,
+                        onStartScan = bluetoothViewModel::startScan,
+                        onStopScan = bluetoothViewModel::stopScan,
+                        onDeviceClick = { device ->
+                            if (device.id !in bluetoothState.connectedTies) {
                                 bluetoothViewModel.connectToDevice(device)
+                            } else {
                                 backStack.add(Route.Chat)
-                            },
-                            onBroadcastMessage = bluetoothViewModel::broadcastMessage
-                        )
-                    }
-                    Route.Chat -> NavEntry(key, metadata = ListDetailSceneStrategy.detailPane()) {
-                        TieScreen(
-                            state = bluetoothState,
-                            localDeviceId = deviceId,
-                            localEmoji = emojiAvatar,
-                            peerId = bluetoothState.connectedPeer?.id,
-                            peerName = bluetoothState.connectedPeer?.name,
-                            peerEmoji = bluetoothState.connectedPeer?.emoji,
-                            onDisconnect = bluetoothViewModel::disconnect,
-                            onNavigateBack = { backStack.removeLastOrNull() },
-                            onSendMessage = bluetoothViewModel::sendMessage,
-                            onBlockUser = viewModel::blockUser,
-                            onEnterPip = onEnterPip
-                        )
-                    }
-                    Route.Ties -> NavEntry(key) {
-                        val contacts by contactsViewModel.allContacts.collectAsStateWithLifecycle()
-                        ContactsScreen(
-                            contacts = contacts,
-                            onStartChat = { contact ->
-                                bluetoothState.scannedDevices.find { it.id == contact.contactId }
-                                    ?.let { 
-                                        bluetoothViewModel.connectToDevice(it)
-                                        backStack.add(Route.Chat)
-                                    }
                             }
-                        )
-                    }
-                    else -> NavEntry(key) { Text("Unknown") }
+                        },
+                        onBroadcastMessage = bluetoothViewModel::broadcastMessage
+                    )
                 }
+                Route.Chat -> NavEntry(key, metadata = ListDetailSceneStrategy.detailPane()) {
+                    TieScreen(
+                        state = bluetoothState,
+                        localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
+                        localEmoji = emojiAvatar,
+                        vibeId = bluetoothState.connectedVibe?.id,
+                        vibeName = bluetoothState.connectedVibe?.name,
+                        vibeEmoji = bluetoothState.connectedVibe?.emoji,
+                        onDisconnect = bluetoothViewModel::disconnect,
+                        onNavigateBack = { backStack.removeLastOrNull() },
+                        onSendMessage = bluetoothViewModel::sendMessage,
+                        onBlockUser = viewModel::blockUser,
+                        onEnterPip = onEnterPip
+                    )
+                }
+                Route.Ties -> NavEntry(key) {
+                    RipplesScreen(
+                        state = bluetoothState,
+                        localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
+                        localEmoji = emojiAvatar,
+                        energySurge = energySurge,
+                        onlyTies = true,
+                        onStartScan = bluetoothViewModel::startScan,
+                        onStopScan = bluetoothViewModel::stopScan,
+                        onDeviceClick = { device ->
+                            backStack.add(Route.Chat)
+                        },
+                        onBroadcastMessage = bluetoothViewModel::broadcastMessage
+                    )
+                }
+                else -> NavEntry(key) { Text("Unknown") }
             }
-
-            val currentTitle = when (currentRoute) {
-                Route.Shout -> "THE AIR"
-                Route.Ties -> "YOUR TIES"
-                Route.Mask -> "YOUR VIBE"
-                Route.Chat -> (bluetoothState.connectedPeer?.name?.uppercase() ?: "TIE")
-                else -> ""
-            }
-
-            val globalSubtitle = when {
-                bluetoothState.connectedPeers.isNotEmpty() -> "${bluetoothState.connectedPeers.size} VIBING TOGETHER"
-                bluetoothState.connectionState is MeshConnectionState.Scanning -> "FEELING THE AIR..."
-                bluetoothState.connectionState is MeshConnectionState.Connecting -> "BRIDGING THE DISTANCE..."
-                else -> "FEEL THE VIBES"
-            }
-
-            UnifiedBlukitBadge(
-                title = currentTitle,
-                subtitle = globalSubtitle,
-                report = supremeReport,
-                isDiscovering = bluetoothState.isDiscovering,
-                isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
-                isLocationEnabled = bluetoothState.isLocationEnabled,
-                permissionsGranted = permissionState.allPermissionsGranted,
-                onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
-                onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
-                onGrantPermissions = { permissionState.launchMultiplePermissionRequest() }
-            )
         }
+
+
+        val globalSubtitle = when {
+            bluetoothState.connectedTies.isNotEmpty() -> "${bluetoothState.connectedTies.size} TIED TOGETHER"
+            bluetoothState.connectionState is AirConnectionState.Scanning -> "FEELING THE VIBES..."
+            bluetoothState.connectionState is AirConnectionState.Connecting -> "BRIDGING THE DISTANCE..."
+            else -> "FEEL THE VIBES"
+        }
+
+        UnifiedBlukitBadge(
+            subtitle = globalSubtitle,
+            report = supremeReport,
+            isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
+            isLocationEnabled = bluetoothState.isLocationEnabled,
+            permissionsGranted = permissionState.allPermissionsGranted,
+            isStealthMode = isStealthMode,
+            currentRoute = (currentRoute as? Route) ?: initialRoute,
+            emojiAvatar = emojiAvatar,
+            nickname = nickname ?: "vibe",
+            incomingTieRequests = bluetoothState.incomingTieRequests,
+            onNavigate = { route ->
+                if (currentRoute != route) {
+                    backStack.add(route)
+                }
+            },
+            onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
+            onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
+            onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
+            onSaveNickname = viewModel::saveNickname,
+            onToggleStealth = viewModel::toggleStealth,
+            onClearHistory = viewModel::clearChatHistory,
+            onLogout = viewModel::logout,
+            onAcceptTie = bluetoothViewModel::acceptTie,
+            onDenyTie = bluetoothViewModel::denyTie,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
+        )
     }
 }
 
 @Composable
 fun UnifiedBlukitBadge(
-    title: String,
     subtitle: String,
     report: cc.thevar.blukit.domain.power.SupremePowerReport,
-    isDiscovering: Boolean,
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
     permissionsGranted: Boolean,
+    isStealthMode: Boolean,
+    currentRoute: Route,
+    emojiAvatar: String,
+    nickname: String,
+    incomingTieRequests: Set<P2PDevice>,
+    onNavigate: (Route) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
-    onGrantPermissions: () -> Unit
+    onGrantPermissions: () -> Unit,
+    onSaveNickname: (String) -> Unit,
+    onToggleStealth: (Boolean) -> Unit,
+    onClearHistory: () -> Unit,
+    onLogout: () -> Unit,
+    onAcceptTie: (P2PDevice) -> Unit,
+    onDenyTie: (P2PDevice) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
+    val hasBreeze = !report.currentBreeze.isNullOrBlank()
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(top = 8.dp, start = 16.dp, end = 16.dp),
-        contentAlignment = Alignment.TopStart
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.BottomCenter
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.Black.copy(alpha = 0.85f))
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.Black.copy(alpha = 0.8f))
                 .border(
                     width = 0.5.dp, 
-                    color = (if (airIsStill) StealthAmber else StealthPrimary).copy(alpha = 0.4f), 
-                    shape = RoundedCornerShape(16.dp)
+                    color = (if (airIsStill) StealthAmber else if (hasBreeze) StealthPrimary else StealthPrimary).copy(alpha = 0.3f), 
+                    shape = RoundedCornerShape(24.dp)
                 )
+                .testTag("BlukitBadge")
                 .clickable { expanded = !expanded }
-                .padding(12.dp)
+                .padding(16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Left: Sentient Branding & Dynamic Status
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { expanded = !expanded }
+                ) {
+                    // Animated B Icon (Vibes travelling through)
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
+                        val infiniteTransition = rememberInfiniteTransition(label = "LogoFlow")
+                        val flowOffset by infiniteTransition.animateFloat(
+                            initialValue = 0f,
+                            targetValue = 1f,
+                            animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
+                            label = "Flow"
+                        )
+                        
+                        Canvas(modifier = Modifier.fillMaxSize().blur(8.dp)) {
+                            drawCircle(
+                                brush = Brush.sweepGradient(
+                                    0.0f to StealthPrimary.copy(alpha = 0f),
+                                    flowOffset to StealthPrimary.copy(alpha = 0.4f),
+                                    1.0f to StealthPrimary.copy(alpha = 0f)
+                                ),
+                                radius = size.minDimension / 2
+                            )
+                        }
+                        
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_blukit_logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+                    
+                    Column {
+                        // Dynamic Status Bar (Top)
                         Text(
-                            text = "BLUKIT",
-                            style = MaterialTheme.typography.labelMedium.copy(
+                            text = (if (airIsStill) "THE VIBES ARE STILL" 
+                                    else if (report.currentBreeze != null) report.currentBreeze.orEmpty() 
+                                    else if (incomingTieRequests.isNotEmpty()) "NEW VIBES RITUAL"
+                                    else subtitle).uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 7.sp,
                                 fontWeight = FontWeight.Black,
-                                letterSpacing = 2.sp,
-                                color = if (airIsStill) StealthAmber else StealthPrimary
+                                color = (if (airIsStill) StealthAmber 
+                                        else if (report.currentBreeze != null || incomingTieRequests.isNotEmpty()) StealthPrimary 
+                                        else Color.White).copy(alpha = 0.6f),
+                                letterSpacing = 0.5.sp
                             )
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(modifier = Modifier.size(1.dp, 12.dp).background(Color.White.copy(alpha = 0.2f)))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 2.sp,
-                                color = Color.White
+                        
+                        // Static Branding (Bottom)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "BLUKIT",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 2.sp,
+                                    color = if (airIsStill) StealthAmber else StealthPrimary
+                                )
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(modifier = Modifier.size(1.dp, 10.dp).background(Color.White.copy(alpha = 0.2f)))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "FEEL THE VIBES",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp,
+                                    color = Color.White.copy(alpha = 0.4f)
+                                )
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(0.2f))
+
+                // Right: Contextual Animated Ritual Icon
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        // Pulse Animation (Sentient Feel)
+                        val infiniteTransition = rememberInfiniteTransition(label = "IconPulse")
+                        val pulseScale by infiniteTransition.animateFloat(
+                            initialValue = 0.9f,
+                            targetValue = 1.2f,
+                            animationSpec = infiniteRepeatable(tween(2000), RepeatMode.Reverse),
+                            label = "Pulse"
+                        )
+                        
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp * pulseScale)
+                                .background(
+                                    Brush.radialGradient(
+                                        listOf((if (airIsStill) StealthAmber else StealthPrimary).copy(alpha = 0.15f), Color.Transparent)
+                                    ),
+                                    CircleShape
+                                )
+                        )
+                        
+                        Icon(
+                            imageVector = if (currentRoute is Route.Ties) Icons.Rounded.Person else Icons.Rounded.Groups,
+                            contentDescription = null,
+                            tint = if (airIsStill) StealthAmber else StealthPrimary,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                     Text(
-                        text = (if (airIsStill) "THE AIR IS STILL" else subtitle).uppercase(),
+                        text = if (currentRoute is Route.Ties) "TIE" else "VIBES",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = (if (airIsStill) StealthAmber else Color.White).copy(alpha = 0.5f),
-                            letterSpacing = 0.5.sp
+                            fontSize = 6.sp,
+                            fontWeight = FontWeight.Black,
+                            color = (if (airIsStill) StealthAmber else StealthPrimary).copy(alpha = 0.6f),
+                            letterSpacing = 1.sp
                         )
                     )
                 }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                cc.thevar.blukit.ui.screens.StatusOverlay(
-                    isDiscovering = isDiscovering,
-                    isBluetoothEnabled = isBluetoothEnabled,
-                    modifier = Modifier.graphicsLayer { alpha = 0.8f }
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                Icon(
-                    if (airIsStill) Icons.Rounded.Warning else Icons.Rounded.Bolt,
-                    contentDescription = null,
-                    tint = if (airIsStill) StealthAmber else StealthPrimary,
-                    modifier = Modifier.size(16.dp)
-                )
+            }
             }
 
-            // --- THE MAGIC BAR (Invisible Status Line) ---
+            // --- THE MAGIC BAR & INTEL ---
             AnimatedVisibility(
-                visible = airIsStill || expanded,
+                visible = airIsStill || expanded || hasBreeze,
                 enter = expandVertically() + fadeIn(),
                 exit = shrinkVertically() + fadeOut()
             ) {
                 Column {
-                    if (airIsStill) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                    if (airIsStill || hasBreeze || incomingTieRequests.isNotEmpty()) {
+                        val requests = incomingTieRequests
+                        Spacer(modifier = Modifier.height(16.dp))
                         MagicBarContent(
                             isBluetoothOff = !isBluetoothEnabled,
                             isLocationOff = isLocationMandatory && !isLocationEnabled,
                             isPermissionMissing = !permissionsGranted,
+                            currentBreeze = report.currentBreeze,
+                            incomingRequests = requests,
+                            onAcceptTie = onAcceptTie,
+                            onDenyTie = onDenyTie,
                             onAwakenBluetooth = onAwakenBluetooth,
                             onAwakenLocation = onAwakenLocation,
                             onGrantPermissions = onGrantPermissions
@@ -378,28 +453,231 @@ fun UnifiedBlukitBadge(
                     }
 
                     if (expanded) {
-                        if (!airIsStill) Spacer(modifier = Modifier.height(12.dp))
-                        IntelRow("HEARTS", report.userCount.toString())
-                        IntelRow("TIES", report.connectedPeerCount.toString())
-                        IntelRow("ENERGY", report.trafficDensity)
-                        IntelRow("FLOW", report.signalStability)
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Einstein Transformation: Integrated Vibe Identity
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .padding(16.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(48.dp)) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = StealthPrimary.copy(alpha = 0.1f),
+                                    border = BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.3f)),
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Person, 
+                                            contentDescription = null,
+                                            tint = StealthPrimary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            var localNickname by remember(nickname) { mutableStateOf(nickname) }
+                            TextField(
+                                value = localNickname,
+                                onValueChange = { 
+                                    localNickname = it
+                                    onSaveNickname(it.ifBlank { "vibe" })
+                                },
+                                modifier = Modifier.weight(1f).testTag("IdentityVibeInput"),
+                                label = { Text("YOU", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = StealthPrimary,
+                                    unfocusedIndicatorColor = StealthPrimary.copy(alpha = 0.2f)
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
                         
+                        Column(modifier = Modifier.testTag("IntelSection")) {
+                            IntelRow(
+                                label = "VIBES", 
+                                value = report.userCount.toString(),
+                                icon = Icons.Rounded.Groups,
+                                modifier = Modifier.testTag("VibesStat"),
+                                onClick = { 
+                                    onNavigate(Route.Shout)
+                                    expanded = false 
+                                }
+                            )
+                            IntelRow(
+                                label = "TIES", 
+                                value = report.connectedTiesCount.toString(),
+                                icon = Icons.Rounded.Person,
+                                modifier = Modifier.testTag("TiesStat"),
+                                onClick = { 
+                                    onNavigate(Route.Ties)
+                                    expanded = false
+                                }
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Einstein Transformation: Quiet Light & Stillness Integrated
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .padding(12.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "QUIET LIGHT",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "GENTLE STADIUM GLOW",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = StealthPrimary.copy(alpha = 0.5f),
+                                    fontSize = 7.sp
+                                )
+                            }
+                            Switch(
+                                checked = isStealthMode,
+                                onCheckedChange = onToggleStealth,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = StealthPrimary,
+                                    checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        var showStillnessLocal by remember { mutableStateOf(false) }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .clickable { showStillnessLocal = !showStillnessLocal }
+                                .padding(12.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (showStillnessLocal) "▼ STILLNESS" else "▶ STILLNESS",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (showStillnessLocal) StealthPrimary else StealthPrimary.copy(alpha = 0.4f),
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+
+                            if (showStillnessLocal) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedButton(
+                                        onClick = { showClearHistoryDialog = true },
+                                        modifier = Modifier.weight(1f),
+                                        border = BorderStroke(0.5.dp, Color.Red.copy(alpha = 0.3f)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red.copy(alpha = 0.7f)),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("DISSOLVE TIES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                    OutlinedButton(
+                                        onClick = { showLogoutDialog = true },
+                                        modifier = Modifier.weight(1f),
+                                        border = BorderStroke(0.5.dp, Color.Red.copy(alpha = 0.3f)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red.copy(alpha = 0.7f)),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("RESET VIBE", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+
                         HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 8.dp),
+                            modifier = Modifier.padding(vertical = 12.dp),
                             color = StealthPrimary.copy(alpha = 0.1f)
                         )
                         
                         Text(
                             text = report.aiInsight.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelSmall.copy(lineHeight = 14.sp),
                             color = Color.White.copy(alpha = 0.8f),
-                            lineHeight = 14.sp,
                             letterSpacing = 0.5.sp
                         )
                     }
                 }
             }
         }
+    }
+
+    // --- DIALOGS MOVED TO HUB (THE BRAIN) ---
+    if (showClearHistoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearHistoryDialog = false },
+            containerColor = Color.Black,
+            titleContentColor = StealthPrimary,
+            textContentColor = Color.White.copy(alpha = 0.7f),
+            title = { Text("Dissolve all Ties?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
+            text = { Text("This will permanently dissolve all your private ties and moments.", fontSize = 12.sp) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onClearHistory()
+                        showClearHistoryDialog = false
+                    }
+                ) {
+                    Text("DISSOLVE", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearHistoryDialog = false }) {
+                    Text("CANCEL", color = Color.White.copy(alpha = 0.4f))
+                }
+            }
+        )
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            containerColor = Color.Black,
+            titleContentColor = StealthPrimary,
+            textContentColor = Color.White.copy(alpha = 0.7f),
+            title = { Text("Reset Identity?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
+            text = { Text("This will clear your profile and device data.", fontSize = 12.sp) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onLogout()
+                        showLogoutDialog = false
+                    }
+                ) {
+                    Text("RESET", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("CANCEL", color = Color.White.copy(alpha = 0.4f))
+                }
+            }
+        )
     }
 }
 
@@ -408,6 +686,10 @@ private fun MagicBarContent(
     isBluetoothOff: Boolean,
     isLocationOff: Boolean,
     isPermissionMissing: Boolean,
+    currentBreeze: String?,
+    incomingRequests: Set<P2PDevice>,
+    onAcceptTie: (P2PDevice) -> Unit,
+    onDenyTie: (P2PDevice) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onGrantPermissions: () -> Unit
@@ -423,10 +705,14 @@ private fun MagicBarContent(
         label = "Alpha"
     )
 
+    val isStill = isBluetoothOff || isLocationOff || isPermissionMissing
+    val hasRequests = incomingRequests.isNotEmpty()
+    val barColor = if (isStill) StealthAmber else StealthPrimary
+
     Surface(
-        color = StealthAmber.copy(alpha = 0.05f),
+        color = barColor.copy(alpha = 0.05f),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(0.5.dp, StealthAmber.copy(alpha = 0.2f)),
+        border = BorderStroke(0.5.dp, barColor.copy(alpha = 0.2f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
@@ -440,131 +726,138 @@ private fun MagicBarContent(
                         isBluetoothOff && isLocationOff -> "AWAKEN RADIOS"
                         isBluetoothOff -> "AWAKEN BLUETOOTH"
                         isLocationOff -> "AWAKEN LOCATION"
-                        else -> "THE AIR IS STILL"
+                        hasRequests -> "NEW VIBES RITUAL"
+                        !currentBreeze.isNullOrBlank() -> "ATMOSPHERIC BREEZE"
+                        else -> "THE VIBES ARE PURE"
                     },
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp
                     ),
-                    color = StealthAmber.copy(alpha = pulseAlpha),
+                    color = barColor.copy(alpha = pulseAlpha),
                     modifier = Modifier.weight(1f)
                 )
 
-                val action = when {
-                    isPermissionMissing -> onGrantPermissions
-                    isBluetoothOff -> onAwakenBluetooth
-                    isLocationOff -> onAwakenLocation
-                    else -> null
-                }
+                if (isStill) {
+                    val action = when {
+                        isPermissionMissing -> onGrantPermissions
+                        isBluetoothOff -> onAwakenBluetooth
+                        isLocationOff -> onAwakenLocation
+                        else -> null
+                    }
 
-                if (action != null) {
-                    Text(
-                        text = "AWAKEN",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.Black
-                        ),
-                        modifier = Modifier
-                            .graphicsLayer { alpha = pulseAlpha }
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(StealthAmber)
-                            .clickable { action() }
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
+                    if (action != null) {
+                        Text(
+                            text = "AWAKEN",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.Black
+                            ),
+                            modifier = Modifier
+                                .graphicsLayer { alpha = pulseAlpha }
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(StealthAmber)
+                                .clickable { action() }
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
             
             val description = when {
                 isPermissionMissing -> "Blukit needs permission to feel the vibes around you."
-                isBluetoothOff -> "Your Bluetooth must be awake to feel the vibes in the air."
+                isBluetoothOff -> "Your Bluetooth must be awake to feel the vibes around you."
                 isLocationOff -> "Location must be awake to feel nearby ripples on this device."
+                hasRequests -> "${(incomingRequests.first().name ?: "Vibe").uppercase()} wants to bridge a tie."
+                !currentBreeze.isNullOrBlank() -> currentBreeze
                 else -> null
             }
 
             if (description != null) {
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 7.sp,
-                        fontWeight = FontWeight.Medium,
-                        lineHeight = 10.sp
-                    ),
-                    color = Color.White.copy(alpha = 0.5f)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Medium,
+                            lineHeight = 10.sp
+                        ),
+                        color = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    if (hasRequests && !isStill) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "ACCEPT",
+                                color = StealthPrimary,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 8.sp,
+                                modifier = Modifier.clickable { onAcceptTie(incomingRequests.first()) }
+                            )
+                            Text(
+                                "DENY",
+                                color = Color.White.copy(alpha = 0.3f),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 8.sp,
+                                modifier = Modifier.clickable { onDenyTie(incomingRequests.first()) }
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun IntelRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
-        Text(text = value, style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun VibesTabIcon(
-    icon: Any, // Can be ImageVector or String (Emoji)
-    label: String,
-    selected: Boolean
+private fun IntelRow(
+    label: String, 
+    value: String,
+    modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    textIcon: String? = null,
+    onClick: (() -> Unit)? = null
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "TabVibes")
-    val vibePulse by infiniteTransition.animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "VibePulse"
-    )
-
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (selected) 0.6f else 0f,
-        animationSpec = tween(500),
-        label = "Glow"
-    )
-
-    Box(contentAlignment = Alignment.Center) {
-        if (selected) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(StealthPrimary.copy(alpha = glowAlpha * 0.2f), CircleShape)
-                    .border(0.5.dp, StealthPrimary.copy(alpha = glowAlpha), CircleShape)
-                    .graphicsLayer {
-                        scaleX = vibePulse
-                        scaleY = vibePulse
-                    }
-            )
-        }
-        
-        when (icon) {
-            is androidx.compose.ui.graphics.vector.ImageVector -> {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = label,
-                    tint = if (selected) StealthPrimary else Color.White.copy(alpha = 0.4f),
-                    modifier = Modifier.size(24.dp)
+                    contentDescription = null,
+                    tint = StealthPrimary.copy(alpha = 0.4f),
+                    modifier = Modifier.size(14.dp)
                 )
-            }
-            is String -> {
+                Spacer(modifier = Modifier.width(8.dp))
+            } else if (textIcon != null) {
                 Text(
-                    text = icon,
-                    fontSize = 20.sp,
-                    modifier = Modifier.graphicsLayer {
-                        alpha = if (selected) 1f else 0.4f
-                    }
+                    text = textIcon,
+                    fontSize = 12.sp,
+                    modifier = Modifier.alpha(0.6f)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
             }
+            Text(
+                text = label, 
+                style = MaterialTheme.typography.labelSmall, 
+                color = Color.White.copy(alpha = 0.4f)
+            )
         }
+        Text(
+            text = value, 
+            style = MaterialTheme.typography.labelSmall, 
+            color = StealthPrimary, 
+            fontWeight = FontWeight.Bold
+        )
     }
 }

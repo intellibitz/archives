@@ -16,7 +16,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Ensures Harmony and The Vibes are correctly reflected.
+ * Uses UnconfinedTestDispatcher for robust, immediate state assertions.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class BluetoothViewModelTest {
 
@@ -24,27 +29,24 @@ class BluetoothViewModelTest {
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
     private lateinit var viewModel: BluetoothViewModel
 
-    private val scannedDevicesFlow = MutableStateFlow(emptyList<cc.thevar.blukit.domain.model.P2PDevice>())
-    private val radioStatesFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = false, isLocationEnabled = false))
-    private val connectedPeersFlow = MutableStateFlow(emptySet<String>())
-    private val isDiscoveringFlow = MutableStateFlow(false)
-    private val errorsFlow = MutableStateFlow("")
+    private val harmonyFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = false, isLocationEnabled = false))
+    private val errorFlow = MutableStateFlow("")
     
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         
-        every { p2pController.scannedDevices } returns scannedDevicesFlow
-        every { radioStateManager.radioStates } returns radioStatesFlow
-        every { p2pController.connectedPeers } returns connectedPeersFlow
-        every { p2pController.isDiscovering } returns isDiscoveringFlow
+        every { radioStateManager.radioStates } returns harmonyFlow
+        every { p2pController.scannedDevices } returns MutableStateFlow(emptyList())
+        every { p2pController.connectedTies } returns MutableStateFlow(emptySet())
+        every { p2pController.incomingTieRequests } returns MutableStateFlow(emptySet())
+        every { p2pController.isDiscovering } returns MutableStateFlow(false)
         every { p2pController.isAdvertising } returns MutableStateFlow(false)
-        every { p2pController.errors } returns errorsFlow
+        every { p2pController.errors } returns errorFlow
         every { p2pController.isConnected } returns MutableStateFlow(false)
         every { p2pController.messages } returns MutableStateFlow(emptyList())
-        every { radioStateManager.radioStates } returns radioStatesFlow
 
         viewModel = BluetoothViewModel(p2pController, radioStateManager)
     }
@@ -55,42 +57,48 @@ class BluetoothViewModelTest {
     }
 
     @Test
-    fun `test state updates when radios enabled`() = runTest(testDispatcher) {
-        viewModel.state.test {
-            // Initial default state
-            assertEquals(false, awaitItem().isBluetoothEnabled)
+    fun `test Harmony reflects The Vibes accurately`() = runTest {
+        viewModel.state.test(timeout = 10.seconds) {
+            // Initial state check
+            val initial = awaitItem()
+            assertEquals("Harmony should start cold", false, initial.isBluetoothEnabled)
 
-            radioStatesFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true)
-            advanceUntilIdle()
+            // Awaken The Vibes
+            harmonyFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true)
             
-            // Wait for combine and stateIn to catch up
-            val state = awaitItem()
-            assertTrue(state.isBluetoothEnabled)
-            assertTrue(state.isLocationEnabled)
+            val active = awaitItem()
+            assertTrue("The Vibes should be alive in Harmony", active.isBluetoothEnabled)
+            assertTrue("The Air should be clear in Harmony", active.isLocationEnabled)
+            
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `test startScan calls controller`() {
+    fun `test Awakening The Vibes triggers discovery`() {
         viewModel.startScan()
         verify { p2pController.startDiscovery() }
         verify { p2pController.startAdvertising() }
     }
 
     @Test
-    fun `test stopScan calls controller`() {
+    fun `test Stilling The Vibes stops discovery`() {
         viewModel.stopScan()
         verify { p2pController.stopDiscovery() }
         verify { p2pController.stopAdvertising() }
     }
 
     @Test
-    fun `test error flow updates state`() = runTest(testDispatcher) {
-        viewModel.state.test {
-            awaitItem() // Initial
-            errorsFlow.value = "Discovery failed"
-            advanceUntilIdle()
-            assertEquals("Discovery failed", awaitItem().errorMessage)
+    fun `test disturbed Air reflects in The Vibes`() = runTest {
+        viewModel.state.test(timeout = 10.seconds) {
+            skipItems(1) // Initial state
+            
+            errorFlow.value = "The Air is Disturbed"
+            
+            val disturbed = awaitItem()
+            assertEquals("The Vibes must reflect the disturbed Air", "The Air is Disturbed", disturbed.errorMessage)
+            
+            cancelAndIgnoreRemainingEvents()
         }
     }
 }

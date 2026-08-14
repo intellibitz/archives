@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
 /**
- * Supreme Senior Architect Implementation:
- * Secure Identity Repository using Android KeyStore and EncryptedSharedPreferences.
+ * Repository interface for managing user identity and privacy settings.
+ * Handles anonymous "vibe" personas and secure storage of device-specific configuration.
  */
 interface IdentityRepository {
     val nicknameFlow: StateFlow<String?>
@@ -29,8 +29,8 @@ interface IdentityRepository {
 }
 
 /**
- * Supreme Senior Architect Implementation:
- * Secure Identity Repository using Android KeyStore and EncryptedSharedPreferences.
+ * Implementation of IdentityRepository using Android KeyStore-backed 
+ * EncryptedSharedPreferences to ensure sensitive user data remains protected at rest.
  */
 class IdentityRepositoryImpl(context: Context) : IdentityRepository {
 
@@ -38,7 +38,15 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
-    private val securePrefs = EncryptedSharedPreferences.create(
+    private val securePrefs = try {
+        createEncryptedPrefs(context)
+    } catch (e: Exception) {
+        // Keystore corruption or signature mismatch - Purge and Recreate
+        context.deleteSharedPreferences("blukit_identity_secure")
+        createEncryptedPrefs(context)
+    }
+
+    private fun createEncryptedPrefs(context: Context) = EncryptedSharedPreferences.create(
         context,
         "blukit_identity_secure",
         masterKey,
@@ -61,12 +69,7 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
     override val emojiAvatar: StateFlow<String> = _emojiAvatar.asStateFlow()
 
     private fun getSanitizedEmoji(): String {
-        val stored = securePrefs.getString(KEY_EMOJI, "🎭") ?: "🎭"
-        return if (stored == "🌬️" || stored == "👤" || stored == "💓") {
-            "🎭" // Migrate old defaults to the Mask
-        } else {
-            stored
-        }
+        return "👤" // Default Person (Your Vibe)
     }
 
     private val _stealthMode = MutableStateFlow(securePrefs.getBoolean(KEY_STEALTH, true))
@@ -94,8 +97,7 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
     override fun getCurrentNickname(): String = securePrefs.getString(KEY_NICKNAME, null) ?: "vibe"
 
     override fun saveEmoji(emoji: String) {
-        securePrefs.edit { putString(KEY_EMOJI, emoji) }
-        _emojiAvatar.value = emoji
+        // No-op: Emojis thrashed, everyone is a person
     }
 
     override fun toggleStealth(enabled: Boolean) {
@@ -113,7 +115,7 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
     override fun logout() {
         securePrefs.edit { clear() }
         _nickname.value = null
-        _emojiAvatar.value = "🎭"
+        _emojiAvatar.value = "👤"
         _stealthMode.value = false
         _blockedUsers.value = emptySet()
     }

@@ -101,7 +101,7 @@ class MovieHallScenarioTest {
     }
 
     @Test
-    fun `movie hall simulation - strangers blukitting publicly while friends whisper privately`() = runTest(testDispatcher) {
+    fun `movie hall simulation - strangers vibes publicly while friends whisper privately`() = runTest(testDispatcher) {
         val lifecycleCallbackSlot = slot<ConnectionLifecycleCallback>()
         val payloadCallbackSlot = slot<PayloadCallback>()
         every { connectionsClient.startAdvertising(any<String>(), any<String>(), capture(lifecycleCallbackSlot), any<AdvertisingOptions>()) } returns Tasks.forResult<Void>(null)
@@ -117,7 +117,7 @@ class MovieHallScenarioTest {
         val peers = listOf("Friend" to "🤝", "StrangerA" to "👤", "StrangerB" to "👤")
         val peerIds = peers.mapIndexed { index, pair -> "id-${pair.first}-$index" }
         
-        peers.forEachIndexed { index, _ ->
+        peers.forEachIndexed { index, pair ->
             val peerId = peerIds[index]
             lifecycleCallback.onConnectionInitiated(peerId, mockk(relaxed = true))
             advanceUntilIdle()
@@ -129,10 +129,14 @@ class MovieHallScenarioTest {
             
             lifecycleCallback.onConnectionResult(peerId, mockk<ConnectionResolution>().apply { every { status.isSuccess } returns true })
             advanceUntilIdle()
+
+            // Tie Ritual: Explicitly accept the tie
+            controller.acceptTie(cc.thevar.blukit.domain.model.P2PDevice(peerId, pair.first, pair.second))
+            advanceUntilIdle()
         }
 
         advanceUntilIdle()
-        assertEquals(3, controller.connectedPeers.value.size)
+        assertEquals(3, controller.connectedTies.value.size)
 
         // 1. StrangerA broadcasts
         val strangerAPayload = MessagePayload(
