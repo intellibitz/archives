@@ -1,6 +1,6 @@
-# Blukit: Data Safety Declaration
+# Blukit - Spread the Vibes: Data Safety Declaration
 
-This document outlines how **Blukit** handles user data, privacy, and security in compliance with Google Play Store standards.
+This document outlines how **Blukit - Spread the Vibes** handles user data, privacy, and security in compliance with Google Play Store standards.
 
 ## 1. Data Collection & Sharing
 
@@ -31,7 +31,7 @@ This document outlines how **Blukit** handles user data, privacy, and security i
 
 Blukit uses granular permissions to protect user privacy:
 - `BLUETOOTH_SCAN`: Used with the `neverForLocation` flag to ensure scanning is only used for vibe discovery.
-- `BLUETOOTH_CONNECT`: Required to establish secure rituals between hearts.
+- `BLUETOOTH_CONNECT`: Required to establish secure rituals between voices.
 - `BLUETOOTH_ADVERTISE`: Required to make your presence felt in The Vibes.
 
 ---

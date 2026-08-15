@@ -1,8 +1,8 @@
-# Privacy Policy for Blukit
+# Privacy Policy for Blukit - Spread the Vibes
 
 **Effective Date: August 15, 2026**
 
-Blukit ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains our practices regarding the ritual of connection through our mobile application, Blukit.
+Blukit ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains our practices regarding the ritual of connection through our mobile application, Blukit - Spread the Vibes.
 
 ## 1. Zero Data Collection
 Blukit is a sentient, decentralized experience. **We do not collect, store, or transmit any of your personal data to any external servers.**
