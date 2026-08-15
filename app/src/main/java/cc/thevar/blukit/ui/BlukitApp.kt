@@ -263,9 +263,9 @@ fun BlukitApp(
         )
 
         val globalSubtitle = when {
-            bluetoothState.connectedLinks.isNotEmpty() -> "PROXIMITY: ${bluetoothState.connectedLinks.size}"
-            bluetoothState.connectionState is AirConnectionState.Scanning -> "VIBES PROXIMITY…"
-            bluetoothState.connectionState is AirConnectionState.Connecting -> "ENERGY PROXIMITY…"
+            bluetoothState.connectedLinks.isNotEmpty() -> "VIBING: ${bluetoothState.connectedLinks.size}"
+            bluetoothState.connectionState is AirConnectionState.Scanning -> "SEARCHING FOR CROWD…"
+            bluetoothState.connectionState is AirConnectionState.Connecting -> "CONNECTING…"
             else -> "SPREAD VIBES"
         }
 
@@ -400,9 +400,9 @@ fun UnifiedBlukitBadge(
                 Column(modifier = Modifier.weight(1f)) {
                     // Dynamic Status Bar (Top)
                     Text(
-                        text = (if (airIsStill) "VIBES STILL" 
+                        text = (if (airIsStill) "RADIOS OFF" 
                                 else if (!currentBreeze.isNullOrBlank()) currentBreeze 
-                                else if (incomingLinkRequests.isNotEmpty()) "VIBE PROXIMITY"
+                                else if (incomingLinkRequests.isNotEmpty()) "NEW VIBE REQUEST"
                                 else subtitle).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 7.sp,
@@ -799,9 +799,9 @@ private fun MagicBarContent(
                         isBluetoothOff && isLocationOff -> "VIBES STILL"
                         isBluetoothOff -> "VIBES STILL"
                         isLocationOff -> "VIBES STILL"
-                        hasRequests -> "PROXIMITY"
+                        hasRequests -> "NEW VIBE"
                         !currentBreeze.isNullOrBlank() -> "ENERGY"
-                        else -> "VIBES ROAR"
+                        else -> "CROWD ROARING"
                     },
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 8.sp,
@@ -840,10 +840,10 @@ private fun MagicBarContent(
             }
             
             val description = when {
-                hasRequests -> "${(incomingRequests.first().name ?: "VIBE").uppercase()} PROXIMITY."
-                isPermissionMissing -> "SPREAD VIBES. HEAR THE CROWD ROAR. PROXIMITY ENERGY."
-                isBluetoothOff -> "VIBES STILL. ENERGY REQUIRED."
-                isLocationOff -> "VIBES STILL. ENERGY REQUIRED."
+                hasRequests -> "${(incomingRequests.first().name ?: "VIBE").uppercase()} WANTS TO VIBE."
+                isPermissionMissing -> "ENABLE RADIOS TO JOIN THE CROWD."
+                isBluetoothOff -> "RADIOS ARE OFF. ENERGY REQUIRED."
+                isLocationOff -> "RADIOS ARE OFF. ENERGY REQUIRED."
                 !currentBreeze.isNullOrBlank() -> currentBreeze
                 else -> null
             }
