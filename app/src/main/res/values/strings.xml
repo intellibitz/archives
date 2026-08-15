@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Blukit - The energy of close proximity</string>
+    <string name="app_name">Blukit - The energy of proximity</string>
 
     <!-- Navigation Labels (The Powers) -->
     <string name="nav_watch">Vibes</string>

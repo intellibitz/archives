@@ -1,4 +1,4 @@
-# Blukit — The energy of close proximity
+# Blukit — The energy of proximity
 
 **Spread the vibes and hear the crowd roar instantly—no internet needed.**
 
