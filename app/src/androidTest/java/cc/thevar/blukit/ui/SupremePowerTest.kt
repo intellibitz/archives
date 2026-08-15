@@ -68,18 +68,11 @@ class SupremePowerTest {
         composeTestRule.onNodeWithText("BLUKIT", substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithTag("IntelSection").assertDoesNotExist()
 
-        // Click to expand using testTag for reliability
-        composeTestRule.onNodeWithTag("BlukitBadge").performClick()
-        
-        // Check expanded state - wait for animation with generous timeout
-        composeTestRule.waitUntil(10000) {
-            composeTestRule.onAllNodesWithTag("IntelSection", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
-        }
+        // Check stats in hub brain (center)
         composeTestRule.onNodeWithText("CROWD", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("10", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNode(hasText("VIBES") and hasAnyAncestor(hasTestTag("IntelSection")), useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("2", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("ROARS", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("5", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("THE VIBES ARE HEALTHY", substring = true, ignoreCase = true, useUnmergedTree = true).assertIsDisplayed() 
 
         // Click to collapse

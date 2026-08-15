@@ -280,7 +280,6 @@ fun BlukitApp(
             isStealthMode = isStealthMode,
             lowPowerMode = lowPowerMode,
             currentRoute = (currentRoute as? Route) ?: initialRoute,
-            emojiAvatar = emojiAvatar,
             nickname = nickname ?: "vibe",
             incomingLinkRequests = bluetoothState.incomingLinkRequests,
             onNavigate = { route ->
@@ -342,7 +341,6 @@ fun UnifiedBlukitBadge(
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
     currentRoute: Route,
-    emojiAvatar: String,
     nickname: String,
     incomingLinkRequests: Set<P2PDevice>,
     onNavigate: (Route) -> Unit,
@@ -390,13 +388,69 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Heartbeat icon
-                BlukitHeartbeat(energy = energy, modifier = Modifier.padding(end = 4.dp))
+                // Left: Sentient Picker & Branding
+                Column(
+                    modifier = Modifier.padding(end = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    BlukitHeartbeat(energy = energy)
+                    Text(
+                        text = "BLUKIT",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                            color = if (airIsStill) Color.Red else StealthPrimary
+                        )
+                    )
+                    Text(
+                        text = "CROWD ENERGY",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.3f)
+                        )
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Smart Switcher (ROARS / VIBES)
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .padding(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "ROARS",
+                            modifier = Modifier
+                                .clickable { onNavigate(Route.Crowd) }
+                                .padding(horizontal = 4.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 6.sp,
+                                fontWeight = if (currentRoute is Route.Crowd) FontWeight.Black else FontWeight.Normal,
+                                color = if (currentRoute is Route.Crowd) StealthPrimary else Color.White.copy(alpha = 0.4f)
+                            )
+                        )
+                        Text(
+                            text = "VIBES",
+                            modifier = Modifier
+                                .clickable { onNavigate(Route.Vibes) }
+                                .padding(horizontal = 4.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 6.sp,
+                                fontWeight = if (currentRoute is Route.Vibes) FontWeight.Black else FontWeight.Normal,
+                                color = if (currentRoute is Route.Vibes) StealthPrimary else Color.White.copy(alpha = 0.4f)
+                            )
+                        )
+                    }
+                }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Intelligence Stats (Hub Brain)
+                    // Center: Intelligence Stats (Hub Brain)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
@@ -412,7 +466,6 @@ fun UnifiedBlukitBadge(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Feedback 4: Status text integrated into the hub intelligence
                     val statusText = when {
                         airIsStill -> "RADIOS OFF"
                         incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
@@ -448,11 +501,8 @@ fun UnifiedBlukitBadge(
                                 letterSpacing = 0.5.sp
                             )
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = emojiAvatar, fontSize = 12.sp)
                     }
                     
-                    // Feedback 6: Move Spread Vibes below you
                     Text(
                         text = "SPREAD VIBES",
                         style = MaterialTheme.typography.labelSmall.copy(
@@ -462,25 +512,6 @@ fun UnifiedBlukitBadge(
                             letterSpacing = 1.sp
                         )
                     )
-                    
-                    // Mode Indicator
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(4.dp)
-                                .background(if (airIsStill) Color.Red else StealthPrimary, CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = if (currentRoute is Route.Vibes) "VIBES" else "CROWD",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 6.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White.copy(alpha = 0.4f),
-                                letterSpacing = 1.sp
-                            )
-                        )
-                    }
                 }
             }
 
@@ -525,7 +556,7 @@ fun UnifiedBlukitBadge(
                                     onSaveNickname(it.ifBlank { "vibe" })
                                 },
                                 modifier = Modifier.weight(1f).testTag("IdentityVibeInput"),
-                                label = { Text("MY NAME", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
+                                label = { Text("YOU", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
                                 colors = TextFieldDefaults.colors(
@@ -537,32 +568,6 @@ fun UnifiedBlukitBadge(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Intel stats in expansion too
-                        Column(modifier = Modifier.testTag("IntelSection")) {
-                            IntelRow(
-                                label = "CROWD", 
-                                value = userCount.toString(),
-                                icon = Icons.Rounded.AccountCircle,
-                                modifier = Modifier.testTag("VibesStat"),
-                                onClick = { 
-                                    onNavigate(Route.Crowd)
-                                    expanded = false 
-                                }
-                            )
-                            IntelRow(
-                                label = "VIBES", 
-                                value = linksCount.toString(),
-                                icon = Icons.Rounded.AccountCircle,
-                                modifier = Modifier.testTag("TiesStat"),
-                                onClick = { 
-                                    onNavigate(Route.Vibes)
-                                    expanded = false
-                                }
-                            )
-                        }
-                        
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Settings Sections (Feedback 6: Simplified)
@@ -868,55 +873,6 @@ private fun HubStat(
                 color = StealthPrimary.copy(alpha = 0.5f),
                 letterSpacing = 1.sp
             )
-        )
-    }
-}
-
-@Composable
-private fun IntelRow(
-    label: String, 
-    value: String,
-    modifier: Modifier = Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    textIcon: String? = null,
-    onClick: (() -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = StealthPrimary.copy(alpha = 0.4f),
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            } else if (textIcon != null) {
-                Text(
-                    text = textIcon,
-                    fontSize = 12.sp,
-                    modifier = Modifier.alpha(0.6f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            Text(
-                text = label, 
-                style = MaterialTheme.typography.labelSmall, 
-                color = Color.White.copy(alpha = 0.4f)
-            )
-        }
-        Text(
-            text = value, 
-            style = MaterialTheme.typography.labelSmall, 
-            color = StealthPrimary, 
-            fontWeight = FontWeight.Bold
         )
     }
 }
