@@ -54,45 +54,18 @@ The core of your identity. Your Vibe is your anonymous presence—a combination 
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                       UI Layer                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │                   The Vibes (Stadium)                 │  │
-│  └───────────────────────────────────────────────────────┘  │
-│             Unified Hub (Sentient Brain & Navigation)        │
-├─────────────────────────────────────────────────────────────┤
-│                      Intelligence Layer                      │
-│  ┌────────────────────┬──────────────────────────────┐      │
-│  │ SupremePower       │ BluetoothViewModel           │      │
-│  │ (Breezes & Intel)  │ (Vibe State & Energy Surges) │      │
-│  └────────────────────┴──────────────────────────────┘      │
-├─────────────────────────────────────────────────────────────┤
-│                     Transport / Security                     │
-│  ┌──────────┬──────────┬───────────┬──────────────────┐    │
-│  │Room DB   │CryptoMgr │Composite  │IdentityRepo       │    │
-│  │(Storage) │(Security)│P2P Engine │(Self-Healing)    │    │
-│  └──────────┴──────────┴───────────┴──────────────────┘    │
-│            PurgeWorker (12h TTL) + Fireproof RadioManager    │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## 📊 Current Project Status: SENTIENT MASTERPIECE
 **Last Updated:** August 15, 2026 · **Status:** EXTRAORDINARY · 4-DEVICE FLEET VERIFIED
 
 ### 🌟 Project Highlights
-- **Interactive Brain**: The `UnifiedBlukitBadge` handles branding, identity rituals, and diagnostics with clickable stats for instant navigation.
+- **Interactive Brain**: The `UnifiedBlukitBadge` handles branding, identity rituals, and diagnostics with clickable stats for instant navigation between VOICES and TIES.
 - **Sentient Magic Bar**: A live intelligence ticker cycled through **Atmospheric Breezes** (e.g., *"A new voice joined The Vibes"*).
 - **Fireproof Transport**: Hardened `NearbyP2PController` with high-fidelity **Native BLE Fallback**.
 - **Self-Healing Identity**: Robust `IdentityRepository` with automated Keystore recovery (OnePlus/Xiaomi optimized).
 
 ---
 
-## 📑 Implementation Record
+## 📑 Implementation Record (The Masterpiece)
 
 ### Phase P1: Hardened Transport
 - **Sequential Vibe Queue**: Worker-coroutine pattern for high-density relay. ✅
@@ -105,10 +78,11 @@ The core of your identity. Your Vibe is your anonymous presence—a combination 
 
 ### Phase P3: Extraordinary UI
 - **Single-Hub Nav**: Branding section and Intel stats act as the primary brain. ✅
+- **Interactive Intel**: Clickable "VOICES" and "TIES" stats rows with contextual animations and direct navigation. ✅
 - **Flowing B Logo**: Custom Canvas animation representing vibes flow. ✅
 
 ### Phase P4: Bi-directional Links
-- **The Link Ritual**: Permission-based messaging (ACCEPT/DENY). ✅
+- **The Link Ritual**: Permission-based messaging established via explicit ACCEPT/DENY from the Magic Bar. ✅
 - **Link Filtering**: Field filters to show only mutual connections in Tie mode. ✅
 
 ---
@@ -116,50 +90,28 @@ The core of your identity. Your Vibe is your anonymous presence—a combination 
 ## 🏁 Testing Strategy & Report
 **Status:** 100% Core Test Coverage · **Total Passed:** 54
 
-| Test Type | Count | Focus Areas |
-|-----------|-------|-------------|
-| **Unit Tests** | 22 | Harmony Logic, Link Rituals, Vibe Mappers |
-| **Instrumented Tests** | 32 | Self-Healing Vault, Hardware Crypto, Hub expansion |
+| Test Type | Count | Focus Areas | Tools Used |
+|-----------|-------|-------------|------------|
+| **Unit Tests** | 22 | Harmony Logic, Link Rituals, Vibe Mappers | JUnit 4, MockK, Turbine, Robolectric |
+| **Instrumented Tests** | 32 | Self-Healing Vault, Hardware Crypto, Hub expansion | AndroidX Test, Room In-Memory, Compose Test |
 
 ### Hardware Verification (4-Device Fleet)
-Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing), **Motorola Moto G82**, and **Xiaomi 24115RA8EI**.
+Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing confirmed), **Motorola Moto G82**, and **Xiaomi 24115RA8EI**.
 
 ---
 
 ## 📜 Project Lifeline
 
-| Date | Milestone |
-| :--- | :--- |
-| 2026-08-09 | **Project Birth**: Decentralized offline P2P chat initialized. |
-| 2026-08-10 | **Architecture & Security**: Navigation 3 + AES-256-GCM Keystore. |
-| 2026-08-12 | **Commandments**: Bluetooth-only bridge + Optional WiFi/Location. |
-| 2026-08-13 | **OLED Stealth**: Pitch Black (#000000) + Amber/Rose accents. |
-| 2026-08-15 | **The Vibes Masterpiece**: Thrashed jargon; Sentient Magic Bar + Flowing B. |
-| 2026-08-15 | **God Mode Alignment**: Transitioned to "Voices" and "Link Rituals". |
-| 2026-08-15 | **Branding Update**: AppName updated to "Blukit - Spread the Vibes". |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- JDK 17+ & Android Studio Ladybug+
-- Physical Android devices for P2P testing
-
-### Build & Run
-```bash
-./gradlew installDebug  # Spread the vibes
-```
-
----
-
-## 🛡️ Data Safety & Compliance
-
-Blukit follows the **Voices Ritual Commandments**:
-1. **Bluetooth Only**: Your radio is the only bridge.
-2. **Mutual Consent**: Ties require explicit link ritual.
-3. **Total Anonymity**: No tracking, no accounts, just pure vibes.
-4. **Absolute Stealth**: All data vanishes every 12 hours.
+| Date | Milestone | Technical Context / Decision |
+| :--- | :--- | :--- |
+| 2026-08-09 | **Project Birth** | Initialized as "blukit", a decentralized offline P2P chat. |
+| 2026-08-10 | **Core Architecture** | Selected Navigation 3, Material 3 Adaptive, and Google Nearby Connections API. |
+| 2026-08-10 | **Security Hardening** | Implemented AES-256-GCM encryption with Android Keystore + ECDH key exchange. |
+| 2026-08-12 | **Commandments** | Enforced core principles: Bluetooth-only by default, optional/silent WiFi and Location. |
+| 2026-08-13 | **OLED Stealth** | Implemented Pitch Black theme (#000000) with Amber/Rose accents. |
+| 2026-08-15 | **The Vibes Masterpiece**| Sentient Magic Bar + Flowing B Logo animation. Thrashed technical jargon. |
+| 2026-08-15 | **God Mode Alignment** | Transitioned terminology to "Voices" and "Link Rituals" for universal inclusion. |
+| 2026-08-15 | **Branding Update** | AppName updated to "Blukit - Spread the Vibes". |
 
 ---
 
@@ -187,6 +139,54 @@ Blukit is designed for high-density environments where cellular networks fail an
 **NO INTERNET. NO CLOUD. NO TRACKING. JUST VIBES.**
 
 ---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       UI Layer                               │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │                   The Vibes (Stadium)                 │  │
+│  └───────────────────────────────────────────────────────┘  │
+│             Unified Hub (Sentient Brain & Navigation)        │
+├─────────────────────────────────────────────────────────────┤
+│                      Intelligence Layer                      │
+│  ┌────────────────────┬──────────────────────────────┐      │
+│  │ SupremePower       │ BluetoothViewModel           │      │
+│  │ (Breezes & Intel)  │ (Vibe State & Energy Surges) │      │
+│  └────────────────────┴──────────────────────────────┘      │
+├─────────────────────────────────────────────────────────────┤
+│                     Transport / Security                     │
+│  ┌──────────┬──────────┬───────────┬──────────────────┐    │
+│  │Room DB   │CryptoMgr │Composite  │IdentityRepo       │    │
+│  │(Storage) │(Security)│P2P Engine │(Self-Healing)    │    │
+│  └──────────┴──────────┴───────────┴──────────────────┘    │
+│            PurgeWorker (12h TTL) + Fireproof RadioManager    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- JDK 17+ & Android Studio Ladybug+
+- Physical Android devices for P2P testing
+
+### Build & Run
+```bash
+./gradlew installDebug  # Spread the vibes
+```
+
+---
+
+## 🛡️ Data Safety & Compliance
+
+Blukit follows the **Voices Ritual Commandments**:
+1. **Bluetooth Only**: Your radio is the only bridge.
+2. **Mutual Consent**: Ties require explicit link ritual.
+3. **Total Anonymity**: No tracking, no accounts, just pure vibes.
+4. **Absolute Stealth**: All data vanishes every 12 hours.
 
 *Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*  
 *Spread the vibes. Hear the voices.*
