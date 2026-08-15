@@ -37,6 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
+import cc.thevar.blukit.BlukitApplication
+import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.viewmodels.AirConnectionState
@@ -69,6 +71,8 @@ fun RipplesScreen(
     var message by remember { mutableStateOf("") }
     var isInputVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    val hapticManager = remember { (context.applicationContext as BlukitApplication).hapticManager }
     
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -143,6 +147,9 @@ fun RipplesScreen(
                 onlyTies = onlyTies,
                 onDeviceClick = onDeviceClick,
                 onStartScan = onStartScan,
+                onVibeSurge = {
+                    hapticManager.triggerVibe(HapticManager.VibeType.STADIUM_WAVE)
+                },
                 modifier = Modifier.fillMaxSize()
             )
             

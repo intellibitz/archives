@@ -24,7 +24,8 @@ class HapticManager(context: Context) {
         MESSAGE, // Short double vibe
         CONNECTION, // Strong single vibe
         ERROR, // Long intense vibe
-        SHOUT // Rippling vibe
+        SHOUT, // Rippling vibe
+        STADIUM_WAVE // Traveling wave feeling
     }
 
     /**
@@ -38,6 +39,10 @@ class HapticManager(context: Context) {
             VibeType.CONNECTION -> VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
             VibeType.ERROR -> VibrationEffect.createWaveform(longArrayOf(0, 200, 100, 200), -1)
             VibeType.SHOUT -> VibrationEffect.createWaveform(longArrayOf(0, 30, 30, 30, 30, 30), -1)
+            VibeType.STADIUM_WAVE -> {
+                // Wave: Increasing duration pulses to simulate outward motion
+                VibrationEffect.createWaveform(longArrayOf(0, 20, 40, 30, 40, 50, 40, 70), -1)
+            }
         }
         vibrator.vibrate(effect)
     }

@@ -84,6 +84,7 @@ fun RipplesField(
     onlyTies: Boolean = false,
     onDeviceClick: (P2PDevice) -> Unit,
     onStartScan: () -> Unit,
+    onVibeSurge: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
@@ -103,6 +104,7 @@ fun RipplesField(
                 
                 // Surge Collective Energy
                 collectiveEnergy = (collectiveEnergy + 0.4f).coerceAtMost(1.0f)
+                onVibeSurge()
                 
                 // Calculate Target Position
                 val deviceIndex = state.scannedDevices.indexOfFirst { it.id == last.senderId }
@@ -233,7 +235,7 @@ private fun Bubble(content: String, color: Color) {
 
 @Composable
 private fun StadiumBackground(energy: Float) {
-    val dotsCount = 800 // High density for stadium feel
+    val dotsCount = 1200 // Refined: Increased for High-Fidelity Stadium feel
     val points = remember {
         List(dotsCount) { 
             Triple(
@@ -264,17 +266,55 @@ private fun StadiumBackground(energy: Float) {
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
+        // 0. Collective Glow: Screen-Wide Bloom when energy is high
+        if (energy > 0.5f) {
+            val bloomAlpha = ((energy - 0.5f) * 0.15f).coerceIn(0f, 0.08f)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    0.0f to StealthAmber.copy(alpha = bloomAlpha),
+                    1.0f to Color.Transparent,
+                    center = center
+                ),
+                radius = size.maxDimension * 0.8f,
+                center = center
+            )
+        }
+
         // 1. Atmosphere: Distant souls as points
         points.forEach { (offset, dotSize, colorShift) ->
-            val dx = sin(time + offset.x * 20) * (15f + energy * 20f)
-            val dy = cos(time + offset.y * 20) * (15f + energy * 20f)
+            val movementScale = 15f + energy * 25f
+            val dx = sin(time + offset.x * 20) * movementScale
+            val dy = cos(time + offset.y * 20) * movementScale
+            
             val color = if (colorShift > 0.95f) StealthRose else StealthAmber
             val alpha = (0.02f + 0.08f * abs(sin(time * 0.5f + colorShift * 10)) + energy * 0.15f).coerceIn(0.01f, 0.3f)
             
+            val currentPos = Offset(offset.x * size.width + dx, offset.y * size.height + dy)
+
+            // Motion Blur Effect: Draw slight tails behind the points when energy > 0.6
+            if (energy > 0.6f) {
+                val tailCount = 3
+                for (i in 1..tailCount) {
+                    val tailAlpha = alpha * (1f - i.toFloat() / (tailCount + 1))
+                    val tailOffset = 1.2f * i 
+                    // Approximate previous position by reversing a bit of the oscillation
+                    val tPrev = time - 0.05f * i
+                    val pdx = sin(tPrev + offset.x * 20) * movementScale
+                    val pdy = cos(tPrev + offset.y * 20) * movementScale
+                    val prevPos = Offset(offset.x * size.width + pdx, offset.y * size.height + pdy)
+                    
+                    drawCircle(
+                        color = color.copy(alpha = tailAlpha),
+                        radius = dotSize.dp.toPx() * (1f + energy * 0.4f) * (1f - i * 0.2f),
+                        center = prevPos
+                    )
+                }
+            }
+
             drawCircle(
                 color = color.copy(alpha = alpha), 
                 radius = dotSize.dp.toPx() * (1f + energy * 0.5f), 
-                center = Offset(offset.x * size.width + dx, offset.y * size.height + dy)
+                center = currentPos
             )
         }
 
@@ -348,10 +388,25 @@ private fun RelayLayer(events: List<RelayEvent>) {
             if (progress < 1f) {
                 val startPos = center + event.start
                 val endPos = center + event.end
+                
+                // Refined: Particle Trail instead of just a line and dot
+                val trailParticles = 6
+                for (i in 0 until trailParticles) {
+                    val p = (progress - i * 0.04f).coerceIn(0f, 1f)
+                    val particlePos = Offset(
+                        lerp(startPos.x, endPos.x, p),
+                        lerp(startPos.y, endPos.y, p)
+                    )
+                    val pAlpha = (1f - progress) * (1f - i.toFloat() / trailParticles)
+                    drawCircle(
+                        color = StealthPrimary.copy(alpha = pAlpha),
+                        radius = (2.dp.toPx() * (1f - i.toFloat() / trailParticles)).coerceAtLeast(0.5.dp.toPx()),
+                        center = particlePos
+                    )
+                }
+
                 val currentHead = Offset(lerp(startPos.x, endPos.x, progress), lerp(startPos.y, endPos.y, progress))
-                val currentTail = Offset(lerp(startPos.x, endPos.x, (progress - 0.15f).coerceAtLeast(0f)), lerp(startPos.y, endPos.y, (progress - 0.15f).coerceAtLeast(0f)))
-                drawLine(color = StealthPrimary.copy(alpha = 1f - progress), start = currentTail, end = currentHead, strokeWidth = 2.5.dp.toPx())
-                drawCircle(color = Color.White.copy(alpha = 0.7f * (1f - progress)), radius = 1.5.dp.toPx(), center = currentHead)
+                drawCircle(color = Color.White.copy(alpha = 0.8f * (1f - progress)), radius = 2.dp.toPx(), center = currentHead)
             }
         }
     }
