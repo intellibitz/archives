@@ -127,23 +127,29 @@ fun BlukitApp(
     val context = LocalContext.current
     
     val viewModel: MainViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return MainViewModel(repository, vibeStore) as T
+        factory = remember(repository, vibeStore) {
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return MainViewModel(repository, vibeStore) as T
+                }
             }
         }
     )
     val bluetoothViewModel: BluetoothViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return BluetoothViewModel(p2pController, radioStateManager) as T
+        factory = remember(p2pController, radioStateManager) {
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return BluetoothViewModel(p2pController, radioStateManager) as T
+                }
             }
         }
     )
     val supremePowerViewModel: SupremePowerViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return SupremePowerViewModel(supremePowerManager) as T
+        factory = remember(supremePowerManager) {
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return SupremePowerViewModel(supremePowerManager) as T
+                }
             }
         }
     )

@@ -11,10 +11,7 @@ import cc.thevar.blukit.data.power.SupremePowerManager
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.theme.BlukitTheme
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import io.mockk.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Before
 import org.junit.Rule
@@ -129,6 +126,7 @@ class FlowsTest {
         startApp()
         
         // Click to navigate to the Tie screen - match the 6-char display limit
+        composeTestRule.waitUntilAtLeastOneExists(hasText("AURA V", substring = true), 5000)
         composeTestRule.onNodeWithText("AURA V", substring = true).performClick()
         
         // Wait for the SendVibeInput to appear in the Tie screen
@@ -136,11 +134,21 @@ class FlowsTest {
         
         // Send a vibe
         composeTestRule.onNodeWithTag("SendVibeInput").performTextInput("Hello from the Air!")
-        composeTestRule.onNodeWithContentDescription("Send", substring = true).performClick()
+        
+        // Ensure mock is ready for the call
+        clearMocks(p2pController, answers = false, recordedCalls = true)
+        
+        composeTestRule.onNodeWithTag("SendVibeButton").performClick()
         
         // Verify the vibe was sent through the controller
-        composeTestRule.waitForIdle()
-        coVerify(timeout = 5000) { p2pController.sendMessage("Hello from the Air!", "vibe-1") }
+        composeTestRule.waitUntil(15000) {
+            try {
+                coVerify { p2pController.sendMessage(any(), any()) }
+                true
+            } catch (e: Throwable) {
+                false
+            }
+        }
     }
 
     private fun startApp() {

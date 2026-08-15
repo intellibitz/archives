@@ -114,6 +114,7 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 | 2026-08-15 | **God Mode Alignment** | Transitioned terminology to "Voices" and "Link Processes" for universal inclusion. |
 | 2026-08-15 | **Branding Update** | AppName updated to "Blukit - Spread the Vibes". Slogan: "Spread the Vibes, Hear the Crowd Roar." |
 | 2026-08-15 | **Einstein Excellence** | Framework de-bloating complete: Removed Room, WorkManager, DataStore, and Accompanist. Implemented custom VibeStore with encrypted persistence. |
+| 2026-08-15 | **Fleet Alignment** | Upgraded all physical devices to ADB Wifi 2.0 (Secure TLS). Hardened E2EE HKDF and per-endpoint P2P queues. |
 
 ---
 

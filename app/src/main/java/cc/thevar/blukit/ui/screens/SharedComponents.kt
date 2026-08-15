@@ -219,6 +219,7 @@ fun BlukitInput(
                         if (value.isNotBlank()) StealthPrimary else Color.White.copy(alpha = 0.05f),
                         CircleShape
                     )
+                    .testTag("SendVibeButton")
                     .semantics { contentDescription = "Send" }
             ) {
                 Icon(
