@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,17 +55,13 @@ import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.screens.ContactsScreen
 import cc.thevar.blukit.ui.screens.RipplesScreen
 import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -83,14 +80,6 @@ fun BlukitApp(
         factory = viewModelFactory {
             initializer {
                 MainViewModel(repository, messageDao)
-            }
-        }
-    )
-
-    val contactsViewModel: ContactsViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer {
-                ContactsViewModel(contactRepository)
             }
         }
     )
@@ -114,9 +103,8 @@ fun BlukitApp(
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emojiAvatar by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
     val isStealthMode by viewModel.isStealthMode.collectAsStateWithLifecycle(initialValue = false)
-    val deviceId by viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "")
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
-    val supremeReport by supremePowerViewModel.report.collectAsStateWithLifecycle()
+    val report by supremePowerViewModel.report.collectAsStateWithLifecycle()
     val energySurge by bluetoothViewModel.energySurge.collectAsStateWithLifecycle()
 
     // Global Permission State for the Magic Bar
@@ -200,7 +188,6 @@ fun BlukitApp(
             }
         }
 
-
         val globalSubtitle = when {
             bluetoothState.connectedLinks.isNotEmpty() -> "${bluetoothState.connectedLinks.size} TIED TOGETHER"
             bluetoothState.connectionState is AirConnectionState.Scanning -> "FEELING THE VIBES..."
@@ -210,7 +197,10 @@ fun BlukitApp(
 
         UnifiedBlukitBadge(
             subtitle = globalSubtitle,
-            report = supremeReport,
+            userCount = report.userCount,
+            linksCount = report.connectedLinksCount,
+            aiInsight = report.aiInsight,
+            currentBreeze = report.currentBreeze,
             isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
             isLocationEnabled = bluetoothState.isLocationEnabled,
             permissionsGranted = permissionState.allPermissionsGranted,
@@ -243,7 +233,10 @@ fun BlukitApp(
 @Composable
 fun UnifiedBlukitBadge(
     subtitle: String,
-    report: cc.thevar.blukit.domain.power.SupremePowerReport,
+    userCount: Int,
+    linksCount: Int,
+    aiInsight: String,
+    currentBreeze: String?,
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
     permissionsGranted: Boolean,
@@ -270,7 +263,7 @@ fun UnifiedBlukitBadge(
     
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
-    val hasBreeze = !report.currentBreeze.isNullOrBlank()
+    val hasBreeze = !currentBreeze.isNullOrBlank()
 
     Box(
         modifier = modifier
@@ -331,14 +324,14 @@ fun UnifiedBlukitBadge(
                     // Dynamic Status Bar (Top)
                     Text(
                         text = (if (airIsStill) "THE VIBES ARE STILL" 
-                                else if (report.currentBreeze != null) report.currentBreeze.orEmpty() 
+                                else if (!currentBreeze.isNullOrBlank()) currentBreeze 
                                 else if (incomingLinkRequests.isNotEmpty()) "INCOMING VIBE"
                                 else subtitle).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 7.sp,
                             fontWeight = FontWeight.Black,
                             color = (if (airIsStill) StealthAmber 
-                                    else if (report.currentBreeze != null || incomingLinkRequests.isNotEmpty()) StealthPrimary 
+                                    else if (!currentBreeze.isNullOrBlank() || incomingLinkRequests.isNotEmpty()) StealthPrimary 
                                     else Color.White).copy(alpha = 0.6f),
                             letterSpacing = 0.5.sp
                         )
@@ -398,7 +391,7 @@ fun UnifiedBlukitBadge(
                         )
                         
                         Icon(
-                            imageVector = if (currentRoute is Route.Ties) Icons.Rounded.Person else Icons.Rounded.Diversity3,
+                            imageVector = if (currentRoute is Route.Ties) Icons.Rounded.Person else Icons.Rounded.Groups,
                             contentDescription = null,
                             tint = if (airIsStill) StealthAmber else StealthPrimary,
                             modifier = Modifier.size(20.dp)
@@ -430,7 +423,7 @@ fun UnifiedBlukitBadge(
                             isBluetoothOff = !isBluetoothEnabled,
                             isLocationOff = isLocationMandatory && !isLocationEnabled,
                             isPermissionMissing = !permissionsGranted,
-                            currentBreeze = report.currentBreeze,
+                            currentBreeze = currentBreeze,
                             incomingRequests = requests,
                             onAcceptLink = onAcceptLink,
                             onDenyLink = onDenyLink,
@@ -497,7 +490,7 @@ fun UnifiedBlukitBadge(
                         Column(modifier = Modifier.testTag("IntelSection")) {
                             IntelRow(
                                 label = "VOICES", 
-                                value = report.userCount.toString(),
+                                value = userCount.toString(),
                                 icon = Icons.Rounded.Groups,
                                 modifier = Modifier.testTag("VibesStat"),
                                 onClick = { 
@@ -507,7 +500,7 @@ fun UnifiedBlukitBadge(
                             )
                             IntelRow(
                                 label = "TIES", 
-                                value = report.connectedLinksCount.toString(),
+                                value = linksCount.toString(),
                                 icon = Icons.Rounded.Person,
                                 modifier = Modifier.testTag("TiesStat"),
                                 onClick = { 
@@ -604,7 +597,7 @@ fun UnifiedBlukitBadge(
                         )
                         
                         Text(
-                            text = report.aiInsight.uppercase(),
+                            text = aiInsight.uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(lineHeight = 14.sp),
                             color = Color.White.copy(alpha = 0.8f),
                             letterSpacing = 0.5.sp
@@ -712,7 +705,7 @@ private fun MagicBarContent(
                     text = when {
                         isPermissionMissing -> "AWAKEN PERMISSIONS"
                         isBluetoothOff && isLocationOff -> "AWAKEN RADIOS"
-                        isBluetoothOff -> "AWAKEN BLUETOOTH"
+                        isBluetoothOff -> "AWAKEN RADIOS"
                         isLocationOff -> "AWAKEN LOCATION"
                         hasRequests -> "INCOMING VIBE"
                         !currentBreeze.isNullOrBlank() -> "ATMOSPHERIC BREEZE"
@@ -757,7 +750,7 @@ private fun MagicBarContent(
             val description = when {
                 hasRequests -> "${(incomingRequests.first().name ?: "Vibe").uppercase()} wants to bridge a link."
                 isPermissionMissing -> "Blukit needs permission to spread the vibes around you."
-                isBluetoothOff -> "Your Bluetooth must be awake to spread the vibes around you."
+                isBluetoothOff -> "Your radios must be awake to spread the vibes around you."
                 isLocationOff -> "Location must be awake to feel nearby ripples on this device."
                 !currentBreeze.isNullOrBlank() -> currentBreeze
                 else -> null

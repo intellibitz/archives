@@ -33,7 +33,10 @@ class SupremePowerTest {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                     UnifiedBlukitBadge(
                         subtitle = "SPREAD THE VIBES",
-                        report = report,
+                        userCount = report.userCount,
+                        linksCount = report.connectedLinksCount,
+                        aiInsight = report.aiInsight,
+                        currentBreeze = report.currentBreeze,
                         isBluetoothEnabled = true,
                         isLocationEnabled = true,
                         permissionsGranted = true,

@@ -38,12 +38,20 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
+    private val backupPrefs = context.getSharedPreferences("blukit_identity_backup", Context.MODE_PRIVATE)
+
     private val securePrefs = try {
         createEncryptedPrefs(context)
     } catch (e: Exception) {
-        // Keystore corruption or signature mismatch - Purge and Recreate
+        // Keystore corruption - Recovery flow
+        val backupId = backupPrefs.getString(KEY_DEVICE_ID, null)
         context.deleteSharedPreferences("blukit_identity_secure")
-        createEncryptedPrefs(context)
+        val newPrefs = createEncryptedPrefs(context)
+        // Restore essential identity markers if possible
+        if (backupId != null) {
+            newPrefs.edit { putString(KEY_DEVICE_ID, backupId) }
+        }
+        newPrefs
     }
 
     private fun createEncryptedPrefs(context: Context) = EncryptedSharedPreferences.create(
@@ -83,10 +91,12 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
     override fun getDeviceId(): String {
         var id = securePrefs.getString(KEY_DEVICE_ID, null)
         if (id == null) {
-            id = UUID.randomUUID().toString()
+            // Check backup
+            id = backupPrefs.getString(KEY_DEVICE_ID, null) ?: UUID.randomUUID().toString()
             securePrefs.edit { putString(KEY_DEVICE_ID, id) }
+            backupPrefs.edit { putString(KEY_DEVICE_ID, id) }
         }
-        return id
+        return id ?: ""
     }
 
     override fun saveNickname(name: String) {
@@ -114,6 +124,7 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
 
     override fun logout() {
         securePrefs.edit { clear() }
+        backupPrefs.edit { clear() }
         _nickname.value = null
         _emojiAvatar.value = "👤"
         _stealthMode.value = false

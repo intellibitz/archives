@@ -112,6 +112,7 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 | 2026-08-15 | **The Vibes Masterpiece**| Sentient Magic Bar + Flowing B Logo animation. Thrashed technical jargon. |
 | 2026-08-15 | **God Mode Alignment** | Transitioned terminology to "Voices" and "Link Rituals" for universal inclusion. |
 | 2026-08-15 | **Branding Update** | AppName updated to "Blukit - Spread the Vibes". |
+| 2026-08-15 | **Einstein Excellence** | Per-endpoint P2P queues, self-healing ID restoration, and Compose recomposition hardening. |
 
 ---
 

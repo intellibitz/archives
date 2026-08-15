@@ -87,13 +87,9 @@ class NearbyP2PController(
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
 
     // Sequential Vibe Queue
-    private sealed class OutgoingVibe {
-        data class Single(val endpointId: String, val payload: Payload) : OutgoingVibe()
-    }
-    private val outgoingQueue = kotlinx.coroutines.channels.Channel<OutgoingVibe>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+    private val outgoingQueues = Collections.synchronizedMap(mutableMapOf<String, kotlinx.coroutines.channels.Channel<Payload>>())
 
     init {
-        processOutgoingQueue()
         observeIdentityChanges()
     }
 
@@ -111,29 +107,32 @@ class NearbyP2PController(
         }
     }
 
-    private fun processOutgoingQueue() {
+    private fun processQueueForEndpoint(endpointId: String) {
+        val queue = outgoingQueues.getOrPut(endpointId) {
+            kotlinx.coroutines.channels.Channel(kotlinx.coroutines.channels.Channel.UNLIMITED)
+        }
+        
         internalScope.launch(ioDispatcher) {
-            for (item in outgoingQueue) {
+            for (payload in queue) {
                 try {
-                    when (item) {
-                        is OutgoingVibe.Single -> {
-                            suspendCancellableCoroutine<Unit> { continuation ->
-                                connectionsClient.sendPayload(item.endpointId, item.payload)
-                                    .addOnCompleteListener { 
-                                        continuation.resume(Unit)
-                                    }
-                            }
-                        }
+                    suspendCancellableCoroutine<Unit> { continuation ->
+                        connectionsClient.sendPayload(endpointId, payload)
+                            .addOnCompleteListener { continuation.resume(Unit) }
                     }
                 } catch (e: Exception) {
-                    Log.e(tag, "QUEUE FAIL: ${e.message}")
+                    Log.e(tag, "QUEUE FAIL ($endpointId): ${e.message}")
+                    if (e is CancellationException) throw e
                 }
             }
         }
     }
 
     private fun queueVibe(endpointId: String, payload: Payload) {
-        outgoingQueue.trySend(OutgoingVibe.Single(endpointId, payload))
+        val queue = outgoingQueues.getOrPut(endpointId) {
+            processQueueForEndpoint(endpointId)
+            outgoingQueues[endpointId]!!
+        }
+        queue.trySend(payload)
     }
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
@@ -450,7 +449,8 @@ class NearbyP2PController(
         stopDiscovery()
         stopAdvertising()
         closeConnection()
-        outgoingQueue.close()
+        outgoingQueues.values.forEach { it.close() }
+        outgoingQueues.clear()
         internalScope.cancel()
     }
 }

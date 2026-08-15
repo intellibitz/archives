@@ -100,9 +100,9 @@ class CryptoManager {
         val iv = cipher.iv
         val encrypted = cipher.doFinal(data)
         
-        val authTagLen = 16 // bytes (128 bits)
+        // Format: [IV Length (1 byte)] [IV] [Encrypted Data + Tag]
         val result = ByteArray(1 + iv.size + encrypted.size)
-        result[0] = authTagLen.toByte()
+        result[0] = iv.size.toByte()
         iv.copyInto(result, 1)
         encrypted.copyInto(result, 1 + iv.size)
         
@@ -113,12 +113,13 @@ class CryptoManager {
      * Decrypts data using AES-256-GCM with a specific secret key.
      */
     fun decrypt(encryptedData: ByteArray, secretKey: SecretKey): ByteArray {
-        val authTagLen = encryptedData[0].toInt() and 0xFF
-        val ivPart = encryptedData.copyOfRange(1, 1 + 12)
-        val encryptedPart = encryptedData.copyOfRange(1 + 12, encryptedData.size)
+        val ivLen = encryptedData[0].toInt() and 0xFF
+        val ivPart = encryptedData.copyOfRange(1, 1 + ivLen)
+        val encryptedPart = encryptedData.copyOfRange(1 + ivLen, encryptedData.size)
         
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(8 * authTagLen, ivPart))
+        // GCM standard tag length is 128 bits (16 bytes)
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, ivPart))
         
         return cipher.doFinal(encryptedPart)
     }

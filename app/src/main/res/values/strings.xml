@@ -47,10 +47,10 @@
 
     <!-- Technical/System -->
     <string name="permission_title">Device Access</string>
-    <string name="permission_desc">Blukit uses Bluetooth to find and talk to people around you without needing the internet.</string>
+    <string name="permission_desc">Blukit uses radios to find and talk to people around you without needing the internet.</string>
     <string name="permission_grant">Allow Access</string>
     <string name="radio_warning_bluetooth">The vibes are quiet.</string>
-    <string name="radio_warning_required">To feel the crowd, your Bluetooth must be awake.</string>
+    <string name="radio_warning_required">To feel the crowd, your radios must be awake.</string>
     <string name="radio_enable_btn">AWAKEN</string>
     <string name="anonymous">vibe</string>
     <string name="error_connection_failed">Could not tie: %1$s</string>
