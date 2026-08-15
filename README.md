@@ -1,4 +1,4 @@
-# Blukit — Feel The Vibes
+# Blukit — Spread the Vibes
 
 **A decentralized, zero-infrastructure offline mesh for high-density venues where internet fails.**
 
@@ -136,6 +136,7 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 | 2026-08-13 | **OLED Stealth**: Pitch Black (#000000) + Amber/Rose accents. |
 | 2026-08-15 | **The Vibes Masterpiece**: Thrashed jargon; Sentient Magic Bar + Flowing B. |
 | 2026-08-15 | **God Mode Alignment**: Transitioned to "Voices" and "Link Rituals". |
+| 2026-08-15 | **Branding Update**: AppName updated to "Blukit - Spread the Vibes". |
 
 ---
 
@@ -147,7 +148,7 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 
 ### Build & Run
 ```bash
-./gradlew installDebug  # Feel the vibes
+./gradlew installDebug  # Spread the vibes
 ```
 
 ---
@@ -161,4 +162,4 @@ Blukit follows the **Voices Ritual Commandments**:
 4. **Absolute Stealth**: All data vanishes every 12 hours.
 
 *Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*  
-*Feel the vibes. Hear the voices.*
+*Spread the vibes. Hear the voices.*

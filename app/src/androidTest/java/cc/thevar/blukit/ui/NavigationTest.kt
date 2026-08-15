@@ -50,8 +50,8 @@ class NavigationTest {
     fun testBottomNavigation() {
         startApp()
         
-        // 1. Initial State - Feel the vibes
-        composeTestRule.onNodeWithText("FEEL THE VIBES").assertIsDisplayed()
+        // 1. Initial State - Spread the vibes
+        composeTestRule.onNodeWithText("SPREAD THE VIBES").assertIsDisplayed()
 
         // 2. Expand Hub
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
@@ -63,7 +63,7 @@ class NavigationTest {
         // 4. Back to Vibes - Click Branding Section then Vibes stat
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
         composeTestRule.onNodeWithTag("VibesStat").performClick()
-        composeTestRule.onNodeWithText("FEEL THE VIBES").assertIsDisplayed()
+        composeTestRule.onNodeWithText("SPREAD THE VIBES").assertIsDisplayed()
     }
 
     private fun startApp() {

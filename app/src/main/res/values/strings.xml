@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Blukit</string>
+    <string name="app_name">Blukit - Spread the Vibes</string>
 
     <!-- Navigation Labels (The Powers) -->
     <string name="nav_watch">Vibes</string>
@@ -10,13 +10,13 @@
     <!-- Vibes Screen (The Gathering) -->
     <string name="watch_title">The Vibes</string>
     <string name="watch_broadcast_desc">%1$d vibes radiating nearby</string>
-    <string name="watch_welcome_title">Feel the Vibes!</string>
-    <string name="watch_welcome_desc">This is the collective pulse of everyone around you. Send a vibe, and the crowd will feel it.</string>
+    <string name="watch_welcome_title">Spread the Vibes!</string>
+    <string name="watch_welcome_desc">This is the collective pulse of everyone around you. Spread a vibe, and the crowd will hear it.</string>
     <string name="watch_empty_hint">Start the vibe below!</string>
 
     <!-- Ripples Screen (Presence) -->
     <string name="shout_title">THE VIBES</string>
-    <string name="shout_radar_subtitle">Feel the Vibes</string>
+    <string name="shout_radar_subtitle">Spread the Vibes</string>
     <string name="shout_make_visible">Join the Vibes</string>
     <string name="shout_type_placeholder">Send a vibe to everyone…</string>
     <string name="shout_empty_radar">Waiting for the vibes…</string>
@@ -56,9 +56,9 @@
     <string name="error_connection_failed">Could not tie: %1$s</string>
 
     <!-- Smart Flow -->
-    <string name="smart_flow_title">Feel the Vibes?</string>
-    <string name="smart_flow_desc">To feel the vibes of people around you, Blukit needs to use the air. This lets your device join the invisible circle.</string>
-    <string name="smart_flow_action">Join the Vibes</string>
+    <string name="smart_flow_title">Spread the Vibes?</string>
+    <string name="smart_flow_desc">To spread the vibes to people around you, Blukit needs to use the air. This lets your device join the invisible circle.</string>
+    <string name="smart_flow_action">Spread the Vibes</string>
 
     <!-- Shared UI -->
     <string name="btn_send">Send</string>

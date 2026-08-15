@@ -8,8 +8,8 @@ This document contains the finalized text for the **Blukit** Play Store listing.
 
 | Field | Recommended Value |
 | :--- | :--- |
-| **App Name** | Blukit — Feel The Vibes |
-| **Short Description** | Instant offline ritual for stadiums, movie theaters & venues. Feel the vibes. |
+| **App Name** | Blukit — Spread the Vibes |
+| **Short Description** | Instant offline ritual for stadiums, movie theaters & venues. Spread the vibes. |
 
 ### Full Description
 **Experience the pulse of a truly sentient, serverless connection.**

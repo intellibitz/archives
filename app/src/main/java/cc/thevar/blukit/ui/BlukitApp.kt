@@ -205,7 +205,7 @@ fun BlukitApp(
             bluetoothState.connectedLinks.isNotEmpty() -> "${bluetoothState.connectedLinks.size} TIED TOGETHER"
             bluetoothState.connectionState is AirConnectionState.Scanning -> "FEELING THE VIBES..."
             bluetoothState.connectionState is AirConnectionState.Connecting -> "BRIDGING THE DISTANCE..."
-            else -> "FEEL THE VIBES"
+            else -> "SPREAD THE VIBES"
         }
 
         UnifiedBlukitBadge(
@@ -368,7 +368,7 @@ fun UnifiedBlukitBadge(
                             Box(modifier = Modifier.size(1.dp, 10.dp).background(Color.White.copy(alpha = 0.2f)))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "FEEL THE VIBES",
+                                text = "SPREAD THE VIBES",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 7.sp,
                                     fontWeight = FontWeight.Bold,
@@ -767,8 +767,8 @@ private fun MagicBarContent(
             }
             
             val description = when {
-                isPermissionMissing -> "Blukit needs permission to feel the vibes around you."
-                isBluetoothOff -> "Your Bluetooth must be awake to feel the vibes around you."
+                isPermissionMissing -> "Blukit needs permission to spread the vibes around you."
+                isBluetoothOff -> "Your Bluetooth must be awake to spread the vibes around you."
                 isLocationOff -> "Location must be awake to feel nearby ripples on this device."
                 hasRequests -> "${(incomingRequests.first().name ?: "Vibe").uppercase()} wants to bridge a link."
                 !currentBreeze.isNullOrBlank() -> currentBreeze
