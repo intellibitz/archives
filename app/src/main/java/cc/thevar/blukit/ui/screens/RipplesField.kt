@@ -82,6 +82,7 @@ fun RipplesField(
     activeBubbles: List<BubbleData>,
     externalEnergy: Float = 0f,
     onlyTies: Boolean = false,
+    lowPowerMode: Boolean = false,
     onDeviceClick: (P2PDevice) -> Unit,
     onStartScan: () -> Unit,
     onVibeSurge: (Float) -> Unit = {},
@@ -152,7 +153,7 @@ fun RipplesField(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            StadiumBackground(energy = finalEnergy)
+            StadiumBackground(energy = finalEnergy, lowPowerMode = lowPowerMode)
             RelayLayer(relayEvents)
             // Filter devices if only ties are requested
             val displayDevices = if (onlyTies) {
@@ -233,8 +234,8 @@ private fun Bubble(content: String, color: Color) {
 }
 
 @Composable
-private fun StadiumBackground(energy: Float) {
-    val dotsCount = 1200 // Refined: Increased for High-Fidelity Stadium feel
+private fun StadiumBackground(energy: Float, lowPowerMode: Boolean) {
+    val dotsCount = if (lowPowerMode) 300 else 1200 // Refined: Significant reduction for battery saver
     val points = remember {
         List(dotsCount) { 
             Triple(
@@ -290,8 +291,8 @@ private fun StadiumBackground(energy: Float) {
             
             val currentPos = Offset(offset.x * size.width + dx, offset.y * size.height + dy)
 
-            // Motion Blur Effect: Draw slight tails behind the points when energy > 0.6
-            if (energy > 0.6f) {
+            // Motion Blur Effect: Disable if battery saver is on
+            if (!lowPowerMode && energy > 0.6f) {
                 val tailCount = 3
                 for (i in 1..tailCount) {
                     val tailAlpha = alpha * (1f - i.toFloat() / (tailCount + 1))

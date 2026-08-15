@@ -19,7 +19,7 @@
     <string name="shout_make_visible">SPREAD THE VIBES</string>
     <string name="shout_type_placeholder">VIBES…</string>
     <string name="shout_empty_radar">HEAR THE CROWD ROAR…</string>
-    <string name="shout_scan_hint">VIBES PROXIMITY…</string>
+    <string name="shout_scan_hint">SEARCHING FOR CROWD…</string>
 
     <!-- Vibes Screen (Mutual) -->
     <string name="whispers_title">PRIVATE VIBES</string>

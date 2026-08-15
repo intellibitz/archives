@@ -63,6 +63,7 @@ fun RipplesScreen(
     localEmoji: String,
     energySurge: Float = 0f,
     onlyTies: Boolean = false,
+    lowPowerMode: Boolean = false,
     onStartScan: () -> Unit,
     onStopScan: () -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
@@ -166,6 +167,7 @@ fun RipplesScreen(
                 activeBubbles = fieldBubbles,
                 externalEnergy = energySurge,
                 onlyTies = onlyTies,
+                lowPowerMode = lowPowerMode,
                 onDeviceClick = onDeviceClick,
                 onStartScan = onStartScan,
                 onVibeSurge = { proximity ->

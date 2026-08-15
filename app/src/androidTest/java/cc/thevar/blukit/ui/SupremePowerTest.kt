@@ -37,6 +37,8 @@ class SupremePowerTest {
                         userCount = report.userCount,
                         linksCount = report.connectedLinksCount,
                         roarsCount = report.totalMessages,
+                        vibesCount = 0,
+                        lowPowerMode = true,
                         currentBreeze = report.currentBreeze,
                         isBluetoothEnabled = true,
                         isLocationEnabled = true,
@@ -44,7 +46,6 @@ class SupremePowerTest {
                         permissionsGranted = true,
                         isPermanentlyDenied = false,
                         isStealthMode = false,
-                        lowPowerMode = false,
                         currentRoute = cc.thevar.blukit.ui.navigation.Route.Crowd,
                         nickname = "vibe",
                         incomingLinkRequests = emptySet<P2PDevice>(),
@@ -74,7 +75,6 @@ class SupremePowerTest {
         composeTestRule.onNodeWithText("10", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("ROARS", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("5", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("THE VIBES ARE HEALTHY", substring = true, ignoreCase = true, useUnmergedTree = true).assertIsDisplayed() 
 
         // Click to collapse
         composeTestRule.onNodeWithTag("BlukitBadge").performClick()

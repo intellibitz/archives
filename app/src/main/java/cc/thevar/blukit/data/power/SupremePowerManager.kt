@@ -115,7 +115,7 @@ class SupremePowerManager(
 
     private fun generateAiInsight(users: Int, links: Int, msgs: Int, harmony: Float): String {
         return when {
-            users == 0 -> "VIBES PROXIMITY"
+            users == 0 -> "SEARCHING FOR CROWD"
             harmony < 0.3f -> "CROWD ENERGY PROXIMITY"
             users > 10 && harmony > 0.8f -> "CROWD ROAR"
             links == 0 && users > 0 -> "CROWD ENERGY"

@@ -133,6 +133,7 @@ fun StatusOverlay(
 fun BlukitHeartbeat(
     energy: Float,
     rotation: Float,
+    lowPowerMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "Heartbeat")
@@ -140,9 +141,9 @@ fun BlukitHeartbeat(
     // 1. Vibe Scaling (Pulse)
     val vibeScale by infiniteTransition.animateFloat(
         initialValue = 0.85f + (energy * 0.2f),
-        targetValue = 1.35f + (energy * 0.4f), 
+        targetValue = if (lowPowerMode) 1.0f else 1.35f + (energy * 0.4f), 
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
+            animation = tween(if (lowPowerMode) 4000 else 2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "VibeScale"
@@ -150,10 +151,10 @@ fun BlukitHeartbeat(
 
     // 2. Aura Alpha
     val auraAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.7f,
+        initialValue = if (lowPowerMode) 0.1f else 0.3f,
+        targetValue = if (lowPowerMode) 0.2f else 0.7f,
         animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearOutSlowInEasing),
+            animation = tween(if (lowPowerMode) 6000 else 3000, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "AuraAlpha"

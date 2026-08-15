@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -219,6 +220,7 @@ fun BlukitApp(
                         localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
                         localEmoji = emojiAvatar,
                         energySurge = energySurge,
+                        lowPowerMode = lowPowerMode,
                         onStartScan = bluetoothViewModel::startScan,
                         onStopScan = bluetoothViewModel::stopScan,
                         onDeviceClick = { device ->
@@ -253,6 +255,7 @@ fun BlukitApp(
                         localEmoji = emojiAvatar,
                         energySurge = energySurge,
                         onlyTies = true,
+                        lowPowerMode = lowPowerMode,
                         onStartScan = bluetoothViewModel::startScan,
                         onStopScan = bluetoothViewModel::stopScan,
                         onDeviceClick = { device ->
@@ -266,7 +269,7 @@ fun BlukitApp(
         }
         
         // Global Lighthouse Scan (Glows from the Hub Badge over the Field/Ticker)
-        FullLighthouseScan(rotation = hubRotation)
+        FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
 
         SnackbarHost(
             hostState = snackbarHostState,
@@ -289,6 +292,7 @@ fun BlukitApp(
             linksCount = report.connectedLinksCount,
             roarsCount = roarsCount,
             vibesCount = vibesCount,
+            lowPowerMode = lowPowerMode,
             currentBreeze = report.currentBreeze,
             isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
             isLocationEnabled = bluetoothState.isLocationEnabled,
@@ -296,7 +300,6 @@ fun BlukitApp(
             permissionsGranted = permissionState.allPermissionsGranted,
             isPermanentlyDenied = isPermanentlyDenied,
             isStealthMode = isStealthMode,
-            lowPowerMode = lowPowerMode,
             currentRoute = (currentRoute as? Route) ?: initialRoute,
             nickname = nickname ?: "vibe",
             incomingLinkRequests = bluetoothState.incomingLinkRequests,
@@ -352,6 +355,7 @@ fun UnifiedBlukitBadge(
     linksCount: Int,
     roarsCount: Int,
     vibesCount: Int,
+    lowPowerMode: Boolean,
     currentBreeze: String?,
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
@@ -359,7 +363,6 @@ fun UnifiedBlukitBadge(
     permissionsGranted: Boolean,
     isPermanentlyDenied: Boolean,
     isStealthMode: Boolean,
-    lowPowerMode: Boolean,
     currentRoute: Route,
     nickname: String,
     incomingLinkRequests: Set<P2PDevice>,
@@ -413,7 +416,7 @@ fun UnifiedBlukitBadge(
                     modifier = Modifier.padding(end = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    BlukitHeartbeat(energy = energy, rotation = rotation)
+                    BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
                     Text(
                         text = "BLUKIT",
                         style = MaterialTheme.typography.labelMedium.copy(
@@ -517,10 +520,10 @@ fun UnifiedBlukitBadge(
                         Text(
                             text = "${nickname.uppercase()} (YOU)",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 7.sp,
+                                fontSize = 8.sp,
                                 fontWeight = FontWeight.Black,
-                                color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.8f),
-                                letterSpacing = 0.5.sp
+                                color = if (airIsStill) Color.Red else StealthPrimary,
+                                letterSpacing = 1.sp
                             )
                         )
                     }
@@ -528,9 +531,9 @@ fun UnifiedBlukitBadge(
                     Text(
                         text = "SPREAD VIBES",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (airIsStill) Color.Red else StealthPrimary,
+                            fontSize = 6.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.6f),
                             letterSpacing = 1.sp
                         )
                     )
@@ -592,57 +595,55 @@ fun UnifiedBlukitBadge(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Settings Sections (Feedback 6: Simplified)
+                        // Settings Sections (Feedback 10: Clubbed Row)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color.White.copy(alpha = 0.05f))
-                                .padding(12.dp)
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "DARK MODE",
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Switch(
-                                checked = isStealthMode,
-                                onCheckedChange = onToggleStealth,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = StealthPrimary,
-                                    checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
+                            // Dark Mode Toggle
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "DARK MODE",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (isStealthMode) StealthPrimary else Color.White.copy(alpha = 0.6f)
                                 )
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .padding(12.dp)
-                        ) {
-                            Text(
-                                text = "BATTERY SAVER",
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Switch(
-                                checked = lowPowerMode,
-                                onCheckedChange = onToggleLowPower,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = StealthPrimary,
-                                    checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Switch(
+                                    checked = isStealthMode,
+                                    onCheckedChange = onToggleStealth,
+                                    modifier = Modifier.scale(0.7f),
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = StealthPrimary,
+                                        checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
+                                    )
                                 )
-                            )
+                            }
+
+                            // Battery Saver Toggle
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "BATTERY SAVER",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (lowPowerMode) StealthPrimary else Color.White.copy(alpha = 0.6f)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Switch(
+                                    checked = lowPowerMode,
+                                    onCheckedChange = onToggleLowPower,
+                                    modifier = Modifier.scale(0.7f),
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = StealthPrimary,
+                                        checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
+                                    )
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -871,15 +872,17 @@ private fun StatusIcon(
 }
 
 @Composable
-private fun FullLighthouseScan(rotation: Float) {
+private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) {
+    if (lowPowerMode && rotation % 10 > 2) return // Skip rendering 80% of frames in battery saver? No, better use lower alpha/size
+    
     Canvas(modifier = Modifier.fillMaxSize()) {
         val center = Offset(56.dp.toPx(), size.height - 64.dp.toPx()) // Precisely aligned with the Hub Heartbeat
-        val radius = size.maxDimension
+        val radius = if (lowPowerMode) size.minDimension / 2 else size.maxDimension
         
         rotate(rotation, pivot = center) {
             val scanBrush = Brush.sweepGradient(
-                0.0f to StealthPrimary.copy(alpha = 0.3f), 
-                0.05f to StealthPrimary.copy(alpha = 0.1f), 
+                0.0f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.1f else 0.3f), 
+                0.05f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.02f else 0.1f), 
                 0.15f to Color.Transparent, 
                 center = center
             )

@@ -88,7 +88,7 @@ class IdentityRepositoryImpl(
     private val _stealthMode = MutableStateFlow(securePrefs.getBoolean(KEY_STEALTH, true))
     override val stealthMode: StateFlow<Boolean> = _stealthMode.asStateFlow()
 
-    private val _lowPowerMode = MutableStateFlow(securePrefs.getBoolean(KEY_LOW_POWER, false))
+    private val _lowPowerMode = MutableStateFlow(securePrefs.getBoolean(KEY_LOW_POWER, true))
     override val lowPowerMode: StateFlow<Boolean> = _lowPowerMode.asStateFlow()
 
     private val _blockedUsers = MutableStateFlow(
