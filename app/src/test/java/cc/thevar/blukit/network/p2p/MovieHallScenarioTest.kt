@@ -83,6 +83,7 @@ class MovieHallScenarioTest {
         every { repository.nicknameFlow } returns MutableStateFlow("Me")
         every { repository.emojiAvatar } returns MutableStateFlow("🎬")
         every { repository.stealthMode } returns MutableStateFlow(false)
+        every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
 
         every { cryptoManager.getLocalKeyPair() } returns pair

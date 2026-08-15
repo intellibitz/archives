@@ -7,63 +7,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.data.repository.IdentityRepositoryImpl
-import cc.thevar.blukit.data.repository.ContactRepository
-import cc.thevar.blukit.data.system.HapticManager
-import cc.thevar.blukit.data.system.RadioStateManager
-import cc.thevar.blukit.data.local.ChatDatabase
-import cc.thevar.blukit.data.power.SupremePowerManager
-import cc.thevar.blukit.network.p2p.BleFallbackController
-import cc.thevar.blukit.network.p2p.CompositeP2PController
-import cc.thevar.blukit.network.p2p.NearbyP2PController
 import cc.thevar.blukit.ui.BlukitApp
 import cc.thevar.blukit.ui.theme.BlukitTheme
 
 class MainActivity : ComponentActivity() {
-    
-    private val repository: IdentityRepository by lazy {
-        IdentityRepositoryImpl(applicationContext)
-    }
-
-    private val radioStateManager by lazy {
-        RadioStateManager(applicationContext)
-    }
-
-    private val hapticManager by lazy {
-        HapticManager(applicationContext)
-    }
-
-    private val database by lazy {
-        ChatDatabase.getInstance(applicationContext)
-    }
-
-    private val contactRepository by lazy {
-        ContactRepository(database.contactDao)
-    }
-    
-    private val p2pController by lazy {
-        val nearby = NearbyP2PController(
-            applicationContext,
-            repository,
-            contactRepository,
-            database.messageDao,
-            database.peerDao,
-            hapticManager
-        )
-        val ble = BleFallbackController(
-            applicationContext,
-            repository,
-            database.messageDao,
-            database.peerDao,
-            hapticManager
-        )
-        CompositeP2PController(nearby, ble)
-    }
-
-    private val supremePowerManager by lazy {
-        SupremePowerManager(p2pController, database.messageDao, hapticManager)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,16 +19,17 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         setContent {
-            val isStealthMode by repository.stealthMode.collectAsStateWithLifecycle(initialValue = false)
+            val app = application as BlukitApplication
+            val isStealthMode by app.identityRepository.stealthMode.collectAsStateWithLifecycle(initialValue = false)
             
             BlukitTheme(stealthMode = isStealthMode) {
                 BlukitApp(
-                    repository = repository,
-                    contactRepository = contactRepository,
-                    messageDao = database.messageDao,
-                    radioStateManager = radioStateManager,
-                    p2pController = p2pController,
-                    supremePowerManager = supremePowerManager,
+                    repository = app.identityRepository,
+                    contactRepository = app.contactRepository,
+                    messageDao = app.database.messageDao,
+                    radioStateManager = app.radioStateManager,
+                    p2pController = app.p2pController,
+                    supremePowerManager = app.supremePowerManager,
                     onEnterPip = {
                         enterPictureInPictureMode(
                             android.app.PictureInPictureParams.Builder().build()

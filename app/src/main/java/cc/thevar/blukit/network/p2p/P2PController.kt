@@ -7,6 +7,17 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
+ * Categorized P2P Errors for better UI feedback and retry logic.
+ */
+sealed class P2PError(val message: String, val isTransient: Boolean) {
+    class DiscoveryError(msg: String) : P2PError(msg, true)
+    class AdvertisingError(msg: String) : P2PError(msg, true)
+    class ConnectionError(msg: String) : P2PError(msg, true)
+    class EncryptionError(msg: String) : P2PError(msg, false)
+    class GenericError(msg: String) : P2PError(msg, false)
+}
+
+/**
  * P2P Controller interface — defines the contract for device discovery, 
  * connection management, and encrypted messaging via Nearby Connections.
  */
@@ -17,7 +28,7 @@ interface P2PController {
     val incomingLinkRequests: StateFlow<Set<P2PDevice>>
     val isDiscovering: StateFlow<Boolean>
     val isAdvertising: StateFlow<Boolean>
-    val errors: StateFlow<String>
+    val errors: StateFlow<P2PError?>
     val messages: StateFlow<List<MessagePayload>>
 
     fun startDiscovery()

@@ -17,22 +17,26 @@ interface IdentityRepository {
     val nicknameFlow: StateFlow<String?>
     val emojiAvatar: StateFlow<String>
     val stealthMode: StateFlow<Boolean>
+    val lowPowerMode: StateFlow<Boolean>
     val blockedUsers: StateFlow<Set<String>>
-    
+
     fun getDeviceId(): String
     fun saveNickname(name: String)
     fun getCurrentNickname(): String
     fun saveEmoji(emoji: String)
     fun toggleStealth(enabled: Boolean)
+    fun toggleLowPowerMode(enabled: Boolean)
     fun blockUser(deviceId: String)
     fun logout()
 }
 
 /**
- * Implementation of IdentityRepository using Android KeyStore-backed 
- * EncryptedSharedPreferences to ensure sensitive user data remains protected at rest.
+ * Implementation of IdentityRepository using Android KeyStore-backed
+ * EncryptedSharedPreferences for maximum privacy of even anonymous identifiers.
  */
-class IdentityRepositoryImpl(context: Context) : IdentityRepository {
+class IdentityRepositoryImpl(
+    context: Context
+) : IdentityRepository {
 
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -66,6 +70,7 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
         const val KEY_NICKNAME = "nickname"
         const val KEY_EMOJI = "emoji_avatar"
         const val KEY_STEALTH = "stealth_mode"
+        const val KEY_LOW_POWER = "low_power_mode"
         const val KEY_DEVICE_ID = "device_id"
         const val KEY_BLOCKED_USERS = "blocked_users"
     }
@@ -82,6 +87,9 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
 
     private val _stealthMode = MutableStateFlow(securePrefs.getBoolean(KEY_STEALTH, true))
     override val stealthMode: StateFlow<Boolean> = _stealthMode.asStateFlow()
+
+    private val _lowPowerMode = MutableStateFlow(securePrefs.getBoolean(KEY_LOW_POWER, false))
+    override val lowPowerMode: StateFlow<Boolean> = _lowPowerMode.asStateFlow()
 
     private val _blockedUsers = MutableStateFlow(
         securePrefs.getStringSet(KEY_BLOCKED_USERS, emptySet()) ?: emptySet()
@@ -115,6 +123,11 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
         _stealthMode.value = enabled
     }
 
+    override fun toggleLowPowerMode(enabled: Boolean) {
+        securePrefs.edit { putBoolean(KEY_LOW_POWER, enabled) }
+        _lowPowerMode.value = enabled
+    }
+
     override fun blockUser(deviceId: String) {
         val current = _blockedUsers.value.toMutableSet()
         current.add(deviceId)
@@ -128,6 +141,7 @@ class IdentityRepositoryImpl(context: Context) : IdentityRepository {
         _nickname.value = null
         _emojiAvatar.value = "👤"
         _stealthMode.value = false
+        _lowPowerMode.value = false
         _blockedUsers.value = emptySet()
     }
 }

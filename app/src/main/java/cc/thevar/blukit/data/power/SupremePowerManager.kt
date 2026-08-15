@@ -39,10 +39,10 @@ class SupremePowerManager(
                 p2pController.connectedLinks,
                 messageDao.getAllMessages(),
                 _breezeFlow.onStart { emit("") }
-            ) { args ->
-                val scanned = args[0] as List<*>
-                val connected = args[1] as Set<*>
-                val messages = args[2] as List<*>
+            ) { args: Array<Any?> ->
+                val scanned = args[0] as List<cc.thevar.blukit.domain.model.P2PDevice>
+                val connected = args[1] as Set<String>
+                val messages = args[2] as List<cc.thevar.blukit.domain.model.MessagePayload>
                 
                 val userCount = scanned.size
                 val linksCount = connected.size

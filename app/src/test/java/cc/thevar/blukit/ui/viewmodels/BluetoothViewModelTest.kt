@@ -30,7 +30,7 @@ class BluetoothViewModelTest {
     private lateinit var viewModel: BluetoothViewModel
 
     private val harmonyFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = false, isLocationEnabled = false))
-    private val errorFlow = MutableStateFlow("")
+    private val errorFlow = MutableStateFlow<cc.thevar.blukit.network.p2p.P2PError?>(null)
     
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -93,10 +93,10 @@ class BluetoothViewModelTest {
         viewModel.state.test(timeout = 10.seconds) {
             skipItems(1) // Initial state
             
-            errorFlow.value = "The Air is Disturbed"
+            errorFlow.value = cc.thevar.blukit.network.p2p.P2PError.GenericError("The Air is Disturbed")
             
             val disturbed = awaitItem()
-            assertEquals("The Vibes must reflect the disturbed Air", "The Air is Disturbed", disturbed.errorMessage)
+            assertEquals("The Vibes must reflect the disturbed Air", "The Air is Disturbed", disturbed.uiError?.message)
             
             cancelAndIgnoreRemainingEvents()
         }

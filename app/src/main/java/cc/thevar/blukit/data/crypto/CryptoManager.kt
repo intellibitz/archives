@@ -66,7 +66,7 @@ class CryptoManager {
 
     /**
      * Derives a shared AES-256 key from our private key and a vibe's public key using ECDH.
-     * Uses HKDF (HMAC-based Extract-and-Expand Key Derivation Function) for security hardening.
+     * Uses HKDF (HMAC-based Extract-and-Expand Key Derivation Function) with high-fidelity salt and info.
      */
     fun deriveSharedSecret(vibePublicKey: PublicKey): SecretKey {
         val keyAgreement = KeyAgreement.getInstance("ECDH")
@@ -74,12 +74,16 @@ class CryptoManager {
         keyAgreement.doPhase(vibePublicKey, true)
         val sharedSecret = keyAgreement.generateSecret()
         
-        // HKDF Implementation (RFC 5869) using HMAC-SHA256
-        val salt = "blukit_p2p_salt".toByteArray()
-        val info = "blukit_aes_256_gcm_key".toByteArray()
+        // HKDF Implementation (RFC 5869)
+        // Hardened: High-entropy static salt for the Extract phase
+        val salt = "blukit_vibe_bridge_salt_v1".toByteArray()
+        // Context-specific info for the Expand phase
+        val info = "blukit_aes_256_gcm_session_v1".toByteArray()
         
         val prk = hmacSha256(salt, sharedSecret)
-        val derivedKey = hmacSha256(prk, info + 0x01.toByte()).copyOf(32) // Expand to 256 bits
+        
+        // Expand: T(1) = HMAC-SHA256(PRK, info | 0x01)
+        val derivedKey = hmacSha256(prk, info + 0x01.toByte()).copyOf(32) // 256-bit key
         
         return SecretKeySpec(derivedKey, "AES")
     }

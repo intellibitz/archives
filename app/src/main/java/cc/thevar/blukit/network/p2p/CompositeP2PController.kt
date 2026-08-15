@@ -55,12 +55,12 @@ class CompositeP2PController(
         bleController.isAdvertising
     ) { nearby, ble -> nearby || ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
 
-    override val errors: StateFlow<String> = combine(
+    override val errors: StateFlow<P2PError?> = combine(
         nearbyController.errors,
         bleController.errors
     ) { nearby, ble ->
-        nearby.takeIf { it.isNotEmpty() } ?: ble
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), "")
+        nearby ?: ble
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
     override val messages: StateFlow<List<MessagePayload>> = nearbyController.messages
 

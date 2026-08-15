@@ -1,6 +1,7 @@
 package cc.thevar.blukit.ui
 
 import android.Manifest
+import android.net.Uri
 import androidx.compose.foundation.Image
 import cc.thevar.blukit.domain.model.P2PDevice
 import android.content.Intent
@@ -41,24 +42,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import cc.thevar.blukit.BlukitApplication
+import cc.thevar.blukit.ui.viewmodels.ViewModelFactory
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import cc.thevar.blukit.R
-import cc.thevar.blukit.data.power.SupremePowerManager
-import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.data.system.RadioStateManager
-import cc.thevar.blukit.network.p2p.P2PController
+import cc.thevar.blukit.network.p2p.P2PError
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.screens.RipplesScreen
 import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import cc.thevar.blukit.data.local.dao.MessageDao
+import cc.thevar.blukit.data.power.SupremePowerManager
+import cc.thevar.blukit.data.repository.ContactRepository
+import cc.thevar.blukit.data.repository.IdentityRepository
+import cc.thevar.blukit.data.system.RadioStateManager
+import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.viewmodels.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -66,36 +72,35 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun BlukitApp(
+    onEnterPip: () -> Unit,
     repository: IdentityRepository,
-    contactRepository: cc.thevar.blukit.data.repository.ContactRepository,
-    messageDao: cc.thevar.blukit.data.local.dao.MessageDao,
+    contactRepository: ContactRepository,
+    messageDao: MessageDao,
     radioStateManager: RadioStateManager,
     p2pController: P2PController,
     supremePowerManager: SupremePowerManager,
-    onEnterPip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val viewModel: MainViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer {
-                MainViewModel(repository, messageDao)
-            }
-        }
-    )
     
-    val bluetoothViewModel: BluetoothViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer {
-                BluetoothViewModel(p2pController, radioStateManager)
+    val viewModel: MainViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return MainViewModel(repository, messageDao) as T
             }
         }
     )
-
+    val bluetoothViewModel: BluetoothViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return BluetoothViewModel(p2pController, radioStateManager) as T
+            }
+        }
+    )
     val supremePowerViewModel: SupremePowerViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer {
-                SupremePowerViewModel(supremePowerManager)
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return SupremePowerViewModel(supremePowerManager) as T
             }
         }
     )
@@ -103,9 +108,25 @@ fun BlukitApp(
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emojiAvatar by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
     val isStealthMode by viewModel.isStealthMode.collectAsStateWithLifecycle(initialValue = false)
+    val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
     val report by supremePowerViewModel.report.collectAsStateWithLifecycle()
     val energySurge by bluetoothViewModel.energySurge.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(bluetoothState.uiError) {
+        bluetoothState.uiError?.let { error ->
+            val message = when (error) {
+                is UiError.SecureChannelFailed -> "SECURITY BREACH: ${error.message.uppercase()}"
+                else -> error.message.uppercase()
+            }
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = if (error.isCritical) SnackbarDuration.Long else SnackbarDuration.Short
+            )
+        }
+    }
 
     // Global Permission State for the Magic Bar
     val permissions = buildList {
@@ -122,6 +143,8 @@ fun BlukitApp(
     }
     val permissionState = rememberMultiplePermissionsState(permissions = permissions)
     
+    val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
+
     val initialRoute = Route.Shout
     val backStack = rememberNavBackStack(initialRoute)
     val currentRoute = backStack.lastOrNull()
@@ -188,6 +211,13 @@ fun BlukitApp(
             }
         }
 
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 16.dp)
+        )
+
         val globalSubtitle = when {
             bluetoothState.connectedLinks.isNotEmpty() -> "${bluetoothState.connectedLinks.size} TIED TOGETHER"
             bluetoothState.connectionState is AirConnectionState.Scanning -> "FEELING THE VIBES..."
@@ -204,7 +234,9 @@ fun BlukitApp(
             isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
             isLocationEnabled = bluetoothState.isLocationEnabled,
             permissionsGranted = permissionState.allPermissionsGranted,
+            isPermanentlyDenied = isPermanentlyDenied,
             isStealthMode = isStealthMode,
+            lowPowerMode = lowPowerMode,
             currentRoute = (currentRoute as? Route) ?: initialRoute,
             emojiAvatar = emojiAvatar,
             nickname = nickname ?: "vibe",
@@ -217,8 +249,15 @@ fun BlukitApp(
             onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
             onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
             onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
+            onOpenSettings = {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
+                context.startActivity(intent)
+            },
             onSaveNickname = viewModel::saveNickname,
             onToggleStealth = viewModel::toggleStealth,
+            onToggleLowPower = viewModel::toggleLowPowerMode,
             onClearHistory = viewModel::clearChatHistory,
             onLogout = viewModel::logout,
             onAcceptLink = bluetoothViewModel::acceptLink,
@@ -227,6 +266,22 @@ fun BlukitApp(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 24.dp)
         )
+
+        if (permissionState.shouldShowRationale && !permissionState.allPermissionsGranted) {
+            AlertDialog(
+                onDismissRequest = { /* Require choice */ },
+                containerColor = Color.Black,
+                titleContentColor = StealthPrimary,
+                textContentColor = Color.White.copy(alpha = 0.7f),
+                title = { Text("UNINTERRUPTED VIBES", fontWeight = FontWeight.Black) },
+                text = { Text("To hear the crowd and spread your vibe without the internet, Blukit needs to use your device's radios.", fontSize = 12.sp) },
+                confirmButton = {
+                    TextButton(onClick = { permissionState.launchMultiplePermissionRequest() }) {
+                        Text("ALLOW", color = StealthPrimary, fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -240,7 +295,9 @@ fun UnifiedBlukitBadge(
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
     permissionsGranted: Boolean,
+    isPermanentlyDenied: Boolean,
     isStealthMode: Boolean,
+    lowPowerMode: Boolean,
     currentRoute: Route,
     emojiAvatar: String,
     nickname: String,
@@ -249,8 +306,10 @@ fun UnifiedBlukitBadge(
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onGrantPermissions: () -> Unit,
+    onOpenSettings: () -> Unit,
     onSaveNickname: (String) -> Unit,
     onToggleStealth: (Boolean) -> Unit,
+    onToggleLowPower: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
     onAcceptLink: (P2PDevice) -> Unit,
@@ -423,13 +482,15 @@ fun UnifiedBlukitBadge(
                             isBluetoothOff = !isBluetoothEnabled,
                             isLocationOff = isLocationMandatory && !isLocationEnabled,
                             isPermissionMissing = !permissionsGranted,
+                            isPermanentlyDenied = isPermanentlyDenied,
                             currentBreeze = currentBreeze,
                             incomingRequests = requests,
                             onAcceptLink = onAcceptLink,
                             onDenyLink = onDenyLink,
                             onAwakenBluetooth = onAwakenBluetooth,
                             onAwakenLocation = onAwakenLocation,
-                            onGrantPermissions = onGrantPermissions
+                            onGrantPermissions = onGrantPermissions,
+                            onOpenSettings = onOpenSettings
                         )
                     }
 
@@ -538,6 +599,40 @@ fun UnifiedBlukitBadge(
                             Switch(
                                 checked = isStealthMode,
                                 onCheckedChange = onToggleStealth,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = StealthPrimary,
+                                    checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .padding(12.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "LOW POWER MODE",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "P2P_STAR STRATEGY FOR ENDURANCE",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = StealthPrimary.copy(alpha = 0.5f),
+                                    fontSize = 7.sp
+                                )
+                            }
+                            Switch(
+                                checked = lowPowerMode,
+                                onCheckedChange = onToggleLowPower,
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = StealthPrimary,
                                     checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
@@ -667,13 +762,15 @@ private fun MagicBarContent(
     isBluetoothOff: Boolean,
     isLocationOff: Boolean,
     isPermissionMissing: Boolean,
+    isPermanentlyDenied: Boolean,
     currentBreeze: String?,
     incomingRequests: Set<P2PDevice>,
     onAcceptLink: (P2PDevice) -> Unit,
     onDenyLink: (P2PDevice) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
-    onGrantPermissions: () -> Unit
+    onGrantPermissions: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "AwakenPulse")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -722,7 +819,7 @@ private fun MagicBarContent(
 
                 if (isStill) {
                     val action = when {
-                        isPermissionMissing -> onGrantPermissions
+                        isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
                         isBluetoothOff -> onAwakenBluetooth
                         isLocationOff -> onAwakenLocation
                         else -> null
@@ -730,7 +827,7 @@ private fun MagicBarContent(
 
                     if (action != null) {
                         Text(
-                            text = "AWAKEN",
+                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else "AWAKEN",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.ExtraBold,

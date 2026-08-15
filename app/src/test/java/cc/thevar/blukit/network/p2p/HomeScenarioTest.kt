@@ -79,6 +79,7 @@ class HomeScenarioTest {
         every { repository.nicknameFlow } returns MutableStateFlow("Mom")
         every { repository.emojiAvatar } returns MutableStateFlow("👩")
         every { repository.stealthMode } returns MutableStateFlow(false)
+        every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { repository.getCurrentNickname() } returns "Mom"
         every { repository.getDeviceId() } returns "mom-device-id"

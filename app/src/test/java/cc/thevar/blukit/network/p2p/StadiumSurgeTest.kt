@@ -76,6 +76,8 @@ class StadiumSurgeTest {
         every { repository.getDeviceId() } returns "stadium-id"
         every { repository.nicknameFlow } returns MutableStateFlow("StadiumUser")
         every { repository.emojiAvatar } returns MutableStateFlow("⚽")
+        every { repository.stealthMode } returns MutableStateFlow(false)
+        every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
 
         controller = NearbyP2PController(

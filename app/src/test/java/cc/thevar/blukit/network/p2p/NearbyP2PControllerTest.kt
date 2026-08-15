@@ -86,6 +86,8 @@ class NearbyP2PControllerTest {
         every { repository.getDeviceId() } returns "tester-id"
         every { repository.nicknameFlow } returns MutableStateFlow("Tester")
         every { repository.emojiAvatar } returns MutableStateFlow("👤")
+        every { repository.stealthMode } returns MutableStateFlow(false)
+        every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
 
         // Mock CryptoManager to return valid keys/secrets

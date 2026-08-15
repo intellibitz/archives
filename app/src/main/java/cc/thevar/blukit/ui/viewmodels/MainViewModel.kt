@@ -14,6 +14,7 @@ class MainViewModel(
     val nickname: Flow<String?> = repository.nicknameFlow
     val emojiAvatar: Flow<String> = repository.emojiAvatar
     val isStealthMode: Flow<Boolean> = repository.stealthMode
+    val lowPowerMode: Flow<Boolean> = repository.lowPowerMode
     
     private val _deviceId = MutableStateFlow(repository.getDeviceId())
     val deviceId: StateFlow<String> = _deviceId.asStateFlow()
@@ -33,6 +34,12 @@ class MainViewModel(
     fun toggleStealth(enabled: Boolean) {
         viewModelScope.launch {
             repository.toggleStealth(enabled)
+        }
+    }
+
+    fun toggleLowPowerMode(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.toggleLowPowerMode(enabled)
         }
     }
 

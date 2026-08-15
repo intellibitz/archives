@@ -44,14 +44,16 @@ class NearbyP2PController(
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
 ) : P2PController {
 
     private val tag = "BlukitP2P"
     private val connectionsClient = Nearby.getConnectionsClient(context)
-    private val strategy = Strategy.P2P_CLUSTER
     private val serviceId = "cc.thevar.blukit.AIR_ID"
 
-    private val internalScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private fun getStrategy() = if (repository.lowPowerMode.value) Strategy.P2P_STAR else Strategy.P2P_CLUSTER
+
+    private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
     private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
     override val scannedDevices = _scannedDevices.asStateFlow()
@@ -71,7 +73,7 @@ class NearbyP2PController(
     private val _isAdvertising = MutableStateFlow(value = false)
     override val isAdvertising = _isAdvertising.asStateFlow()
 
-    private val _errors = MutableStateFlow("")
+    private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
     override val messages: StateFlow<List<MessagePayload>> = messageDao.getAllMessages()
@@ -91,6 +93,7 @@ class NearbyP2PController(
 
     init {
         observeIdentityChanges()
+        observePowerChanges()
     }
 
     private fun observeIdentityChanges() {
@@ -103,6 +106,24 @@ class NearbyP2PController(
                         startAdvertising()
                     }
                     // Discovery also carries the local name in some strategies, but primarily advertising.
+                }
+        }
+    }
+
+    private fun observePowerChanges() {
+        internalScope.launch {
+            repository.lowPowerMode
+                .drop(1)
+                .collect {
+                    Log.i(tag, "POWER: Low Power Mode changed to $it. Adapting strategy.")
+                    if (_isAdvertising.value) {
+                        stopAdvertising()
+                        startAdvertising()
+                    }
+                    if (_isDiscovering.value) {
+                        stopDiscovery()
+                        startDiscovery()
+                    }
                 }
         }
     }
@@ -153,7 +174,7 @@ class NearbyP2PController(
                 syncAirHistory(endpointId)
             } else {
                 Log.w(tag, "LINK FAIL $endpointId: ${result.status.statusMessage}")
-                handleNearbyError(Exception(result.status.statusMessage), "LINK")
+                handleNearbyError(P2PError.ConnectionError(result.status.statusMessage ?: "Link Failed"))
             }
         }
 
@@ -199,60 +220,100 @@ class NearbyP2PController(
         try {
             val decryptedBytes = cryptoManager.decrypt(bytes, secretKey)
             val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
-            
-            if (payload.type == MessagePayload.TYPE_ACK) {
-                internalScope.launch(ioDispatcher) { messageDao.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED) }
-                return
-            }
 
-            if (payload.type == MessagePayload.TYPE_LINK_REQUEST) {
-                val device = _scannedDevices.value.find { it.id == endpointId } 
-                    ?: P2PDevice(endpointId, payload.senderName, payload.senderEmoji ?: "👤")
-                _incomingLinkRequests.update { it + device }
-                return
-            }
-
-            if (payload.type == MessagePayload.TYPE_LINK_ACCEPT) {
-                _connectedLinks.update { it + endpointId }
-                _isConnected.value = true
-                return
-            }
-
-            if (!isNewMessage(payload.messageId)) return
-
-            // ACK
-            internalScope.launch(ioDispatcher) {
-                val ack = MessagePayload(
-                    messageId = payload.messageId,
-                    senderId = repository.getDeviceId(),
-                    senderName = "", content = "", timestamp = System.currentTimeMillis(),
-                    type = MessagePayload.TYPE_ACK, receiverId = payload.senderId
-                )
-                val encAck = cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), ack).toByteArray(), secretKey)
-                queueVibe(endpointId, Payload.fromBytes(encAck))
-            }
-
-            // Relay
-            if (payload.receiverId.isNullOrEmpty()) {
-                internalScope.launch(ioDispatcher) {
-                    val myId = repository.getDeviceId()
-                    if (payload.senderId != myId) {
-                        activeConnections.filter { it != endpointId }.forEach { target ->
-                            vibeKeys[target]?.let { key ->
-                                try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(decryptedBytes, key))) } catch (e: Exception) {}
-                            }
-                        }
+            when (payload.type) {
+                MessagePayload.TYPE_ACK -> handleAck(payload)
+                MessagePayload.TYPE_LINK_REQUEST -> handleLinkRequest(endpointId, payload)
+                MessagePayload.TYPE_LINK_ACCEPT -> handleLinkAccept(endpointId)
+                else -> {
+                    if (isNewMessage(payload.messageId)) {
+                        handleChatMessage(endpointId, payload, decryptedBytes, secretKey)
                     }
                 }
             }
+        } catch (e: Exception) {
+            Log.e(tag, "MESSAGE DECRYPT/DECODE FAIL: ${e.message}")
+            handleNearbyError(P2PError.EncryptionError("Failed to decrypt incoming vibe"))
+        }
+    }
 
-            internalScope.launch(ioDispatcher) {
-                if (payload.senderId !in repository.blockedUsers.value) {
-                    messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = false))
-                    hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
+    private fun handleAck(payload: MessagePayload) {
+        internalScope.launch(ioDispatcher) {
+            messageDao.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
+        }
+    }
+
+    private fun handleLinkRequest(endpointId: String, payload: MessagePayload) {
+        val device = _scannedDevices.value.find { it.id == endpointId }
+            ?: P2PDevice(endpointId, payload.senderName, payload.senderEmoji ?: "👤")
+        _incomingLinkRequests.update { it + device }
+    }
+
+    private fun handleLinkAccept(endpointId: String) {
+        _connectedLinks.update { it + endpointId }
+        _isConnected.value = true
+    }
+
+    private fun handleChatMessage(
+        endpointId: String,
+        payload: MessagePayload,
+        decryptedBytes: ByteArray,
+        secretKey: SecretKey
+    ) {
+        // 1. Send ACK back immediately
+        sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
+
+        // 2. Relay if it's a broadcast/shout
+        if (payload.receiverId.isNullOrEmpty()) {
+            relayMessage(endpointId, payload.senderId, decryptedBytes)
+        }
+
+        // 3. Save to Local DB
+        saveIncomingMessage(payload)
+    }
+
+    private fun sendAck(endpointId: String, messageId: String, receiverId: String, secretKey: SecretKey) {
+        internalScope.launch(ioDispatcher) {
+            val ack = MessagePayload(
+                messageId = messageId,
+                senderId = repository.getDeviceId(),
+                senderName = "",
+                content = "",
+                timestamp = System.currentTimeMillis(),
+                type = MessagePayload.TYPE_ACK,
+                receiverId = receiverId
+            )
+            val json = Json.encodeToString(MessagePayload.serializer(), ack)
+            val encAck = cryptoManager.encrypt(json.toByteArray(), secretKey)
+            queueVibe(endpointId, Payload.fromBytes(encAck))
+        }
+    }
+
+    private fun relayMessage(sourceEndpointId: String, senderId: String, decryptedBytes: ByteArray) {
+        internalScope.launch(ioDispatcher) {
+            val myId = repository.getDeviceId()
+            if (senderId == myId) return@launch // Don't relay our own messages
+
+            activeConnections.filter { it != sourceEndpointId }.forEach { target ->
+                vibeKeys[target]?.let { key ->
+                    try {
+                        val reEncrypted = cryptoManager.encrypt(decryptedBytes, key)
+                        queueVibe(target, Payload.fromBytes(reEncrypted))
+                    } catch (e: Exception) {
+                        Log.e(tag, "RELAY FAIL to $target: ${e.message}")
+                    }
                 }
             }
-        } catch (e: Exception) {}
+        }
+    }
+
+    private fun saveIncomingMessage(payload: MessagePayload) {
+        internalScope.launch(ioDispatcher) {
+            if (payload.senderId !in repository.blockedUsers.value) {
+                messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = false))
+                hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
+            }
+        }
     }
 
     override fun startDiscovery() {
@@ -260,34 +321,44 @@ class NearbyP2PController(
         if (_isDiscovering.value) return
         _isDiscovering.value = true
         internalScope.launch(ioDispatcher) {
-            // Hardened: Ensure strategy is Cluster for best Bluetooth performance within The Air
             val options = DiscoveryOptions.Builder()
-                .setStrategy(strategy)
+                .setStrategy(getStrategy())
                 .build()
-            
-            connectionsClient.startDiscovery(serviceId, object : EndpointDiscoveryCallback() {
-                override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-                    Log.i(tag, "VIBE FOUND: $endpointId (${info.endpointName})")
-                    val parts = info.endpointName.split("|", limit = 3)
-                    if (parts.size < 3) return
-                    val vibeDeviceId = parts[2]
-                    val myDeviceId = repository.getDeviceId()
 
-                    val newDevice = P2PDevice(id = endpointId, name = parts[1], emoji = parts[0])
-                    _scannedDevices.update { it.filter { d -> d.id != endpointId } + newDevice }
-                    
-                    if (myDeviceId < vibeDeviceId && !activeConnections.contains(endpointId)) {
-                        Log.i(tag, "THE AIR: Requesting $endpointId")
-                        val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId"
-                        connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback)
-                            .addOnFailureListener { e -> Log.w(tag, "REQ FAIL: ${e.message}") }
+            connectionsClient.startDiscovery(serviceId, createDiscoveryCallback(), options)
+                .addOnSuccessListener { Log.i(tag, "DISCOVERY START SUCCESS") }
+                .addOnFailureListener { e ->
+                    _isDiscovering.value = false
+                    Log.e(tag, "DISCOVERY FAIL: ${e.message}")
+                    handleNearbyError(P2PError.DiscoveryError(e.message ?: "Discovery failed"))
+                }
+        }
+    }
+
+    private fun createDiscoveryCallback() = object : EndpointDiscoveryCallback() {
+        override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
+            Log.i(tag, "VIBE FOUND: $endpointId (${info.endpointName})")
+            val parts = info.endpointName.split("|", limit = 3)
+            if (parts.size < 3) return
+            val vibeDeviceId = parts[2]
+            val myDeviceId = repository.getDeviceId()
+
+            val newDevice = P2PDevice(id = endpointId, name = parts[1], emoji = parts[0])
+            _scannedDevices.update { it.filter { d -> d.id != endpointId } + newDevice }
+
+            if (myDeviceId < vibeDeviceId && !activeConnections.contains(endpointId)) {
+                Log.i(tag, "THE AIR: Requesting $endpointId")
+                val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId"
+                connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback)
+                    .addOnFailureListener { e ->
+                        Log.w(tag, "REQ FAIL: ${e.message}")
+                        handleNearbyError(P2PError.ConnectionError("Failed to request connection to ${info.endpointName}"))
                     }
-                }
-                override fun onEndpointLost(endpointId: String) {
-                    _scannedDevices.update { it.filter { d -> d.id != endpointId } }
-                }
-            }, options).addOnSuccessListener { Log.i(tag, "DISCOVERY START SUCCESS") }
-              .addOnFailureListener { e -> _isDiscovering.value = false; Log.e(tag, "DISCOVERY FAIL: ${e.message}") }
+            }
+        }
+
+        override fun onEndpointLost(endpointId: String) {
+            _scannedDevices.update { it.filter { d -> d.id != endpointId } }
         }
     }
 
@@ -303,12 +374,16 @@ class NearbyP2PController(
         _isAdvertising.value = true
         internalScope.launch(ioDispatcher) {
             val options = AdvertisingOptions.Builder()
-                .setStrategy(strategy)
+                .setStrategy(getStrategy())
                 .build()
             val name = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
             connectionsClient.startAdvertising(name, serviceId, connectionLifecycleCallback, options)
                 .addOnSuccessListener { Log.i(tag, "ADVERTISING START SUCCESS") }
-                .addOnFailureListener { e -> _isAdvertising.value = false; Log.e(tag, "ADVERTISING FAIL: ${e.message}") }
+                .addOnFailureListener { e ->
+                    _isAdvertising.value = false
+                    Log.e(tag, "ADVERTISING FAIL: ${e.message}")
+                    handleNearbyError(P2PError.AdvertisingError(e.message ?: "Advertising failed"))
+                }
         }
     }
 
@@ -430,12 +505,9 @@ class NearbyP2PController(
         }
     }
 
-    private fun handleNearbyError(e: Exception, context: String) {
-        if (e is ApiException && e.statusCode in setOf(
-                8001, 8002, 8003, 8011, 8012, 8029, 8032, 8035, 8025, 8030
-            )
-        ) return
-        internalScope.launch { _errors.emit(e.message ?: "The Air is Still") }
+    private fun handleNearbyError(error: P2PError) {
+        if (error is P2PError.ConnectionError && error.message.contains("8003")) return // Already connected
+        internalScope.launch { _errors.emit(error) }
     }
 
     override fun closeConnection() {

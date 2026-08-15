@@ -38,14 +38,15 @@ class BleFallbackController(
     private val peerDao: PeerDao,
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main
 ) : P2PController {
 
     private val tag = "BlukitBLE"
     private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
     private val adapter = bluetoothManager?.adapter
 
-    private val internalScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
     private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
     override val scannedDevices = _scannedDevices.asStateFlow()
@@ -65,7 +66,7 @@ class BleFallbackController(
     private val _isAdvertising = MutableStateFlow(false)
     override val isAdvertising = _isAdvertising.asStateFlow()
 
-    private val _errors = MutableStateFlow("")
+    private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
     override val messages: StateFlow<List<MessagePayload>> = messageDao.getAllMessages()
@@ -79,6 +80,7 @@ class BleFallbackController(
     private val vibeKeys = ConcurrentHashMap<String, SecretKey>()
     private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
     private var gattServer: BluetoothGattServer? = null
+    private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
 
     companion object {
         private val SERVICE_UUID = UUID.fromString("0000fb01-0000-1000-8000-00805f9b34fb")
@@ -126,37 +128,17 @@ class BleFallbackController(
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            val address = gatt.device.address
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.i(tag, "GATT: Connected to $address")
-                try { gatt.discoverServices() } catch (e: SecurityException) {}
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.i(tag, "GATT: Disconnected from $address")
-                activeGatts.remove(address)
-                _connectedLinks.update { it - address }
-                if (activeGatts.isEmpty()) _isConnected.value = false
-            }
+            handleGattConnectionChange(gatt, newState)
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            val address = gatt.device.address
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                activeGatts[address] = gatt
-                _connectedLinks.update { it + address }
-                _isConnected.value = true
-                sendHandshake(address)
-            }
+            handleGattServicesDiscovered(gatt, status)
         }
     }
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.i(tag, "GATT Server: Connected to ${device.address}")
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.i(tag, "GATT Server: Disconnected from ${device.address}")
-                vibeKeys.remove(device.address)
-            }
+            handleGattServerConnectionChange(device, newState)
         }
 
         override fun onCharacteristicWriteRequest(
@@ -168,14 +150,63 @@ class BleFallbackController(
             offset: Int,
             value: ByteArray
         ) {
-            if (characteristic.uuid == VIBE_CHAR_UUID) {
-                if (responseNeeded) {
-                    try {
-                        gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
-                    } catch (e: SecurityException) {}
-                }
-                handleReceivedData(device.address, value)
+            handleCharacteristicWrite(device, requestId, characteristic, responseNeeded, value)
+        }
+    }
+
+    private fun handleGattConnectionChange(gatt: BluetoothGatt, newState: Int) {
+        val address = gatt.device.address
+        if (newState == BluetoothProfile.STATE_CONNECTED) {
+            Log.i(tag, "GATT: Connected to $address")
+            try {
+                gatt.discoverServices()
+            } catch (e: SecurityException) {
+                reportError(P2PError.ConnectionError("Permission Denied for Service Discovery"))
             }
+        } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+            Log.i(tag, "GATT: Disconnected from $address")
+            activeGatts.remove(address)
+            _connectedLinks.update { it - address }
+            if (activeGatts.isEmpty()) _isConnected.value = false
+        }
+    }
+
+    private fun handleGattServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+        val address = gatt.device.address
+        if (status == BluetoothGatt.GATT_SUCCESS) {
+            activeGatts[address] = gatt
+            _connectedLinks.update { it + address }
+            _isConnected.value = true
+            sendHandshake(address)
+        } else {
+            Log.e(tag, "Service discovery failed with status: $status")
+            reportError(P2PError.ConnectionError("Service discovery failed"))
+        }
+    }
+
+    private fun handleGattServerConnectionChange(device: BluetoothDevice, newState: Int) {
+        if (newState == BluetoothProfile.STATE_CONNECTED) {
+            Log.i(tag, "GATT Server: Connected to ${device.address}")
+        } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+            Log.i(tag, "GATT Server: Disconnected from ${device.address}")
+            vibeKeys.remove(device.address)
+        }
+    }
+
+    private fun handleCharacteristicWrite(
+        device: BluetoothDevice,
+        requestId: Int,
+        characteristic: BluetoothGattCharacteristic,
+        responseNeeded: Boolean,
+        value: ByteArray
+    ) {
+        if (characteristic.uuid == VIBE_CHAR_UUID) {
+            if (responseNeeded) {
+                try {
+                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                } catch (e: SecurityException) {}
+            }
+            handleReceivedData(device.address, value)
         }
     }
 
@@ -202,31 +233,64 @@ class BleFallbackController(
 
     private fun handleMessage(address: String, data: ByteArray) {
         val secretKey = vibeKeys[address] ?: return
+        try {
+            val decryptedBytes = cryptoManager.decrypt(data, secretKey)
+            val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
+
+            when (payload.type) {
+                MessagePayload.TYPE_ACK -> handleAck(payload)
+                else -> {
+                    if (isNewMessage(payload.messageId) && payload.senderId !in repository.blockedUsers.value) {
+                        handleChatMessage(address, payload, secretKey)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Message decrypt error: ${e.message}")
+            reportError(P2PError.EncryptionError("Failed to decrypt incoming vibe"))
+        }
+    }
+
+    private fun handleAck(payload: MessagePayload) {
+        internalScope.launch(ioDispatcher) {
+            messageDao.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
+        }
+    }
+
+    private fun handleChatMessage(address: String, payload: MessagePayload, secretKey: SecretKey) {
+        internalScope.launch(ioDispatcher) {
+            messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = false))
+            hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
+            sendAck(address, payload, secretKey)
+        }
+    }
+
+    private fun sendAck(address: String, originalPayload: MessagePayload, secretKey: SecretKey) {
+        val ack = MessagePayload(
+            messageId = originalPayload.messageId,
+            senderId = repository.getDeviceId(),
+            senderName = "",
+            content = "",
+            timestamp = System.currentTimeMillis(),
+            type = MessagePayload.TYPE_ACK,
+            receiverId = originalPayload.senderId
+        )
         internalScope.launch(ioDispatcher) {
             try {
-                val decryptedBytes = cryptoManager.decrypt(data, secretKey)
-                val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
-                
-                if (payload.type == MessagePayload.TYPE_ACK) {
-                    messageDao.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
-                    return@launch
-                }
-
-                if (payload.senderId !in repository.blockedUsers.value) {
-                    messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = false))
-                    hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
-                    
-                    val ack = MessagePayload(
-                        messageId = payload.messageId,
-                        senderId = repository.getDeviceId(),
-                        senderName = "", content = "", timestamp = System.currentTimeMillis(),
-                        type = MessagePayload.TYPE_ACK, receiverId = payload.senderId
-                    )
-                    sendData(address, cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), ack).toByteArray(), secretKey))
-                }
+                val json = Json.encodeToString(MessagePayload.serializer(), ack)
+                val encryptedAck = cryptoManager.encrypt(json.toByteArray(), secretKey)
+                sendData(address, encryptedAck)
             } catch (e: Exception) {
-                Log.e(tag, "Message decrypt error: ${e.message}")
+                Log.e(tag, "Failed to send ACK: ${e.message}")
             }
+        }
+    }
+
+    private fun isNewMessage(id: String): Boolean = synchronized(messageIdHistory) {
+        if (messageIdHistory.contains(id)) false else {
+            messageIdHistory.add(id)
+            if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
+            true
         }
     }
 
@@ -252,7 +316,7 @@ class BleFallbackController(
     override fun startDiscovery() {
         Log.i(tag, "BLE: startDiscovery()")
         if (adapter == null || !adapter.isEnabled) {
-            _errors.value = "Bluetooth Disabled"
+            reportError(P2PError.DiscoveryError("Bluetooth Disabled"))
             return
         }
         val scanner = adapter.bluetoothLeScanner ?: return
@@ -269,7 +333,7 @@ class BleFallbackController(
         try {
             scanner.startScan(listOf(filter), settings, scanCallback)
         } catch (e: SecurityException) {
-            _errors.value = "Permission Denied"
+            reportError(P2PError.DiscoveryError("Permission Denied"))
             _isDiscovering.value = false
         }
     }
@@ -285,7 +349,10 @@ class BleFallbackController(
 
     override fun startAdvertising() {
         Log.i(tag, "BLE: startAdvertising()")
-        if (adapter == null || !adapter.isEnabled) return
+        if (adapter == null || !adapter.isEnabled) {
+            reportError(P2PError.AdvertisingError("Bluetooth Disabled"))
+            return
+        }
         val advertiser = adapter.bluetoothLeAdvertiser ?: return
         
         _isAdvertising.value = true
@@ -308,6 +375,7 @@ class BleFallbackController(
             advertiser.startAdvertising(settings, data, advertiseCallback)
             startGattServer()
         } catch (e: SecurityException) {
+            reportError(P2PError.AdvertisingError("Permission Denied"))
             _isAdvertising.value = false
         }
     }
@@ -325,6 +393,7 @@ class BleFallbackController(
             gattServer?.addService(service)
         } catch (e: SecurityException) {
             Log.e(tag, "GATT Server start fail: ${e.message}")
+            reportError(P2PError.AdvertisingError("Permission Denied for GATT Server"))
         }
     }
 
@@ -371,6 +440,7 @@ class BleFallbackController(
             }
         } catch (e: SecurityException) {
             flow.tryEmit(ConnectionStatus.Error("Permission Denied"))
+            reportError(P2PError.ConnectionError("Permission Denied"))
         }
 
         return flow.asSharedFlow()
@@ -412,10 +482,18 @@ class BleFallbackController(
                 }
             }
             messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = true))
+            synchronized(messageIdHistory) {
+                messageIdHistory.add(payload.messageId)
+                if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
+            }
             return payload
         } catch (e: Exception) {
             return null
         }
+    }
+
+    private fun reportError(error: P2PError) {
+        internalScope.launch { _errors.emit(error) }
     }
 
     override suspend fun broadcastMessage(content: String): MessagePayload? {

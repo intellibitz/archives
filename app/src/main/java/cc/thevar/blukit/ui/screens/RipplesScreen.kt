@@ -188,15 +188,14 @@ fun RipplesScreen(
                 }
             }
 
-            // Error Snackbar
-            state.errorMessage?.let { error ->
+            state.uiError?.let { error ->
                 Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
                     Snackbar(
                         modifier = Modifier.padding(16.dp),
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                     ) {
-                        Text(text = error)
+                        Text(text = error.message)
                     }
                 }
             }

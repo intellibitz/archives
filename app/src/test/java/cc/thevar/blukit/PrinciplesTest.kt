@@ -53,6 +53,7 @@ class PrinciplesTest {
         every { repository.nicknameFlow } returns MutableStateFlow(null)
         every { repository.emojiAvatar } returns MutableStateFlow("👤")
         every { repository.stealthMode } returns MutableStateFlow(false)
+        every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { repository.getCurrentNickname() } returns "TestUser"
         every { repository.getDeviceId() } returns "test-device-id"

@@ -40,7 +40,7 @@ class FlowsTest {
     private val isConnectedFlow = MutableStateFlow(false)
     private val isDiscoveringFlow = MutableStateFlow(false)
     private val isAdvertisingFlow = MutableStateFlow(false)
-    private val errorsFlow = MutableStateFlow("")
+    private val errorsFlow = MutableStateFlow<cc.thevar.blukit.network.p2p.P2PError?>(null)
     private val messagesFlow = MutableStateFlow(emptyList<cc.thevar.blukit.domain.model.MessagePayload>())
     private val radioStatesFlow = MutableStateFlow(RadioStates(true, true))
     private val reportFlow = MutableStateFlow(cc.thevar.blukit.domain.power.SupremePowerReport())
@@ -155,5 +155,6 @@ class FlowsTest {
                 )
             }
         }
+        composeTestRule.waitForIdle()
     }
 }

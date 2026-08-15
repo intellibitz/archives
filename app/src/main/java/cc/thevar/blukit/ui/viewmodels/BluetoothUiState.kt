@@ -2,6 +2,7 @@ package cc.thevar.blukit.ui.viewmodels
 
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.network.p2p.P2PError
 
 /**
  * Represents the UI state for connectivity within The Air.
@@ -22,7 +23,7 @@ data class BluetoothUiState(
     val isAdvertising: Boolean = false,
     val connectedLinks: Set<String> = emptySet(),
     val incomingLinkRequests: Set<P2PDevice> = emptySet(),
-    val errorMessage: String? = null,
+    val uiError: cc.thevar.blukit.ui.UiError? = null,
     val messages: List<MessagePayload> = emptyList(),
     val isBluetoothEnabled: Boolean = false,
     val isLocationEnabled: Boolean = false

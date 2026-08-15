@@ -6,6 +6,7 @@ import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.data.system.RadioStateManager
+import cc.thevar.blukit.ui.toUiError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -60,13 +61,13 @@ class BluetoothViewModel(
         val isConnected = args[4] as Boolean
         val isDiscovering = args[5] as Boolean
         val isAdvertising = args[6] as Boolean
-        val error = args[7] as String
+        val error = args[7] as? cc.thevar.blukit.network.p2p.P2PError
         val messages = args[8] as List<cc.thevar.blukit.domain.model.MessagePayload>
         val manualState = args[9] as? AirConnectionState
 
         val connectionState = when {
             manualState != null -> manualState
-            error.isNotEmpty() -> AirConnectionState.Error(error)
+            error != null -> AirConnectionState.Error(error.message)
             isConnected -> {
                 val vibe = scannedDevices.find { it.id in connectedLinks }
                     ?: P2PDevice(id = connectedLinks.firstOrNull() ?: "", name = "vibe", emoji = "👤")
@@ -86,7 +87,7 @@ class BluetoothViewModel(
             isDiscovering = isDiscovering,
             isAdvertising = isAdvertising,
             messages = messages,
-            errorMessage = error.takeIf { it.isNotEmpty() }
+            uiError = error?.toUiError()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BluetoothUiState())
 
@@ -148,7 +149,7 @@ class BluetoothViewModel(
 
     fun disconnect() {
         p2pController.closeConnection()
-        _manualConnectionState.value = AirConnectionState.Disconnected
+        _manualConnectionState.value = null
     }
 
     override fun onCleared() {

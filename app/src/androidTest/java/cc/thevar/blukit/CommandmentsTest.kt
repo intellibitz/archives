@@ -62,7 +62,7 @@ class CommandmentsTest {
         io.mockk.every { p2p.isAdvertising } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         io.mockk.every { p2p.isConnected } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         io.mockk.every { p2p.messages } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
-        io.mockk.every { p2p.errors } returns kotlinx.coroutines.flow.MutableStateFlow("")
+        io.mockk.every { p2p.errors } returns kotlinx.coroutines.flow.MutableStateFlow(null)
 
         val spm: cc.thevar.blukit.data.power.SupremePowerManager = mockk(relaxed = true)
         io.mockk.every { spm.report } returns kotlinx.coroutines.flow.MutableStateFlow(cc.thevar.blukit.domain.power.SupremePowerReport())

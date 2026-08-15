@@ -28,6 +28,7 @@ class MainViewModelTest {
         every { repository.nicknameFlow } returns nicknameFlow
         every { repository.emojiAvatar } returns MutableStateFlow("👤")
         every { repository.stealthMode } returns MutableStateFlow(false)
+        every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { repository.getDeviceId() } returns "test-id"
         
