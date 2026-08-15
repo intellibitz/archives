@@ -167,7 +167,7 @@ fun RipplesField(
             
             // Center "Me" Node + Own Bubble
             Box(contentAlignment = Alignment.Center) {
-                CenterNode(localEmoji, finalEnergy)
+                CenterNode(finalEnergy)
                 val myBubble = activeBubbles.findLast { it.senderId == localDeviceId }
                 val myBubbleColor = if (myBubble?.isPrivate == true) StealthRose else Color.White
                 BubbleWrapper(activeBubble = myBubble, color = myBubbleColor)
@@ -435,7 +435,7 @@ private fun VibesConnectivity(devices: List<P2PDevice>) {
 }
 
 @Composable
-private fun CenterNode(emoji: String, energy: Float) {
+private fun CenterNode(energy: Float) {
     val infiniteTransition = rememberInfiniteTransition(label = "Me")
     val vibeScale by infiniteTransition.animateFloat(
         initialValue = 0.85f + (energy * 0.2f),
@@ -477,7 +477,7 @@ private fun CenterNode(emoji: String, energy: Float) {
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = Icons.Rounded.Person, 
+                    imageVector = Icons.Rounded.AccountCircle, 
                     contentDescription = null,
                     tint = StealthAmber,
                     modifier = Modifier.size(32.dp).graphicsLayer {

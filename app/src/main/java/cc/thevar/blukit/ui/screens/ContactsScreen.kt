@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -129,7 +130,7 @@ fun TieItem(
             
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Avatar with Glow
+            // Profile Icon with Glow
             Box(contentAlignment = Alignment.Center) {
                 Box(
                     modifier = Modifier
@@ -145,9 +146,11 @@ fun TieItem(
                         .border(1.dp, StealthPrimary.copy(alpha = 0.5f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = contact.emoji,
-                        fontSize = 24.sp
+                    Icon(
+                        imageVector = Icons.Rounded.AccountCircle,
+                        contentDescription = null,
+                        tint = StealthPrimary,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
                 
@@ -180,7 +183,7 @@ fun TieItem(
                     format.format(date)
                 }
                 Text(
-                    text = "LAST SYNC: $lastSeenDate",
+                    text = "ENERGY: $lastSeenDate",
                     style = MaterialTheme.typography.labelSmall,
                     color = StealthPrimary.copy(alpha = 0.6f),
                     letterSpacing = 1.sp

@@ -391,18 +391,6 @@ private fun AnimatedVibeItem(
             .padding(vertical = 6.dp)
     ) {
         if (!isMe) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.05f))
-                    .padding(end = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp)
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            
             Column {
                 Text(
                     text = msg.content.uppercase(),
@@ -433,16 +421,6 @@ private fun AnimatedVibeItem(
                     color = StealthPrimary.copy(alpha = 0.3f),
                     fontSize = 7.sp
                 )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(StealthPrimary.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp)
             }
         }
     }

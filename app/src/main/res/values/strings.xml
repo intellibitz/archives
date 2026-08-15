@@ -29,9 +29,9 @@
 
     <!-- Vibe Screen (Persona) -->
     <string name="mask_title">BLUKIT</string>
-    <string name="mask_nickname_label">VIBE</string>
-    <string name="mask_stealth_mode">ENERGY</string>
-    <string name="mask_stealth_desc">PROXIMITY</string>
+    <string name="mask_nickname_label">BLUKIT VIBE</string>
+    <string name="mask_stealth_mode">ENERGY GLOW</string>
+    <string name="mask_stealth_desc">PROXIMITY ENERGY</string>
     <string name="mask_start_exploring">SPREAD VIBES</string>
     <string name="mask_clear_whispers">CLEAR VIBES</string>
     <string name="mask_reset_profile">NEW BLUKIT</string>

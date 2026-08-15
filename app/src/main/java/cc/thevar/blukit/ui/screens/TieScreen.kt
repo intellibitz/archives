@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.*
@@ -206,9 +207,12 @@ fun ChatMessage(
                     border = BorderStroke(1.dp, Brush.linearGradient(listOf(StealthAmber, StealthRose)))
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        // Dynamic Emoji: override for local or use stored with fallback
-                        val displayEmoji = if (isFromLocalUser) localEmoji else (payload.senderEmoji ?: "👤")
-                        Text(text = displayEmoji, fontSize = 14.sp)
+                        Icon(
+                            imageVector = Icons.Rounded.AccountCircle,
+                            contentDescription = null,
+                            tint = StealthAmber,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
             }

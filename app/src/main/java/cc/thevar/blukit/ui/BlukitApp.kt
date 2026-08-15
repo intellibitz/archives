@@ -17,8 +17,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -129,29 +127,23 @@ fun BlukitApp(
     val context = LocalContext.current
     
     val viewModel: MainViewModel = viewModel(
-        factory = remember {
-            object : ViewModelProvider.Factory {
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return MainViewModel(repository, vibeStore) as T
-                }
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return MainViewModel(repository, vibeStore) as T
             }
         }
     )
     val bluetoothViewModel: BluetoothViewModel = viewModel(
-        factory = remember {
-            object : ViewModelProvider.Factory {
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return BluetoothViewModel(p2pController, radioStateManager) as T
-                }
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return BluetoothViewModel(p2pController, radioStateManager) as T
             }
         }
     )
     val supremePowerViewModel: SupremePowerViewModel = viewModel(
-        factory = remember {
-            object : ViewModelProvider.Factory {
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SupremePowerViewModel(supremePowerManager) as T
-                }
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return SupremePowerViewModel(supremePowerManager) as T
             }
         }
     )
@@ -289,7 +281,6 @@ fun BlukitApp(
             isStealthMode = isStealthMode,
             lowPowerMode = lowPowerMode,
             currentRoute = (currentRoute as? Route) ?: initialRoute,
-            emojiAvatar = emojiAvatar,
             nickname = nickname ?: "vibe",
             incomingLinkRequests = bluetoothState.incomingLinkRequests,
             onNavigate = { route ->
@@ -307,7 +298,6 @@ fun BlukitApp(
                 context.startActivity(intent)
             },
             onSaveNickname = viewModel::saveNickname,
-            onSaveEmoji = viewModel::saveEmoji,
             onToggleStealth = viewModel::toggleStealth,
             onToggleLowPower = viewModel::toggleLowPowerMode,
             onClearHistory = viewModel::clearChatHistory,
@@ -351,7 +341,6 @@ fun UnifiedBlukitBadge(
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
     currentRoute: Route,
-    emojiAvatar: String,
     nickname: String,
     incomingLinkRequests: Set<P2PDevice>,
     onNavigate: (Route) -> Unit,
@@ -360,7 +349,6 @@ fun UnifiedBlukitBadge(
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
     onSaveNickname: (String) -> Unit,
-    onSaveEmoji: (String) -> Unit,
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
@@ -402,7 +390,6 @@ fun UnifiedBlukitBadge(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 // Left: Smart Branding & Dynamic Status
-                // Animated B Icon (Vibes travelling through)
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
                     val infiniteTransition = rememberInfiniteTransition(label = "LogoFlow")
                     val flowOffset by infiniteTransition.animateFloat(
@@ -482,7 +469,6 @@ fun UnifiedBlukitBadge(
                     modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        // Pulse Animation (Interactive Feel)
                         val infiniteTransition = rememberInfiniteTransition(label = "IconPulse")
                         val pulseScale by infiniteTransition.animateFloat(
                             initialValue = 0.9f,
@@ -503,7 +489,7 @@ fun UnifiedBlukitBadge(
                         )
                         
                         Icon(
-                            imageVector = if (currentRoute is Route.Vibes) Icons.Rounded.AccountCircle else Icons.Rounded.AccountCircle,
+                            imageVector = Icons.Rounded.AccountCircle,
                             contentDescription = null,
                             tint = if (airIsStill) StealthAmber else StealthPrimary,
                             modifier = Modifier.size(20.dp)
@@ -521,7 +507,6 @@ fun UnifiedBlukitBadge(
                 }
             }
 
-            // THE MAGIC BAR & INTEL
             AnimatedVisibility(
                 visible = airIsStill || expanded || hasBreeze || incomingLinkRequests.isNotEmpty(),
                 enter = expandVertically() + fadeIn(),
@@ -550,7 +535,7 @@ fun UnifiedBlukitBadge(
                     if (expanded) {
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Integrated Vibe Identity
+                        // Integrated Vibe Identity (Minimalist, no Emojis)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -559,21 +544,6 @@ fun UnifiedBlukitBadge(
                                 .background(Color.White.copy(alpha = 0.05f))
                                 .padding(16.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(48.dp)) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = StealthPrimary.copy(alpha = 0.1f),
-                                    border = BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.3f)),
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(text = emojiAvatar, fontSize = 24.sp)
-                                    }
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.width(16.dp))
-
                             var localNickname by remember(nickname) { mutableStateOf(nickname) }
                             TextField(
                                 value = localNickname,
@@ -582,7 +552,7 @@ fun UnifiedBlukitBadge(
                                     onSaveNickname(it.ifBlank { "vibe" })
                                 },
                                 modifier = Modifier.weight(1f).testTag("IdentityVibeInput"),
-                                label = { Text("VIBE", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
+                                label = { Text("BLUKIT VIBE", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
                                 colors = TextFieldDefaults.colors(
@@ -592,39 +562,6 @@ fun UnifiedBlukitBadge(
                                     unfocusedIndicatorColor = StealthPrimary.copy(alpha = 0.2f)
                                 )
                             )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        // Visage Diversity: Emoji Selector
-                        val visages = listOf("👤", "🐱", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐸", "🦋", "🌈", "⚡", "💎", "🍀", "🔥", "🎭")
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .horizontalScroll(rememberScrollState())
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            visages.forEach { emoji ->
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(if (emoji == emojiAvatar) StealthPrimary.copy(alpha = 0.2f) else Color.Transparent)
-                                        .border(
-                                            width = if (emoji == emojiAvatar) 1.dp else 0.dp,
-                                            color = if (emoji == emojiAvatar) StealthPrimary else Color.Transparent,
-                                            shape = CircleShape
-                                        )
-                                        .clickable { onSaveEmoji(emoji) },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(text = emoji, fontSize = 18.sp)
-                                }
-                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -654,7 +591,7 @@ fun UnifiedBlukitBadge(
                         
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Quiet Light & Stillness Integrated
+                        // Settings Sections (Einstein Minimalist)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -665,13 +602,13 @@ fun UnifiedBlukitBadge(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "ENERGY",
+                                    text = "ENERGY GLOW",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "PROXIMITY",
+                                    text = "PROXIMITY ENERGY",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = StealthPrimary.copy(alpha = 0.5f),
                                     fontSize = 7.sp
@@ -699,13 +636,13 @@ fun UnifiedBlukitBadge(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "BLUKIT",
+                                    text = "BLUKIT ENERGY",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "ENERGY",
+                                    text = "VIBE PROXIMITY",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = StealthPrimary.copy(alpha = 0.5f),
                                     fontSize = 7.sp
@@ -752,7 +689,7 @@ fun UnifiedBlukitBadge(
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
-                                        Text("CLEAR PROXIMITY", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                        Text("CLEAR VIBES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                                     }
                                     OutlinedButton(
                                         onClick = { showLogoutDialog = true },
@@ -761,7 +698,7 @@ fun UnifiedBlukitBadge(
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
-                                        Text("NEW BLUKIT", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                        Text("RESET BLUKIT", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -784,15 +721,14 @@ fun UnifiedBlukitBadge(
         }
     }
 
-    // DIALOGS MOVED TO HUB (THE BRAIN)
     if (showClearHistoryDialog) {
         AlertDialog(
             onDismissRequest = { showClearHistoryDialog = false },
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White.copy(alpha = 0.7f),
-            title = { Text("CLEAR PROXIMITY?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("CLEAR PROXIMITY ENERGY.", fontSize = 12.sp) },
+            title = { Text("CLEAR VIBES?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
+            text = { Text("CLEAR VIBE ENERGY.", fontSize = 12.sp) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -872,7 +808,7 @@ private fun MagicBarContent(
         color = barColor.copy(alpha = 0.05f),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(0.5.dp, barColor.copy(alpha = 0.2f)),
-        modifier = Modifier.fillMaxWidth().testTag("MagicBar")
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             Row(

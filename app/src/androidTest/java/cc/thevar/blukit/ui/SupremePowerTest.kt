@@ -44,7 +44,6 @@ class SupremePowerTest {
                         isStealthMode = false,
                         lowPowerMode = false,
                         currentRoute = cc.thevar.blukit.ui.navigation.Route.Crowd,
-                        emojiAvatar = "👤",
                         nickname = "vibe",
                         incomingLinkRequests = emptySet<P2PDevice>(),
                         onNavigate = {},
@@ -53,7 +52,6 @@ class SupremePowerTest {
                         onGrantPermissions = {},
                         onOpenSettings = {},
                         onSaveNickname = {},
-                        onSaveEmoji = {},
                         onToggleStealth = {},
                         onToggleLowPower = {},
                         onClearHistory = {},
@@ -79,7 +77,7 @@ class SupremePowerTest {
         }
         composeTestRule.onNodeWithText("CROWD", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("10", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNode(hasText("PROXIMITY") and hasAnyAncestor(hasTestTag("IntelSection")), useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNode(hasText("VIBES") and hasAnyAncestor(hasTestTag("IntelSection")), useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("2", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("THE VIBES ARE HEALTHY", substring = true, ignoreCase = true, useUnmergedTree = true).assertIsDisplayed() 
 
