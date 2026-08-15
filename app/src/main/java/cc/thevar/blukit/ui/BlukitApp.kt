@@ -262,7 +262,6 @@ fun BlukitApp(
                 .padding(top = 16.dp)
         )
 
-
         val roarsCount = remember(bluetoothState.messages) {
             bluetoothState.messages.count { it.receiverId.isNullOrBlank() }
         }
@@ -272,7 +271,6 @@ fun BlukitApp(
             userCount = report.userCount,
             linksCount = report.connectedLinksCount,
             roarsCount = roarsCount,
-            aiInsight = report.aiInsight,
             currentBreeze = report.currentBreeze,
             isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
             isLocationEnabled = bluetoothState.isLocationEnabled,
@@ -335,7 +333,6 @@ fun UnifiedBlukitBadge(
     userCount: Int,
     linksCount: Int,
     roarsCount: Int,
-    aiInsight: String,
     currentBreeze: String?,
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
@@ -368,7 +365,6 @@ fun UnifiedBlukitBadge(
     
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
-    val hasBreeze = !currentBreeze.isNullOrBlank()
 
     Box(
         modifier = modifier
@@ -400,52 +396,7 @@ fun UnifiedBlukitBadge(
                 Spacer(modifier = Modifier.width(8.dp))
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Feedback 4: Status text integrated into the hub intelligence
-                    val statusText = when {
-                        airIsStill -> "RADIOS OFF"
-                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
-                        !currentBreeze.isNullOrBlank() -> currentBreeze
-                        else -> null
-                    }
-                    
-                    if (statusText != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = statusText.uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (airIsStill) Color.Red else StealthPrimary,
-                                    letterSpacing = 0.5.sp
-                                ),
-                                modifier = Modifier.padding(bottom = 2.dp)
-                            )
-                            
-                            if (incomingLinkRequests.isNotEmpty()) {
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text(
-                                        "VIBE",
-                                        color = StealthPrimary,
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 8.sp,
-                                        modifier = Modifier
-                                            .testTag("AcceptLinkButton")
-                                            .clickable { onAcceptLink(incomingLinkRequests.first()) }
-                                    )
-                                    Text(
-                                        "IGNORE",
-                                        color = Color.White.copy(alpha = 0.3f),
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 8.sp,
-                                        modifier = Modifier.clickable { onDenyLink(incomingLinkRequests.first()) }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Center: Intelligence Stats (Super Intelligent Hub)
+                    // Intelligence Stats (Hub Brain)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
@@ -461,41 +412,28 @@ fun UnifiedBlukitBadge(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Branding Section
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "BLUKIT IS CROWD ENERGY",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 5.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.White.copy(alpha = 0.3f),
-                                letterSpacing = 0.5.sp
-                            )
-                        )
-                        Text(
-                            text = "SPREAD VIBES TO HEAR CROWDS ROAR",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 6.sp,
-                                fontWeight = FontWeight.Black,
-                                color = StealthPrimary.copy(alpha = 0.8f),
-                                letterSpacing = 1.sp
-                            )
-                        )
-                        Text(
-                            text = "SPREAD VIBES",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 7.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (airIsStill) Color.Red else StealthPrimary,
-                                letterSpacing = 2.sp
-                            )
-                        )
+                    // Feedback 4: Status text integrated into the hub intelligence
+                    val statusText = when {
+                        airIsStill -> "RADIOS OFF"
+                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
+                        !currentBreeze.isNullOrBlank() -> currentBreeze
+                        else -> "HEAR THE CROWD ROAR"
                     }
+                    
+                    Text(
+                        text = statusText.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 6.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (airIsStill) Color.Red else StealthPrimary.copy(alpha = 0.8f),
+                            letterSpacing = 0.5.sp
+                        )
+                    )
                 }
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Right: User Visage & Mode Indicator
+                // Right: User Identity & SPREAD VIBES
                 Column(
                     horizontalAlignment = Alignment.End,
                     modifier = Modifier.padding(start = 8.dp)
@@ -511,31 +449,19 @@ fun UnifiedBlukitBadge(
                             )
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Box(contentAlignment = Alignment.Center) {
-                            val infiniteTransition = rememberInfiniteTransition(label = "UserPulse")
-                            val pulseScale by infiniteTransition.animateFloat(
-                                initialValue = 0.9f,
-                                targetValue = 1.1f,
-                                animationSpec = infiniteRepeatable(tween(2000), RepeatMode.Reverse),
-                                label = "Pulse"
-                            )
-                            
-                            Box(
-                                modifier = Modifier
-                                    .size(20.dp * pulseScale)
-                                    .background(
-                                        Brush.radialGradient(
-                                            listOf((if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.1f), Color.Transparent)
-                                        ),
-                                        CircleShape
-                                    )
-                            )
-                            
-                            Text(text = emojiAvatar, fontSize = 12.sp)
-                        }
+                        Text(text = emojiAvatar, fontSize = 12.sp)
                     }
                     
-                    Spacer(modifier = Modifier.height(2.dp))
+                    // Feedback 6: Move Spread Vibes below you
+                    Text(
+                        text = "SPREAD VIBES",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (airIsStill) Color.Red else StealthPrimary,
+                            letterSpacing = 1.sp
+                        )
+                    )
                     
                     // Mode Indicator
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -559,13 +485,12 @@ fun UnifiedBlukitBadge(
             }
 
             AnimatedVisibility(
-                visible = airIsStill || expanded || hasBreeze || incomingLinkRequests.isNotEmpty(),
+                visible = airIsStill || expanded || incomingLinkRequests.isNotEmpty(),
                 enter = expandVertically() + fadeIn(),
                 exit = shrinkVertically() + fadeOut()
             ) {
                 Column {
-                    if (airIsStill || hasBreeze || incomingLinkRequests.isNotEmpty()) {
-                        val requests = incomingLinkRequests
+                    if (airIsStill || incomingLinkRequests.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         MagicBarContent(
                             isBluetoothOff = !isBluetoothEnabled,
@@ -573,9 +498,6 @@ fun UnifiedBlukitBadge(
                             isWifiOff = !isWifiEnabled,
                             isPermissionMissing = !permissionsGranted,
                             isPermanentlyDenied = isPermanentlyDenied,
-                            incomingRequests = requests,
-                            onAcceptLink = onAcceptLink,
-                            onDenyLink = onDenyLink,
                             onAwakenBluetooth = onAwakenBluetooth,
                             onAwakenLocation = onAwakenLocation,
                             onGrantPermissions = onGrantPermissions,
@@ -586,7 +508,7 @@ fun UnifiedBlukitBadge(
                     if (expanded) {
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Integrated Vibe Identity (Minimalist, no Emojis)
+                        // Integrated Vibe Identity
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -603,7 +525,7 @@ fun UnifiedBlukitBadge(
                                     onSaveNickname(it.ifBlank { "vibe" })
                                 },
                                 modifier = Modifier.weight(1f).testTag("IdentityVibeInput"),
-                                label = { Text("BLUKIT VIBE", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
+                                label = { Text("MY NAME", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
                                 colors = TextFieldDefaults.colors(
@@ -617,6 +539,7 @@ fun UnifiedBlukitBadge(
 
                         Spacer(modifier = Modifier.height(16.dp))
                         
+                        // Intel stats in expansion too
                         Column(modifier = Modifier.testTag("IntelSection")) {
                             IntelRow(
                                 label = "CROWD", 
@@ -642,7 +565,7 @@ fun UnifiedBlukitBadge(
                         
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Settings Sections (Einstein Minimalist)
+                        // Settings Sections (Feedback 6: Simplified)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -651,20 +574,13 @@ fun UnifiedBlukitBadge(
                                 .background(Color.White.copy(alpha = 0.05f))
                                 .padding(12.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "ENERGY GLOW",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "PROXIMITY ENERGY",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = StealthPrimary.copy(alpha = 0.5f),
-                                    fontSize = 7.sp
-                                )
-                            }
+                            Text(
+                                text = "DARK MODE",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                             Switch(
                                 checked = isStealthMode,
                                 onCheckedChange = onToggleStealth,
@@ -685,20 +601,13 @@ fun UnifiedBlukitBadge(
                                 .background(Color.White.copy(alpha = 0.05f))
                                 .padding(12.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "BLUKIT ENERGY",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "VIBE PROXIMITY",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = StealthPrimary.copy(alpha = 0.5f),
-                                    fontSize = 7.sp
-                                )
-                            }
+                            Text(
+                                text = "BATTERY SAVER",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                             Switch(
                                 checked = lowPowerMode,
                                 onCheckedChange = onToggleLowPower,
@@ -709,63 +618,29 @@ fun UnifiedBlukitBadge(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        var showStillnessLocal by remember { mutableStateOf(false) }
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .clickable { showStillnessLocal = !showStillnessLocal }
-                                .padding(12.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = if (showStillnessLocal) "▼ ROAR" else "▶ ROAR",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (showStillnessLocal) StealthPrimary else StealthPrimary.copy(alpha = 0.4f),
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 1.sp
-                                )
+                        // Feedback 6: Top-level destructive buttons
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { showClearHistoryDialog = true },
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("CLEAR VIBES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                             }
-
-                            if (showStillnessLocal) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(
-                                        onClick = { showClearHistoryDialog = true },
-                                        modifier = Modifier.weight(1f),
-                                        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text("CLEAR VIBES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                    OutlinedButton(
-                                        onClick = { showLogoutDialog = true },
-                                        modifier = Modifier.weight(1f),
-                                        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text("RESET BLUKIT", fontSize = 7.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                }
+                            OutlinedButton(
+                                onClick = { showLogoutDialog = true },
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("RESET PROFILE", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                             }
                         }
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 12.dp),
-                            color = StealthPrimary.copy(alpha = 0.1f)
-                        )
-                        
-                        Text(
-                            text = aiInsight.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(lineHeight = 14.sp),
-                            color = Color.White.copy(alpha = 0.8f),
-                            letterSpacing = 0.5.sp
-                        )
                     }
                 }
             }
@@ -779,7 +654,7 @@ fun UnifiedBlukitBadge(
             titleContentColor = StealthPrimary,
             textContentColor = Color.White.copy(alpha = 0.7f),
             title = { Text("CLEAR VIBES?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("CLEAR VIBE ENERGY.", fontSize = 12.sp) },
+            text = { Text("THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", fontSize = 12.sp) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -804,8 +679,8 @@ fun UnifiedBlukitBadge(
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White.copy(alpha = 0.7f),
-            title = { Text("NEW BLUKIT?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("RESET BLUKIT VIBES.", fontSize = 12.sp) },
+            title = { Text("RESET PROFILE?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
+            text = { Text("THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", fontSize = 12.sp) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -832,9 +707,6 @@ private fun MagicBarContent(
     isWifiOff: Boolean,
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
-    incomingRequests: Set<P2PDevice>,
-    onAcceptLink: (P2PDevice) -> Unit,
-    onDenyLink: (P2PDevice) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onGrantPermissions: () -> Unit,
@@ -852,15 +724,11 @@ private fun MagicBarContent(
     )
 
     val isStill = isBluetoothOff || isLocationOff || isPermissionMissing
-    val hasRequests = incomingRequests.isNotEmpty()
     
-    // Feedback 4: High-visibility Red background for alerts
-    val barColor = if (isStill) Color.Red else StealthPrimary
-
     Surface(
         color = if (isStill) Color.Red else StealthPrimary.copy(alpha = 0.05f),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(0.5.dp, if (isStill) Color.White.copy(alpha = 0.5f) else barColor.copy(alpha = 0.3f)),
+        border = BorderStroke(0.5.dp, if (isStill) Color.White.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
@@ -906,12 +774,12 @@ private fun MagicBarContent(
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = if (isStill) Color.White else Color.Black
+                                color = Color.White
                             ),
                             modifier = Modifier
                                 .graphicsLayer { alpha = pulseAlpha }
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(if (isStill) Color.White.copy(alpha = 0.2f) else Color.Red)
+                                .background(Color.White.copy(alpha = 0.2f))
                                 .clickable { action() }
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         )

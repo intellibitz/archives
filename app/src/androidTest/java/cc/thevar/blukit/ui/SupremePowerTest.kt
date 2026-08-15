@@ -36,7 +36,6 @@ class SupremePowerTest {
                         userCount = report.userCount,
                         linksCount = report.connectedLinksCount,
                         roarsCount = report.totalMessages,
-                        aiInsight = report.aiInsight,
                         currentBreeze = report.currentBreeze,
                         isBluetoothEnabled = true,
                         isLocationEnabled = true,

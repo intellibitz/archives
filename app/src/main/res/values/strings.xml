@@ -30,17 +30,17 @@
     <!-- Vibe Screen (Persona) -->
     <string name="mask_title">MY VIBE</string>
     <string name="mask_nickname_label">MY NAME</string>
-    <string name="mask_stealth_mode">DARK GLOW</string>
+    <string name="mask_stealth_mode">DARK MODE</string>
     <string name="mask_stealth_desc">OLED ENERGY SAVER</string>
     <string name="mask_start_exploring">JOIN THE CROWD</string>
-    <string name="mask_clear_whispers">CLEAR MESSAGES</string>
-    <string name="mask_reset_profile">NEW IDENTITY</string>
+    <string name="mask_clear_whispers">CLEAR VIBES</string>
+    <string name="mask_reset_profile">RESET PROFILE</string>
 
     <!-- Confirmation Dialogs -->
     <string name="conf_delete_whispers_title">CLEAR ALL MESSAGES?</string>
     <string name="conf_delete_whispers_desc">THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.</string>
-    <string name="conf_reset_identity_title">NEW IDENTITY?</string>
-    <string name="conf_reset_identity_desc">THIS WILL CLEAR YOUR LOCAL BLUKIT VISAGE.</string>
+    <string name="conf_reset_identity_title">RESET PROFILE?</string>
+    <string name="conf_reset_identity_desc">THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.</string>
     <string name="conf_delete_btn">CLEAR</string>
     <string name="conf_reset_btn">RESET</string>
 
