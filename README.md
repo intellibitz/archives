@@ -1,6 +1,6 @@
 # Blukit — Spread the Vibes
 
-**The power of close proximity. Spread the vibes and hear the crowd roar instantly in any crowd—no internet needed.**
+**The energy of close proximity. Spread the vibes and hear the crowd roar instantly—no internet needed.**
 
 ---
 
@@ -119,7 +119,7 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 
 ## 📝 Play Store Metadata
 
-**Short Description:** The power of close proximity. Spread the vibes and hear the crowd roar instantly.
+**Short Description:** The energy of close proximity. Spread the vibes and hear the crowd roar instantly.
 
 ### Full Description
 **Experience the pulse of a truly smart, serverless connection.**
