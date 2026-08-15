@@ -1,7 +1,6 @@
 package cc.thevar.blukit
 
-import cc.thevar.blukit.data.local.dao.MessageDao
-import cc.thevar.blukit.data.local.dao.PeerDao
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
@@ -32,8 +31,7 @@ class PrinciplesTest {
 
     private lateinit var repository: IdentityRepository
     private val contactRepository: ContactRepository = mockk(relaxed = true)
-    private val messageDao: MessageDao = mockk(relaxed = true)
-    private val peerDao: PeerDao = mockk(relaxed = true)
+    private val vibeStore: VibeStore = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -57,11 +55,11 @@ class PrinciplesTest {
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { repository.getCurrentNickname() } returns "TestUser"
         every { repository.getDeviceId() } returns "test-device-id"
-        every { messageDao.getAllMessages() } returns flowOf(emptyList())
+        every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
         every { contactRepository.allContacts } returns flowOf(emptyList())
         
         controller = NearbyP2PController(
-            io.mockk.mockk(relaxed = true), repository, contactRepository, messageDao, peerDao, hapticManager, cryptoManager, testDispatcher
+            io.mockk.mockk(relaxed = true), repository, contactRepository, vibeStore, hapticManager, cryptoManager, testDispatcher
         )
     }
 
@@ -70,7 +68,7 @@ class PrinciplesTest {
     @Test
     fun `Power 1 & 4 - Vibes are decentralized and broadcast to everyone in The Vibes`() = runTest {
         controller.broadcastMessage("Public Info")
-        coVerify { messageDao.insertMessage(match { it.content == "Public Info" && it.receiverId == null }) }
+        coVerify { vibeStore.insertMessage(match { it.content == "Public Info" && it.receiverId == null }) }
     }
 
     @Test
@@ -78,7 +76,7 @@ class PrinciplesTest {
         val result = controller.broadcastMessage("Lone Shoutout")
         assertNotNull(result)
         assertEquals("Lone Shoutout", result?.content)
-        coVerify { messageDao.insertMessage(any()) }
+        coVerify { vibeStore.insertMessage(any()) }
     }
 
     // --- COMMANDMENT TESTS ---

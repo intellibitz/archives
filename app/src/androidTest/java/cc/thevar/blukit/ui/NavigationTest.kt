@@ -3,6 +3,7 @@ package cc.thevar.blukit.ui
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
@@ -23,7 +24,7 @@ class NavigationTest {
 
     private val repository: IdentityRepository = mockk(relaxed = true)
     private val contactRepository: ContactRepository = mockk(relaxed = true)
-    private val messageDao: cc.thevar.blukit.data.local.dao.MessageDao = mockk(relaxed = true)
+    private val vibeStore: VibeStore = mockk(relaxed = true)
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
     private val p2pController: P2PController = mockk(relaxed = true)
 
@@ -45,6 +46,7 @@ class NavigationTest {
         every { p2pController.messages } returns MutableStateFlow(emptyList())
         
         every { radioStateManager.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(false, false))
+        every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
     }
 
     @Test
@@ -76,7 +78,7 @@ class NavigationTest {
                 BlukitApp(
                     repository = repository,
                     contactRepository = contactRepository,
-                    messageDao = messageDao,
+                    vibeStore = vibeStore,
                     radioStateManager = radioStateManager,
                     p2pController = p2pController,
                     supremePowerManager = spm,

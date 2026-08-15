@@ -70,7 +70,7 @@ fun ContactsScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(contacts, key = { it.contactId }) { contact ->
+                items(contacts, key = { it.id }) { contact ->
                     TieItem(
                         contact = contact,
                         onStartChat = { onStartChat(contact) }
@@ -146,7 +146,7 @@ fun TieItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = contact.avatarUri ?: "👤",
+                        text = contact.emoji,
                         fontSize = 24.sp
                     )
                 }
@@ -168,14 +168,14 @@ fun TieItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = contact.name.uppercase(),
+                    text = contact.nickname.uppercase(),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.sp,
                     color = Color.White
                 )
-                val lastSeenDate = remember(contact.lastSeen) {
-                    val date = Date(contact.lastSeen)
+                val lastSeenDate = remember(contact.lastVibeAt) {
+                    val date = Date(contact.lastVibeAt)
                     val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
                     format.format(date)
                 }

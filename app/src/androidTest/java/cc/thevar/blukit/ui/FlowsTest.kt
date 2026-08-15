@@ -2,6 +2,7 @@ package cc.thevar.blukit.ui
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
@@ -27,7 +28,7 @@ class FlowsTest {
 
     private val repository: IdentityRepository = mockk(relaxed = true)
     private val contactRepository: ContactRepository = mockk(relaxed = true)
-    private val messageDao: cc.thevar.blukit.data.local.dao.MessageDao = mockk(relaxed = true)
+    private val vibeStore: VibeStore = mockk(relaxed = true)
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
     private val p2pController: P2PController = mockk(relaxed = true)
     private val supremePowerManager: SupremePowerManager = mockk(relaxed = true)
@@ -64,6 +65,7 @@ class FlowsTest {
         
         every { radioStateManager.radioStates } returns radioStatesFlow
         every { supremePowerManager.report } returns reportFlow
+        every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
     }
 
     @Test
@@ -147,7 +149,7 @@ class FlowsTest {
                 BlukitApp(
                     repository = repository,
                     contactRepository = contactRepository,
-                    messageDao = messageDao,
+                    vibeStore = vibeStore,
                     radioStateManager = radioStateManager,
                     p2pController = p2pController,
                     supremePowerManager = supremePowerManager,

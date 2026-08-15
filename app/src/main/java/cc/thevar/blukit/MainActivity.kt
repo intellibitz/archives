@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
                 BlukitApp(
                     repository = app.identityRepository,
                     contactRepository = app.contactRepository,
-                    messageDao = app.database.messageDao,
+                    vibeStore = app.vibeStore,
                     radioStateManager = app.radioStateManager,
                     p2pController = app.p2pController,
                     supremePowerManager = app.supremePowerManager,

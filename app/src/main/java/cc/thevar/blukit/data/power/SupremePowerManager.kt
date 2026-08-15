@@ -1,6 +1,6 @@
 package cc.thevar.blukit.data.power
 
-import cc.thevar.blukit.data.local.dao.MessageDao
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.domain.power.SupremePowerReport
 import cc.thevar.blukit.network.p2p.P2PController
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 class SupremePowerManager(
     private val p2pController: P2PController,
-    private val messageDao: MessageDao,
+    private val vibeStore: VibeStore,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager? = null
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -37,7 +37,7 @@ class SupremePowerManager(
             combine(
                 p2pController.scannedDevices,
                 p2pController.connectedLinks,
-                messageDao.getAllMessages(),
+                vibeStore.getAllMessages(),
                 _breezeFlow.onStart { emit("") }
             ) { args: Array<Any?> ->
                 val scanned = args[0] as List<cc.thevar.blukit.domain.model.P2PDevice>

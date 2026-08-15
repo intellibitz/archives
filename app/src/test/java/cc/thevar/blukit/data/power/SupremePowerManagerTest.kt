@@ -1,7 +1,8 @@
 package cc.thevar.blukit.data.power
 
 import app.cash.turbine.test
-import cc.thevar.blukit.data.local.dao.MessageDao
+import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.network.p2p.P2PController
 import io.mockk.every
@@ -19,17 +20,17 @@ class SupremePowerManagerTest {
     @Test
     fun `test report updates vibes state`() = runTest {
         val p2pController: P2PController = mockk(relaxed = true)
-        val messageDao: MessageDao = mockk(relaxed = true)
+        val vibeStore: VibeStore = mockk(relaxed = true)
 
-        val scannedDevicesFlow = MutableStateFlow(emptyList<P2PDevice>())
+        val scannedDevicesFlow = MutableStateFlow(emptyList<cc.thevar.blukit.domain.model.P2PDevice>())
         val connectedLinksFlow = MutableStateFlow(emptySet<String>())
-        val allMessagesFlow = MutableStateFlow(emptyList<cc.thevar.blukit.data.local.entities.MessageEntity>())
+        val allMessagesFlow = MutableStateFlow(emptyList<MessagePayload>())
 
         every { p2pController.scannedDevices } returns scannedDevicesFlow
         every { p2pController.connectedLinks } returns connectedLinksFlow
-        every { messageDao.getAllMessages() } returns allMessagesFlow
+        every { vibeStore.getAllMessages() } returns allMessagesFlow
 
-        val manager = SupremePowerManager(p2pController, messageDao)
+        val manager = SupremePowerManager(p2pController, vibeStore)
 
         manager.report.test {
             // Wait for initial combined state

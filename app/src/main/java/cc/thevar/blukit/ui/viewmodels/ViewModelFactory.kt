@@ -10,7 +10,7 @@ class ViewModelFactory(private val application: BlukitApplication) : ViewModelPr
             modelClass.isAssignableFrom(MainViewModel::class.java) -> {
                 MainViewModel(
                     application.identityRepository,
-                    application.database.messageDao
+                    application.vibeStore
                 ) as T
             }
             modelClass.isAssignableFrom(BluetoothViewModel::class.java) -> {

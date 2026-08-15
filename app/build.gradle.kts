@@ -4,7 +4,6 @@ import java.io.FileInputStream
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.jetbrains.kotlin.plugin.serialization)
 }
 
@@ -41,7 +40,6 @@ android {
         jniLibs {
             useLegacyPackaging = false
             keepDebugSymbols += "**/libandroidx.graphics.path.so"
-            keepDebugSymbols += "**/libdatastore_shared_counter.so"
         }
     }
 
@@ -85,7 +83,6 @@ android {
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.accompanist.permissions)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.adaptive)
     implementation(libs.androidx.compose.adaptive.layout)
@@ -98,15 +95,12 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.room.runtime)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.core)
@@ -114,7 +108,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.play.services.location)
     implementation(libs.play.services.nearby)
-    implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.security.crypto)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
@@ -133,5 +126,4 @@ dependencies {
     androidTestImplementation(libs.turbine)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    "ksp"(libs.androidx.room.compiler)
 }

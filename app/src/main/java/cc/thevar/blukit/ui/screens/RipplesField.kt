@@ -45,8 +45,6 @@ import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthSecondary
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthRose
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 import kotlin.math.*
 import kotlin.random.Random
@@ -76,7 +74,6 @@ data class VibeRipple(
  * The Air: A high-fidelity vibe visualization for projected displays.
  * Animates vibe relays, atmospheric ripples, and peer-specific vibes.
  */
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun RipplesField(
     state: BluetoothUiState,

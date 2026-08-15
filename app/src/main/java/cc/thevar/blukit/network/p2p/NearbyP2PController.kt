@@ -4,12 +4,9 @@ import android.content.Context
 import android.util.Log
 import cc.thevar.blukit.R
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.dao.MessageDao
-import cc.thevar.blukit.data.local.dao.PeerDao
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.local.entities.ContactEntity
 import cc.thevar.blukit.data.local.entities.PeerEntity
-import cc.thevar.blukit.data.local.entities.toBluetoothPayload
-import cc.thevar.blukit.data.local.entities.toMessageEntity
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
@@ -39,8 +36,7 @@ class NearbyP2PController(
     private val context: Context,
     private val repository: IdentityRepository,
     private val contactRepository: ContactRepository,
-    private val messageDao: MessageDao,
-    private val peerDao: PeerDao,
+    private val vibeStore: VibeStore,
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -76,8 +72,7 @@ class NearbyP2PController(
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
-    override val messages: StateFlow<List<MessagePayload>> = messageDao.getAllMessages()
-        .map { entities -> entities.map { it.toBluetoothPayload() } }
+    override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
         .stateIn(
             scope = internalScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -239,7 +234,7 @@ class NearbyP2PController(
 
     private fun handleAck(payload: MessagePayload) {
         internalScope.launch(ioDispatcher) {
-            messageDao.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
+            vibeStore.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
         }
     }
 
@@ -310,7 +305,7 @@ class NearbyP2PController(
     private fun saveIncomingMessage(payload: MessagePayload) {
         internalScope.launch(ioDispatcher) {
             if (payload.senderId !in repository.blockedUsers.value) {
-                messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = false))
+                vibeStore.insertMessage(payload)
                 hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
             }
         }
@@ -455,9 +450,9 @@ class NearbyP2PController(
     private fun syncAirHistory(endpointId: String) {
         internalScope.launch(ioDispatcher) {
             val key = getVibeKeyWithRetry(endpointId) ?: return@launch
-            messageDao.getAllMessages().first().filter { it.receiverId.isNullOrBlank() }.takeLast(10).forEach { entity ->
+            vibeStore.getAllMessages().value.filter { it.receiverId.isNullOrBlank() }.takeLast(10).forEach { payload ->
                 try {
-                    val json = Json.encodeToString(MessagePayload.serializer(), entity.toBluetoothPayload())
+                    val json = Json.encodeToString(MessagePayload.serializer(), payload)
                     queueVibe(endpointId, Payload.fromBytes(cryptoManager.encrypt(json.toByteArray(), key)))
                 } catch (e: Exception) {}
             }
@@ -490,7 +485,7 @@ class NearbyP2PController(
                 }
             }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 100) messageIdHistory.removeAt(0) }
-            messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = true))
+            vibeStore.insertMessage(payload)
             return payload
         } catch (e: Exception) { return null }
     }

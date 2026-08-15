@@ -7,10 +7,7 @@ import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.dao.MessageDao
-import cc.thevar.blukit.data.local.dao.PeerDao
-import cc.thevar.blukit.data.local.entities.toBluetoothPayload
-import cc.thevar.blukit.data.local.entities.toMessageEntity
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
@@ -34,8 +31,7 @@ import javax.crypto.SecretKey
 class BleFallbackController(
     private val context: Context,
     private val repository: IdentityRepository,
-    private val messageDao: MessageDao,
-    private val peerDao: PeerDao,
+    private val vibeStore: VibeStore,
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -69,13 +65,7 @@ class BleFallbackController(
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
-    override val messages: StateFlow<List<MessagePayload>> = messageDao.getAllMessages()
-        .map { entities -> entities.map { it.toBluetoothPayload() } }
-        .stateIn(
-            scope = internalScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
 
     private val vibeKeys = ConcurrentHashMap<String, SecretKey>()
     private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
@@ -253,13 +243,13 @@ class BleFallbackController(
 
     private fun handleAck(payload: MessagePayload) {
         internalScope.launch(ioDispatcher) {
-            messageDao.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
+            vibeStore.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
         }
     }
 
     private fun handleChatMessage(address: String, payload: MessagePayload, secretKey: SecretKey) {
         internalScope.launch(ioDispatcher) {
-            messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = false))
+            vibeStore.insertMessage(payload)
             hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
             sendAck(address, payload, secretKey)
         }
@@ -481,7 +471,7 @@ class BleFallbackController(
                     }
                 }
             }
-            messageDao.insertMessage(payload.toMessageEntity(isFromLocalUser = true))
+            vibeStore.insertMessage(payload)
             synchronized(messageIdHistory) {
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)

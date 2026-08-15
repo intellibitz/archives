@@ -3,8 +3,7 @@ package cc.thevar.blukit.network.p2p
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import cc.thevar.blukit.TestBlukitApplication
-import cc.thevar.blukit.data.local.dao.MessageDao
-import cc.thevar.blukit.data.local.dao.PeerDao
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
@@ -39,8 +38,7 @@ class MovieHallScenarioTest {
     private lateinit var context: Context
     private lateinit var repository: IdentityRepository
     private val contactRepository: ContactRepository = mockk(relaxed = true)
-    private val messageDao: MessageDao = mockk(relaxed = true)
-    private val peerDao: PeerDao = mockk(relaxed = true)
+    private val vibeStore: VibeStore = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
     private val connectionsClient: ConnectionsClient = mockk(relaxed = true)
@@ -77,7 +75,7 @@ class MovieHallScenarioTest {
         }
         every { connectionsClient.sendPayload(any<String>(), any<Payload>()) } returns mockTask
         
-        every { messageDao.getAllMessages() } returns flowOf(emptyList())
+        every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
         every { repository.getCurrentNickname() } returns "Me"
         every { repository.getDeviceId() } returns "my-device-id"
         every { repository.nicknameFlow } returns MutableStateFlow("Me")
@@ -91,7 +89,7 @@ class MovieHallScenarioTest {
         every { cryptoManager.encrypt(any(), any()) } returns byteArrayOf(0x11)
 
         controller = NearbyP2PController(
-            context, repository, contactRepository, messageDao, peerDao, hapticManager, cryptoManager, testDispatcher
+            context, repository, contactRepository, vibeStore, hapticManager, cryptoManager, testDispatcher
         )
     }
 
@@ -172,10 +170,10 @@ class MovieHallScenarioTest {
         advanceUntilIdle()
 
         // Verifications
-        coVerify { messageDao.insertMessage(match { it.content == "That opening scene was intense!" }) }
-        coVerify { messageDao.insertMessage(match { it.content == "Agree, amazing cinematography." }) }
-        coVerify { messageDao.insertMessage(match { it.content.contains("cameo") }) }
-        coVerify { messageDao.insertMessage(match { it.content == "OMG YES! Totally unexpected." }) }
+        coVerify { vibeStore.insertMessage(match { it.content == "That opening scene was intense!" }) }
+        coVerify { vibeStore.insertMessage(match { it.content == "Agree, amazing cinematography." }) }
+        coVerify { vibeStore.insertMessage(match { it.content.contains("cameo") }) }
+        coVerify { vibeStore.insertMessage(match { it.content == "OMG YES! Totally unexpected." }) }
 
         peerIds.forEach { peerId ->
             verify(atLeast = 1, timeout = 2000) { connectionsClient.sendPayload(eq(peerId), any()) }

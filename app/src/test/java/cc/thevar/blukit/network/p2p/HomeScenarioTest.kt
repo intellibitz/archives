@@ -3,8 +3,7 @@ package cc.thevar.blukit.network.p2p
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import cc.thevar.blukit.TestBlukitApplication
-import cc.thevar.blukit.data.local.dao.MessageDao
-import cc.thevar.blukit.data.local.dao.PeerDao
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
@@ -44,8 +43,7 @@ class HomeScenarioTest {
     private lateinit var context: Context
     private lateinit var repository: IdentityRepository
     private val contactRepository: ContactRepository = mockk(relaxed = true)
-    private val messageDao: MessageDao = mockk(relaxed = true)
-    private val peerDao: PeerDao = mockk(relaxed = true)
+    private val vibeStore: VibeStore = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
     private val connectionsClient: ConnectionsClient = mockk(relaxed = true)
@@ -75,7 +73,7 @@ class HomeScenarioTest {
         }
         every { connectionsClient.sendPayload(any<String>(), any<Payload>()) } returns mockTask
         
-        every { messageDao.getAllMessages() } returns flowOf(emptyList())
+        every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
         every { repository.nicknameFlow } returns MutableStateFlow("Mom")
         every { repository.emojiAvatar } returns MutableStateFlow("👩")
         every { repository.stealthMode } returns MutableStateFlow(false)
@@ -85,7 +83,7 @@ class HomeScenarioTest {
         every { repository.getDeviceId() } returns "mom-device-id"
 
         controller = NearbyP2PController(
-            context, repository, contactRepository, messageDao, peerDao, hapticManager, cryptoManager, testDispatcher
+            context, repository, contactRepository, vibeStore, hapticManager, cryptoManager, testDispatcher
         )
     }
 
@@ -141,7 +139,7 @@ class HomeScenarioTest {
         peerIds.forEach { peerId ->
             verify(atLeast = 1, timeout = 2000) { connectionsClient.sendPayload(peerId, any()) }
         }
-        coVerify { messageDao.insertMessage(match { it.content == "dinner ready" && it.receiverId == null }) }
+        coVerify { vibeStore.insertMessage(match { it.content == "dinner ready" && it.receiverId == null }) }
 
         val responses = listOf(
             peerIds[0] to ("Son" to "one min mom"),
@@ -170,7 +168,7 @@ class HomeScenarioTest {
         advanceUntilIdle()
         
         verify(atLeast = 2, timeout = 2000) { connectionsClient.sendPayload(eq(husbandId), any()) }
-        coVerify { messageDao.insertMessage(match { it.content == "yes love" && it.receiverId == husbandId }) }
+        coVerify { vibeStore.insertMessage(match { it.content == "yes love" && it.receiverId == husbandId }) }
 
         val whisperResponse = MessagePayload(
             messageId = "whisper-1", senderId = "id-Husband", senderName = "Husband", senderEmoji = "🧔",
@@ -184,6 +182,6 @@ class HomeScenarioTest {
         payloadCallbackSlot.captured.onPayloadReceived(husbandId, whisperPayload)
         advanceUntilIdle()
 
-        coVerify { messageDao.insertMessage(match { it.content == "can't wait" && it.receiverId == "mom-device-id" }) }
+        coVerify { vibeStore.insertMessage(match { it.content == "can't wait" && it.receiverId == "mom-device-id" }) }
     }
 }

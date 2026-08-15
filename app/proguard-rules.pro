@@ -4,9 +4,6 @@
 -keep class com.google.android.gms.nearby.** { *; }
 -keep interface com.google.android.gms.nearby.** { *; }
 
-# Room
--keep class * extends androidx.room.RoomDatabase
--keep class *_*Impl { *; }
 
 # Kotlin Serialization
 -keepattributes *Annotation*, EnclosingMethod, Signature
@@ -17,8 +14,7 @@
 # AndroidX Navigation
 -keep class androidx.navigation.** { *; }
 
-# Datastore & Security
--keep class androidx.datastore.** { *; }
+# Security
 -keep class androidx.security.crypto.** { *; }
 
 # Internal Crypto & Networking (Ensure handshakes work)

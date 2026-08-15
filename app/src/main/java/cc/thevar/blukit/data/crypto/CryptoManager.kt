@@ -128,8 +128,45 @@ class CryptoManager {
         return cipher.doFinal(encryptedPart)
     }
 
+    /**
+     * Encrypts data for local storage using a hardware-backed AES key.
+     */
+    fun encryptLocal(data: ByteArray): ByteArray {
+        val secretKey = getLocalStoreKey()
+        return encrypt(data, secretKey)
+    }
+
+    /**
+     * Decrypts data from local storage using a hardware-backed AES key.
+     */
+    fun decryptLocal(encryptedData: ByteArray): ByteArray {
+        val secretKey = getLocalStoreKey()
+        return decrypt(encryptedData, secretKey)
+    }
+
+    private fun getLocalStoreKey(): SecretKey {
+        val entry = keyStore.getEntry(KEY_ALIAS_LOCAL, null) as? KeyStore.SecretKeyEntry
+        return entry?.secretKey ?: generateLocalStoreKey()
+    }
+
+    private fun generateLocalStoreKey(): SecretKey {
+        val keyGenerator = javax.crypto.KeyGenerator.getInstance(
+            KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
+        )
+        val parameterSpec = KeyGenParameterSpec.Builder(
+            KEY_ALIAS_LOCAL,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setUserAuthenticationRequired(false)
+            .build()
+        keyGenerator.init(parameterSpec)
+        return keyGenerator.generateKey()
+    }
+
     companion object {
         private const val KEY_ALIAS_EC = "blukit_ec_identity"
+        private const val KEY_ALIAS_LOCAL = "blukit_local_storage"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
     }
 }

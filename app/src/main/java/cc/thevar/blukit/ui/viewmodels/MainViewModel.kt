@@ -2,13 +2,14 @@ package cc.thevar.blukit.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class MainViewModel(
     private val repository: IdentityRepository,
-    private val messageDao: cc.thevar.blukit.data.local.dao.MessageDao,
+    private val vibeStore: VibeStore,
 ) : ViewModel() {
 
     val nickname: Flow<String?> = repository.nicknameFlow
@@ -51,7 +52,7 @@ class MainViewModel(
 
     fun clearChatHistory() {
         viewModelScope.launch {
-            messageDao.clearAllMessages()
+            vibeStore.clearAllMessages()
         }
     }
 

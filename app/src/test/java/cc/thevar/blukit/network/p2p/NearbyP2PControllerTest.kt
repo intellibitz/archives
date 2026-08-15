@@ -3,8 +3,7 @@ package cc.thevar.blukit.network.p2p
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import cc.thevar.blukit.TestBlukitApplication
-import cc.thevar.blukit.data.local.dao.MessageDao
-import cc.thevar.blukit.data.local.dao.PeerDao
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
@@ -41,8 +40,7 @@ class NearbyP2PControllerTest {
     private lateinit var context: Context
     private lateinit var repository: IdentityRepository
     private val contactRepository: ContactRepository = mockk(relaxed = true)
-    private val messageDao: MessageDao = mockk(relaxed = true)
-    private val peerDao: PeerDao = mockk(relaxed = true)
+    private val vibeStore: VibeStore = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
     private val connectionsClient: ConnectionsClient = mockk(relaxed = true)
@@ -81,7 +79,7 @@ class NearbyP2PControllerTest {
         }
         every { connectionsClient.sendPayload(any<String>(), any()) } returns mockTask
         
-        every { messageDao.getAllMessages() } returns flowOf(emptyList())
+        every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
         every { repository.getCurrentNickname() } returns "Tester"
         every { repository.getDeviceId() } returns "tester-id"
         every { repository.nicknameFlow } returns MutableStateFlow("Tester")
@@ -98,7 +96,7 @@ class NearbyP2PControllerTest {
         every { cryptoManager.encrypt(any(), any()) } returns byteArrayOf(0x11)
 
         controller = NearbyP2PController(
-            context, repository, contactRepository, messageDao, peerDao, hapticManager, cryptoManager, testDispatcher
+            context, repository, contactRepository, vibeStore, hapticManager, cryptoManager, testDispatcher
         )
     }
 

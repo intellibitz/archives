@@ -40,11 +40,10 @@ import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.viewmodels.AirConnectionState
+import cc.thevar.blukit.ui.rememberSpreadPermissionsState
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthRose
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -53,7 +52,7 @@ import java.util.Locale
 /**
  * Ripples Screen: Seeing the ripples of souls around you.
  */
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RipplesScreen(
     state: BluetoothUiState,
@@ -85,7 +84,7 @@ fun RipplesScreen(
         }
     }
 
-    val permissionState = rememberMultiplePermissionsState(permissions = permissions)
+    val permissionState = rememberSpreadPermissionsState(permissions = permissions)
     var showSmartFlowPrompt by remember { mutableStateOf(false) }
 
     // Chat Bubbles logic for Radar visualization

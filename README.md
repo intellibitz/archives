@@ -113,7 +113,7 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 | 2026-08-15 | **The Vibes Masterpiece**| Smart Magic Bar + Flowing B Logo animation. Thrashed technical jargon. |
 | 2026-08-15 | **God Mode Alignment** | Transitioned terminology to "Voices" and "Link Processes" for universal inclusion. |
 | 2026-08-15 | **Branding Update** | AppName updated to "Blukit - Spread the Vibes". Slogan: "Spread the Vibes, Hear the Crowd Roar." |
-| 2026-08-15 | **Einstein Excellence** | Per-endpoint P2P queues, self-healing ID restoration, and Compose recomposition hardening. |
+| 2026-08-15 | **Einstein Excellence** | Framework de-bloating complete: Removed Room, WorkManager, DataStore, and Accompanist. Implemented custom VibeStore with encrypted persistence. |
 
 ---
 
@@ -160,10 +160,10 @@ Blukit is designed for high-density environments where cellular networks fail an
 ├─────────────────────────────────────────────────────────────┤
 │                     Transport / Security                     │
 │  ┌──────────┬──────────┬───────────┬──────────────────┐    │
-│  │Room DB   │CryptoMgr │Composite  │IdentityRepo       │    │
+│  │VibeStore │CryptoMgr │Composite  │IdentityRepo       │    │
 │  │(Storage) │(Security)│P2P Engine │(Self-Healing)    │    │
 │  └──────────┴──────────┴───────────┴──────────────────┘    │
-│            PurgeWorker (12h TTL) + Fireproof RadioManager    │
+│        12h TTL Purge Loop + Fireproof RadioManager         │
 └─────────────────────────────────────────────────────────────┘
 ```
 

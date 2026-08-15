@@ -1,6 +1,6 @@
 package cc.thevar.blukit.ui.viewmodels
 
-import cc.thevar.blukit.data.local.dao.MessageDao
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +15,7 @@ import org.junit.Test
 class MainViewModelTest {
 
     private lateinit var repository: IdentityRepository
-    private val messageDao: MessageDao = mockk(relaxed = true)
+    private val vibeStore: VibeStore = mockk(relaxed = true)
     private lateinit var viewModel: MainViewModel
     
     private val nicknameFlow = MutableStateFlow<String?>("vibe")
@@ -32,7 +32,7 @@ class MainViewModelTest {
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { repository.getDeviceId() } returns "test-id"
         
-        viewModel = MainViewModel(repository, messageDao)
+        viewModel = MainViewModel(repository, vibeStore)
     }
 
     @After
@@ -47,9 +47,9 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `test clearChatHistory calls messageDao`() = runTest {
+    fun `test clearChatHistory calls vibeStore`() = runTest {
         viewModel.clearChatHistory()
-        coVerify { messageDao.clearAllMessages() }
+        coVerify { vibeStore.clearAllMessages() }
     }
 
     @Test

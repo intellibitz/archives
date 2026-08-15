@@ -1,23 +1,19 @@
 package cc.thevar.blukit
 
 import android.app.Application
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.ChatDatabase
+import cc.thevar.blukit.data.local.VibeStore
 import cc.thevar.blukit.data.power.SupremePowerManager
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.repository.IdentityRepositoryImpl
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
-import cc.thevar.blukit.data.worker.PurgeWorker
 import cc.thevar.blukit.network.p2p.NearbyP2PController
 import cc.thevar.blukit.network.p2p.P2PController
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.hours
 
 /**
  * Blukit Application class — entry point for global system initialization.
@@ -29,26 +25,27 @@ class BlukitApplication : Application() {
     lateinit var p2pController: P2PController
     lateinit var radioStateManager: RadioStateManager
     lateinit var supremePowerManager: SupremePowerManager
-    lateinit var database: ChatDatabase
+    lateinit var vibeStore: VibeStore
     lateinit var hapticManager: HapticManager
     lateinit var cryptoManager: CryptoManager
+    
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
         
-        database = ChatDatabase.getInstance(this)
+        cryptoManager = CryptoManager()
+        vibeStore = VibeStore(this, cryptoManager)
         identityRepository = IdentityRepositoryImpl(this)
-        contactRepository = ContactRepository(database.contactDao)
+        contactRepository = ContactRepository(vibeStore) 
         radioStateManager = RadioStateManager(this)
         hapticManager = HapticManager(this)
-        cryptoManager = CryptoManager()
         
         p2pController = NearbyP2PController(
             context = this,
             repository = identityRepository,
             contactRepository = contactRepository,
-            messageDao = database.messageDao,
-            peerDao = database.peerDao,
+            vibeStore = vibeStore,
             hapticManager = hapticManager,
             cryptoManager = cryptoManager,
             ioDispatcher = Dispatchers.IO
@@ -56,32 +53,24 @@ class BlukitApplication : Application() {
         
         supremePowerManager = SupremePowerManager(
             p2pController = p2pController,
-            messageDao = database.messageDao,
+            vibeStore = vibeStore,
             hapticManager = hapticManager
         )
 
-        setupPurgeWorker()
+        start12HourPurge()
     }
 
     /**
-     * Schedules a periodic background worker to enforce ephemeral data retention policies.
-     * Chat logs are purged every 12 hours to maintain "Vibing Persistence" and ensure user privacy.
+     * Minimalist 12-hour purge logic using a simple coroutine loop.
+     * Replaces WorkManager for ephemeral data retention.
      */
-    private fun setupPurgeWorker() {
-        val constraints = Constraints.Builder()
-            .setRequiresBatteryNotLow(true)
-            .setRequiresDeviceIdle(true)
-            .build()
-
-        val purgeRequest = PeriodicWorkRequestBuilder<PurgeWorker>(
-            12, TimeUnit.HOURS
-        ).setConstraints(constraints)
-            .build()
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "purge_messages",
-            ExistingPeriodicWorkPolicy.KEEP,
-            purgeRequest
-        )
+    private fun start12HourPurge() {
+        applicationScope.launch {
+            while (isActive) {
+                val threshold = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(12)
+                vibeStore.deleteOldMessages(threshold)
+                delay(12.hours)
+            }
+        }
     }
 }

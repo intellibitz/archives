@@ -1,15 +1,19 @@
 package cc.thevar.blukit.ui
 
 import android.Manifest
-import android.net.Uri
-import androidx.compose.foundation.Image
-import cc.thevar.blukit.domain.model.P2PDevice
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,57 +29,96 @@ import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneSt
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.Canvas
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import cc.thevar.blukit.BlukitApplication
-import cc.thevar.blukit.ui.viewmodels.ViewModelFactory
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import cc.thevar.blukit.BlukitApplication
 import cc.thevar.blukit.R
+import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.power.SupremePowerManager
+import cc.thevar.blukit.data.repository.ContactRepository
+import cc.thevar.blukit.data.repository.IdentityRepository
+import cc.thevar.blukit.data.system.RadioStateManager
+import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.network.p2p.P2PError
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.screens.RipplesScreen
 import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import cc.thevar.blukit.data.local.dao.MessageDao
-import cc.thevar.blukit.data.power.SupremePowerManager
-import cc.thevar.blukit.data.repository.ContactRepository
-import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.data.system.RadioStateManager
-import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.viewmodels.*
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import cc.thevar.blukit.ui.viewmodels.ViewModelFactory
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalPermissionsApi::class)
+@Composable
+fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissionsState {
+    val context = LocalContext.current
+    var allGranted by remember {
+        mutableStateOf(permissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        })
+    }
+    var shouldShowRationale by remember {
+        mutableStateOf(permissions.any {
+            (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
+        })
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        allGranted = result.values.all { it }
+        shouldShowRationale = permissions.any {
+            (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
+        }
+    }
+
+    return remember(allGranted, shouldShowRationale) {
+        object : SpreadPermissionsState {
+            override val allPermissionsGranted: Boolean = allGranted
+            override val shouldShowRationale: Boolean = shouldShowRationale
+            override fun launchMultiplePermissionRequest() {
+                launcher.launch(permissions.toTypedArray())
+            }
+        }
+    }
+}
+
+interface SpreadPermissionsState {
+    val allPermissionsGranted: Boolean
+    val shouldShowRationale: Boolean
+    fun launchMultiplePermissionRequest()
+}
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun BlukitApp(
     onEnterPip: () -> Unit,
     repository: IdentityRepository,
     contactRepository: ContactRepository,
-    messageDao: MessageDao,
+    vibeStore: VibeStore,
     radioStateManager: RadioStateManager,
     p2pController: P2PController,
     supremePowerManager: SupremePowerManager,
@@ -86,7 +129,7 @@ fun BlukitApp(
     val viewModel: MainViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return MainViewModel(repository, messageDao) as T
+                return MainViewModel(repository, vibeStore) as T
             }
         }
     )
@@ -141,7 +184,7 @@ fun BlukitApp(
             add(Manifest.permission.NEARBY_WIFI_DEVICES)
         }
     }
-    val permissionState = rememberMultiplePermissionsState(permissions = permissions)
+    val permissionState = rememberSpreadPermissionsState(permissions = permissions)
     
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
 

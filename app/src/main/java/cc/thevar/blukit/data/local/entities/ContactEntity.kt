@@ -1,14 +1,12 @@
 package cc.thevar.blukit.data.local.entities
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
-@Entity(tableName = "contacts")
+@Serializable
 data class ContactEntity(
-    @PrimaryKey
-    val contactId: String,
-    val name: String,
-    val bluetoothAddress: String,
-    val lastSeen: Long,
-    val avatarUri: String? = null
+    val id: String,
+    val nickname: String,
+    val emoji: String,
+    val publicKey: String, // Base64
+    val lastVibeAt: Long
 )
