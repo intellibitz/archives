@@ -2,10 +2,10 @@
 
 **Effective Date: August 15, 2026**
 
-Blukit ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains our practices regarding the ritual of connection through our mobile application, Blukit - Spread the Vibes.
+Blukit ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains our practices regarding the process of connection through our mobile application, Blukit - Spread the Vibes.
 
 ## 1. Zero Data Collection
-Blukit is a sentient, offline experience. **We do not collect, store, or transmit any of your personal data to any external servers.**
+Blukit is a smart, offline experience. **We do not collect, store, or transmit any of your personal data to any external servers.**
 
 *   **User Identity**: Your nickname is stored strictly on your local device and is only shared with nearby voices via local radio links (Bluetooth).
 *   **Voices**: Your history is stored in a local encrypted database on your device and is never uploaded to a cloud.
@@ -20,10 +20,10 @@ To ensure the privacy of your private Ties, Blukit uses:
 *   **Diffie-Hellman (ECDH)** key exchange to establish secure sessions between voices.
 *   Keys are stored securely in the **Android Keystore System**.
 
-## 4. Data Retention (Ephemeral Ritual)
+## 4. Data Retention (Ephemeral Process)
 Blukit is designed to be ephemeral.
 *   **Automatic Purge**: All local logs are automatically deleted from your device after 12 hours.
-*   **Manual Deletion**: You can dissolve your ties or reset your identity at any time within the sentient hub settings.
+*   **Manual Deletion**: You can forget your ties or reset your identity at any time within the hub settings.
 
 ## 5. Third-Party Services
 Blukit does not use any third-party analytics, advertising SDKs, or cloud services.
@@ -32,4 +32,4 @@ Blukit does not use any third-party analytics, advertising SDKs, or cloud servic
 We may update our Privacy Policy as the vibes shift. Any changes will be reflected by updating the "Effective Date" at the top of this document.
 
 ## 7. Contact Us
-If you have any questions about this sentient ritual, please contact us at: **muthu.ramadoss@gmail.com**
+If you have any questions about this connection process, please contact us at: **muthu.ramadoss@gmail.com**

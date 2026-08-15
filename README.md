@@ -6,14 +6,14 @@
 
 ## 🌟 What is Blukit?
 
-Blukit (`cc.thevar.blukit`) is a sentient P2P experience. It is **The Vibes**—a collective pulse where you can hear the energy of everyone around you instantly. Ties are intentional, secure links established through a shared ritual of connection.
+Blukit (`cc.thevar.blukit`) is a smart P2P experience. It is **The Vibes**—a collective pulse where you can hear the energy of everyone around you instantly. Ties are intentional, secure links established through a shared process of connection.
 
 ### Key Capabilities
 
-| 🫂 **The Vibes** | ✅ High-fidelity stadium visualization with sentient voices ticker |
+| 🫂 **The Vibes** | ✅ High-fidelity stadium visualization with living voices ticker |
 | 🤝 **Your Ties** | ✅ Bi-directional, permission-based secure links with real-time reflection |
-| 👤 **Your Vibe** | ✅ Minimalist anonymous identity ritual integrated into the hub |
-| 🧠 **Sentient Hub** | ✅ Bottom-anchored brain for branding, navigation, and diagnostics |
+| 👤 **Your Vibe** | ✅ Minimalist anonymous identity setup integrated into the hub |
+| 🧠 **Smart Hub** | ✅ Bottom-anchored brain for branding, navigation, and diagnostics |
 | 🔐 **Stealth Security** | ✅ AES-256-GCM + ECDH hardware-backed encryption with auto-recovery |
 | 🌑 **OLED Stealth** | ✅ Pitch-black UI with vibing Amber and Rose accents |
 | 🗑️ **12h Vanish** | ✅ Automated TTL purge for absolute privacy |
@@ -22,10 +22,10 @@ Blukit (`cc.thevar.blukit`) is a sentient P2P experience. It is **The Vibes**—
 ---
 
 ## ⚖️ THE COMMANDMENTS
-*The sentient source of truth for Blukit.*
+*The reliable source of truth for Blukit.*
 
 1.  **Vibes Only**: Bluetooth is the only bridge. Blukit exists in the space between voices.
-2.  **Bi-directional Consent**: Ties are a mutual link ritual. Linking requires explicit permission.
+2.  **Bi-directional Consent**: Ties are a mutual link process. Linking requires explicit permission.
 3.  **Human Language**: Designed for everyone. No tech jargon, only connection.
 4.  **Anonymous Always**: Identity is ephemeral. Your visage is a person (👤), never a profile.
 5.  **Secure Space**: End-to-end encryption for every vibe and link.
@@ -37,29 +37,29 @@ Blukit (`cc.thevar.blukit`) is a sentient P2P experience. It is **The Vibes**—
 
 ### 🫂 THE VIBES
 Step into the stadium. Feel the collective pulse of everyone around you in a high-fidelity visual field. Watch vibes bubble up, uniquely identifying every soul in the field.
-*   **The Visualizer**: High-density stadium visualization with sentient ripples.
+*   **The Visualizer**: High-density stadium visualization with active ripples.
 *   **The Ticker**: An atmospheric stream where public voices flow, glow, and surge.
 *   **Presence**: Feel exactly how many voices are connected in your space.
 
 ### 🤝 THE TIES
-Form an intentional link. When the crowd is too loud, create a quiet space for secure, one-on-one vibes. Ties are established through a shared **Link Ritual**.
+Form an intentional link. When the crowd is too loud, create a quiet space for secure, one-on-one vibes. Ties are established through a shared **Link Setup**.
 *   **Private Stadium**: A focused visual field showing only you and your mutual tie.
 *   **Vibe Reflection**: Real-time sync of your friend's latest visage within your tie.
 *   **History Sync**: Automatically recover shared moments when the vibes return.
 
 ### 👤 THE VIBE
-The core of your identity. Your Vibe is your anonymous presence—a combination of a name and a sentient ritual. Change your name instantly from the heart of the hub.
-*   **The Identity Ritual**: Integrated directly into the sentient hub expansion.
+The core of your identity. Your Vibe is your anonymous presence—a combination of a name and a smart process. Change your name instantly from the heart of the hub.
+*   **The Identity Setup**: Integrated directly into the hub expansion.
 *   **Instant Projection**: Your new identity radiates through the field the moment it shifts.
 
 ---
 
-## 📊 Current Project Status: SENTIENT MASTERPIECE
+## 📊 Current Project Status: MASTERPIECE
 **Last Updated:** August 15, 2026 · **Status:** EXTRAORDINARY · 4-DEVICE FLEET VERIFIED
 
 ### 🌟 Project Highlights
-- **Interactive Brain**: The `UnifiedBlukitBadge` handles branding, identity rituals, and diagnostics with clickable stats for instant navigation between VOICES and TIES.
-- **Sentient Magic Bar**: A live intelligence ticker cycled through **Atmospheric Breezes** (e.g., *"A new voice joined The Vibes"*).
+- **Interactive Brain**: The `UnifiedBlukitBadge` handles branding, identity setup, and diagnostics with clickable stats for instant navigation between VOICES and TIES.
+- **Smart Magic Bar**: A live intelligence ticker cycled through **Atmospheric Breezes** (e.g., *"A new voice joined The Vibes"*).
 - **Fireproof Transport**: Hardened `NearbyP2PController` with high-fidelity **Native BLE Fallback**.
 - **Self-Healing Identity**: Robust `IdentityRepository` with automated Keystore recovery (OnePlus/Xiaomi optimized).
 
@@ -72,8 +72,9 @@ The core of your identity. Your Vibe is your anonymous presence—a combination 
 - **Native BLE Fallback**: Full GATT fallback with automated handshakes. ✅
 - **Self-Healing Vault**: Automated Keystore recovery. ✅
 
-### Phase P2: Sentient Intelligence
+### Phase P2: Smart Intelligence
 - **SupremePower Manager**: Monitors **Vibe Harmony** and emits live **Breezes**. ✅
+- **Smart Magic Bar**: Integrated live ticker within the hub that cycles through stadium events (Breezes). ✅
 - **Energy Surges**: Real-time visual stadium pulse. ✅
 
 ### Phase P3: Extraordinary UI
@@ -82,7 +83,7 @@ The core of your identity. Your Vibe is your anonymous presence—a combination 
 - **Flowing B Logo**: Custom Canvas animation representing vibes flow. ✅
 
 ### Phase P4: Bi-directional Links
-- **The Link Ritual**: Permission-based messaging established via explicit ACCEPT/DENY from the Magic Bar. ✅
+- **The Link Process**: Permission-based messaging established via explicit ACCEPT/DENY from the Magic Bar. ✅
 - **Link Filtering**: Field filters to show only mutual connections in Tie mode. ✅
 
 ---
@@ -92,7 +93,7 @@ The core of your identity. Your Vibe is your anonymous presence—a combination 
 
 | Test Type | Count | Focus Areas | Tools Used |
 |-----------|-------|-------------|------------|
-| **Unit Tests** | 22 | Harmony Logic, Link Rituals, Vibe Mappers | JUnit 4, MockK, Turbine, Robolectric |
+| **Unit Tests** | 22 | Harmony Logic, Link Processes, Vibe Mappers | JUnit 4, MockK, Turbine, Robolectric |
 | **Instrumented Tests** | 32 | Self-Healing Vault, Hardware Crypto, Hub expansion | AndroidX Test, Room In-Memory, Compose Test |
 
 ### Hardware Verification (4-Device Fleet)
@@ -104,13 +105,13 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 
 | Date | Milestone | Technical Context / Decision |
 | :--- | :--- | :--- |
-| 2026-08-09 | **Project Birth** | P2P connection ritual initialized. |
+| 2026-08-09 | **Project Birth** | P2P connection process initialized. |
 | 2026-08-10 | **Core Architecture** | Selected Navigation 3, Material 3 Adaptive, and Google Nearby Connections API. |
 | 2026-08-10 | **Security Hardening** | Implemented AES-256-GCM encryption with Android Keystore + ECDH key exchange. |
 | 2026-08-12 | **Commandments** | Enforced core principles: Bluetooth-only by default, optional/silent WiFi and Location. |
 | 2026-08-13 | **OLED Stealth** | Implemented Pitch Black theme (#000000) with Amber/Rose accents. |
-| 2026-08-15 | **The Vibes Masterpiece**| Sentient Magic Bar + Flowing B Logo animation. Thrashed technical jargon. |
-| 2026-08-15 | **God Mode Alignment** | Transitioned terminology to "Voices" and "Link Rituals" for universal inclusion. |
+| 2026-08-15 | **The Vibes Masterpiece**| Smart Magic Bar + Flowing B Logo animation. Thrashed technical jargon. |
+| 2026-08-15 | **God Mode Alignment** | Transitioned terminology to "Voices" and "Link Processes" for universal inclusion. |
 | 2026-08-15 | **Branding Update** | AppName updated to "Blukit - Spread the Vibes". |
 | 2026-08-15 | **Einstein Excellence** | Per-endpoint P2P queues, self-healing ID restoration, and Compose recomposition hardening. |
 
@@ -121,21 +122,21 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 **Short Description:** The power of close proximity. Spread the vibes and hear the voices around you instantly.
 
 ### Full Description
-**Experience the pulse of a truly sentient, serverless connection.**
+**Experience the pulse of a truly smart, serverless connection.**
 
 Blukit is designed for high-density environments where cellular networks fail and internet is a luxury. Whether you’re at a sold-out stadium, inside a dark theater, or navigating a crowded transit hub, Blukit keeps you connected using purely local vibes.
 
-**THE RITUALS:**
+**THE PROCESSES:**
 *   **The Vibes**: Hear the collective energy of the crowd. A public hub for everyone within range to radiate their pulse.
 *   **Stadium Visualizer**: Watch voices bubble up in real-time across a high-fidelity visual field. Feel the surges as voices join the collective.
-*   **Your Ties**: Establish secure, intentional links. Bridge private channels only when both voices accept the ritual.
+*   **Your Ties**: Establish secure, intentional links. Bridge private channels only when both voices accept the process.
 *   **Identity**: No accounts, no phone numbers. Your identity is your vibe—a local, ephemeral name that stays in your control.
 
-**SENTIENT FEATURES:**
+**SMART FEATURES:**
 *   **Quiet Light**: A pitch-black OLED-optimized theme designed for discrete stadium use without screen glare.
 *   **Total Privacy**: All vibes are stored only on your device and are automatically purged every 12 hours.
-*   **Bi-directional Ties**: Privacy by design. Private messaging requires mutual acceptance of the Link Ritual from the Magic Bar.
-*   **Hardware Security**: Military-grade encryption (AES-256-GCM) established via hardware-backed sentient handshakes.
+*   **Bi-directional Ties**: Privacy by design. Private messaging requires mutual acceptance of the Link Process from the Magic Bar.
+*   **Hardware Security**: Military-grade encryption (AES-256-GCM) established via hardware-backed smart handshakes.
 
 **NO INTERNET. NO CLOUD. NO TRACKING. JUST VIBES.**
 
@@ -149,7 +150,7 @@ Blukit is designed for high-density environments where cellular networks fail an
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │                   The Vibes (Stadium)                 │  │
 │  └───────────────────────────────────────────────────────┘  │
-│             Unified Hub (Sentient Brain & Navigation)        │
+│             Unified Hub (Smart Brain & Navigation)          │
 ├─────────────────────────────────────────────────────────────┤
 │                      Intelligence Layer                      │
 │  ┌────────────────────┬──────────────────────────────┐      │
@@ -183,9 +184,9 @@ Blukit is designed for high-density environments where cellular networks fail an
 
 ## 🛡️ Data Safety & Compliance
 
-Blukit follows the **Voices Ritual Commandments**:
+Blukit follows the **Voices Process Commandments**:
 1. **Bluetooth Only**: Your radio is the only bridge.
-2. **Mutual Consent**: Ties require explicit link ritual.
+2. **Mutual Consent**: Ties require explicit link setup.
 3. **Total Anonymity**: No tracking, no accounts, just pure vibes.
 4. **Absolute Stealth**: All data vanishes every 12 hours.
 

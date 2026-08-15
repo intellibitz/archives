@@ -67,22 +67,22 @@ class FlowsTest {
     }
 
     @Test
-    fun testLinkRitual_AcceptanceFlow() {
+    fun testLinkSetup_AcceptanceFlow() {
         // Mock an incoming vibe wanting to link
         val incomingVibe = P2PDevice("id-123", "Mystic Vibe", "👤")
         incomingRequestsFlow.value = setOf(incomingVibe)
 
         startApp()
         
-        // Ensure the hub expands to reveal the ritual
+        // Ensure the hub expands to reveal the setup
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
         
         composeTestRule.onRoot().printToLog("UI_TREE")
 
-        // Wait for the Incoming Vibe ritual - look for the text in a more flexible way
+        // Wait for the Incoming Vibe setup - look for the text in a more flexible way
         composeTestRule.waitUntilAtLeastOneExists(hasText("wants to bridge a link", substring = true).or(hasText("MYSTIC", substring = true)), 10000)
         
-        // Accept the ritual if visible
+        // Accept the setup if visible
         composeTestRule.onAllNodesWithText("ACCEPT", substring = true).onFirst().performClick()
         
         // Verify P2P Controller is notified

@@ -159,7 +159,7 @@ class NearbyP2PControllerTest {
             lifecycleCallback.onConnectionResult(peerId, resultSuccess)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // Link Ritual: Explicitly accept the link to move from activeConnections to connectedLinks
+            // Link Setup: Explicitly accept the link to move from activeConnections to connectedLinks
             controller.acceptLink(cc.thevar.blukit.domain.model.P2PDevice(peerId, "Vibe", "👤"))
             testDispatcher.scheduler.advanceUntilIdle()
         }

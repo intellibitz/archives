@@ -126,7 +126,7 @@ class HomeScenarioTest {
             lifecycleCallback.onConnectionResult(peerId, mockk<ConnectionResolution>().apply { every { status.isSuccess } returns true })
             advanceUntilIdle()
 
-            // Link Ritual: Explicitly accept the link
+            // Link Setup: Explicitly accept the link
             controller.acceptLink(cc.thevar.blukit.domain.model.P2PDevice(peerId, pair.first, pair.second))
             advanceUntilIdle()
         }

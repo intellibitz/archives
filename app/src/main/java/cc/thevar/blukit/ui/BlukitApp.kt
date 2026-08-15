@@ -289,7 +289,7 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Sentient Branding & Dynamic Status
+                // Left: Smart Branding & Dynamic Status
                 // Animated B Icon (Vibes travelling through)
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
                     val infiniteTransition = rememberInfiniteTransition(label = "LogoFlow")
@@ -364,13 +364,13 @@ fun UnifiedBlukitBadge(
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Right: Contextual Animated Ritual Icon
+                // Right: Contextual Animated Icon
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        // Pulse Animation (Sentient Feel)
+                        // Pulse Animation (Interactive Feel)
                         val infiniteTransition = rememberInfiniteTransition(label = "IconPulse")
                         val pulseScale by infiniteTransition.animateFloat(
                             initialValue = 0.9f,
@@ -409,7 +409,7 @@ fun UnifiedBlukitBadge(
                 }
             }
 
-            // --- THE MAGIC BAR & INTEL ---
+            // THE MAGIC BAR & INTEL
             AnimatedVisibility(
                 visible = airIsStill || expanded || hasBreeze || incomingLinkRequests.isNotEmpty(),
                 enter = expandVertically() + fadeIn(),
@@ -436,7 +436,7 @@ fun UnifiedBlukitBadge(
                     if (expanded) {
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Einstein Transformation: Integrated Vibe Identity
+                        // Integrated Vibe Identity
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -512,7 +512,7 @@ fun UnifiedBlukitBadge(
                         
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Einstein Transformation: Quiet Light & Stillness Integrated
+                        // Quiet Light & Stillness Integrated
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -608,7 +608,7 @@ fun UnifiedBlukitBadge(
         }
     }
 
-    // --- DIALOGS MOVED TO HUB (THE BRAIN) ---
+    // DIALOGS MOVED TO HUB (THE BRAIN)
     if (showClearHistoryDialog) {
         AlertDialog(
             onDismissRequest = { showClearHistoryDialog = false },
@@ -642,7 +642,7 @@ fun UnifiedBlukitBadge(
             titleContentColor = StealthPrimary,
             textContentColor = Color.White.copy(alpha = 0.7f),
             title = { Text("New Identity?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("This will clear your local profile and start a fresh ritual.", fontSize = 12.sp) },
+            text = { Text("This will clear your local profile and start a fresh setup.", fontSize = 12.sp) },
             confirmButton = {
                 TextButton(
                     onClick = {

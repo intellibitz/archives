@@ -24,14 +24,14 @@ This document outlines how **Blukit - Spread the Vibes** handles user data, priv
 
 - **No Cloud Sync**: Voices never leave the local device radio range (50-100m).
 - **Automated Purge**: All local logs are automatically deleted from your device after 12 hours.
-- **Vibe Moderation**: The app includes a sentient system for **Blocking** offensive voices locally, ensuring a safe collective environment.
+- **Vibe Moderation**: The app includes a smart system for **Blocking** offensive voices locally, ensuring a safe collective environment.
 - **Quiet Light**: A dedicated OLED-optimized pitch-black theme to prevent screen glare in dark environments.
 
 ## 4. Permissions
 
 Blukit uses granular permissions to protect user privacy:
 - `BLUETOOTH_SCAN`: Used with the `neverForLocation` flag to ensure scanning is only used for vibe discovery.
-- `BLUETOOTH_CONNECT`: Required to establish secure rituals between voices.
+- `BLUETOOTH_CONNECT`: Required to establish secure setup between voices.
 - `BLUETOOTH_ADVERTISE`: Required to make your presence felt in The Vibes.
 
 ---
