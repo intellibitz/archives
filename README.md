@@ -194,3 +194,9 @@ Blukit follows the **Voices Process Commandments**:
 
 *Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*  
 *Spread the Vibes, Hear the Crowd Roar.*
+
+---
+
+## 🛠️ The Blukit Way (Git Workflow)
+- **Branches are cheap.** Work is done in feature-specific branches (e.g., `step-11-refinement`).
+- **Verified Merges.** Only hardened, fleet-verified code is merged back into `main`.
