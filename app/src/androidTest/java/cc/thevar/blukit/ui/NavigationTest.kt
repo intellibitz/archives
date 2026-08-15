@@ -58,7 +58,7 @@ class NavigationTest {
 
         // 3. Ties (YOUR TIES) - Click Ties stat row in expanded hub
         composeTestRule.onNodeWithTag("TiesStat").performClick()
-        composeTestRule.onNodeWithText("YOUR TIES").assertIsDisplayed()
+        composeTestRule.onNodeWithText("NO TIES FOUND…", substring = true).assertIsDisplayed()
         
         // 4. Back to Vibes - Click Branding Section then Vibes stat
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()

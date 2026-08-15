@@ -296,91 +296,80 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
                 // Left: Sentient Branding & Dynamic Status
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { expanded = !expanded }
-                ) {
-                    // Animated B Icon (Vibes travelling through)
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
-                        val infiniteTransition = rememberInfiniteTransition(label = "LogoFlow")
-                        val flowOffset by infiniteTransition.animateFloat(
-                            initialValue = 0f,
-                            targetValue = 1f,
-                            animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
-                            label = "Flow"
-                        )
-                        
-                        Canvas(modifier = Modifier.fillMaxSize().blur(8.dp)) {
-                            drawCircle(
-                                brush = Brush.sweepGradient(
-                                    0.0f to StealthPrimary.copy(alpha = 0f),
-                                    flowOffset to StealthPrimary.copy(alpha = 0.4f),
-                                    1.0f to StealthPrimary.copy(alpha = 0f)
-                                ),
-                                radius = size.minDimension / 2
-                            )
-                        }
-                        
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_blukit_logo),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                // Animated B Icon (Vibes travelling through)
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "LogoFlow")
+                    val flowOffset by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
+                        label = "Flow"
+                    )
+                    
+                    Canvas(modifier = Modifier.fillMaxSize().blur(8.dp)) {
+                        drawCircle(
+                            brush = Brush.sweepGradient(
+                                0.0f to StealthPrimary.copy(alpha = 0f),
+                                flowOffset to StealthPrimary.copy(alpha = 0.4f),
+                                1.0f to StealthPrimary.copy(alpha = 0f)
+                            ),
+                            radius = size.minDimension / 2
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(12.dp))
                     
-                    Column {
-                        // Dynamic Status Bar (Top)
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_blukit_logo),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Column(modifier = Modifier.weight(1f)) {
+                    // Dynamic Status Bar (Top)
+                    Text(
+                        text = (if (airIsStill) "THE VIBES ARE STILL" 
+                                else if (report.currentBreeze != null) report.currentBreeze.orEmpty() 
+                                else if (incomingLinkRequests.isNotEmpty()) "INCOMING VIBE"
+                                else subtitle).uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Black,
+                            color = (if (airIsStill) StealthAmber 
+                                    else if (report.currentBreeze != null || incomingLinkRequests.isNotEmpty()) StealthPrimary 
+                                    else Color.White).copy(alpha = 0.6f),
+                            letterSpacing = 0.5.sp
+                        )
+                    )
+                    
+                    // Static Branding (Bottom)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = (if (airIsStill) "THE VIBES ARE STILL" 
-                                    else if (report.currentBreeze != null) report.currentBreeze.orEmpty() 
-                                    else if (incomingLinkRequests.isNotEmpty()) "INCOMING VIBE"
-                                    else subtitle).uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 7.sp,
+                            text = "BLUKIT",
+                            style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.Black,
-                                color = (if (airIsStill) StealthAmber 
-                                        else if (report.currentBreeze != null || incomingLinkRequests.isNotEmpty()) StealthPrimary 
-                                        else Color.White).copy(alpha = 0.6f),
-                                letterSpacing = 0.5.sp
+                                letterSpacing = 2.sp,
+                                color = if (airIsStill) StealthAmber else StealthPrimary
                             )
                         )
-                        
-                        // Static Branding (Bottom)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "BLUKIT",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 2.sp,
-                                    color = if (airIsStill) StealthAmber else StealthPrimary
-                                )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(modifier = Modifier.size(1.dp, 10.dp).background(Color.White.copy(alpha = 0.2f)))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "SPREAD THE VIBES",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                color = Color.White.copy(alpha = 0.4f)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Box(modifier = Modifier.size(1.dp, 10.dp).background(Color.White.copy(alpha = 0.2f)))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "SPREAD THE VIBES",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp,
-                                    color = Color.White.copy(alpha = 0.4f)
-                                )
-                            )
-                        }
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(0.2f))
+                Spacer(modifier = Modifier.weight(0.1f))
 
                 // Right: Contextual Animated Ritual Icon
                 Column(
@@ -426,11 +415,10 @@ fun UnifiedBlukitBadge(
                     )
                 }
             }
-            }
 
             // --- THE MAGIC BAR & INTEL ---
             AnimatedVisibility(
-                visible = airIsStill || expanded || hasBreeze,
+                visible = airIsStill || expanded || hasBreeze || incomingLinkRequests.isNotEmpty(),
                 enter = expandVertically() + fadeIn(),
                 exit = shrinkVertically() + fadeOut()
             ) {
@@ -767,10 +755,10 @@ private fun MagicBarContent(
             }
             
             val description = when {
+                hasRequests -> "${(incomingRequests.first().name ?: "Vibe").uppercase()} wants to bridge a link."
                 isPermissionMissing -> "Blukit needs permission to spread the vibes around you."
                 isBluetoothOff -> "Your Bluetooth must be awake to spread the vibes around you."
                 isLocationOff -> "Location must be awake to feel nearby ripples on this device."
-                hasRequests -> "${(incomingRequests.first().name ?: "Vibe").uppercase()} wants to bridge a link."
                 !currentBreeze.isNullOrBlank() -> currentBreeze
                 else -> null
             }
@@ -789,7 +777,7 @@ private fun MagicBarContent(
                         modifier = Modifier.weight(1f)
                     )
                     
-                    if (hasRequests && !isStill) {
+                    if (hasRequests) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 "ACCEPT",

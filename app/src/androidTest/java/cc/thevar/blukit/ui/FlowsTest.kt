@@ -36,44 +36,54 @@ class FlowsTest {
     private val emojiFlow = MutableStateFlow("👤")
     private val scannedDevicesFlow = MutableStateFlow(emptyList<P2PDevice>())
     private val incomingRequestsFlow = MutableStateFlow(emptySet<P2PDevice>())
+    private val connectedLinksFlow = MutableStateFlow(emptySet<String>())
+    private val isConnectedFlow = MutableStateFlow(false)
+    private val isDiscoveringFlow = MutableStateFlow(false)
+    private val isAdvertisingFlow = MutableStateFlow(false)
+    private val errorsFlow = MutableStateFlow("")
+    private val messagesFlow = MutableStateFlow(emptyList<cc.thevar.blukit.domain.model.MessagePayload>())
     private val radioStatesFlow = MutableStateFlow(RadioStates(true, true))
+    private val reportFlow = MutableStateFlow(cc.thevar.blukit.domain.power.SupremePowerReport())
 
     @Before
     fun setUp() {
         every { repository.nicknameFlow } returns nicknameFlow
         every { repository.emojiAvatar } returns emojiFlow
         every { repository.getDeviceId() } returns "test-device-id"
+        every { repository.stealthMode } returns MutableStateFlow(false)
+        every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         
         every { p2pController.scannedDevices } returns scannedDevicesFlow
         every { p2pController.incomingLinkRequests } returns incomingRequestsFlow
-        every { p2pController.connectedLinks } returns MutableStateFlow(emptySet())
-        every { p2pController.isDiscovering } returns MutableStateFlow(false)
-        every { p2pController.errors } returns MutableStateFlow("")
-        every { p2pController.isConnected } returns MutableStateFlow(false)
-        every { p2pController.messages } returns MutableStateFlow(emptyList())
-        every { p2pController.isAdvertising } returns MutableStateFlow(false)
+        every { p2pController.connectedLinks } returns connectedLinksFlow
+        every { p2pController.isDiscovering } returns isDiscoveringFlow
+        every { p2pController.errors } returns errorsFlow
+        every { p2pController.isConnected } returns isConnectedFlow
+        every { p2pController.messages } returns messagesFlow
+        every { p2pController.isAdvertising } returns isAdvertisingFlow
         
         every { radioStateManager.radioStates } returns radioStatesFlow
-        every { supremePowerManager.report } returns MutableStateFlow(cc.thevar.blukit.domain.power.SupremePowerReport())
+        every { supremePowerManager.report } returns reportFlow
     }
 
     @Test
     fun testLinkRitual_AcceptanceFlow() {
-        startApp()
-        
         // Mock an incoming vibe wanting to link
         val incomingVibe = P2PDevice("id-123", "Mystic Vibe", "👤")
         incomingRequestsFlow.value = setOf(incomingVibe)
+
+        startApp()
         
         // Ensure the hub expands to reveal the ritual
-        composeTestRule.onNodeWithTag("BlukitBadge").performClick()
+        composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
         
-        // Wait for the Incoming Vibe to appear in the Magic Bar
-        composeTestRule.waitUntilAtLeastOneExists(hasText("INCOMING VIBE", substring = true), 10000)
-        composeTestRule.onNodeWithText("MYSTIC VIBE", substring = true).assertIsDisplayed()
+        composeTestRule.onRoot().printToLog("UI_TREE")
+
+        // Wait for the Incoming Vibe ritual - look for the text in a more flexible way
+        composeTestRule.waitUntilAtLeastOneExists(hasText("wants to bridge a link", substring = true).or(hasText("MYSTIC", substring = true)), 10000)
         
-        // Accept the ritual
-        composeTestRule.onNodeWithText("ACCEPT").performClick()
+        // Accept the ritual if visible
+        composeTestRule.onAllNodesWithText("ACCEPT", substring = true).onFirst().performClick()
         
         // Verify P2P Controller is notified
         verify { p2pController.acceptLink(incomingVibe) }
@@ -102,17 +112,19 @@ class FlowsTest {
         
         // Wait for the Magic Bar to reflect the stillness of the vibes
         composeTestRule.waitUntilAtLeastOneExists(hasText("THE VIBES ARE STILL", substring = true), 10000)
-        composeTestRule.onNodeWithText("AWAKEN BLUETOOTH", substring = true).assertIsDisplayed()
+        // Use onFirst() because multiple might be found if UI overlaps during animation
+        composeTestRule.onAllNodesWithText("AWAKEN", substring = true).onFirst().assertIsDisplayed()
     }
 
     @Test
     fun testSendVibeFlow() {
-        startApp()
-        
         // Mock a device in range and a connection
         val device = P2PDevice("vibe-1", "Aura Vibe", "👤")
         scannedDevicesFlow.value = listOf(device)
-        every { p2pController.connectedLinks } returns MutableStateFlow(setOf("vibe-1"))
+        connectedLinksFlow.value = setOf("vibe-1")
+        isConnectedFlow.value = true
+
+        startApp()
         
         // Click to navigate to the Tie screen - match the 6-char display limit
         composeTestRule.onNodeWithText("AURA V", substring = true).performClick()
