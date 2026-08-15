@@ -65,6 +65,7 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.network.p2p.P2PError
 import cc.thevar.blukit.ui.navigation.Route
+import cc.thevar.blukit.ui.screens.BlukitHeartbeat
 import cc.thevar.blukit.ui.screens.RipplesScreen
 import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.theme.StealthAmber
@@ -270,6 +271,7 @@ fun BlukitApp(
 
         UnifiedBlukitBadge(
             subtitle = globalSubtitle,
+            energy = energySurge,
             userCount = report.userCount,
             linksCount = report.connectedLinksCount,
             aiInsight = report.aiInsight,
@@ -330,6 +332,7 @@ fun BlukitApp(
 @Composable
 fun UnifiedBlukitBadge(
     subtitle: String,
+    energy: Float,
     userCount: Int,
     linksCount: Int,
     aiInsight: String,
@@ -389,35 +392,10 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Smart Branding & Dynamic Status
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
-                    val infiniteTransition = rememberInfiniteTransition(label = "LogoFlow")
-                    val flowOffset by infiniteTransition.animateFloat(
-                        initialValue = 0f,
-                        targetValue = 1f,
-                        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
-                        label = "Flow"
-                    )
-                    
-                    Canvas(modifier = Modifier.fillMaxSize().blur(8.dp)) {
-                        drawCircle(
-                            brush = Brush.sweepGradient(
-                                0.0f to StealthPrimary.copy(alpha = 0f),
-                                flowOffset to StealthPrimary.copy(alpha = 0.4f),
-                                1.0f to StealthPrimary.copy(alpha = 0f)
-                            ),
-                            radius = size.minDimension / 2
-                        )
-                    }
-                    
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_blukit_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                // Left: Smart Branding & Dynamic Status - Center Vibe Heartbeat moved here
+                BlukitHeartbeat(energy = energy, modifier = Modifier.padding(end = 4.dp))
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 
                 Column(modifier = Modifier.weight(1f)) {
                     // Dynamic Status Bar (Top)

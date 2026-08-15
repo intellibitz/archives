@@ -129,6 +129,65 @@ fun StatusOverlay(
 }
 
 @Composable
+fun BlukitHeartbeat(
+    energy: Float,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "Heartbeat")
+    val vibeScale by infiniteTransition.animateFloat(
+        initialValue = 0.85f + (energy * 0.2f),
+        targetValue = 1.35f + (energy * 0.4f), 
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "VibeScale"
+    )
+
+    val auraAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "AuraAlpha"
+    )
+
+    Box(contentAlignment = Alignment.Center, modifier = modifier.size(48.dp)) {
+        // High-Fidelity Aura
+        Canvas(modifier = Modifier.fillMaxSize().blur(8.dp)) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(StealthAmber.copy(alpha = auraAlpha), Color.Transparent)
+                ),
+                radius = size.minDimension / 1.3f * vibeScale
+            )
+        }
+        
+        // Inner Vibe Body
+        Surface(
+            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.4f),
+            border = BorderStroke(1.dp, Brush.radialGradient(listOf(StealthAmber, cc.thevar.blukit.ui.theme.StealthRose))),
+            modifier = Modifier.size(24.dp * vibeScale)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Rounded.AccountCircle, 
+                    contentDescription = null,
+                    tint = StealthAmber,
+                    modifier = Modifier.size(16.dp).graphicsLayer {
+                        scaleX = vibeScale
+                        scaleY = vibeScale
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun StatusItem(label: String, active: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(

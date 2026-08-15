@@ -165,9 +165,8 @@ fun RipplesField(
             VibeRippleLayer(vibeRipples)
             VibesConnectivity(displayDevices)
             
-            // Center "Me" Node + Own Bubble
+            // Center Node (Removed - moved to badge)
             Box(contentAlignment = Alignment.Center) {
-                CenterNode(finalEnergy)
                 val myBubble = activeBubbles.findLast { it.senderId == localDeviceId }
                 val myBubbleColor = if (myBubble?.isPrivate == true) StealthRose else Color.White
                 BubbleWrapper(activeBubble = myBubble, color = myBubbleColor)
@@ -430,62 +429,6 @@ private fun VibesConnectivity(devices: List<P2PDevice>) {
             val angle = (devices.indexOf(device).toDouble() / devices.size) * 2 * PI
             val target = Offset(center.x + (radiusPx * cos(angle)).toFloat(), center.y + (radiusPx * sin(angle)).toFloat())
             drawLine(color = StealthPrimary.copy(alpha = 0.05f + 0.2f * flow), start = center, end = target, strokeWidth = (1f + flow).dp.toPx())
-        }
-    }
-}
-
-@Composable
-private fun CenterNode(energy: Float) {
-    val infiniteTransition = rememberInfiniteTransition(label = "Me")
-    val vibeScale by infiniteTransition.animateFloat(
-        initialValue = 0.85f + (energy * 0.2f),
-        targetValue = 1.35f + (energy * 0.4f), 
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "VibeScale"
-    )
-
-    val auraAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f, // Brighter base
-        targetValue = 0.7f, // Brighter peak
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "AuraAlpha"
-    )
-
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
-        // High-Fidelity Aura
-        Canvas(modifier = Modifier.fillMaxSize().blur(24.dp)) {
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(StealthAmber.copy(alpha = auraAlpha), Color.Transparent)
-                ),
-                radius = size.minDimension / 1.3f * vibeScale
-            )
-        }
-        
-        // Inner Vibe Body
-        Surface(
-            shape = CircleShape,
-            color = Color.Black.copy(alpha = 0.4f),
-            border = BorderStroke(2.dp, Brush.radialGradient(listOf(StealthAmber, StealthRose))),
-            modifier = Modifier.size(64.dp * vibeScale)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Rounded.AccountCircle, 
-                    contentDescription = null,
-                    tint = StealthAmber,
-                    modifier = Modifier.size(32.dp).graphicsLayer {
-                        scaleX = vibeScale
-                        scaleY = vibeScale
-                    }
-                )
-            }
         }
     }
 }
