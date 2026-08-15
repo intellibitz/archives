@@ -32,10 +32,10 @@ class SupremePowerTest {
             BlukitTheme {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                     UnifiedBlukitBadge(
-                        subtitle = "SPREAD THE VIBES",
                         energy = 0f,
                         userCount = report.userCount,
                         linksCount = report.connectedLinksCount,
+                        roarsCount = report.totalMessages,
                         aiInsight = report.aiInsight,
                         currentBreeze = report.currentBreeze,
                         isBluetoothEnabled = true,

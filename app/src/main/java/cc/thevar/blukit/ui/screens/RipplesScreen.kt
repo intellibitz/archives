@@ -278,19 +278,9 @@ private fun VibingVibesTicker(
     Box(
         modifier = modifier
     ) {
-        if (vibes.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = if (onlyTies) "ROARS 0" else "VIBES 0",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = StealthAmber.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp
-                    )
-                }
-            }
-        } else {
+            if (vibes.isEmpty()) {
+                // Empty state handled by Hub
+            } else {
             LazyColumn(
                 state = listState,
                 modifier = Modifier

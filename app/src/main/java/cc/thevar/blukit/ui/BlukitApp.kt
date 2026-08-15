@@ -262,18 +262,16 @@ fun BlukitApp(
                 .padding(top = 16.dp)
         )
 
-        val globalSubtitle = when {
-            bluetoothState.connectedLinks.isNotEmpty() -> "VIBING: ${bluetoothState.connectedLinks.size}"
-            bluetoothState.connectionState is AirConnectionState.Scanning -> "SEARCHING FOR CROWD…"
-            bluetoothState.connectionState is AirConnectionState.Connecting -> "CONNECTING…"
-            else -> "SPREAD VIBES"
+
+        val roarsCount = remember(bluetoothState.messages) {
+            bluetoothState.messages.count { it.receiverId.isNullOrBlank() }
         }
 
         UnifiedBlukitBadge(
-            subtitle = globalSubtitle,
             energy = energySurge,
             userCount = report.userCount,
             linksCount = report.connectedLinksCount,
+            roarsCount = roarsCount,
             aiInsight = report.aiInsight,
             currentBreeze = report.currentBreeze,
             isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
@@ -333,10 +331,10 @@ fun BlukitApp(
 
 @Composable
 fun UnifiedBlukitBadge(
-    subtitle: String,
     energy: Float,
     userCount: Int,
     linksCount: Int,
+    roarsCount: Int,
     aiInsight: String,
     currentBreeze: String?,
     isBluetoothEnabled: Boolean,
@@ -396,62 +394,69 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Heartbeat icon moved here
+                // Left: Heartbeat icon
                 BlukitHeartbeat(energy = energy, modifier = Modifier.padding(end = 4.dp))
 
                 Spacer(modifier = Modifier.width(8.dp))
                 
-                Column(modifier = Modifier.weight(1f)) {
-                    // Dynamic Status Bar (Top)
-                    Text(
-                        text = (if (airIsStill) "RADIOS OFF" 
-                                else if (!currentBreeze.isNullOrBlank()) currentBreeze 
-                                else if (incomingLinkRequests.isNotEmpty()) "NEW VIBE REQUEST"
-                                else subtitle).uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Black,
-                            color = (if (airIsStill) Color.Red 
-                                    else if (!currentBreeze.isNullOrBlank() || incomingLinkRequests.isNotEmpty()) StealthPrimary 
-                                    else Color.White).copy(alpha = 0.6f),
-                            letterSpacing = 0.5.sp
-                        )
-                    )
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Feedback 4: Status text integrated into the hub intelligence
+                    val statusText = when {
+                        airIsStill -> "RADIOS OFF"
+                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
+                        !currentBreeze.isNullOrBlank() -> currentBreeze
+                        else -> null
+                    }
                     
-                    // Static Branding (Bottom)
-                    Column {
-                        // Feedback 4: "HEAR THE CROWD ROAR" above "SPREAD VIBES"
+                    if (statusText != null) {
+                        Text(
+                            text = statusText.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (airIsStill) Color.Red else StealthPrimary,
+                                letterSpacing = 0.5.sp
+                            ),
+                            modifier = Modifier.padding(bottom = 2.dp)
+                        )
+                    }
+
+                    // Center: Intelligence Stats (Super Intelligent Hub)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        if (currentRoute is Route.Vibes) {
+                            HubStat(label = "VIBES", value = linksCount.toString())
+                        } else {
+                            HubStat(label = "CROWD", value = userCount.toString())
+                            Spacer(modifier = Modifier.width(16.dp))
+                            HubStat(label = "ROARS", value = roarsCount.toString())
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Branding Section
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "HEAR THE CROWD ROAR",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 6.sp,
                                 fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp,
-                                color = StealthPrimary.copy(alpha = 0.8f)
+                                color = StealthPrimary.copy(alpha = 0.8f),
+                                letterSpacing = 1.sp
                             )
                         )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "BLUKIT",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 2.sp,
-                                    color = if (airIsStill) Color.Red else StealthPrimary
-                                )
+                        Text(
+                            text = "SPREAD VIBES",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (airIsStill) Color.Red else StealthPrimary,
+                                letterSpacing = 2.sp
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Box(modifier = Modifier.size(1.dp, 10.dp).background(Color.White.copy(alpha = 0.2f)))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "SPREAD VIBES",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp,
-                                    color = Color.White.copy(alpha = 0.4f)
-                                )
-                            )
-                        }
+                        )
                     }
                 }
 
@@ -535,7 +540,6 @@ fun UnifiedBlukitBadge(
                             isWifiOff = !isWifiEnabled,
                             isPermissionMissing = !permissionsGranted,
                             isPermanentlyDenied = isPermanentlyDenied,
-                            currentBreeze = currentBreeze,
                             incomingRequests = requests,
                             onAcceptLink = onAcceptLink,
                             onDenyLink = onDenyLink,
@@ -795,7 +799,6 @@ private fun MagicBarContent(
     isWifiOff: Boolean,
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
-    currentBreeze: String?,
     incomingRequests: Set<P2PDevice>,
     onAcceptLink: (P2PDevice) -> Unit,
     onDenyLink: (P2PDevice) -> Unit,
@@ -881,26 +884,26 @@ private fun MagicBarContent(
                 }
             }
             
-            val description = when {
-                hasRequests -> "${(incomingRequests.first().name ?: "VIBE").uppercase()} WANTS TO VIBE."
-                isPermissionMissing -> "ENABLE RADIOS TO JOIN THE CROWD."
-                isBluetoothOff -> "RADIOS ARE OFF. ENERGY REQUIRED."
-                isLocationOff -> "RADIOS ARE OFF. ENERGY REQUIRED."
-                !currentBreeze.isNullOrBlank() -> currentBreeze
+            val alertText = when {
+                hasRequests -> "NEW VIBE REQUEST"
+                isPermissionMissing -> "PERMISSIONS REQUIRED"
+                isBluetoothOff -> "BLUETOOTH OFF"
+                isLocationOff -> "LOCATION OFF"
+                isWifiOff -> "WIFI OFF"
                 else -> null
             }
 
-            if (description != null) {
+            if (alertText != null) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = description,
+                        text = alertText,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
                             lineHeight = 10.sp
                         ),
-                        color = (if (isStill) Color.Red else Color.White).copy(alpha = 0.7f),
+                        color = Color.White,
                         modifier = Modifier.weight(1f)
                     )
                     
@@ -981,6 +984,35 @@ private fun StatusIcon(
                 rotationZ = rotation
             }
     )
+}
+
+@Composable
+private fun HubStat(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.Black,
+                color = Color.White
+            )
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 6.sp,
+                fontWeight = FontWeight.Bold,
+                color = StealthPrimary.copy(alpha = 0.5f),
+                letterSpacing = 1.sp
+            )
+        )
+    }
 }
 
 @Composable
