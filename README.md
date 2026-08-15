@@ -1,6 +1,6 @@
 # Blukit — Spread the Vibes
 
-**The power of close proximity. Spread the vibes and hear the voices around you instantly in any crowd—no internet needed.**
+**The power of close proximity. Spread the vibes and hear the crowd roar instantly in any crowd—no internet needed.**
 
 ---
 
@@ -112,14 +112,14 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 | 2026-08-13 | **OLED Stealth** | Implemented Pitch Black theme (#000000) with Amber/Rose accents. |
 | 2026-08-15 | **The Vibes Masterpiece**| Smart Magic Bar + Flowing B Logo animation. Thrashed technical jargon. |
 | 2026-08-15 | **God Mode Alignment** | Transitioned terminology to "Voices" and "Link Processes" for universal inclusion. |
-| 2026-08-15 | **Branding Update** | AppName updated to "Blukit - Spread the Vibes". |
+| 2026-08-15 | **Branding Update** | AppName updated to "Blukit - Spread the Vibes". Slogan: "Spread the Vibes, Hear the Crowd Roar." |
 | 2026-08-15 | **Einstein Excellence** | Per-endpoint P2P queues, self-healing ID restoration, and Compose recomposition hardening. |
 
 ---
 
 ## 📝 Play Store Metadata
 
-**Short Description:** The power of close proximity. Spread the vibes and hear the voices around you instantly.
+**Short Description:** The power of close proximity. Spread the vibes and hear the crowd roar instantly.
 
 ### Full Description
 **Experience the pulse of a truly smart, serverless connection.**
@@ -191,4 +191,4 @@ Blukit follows the **Voices Process Commandments**:
 4. **Absolute Stealth**: All data vanishes every 12 hours.
 
 *Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*  
-*Spread the vibes. Hear the voices.*
+*Spread the Vibes, Hear the Crowd Roar.*
