@@ -5,7 +5,7 @@
 Blukit ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains our practices regarding the ritual of connection through our mobile application, Blukit - Spread the Vibes.
 
 ## 1. Zero Data Collection
-Blukit is a sentient, decentralized experience. **We do not collect, store, or transmit any of your personal data to any external servers.**
+Blukit is a sentient, offline experience. **We do not collect, store, or transmit any of your personal data to any external servers.**
 
 *   **User Identity**: Your nickname is stored strictly on your local device and is only shared with nearby voices via local radio links (Bluetooth).
 *   **Voices**: Your history is stored in a local encrypted database on your device and is never uploaded to a cloud.

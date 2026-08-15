@@ -1,6 +1,6 @@
 # Blukit — Spread the Vibes
 
-**A decentralized, zero-infrastructure offline mesh for high-density venues where internet fails.**
+**The power of close proximity. Spread the vibes and hear the voices around you instantly in any crowd—no internet needed.**
 
 ---
 
@@ -104,7 +104,7 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 
 | Date | Milestone | Technical Context / Decision |
 | :--- | :--- | :--- |
-| 2026-08-09 | **Project Birth** | Initialized as "blukit", a decentralized offline P2P chat. |
+| 2026-08-09 | **Project Birth** | P2P connection ritual initialized. |
 | 2026-08-10 | **Core Architecture** | Selected Navigation 3, Material 3 Adaptive, and Google Nearby Connections API. |
 | 2026-08-10 | **Security Hardening** | Implemented AES-256-GCM encryption with Android Keystore + ECDH key exchange. |
 | 2026-08-12 | **Commandments** | Enforced core principles: Bluetooth-only by default, optional/silent WiFi and Location. |
@@ -117,7 +117,7 @@ Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing
 
 ## 📝 Play Store Metadata
 
-**Short Description:** Instant offline ritual for stadiums, movie theaters & venues. Spread the vibes.
+**Short Description:** The power of close proximity. Spread the vibes and hear the voices around you instantly.
 
 ### Full Description
 **Experience the pulse of a truly sentient, serverless connection.**
