@@ -265,12 +265,16 @@ fun BlukitApp(
         val roarsCount = remember(bluetoothState.messages) {
             bluetoothState.messages.count { it.receiverId.isNullOrBlank() }
         }
+        val vibesCount = remember(bluetoothState.messages) {
+            bluetoothState.messages.count { !it.receiverId.isNullOrBlank() }
+        }
 
         UnifiedBlukitBadge(
             energy = energySurge,
             userCount = report.userCount,
             linksCount = report.connectedLinksCount,
             roarsCount = roarsCount,
+            vibesCount = vibesCount,
             currentBreeze = report.currentBreeze,
             isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
             isLocationEnabled = bluetoothState.isLocationEnabled,
@@ -332,6 +336,7 @@ fun UnifiedBlukitBadge(
     userCount: Int,
     linksCount: Int,
     roarsCount: Int,
+    vibesCount: Int,
     currentBreeze: String?,
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
@@ -388,7 +393,7 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Sentient Picker & Branding
+                // Left: Sentient Branding
                 Column(
                     modifier = Modifier.padding(end = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -411,10 +416,31 @@ fun UnifiedBlukitBadge(
                             color = Color.White.copy(alpha = 0.3f)
                         )
                     )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+                
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    val statusText = when {
+                        airIsStill -> "RADIOS OFF"
+                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
+                        !currentBreeze.isNullOrBlank() -> currentBreeze
+                        else -> "HEAR THE CROWD ROAR"
+                    }
                     
+                    Text(
+                        text = statusText.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (airIsStill) Color.Red else StealthPrimary.copy(alpha = 0.8f),
+                            letterSpacing = 0.5.sp
+                        )
+                    )
+
                     Spacer(modifier = Modifier.height(4.dp))
-                    
-                    // Smart Switcher (ROARS / VIBES)
+
+                    // Feedback 8: Smart Switcher (ROARS / VIBES) moved here
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
@@ -445,43 +471,24 @@ fun UnifiedBlukitBadge(
                             )
                         )
                     }
-                }
 
-                Spacer(modifier = Modifier.width(4.dp))
-                
-                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Center: Intelligence Stats (Hub Brain)
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Intelligence Stats (Hub Brain)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
                         if (currentRoute is Route.Vibes) {
-                            HubStat(label = "VIBES", value = linksCount.toString())
+                            HubStat(label = "FRIENDS", value = linksCount.toString())
+                            Spacer(modifier = Modifier.width(16.dp))
+                            HubStat(label = "VIBES", value = vibesCount.toString())
                         } else {
                             HubStat(label = "CROWD", value = userCount.toString())
                             Spacer(modifier = Modifier.width(16.dp))
                             HubStat(label = "ROARS", value = roarsCount.toString())
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    val statusText = when {
-                        airIsStill -> "RADIOS OFF"
-                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
-                        !currentBreeze.isNullOrBlank() -> currentBreeze
-                        else -> "HEAR THE CROWD ROAR"
-                    }
-                    
-                    Text(
-                        text = statusText.uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (airIsStill) Color.Red else StealthPrimary.copy(alpha = 0.8f),
-                            letterSpacing = 0.5.sp
-                        )
-                    )
                 }
 
                 Spacer(modifier = Modifier.weight(0.1f))
