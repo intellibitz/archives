@@ -43,7 +43,7 @@ class SupremePowerTest {
                         isPermanentlyDenied = false,
                         isStealthMode = false,
                         lowPowerMode = false,
-                        currentRoute = cc.thevar.blukit.ui.navigation.Route.Shout,
+                        currentRoute = cc.thevar.blukit.ui.navigation.Route.Crowd,
                         emojiAvatar = "👤",
                         nickname = "vibe",
                         incomingLinkRequests = emptySet<P2PDevice>(),

@@ -71,6 +71,7 @@ class BleFallbackController(
     private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
     private var gattServer: BluetoothGattServer? = null
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
+    private val pendingLinkRequests = Collections.synchronizedSet(mutableSetOf<String>())
 
     companion object {
         private val SERVICE_UUID = UUID.fromString("0000fb01-0000-1000-8000-00805f9b34fb")
@@ -156,8 +157,10 @@ class BleFallbackController(
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
             Log.i(tag, "GATT: Disconnected from $address")
             activeGatts.remove(address)
+            pendingLinkRequests.remove(address)
             _connectedLinks.update { it - address }
             if (activeGatts.isEmpty()) _isConnected.value = false
+            updateScannedDevices()
         }
     }
 
@@ -216,6 +219,7 @@ class BleFallbackController(
             val sharedSecret = cryptoManager.deriveSharedSecret(vibePublicKey)
             vibeKeys[address] = sharedSecret
             Log.i(tag, "SECURE: Channel ready for $address (BLE)")
+            updateScannedDevices()
         } catch (e: Exception) {
             Log.e(tag, "Handshake error: ${e.message}")
         }
@@ -433,17 +437,23 @@ class BleFallbackController(
 
     override fun requestLink(device: P2PDevice) {
         // BLE implementation of Link Request
+        pendingLinkRequests.add(device.id)
+        updateScannedDevices()
         sendHandshake(device.id)
     }
 
     override fun acceptLink(device: P2PDevice) {
+        pendingLinkRequests.remove(device.id)
         _incomingLinkRequests.update { it - device }
         _connectedLinks.update { it + device.id }
         _isConnected.value = true
+        updateScannedDevices()
     }
 
     override fun denyLink(device: P2PDevice) {
+        pendingLinkRequests.remove(device.id)
         _incomingLinkRequests.update { it - device }
+        updateScannedDevices()
     }
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
@@ -513,6 +523,17 @@ class BleFallbackController(
             return payload
         } catch (e: Exception) {
             return null
+        }
+    }
+
+    private fun updateScannedDevices() {
+        _scannedDevices.update { current ->
+            current.map { device ->
+                device.copy(
+                    isConnected = device.id in _connectedLinks.value,
+                    isLinkPending = device.id in pendingLinkRequests
+                )
+            }
         }
     }
 

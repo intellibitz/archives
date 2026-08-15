@@ -196,7 +196,7 @@ fun BlukitApp(
     
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
 
-    val initialRoute = Route.Shout
+    val initialRoute = Route.Crowd
     val backStack = rememberNavBackStack(initialRoute)
     val currentRoute = backStack.lastOrNull()
 
@@ -210,7 +210,7 @@ fun BlukitApp(
             modifier = Modifier.fillMaxSize()
         ) { key ->
             when (key) {
-                Route.Shout -> NavEntry(key, metadata = ListDetailSceneStrategy.listPane()) {
+                Route.Crowd -> NavEntry(key, metadata = ListDetailSceneStrategy.listPane()) {
                     RipplesScreen(
                         state = bluetoothState,
                         localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
@@ -225,7 +225,7 @@ fun BlukitApp(
                                 backStack.add(Route.Chat)
                             }
                         },
-                        onBroadcastMessage = bluetoothViewModel::broadcastMessage
+                        onBroadcastMessage = bluetoothViewModel::roar
                     )
                 }
                 Route.Chat -> NavEntry(key, metadata = ListDetailSceneStrategy.detailPane()) {
@@ -243,7 +243,7 @@ fun BlukitApp(
                         onEnterPip = onEnterPip
                     )
                 }
-                Route.Ties -> NavEntry(key) {
+                Route.Vibes -> NavEntry(key) {
                     RipplesScreen(
                         state = bluetoothState,
                         localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
@@ -255,7 +255,7 @@ fun BlukitApp(
                         onDeviceClick = { device ->
                             backStack.add(Route.Chat)
                         },
-                        onBroadcastMessage = bluetoothViewModel::broadcastMessage
+                        onBroadcastMessage = bluetoothViewModel::roar
                     )
                 }
                 else -> NavEntry(key) { Text("Unknown") }
@@ -503,14 +503,14 @@ fun UnifiedBlukitBadge(
                         )
                         
                         Icon(
-                            imageVector = if (currentRoute is Route.Ties) Icons.Rounded.AccountCircle else Icons.Rounded.AccountCircle,
+                            imageVector = if (currentRoute is Route.Vibes) Icons.Rounded.AccountCircle else Icons.Rounded.AccountCircle,
                             contentDescription = null,
                             tint = if (airIsStill) StealthAmber else StealthPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Text(
-                        text = if (currentRoute is Route.Ties) "ROAR" else "VIBES",
+                        text = if (currentRoute is Route.Vibes) "ROAR" else "VIBES",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 6.sp,
                             fontWeight = FontWeight.Black,
@@ -636,17 +636,17 @@ fun UnifiedBlukitBadge(
                                 icon = Icons.Rounded.AccountCircle,
                                 modifier = Modifier.testTag("VibesStat"),
                                 onClick = { 
-                                    onNavigate(Route.Shout)
+                                    onNavigate(Route.Crowd)
                                     expanded = false 
                                 }
                             )
                             IntelRow(
-                                label = "PROXIMITY", 
+                                label = "VIBES", 
                                 value = linksCount.toString(),
                                 icon = Icons.Rounded.AccountCircle,
                                 modifier = Modifier.testTag("TiesStat"),
                                 onClick = { 
-                                    onNavigate(Route.Ties)
+                                    onNavigate(Route.Vibes)
                                     expanded = false
                                 }
                             )
@@ -951,7 +951,7 @@ private fun MagicBarContent(
                     if (hasRequests) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                "ROAR",
+                                "VIBE",
                                 color = StealthPrimary,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 8.sp,

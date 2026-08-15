@@ -1,16 +1,16 @@
 <resources>
     <string name="app_name">Blukit - The energy of proximity</string>
 
-    <string name="nav_watch">VIBES</string>
+    <string name="nav_watch">CROWD</string>
     <string name="nav_shout">ENERGY</string>
-    <string name="nav_whispers">PROXIMITY</string>
+    <string name="nav_whispers">VIBES</string>
     <string name="nav_mask">BLUKIT</string>
 
-    <!-- Vibes Screen (The Gathering) -->
-    <string name="watch_title">VIBES</string>
+    <!-- Crowd Screen (Landing) -->
+    <string name="watch_title">CROWD</string>
     <string name="watch_broadcast_desc">%1$d VIBES NEARBY</string>
     <string name="watch_welcome_title">SPREAD THE VIBES</string>
-    <string name="watch_welcome_desc">SPREAD THE VIBES. HEAR THE CROWD ROAR. BLUKIT ENERGY IN CLOSE PROXIMITY.</string>
+    <string name="watch_welcome_desc">SPREAD VIBES. HEAR THE CROWD ROAR. BLUKIT ENERGY.</string>
     <string name="watch_empty_hint">Start the vibe below!</string>
 
     <!-- Ripples Screen (Presence) -->
@@ -21,11 +21,11 @@
     <string name="shout_empty_radar">HEAR THE CROWD ROAR…</string>
     <string name="shout_scan_hint">VIBES PROXIMITY…</string>
 
-    <!-- Ties Screen (Private History) -->
-    <string name="whispers_title">PROXIMITY</string>
-    <string name="whispers_empty_hint">SPREAD VIBES. HEAR THE CROWD ROAR.</string>
-    <string name="whispers_last_seen">ROAR: %1$s</string>
-    <string name="whispers_label">PROXIMITY</string>
+    <!-- Vibes Screen (Mutual) -->
+    <string name="whispers_title">VIBES</string>
+    <string name="whispers_empty_hint">SPREAD VIBES. VIBE WITH THE CROWD.</string>
+    <string name="whispers_last_seen">VIBED: %1$s</string>
+    <string name="whispers_label">VIBES</string>
 
     <!-- Vibe Screen (Persona) -->
     <string name="mask_title">BLUKIT</string>
@@ -33,12 +33,12 @@
     <string name="mask_stealth_mode">ENERGY</string>
     <string name="mask_stealth_desc">PROXIMITY</string>
     <string name="mask_start_exploring">SPREAD VIBES</string>
-    <string name="mask_clear_whispers">CLEAR PROXIMITY</string>
+    <string name="mask_clear_whispers">CLEAR VIBES</string>
     <string name="mask_reset_profile">NEW BLUKIT</string>
 
     <!-- Confirmation Dialogs -->
-    <string name="conf_delete_whispers_title">CLEAR PROXIMITY?</string>
-    <string name="conf_delete_whispers_desc">CLEAR PROXIMITY ENERGY.</string>
+    <string name="conf_delete_whispers_title">CLEAR VIBES?</string>
+    <string name="conf_delete_whispers_desc">CLEAR VIBE ENERGY.</string>
     <string name="conf_reset_identity_title">NEW BLUKIT?</string>
     <string name="conf_reset_identity_desc">RESET BLUKIT VIBES.</string>
     <string name="conf_delete_btn">CLEAR</string>

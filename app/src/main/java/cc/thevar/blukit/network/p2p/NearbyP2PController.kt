@@ -85,6 +85,7 @@ class NearbyP2PController(
 
     // Sequential Vibe Queue
     private val outgoingQueues = Collections.synchronizedMap(mutableMapOf<String, kotlinx.coroutines.channels.Channel<Payload>>())
+    private val pendingLinkRequests = Collections.synchronizedSet(mutableSetOf<String>())
 
     init {
         observeIdentityChanges()
@@ -176,9 +177,11 @@ class NearbyP2PController(
         override fun onDisconnected(endpointId: String) {
             Log.i(tag, "UNLINKED: $endpointId")
             activeConnections.remove(endpointId)
+            pendingLinkRequests.remove(endpointId)
             _connectedLinks.update { it - endpointId }
             vibeKeys.remove(endpointId)
             if (activeConnections.isEmpty()) _isConnected.value = false
+            updateScannedDevices()
         }
     }
 
@@ -245,8 +248,10 @@ class NearbyP2PController(
     }
 
     private fun handleLinkAccept(endpointId: String) {
+        pendingLinkRequests.remove(endpointId)
         _connectedLinks.update { it + endpointId }
         _isConnected.value = true
+        updateScannedDevices()
     }
 
     private fun handleChatMessage(
@@ -404,6 +409,8 @@ class NearbyP2PController(
     }
 
     override fun requestLink(device: P2PDevice) {
+        pendingLinkRequests.add(device.id)
+        updateScannedDevices()
         internalScope.launch(ioDispatcher) {
             val payload = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
@@ -420,8 +427,10 @@ class NearbyP2PController(
 
     override fun acceptLink(device: P2PDevice) {
         _incomingLinkRequests.update { it - device }
+        pendingLinkRequests.remove(device.id)
         _connectedLinks.update { it + device.id }
         _isConnected.value = true
+        updateScannedDevices()
         internalScope.launch(ioDispatcher) {
             val payload = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
@@ -437,7 +446,9 @@ class NearbyP2PController(
     }
 
     override fun denyLink(device: P2PDevice) {
+        pendingLinkRequests.remove(device.id)
         _incomingLinkRequests.update { it - device }
+        updateScannedDevices()
     }
 
     private suspend fun sendMessagePayload(endpointId: String, payload: MessagePayload) {
@@ -502,6 +513,17 @@ class NearbyP2PController(
             messageIdHistory.add(id)
             if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
             true
+        }
+    }
+
+    private fun updateScannedDevices() {
+        _scannedDevices.update { current ->
+            current.map { device ->
+                device.copy(
+                    isConnected = device.id in _connectedLinks.value,
+                    isLinkPending = device.id in pendingLinkRequests
+                )
+            }
         }
     }
 

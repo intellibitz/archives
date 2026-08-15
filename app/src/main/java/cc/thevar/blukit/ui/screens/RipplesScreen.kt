@@ -26,6 +26,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -65,7 +66,7 @@ fun RipplesScreen(
     onStartScan: () -> Unit,
     onStopScan: () -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
-    onBroadcastMessage: (String) -> Unit,
+    onBroadcastMessage: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var message by remember { mutableStateOf("") }
@@ -135,8 +136,14 @@ fun RipplesScreen(
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
-        val vibes = remember(state.messages) {
-            state.messages.filter { it.receiverId.isNullOrBlank() }
+        val vibes = remember(state.messages, onlyTies) {
+            if (onlyTies) {
+                // Mutual vibes: Show all messages that are NOT broadcasts
+                state.messages.filter { !it.receiverId.isNullOrBlank() }
+            } else {
+                // Public crowd: Show only broadcasts
+                state.messages.filter { it.receiverId.isNullOrBlank() }
+            }
         }
 
         Box(
@@ -144,11 +151,19 @@ fun RipplesScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            val fieldBubbles = remember(activeBubbles, onlyTies) {
+                if (onlyTies) {
+                    activeBubbles.filter { it.isPrivate }
+                } else {
+                    activeBubbles.filter { !it.isPrivate }
+                }
+            }
+
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
                 localEmoji = localEmoji,
-                activeBubbles = activeBubbles,
+                activeBubbles = fieldBubbles,
                 externalEnergy = energySurge,
                 onlyTies = onlyTies,
                 onDeviceClick = onDeviceClick,
@@ -187,7 +202,7 @@ fun RipplesScreen(
                         onSend = {
                             if (message.isNotBlank()) {
                                 if (state.isDiscovering || state.isAdvertising) {
-                                    onBroadcastMessage(message)
+                                    onBroadcastMessage(message, onlyTies)
                                     message = ""
                                     isInputVisible = false
                                     focusManager.clearFocus()
@@ -376,12 +391,17 @@ private fun AnimatedVibeItem(
             .padding(vertical = 6.dp)
     ) {
         if (!isMe) {
-            Icon(
-                imageVector = Icons.Rounded.Person,
-                contentDescription = null,
-                tint = if (isFocused) StealthAmber else Color.White.copy(alpha = 0.6f),
-                modifier = Modifier.size(16.dp).padding(end = 12.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.05f))
+                    .padding(end = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp)
+            }
+            Spacer(modifier = Modifier.width(8.dp))
             
             Column {
                 Text(
@@ -414,12 +434,16 @@ private fun AnimatedVibeItem(
                     fontSize = 7.sp
                 )
             }
-            Icon(
-                imageVector = Icons.Rounded.Person,
-                contentDescription = null,
-                tint = StealthPrimary,
-                modifier = Modifier.size(16.dp).padding(start = 12.dp)
-            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(StealthPrimary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp)
+            }
         }
     }
 }

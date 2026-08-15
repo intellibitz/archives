@@ -5,17 +5,17 @@ import kotlinx.serialization.Serializable
 
 sealed interface Route : NavKey {
     @Serializable
-    data object Watch : Route
+    data object Crowd : Route
     
     @Serializable
-    data object Shout : Route
+    data object Energy : Route
     
     @Serializable
     data object Chat : Route
 
     @Serializable
-    data object Ties : Route
+    data object Vibes : Route
 
     @Serializable
-    data object Mask : Route
+    data object Blukit : Route
 }

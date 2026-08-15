@@ -167,7 +167,7 @@ fun RipplesField(
             
             // Center "Me" Node + Own Bubble
             Box(contentAlignment = Alignment.Center) {
-                CenterNode(localEmoji)
+                CenterNode(localEmoji, finalEnergy)
                 val myBubble = activeBubbles.findLast { it.senderId == localDeviceId }
                 val myBubbleColor = if (myBubble?.isPrivate == true) StealthRose else Color.White
                 BubbleWrapper(activeBubble = myBubble, color = myBubbleColor)
@@ -177,6 +177,7 @@ fun RipplesField(
             if (displayDevices.isNotEmpty()) {
                 VibeNodes(
                     devices = displayDevices,
+                    connectedLinks = state.connectedLinks,
                     activeBubbles = activeBubbles,
                     onDeviceClick = onDeviceClick
                 )
@@ -434,11 +435,11 @@ private fun VibesConnectivity(devices: List<P2PDevice>) {
 }
 
 @Composable
-private fun CenterNode(emoji: String) {
+private fun CenterNode(emoji: String, energy: Float) {
     val infiniteTransition = rememberInfiniteTransition(label = "Me")
     val vibeScale by infiniteTransition.animateFloat(
-        initialValue = 0.85f,
-        targetValue = 1.35f, // Even more intense
+        initialValue = 0.85f + (energy * 0.2f),
+        targetValue = 1.35f + (energy * 0.4f), 
         animationSpec = infiniteRepeatable(
             animation = tween(2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -490,16 +491,23 @@ private fun CenterNode(emoji: String) {
 }
 
 @Composable
-private fun VibeNodes(devices: List<P2PDevice>, activeBubbles: List<BubbleData>, onDeviceClick: (P2PDevice) -> Unit) {
+private fun VibeNodes(
+    devices: List<P2PDevice>, 
+    connectedLinks: Set<String>,
+    activeBubbles: List<BubbleData>, 
+    onDeviceClick: (P2PDevice) -> Unit
+) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         devices.forEachIndexed { index, device ->
             val radiusValue = (1f - device.proximityFactor) * 140f + 60f
             val angle = (index.toDouble() / devices.size) * 2 * PI
             val activeBubble = activeBubbles.findLast { it.senderId == device.id }
             val bubbleColor = if (activeBubble?.isPrivate == true) StealthRose else StealthAmber
+            val isVibed = device.id in connectedLinks
             
             VibeNode(
                 device = device, 
+                isVibed = isVibed,
                 xOffset = (radiusValue * cos(angle)).toFloat().dp, 
                 yOffset = (radiusValue * sin(angle)).toFloat().dp, 
                 activeBubble = activeBubble,
@@ -513,6 +521,7 @@ private fun VibeNodes(devices: List<P2PDevice>, activeBubbles: List<BubbleData>,
 @Composable
 private fun VibeNode(
     device: P2PDevice, 
+    isVibed: Boolean,
     xOffset: Dp, 
     yOffset: Dp, 
     activeBubble: BubbleData?, 
@@ -533,7 +542,7 @@ private fun VibeNode(
     val nodeSize = if (device.proximityFactor > 0.7f) 56.dp else 44.dp
 
     val glowAlpha by animateFloatAsState(
-        targetValue = if (device.isConnected) 0.8f else 0.2f,
+        targetValue = if (isVibed) 0.8f else 0.2f,
         animationSpec = tween(1000),
         label = "GlowAlpha"
     )
@@ -548,7 +557,7 @@ private fun VibeNode(
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            (if (device.isConnected) StealthAmber else colorForProximity(device.proximityLabel)).copy(alpha = 0.2f * glowAlpha),
+                            (if (isVibed) StealthAmber else colorForProximity(device.proximityLabel)).copy(alpha = 0.2f * glowAlpha),
                             Color.Transparent
                         )
                     ),
@@ -562,15 +571,15 @@ private fun VibeNode(
                 .size(nodeSize)
                 .clip(CircleShape)
                 .background(
-                    if (device.isConnected) {
+                    if (isVibed) {
                         Brush.linearGradient(listOf(StealthAmber, StealthRose))
                     } else {
                         Brush.linearGradient(listOf(Color(0xFF1A1D26), Color(0xFF0A0C14)))
                     }
                 )
                 .border(
-                    if (device.isConnected) 2.dp else 1.dp,
-                    if (device.isConnected) Color.White else Color.White.copy(alpha = 0.15f),
+                    if (isVibed) 2.dp else 1.dp,
+                    if (isVibed) Color.White else Color.White.copy(alpha = 0.15f),
                     CircleShape
                 )
                 .clickable { onClick() },
@@ -578,11 +587,11 @@ private fun VibeNode(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    imageVector = if (device.isConnecting) Icons.Rounded.Refresh else Icons.Rounded.Person,
+                    imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Refresh else Icons.Rounded.Person,
                     contentDescription = null,
-                    tint = if (device.isConnected) Color.Black else Color.White,
+                    tint = if (isVibed) Color.Black else if (device.isLinkPending) StealthAmber else Color.White,
                     modifier = Modifier.size((nodeSize.value / 2.2f).dp).graphicsLayer {
-                        if (device.isConnected) {
+                        if (isVibed || device.isLinkPending) {
                             scaleX = vibeScale
                             scaleY = vibeScale
                         }
