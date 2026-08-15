@@ -179,10 +179,6 @@ fun RipplesField(
                     activeBubbles = activeBubbles,
                     onDeviceClick = onDeviceClick
                 )
-            } else if (!state.isConnecting) {
-                EmptyRadarHint(onlyTies)
-            } else {
-                LoadingRadarHint(state.isConnecting)
             }
         }
     }
@@ -540,36 +536,5 @@ private fun colorForProximity(group: String): Color {
         "Close" -> Color(0xFF00FFCC)
         "Moderate" -> Color(0xFFFFE500)
         else -> Color(0xFFFF1744)
-    }
-}
-
-@Composable
-private fun EmptyRadarHint(onlyTies: Boolean) {
-    Column(
-        modifier = Modifier.padding(top = 280.dp), // Positioned well below the central vibe
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.AccountCircle, 
-            contentDescription = null,
-            tint = StealthAmber.copy(alpha = 0.3f),
-            modifier = Modifier.size(32.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = (if (onlyTies) "ROARS 0" else "CROWD 0"), 
-            style = MaterialTheme.typography.labelSmall,
-            color = StealthAmber.copy(alpha = 0.4f), 
-            fontWeight = FontWeight.Black, 
-            letterSpacing = 2.sp
-        )
-    }
-}
-
-@Composable
-private fun LoadingRadarHint(isConnecting: Boolean) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        CircularProgressIndicator(modifier = Modifier.size(32.dp), color = StealthAmber, strokeWidth = 2.dp)
-        Text(text = (if (isConnecting) "PROXIMITY…" else "VIBES…"), style = MaterialTheme.typography.labelSmall, color = StealthAmber, modifier = Modifier.padding(top = 12.dp), letterSpacing = 2.sp)
     }
 }

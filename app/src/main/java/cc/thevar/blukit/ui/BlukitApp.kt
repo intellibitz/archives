@@ -409,16 +409,40 @@ fun UnifiedBlukitBadge(
                     }
                     
                     if (statusText != null) {
-                        Text(
-                            text = statusText.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 7.sp,
-                                fontWeight = FontWeight.Black,
-                                color = if (airIsStill) Color.Red else StealthPrimary,
-                                letterSpacing = 0.5.sp
-                            ),
-                            modifier = Modifier.padding(bottom = 2.dp)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = statusText.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (airIsStill) Color.Red else StealthPrimary,
+                                    letterSpacing = 0.5.sp
+                                ),
+                                modifier = Modifier.padding(bottom = 2.dp)
+                            )
+                            
+                            if (incomingLinkRequests.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        "VIBE",
+                                        color = StealthPrimary,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 8.sp,
+                                        modifier = Modifier
+                                            .testTag("AcceptLinkButton")
+                                            .clickable { onAcceptLink(incomingLinkRequests.first()) }
+                                    )
+                                    Text(
+                                        "IGNORE",
+                                        color = Color.White.copy(alpha = 0.3f),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 8.sp,
+                                        modifier = Modifier.clickable { onDenyLink(incomingLinkRequests.first()) }
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     // Center: Intelligence Stats (Super Intelligent Hub)
@@ -440,7 +464,16 @@ fun UnifiedBlukitBadge(
                     // Branding Section
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "HEAR THE CROWD ROAR",
+                            text = "BLUKIT IS CROWD ENERGY",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White.copy(alpha = 0.3f),
+                                letterSpacing = 0.5.sp
+                            )
+                        )
+                        Text(
+                            text = "SPREAD VIBES TO HEAR CROWDS ROAR",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 6.sp,
                                 fontWeight = FontWeight.Black,
@@ -820,12 +853,14 @@ private fun MagicBarContent(
 
     val isStill = isBluetoothOff || isLocationOff || isPermissionMissing
     val hasRequests = incomingRequests.isNotEmpty()
+    
+    // Feedback 4: High-visibility Red background for alerts
     val barColor = if (isStill) Color.Red else StealthPrimary
 
     Surface(
-        color = barColor.copy(alpha = if (isStill) 0.15f else 0.05f),
+        color = if (isStill) Color.Red else StealthPrimary.copy(alpha = 0.05f),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(0.5.dp, barColor.copy(alpha = 0.3f)),
+        border = BorderStroke(0.5.dp, if (isStill) Color.White.copy(alpha = 0.5f) else barColor.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
@@ -867,65 +902,19 @@ private fun MagicBarContent(
 
                     if (action != null) {
                         Text(
-                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else "TURN ON",
+                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else "ENABLE RADIOS",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
+                                color = if (isStill) Color.White else Color.Black
                             ),
                             modifier = Modifier
                                 .graphicsLayer { alpha = pulseAlpha }
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(Color.Red)
+                                .background(if (isStill) Color.White.copy(alpha = 0.2f) else Color.Red)
                                 .clickable { action() }
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         )
-                    }
-                }
-            }
-            
-            val alertText = when {
-                hasRequests -> "NEW VIBE REQUEST"
-                isPermissionMissing -> "PERMISSIONS REQUIRED"
-                isBluetoothOff -> "BLUETOOTH OFF"
-                isLocationOff -> "LOCATION OFF"
-                isWifiOff -> "WIFI OFF"
-                else -> null
-            }
-
-            if (alertText != null) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = alertText,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            lineHeight = 10.sp
-                        ),
-                        color = Color.White,
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    if (hasRequests) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                "VIBE",
-                                color = StealthPrimary,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 8.sp,
-                                modifier = Modifier
-                                    .testTag("AcceptLinkButton")
-                                    .clickable { onAcceptLink(incomingRequests.first()) }
-                            )
-                            Text(
-                                "IGNORE",
-                                color = Color.White.copy(alpha = 0.3f),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 8.sp,
-                                modifier = Modifier.clickable { onDenyLink(incomingRequests.first()) }
-                            )
-                        }
                     }
                 }
             }
