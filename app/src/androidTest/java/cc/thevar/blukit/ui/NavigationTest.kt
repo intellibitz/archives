@@ -53,20 +53,20 @@ class NavigationTest {
     fun testBottomNavigation() {
         startApp()
         
-        // 1. Initial State - Spread the vibes
-        composeTestRule.onNodeWithText("SPREAD THE VIBES").assertIsDisplayed()
+        // 1. Initial State - Spread vibes
+        composeTestRule.onNodeWithText("SPREAD VIBES").assertIsDisplayed()
 
         // 2. Expand Hub
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
 
-        // 3. Ties (YOUR TIES) - Click Ties stat row in expanded hub
+        // 3. Proximity (YOUR PROXIMITY) - Click Proximity stat row in expanded hub
         composeTestRule.onNodeWithTag("TiesStat").performClick()
-        composeTestRule.onNodeWithText("NO TIES FOUND…", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("VIBES STILL…", substring = true).assertIsDisplayed()
         
         // 4. Back to Vibes - Click Branding Section then Vibes stat
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
         composeTestRule.onNodeWithTag("VibesStat").performClick()
-        composeTestRule.onNodeWithText("SPREAD THE VIBES").assertIsDisplayed()
+        composeTestRule.onNodeWithText("SPREAD VIBES").assertIsDisplayed()
     }
 
     private fun startApp() {

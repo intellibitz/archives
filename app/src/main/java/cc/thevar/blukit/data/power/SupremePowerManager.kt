@@ -80,7 +80,7 @@ class SupremePowerManager(
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("A new voice joined The Vibes")
+                if (new > old) emitBreeze("VIBE PROXIMITY")
             }.launchIn(scope)
 
         // Link Formed
@@ -89,7 +89,7 @@ class SupremePowerManager(
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("A new link has been established")
+                if (new > old) emitBreeze("CROWD ENERGY")
             }.launchIn(scope)
 
         // Messages Relayed
@@ -98,7 +98,7 @@ class SupremePowerManager(
                 if (msgs.isNotEmpty()) {
                     val last = msgs.last()
                     if (System.currentTimeMillis() - last.timestamp < 1000) {
-                        emitBreeze("Vibe relayed through the web")
+                        emitBreeze("VIBE ROAR")
                     }
                 }
             }.launchIn(scope)
@@ -115,12 +115,12 @@ class SupremePowerManager(
 
     private fun generateAiInsight(users: Int, links: Int, msgs: Int, harmony: Float): String {
         return when {
-            users == 0 -> "Listening for the vibes..."
-            harmony < 0.3f -> "The connection is light. Vibes may take time to travel."
-            users > 10 && harmony > 0.8f -> "The atmosphere is vibrant. Everyone is in sync."
-            links == 0 && users > 0 -> "Vibes are near. Wave to bridge a link."
-            msgs > 100 -> "The collective pulse is strong. Our invisible network is active."
-            else -> "The vibes are steady. Watching for new voices."
+            users == 0 -> "VIBES PROXIMITY"
+            harmony < 0.3f -> "CROWD ENERGY PROXIMITY"
+            users > 10 && harmony > 0.8f -> "CROWD ROAR"
+            links == 0 && users > 0 -> "CROWD ENERGY"
+            msgs > 100 -> "BLUKIT ROAR"
+            else -> "VIBES ENERGY"
         }
     }
 }

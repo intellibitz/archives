@@ -71,8 +71,7 @@ data class VibeRipple(
 )
 
 /**
- * The Air: A high-fidelity vibe visualization for projected displays.
- * Animates vibe relays, atmospheric ripples, and peer-specific vibes.
+ * BLUKIT: ENERGY PROXIMITY.
  */
 @Composable
 fun RipplesField(
@@ -557,7 +556,7 @@ private fun VibeNode(device: P2PDevice, xOffset: Dp, yOffset: Dp, activeBubble: 
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    imageVector = if (device.isConnecting) Icons.Rounded.HourglassEmpty else Icons.Rounded.Person,
+                    imageVector = if (device.isConnecting) Icons.Rounded.Refresh else Icons.Rounded.Person,
                     contentDescription = null,
                     tint = if (device.isConnected) Color.Black else Color.White,
                     modifier = Modifier.size((nodeSize.value / 2.2f).dp).graphicsLayer {
@@ -596,14 +595,14 @@ private fun EmptyRadarHint(onlyTies: Boolean) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.Rounded.Diversity3, 
+            imageVector = Icons.Rounded.AccountCircle, 
             contentDescription = null,
             tint = StealthAmber.copy(alpha = 0.3f),
             modifier = Modifier.size(32.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = (if (onlyTies) "NO TIES FOUND…" else stringResource(R.string.shout_empty_radar)).uppercase(), 
+            text = (if (onlyTies) "VIBES STILL…" else stringResource(R.string.shout_empty_radar)).uppercase(), 
             style = MaterialTheme.typography.labelSmall,
             color = StealthAmber.copy(alpha = 0.4f), 
             fontWeight = FontWeight.Black, 
@@ -616,6 +615,6 @@ private fun EmptyRadarHint(onlyTies: Boolean) {
 private fun LoadingRadarHint(isConnecting: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         CircularProgressIndicator(modifier = Modifier.size(32.dp), color = StealthAmber, strokeWidth = 2.dp)
-        Text(text = (if (isConnecting) "BRIDGING…" else "SYNCING THE VIBES…"), style = MaterialTheme.typography.labelSmall, color = StealthAmber, modifier = Modifier.padding(top = 12.dp), letterSpacing = 2.sp)
+        Text(text = (if (isConnecting) "PROXIMITY…" else "VIBES…"), style = MaterialTheme.typography.labelSmall, color = StealthAmber, modifier = Modifier.padding(top = 12.dp), letterSpacing = 2.sp)
     }
 }

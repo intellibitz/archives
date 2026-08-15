@@ -76,8 +76,10 @@ class SupremePowerTest {
             composeTestRule.onAllNodesWithTag("IntelSection", useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("VOICES", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("CROWD", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("10", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNode(hasText("PROXIMITY") and hasAnyAncestor(hasTestTag("IntelSection")), useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("2", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("THE VIBES ARE HEALTHY", substring = true, ignoreCase = true, useUnmergedTree = true).assertIsDisplayed() 
 
         // Click to collapse

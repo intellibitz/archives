@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.Forum
-import androidx.compose.material.icons.rounded.PictureInPicture
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -123,8 +123,8 @@ fun StatusOverlay(
         modifier = modifier.padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        StatusItem("AIR", isBluetoothEnabled)
-        StatusItem("VIBE", isDiscovering)
+        StatusItem("ENERGY", isBluetoothEnabled)
+        StatusItem("VIBES", isDiscovering)
     }
 }
 
@@ -152,7 +152,7 @@ fun BlukitInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
-    placeholder: String = "SEND VIBES...",
+    placeholder: String = "SPREAD VIBES...",
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -223,7 +223,7 @@ fun BlukitInput(
                     .semantics { contentDescription = "Send" }
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Groups,
+                    imageVector = Icons.Rounded.AccountCircle,
                     contentDescription = null,
                     tint = if (value.isNotBlank()) Color.Black else StealthPrimary,
                     modifier = Modifier

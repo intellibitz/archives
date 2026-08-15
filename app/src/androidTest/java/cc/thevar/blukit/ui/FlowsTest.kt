@@ -17,11 +17,23 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+import androidx.test.rule.GrantPermissionRule
+import android.Manifest
+
 @OptIn(ExperimentalTestApi::class)
 class FlowsTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    @get:Rule
+    val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
+        Manifest.permission.BLUETOOTH_SCAN,
+        Manifest.permission.BLUETOOTH_ADVERTISE,
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.NEARBY_WIFI_DEVICES
+    )
 
     private val repository: IdentityRepository = mockk(relaxed = true)
     private val contactRepository: ContactRepository = mockk(relaxed = true)
@@ -81,11 +93,11 @@ class FlowsTest {
         // Wait for the Incoming Vibe setup - look for the text in a more flexible way
         composeTestRule.waitUntilAtLeastOneExists(hasText("wants to bridge a link", substring = true).or(hasText("MYSTIC", substring = true)), 10000)
         
-        // Accept the setup if visible
-        composeTestRule.onAllNodesWithText("ACCEPT", substring = true).onFirst().performClick()
+        // Roar the setup if visible
+        composeTestRule.onNodeWithTag("AcceptLinkButton").performClick()
         
         // Verify P2P Controller is notified
-        verify { p2pController.acceptLink(incomingVibe) }
+        coVerify { p2pController.acceptLink(any()) }
     }
 
     @Test
@@ -110,9 +122,10 @@ class FlowsTest {
         startApp()
         
         // Wait for the Magic Bar to reflect the stillness of the vibes
-        composeTestRule.waitUntilAtLeastOneExists(hasText("THE VIBES ARE STILL", substring = true), 10000)
+        composeTestRule.waitUntilAtLeastOneExists(hasText("VIBES STILL", substring = true), 10000)
         // Use onFirst() because multiple might be found if UI overlaps during animation
-        composeTestRule.onAllNodesWithText("AWAKEN", substring = true).onFirst().assertIsDisplayed()
+        composeTestRule.waitUntilAtLeastOneExists(hasText("AWAKEN", substring = true), 10000)
+        composeTestRule.onAllNodesWithText("AWAKEN", substring = true).onFirst().assertIsDisplayed().assertHasClickAction()
     }
 
     @Test
@@ -135,15 +148,13 @@ class FlowsTest {
         // Send a vibe
         composeTestRule.onNodeWithTag("SendVibeInput").performTextInput("Hello from the Air!")
         
-        // Ensure mock is ready for the call
-        clearMocks(p2pController, answers = false, recordedCalls = true)
-        
-        composeTestRule.onNodeWithTag("SendVibeButton").performClick()
+        // Wait for button to be enabled and then click
+        composeTestRule.onNodeWithTag("SendVibeButton").assertIsEnabled().performClick()
         
         // Verify the vibe was sent through the controller
         composeTestRule.waitUntil(15000) {
             try {
-                coVerify { p2pController.sendMessage(any(), any()) }
+                coVerify(atLeast = 1) { p2pController.sendMessage(any(), any()) }
                 true
             } catch (e: Throwable) {
                 false

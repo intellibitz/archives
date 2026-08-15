@@ -11,7 +11,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.PictureInPicture
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -116,7 +116,7 @@ fun TieScreen(
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
                 }
                 IconButton(onClick = onEnterPip) {
-                    Icon(Icons.Rounded.PictureInPicture, contentDescription = "PiP", tint = Color.White)
+                    Icon(Icons.Rounded.Info, contentDescription = "PiP", tint = Color.White)
                 }
                 IconButton(onClick = onDisconnect) {
                     Icon(Icons.Rounded.Close, contentDescription = "Disconnect", tint = Color.White)
@@ -157,7 +157,7 @@ fun TieScreen(
                         focusManager.clearFocus()
                     }
                 },
-                placeholder = "SEND VIBES..."
+                placeholder = "SPREAD VIBES..."
             )
         }
     }

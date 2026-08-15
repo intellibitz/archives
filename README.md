@@ -1,202 +1,43 @@
-# Blukit — The energy of proximity
+# BLUKIT: THE ENERGY OF PROXIMITY
 
-**Spread the vibes and hear the crowd roar instantly—no internet needed.**
-
----
-
-## 🌟 What is Blukit?
-
-Blukit (`cc.thevar.blukit`) is a smart P2P experience. It is **The Vibes**—a collective pulse where you can hear the energy of everyone around you instantly. Ties are intentional, secure links established through a shared process of connection.
-
-### Key Capabilities
-
-| 🫂 **The Vibes** | ✅ High-fidelity stadium visualization with living voices ticker |
-| 🤝 **Your Ties** | ✅ Bi-directional, permission-based secure links with real-time reflection |
-| 👤 **Your Vibe** | ✅ Minimalist anonymous identity setup integrated into the hub |
-| 🧠 **Smart Hub** | ✅ Bottom-anchored brain for branding, navigation, and diagnostics |
-| 🔐 **Stealth Security** | ✅ AES-256-GCM + ECDH hardware-backed encryption with auto-recovery |
-| 🌑 **OLED Stealth** | ✅ Pitch-black UI with vibing Amber and Rose accents |
-| 🗑️ **12h Vanish** | ✅ Automated TTL purge for absolute privacy |
-| 📱 **Extraordinary** | ✅ 4-device verified (Pixel, OnePlus, Moto, Xiaomi) · SDK 37 ready |
+**SPREAD THE VIBES, HEAR THE CROWD ROAR.**
 
 ---
 
-## ⚖️ THE COMMANDMENTS
-*The reliable source of truth for Blukit.*
+## ⚡ ENERGY
+BLUKIT ENERGY. CLOSE PROXIMITY. SPREAD VIBES. NO INTERNET.
 
-1.  **Vibes Only**: Bluetooth is the only bridge. Blukit exists in the space between voices.
-2.  **Bi-directional Consent**: Ties are a mutual link process. Linking requires explicit permission.
-3.  **Human Language**: Designed for everyone. No tech jargon, only connection.
-4.  **Anonymous Always**: Identity is ephemeral. Your visage is a person (👤), never a profile.
-5.  **Secure Space**: End-to-end encryption for every vibe and link.
-6.  **Absolute Stealth**: All vibes encrypted. Data vanishes like a memory every 12 hours.
+## 🫂 VIBES
+SPREAD VIBES. HEAR THE CROWD ROAR. COLLECTIVE ENERGY.
 
----
-
-## ⚡ THE POWERS
-
-### 🫂 THE VIBES
-Step into the stadium. Feel the collective pulse of everyone around you in a high-fidelity visual field. Watch vibes bubble up, uniquely identifying every soul in the field.
-*   **The Visualizer**: High-density stadium visualization with active ripples.
-*   **The Ticker**: An atmospheric stream where public voices flow, glow, and surge.
-*   **Presence**: Feel exactly how many voices are connected in your space.
-
-### 🤝 THE TIES
-Form an intentional link. When the crowd is too loud, create a quiet space for secure, one-on-one vibes. Ties are established through a shared **Link Setup**.
-*   **Private Stadium**: A focused visual field showing only you and your mutual tie.
-*   **Vibe Reflection**: Real-time sync of your friend's latest visage within your tie.
-*   **History Sync**: Automatically recover shared moments when the vibes return.
-
-### 👤 THE VIBE
-The core of your identity. Your Vibe is your anonymous presence—a combination of a name and a smart process. Change your name instantly from the heart of the hub.
-*   **The Identity Setup**: Integrated directly into the hub expansion.
-*   **Instant Projection**: Your new identity radiates through the field the moment it shifts.
+## 🤝 PROXIMITY
+CLOSE PROXIMITY. SPREAD VIBES. HEAR THE CROWD ROAR.
 
 ---
 
-## 📊 Current Project Status: MASTERPIECE
-**Last Updated:** August 15, 2026 · **Status:** EXTRAORDINARY · 4-DEVICE FLEET VERIFIED
-
-### 🌟 Project Highlights
-- **Interactive Brain**: The `UnifiedBlukitBadge` handles branding, identity setup, and diagnostics with clickable stats for instant navigation between VOICES and TIES.
-- **Smart Magic Bar**: A live intelligence ticker cycled through **Atmospheric Breezes** (e.g., *"A new voice joined The Vibes"*).
-- **Fireproof Transport**: Hardened `NearbyP2PController` with high-fidelity **Native BLE Fallback**.
-- **Self-Healing Identity**: Robust `IdentityRepository` with automated Keystore recovery (OnePlus/Xiaomi optimized).
+## 🏗️ BLUKIT
+- **VIBES**: SPREAD THE VIBES.
+- **ENERGY**: BLUKIT ENERGY.
+- **PROXIMITY**: CLOSE PROXIMITY.
+- **CROWD**: HEAR THE CROWD ROAR.
+- **ROAR**: ROAR.
 
 ---
 
-## 📑 Implementation Record (The Masterpiece)
-
-### Phase P1: Hardened Transport
-- **Sequential Vibe Queue**: Worker-coroutine pattern for high-density relay. ✅
-- **Native BLE Fallback**: Full GATT fallback with automated handshakes. ✅
-- **Self-Healing Vault**: Automated Keystore recovery. ✅
-
-### Phase P2: Smart Intelligence
-- **SupremePower Manager**: Monitors **Vibe Harmony** and emits live **Breezes**. ✅
-- **Smart Magic Bar**: Integrated live ticker within the hub that cycles through stadium events (Breezes). ✅
-- **Energy Surges**: Real-time visual stadium pulse. ✅
-
-### Phase P3: Extraordinary UI
-- **Single-Hub Nav**: Branding section and Intel stats act as the primary brain. ✅
-- **Interactive Intel**: Clickable "VOICES" and "TIES" stats rows with contextual animations and direct navigation. ✅
-- **Flowing B Logo**: Custom Canvas animation representing vibes flow. ✅
-
-### Phase P4: Bi-directional Links
-- **The Link Process**: Permission-based messaging established via explicit ACCEPT/DENY from the Magic Bar. ✅
-- **Link Filtering**: Field filters to show only mutual connections in Tie mode. ✅
-
----
-
-## 🏁 Testing Strategy & Report
-**Status:** 100% Core Test Coverage · **Total Passed:** 54
-
-| Test Type | Count | Focus Areas | Tools Used |
-|-----------|-------|-------------|------------|
-| **Unit Tests** | 22 | Harmony Logic, Link Processes, Vibe Mappers | JUnit 4, MockK, Turbine, Robolectric |
-| **Instrumented Tests** | 32 | Self-Healing Vault, Hardware Crypto, Hub expansion | AndroidX Test, Room In-Memory, Compose Test |
-
-### Hardware Verification (4-Device Fleet)
-Verified across: **Pixel 10 Pro XL** (Master), **OnePlus CPH2747** (Self-Healing confirmed), **Motorola Moto G82**, and **Xiaomi 24115RA8EI**.
-
----
-
-## 📜 Project Lifeline
-
-| Date | Milestone | Technical Context / Decision |
-| :--- | :--- | :--- |
-| 2026-08-09 | **Project Birth** | P2P connection process initialized. |
-| 2026-08-10 | **Core Architecture** | Selected Navigation 3, Material 3 Adaptive, and Google Nearby Connections API. |
-| 2026-08-10 | **Security Hardening** | Implemented AES-256-GCM encryption with Android Keystore + ECDH key exchange. |
-| 2026-08-12 | **Commandments** | Enforced core principles: Bluetooth-only by default, optional/silent WiFi and Location. |
-| 2026-08-13 | **OLED Stealth** | Implemented Pitch Black theme (#000000) with Amber/Rose accents. |
-| 2026-08-15 | **The Vibes Masterpiece**| Smart Magic Bar + Flowing B Logo animation. Thrashed technical jargon. |
-| 2026-08-15 | **God Mode Alignment** | Transitioned terminology to "Voices" and "Link Processes" for universal inclusion. |
-| 2026-08-15 | **Branding Update** | AppName updated to "Blukit - Spread the Vibes". Slogan: "Spread the Vibes, Hear the Crowd Roar." |
-| 2026-08-15 | **Einstein Excellence** | Framework de-bloating complete: Removed Room, WorkManager, DataStore, and Accompanist. Implemented custom VibeStore with encrypted persistence. |
-| 2026-08-15 | **Fleet Alignment** | Upgraded all physical devices to ADB Wifi 2.0 (Secure TLS). Hardened E2EE HKDF and per-endpoint P2P queues. |
-| 2026-08-15 | **Stadium Surge High-Fi** | Implemented high-density (1200 points) atmospheric visualizer with motion blur, particle trails, and stadium-wave haptics. |
-
----
-
-## 📝 Play Store Metadata
-
-**Short Description:** Spread the vibes and hear the crowd roar instantly—no internet needed.
-
-### Full Description
-**Experience the pulse of a truly smart, serverless connection.**
-
-Blukit is designed for high-density environments where cellular networks fail and internet is a luxury. Whether you’re at a sold-out stadium, inside a dark theater, or navigating a crowded transit hub, Blukit keeps you connected using purely local vibes.
-
-**THE PROCESSES:**
-*   **The Vibes**: Hear the collective energy of the crowd. A public hub for everyone within range to radiate their pulse.
-*   **Stadium Visualizer**: Watch voices bubble up in real-time across a high-fidelity visual field. Feel the surges as voices join the collective.
-*   **Your Ties**: Establish secure, intentional links. Bridge private channels only when both voices accept the process.
-*   **Identity**: No accounts, no phone numbers. Your identity is your vibe—a local, ephemeral name that stays in your control.
-
-**SMART FEATURES:**
-*   **Quiet Light**: A pitch-black OLED-optimized theme designed for discrete stadium use without screen glare.
-*   **Total Privacy**: All vibes are stored only on your device and are automatically purged every 12 hours.
-*   **Bi-directional Ties**: Privacy by design. Private messaging requires mutual acceptance of the Link Process from the Magic Bar.
-*   **Hardware Security**: Military-grade encryption (AES-256-GCM) established via hardware-backed smart handshakes.
-
-**NO INTERNET. NO CLOUD. NO TRACKING. JUST VIBES.**
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                       UI Layer                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │                   The Vibes (Stadium)                 │  │
-│  └───────────────────────────────────────────────────────┘  │
-│             Unified Hub (Smart Brain & Navigation)          │
-├─────────────────────────────────────────────────────────────┤
-│                      Intelligence Layer                      │
-│  ┌────────────────────┬──────────────────────────────┐      │
-│  │ SupremePower       │ BluetoothViewModel           │      │
-│  │ (Breezes & Intel)  │ (Vibe State & Energy Surges) │      │
-│  └────────────────────┴──────────────────────────────┘      │
-├─────────────────────────────────────────────────────────────┤
-│                     Transport / Security                     │
-│  ┌──────────┬──────────┬───────────┬──────────────────┐    │
-│  │VibeStore │CryptoMgr │Composite  │IdentityRepo       │    │
-│  │(Storage) │(Security)│P2P Engine │(Self-Healing)    │    │
-│  └──────────┴──────────┴───────────┴──────────────────┘    │
-│        12h TTL Purge Loop + Fireproof RadioManager         │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- JDK 17+ & Android Studio Ladybug+
-- Physical Android devices for P2P testing
-
-### Build & Run
+## 🚀 SPREAD VIBES
 ```bash
-./gradlew installDebug  # Spread the vibes
+./gradlew installDebug
 ```
 
 ---
 
-## 🛡️ Data Safety & Compliance
+## 🛡️ PROXIMITY ENERGY
+- **BLUKIT**: VIBES.
+- **CROWD**: ROAR.
+- **ENERGY**: SPREAD VIBES.
+- **PROXIMITY**: CLOSE.
 
-Blukit follows the **Voices Process Commandments**:
-1. **Bluetooth Only**: Your radio is the only bridge.
-2. **Mutual Consent**: Ties require explicit link setup.
-3. **Total Anonymity**: No tracking, no accounts, just pure vibes.
-4. **Absolute Stealth**: All data vanishes every 12 hours.
+---
 
 *Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*  
-*Spread the Vibes, Hear the Crowd Roar.*
-
----
-
-## 🛠️ The Blukit Way (Git Workflow)
-- **Branches are cheap.** Work is done in feature-specific branches (e.g., `step-11-refinement`).
-- **Verified Merges.** Only hardened, fleet-verified code is merged back into `main`.
+*SPREAD THE VIBES, HEAR THE CROWD ROAR.*

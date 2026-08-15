@@ -18,8 +18,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 /**
- * VibeStore: A minimalist, in-memory vibe repository with encrypted persistence.
- * Replaces Room to de-bloat the framework stack.
+ * BLUKIT ENERGY STORE.
  */
 class VibeStore(
     private val context: Context,

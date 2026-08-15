@@ -1,64 +1,63 @@
 <resources>
     <string name="app_name">Blukit - The energy of proximity</string>
 
-    <!-- Navigation Labels (The Powers) -->
-    <string name="nav_watch">Vibes</string>
-    <string name="nav_shout">Air</string>
-    <string name="nav_whispers">Ties</string>
-    <string name="nav_mask">Vibe</string>
+    <string name="nav_watch">VIBES</string>
+    <string name="nav_shout">ENERGY</string>
+    <string name="nav_whispers">PROXIMITY</string>
+    <string name="nav_mask">BLUKIT</string>
 
     <!-- Vibes Screen (The Gathering) -->
-    <string name="watch_title">The Vibes</string>
-    <string name="watch_broadcast_desc">%1$d vibes radiating nearby</string>
-    <string name="watch_welcome_title">Spread the Vibes!</string>
-    <string name="watch_welcome_desc">This is the collective pulse of everyone around you. Spread the vibes, and hear the crowd roar.</string>
+    <string name="watch_title">VIBES</string>
+    <string name="watch_broadcast_desc">%1$d VIBES NEARBY</string>
+    <string name="watch_welcome_title">SPREAD THE VIBES</string>
+    <string name="watch_welcome_desc">SPREAD THE VIBES. HEAR THE CROWD ROAR. BLUKIT ENERGY IN CLOSE PROXIMITY.</string>
     <string name="watch_empty_hint">Start the vibe below!</string>
 
     <!-- Ripples Screen (Presence) -->
-    <string name="shout_title">THE VIBES</string>
-    <string name="shout_radar_subtitle">Spread the Vibes</string>
-    <string name="shout_make_visible">Join the Vibes</string>
-    <string name="shout_type_placeholder">Send a vibe to everyone…</string>
-    <string name="shout_empty_radar">Waiting for the vibes…</string>
-    <string name="shout_scan_hint">Feeling the vibes…</string>
+    <string name="shout_title">VIBES</string>
+    <string name="shout_radar_subtitle">CROWD ENERGY</string>
+    <string name="shout_make_visible">SPREAD THE VIBES</string>
+    <string name="shout_type_placeholder">VIBES…</string>
+    <string name="shout_empty_radar">HEAR THE CROWD ROAR…</string>
+    <string name="shout_scan_hint">VIBES PROXIMITY…</string>
 
     <!-- Ties Screen (Private History) -->
-    <string name="whispers_title">Ties</string>
-    <string name="whispers_empty_hint">No ties yet. Find a vibe in the field to connect!</string>
-    <string name="whispers_last_seen">Last seen: %1$s</string>
-    <string name="whispers_label">Connected privately</string>
+    <string name="whispers_title">PROXIMITY</string>
+    <string name="whispers_empty_hint">SPREAD VIBES. HEAR THE CROWD ROAR.</string>
+    <string name="whispers_last_seen">ROAR: %1$s</string>
+    <string name="whispers_label">PROXIMITY</string>
 
     <!-- Vibe Screen (Persona) -->
-    <string name="mask_title">Vibe</string>
-    <string name="mask_nickname_label">YOUR NAME</string>
-    <string name="mask_stealth_mode">QUIET LIGHT</string>
-    <string name="mask_stealth_desc">GENTLE STADIUM GLOW</string>
-    <string name="mask_start_exploring">JOIN THE VIBES</string>
-    <string name="mask_clear_whispers">FORGET TIES</string>
-    <string name="mask_reset_profile">NEW IDENTITY</string>
+    <string name="mask_title">BLUKIT</string>
+    <string name="mask_nickname_label">VIBE</string>
+    <string name="mask_stealth_mode">ENERGY</string>
+    <string name="mask_stealth_desc">PROXIMITY</string>
+    <string name="mask_start_exploring">SPREAD VIBES</string>
+    <string name="mask_clear_whispers">CLEAR PROXIMITY</string>
+    <string name="mask_reset_profile">NEW BLUKIT</string>
 
     <!-- Confirmation Dialogs -->
-    <string name="conf_delete_whispers_title">FORGET ALL TIES?</string>
-    <string name="conf_delete_whispers_desc">THIS WILL PERMANENTLY REMOVE YOUR PRIVATE TIES AND HISTORY.</string>
-    <string name="conf_reset_identity_title">NEW IDENTITY?</string>
-    <string name="conf_reset_identity_desc">THIS WILL CLEAR YOUR LOCAL PROFILE.</string>
-    <string name="conf_delete_btn">REMOVE</string>
+    <string name="conf_delete_whispers_title">CLEAR PROXIMITY?</string>
+    <string name="conf_delete_whispers_desc">CLEAR PROXIMITY ENERGY.</string>
+    <string name="conf_reset_identity_title">NEW BLUKIT?</string>
+    <string name="conf_reset_identity_desc">RESET BLUKIT VIBES.</string>
+    <string name="conf_delete_btn">CLEAR</string>
     <string name="conf_reset_btn">RESET</string>
 
     <!-- Technical/System -->
-    <string name="permission_title">Device Access</string>
-    <string name="permission_desc">Blukit uses radios to find and talk to people around you without needing the internet.</string>
-    <string name="permission_grant">Allow Access</string>
-    <string name="radio_warning_bluetooth">The vibes are quiet.</string>
-    <string name="radio_warning_required">To feel the crowd, your radios must be awake.</string>
+    <string name="permission_title">BLUKIT</string>
+    <string name="permission_desc">BLUKIT PROXIMITY ENERGY.</string>
+    <string name="permission_grant">SPREAD VIBES</string>
+    <string name="radio_warning_bluetooth">VIBES STILL.</string>
+    <string name="radio_warning_required">BLUKIT ENERGY REQUIRED.</string>
     <string name="radio_enable_btn">AWAKEN</string>
-    <string name="anonymous">vibe</string>
-    <string name="error_connection_failed">Could not tie: %1$s</string>
+    <string name="anonymous">VIBE</string>
+    <string name="error_connection_failed">PROXIMITY FAIL: %1$s</string>
 
     <!-- Smart Flow -->
-    <string name="smart_flow_title">Spread the Vibes?</string>
-    <string name="smart_flow_desc">To spread the vibes to people around you, Blukit needs to use the air. This lets your device join the invisible circle.</string>
-    <string name="smart_flow_action">Spread the Vibes</string>
+    <string name="smart_flow_title">SPREAD VIBES?</string>
+    <string name="smart_flow_desc">SPREAD VIBES. HEAR THE CROWD ROAR. PROXIMITY ENERGY.</string>
+    <string name="smart_flow_action">SPREAD VIBES</string>
 
     <!-- Shared UI -->
     <string name="btn_send">Send</string>

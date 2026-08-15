@@ -18,9 +18,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Diversity3
+import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -52,7 +52,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Ripples Screen: Seeing the ripples of souls around you.
+ * VIBES: CROWD ENERGY.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -261,20 +261,20 @@ private fun VibingVibesTicker(
         if (vibes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "THE VIBES ARE QUIET",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = StealthAmber.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp
-                    )
-                    Text(
-                        text = "WAITING FOR THE VIBES",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.4f),
-                        fontSize = 8.sp,
-                        letterSpacing = 1.sp
-                    )
+                Text(
+                    text = "VIBES STILL",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = StealthAmber.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.sp
+                )
+                Text(
+                    text = "VIBES PROXIMITY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.4f),
+                    fontSize = 8.sp,
+                    letterSpacing = 1.sp
+                )
                 }
             }
         } else {
@@ -327,7 +327,7 @@ private fun VibingVibesTicker(
                         .shadow(12.dp, CircleShape)
                 ) {
                     Icon(
-                        Icons.Rounded.Forum, 
+                        Icons.Rounded.Email, 
                         contentDescription = null, 
                         tint = Color.Black,
                         modifier = Modifier.size(24.dp)

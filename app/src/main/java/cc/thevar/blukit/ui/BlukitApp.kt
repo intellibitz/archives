@@ -127,7 +127,7 @@ fun BlukitApp(
     val context = LocalContext.current
     
     val viewModel: MainViewModel = viewModel(
-        factory = remember(repository, vibeStore) {
+        factory = remember {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return MainViewModel(repository, vibeStore) as T
@@ -136,7 +136,7 @@ fun BlukitApp(
         }
     )
     val bluetoothViewModel: BluetoothViewModel = viewModel(
-        factory = remember(p2pController, radioStateManager) {
+        factory = remember {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return BluetoothViewModel(p2pController, radioStateManager) as T
@@ -145,7 +145,7 @@ fun BlukitApp(
         }
     )
     val supremePowerViewModel: SupremePowerViewModel = viewModel(
-        factory = remember(supremePowerManager) {
+        factory = remember {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return SupremePowerViewModel(supremePowerManager) as T
@@ -167,7 +167,7 @@ fun BlukitApp(
     LaunchedEffect(bluetoothState.uiError) {
         bluetoothState.uiError?.let { error ->
             val message = when (error) {
-                is UiError.SecureChannelFailed -> "SECURITY BREACH: ${error.message.uppercase()}"
+                is UiError.SecureChannelFailed -> "ROAR FAIL: ${error.message.uppercase()}"
                 else -> error.message.uppercase()
             }
             snackbarHostState.showSnackbar(
@@ -268,10 +268,10 @@ fun BlukitApp(
         )
 
         val globalSubtitle = when {
-            bluetoothState.connectedLinks.isNotEmpty() -> "${bluetoothState.connectedLinks.size} TIED TOGETHER"
-            bluetoothState.connectionState is AirConnectionState.Scanning -> "FEELING THE VIBES..."
-            bluetoothState.connectionState is AirConnectionState.Connecting -> "BRIDGING THE DISTANCE..."
-            else -> "SPREAD THE VIBES"
+            bluetoothState.connectedLinks.isNotEmpty() -> "PROXIMITY: ${bluetoothState.connectedLinks.size}"
+            bluetoothState.connectionState is AirConnectionState.Scanning -> "VIBES PROXIMITY…"
+            bluetoothState.connectionState is AirConnectionState.Connecting -> "ENERGY PROXIMITY…"
+            else -> "SPREAD VIBES"
         }
 
         UnifiedBlukitBadge(
@@ -322,11 +322,11 @@ fun BlukitApp(
                 containerColor = Color.Black,
                 titleContentColor = StealthPrimary,
                 textContentColor = Color.White.copy(alpha = 0.7f),
-                title = { Text("UNINTERRUPTED VIBES", fontWeight = FontWeight.Black) },
-                text = { Text("To hear the crowd and spread your vibe without the internet, Blukit needs to use your device's radios.", fontSize = 12.sp) },
+                title = { Text("BLUKIT ENERGY", fontWeight = FontWeight.Black) },
+                text = { Text("SPREAD VIBES. HEAR THE CROWD ROAR. PROXIMITY ENERGY.", fontSize = 12.sp) },
                 confirmButton = {
                     TextButton(onClick = { permissionState.launchMultiplePermissionRequest() }) {
-                        Text("ALLOW", color = StealthPrimary, fontWeight = FontWeight.Bold)
+                        Text("VIBES", color = StealthPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -431,9 +431,9 @@ fun UnifiedBlukitBadge(
                 Column(modifier = Modifier.weight(1f)) {
                     // Dynamic Status Bar (Top)
                     Text(
-                        text = (if (airIsStill) "THE VIBES ARE STILL" 
+                        text = (if (airIsStill) "VIBES STILL" 
                                 else if (!currentBreeze.isNullOrBlank()) currentBreeze 
-                                else if (incomingLinkRequests.isNotEmpty()) "INCOMING VIBE"
+                                else if (incomingLinkRequests.isNotEmpty()) "VIBE PROXIMITY"
                                 else subtitle).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 7.sp,
@@ -459,7 +459,7 @@ fun UnifiedBlukitBadge(
                         Box(modifier = Modifier.size(1.dp, 10.dp).background(Color.White.copy(alpha = 0.2f)))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "SPREAD THE VIBES",
+                            text = "SPREAD VIBES",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 7.sp,
                                 fontWeight = FontWeight.Bold,
@@ -499,14 +499,14 @@ fun UnifiedBlukitBadge(
                         )
                         
                         Icon(
-                            imageVector = if (currentRoute is Route.Ties) Icons.Rounded.Person else Icons.Rounded.Groups,
+                            imageVector = if (currentRoute is Route.Ties) Icons.Rounded.AccountCircle else Icons.Rounded.AccountCircle,
                             contentDescription = null,
                             tint = if (airIsStill) StealthAmber else StealthPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Text(
-                        text = if (currentRoute is Route.Ties) "TIE" else "VIBES",
+                        text = if (currentRoute is Route.Ties) "ROAR" else "VIBES",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 6.sp,
                             fontWeight = FontWeight.Black,
@@ -583,7 +583,7 @@ fun UnifiedBlukitBadge(
                                     onSaveNickname(it.ifBlank { "vibe" })
                                 },
                                 modifier = Modifier.weight(1f).testTag("IdentityVibeInput"),
-                                label = { Text("YOU", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
+                                label = { Text("VIBE", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
                                 colors = TextFieldDefaults.colors(
@@ -599,9 +599,9 @@ fun UnifiedBlukitBadge(
                         
                         Column(modifier = Modifier.testTag("IntelSection")) {
                             IntelRow(
-                                label = "VOICES", 
+                                label = "CROWD", 
                                 value = userCount.toString(),
-                                icon = Icons.Rounded.Groups,
+                                icon = Icons.Rounded.AccountCircle,
                                 modifier = Modifier.testTag("VibesStat"),
                                 onClick = { 
                                     onNavigate(Route.Shout)
@@ -609,9 +609,9 @@ fun UnifiedBlukitBadge(
                                 }
                             )
                             IntelRow(
-                                label = "TIES", 
+                                label = "PROXIMITY", 
                                 value = linksCount.toString(),
-                                icon = Icons.Rounded.Person,
+                                icon = Icons.Rounded.AccountCircle,
                                 modifier = Modifier.testTag("TiesStat"),
                                 onClick = { 
                                     onNavigate(Route.Ties)
@@ -633,13 +633,13 @@ fun UnifiedBlukitBadge(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "QUIET LIGHT",
+                                    text = "ENERGY",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "GENTLE STADIUM GLOW",
+                                    text = "PROXIMITY",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = StealthPrimary.copy(alpha = 0.5f),
                                     fontSize = 7.sp
@@ -667,13 +667,13 @@ fun UnifiedBlukitBadge(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "LOW POWER MODE",
+                                    text = "BLUKIT",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "P2P_STAR STRATEGY FOR ENDURANCE",
+                                    text = "ENERGY",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = StealthPrimary.copy(alpha = 0.5f),
                                     fontSize = 7.sp
@@ -702,7 +702,7 @@ fun UnifiedBlukitBadge(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = if (showStillnessLocal) "▼ STILLNESS" else "▶ STILLNESS",
+                                    text = if (showStillnessLocal) "▼ ROAR" else "▶ ROAR",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (showStillnessLocal) StealthPrimary else StealthPrimary.copy(alpha = 0.4f),
                                     fontWeight = FontWeight.Black,
@@ -720,7 +720,7 @@ fun UnifiedBlukitBadge(
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
-                                        Text("FORGET TIES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                        Text("CLEAR PROXIMITY", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                                     }
                                     OutlinedButton(
                                         onClick = { showLogoutDialog = true },
@@ -729,7 +729,7 @@ fun UnifiedBlukitBadge(
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
-                                        Text("NEW IDENTITY", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                        Text("NEW BLUKIT", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -759,8 +759,8 @@ fun UnifiedBlukitBadge(
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White.copy(alpha = 0.7f),
-            title = { Text("Forget all Ties?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("This will permanently remove all your private ties and shared history.", fontSize = 12.sp) },
+            title = { Text("CLEAR PROXIMITY?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
+            text = { Text("CLEAR PROXIMITY ENERGY.", fontSize = 12.sp) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -768,7 +768,7 @@ fun UnifiedBlukitBadge(
                         showClearHistoryDialog = false
                     }
                 ) {
-                    Text("REMOVE", color = Color.Red, fontWeight = FontWeight.Bold)
+                    Text("CLEAR", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -785,8 +785,8 @@ fun UnifiedBlukitBadge(
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White.copy(alpha = 0.7f),
-            title = { Text("New Identity?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("This will clear your local profile and start a fresh setup.", fontSize = 12.sp) },
+            title = { Text("NEW BLUKIT?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
+            text = { Text("RESET BLUKIT VIBES.", fontSize = 12.sp) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -794,7 +794,7 @@ fun UnifiedBlukitBadge(
                         showLogoutDialog = false
                     }
                 ) {
-                    Text("START FRESH", color = Color.Red, fontWeight = FontWeight.Bold)
+                    Text("RESET", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -840,7 +840,7 @@ private fun MagicBarContent(
         color = barColor.copy(alpha = 0.05f),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(0.5.dp, barColor.copy(alpha = 0.2f)),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().testTag("MagicBar")
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             Row(
@@ -849,13 +849,13 @@ private fun MagicBarContent(
             ) {
                 Text(
                     text = when {
-                        isPermissionMissing -> "AWAKEN PERMISSIONS"
-                        isBluetoothOff && isLocationOff -> "AWAKEN RADIOS"
-                        isBluetoothOff -> "AWAKEN RADIOS"
-                        isLocationOff -> "AWAKEN LOCATION"
-                        hasRequests -> "INCOMING VIBE"
-                        !currentBreeze.isNullOrBlank() -> "ATMOSPHERIC BREEZE"
-                        else -> "THE VIBES ARE PURE"
+                        isPermissionMissing -> "BLUKIT ENERGY"
+                        isBluetoothOff && isLocationOff -> "VIBES STILL"
+                        isBluetoothOff -> "VIBES STILL"
+                        isLocationOff -> "VIBES STILL"
+                        hasRequests -> "PROXIMITY"
+                        !currentBreeze.isNullOrBlank() -> "ENERGY"
+                        else -> "VIBES ROAR"
                     },
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 8.sp,
@@ -894,10 +894,10 @@ private fun MagicBarContent(
             }
             
             val description = when {
-                hasRequests -> "${(incomingRequests.first().name ?: "Vibe").uppercase()} wants to bridge a link."
-                isPermissionMissing -> "Blukit needs permission to spread the vibes around you."
-                isBluetoothOff -> "Your radios must be awake to spread the vibes around you."
-                isLocationOff -> "Location must be awake to feel nearby ripples on this device."
+                hasRequests -> "${(incomingRequests.first().name ?: "VIBE").uppercase()} PROXIMITY."
+                isPermissionMissing -> "SPREAD VIBES. HEAR THE CROWD ROAR. PROXIMITY ENERGY."
+                isBluetoothOff -> "VIBES STILL. ENERGY REQUIRED."
+                isLocationOff -> "VIBES STILL. ENERGY REQUIRED."
                 !currentBreeze.isNullOrBlank() -> currentBreeze
                 else -> null
             }
@@ -919,14 +919,16 @@ private fun MagicBarContent(
                     if (hasRequests) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                "ACCEPT",
+                                "ROAR",
                                 color = StealthPrimary,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 8.sp,
-                                modifier = Modifier.clickable { onAcceptLink(incomingRequests.first()) }
+                                modifier = Modifier
+                                    .testTag("AcceptLinkButton")
+                                    .clickable { onAcceptLink(incomingRequests.first()) }
                             )
                             Text(
-                                "DENY",
+                                "IGNORE",
                                 color = Color.White.copy(alpha = 0.3f),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 8.sp,
