@@ -178,6 +178,7 @@ fun RipplesField(
                     devices = displayDevices,
                     connectedLinks = state.connectedLinks,
                     activeBubbles = activeBubbles,
+                    onlyTies = onlyTies,
                     onDeviceClick = onDeviceClick
                 )
             }
@@ -416,6 +417,7 @@ private fun VibeNodes(
     devices: List<P2PDevice>, 
     connectedLinks: Set<String>,
     activeBubbles: List<BubbleData>, 
+    onlyTies: Boolean,
     onDeviceClick: (P2PDevice) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -429,6 +431,7 @@ private fun VibeNodes(
             VibeNode(
                 device = device, 
                 isVibed = isVibed,
+                onlyTies = onlyTies,
                 xOffset = (radiusValue * cos(angle)).toFloat().dp, 
                 yOffset = (radiusValue * sin(angle)).toFloat().dp, 
                 activeBubble = activeBubble,
@@ -443,6 +446,7 @@ private fun VibeNodes(
 private fun VibeNode(
     device: P2PDevice, 
     isVibed: Boolean,
+    onlyTies: Boolean,
     xOffset: Dp, 
     yOffset: Dp, 
     activeBubble: BubbleData?, 
@@ -518,12 +522,16 @@ private fun VibeNode(
                         }
                     }
                 )
+                val baseName = (device.name ?: stringResource(R.string.anonymous)).take(6).uppercase()
+                val displayName = if (!onlyTies && isVibed) "$baseName (MUTUAL)" else baseName
                 Text(
-                    text = (device.name ?: stringResource(R.string.anonymous)).take(6).uppercase(),
-                    fontSize = 8.sp,
-                    color = if (device.isConnected) Color.Black else Color.White.copy(alpha = 0.7f),
+                    text = displayName,
+                    fontSize = 7.sp,
+                    color = if (isVibed) Color.Black else Color.White.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp
+                    letterSpacing = 0.5.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

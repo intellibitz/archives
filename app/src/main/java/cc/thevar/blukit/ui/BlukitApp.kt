@@ -458,36 +458,47 @@ fun UnifiedBlukitBadge(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Feedback 8: Smart Switcher (ROARS / VIBES) moved here
+                    // Feedback 11: ROARS / VIBES Picker (More Visual)
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color.White.copy(alpha = 0.08f))
                             .padding(2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Text(
-                            text = "ROARS",
+                        val isRoars = currentRoute is Route.Crowd
+                        Box(
                             modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(if (isRoars) StealthPrimary else Color.Transparent)
                                 .clickable { onNavigate(Route.Crowd) }
-                                .padding(horizontal = 4.dp),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 6.sp,
-                                fontWeight = if (currentRoute is Route.Crowd) FontWeight.Black else FontWeight.Normal,
-                                color = if (currentRoute is Route.Crowd) StealthPrimary else Color.White.copy(alpha = 0.4f)
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "ROARS",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                                )
                             )
-                        )
-                        Text(
-                            text = "VIBES",
+                        }
+                        Box(
                             modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(if (!isRoars) StealthPrimary else Color.Transparent)
                                 .clickable { onNavigate(Route.Vibes) }
-                                .padding(horizontal = 4.dp),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 6.sp,
-                                fontWeight = if (currentRoute is Route.Vibes) FontWeight.Black else FontWeight.Normal,
-                                color = if (currentRoute is Route.Vibes) StealthPrimary else Color.White.copy(alpha = 0.4f)
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "VIBES",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (!isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                                )
                             )
-                        )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -498,7 +509,7 @@ fun UnifiedBlukitBadge(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         if (currentRoute is Route.Vibes) {
-                            HubStat(label = "FRIENDS", value = linksCount.toString())
+                            HubStat(label = "MUTUAL", value = linksCount.toString())
                             Spacer(modifier = Modifier.width(16.dp))
                             HubStat(label = "VIBES", value = vibesCount.toString())
                         } else {
@@ -516,17 +527,26 @@ fun UnifiedBlukitBadge(
                     horizontalAlignment = Alignment.End,
                     modifier = Modifier.padding(start = 8.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "${nickname.uppercase()} (YOU)",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Black,
-                                color = if (airIsStill) Color.Red else StealthPrimary,
-                                letterSpacing = 1.sp
-                            )
+                    Text(
+                        text = nickname.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (airIsStill) Color.Red else StealthPrimary,
+                            letterSpacing = 1.sp
                         )
-                    }
+                    )
+                    Text(
+                        text = "(YOU)",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 6.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.4f),
+                            letterSpacing = 0.5.sp
+                        )
+                    )
+                    
+                    Spacer(modifier = Modifier.height(2.dp))
                     
                     Text(
                         text = "SPREAD VIBES",

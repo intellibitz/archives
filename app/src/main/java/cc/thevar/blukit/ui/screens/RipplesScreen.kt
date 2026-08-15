@@ -308,7 +308,9 @@ private fun VibingVibesTicker(
                     AnimatedVibeItem(
                         msg = msg,
                         isMe = isMe,
+                        isMutual = msg.senderId in state.connectedLinks,
                         isFocused = isFocused,
+                        onlyTies = onlyTies,
                         timestamp = timeFormatter.format(Date(msg.timestamp)),
                         alpha = alpha,
                         onClick = {
@@ -326,7 +328,9 @@ private fun VibingVibesTicker(
 private fun AnimatedVibeItem(
     msg: cc.thevar.blukit.domain.model.MessagePayload,
     isMe: Boolean,
+    isMutual: Boolean,
     isFocused: Boolean,
+    onlyTies: Boolean,
     timestamp: String,
     alpha: Float,
     onClick: () -> Unit
@@ -349,10 +353,15 @@ private fun AnimatedVibeItem(
         if (!isMe) {
             Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp, modifier = Modifier.padding(end = 8.dp))
             Column {
+                val displayName = if (!onlyTies && isMutual) {
+                    "${msg.senderName.uppercase()} (MUTUAL)"
+                } else {
+                    msg.senderName.uppercase()
+                }
                 Text(
-                    text = msg.senderName.uppercase(),
+                    text = displayName,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isFocused) StealthAmber else Color.White.copy(alpha = 0.6f),
+                    color = if (isFocused) StealthAmber else if (isMutual) StealthPrimary else Color.White.copy(alpha = 0.6f),
                     fontWeight = FontWeight.Black,
                     letterSpacing = 0.5.sp
                 )
