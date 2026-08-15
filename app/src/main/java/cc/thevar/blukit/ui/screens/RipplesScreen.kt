@@ -147,8 +147,8 @@ fun RipplesScreen(
                 onlyTies = onlyTies,
                 onDeviceClick = onDeviceClick,
                 onStartScan = onStartScan,
-                onVibeSurge = {
-                    hapticManager.triggerVibe(HapticManager.VibeType.STADIUM_WAVE)
+                onVibeSurge = { proximity ->
+                    hapticManager.triggerProximityVibe(proximity)
                 },
                 modifier = Modifier.fillMaxSize()
             )

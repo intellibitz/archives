@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.io.File
 
 /**
@@ -30,7 +32,7 @@ class VibeStore(
     private val _peers = MutableStateFlow<Map<String, PeerEntity>>(emptyMap())
     private val _contacts = MutableStateFlow<Map<String, ContactEntity>>(emptyMap())
 
-    private val messagesFile = File(context.filesDir, "vibes.bin")
+    private val messagesLogFile = File(context.filesDir, "vibes_log.bin")
     private val peersFile = File(context.filesDir, "peers.bin")
     private val contactsFile = File(context.filesDir, "contacts.bin")
 
@@ -38,15 +40,28 @@ class VibeStore(
 
     init {
         loadData()
+        scope.launch {
+            compactMessages()
+        }
     }
 
     private fun loadData() {
-        if (messagesFile.exists()) {
+        if (messagesLogFile.exists()) {
             try {
-                val encrypted = messagesFile.readBytes()
-                val decrypted = cryptoManager.decryptLocal(encrypted)
-                val json = decrypted.decodeToString()
-                _messages.value = Json.decodeFromString(json)
+                val messageMap = mutableMapOf<String, MessagePayload>()
+                messagesLogFile.inputStream().use { fis ->
+                    val dis = DataInputStream(fis)
+                    while (fis.available() > 0) {
+                        val length = dis.readInt()
+                        val encrypted = ByteArray(length)
+                        dis.readFully(encrypted)
+                        val decrypted = cryptoManager.decryptLocal(encrypted)
+                        val json = decrypted.decodeToString()
+                        val message = Json.decodeFromString<MessagePayload>(json)
+                        messageMap[message.messageId] = message
+                    }
+                }
+                _messages.value = messageMap.values.toList().sortedBy { it.timestamp }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -73,13 +88,50 @@ class VibeStore(
         }
     }
 
+    private fun appendMessageToLog(message: MessagePayload) {
+        scope.launch {
+            try {
+                val json = Json.encodeToString(message)
+                val encrypted = cryptoManager.encryptLocal(json.encodeToByteArray())
+                java.io.FileOutputStream(messagesLogFile, true).use { fos ->
+                    val dos = DataOutputStream(fos)
+                    dos.writeInt(encrypted.size)
+                    dos.write(encrypted)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    suspend fun compactMessages() {
+        val now = System.currentTimeMillis()
+        val twelveHoursAgo = now - 12 * 3600 * 1000
+        _messages.update { it.filter { m -> m.timestamp >= twelveHoursAgo } }
+        val currentMessages = _messages.value
+
+        val tempFile = File(context.filesDir, "vibes_log.tmp")
+        try {
+            tempFile.outputStream().use { fos ->
+                val dos = DataOutputStream(fos)
+                currentMessages.forEach { message ->
+                    val json = Json.encodeToString(message)
+                    val encrypted = cryptoManager.encryptLocal(json.encodeToByteArray())
+                    dos.writeInt(encrypted.size)
+                    dos.write(encrypted)
+                }
+            }
+            if (tempFile.exists()) {
+                tempFile.renameTo(messagesLogFile)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun saveData() {
         scope.launch {
             try {
-                val messagesJson = Json.encodeToString(_messages.value)
-                val encryptedMessages = cryptoManager.encryptLocal(messagesJson.encodeToByteArray())
-                messagesFile.writeBytes(encryptedMessages)
-
                 val peersJson = Json.encodeToString(_peers.value)
                 val encryptedPeers = cryptoManager.encryptLocal(peersJson.encodeToByteArray())
                 peersFile.writeBytes(encryptedPeers)
@@ -98,26 +150,30 @@ class VibeStore(
 
     suspend fun insertMessage(message: MessagePayload) {
         _messages.update { it + message }
-        saveData()
+        appendMessageToLog(message)
     }
 
     suspend fun updateMessageStatus(messageId: String, status: Int) {
+        var updated: MessagePayload? = null
         _messages.update { list ->
-            list.map { if (it.messageId == messageId) it.copy(status = status) else it }
+            list.map {
+                if (it.messageId == messageId) {
+                    val m = it.copy(status = status)
+                    updated = m
+                    m
+                } else it
+            }
         }
-        saveData()
+        updated?.let { appendMessageToLog(it) }
     }
 
     suspend fun deleteOldMessages(threshold: Long) {
-        _messages.update { list ->
-            list.filter { it.timestamp >= threshold }
-        }
-        saveData()
+        compactMessages()
     }
 
     suspend fun clearAllMessages() {
         _messages.value = emptyList()
-        saveData()
+        if (messagesLogFile.exists()) messagesLogFile.delete()
     }
 
     // Peer Operations

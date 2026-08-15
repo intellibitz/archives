@@ -51,4 +51,28 @@ class HapticManager(context: Context) {
      * Legacy compatibility wrapper.
      */
     fun triggerMessageAlert() = triggerVibe(VibeType.MESSAGE)
+
+    /**
+     * Triggers a proximity-based vibe for incoming surges.
+     * High Fidelity implementation: Stronger vibes for closer devices.
+     */
+    fun triggerProximityVibe(proximity: Float) {
+        if (!vibrator.hasVibrator()) return
+
+        val effect = when {
+            proximity > 0.8f -> {
+                // Strong, sharp double vibe
+                VibrationEffect.createWaveform(longArrayOf(0, 60, 40, 60), -1)
+            }
+            proximity > 0.4f -> {
+                // Medium single vibe
+                VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE)
+            }
+            else -> {
+                // Subtle, faint ripple
+                VibrationEffect.createWaveform(longArrayOf(0, 20, 30, 20, 30, 20), -1)
+            }
+        }
+        vibrator.vibrate(effect)
+    }
 }

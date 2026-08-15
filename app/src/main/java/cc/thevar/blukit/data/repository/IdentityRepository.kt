@@ -82,7 +82,7 @@ class IdentityRepositoryImpl(
     override val emojiAvatar: StateFlow<String> = _emojiAvatar.asStateFlow()
 
     private fun getSanitizedEmoji(): String {
-        return "👤" // Default Person (Your Vibe)
+        return securePrefs.getString(KEY_EMOJI, null) ?: "👤"
     }
 
     private val _stealthMode = MutableStateFlow(securePrefs.getBoolean(KEY_STEALTH, true))
@@ -115,7 +115,8 @@ class IdentityRepositoryImpl(
     override fun getCurrentNickname(): String = securePrefs.getString(KEY_NICKNAME, null) ?: "vibe"
 
     override fun saveEmoji(emoji: String) {
-        // No-op: Emojis thrashed, everyone is a person
+        securePrefs.edit { putString(KEY_EMOJI, emoji) }
+        _emojiAvatar.value = emoji
     }
 
     override fun toggleStealth(enabled: Boolean) {

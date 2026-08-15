@@ -17,6 +17,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -305,6 +307,7 @@ fun BlukitApp(
                 context.startActivity(intent)
             },
             onSaveNickname = viewModel::saveNickname,
+            onSaveEmoji = viewModel::saveEmoji,
             onToggleStealth = viewModel::toggleStealth,
             onToggleLowPower = viewModel::toggleLowPowerMode,
             onClearHistory = viewModel::clearChatHistory,
@@ -357,6 +360,7 @@ fun UnifiedBlukitBadge(
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
     onSaveNickname: (String) -> Unit,
+    onSaveEmoji: (String) -> Unit,
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
@@ -563,12 +567,7 @@ fun UnifiedBlukitBadge(
                                     modifier = Modifier.fillMaxSize()
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Person, 
-                                            contentDescription = null,
-                                            tint = StealthPrimary,
-                                            modifier = Modifier.size(24.dp)
-                                        )
+                                        Text(text = emojiAvatar, fontSize = 24.sp)
                                     }
                                 }
                             }
@@ -593,6 +592,39 @@ fun UnifiedBlukitBadge(
                                     unfocusedIndicatorColor = StealthPrimary.copy(alpha = 0.2f)
                                 )
                             )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Visage Diversity: Emoji Selector
+                        val visages = listOf("👤", "🐱", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐸", "🦋", "🌈", "⚡", "💎", "🍀", "🔥", "🎭")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .horizontalScroll(rememberScrollState())
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            visages.forEach { emoji ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(if (emoji == emojiAvatar) StealthPrimary.copy(alpha = 0.2f) else Color.Transparent)
+                                        .border(
+                                            width = if (emoji == emojiAvatar) 1.dp else 0.dp,
+                                            color = if (emoji == emojiAvatar) StealthPrimary else Color.Transparent,
+                                            shape = CircleShape
+                                        )
+                                        .clickable { onSaveEmoji(emoji) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(text = emoji, fontSize = 18.sp)
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))

@@ -83,7 +83,7 @@ fun RipplesField(
     onlyTies: Boolean = false,
     onDeviceClick: (P2PDevice) -> Unit,
     onStartScan: () -> Unit,
-    onVibeSurge: () -> Unit = {},
+    onVibeSurge: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
@@ -103,10 +103,12 @@ fun RipplesField(
                 
                 // Surge Collective Energy
                 collectiveEnergy = (collectiveEnergy + 0.4f).coerceAtMost(1.0f)
-                onVibeSurge()
                 
                 // Calculate Target Position
                 val deviceIndex = state.scannedDevices.indexOfFirst { it.id == last.senderId }
+                val proximity = if (deviceIndex != -1) state.scannedDevices[deviceIndex].proximityFactor else 1.0f
+                onVibeSurge(proximity)
+
                 val targetOffset = if (deviceIndex != -1) {
                     val device = state.scannedDevices[deviceIndex]
                     val maxRadiusPx = with(density) { 140.dp.toPx() }

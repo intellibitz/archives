@@ -53,6 +53,7 @@ class SupremePowerTest {
                         onGrantPermissions = {},
                         onOpenSettings = {},
                         onSaveNickname = {},
+                        onSaveEmoji = {},
                         onToggleStealth = {},
                         onToggleLowPower = {},
                         onClearHistory = {},
