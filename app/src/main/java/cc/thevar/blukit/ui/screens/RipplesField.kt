@@ -153,7 +153,6 @@ fun RipplesField(
             contentAlignment = Alignment.Center
         ) {
             StadiumBackground(energy = finalEnergy)
-            RadarBackground()
             RelayLayer(relayEvents)
             // Filter devices if only ties are requested
             val displayDevices = if (onlyTies) {
@@ -364,24 +363,6 @@ private fun VibeRippleLayer(ripples: List<VibeRipple>) {
     }
 }
 
-@Composable
-private fun RadarBackground() {
-    val infiniteTransition = rememberInfiniteTransition(label = "Sweep")
-    val rotation by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "R")
-    
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val center = center
-        val maxRadius = size.minDimension / 1.7f
-        for (i in 1..4) {
-            drawCircle(color = StealthPrimary.copy(alpha = 0.03f), radius = maxRadius * (i / 4f), style = Stroke(width = 1.dp.toPx()))
-        }
-        rotate(rotation) {
-            val sonarBrush = Brush.sweepGradient(0.0f to StealthPrimary.copy(alpha = 0.6f), 0.2f to StealthPrimary.copy(alpha = 0.1f), 0.5f to Color.Transparent, center = center)
-            drawCircle(brush = sonarBrush, radius = maxRadius)
-            drawLine(color = StealthPrimary.copy(alpha = 0.4f), start = center, end = Offset(center.x + maxRadius, center.y), strokeWidth = 2.dp.toPx())
-        }
-    }
-}
 
 @Composable
 private fun RelayLayer(events: List<RelayEvent>) {

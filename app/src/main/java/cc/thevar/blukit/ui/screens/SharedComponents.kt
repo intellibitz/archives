@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -134,6 +135,8 @@ fun BlukitHeartbeat(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "Heartbeat")
+    
+    // 1. Vibe Scaling (Pulse)
     val vibeScale by infiniteTransition.animateFloat(
         initialValue = 0.85f + (energy * 0.2f),
         targetValue = 1.35f + (energy * 0.4f), 
@@ -144,6 +147,7 @@ fun BlukitHeartbeat(
         label = "VibeScale"
     )
 
+    // 2. Aura Alpha
     val auraAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
         targetValue = 0.7f,
@@ -152,6 +156,14 @@ fun BlukitHeartbeat(
             repeatMode = RepeatMode.Reverse
         ),
         label = "AuraAlpha"
+    )
+
+    // 3. Lighthouse Scan (Radar Sweep)
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f, 
+        targetValue = 360f, 
+        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)), 
+        label = "Scan"
     )
 
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(48.dp)) {
@@ -164,25 +176,28 @@ fun BlukitHeartbeat(
                 radius = size.minDimension / 1.3f * vibeScale
             )
         }
+
+        // Lighthouse Scan Animation
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            rotate(rotation) {
+                val scanBrush = Brush.sweepGradient(
+                    0.0f to StealthPrimary.copy(alpha = 0.6f), 
+                    0.15f to StealthPrimary.copy(alpha = 0.1f), 
+                    0.4f to Color.Transparent, 
+                    center = center
+                )
+                drawCircle(brush = scanBrush, radius = size.minDimension / 2)
+            }
+        }
         
-        // Inner Vibe Body
+        // Inner Vibe Body (Minimalist - No Text/Icon)
         Surface(
             shape = CircleShape,
-            color = Color.Black.copy(alpha = 0.4f),
+            color = Color.Black.copy(alpha = 0.6f),
             border = BorderStroke(1.dp, Brush.radialGradient(listOf(StealthAmber, cc.thevar.blukit.ui.theme.StealthRose))),
-            modifier = Modifier.size(24.dp * vibeScale)
+            modifier = Modifier.size(20.dp * vibeScale)
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Rounded.AccountCircle, 
-                    contentDescription = null,
-                    tint = StealthAmber,
-                    modifier = Modifier.size(16.dp).graphicsLayer {
-                        scaleX = vibeScale
-                        scaleY = vibeScale
-                    }
-                )
-            }
+            // Pure energy
         }
     }
 }
