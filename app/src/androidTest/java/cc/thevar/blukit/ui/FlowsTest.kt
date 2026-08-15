@@ -119,10 +119,10 @@ class FlowsTest {
         startApp()
         
         // Wait for the Magic Bar to reflect the stillness of the vibes
-        composeTestRule.waitUntilAtLeastOneExists(hasText("VIBES STILL", substring = true), 10000)
+        composeTestRule.waitUntilAtLeastOneExists(hasText("RADIOS OFF", substring = true), 10000)
         // Use onFirst() because multiple might be found if UI overlaps during animation
-        composeTestRule.waitUntilAtLeastOneExists(hasText("AWAKEN", substring = true), 10000)
-        composeTestRule.onAllNodesWithText("AWAKEN", substring = true).onFirst().assertIsDisplayed().assertHasClickAction()
+        composeTestRule.waitUntilAtLeastOneExists(hasText("TURN ON", substring = true), 10000)
+        composeTestRule.onAllNodesWithText("TURN ON", substring = true).onFirst().assertIsDisplayed().assertHasClickAction()
     }
 
     @Test

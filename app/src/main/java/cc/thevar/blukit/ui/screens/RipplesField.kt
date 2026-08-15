@@ -557,7 +557,7 @@ private fun EmptyRadarHint(onlyTies: Boolean) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = (if (onlyTies) "VIBES STILL…" else stringResource(R.string.shout_empty_radar)).uppercase(), 
+            text = (if (onlyTies) "ROARS 0" else "CROWD 0"), 
             style = MaterialTheme.typography.labelSmall,
             color = StealthAmber.copy(alpha = 0.4f), 
             fontWeight = FontWeight.Black, 

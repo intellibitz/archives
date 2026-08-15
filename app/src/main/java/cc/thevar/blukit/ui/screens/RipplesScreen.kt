@@ -175,13 +175,10 @@ fun RipplesScreen(
             )
             
             // Full Screen Vibes Ticker
-            val effectiveInputVisible = isInputVisible || vibes.isEmpty()
             VibingVibesTicker(
                 state = state,
                 vibes = vibes,
                 localDeviceId = localDeviceId,
-                isInputVisible = effectiveInputVisible,
-                onSendVibeClick = { isInputVisible = true },
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -192,7 +189,7 @@ fun RipplesScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AnimatedVisibility(
-                    visible = effectiveInputVisible,
+                    visible = isInputVisible || vibes.isEmpty(),
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
@@ -263,8 +260,6 @@ private fun VibingVibesTicker(
     state: BluetoothUiState,
     vibes: List<cc.thevar.blukit.domain.model.MessagePayload>,
     localDeviceId: String,
-    isInputVisible: Boolean,
-    onSendVibeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -337,32 +332,6 @@ private fun VibingVibesTicker(
             }
         }
         
-        if (!isInputVisible) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(24.dp)
-                    .padding(bottom = 32.dp)
-            ) {
-                IconButton(
-                    onClick = onSendVibeClick,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .background(
-                            Brush.linearGradient(listOf(StealthAmber, StealthRose)),
-                            CircleShape
-                        )
-                        .shadow(12.dp, CircleShape)
-                ) {
-                    Icon(
-                        Icons.Rounded.Email, 
-                        contentDescription = null, 
-                        tint = Color.Black,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-        }
     }
 }
 

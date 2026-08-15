@@ -26,7 +26,8 @@ data class BluetoothUiState(
     val uiError: cc.thevar.blukit.ui.UiError? = null,
     val messages: List<MessagePayload> = emptyList(),
     val isBluetoothEnabled: Boolean = false,
-    val isLocationEnabled: Boolean = false
+    val isLocationEnabled: Boolean = false,
+    val isWifiEnabled: Boolean = false
 ) {
     // Helper properties for legacy UI compatibility or convenience
     val isConnected: Boolean get() = connectionState is AirConnectionState.Connected

@@ -278,6 +278,7 @@ fun BlukitApp(
             currentBreeze = report.currentBreeze,
             isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
             isLocationEnabled = bluetoothState.isLocationEnabled,
+            isWifiEnabled = bluetoothState.isWifiEnabled,
             permissionsGranted = permissionState.allPermissionsGranted,
             isPermanentlyDenied = isPermanentlyDenied,
             isStealthMode = isStealthMode,
@@ -339,6 +340,7 @@ fun UnifiedBlukitBadge(
     currentBreeze: String?,
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
+    isWifiEnabled: Boolean,
     permissionsGranted: Boolean,
     isPermanentlyDenied: Boolean,
     isStealthMode: Boolean,
@@ -381,7 +383,7 @@ fun UnifiedBlukitBadge(
                 .background(Color.Black.copy(alpha = 0.8f))
                 .border(
                     width = 0.5.dp, 
-                    color = (if (airIsStill) StealthAmber else if (hasBreeze) StealthPrimary else StealthPrimary).copy(alpha = 0.3f), 
+                    color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.3f), 
                     shape = RoundedCornerShape(24.dp)
                 )
                 .testTag("BlukitBadge")
@@ -392,7 +394,7 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Smart Branding & Dynamic Status - Center Vibe Heartbeat moved here
+                // Left: Heartbeat icon moved here
                 BlukitHeartbeat(energy = energy, modifier = Modifier.padding(end = 4.dp))
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -407,7 +409,7 @@ fun UnifiedBlukitBadge(
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 7.sp,
                             fontWeight = FontWeight.Black,
-                            color = (if (airIsStill) StealthAmber 
+                            color = (if (airIsStill) Color.Red 
                                     else if (!currentBreeze.isNullOrBlank() || incomingLinkRequests.isNotEmpty()) StealthPrimary 
                                     else Color.White).copy(alpha = 0.6f),
                             letterSpacing = 0.5.sp
@@ -415,27 +417,39 @@ fun UnifiedBlukitBadge(
                     )
                     
                     // Static Branding (Bottom)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column {
+                        // Feedback 4: "HEAR THE CROWD ROAR" above "SPREAD VIBES"
                         Text(
-                            text = "BLUKIT",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 2.sp,
-                                color = if (airIsStill) StealthAmber else StealthPrimary
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(modifier = Modifier.size(1.dp, 10.dp).background(Color.White.copy(alpha = 0.2f)))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "SPREAD VIBES",
+                            text = "HEAR THE CROWD ROAR",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 7.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontSize = 6.sp,
+                                fontWeight = FontWeight.Black,
                                 letterSpacing = 1.sp,
-                                color = Color.White.copy(alpha = 0.4f)
+                                color = StealthPrimary.copy(alpha = 0.8f)
                             )
                         )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "BLUKIT",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 2.sp,
+                                    color = if (airIsStill) Color.Red else StealthPrimary
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(modifier = Modifier.size(1.dp, 10.dp).background(Color.White.copy(alpha = 0.2f)))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "SPREAD VIBES",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp,
+                                    color = Color.White.copy(alpha = 0.4f)
+                                )
+                            )
+                        }
                     }
                 }
 
@@ -460,7 +474,7 @@ fun UnifiedBlukitBadge(
                                 .size(24.dp * pulseScale)
                                 .background(
                                     Brush.radialGradient(
-                                        listOf((if (airIsStill) StealthAmber else StealthPrimary).copy(alpha = 0.15f), Color.Transparent)
+                                        listOf((if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.15f), Color.Transparent)
                                     ),
                                     CircleShape
                                 )
@@ -469,7 +483,7 @@ fun UnifiedBlukitBadge(
                         Icon(
                             imageVector = Icons.Rounded.AccountCircle,
                             contentDescription = null,
-                            tint = if (airIsStill) StealthAmber else StealthPrimary,
+                            tint = if (airIsStill) Color.Red else StealthPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -478,7 +492,7 @@ fun UnifiedBlukitBadge(
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 6.sp,
                             fontWeight = FontWeight.Black,
-                            color = (if (airIsStill) StealthAmber else StealthPrimary).copy(alpha = 0.6f),
+                            color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.6f),
                             letterSpacing = 1.sp
                         )
                     )
@@ -497,6 +511,7 @@ fun UnifiedBlukitBadge(
                         MagicBarContent(
                             isBluetoothOff = !isBluetoothEnabled,
                             isLocationOff = isLocationMandatory && !isLocationEnabled,
+                            isWifiOff = !isWifiEnabled,
                             isPermissionMissing = !permissionsGranted,
                             isPermanentlyDenied = isPermanentlyDenied,
                             currentBreeze = currentBreeze,
@@ -756,6 +771,7 @@ fun UnifiedBlukitBadge(
 private fun MagicBarContent(
     isBluetoothOff: Boolean,
     isLocationOff: Boolean,
+    isWifiOff: Boolean,
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
     currentBreeze: String?,
@@ -780,12 +796,12 @@ private fun MagicBarContent(
 
     val isStill = isBluetoothOff || isLocationOff || isPermissionMissing
     val hasRequests = incomingRequests.isNotEmpty()
-    val barColor = if (isStill) StealthAmber else StealthPrimary
+    val barColor = if (isStill) Color.Red else StealthPrimary
 
     Surface(
-        color = barColor.copy(alpha = 0.05f),
+        color = barColor.copy(alpha = if (isStill) 0.15f else 0.05f),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(0.5.dp, barColor.copy(alpha = 0.2f)),
+        border = BorderStroke(0.5.dp, barColor.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
@@ -793,24 +809,29 @@ private fun MagicBarContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = when {
-                        isPermissionMissing -> "BLUKIT ENERGY"
-                        isBluetoothOff && isLocationOff -> "VIBES STILL"
-                        isBluetoothOff -> "VIBES STILL"
-                        isLocationOff -> "VIBES STILL"
-                        hasRequests -> "NEW VIBE"
-                        !currentBreeze.isNullOrBlank() -> "ENERGY"
-                        else -> "CROWD ROARING"
-                    },
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    ),
-                    color = barColor.copy(alpha = pulseAlpha),
-                    modifier = Modifier.weight(1f)
-                )
+                // Status Icons: Bluetooth (Mandatory), WiFi, Location (Optional)
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    StatusIcon(
+                        icon = Icons.Rounded.Search, 
+                        isOn = !isBluetoothOff, 
+                        isPermissionMissing = isPermissionMissing,
+                        isMandatory = true
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    StatusIcon(
+                        icon = Icons.Rounded.Refresh, 
+                        isOn = !isWifiOff, 
+                        isPermissionMissing = isPermissionMissing,
+                        isMandatory = false
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    StatusIcon(
+                        icon = Icons.Rounded.LocationOn, 
+                        isOn = !isLocationOff, 
+                        isPermissionMissing = isPermissionMissing,
+                        isMandatory = false
+                    )
+                }
 
                 if (isStill) {
                     val action = when {
@@ -822,16 +843,16 @@ private fun MagicBarContent(
 
                     if (action != null) {
                         Text(
-                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else "AWAKEN",
+                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else "TURN ON",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color.Black
+                                color = Color.White
                             ),
                             modifier = Modifier
                                 .graphicsLayer { alpha = pulseAlpha }
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(StealthAmber)
+                                .background(Color.Red)
                                 .clickable { action() }
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         )
@@ -858,7 +879,7 @@ private fun MagicBarContent(
                             fontWeight = FontWeight.Medium,
                             lineHeight = 10.sp
                         ),
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = (if (isStill) Color.Red else Color.White).copy(alpha = 0.7f),
                         modifier = Modifier.weight(1f)
                     )
                     
@@ -886,6 +907,33 @@ private fun MagicBarContent(
             }
         }
     }
+}
+
+@Composable
+private fun StatusIcon(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isOn: Boolean,
+    isPermissionMissing: Boolean,
+    @Suppress("UNUSED_PARAMETER") isMandatory: Boolean
+) {
+    val tint = when {
+        isPermissionMissing -> Color.Yellow
+        isOn -> Color.Green
+        else -> Color.Red
+    }
+    
+    val description = when {
+        isPermissionMissing -> "Permission Missing"
+        isOn -> "On"
+        else -> "Off"
+    }
+
+    Icon(
+        imageVector = icon,
+        contentDescription = description,
+        tint = tint.copy(alpha = 0.8f),
+        modifier = Modifier.size(16.dp)
+    )
 }
 
 @Composable

@@ -84,6 +84,7 @@ class BluetoothViewModel(
             incomingLinkRequests = incomingLinkRequests,
             isBluetoothEnabled = radioStates.isBluetoothEnabled,
             isLocationEnabled = radioStates.isLocationEnabled,
+            isWifiEnabled = radioStates.isWifiEnabled,
             isDiscovering = isDiscovering,
             isAdvertising = isAdvertising,
             messages = messages,

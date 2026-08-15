@@ -61,7 +61,7 @@ class NavigationTest {
 
         // 3. Proximity (YOUR PROXIMITY) - Click Proximity stat row in expanded hub
         composeTestRule.onNodeWithTag("TiesStat").performClick()
-        composeTestRule.onNodeWithText("VIBES STILL…", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("ROARS 0", substring = true).assertIsDisplayed()
         
         // 4. Back to Vibes - Click Branding Section then Vibes stat
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()

@@ -40,6 +40,7 @@ class SupremePowerTest {
                         currentBreeze = report.currentBreeze,
                         isBluetoothEnabled = true,
                         isLocationEnabled = true,
+                        isWifiEnabled = true,
                         permissionsGranted = true,
                         isPermanentlyDenied = false,
                         isStealthMode = false,

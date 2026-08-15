@@ -18,6 +18,7 @@ import android.util.Log
 data class RadioStates(
     val isBluetoothEnabled: Boolean,
     val isLocationEnabled: Boolean,
+    val isWifiEnabled: Boolean = true
 )
 
 /**
@@ -29,6 +30,7 @@ class RadioStateManager(private val context: Context) {
     private val tag = "BlukitRadio"
     private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
 
     private val _radioStates = MutableStateFlow(getCurrentStates())
     val radioStates: StateFlow<RadioStates> = _radioStates.asStateFlow()
@@ -45,6 +47,7 @@ class RadioStateManager(private val context: Context) {
         val filter = IntentFilter().apply {
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
             addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
+            addAction(android.net.wifi.WifiManager.WIFI_STATE_CHANGED_ACTION)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -89,13 +92,18 @@ class RadioStateManager(private val context: Context) {
             false
         }
 
-        // Location is an optional breeze on Android 12+, but mandatory for the Air on older devices
         val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-        Log.d(tag, "Vibe Check: Bluetooth=$isBtEnabled (Required), GPS=$isLocationEnabled (Optional=${!isLocationMandatory}), Wi-Fi=Optional")
+        
+        val isWifiEnabled = try {
+            wifiManager.isWifiEnabled
+        } catch (e: Exception) {
+            true
+        }
 
         return RadioStates(
             isBluetoothEnabled = isBtEnabled && hasConnectPermission,
-            isLocationEnabled = if (isLocationMandatory) isLocationEnabled else true // Suppress "Disabled" UI on 12+ if location is off
+            isLocationEnabled = if (isLocationMandatory) isLocationEnabled else true,
+            isWifiEnabled = isWifiEnabled
         )
     }
 }
