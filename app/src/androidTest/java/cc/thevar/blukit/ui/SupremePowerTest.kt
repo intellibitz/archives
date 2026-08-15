@@ -33,6 +33,7 @@ class SupremePowerTest {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                     UnifiedBlukitBadge(
                         energy = 0f,
+                        rotation = 0f,
                         userCount = report.userCount,
                         linksCount = report.connectedLinksCount,
                         roarsCount = report.totalMessages,

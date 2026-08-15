@@ -132,6 +132,7 @@ fun StatusOverlay(
 @Composable
 fun BlukitHeartbeat(
     energy: Float,
+    rotation: Float,
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "Heartbeat")
@@ -158,14 +159,6 @@ fun BlukitHeartbeat(
         label = "AuraAlpha"
     )
 
-    // 3. Lighthouse Scan (Radar Sweep)
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f, 
-        targetValue = 360f, 
-        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)), 
-        label = "Scan"
-    )
-
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(48.dp)) {
         // High-Fidelity Aura
         Canvas(modifier = Modifier.fillMaxSize().blur(8.dp)) {
@@ -182,8 +175,8 @@ fun BlukitHeartbeat(
             rotate(rotation) {
                 val scanBrush = Brush.sweepGradient(
                     0.0f to StealthPrimary.copy(alpha = 0.6f), 
-                    0.15f to StealthPrimary.copy(alpha = 0.1f), 
-                    0.4f to Color.Transparent, 
+                    0.05f to StealthPrimary.copy(alpha = 0.1f), 
+                    0.15f to Color.Transparent, 
                     center = center
                 )
                 drawCircle(brush = scanBrush, radius = size.minDimension / 2)

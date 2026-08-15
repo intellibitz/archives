@@ -32,8 +32,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -193,6 +195,14 @@ fun BlukitApp(
     val backStack = rememberNavBackStack(initialRoute)
     val currentRoute = backStack.lastOrNull()
 
+    val infiniteTransition = rememberInfiniteTransition(label = "HubLighthouse")
+    val hubRotation by infiniteTransition.animateFloat(
+        initialValue = 0f, 
+        targetValue = 360f, 
+        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)), 
+        label = "Scan"
+    )
+
     val listDetailSceneStrategy = rememberListDetailSceneStrategy<NavKey>()
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -254,6 +264,9 @@ fun BlukitApp(
                 else -> NavEntry(key) { Text("Unknown") }
             }
         }
+        
+        // Global Lighthouse Scan (Glows from the Hub Badge over the Field/Ticker)
+        FullLighthouseScan(rotation = hubRotation)
 
         SnackbarHost(
             hostState = snackbarHostState,
@@ -271,6 +284,7 @@ fun BlukitApp(
 
         UnifiedBlukitBadge(
             energy = energySurge,
+            rotation = hubRotation,
             userCount = report.userCount,
             linksCount = report.connectedLinksCount,
             roarsCount = roarsCount,
@@ -333,6 +347,7 @@ fun BlukitApp(
 @Composable
 fun UnifiedBlukitBadge(
     energy: Float,
+    rotation: Float,
     userCount: Int,
     linksCount: Int,
     roarsCount: Int,
@@ -398,7 +413,7 @@ fun UnifiedBlukitBadge(
                     modifier = Modifier.padding(end = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    BlukitHeartbeat(energy = energy)
+                    BlukitHeartbeat(energy = energy, rotation = rotation)
                     Text(
                         text = "BLUKIT",
                         style = MaterialTheme.typography.labelMedium.copy(
@@ -853,6 +868,24 @@ private fun StatusIcon(
                 rotationZ = rotation
             }
     )
+}
+
+@Composable
+private fun FullLighthouseScan(rotation: Float) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val center = Offset(56.dp.toPx(), size.height - 64.dp.toPx()) // Precisely aligned with the Hub Heartbeat
+        val radius = size.maxDimension
+        
+        rotate(rotation, pivot = center) {
+            val scanBrush = Brush.sweepGradient(
+                0.0f to StealthPrimary.copy(alpha = 0.3f), 
+                0.05f to StealthPrimary.copy(alpha = 0.1f), 
+                0.15f to Color.Transparent, 
+                center = center
+            )
+            drawCircle(brush = scanBrush, radius = radius, center = center)
+        }
+    }
 }
 
 @Composable
