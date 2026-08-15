@@ -23,7 +23,7 @@
 
     <!-- Vibes Screen (Mutual) -->
     <string name="whispers_title">PRIVATE VIBES</string>
-    <string name="whispers_empty_hint">CONNECT WITH SOMEONE IN THE CROWD TO VIBE.</string>
+    <string name="whispers_empty_hint">VIBES 0</string>
     <string name="whispers_last_seen">LAST SEEN: %1$s</string>
     <string name="whispers_label">VIBING</string>
 

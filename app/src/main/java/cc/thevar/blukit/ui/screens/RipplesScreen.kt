@@ -179,6 +179,7 @@ fun RipplesScreen(
                 state = state,
                 vibes = vibes,
                 localDeviceId = localDeviceId,
+                onlyTies = onlyTies,
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -260,6 +261,7 @@ private fun VibingVibesTicker(
     state: BluetoothUiState,
     vibes: List<cc.thevar.blukit.domain.model.MessagePayload>,
     localDeviceId: String,
+    onlyTies: Boolean,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -279,20 +281,13 @@ private fun VibingVibesTicker(
         if (vibes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "VIBES STILL",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = StealthAmber.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 2.sp
-                )
-                Text(
-                    text = "VIBES PROXIMITY",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.4f),
-                    fontSize = 8.sp,
-                    letterSpacing = 1.sp
-                )
+                    Text(
+                        text = if (onlyTies) "ROARS 0" else "VIBES 0",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = StealthAmber.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 2.sp
+                    )
                 }
             }
         } else {
@@ -360,10 +355,18 @@ private fun AnimatedVibeItem(
             .padding(vertical = 6.dp)
     ) {
         if (!isMe) {
+            Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp, modifier = Modifier.padding(end = 8.dp))
             Column {
                 Text(
-                    text = msg.content.uppercase(),
+                    text = msg.senderName.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
+                    color = if (isFocused) StealthAmber else Color.White.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp
+                )
+                Text(
+                    text = msg.content.uppercase(),
+                    style = MaterialTheme.typography.bodySmall,
                     color = if (isFocused) StealthAmber else Color.White.copy(alpha = 0.9f),
                     fontWeight = if (isFocused) FontWeight.Black else FontWeight.Bold,
                     letterSpacing = 0.5.sp
@@ -378,8 +381,15 @@ private fun AnimatedVibeItem(
         } else {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = msg.content.uppercase(),
+                    text = "${msg.senderName.uppercase()} (YOU)",
                     style = MaterialTheme.typography.labelSmall,
+                    color = StealthPrimary.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp
+                )
+                Text(
+                    text = msg.content.uppercase(),
+                    style = MaterialTheme.typography.bodySmall,
                     color = StealthPrimary,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 0.5.sp
@@ -391,6 +401,7 @@ private fun AnimatedVibeItem(
                     fontSize = 7.sp
                 )
             }
+            Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp, modifier = Modifier.padding(start = 8.dp))
         }
     }
 }

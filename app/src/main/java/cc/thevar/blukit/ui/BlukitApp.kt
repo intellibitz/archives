@@ -284,6 +284,7 @@ fun BlukitApp(
             isStealthMode = isStealthMode,
             lowPowerMode = lowPowerMode,
             currentRoute = (currentRoute as? Route) ?: initialRoute,
+            emojiAvatar = emojiAvatar,
             nickname = nickname ?: "vibe",
             incomingLinkRequests = bluetoothState.incomingLinkRequests,
             onNavigate = { route ->
@@ -346,6 +347,7 @@ fun UnifiedBlukitBadge(
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
     currentRoute: Route,
+    emojiAvatar: String,
     nickname: String,
     incomingLinkRequests: Set<P2PDevice>,
     onNavigate: (Route) -> Unit,
@@ -455,47 +457,66 @@ fun UnifiedBlukitBadge(
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Right: Contextual Animated Icon
+                // Right: User Visage & Mode Indicator
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.End,
                     modifier = Modifier.padding(start = 8.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        val infiniteTransition = rememberInfiniteTransition(label = "IconPulse")
-                        val pulseScale by infiniteTransition.animateFloat(
-                            initialValue = 0.9f,
-                            targetValue = 1.2f,
-                            animationSpec = infiniteRepeatable(tween(2000), RepeatMode.Reverse),
-                            label = "Pulse"
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "${nickname.uppercase()} (YOU)",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Black,
+                                color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.8f),
+                                letterSpacing = 0.5.sp
+                            )
                         )
-                        
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(contentAlignment = Alignment.Center) {
+                            val infiniteTransition = rememberInfiniteTransition(label = "UserPulse")
+                            val pulseScale by infiniteTransition.animateFloat(
+                                initialValue = 0.9f,
+                                targetValue = 1.1f,
+                                animationSpec = infiniteRepeatable(tween(2000), RepeatMode.Reverse),
+                                label = "Pulse"
+                            )
+                            
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp * pulseScale)
+                                    .background(
+                                        Brush.radialGradient(
+                                            listOf((if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.1f), Color.Transparent)
+                                        ),
+                                        CircleShape
+                                    )
+                            )
+                            
+                            Text(text = emojiAvatar, fontSize = 12.sp)
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(2.dp))
+                    
+                    // Mode Indicator
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(24.dp * pulseScale)
-                                .background(
-                                    Brush.radialGradient(
-                                        listOf((if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.15f), Color.Transparent)
-                                    ),
-                                    CircleShape
-                                )
+                                .size(4.dp)
+                                .background(if (airIsStill) Color.Red else StealthPrimary, CircleShape)
                         )
-                        
-                        Icon(
-                            imageVector = Icons.Rounded.AccountCircle,
-                            contentDescription = null,
-                            tint = if (airIsStill) Color.Red else StealthPrimary,
-                            modifier = Modifier.size(20.dp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (currentRoute is Route.Vibes) "VIBES" else "CROWD",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 6.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White.copy(alpha = 0.4f),
+                                letterSpacing = 1.sp
+                            )
                         )
                     }
-                    Text(
-                        text = if (currentRoute is Route.Vibes) "ROAR" else "VIBES",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.Black,
-                            color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.6f),
-                            letterSpacing = 1.sp
-                        )
-                    )
                 }
             }
 
@@ -916,23 +937,49 @@ private fun StatusIcon(
     isPermissionMissing: Boolean,
     @Suppress("UNUSED_PARAMETER") isMandatory: Boolean
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "StatusAnim")
+    
     val tint = when {
         isPermissionMissing -> Color.Yellow
         isOn -> Color.Green
         else -> Color.Red
     }
-    
-    val description = when {
-        isPermissionMissing -> "Permission Missing"
-        isOn -> "On"
-        else -> "Off"
-    }
+
+    val animScale by infiniteTransition.animateFloat(
+        initialValue = if (isOn) 0.9f else 1f,
+        targetValue = if (isOn) 1.1f else 1f,
+        animationSpec = infiniteRepeatable(tween(1500), RepeatMode.Reverse),
+        label = "Scale"
+    )
+
+    val animAlpha by infiniteTransition.animateFloat(
+        initialValue = if (!isOn) 0.3f else 1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(if (isPermissionMissing) 1000 else 500), 
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Alpha"
+    )
+
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = if (isOn) 360f else 0f,
+        animationSpec = infiniteRepeatable(tween(8000, easing = LinearEasing)),
+        label = "Rotate"
+    )
 
     Icon(
         imageVector = icon,
-        contentDescription = description,
-        tint = tint.copy(alpha = 0.8f),
-        modifier = Modifier.size(16.dp)
+        contentDescription = null,
+        tint = tint.copy(alpha = if (isOn) 0.8f else animAlpha),
+        modifier = Modifier
+            .size(16.dp)
+            .graphicsLayer {
+                scaleX = if (isOn) animScale else 1f
+                scaleY = if (isOn) animScale else 1f
+                rotationZ = rotation
+            }
     )
 }
 
