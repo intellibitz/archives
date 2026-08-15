@@ -53,7 +53,8 @@ data class BubbleData(
     val senderId: String,
     val content: String,
     val timestamp: Long,
-    val messageId: String
+    val messageId: String,
+    val isPrivate: Boolean = false
 )
 
 data class RelayEvent(
@@ -121,7 +122,8 @@ fun RipplesField(
                 relayEvents.add(RelayEvent(last.messageId, startOffset, targetOffset, System.currentTimeMillis()))
                 
                 // Add a Ripple at the target location
-                vibeRipples.add(VibeRipple(last.messageId, targetOffset, System.currentTimeMillis(), StealthAmber))
+                val rippleColor = if (last.isPrivate) StealthRose else StealthAmber
+                vibeRipples.add(VibeRipple(last.messageId, targetOffset, System.currentTimeMillis(), rippleColor))
             }
         }
     }
@@ -167,7 +169,8 @@ fun RipplesField(
             Box(contentAlignment = Alignment.Center) {
                 CenterNode(localEmoji)
                 val myBubble = activeBubbles.findLast { it.senderId == localDeviceId }
-                BubbleWrapper(activeBubble = myBubble, color = Color.White)
+                val myBubbleColor = if (myBubble?.isPrivate == true) StealthRose else Color.White
+                BubbleWrapper(activeBubble = myBubble, color = myBubbleColor)
             }
 
             // Vibe nodes and bubbles
@@ -492,13 +495,30 @@ private fun VibeNodes(devices: List<P2PDevice>, activeBubbles: List<BubbleData>,
         devices.forEachIndexed { index, device ->
             val radiusValue = (1f - device.proximityFactor) * 140f + 60f
             val angle = (index.toDouble() / devices.size) * 2 * PI
-            VibeNode(device = device, xOffset = (radiusValue * cos(angle)).toFloat().dp, yOffset = (radiusValue * sin(angle)).toFloat().dp, activeBubble = activeBubbles.findLast { it.senderId == device.id }, onClick = { onDeviceClick(device) })
+            val activeBubble = activeBubbles.findLast { it.senderId == device.id }
+            val bubbleColor = if (activeBubble?.isPrivate == true) StealthRose else StealthAmber
+            
+            VibeNode(
+                device = device, 
+                xOffset = (radiusValue * cos(angle)).toFloat().dp, 
+                yOffset = (radiusValue * sin(angle)).toFloat().dp, 
+                activeBubble = activeBubble,
+                bubbleColor = bubbleColor,
+                onClick = { onDeviceClick(device) }
+            )
         }
     }
 }
 
 @Composable
-private fun VibeNode(device: P2PDevice, xOffset: Dp, yOffset: Dp, activeBubble: BubbleData?, onClick: () -> Unit) {
+private fun VibeNode(
+    device: P2PDevice, 
+    xOffset: Dp, 
+    yOffset: Dp, 
+    activeBubble: BubbleData?, 
+    bubbleColor: Color,
+    onClick: () -> Unit
+) {
     val vibeDuration = (3000 - (device.proximityFactor * 2200)).toInt().coerceIn(500, 3000)
     val infiniteTransition = rememberInfiniteTransition(label = "Node")
     val vibeScale by infiniteTransition.animateFloat(
@@ -519,7 +539,7 @@ private fun VibeNode(device: P2PDevice, xOffset: Dp, yOffset: Dp, activeBubble: 
     )
 
     Box(modifier = Modifier.offset(xOffset, yOffset).size(nodeSize * 3.5f), contentAlignment = Alignment.Center) {
-        BubbleWrapper(activeBubble = activeBubble, color = StealthAmber)
+        BubbleWrapper(activeBubble = activeBubble, color = bubbleColor)
         
         // Dynamic Halo
         Box(

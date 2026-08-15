@@ -248,10 +248,44 @@ class BleFallbackController(
     }
 
     private fun handleChatMessage(address: String, payload: MessagePayload, secretKey: SecretKey) {
+        // 1. Send ACK
+        sendAck(address, payload, secretKey)
+
+        // 2. Relay if broadcast
+        if (payload.receiverId.isNullOrEmpty()) {
+            relayMessage(address, payload)
+        }
+
+        // 3. Save and Haptic
         internalScope.launch(ioDispatcher) {
             vibeStore.insertMessage(payload)
             hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
-            sendAck(address, payload, secretKey)
+        }
+    }
+
+    private fun relayMessage(sourceAddress: String, payload: MessagePayload) {
+        if (payload.hopCount >= 3) return
+
+        internalScope.launch(ioDispatcher) {
+            val myId = repository.getDeviceId()
+            if (payload.senderId == myId) return@launch
+
+            val relayedPayload = payload.copy(hopCount = payload.hopCount + 1)
+            val json = Json.encodeToString(MessagePayload.serializer(), relayedPayload)
+            val bytes = json.encodeToByteArray()
+
+            activeGatts.forEach { (address, _) ->
+                if (address != sourceAddress) {
+                    vibeKeys[address]?.let { key ->
+                        try {
+                            val encrypted = cryptoManager.encrypt(bytes, key)
+                            sendData(address, encrypted)
+                        } catch (e: Exception) {
+                            Log.e(tag, "BLE RELAY FAIL to $address")
+                        }
+                    }
+                }
+            }
         }
     }
 

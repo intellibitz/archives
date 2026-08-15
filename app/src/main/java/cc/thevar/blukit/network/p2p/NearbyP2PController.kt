@@ -222,7 +222,7 @@ class NearbyP2PController(
                 MessagePayload.TYPE_LINK_ACCEPT -> handleLinkAccept(endpointId)
                 else -> {
                     if (isNewMessage(payload.messageId)) {
-                        handleChatMessage(endpointId, payload, decryptedBytes, secretKey)
+                        handleChatMessage(endpointId, payload, secretKey)
                     }
                 }
             }
@@ -252,7 +252,6 @@ class NearbyP2PController(
     private fun handleChatMessage(
         endpointId: String,
         payload: MessagePayload,
-        decryptedBytes: ByteArray,
         secretKey: SecretKey
     ) {
         // 1. Send ACK back immediately
@@ -260,7 +259,7 @@ class NearbyP2PController(
 
         // 2. Relay if it's a broadcast/shout
         if (payload.receiverId.isNullOrEmpty()) {
-            relayMessage(endpointId, payload.senderId, decryptedBytes)
+            relayMessage(endpointId, payload)
         }
 
         // 3. Save to Local DB
@@ -284,15 +283,21 @@ class NearbyP2PController(
         }
     }
 
-    private fun relayMessage(sourceEndpointId: String, senderId: String, decryptedBytes: ByteArray) {
+    private fun relayMessage(sourceEndpointId: String, payload: MessagePayload) {
+        if (payload.hopCount >= 3) return // Max hops reached
+        
         internalScope.launch(ioDispatcher) {
             val myId = repository.getDeviceId()
-            if (senderId == myId) return@launch // Don't relay our own messages
+            if (payload.senderId == myId) return@launch // Don't relay our own messages
+
+            val relayedPayload = payload.copy(hopCount = payload.hopCount + 1)
+            val json = Json.encodeToString(MessagePayload.serializer(), relayedPayload)
+            val bytes = json.encodeToByteArray()
 
             activeConnections.filter { it != sourceEndpointId }.forEach { target ->
                 vibeKeys[target]?.let { key ->
                     try {
-                        val reEncrypted = cryptoManager.encrypt(decryptedBytes, key)
+                        val reEncrypted = cryptoManager.encrypt(bytes, key)
                         queueVibe(target, Payload.fromBytes(reEncrypted))
                     } catch (e: Exception) {
                         Log.e(tag, "RELAY FAIL to $target: ${e.message}")

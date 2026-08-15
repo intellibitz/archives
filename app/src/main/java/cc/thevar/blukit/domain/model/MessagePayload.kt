@@ -12,7 +12,8 @@ data class MessagePayload(
     val content: String,
     val timestamp: Long,
     val type: Int = TYPE_TEXT,
-    val status: Int = STATUS_SENT
+    val status: Int = STATUS_SENT,
+    val hopCount: Int = 0
 ) {
     companion object {
         const val TYPE_TEXT = 1

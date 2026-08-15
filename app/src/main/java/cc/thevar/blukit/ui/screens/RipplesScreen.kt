@@ -96,11 +96,17 @@ fun RipplesScreen(
     val processedMessageIds = remember { mutableSetOf<String>() }
 
     LaunchedEffect(state.messages) {
-        val newMessages = state.messages.filter { 
-            it.receiverId.isNullOrBlank() && it.messageId !in processedMessageIds 
-        }
+        val newMessages = state.messages.filter { it.messageId !in processedMessageIds }
         newMessages.forEach { msg ->
-            activeBubbles.add(BubbleData(msg.senderId, msg.content, System.currentTimeMillis(), msg.messageId))
+            activeBubbles.add(
+                BubbleData(
+                    msg.senderId,
+                    msg.content,
+                    System.currentTimeMillis(),
+                    msg.messageId,
+                    isPrivate = !msg.receiverId.isNullOrBlank()
+                )
+            )
             processedMessageIds.add(msg.messageId)
         }
     }
@@ -156,6 +162,7 @@ fun RipplesScreen(
             // Full Screen Vibes Ticker
             val effectiveInputVisible = isInputVisible || vibes.isEmpty()
             VibingVibesTicker(
+                state = state,
                 vibes = vibes,
                 localDeviceId = localDeviceId,
                 isInputVisible = effectiveInputVisible,
@@ -238,6 +245,7 @@ fun RipplesScreen(
 
 @Composable
 private fun VibingVibesTicker(
+    state: BluetoothUiState,
     vibes: List<cc.thevar.blukit.domain.model.MessagePayload>,
     localDeviceId: String,
     isInputVisible: Boolean,
@@ -290,8 +298,13 @@ private fun VibingVibesTicker(
                     val isMe = msg.senderId == localDeviceId
                     val isFocused = focusedVibeId == msg.senderId
                     
+                    // Look up proximity factor (0.0 to 1.0)
+                    val proximity = if (isMe) 1.0f else {
+                        state.scannedDevices.find { it.id == msg.senderId }?.proximityFactor ?: 0.5f
+                    }
+                    
                     val alpha by animateFloatAsState(
-                        if (focusedVibeId == null || isFocused || isMe) 1f else 0.15f,
+                        if (focusedVibeId == null || isFocused || isMe) proximity.coerceAtLeast(0.3f) else 0.1f,
                         label = "VibeAlpha"
                     )
 
