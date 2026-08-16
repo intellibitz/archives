@@ -38,6 +38,7 @@ class NearbyP2PController(
     private val contactRepository: ContactRepository,
     private val vibeStore: VibeStore,
     private val hapticManager: HapticManager,
+    private val radioStateManager: cc.thevar.blukit.data.system.RadioStateManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
@@ -90,6 +91,28 @@ class NearbyP2PController(
     init {
         observeIdentityChanges()
         observePowerChanges()
+        observeRadioChanges()
+    }
+
+    private fun observeRadioChanges() {
+        radioStateManager.radioStates
+            .drop(1)
+            .onEach {
+                if (_isAdvertising.value) {
+                    stopAdvertising()
+                    startAdvertising()
+                }
+            }
+            .launchIn(internalScope)
+    }
+
+    private fun getRadioFlag(): String {
+        val states = radioStateManager.radioStates.value
+        return when {
+            states.isWifiEnabled -> "W"
+            states.isBluetoothEnabled -> "B"
+            else -> "L"
+        }
     }
 
     private fun observeIdentityChanges() {
@@ -348,11 +371,22 @@ class NearbyP2PController(
             val vibeDeviceId = parts[2]
             val myDeviceId = repository.getDeviceId()
 
+            // Sentient detection of peer medium based on name flags
+            val peerMedium = if (parts.size >= 4) {
+                when (parts[3]) {
+                    "W" -> P2PDevice.ConnectionMedium.WIFI
+                    "B" -> P2PDevice.ConnectionMedium.BLUETOOTH
+                    else -> P2PDevice.ConnectionMedium.LOCATION
+                }
+            } else {
+                P2PDevice.ConnectionMedium.LOCATION
+            }
+
             val newDevice = P2PDevice(
                 id = endpointId, 
                 name = parts[1], 
                 emoji = parts[0],
-                medium = P2PDevice.ConnectionMedium.LOCATION
+                medium = peerMedium
             )
             _scannedDevices.update { it.filter { d -> d.id != endpointId } + newDevice }
 
@@ -386,7 +420,7 @@ class NearbyP2PController(
             val options = AdvertisingOptions.Builder()
                 .setStrategy(getStrategy())
                 .build()
-            val name = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
+            val name = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}|${getRadioFlag()}"
             connectionsClient.startAdvertising(name, serviceId, connectionLifecycleCallback, options)
                 .addOnSuccessListener { Log.i(tag, "ADVERTISING START SUCCESS") }
                 .addOnFailureListener { e ->

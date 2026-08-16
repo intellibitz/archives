@@ -50,6 +50,7 @@ class BlukitApplication : Application() {
             contactRepository = contactRepository,
             vibeStore = vibeStore,
             hapticManager = hapticManager,
+            radioStateManager = radioStateManager,
             cryptoManager = cryptoManager,
             ioDispatcher = Dispatchers.IO
         )
