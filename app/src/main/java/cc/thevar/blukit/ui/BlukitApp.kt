@@ -75,6 +75,7 @@ import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.viewmodels.*
 import cc.thevar.blukit.ui.viewmodels.ViewModelFactory
+import cc.thevar.blukit.ui.screens.BlukitInput
 
 @Composable
 fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissionsState {
@@ -227,7 +228,7 @@ fun BlukitApp(
                             if (device.id !in bluetoothState.connectedLinks) {
                                 bluetoothViewModel.connectToDevice(device)
                             } else {
-                                backStack.add(Route.Chat)
+                                backStack.add(Route.Vibes)
                             }
                         },
                         onBroadcastMessage = bluetoothViewModel::roar
@@ -285,48 +286,75 @@ fun BlukitApp(
             bluetoothState.messages.count { !it.receiverId.isNullOrBlank() }
         }
 
-        UnifiedBlukitBadge(
-            energy = energySurge,
-            rotation = hubRotation,
-            userCount = report.userCount,
-            linksCount = report.connectedLinksCount,
-            roarsCount = roarsCount,
-            vibesCount = vibesCount,
-            lowPowerMode = lowPowerMode,
-            currentBreeze = report.currentBreeze,
-            isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
-            isLocationEnabled = bluetoothState.isLocationEnabled,
-            isWifiEnabled = bluetoothState.isWifiEnabled,
-            permissionsGranted = permissionState.allPermissionsGranted,
-            isPermanentlyDenied = isPermanentlyDenied,
-            isStealthMode = isStealthMode,
-            currentRoute = (currentRoute as? Route) ?: initialRoute,
-            nickname = nickname ?: "vibe",
-            incomingLinkRequests = bluetoothState.incomingLinkRequests,
-            onNavigate = { route ->
-                if (currentRoute != route) {
-                    backStack.add(route)
-                }
-            },
-            onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
-            onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
-            onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
-            onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
-            onOpenSettings = {
-                // Feedback 13: Fallback should go to Bluetooth settings
-                context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
-            },
-            onSaveNickname = viewModel::saveNickname,
-            onToggleStealth = viewModel::toggleStealth,
-            onToggleLowPower = viewModel::toggleLowPowerMode,
-            onClearHistory = viewModel::clearChatHistory,
-            onLogout = viewModel::logout,
-            onAcceptLink = bluetoothViewModel::acceptLink,
-            onDenyLink = bluetoothViewModel::denyLink,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
-        )
+        // Global "SEND VIBES" input field positioned above the Hub
+        var messageText by remember { mutableStateOf("") }
+        val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+        
+        Column(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Feedback 15: "send vibes" text field above the fields/hub
+            AnimatedVisibility(
+                visible = currentRoute is Route.Crowd || currentRoute is Route.Vibes,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                BlukitInput(
+                    value = messageText,
+                    onValueChange = { messageText = it },
+                    onSend = {
+                        if (messageText.isNotBlank()) {
+                            bluetoothViewModel.roar(messageText, currentRoute is Route.Vibes)
+                            messageText = ""
+                            focusManager.clearFocus()
+                        }
+                    },
+                    placeholder = "SPREAD VIBES…",
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            UnifiedBlukitBadge(
+                energy = energySurge,
+                rotation = hubRotation,
+                userCount = report.userCount,
+                linksCount = report.connectedLinksCount,
+                roarsCount = roarsCount,
+                vibesCount = vibesCount,
+                lowPowerMode = lowPowerMode,
+                currentBreeze = report.currentBreeze,
+                isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
+                isLocationEnabled = bluetoothState.isLocationEnabled,
+                isWifiEnabled = bluetoothState.isWifiEnabled,
+                permissionsGranted = permissionState.allPermissionsGranted,
+                isPermanentlyDenied = isPermanentlyDenied,
+                isStealthMode = isStealthMode,
+                currentRoute = (currentRoute as? Route) ?: initialRoute,
+                nickname = nickname ?: "vibe",
+                incomingLinkRequests = bluetoothState.incomingLinkRequests,
+                onNavigate = { route ->
+                    if (currentRoute != route) {
+                        backStack.add(route)
+                    }
+                },
+                onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
+                onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
+                onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
+                onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
+                onOpenSettings = {
+                    context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+                },
+                onSaveNickname = viewModel::saveNickname,
+                onToggleStealth = viewModel::toggleStealth,
+                onToggleLowPower = viewModel::toggleLowPowerMode,
+                onClearHistory = viewModel::clearChatHistory,
+                onLogout = viewModel::logout,
+                onAcceptLink = bluetoothViewModel::acceptLink,
+                onDenyLink = bluetoothViewModel::denyLink,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+        }
 
         if (permissionState.shouldShowRationale && !permissionState.allPermissionsGranted) {
             AlertDialog(
@@ -407,7 +435,7 @@ fun UnifiedBlukitBadge(
                 .clickable { expanded = !expanded }
                 .padding(16.dp)
         ) {
-            // Feedback 14: Radios Bar at the TOP of the badge
+            // Feedback 14/15: Radios Bar at the TOP of the badge (Always visible)
             MagicBarContent(
                 isBluetoothOff = !isBluetoothEnabled,
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
@@ -457,25 +485,26 @@ fun UnifiedBlukitBadge(
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     // Intelligence Stats (Hub Brain)
                     val statusText = when {
-                        airIsStill -> "RADIOS OFF"
+                        airIsStill -> null // Redundant with magic bar
                         incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
                         !currentBreeze.isNullOrBlank() -> currentBreeze
                         else -> "HEAR THE CROWD ROAR"
                     }
                     
-                    Text(
-                        text = statusText.uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (airIsStill) Color.Red else StealthPrimary.copy(alpha = 0.8f),
-                            letterSpacing = 0.5.sp
+                    if (statusText != null) {
+                        Text(
+                            text = statusText.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Black,
+                                color = StealthPrimary.copy(alpha = 0.8f),
+                                letterSpacing = 0.5.sp
+                            )
                         )
-                    )
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
 
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Feedback 11: ROARS / VIBES Picker
+                    // Feedback 11/15: CROWD / FRIENDS Picker
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -483,20 +512,20 @@ fun UnifiedBlukitBadge(
                             .padding(2.dp),
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        val isRoars = currentRoute is Route.Crowd
+                        val isCrowd = currentRoute is Route.Crowd
                         Surface(
                             onClick = { onNavigate(Route.Crowd) },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (isRoars) StealthPrimary else Color.Transparent,
+                            color = if (isCrowd) StealthPrimary else Color.Transparent,
                             modifier = Modifier.height(24.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
                                 Text(
-                                    text = "ROARS",
+                                    text = "CROWD",
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontSize = 7.sp,
                                         fontWeight = FontWeight.Black,
-                                        color = if (isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                                        color = if (isCrowd) Color.Black else Color.White.copy(alpha = 0.4f)
                                     )
                                 )
                             }
@@ -504,23 +533,23 @@ fun UnifiedBlukitBadge(
                         Surface(
                             onClick = { onNavigate(Route.Vibes) },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (!isRoars) StealthPrimary else Color.Transparent,
+                            color = if (!isCrowd) StealthPrimary else Color.Transparent,
                             modifier = Modifier.height(24.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
                                 Text(
-                                    text = "VIBES",
+                                    text = "FRIENDS",
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontSize = 7.sp,
                                         fontWeight = FontWeight.Black,
-                                        color = if (!isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                                        color = if (!isCrowd) Color.Black else Color.White.copy(alpha = 0.4f)
                                     )
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -540,7 +569,7 @@ fun UnifiedBlukitBadge(
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Right: User Identity & SPREAD VIBES
+                // Right: User Identity (Feedback 11)
                 Column(
                     horizontalAlignment = Alignment.End,
                     modifier = Modifier.padding(start = 8.dp)
@@ -564,17 +593,31 @@ fun UnifiedBlukitBadge(
                         )
                     )
                     
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     
-                    Text(
-                        text = "SPREAD VIBES",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.6f),
-                            letterSpacing = 1.sp
+                    // Feedback 15: Expansion Action (Move outside radio bar)
+                    val needsPermission = !permissionsGranted
+                    val actionText = if (airIsStill) (if (needsPermission) "GRANT" else "TURN ON") else if (expanded) "CLOSE" else "SETUP"
+                    Surface(
+                        onClick = { 
+                            if (needsPermission) onGrantPermissions()
+                            else if (airIsStill) onAwakenBluetooth() 
+                            else expanded = !expanded 
+                        },
+                        color = if (airIsStill) Color.Red else Color.White.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = actionText,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 6.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (airIsStill) Color.White else StealthPrimary,
+                                letterSpacing = 1.sp
+                            )
                         )
-                    )
+                    }
                 }
             }
 
@@ -774,7 +817,7 @@ private fun MagicBarContent(
     )
 
     val isStill = isBluetoothOff || isLocationOff || isPermissionMissing
-
+    
     Surface(
         color = if (isStill) Color.Red.copy(alpha = 0.15f) else StealthPrimary.copy(alpha = 0.05f),
         shape = RoundedCornerShape(12.dp),
@@ -795,7 +838,7 @@ private fun MagicBarContent(
                         isMandatory = true,
                         onClick = onAwakenBluetooth
                     )
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     StatusIcon(
                         icon = Icons.Rounded.Wifi, 
                         isOn = !isWifiOff, 
@@ -803,7 +846,7 @@ private fun MagicBarContent(
                         isMandatory = false,
                         onClick = onAwakenWifi
                     )
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     StatusIcon(
                         icon = Icons.Rounded.LocationOn, 
                         isOn = !isLocationOff, 
@@ -823,30 +866,6 @@ private fun MagicBarContent(
                         ),
                         modifier = Modifier.padding(end = 12.dp)
                     )
-
-                    val action = when {
-                        isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
-                        isBluetoothOff -> onAwakenBluetooth
-                        isLocationOff -> onAwakenLocation
-                        else -> onOpenSettings
-                    }
-
-                    if (action != null) {
-                        Text(
-                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else "TURN ON",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
-                            ),
-                            modifier = Modifier
-                                .graphicsLayer { alpha = pulseAlpha }
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color.White.copy(alpha = 0.2f))
-                                .clickable { action() }
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
-                    }
                 }
             }
         }
@@ -898,7 +917,7 @@ private fun StatusIcon(
         contentDescription = null,
         tint = tint.copy(alpha = if (isOn) 0.8f else animAlpha),
         modifier = Modifier
-            .size(20.dp)
+            .size(20.dp) 
             .clickable { onClick() }
             .graphicsLayer {
                 scaleX = if (isOn) animScale else 1f
@@ -953,6 +972,55 @@ private fun HubStat(
                 color = StealthPrimary.copy(alpha = 0.5f),
                 letterSpacing = 1.sp
             )
+        )
+    }
+}
+
+@Composable
+private fun IntelRow(
+    label: String, 
+    value: String,
+    modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    textIcon: String? = null,
+    onClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = StealthPrimary.copy(alpha = 0.4f),
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            } else if (textIcon != null) {
+                Text(
+                    text = textIcon,
+                    fontSize = 12.sp,
+                    modifier = Modifier.alpha(0.6f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(
+                text = label, 
+                style = MaterialTheme.typography.labelSmall, 
+                color = Color.White.copy(alpha = 0.4f)
+            )
+        }
+        Text(
+            text = value, 
+            style = MaterialTheme.typography.labelSmall, 
+            color = StealthPrimary, 
+            fontWeight = FontWeight.Bold
         )
     }
 }

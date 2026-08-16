@@ -3,7 +3,7 @@
 
     <string name="nav_watch">CROWD</string>
     <string name="nav_shout">ENERGY</string>
-    <string name="nav_whispers">VIBES</string>
+    <string name="nav_whispers">FRIENDS</string>
     <string name="nav_mask">ME</string>
 
     <!-- Crowd Screen (Landing) -->
@@ -22,8 +22,8 @@
     <string name="shout_scan_hint">SEARCHING FOR CROWD…</string>
 
     <!-- Vibes Screen (Mutual) -->
-    <string name="whispers_title">PRIVATE VIBES</string>
-    <string name="whispers_empty_hint">VIBES 0</string>
+    <string name="whispers_title">FRIENDS</string>
+    <string name="whispers_empty_hint">FRIENDS 0</string>
     <string name="whispers_last_seen">LAST SEEN: %1$s</string>
     <string name="whispers_label">VIBING</string>
 
@@ -57,7 +57,7 @@
     <!-- Smart Flow -->
     <string name="smart_flow_title">JOIN THE CROWD?</string>
     <string name="smart_flow_desc">START SPREADING VIBES TO HEAR THE CROWD ROAR.</string>
-    <string name="smart_flow_action">JOIN CROWD</string>
+    <string name="smart_flow_action">JOIN</string>
 
     <!-- Shared UI -->
     <string name="btn_send">Send</string>

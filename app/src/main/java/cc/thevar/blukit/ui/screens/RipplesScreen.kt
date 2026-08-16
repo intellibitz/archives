@@ -70,9 +70,6 @@ fun RipplesScreen(
     onBroadcastMessage: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var message by remember { mutableStateOf("") }
-    var isInputVisible by remember { mutableStateOf(false) }
-    val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     val hapticManager = remember { (context.applicationContext as BlukitApplication).hapticManager }
     
@@ -82,7 +79,6 @@ fun RipplesScreen(
             add(Manifest.permission.BLUETOOTH_ADVERTISE)
             add(Manifest.permission.BLUETOOTH_CONNECT)
         } else {
-            // Pre-Android 12, location IS unfortunately technically required for Bluetooth scanning
             add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -91,7 +87,6 @@ fun RipplesScreen(
     }
 
     val permissionState = rememberSpreadPermissionsState(permissions = permissions)
-    var showSmartFlowPrompt by remember { mutableStateOf(false) }
 
     // Chat Bubbles logic for Radar visualization
     val activeBubbles = remember { mutableStateListOf<BubbleData>() }
@@ -139,10 +134,8 @@ fun RipplesScreen(
     ) { innerPadding ->
         val vibes = remember(state.messages, onlyTies) {
             if (onlyTies) {
-                // Mutual vibes: Show all messages that are NOT broadcasts
                 state.messages.filter { !it.receiverId.isNullOrBlank() }
             } else {
-                // Public crowd: Show only broadcasts
                 state.messages.filter { it.receiverId.isNullOrBlank() }
             }
         }
@@ -185,37 +178,6 @@ fun RipplesScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                AnimatedVisibility(
-                    visible = isInputVisible || vibes.isEmpty(),
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    BlukitInput(
-                        value = message,
-                        onValueChange = { message = it },
-                        onSend = {
-                            if (message.isNotBlank()) {
-                                if (state.isDiscovering || state.isAdvertising) {
-                                    onBroadcastMessage(message, onlyTies)
-                                    message = ""
-                                    isInputVisible = false
-                                    focusManager.clearFocus()
-                                } else {
-                                    showSmartFlowPrompt = true
-                                }
-                            }
-                        },
-                        placeholder = stringResource(R.string.shout_type_placeholder)
-                    )
-                }
-            }
-
             state.uiError?.let { error ->
                 Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
                     Snackbar(
@@ -228,33 +190,6 @@ fun RipplesScreen(
                 }
             }
         }
-    }
-
-    if (showSmartFlowPrompt) {
-        AlertDialog(
-            onDismissRequest = { showSmartFlowPrompt = false },
-            title = { Text(stringResource(R.string.smart_flow_title)) },
-            text = { Text(stringResource(R.string.smart_flow_desc)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showSmartFlowPrompt = false
-                        if (permissionState.allPermissionsGranted) {
-                            onStartScan()
-                        } else {
-                            permissionState.launchMultiplePermissionRequest()
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.smart_flow_action))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSmartFlowPrompt = false }) {
-                    Text(stringResource(R.string.btn_cancel))
-                }
-            }
-        )
     }
 }
 
@@ -403,43 +338,6 @@ private fun AnimatedVibeItem(
                 )
             }
             Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp, modifier = Modifier.padding(start = 8.dp))
-        }
-    }
-}
-
-@Composable
-private fun PermissionRequestContent(
-    onRequestPermissions: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = stringResource(R.string.permission_title),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Black,
-            color = Color.White
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.permission_desc),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            color = StealthPrimary.copy(alpha = 0.7f)
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onRequestPermissions,
-            colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
-            shape = RoundedCornerShape(4.dp),
-            modifier = Modifier.fillMaxWidth().height(56.dp)
-        ) {
-            Text(stringResource(R.string.permission_grant).uppercase(), fontWeight = FontWeight.Black)
         }
     }
 }

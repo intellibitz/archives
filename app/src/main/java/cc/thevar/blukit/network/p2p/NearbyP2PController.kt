@@ -47,7 +47,7 @@ class NearbyP2PController(
     private val connectionsClient = Nearby.getConnectionsClient(context)
     private val serviceId = "cc.thevar.blukit.AIR_ID"
 
-    private fun getStrategy() = if (repository.lowPowerMode.value) Strategy.P2P_STAR else Strategy.P2P_CLUSTER
+    private fun getStrategy() = Strategy.P2P_CLUSTER // Hardened for high-reliability crowd discovery
 
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
@@ -342,7 +342,7 @@ class NearbyP2PController(
 
     private fun createDiscoveryCallback() = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            Log.i(tag, "VIBE FOUND: $endpointId (${info.endpointName})")
+            Log.i(tag, "VIBE FOUND: $endpointId (${info.endpointName}). Updating CROWD.")
             val parts = info.endpointName.split("|", limit = 3)
             if (parts.size < 3) return
             val vibeDeviceId = parts[2]

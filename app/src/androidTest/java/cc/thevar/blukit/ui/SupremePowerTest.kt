@@ -72,10 +72,9 @@ class SupremePowerTest {
         composeTestRule.onNodeWithTag("IntelSection").assertDoesNotExist()
 
         // Check stats in hub brain (center)
-        composeTestRule.onNodeWithText("CROWD", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("CROWD", useUnmergedTree = true).onFirst().assertIsDisplayed()
         composeTestRule.onNodeWithText("10", useUnmergedTree = true).assertIsDisplayed()
-        // There might be multiple "ROARS" (one in toggle, one in stat)
-        composeTestRule.onAllNodesWithText("ROARS", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        composeTestRule.onNodeWithText("ROARS", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("5", useUnmergedTree = true).assertIsDisplayed()
 
         // Click to collapse
