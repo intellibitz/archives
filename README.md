@@ -9,21 +9,21 @@ Blukit is a sentient, offline proximity experience designed for high-density hum
 ## 🫂 THE CROWD (Public Energy)
 When you open Blukit, you land in the **CROWD**. This is the collective pulse of everyone around you.
 - **Vibes**: Send a collective **VIBE** and see the stadium glow instantly.
-- **Collective Field**: Every soul identified as **NAME (YOU)**, **NAME (MUTUAL)**, or **NAME**.
+- **Collective Field**: Every soul identified as **NAME (YOU)**, **NAME+** (MUTUAL), or **NAME**.
 
 ## ✨ FRIENDS (Mutual Energy)
 Form an intentional link through **MUTUAL APPROVAL**. 
-- **Mutual**: Select a voice from the crowd to initiate a private connection. Once both souls **VIBE**, you form a private proximity group.
+- **Mutual**: Select a soul from the crowd to initiate a private connection. Once both souls **VIBE**, you form a private proximity group.
 - **Friends Field**: The same atmospheric UX, filtered strictly for your mutual approvals.
 
 ---
 
 ## 🧠 OMNIPOTENT HUB
-The **Blukit Badge** at the bottom is the all-in-one control center:
-- **Energy Bar**: Persistent traffic-light status for Bluetooth, WiFi, and Location, including Dark Mode and Battery Saver toggles.
+The **Blukit Badge** at the bottom is the all-in-one command center:
+- **Energy Bar**: Persistent status for Bluetooth, WiFi, and Location, with double-liner stacks for **DARK MODE** and **LOW BATTERY MODE**.
 - **Smart Switcher**: Instantly toggle between **CROWD** and **FRIENDS** with real-time density counts.
-- **Identity**: Your persona is editable right from the hub.
-- **Destructive Roar**: Instantly clear history or reset your profile from the center.
+- **Identity**: Your visage is editable right from the hub. Stacked with **(YOU)** and a direct **RESET PROFILE** action.
+- **Action Center**: Instantly **CLEAR VIBES (n)** from the center column.
 
 ---
 
