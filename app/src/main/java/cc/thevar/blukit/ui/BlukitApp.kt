@@ -351,7 +351,9 @@ fun BlukitApp(
             )
         }
 
-        if (permissionState.shouldShowRationale && !permissionState.allPermissionsGranted) {
+        val isStill = !bluetoothState.isBluetoothEnabled || !bluetoothState.isLocationEnabled
+
+        if (isStill && permissionState.shouldShowRationale && !permissionState.allPermissionsGranted) {
             AlertDialog(
                 onDismissRequest = { },
                 containerColor = Color.Black,
@@ -407,7 +409,8 @@ fun UnifiedBlukitBadge(
     val focusRequester = remember { FocusRequester() }
     
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-    val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
+    // Hardened: Only consider 'Still' if Bluetooth is physically OFF
+    val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled)
 
     Surface(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
