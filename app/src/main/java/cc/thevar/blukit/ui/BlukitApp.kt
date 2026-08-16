@@ -446,9 +446,11 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Sentient Branding
+                // Left: Sentient Branding & Hub Toggle
                 Column(
-                    modifier = Modifier.padding(end = 8.dp),
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clickable { expanded = !expanded },
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
@@ -462,11 +464,11 @@ fun UnifiedBlukitBadge(
                         )
                     )
                     Text(
-                        text = "CROWD ENERGY",
+                        text = if (expanded) "CLOSE HUB" else "OPEN HUB",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.3f)
+                            color = Color.White.copy(alpha = 0.5f)
                         )
                     )
                 }
@@ -563,26 +565,17 @@ fun UnifiedBlukitBadge(
                         )
                     )
                     
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
                     
-                    // Feedback 15/16: Expansion Action (HUB)
-                    val actionText = if (expanded) "CLOSE" else "HUB"
-                    Surface(
-                        onClick = { expanded = !expanded },
-                        color = Color.White.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text(
-                            text = actionText,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 6.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = StealthPrimary,
-                                letterSpacing = 1.sp
-                            )
+                    Text(
+                        text = "SPREAD VIBES",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 6.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.6f),
+                            letterSpacing = 1.sp
                         )
-                    }
+                    )
                 }
             }
 
@@ -840,20 +833,23 @@ private fun MagicBarContent(
                     }
 
                     if (action != null) {
-                        Text(
-                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else if (isPermissionMissing) "GRANT" else "TURN ON",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
-                            ),
-                            modifier = Modifier
-                                .graphicsLayer { alpha = pulseAlpha }
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color.White.copy(alpha = 0.2f))
-                                .clickable { action() }
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
+                        Surface(
+                            onClick = { action() },
+                            color = Color.White,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else if (isPermissionMissing) "GRANT" else "TURN ON",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.Red
+                                ),
+                                modifier = Modifier
+                                    .graphicsLayer { alpha = pulseAlpha }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             }
