@@ -1,38 +1,37 @@
-# Blukit - Spread the Vibes: Data Safety Declaration
+# Blukit: Data Safety
 
-This document outlines how **Blukit - Spread the Vibes** handles user data, privacy, and security in compliance with Google Play Store standards.
+This page explains how **Blukit** keeps your info safe and private.
 
-## 1. Data Collection & Sharing
+## 1. No Data Collection or Sharing
 
-**Blukit does not collect or share any user data with third parties.**
+**Blukit doesn't collect or share your data with anyone else.**
 
-| Data Type | Collected | Shared | Purpose |
+| What we use | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
-| **Personal Info** (Nickname) | No | No | Strictly stored locally to identify you to nearby voices. |
-| **Messages** | No | No | Stored in a local encrypted database for your history. |
-| **Location** | No | No | Bluetooth scanning requires location permissions on older Android versions, but location data is never read or stored. |
-| **Device IDs** | No | No | A random UUID is generated locally to uniquely identify you in the collective. |
+| **Nickname** | Only on your phone | Nearby people only | So people nearby know who you are. |
+| **Messages** | Only on your phone | Only with people you talk to | To keep your chat history. |
+| **Location** | No | No | Needed for Bluetooth on some phones, but we never look at where you are. |
+| **Device ID** | No | No | We make a random ID on your phone to find other people nearby. |
 
-## 2. Encryption
+## 2. Security
 
-**All data is encrypted in transit.**
+**Everything you send is encrypted.**
 
-- **Vibe-to-Vibe Traffic**: All messaging payloads are encrypted using **AES-256-GCM** via the hardware-backed **Android Keystore System**.
-- **Shared Secrets**: Encryption keys are established between voices using **Diffie-Hellman (ECDH)**, ensuring that only you and your tie can hear the vibes.
+- **Vibe Security**: All your messages are scrambled using advanced security (**AES-256**) so only the intended person can read them.
+- **Private Keys**: Your phone makes secret keys that stay on your phone to keep your private vibes safe.
 
-## 3. Local Privacy & Ephemerality
+## 3. Your Privacy
 
-- **No Cloud Sync**: Voices never leave the local device radio range (50-100m).
-- **Automated Purge**: All local logs are automatically deleted from your device after 12 hours.
-- **Vibe Moderation**: The app includes a smart system for **Blocking** offensive voices locally, ensuring a safe collective environment.
-- **Quiet Light**: A dedicated OLED-optimized pitch-black theme to prevent screen glare in dark environments.
+- **No Cloud**: Your messages never go to the internet or a cloud server. They stay within about 100 meters of you.
+- **Auto-Delete**: Everything you send is deleted from your phone automatically after 12 hours. It's like it never happened.
+- **Blocking**: You can block anyone you don't want to hear from.
+- **Dark Mode**: A pitch-black theme that's easy on the eyes and saves battery.
 
 ## 4. Permissions
 
-Blukit uses granular permissions to protect user privacy:
-- `BLUETOOTH_SCAN`: Used with the `neverForLocation` flag to ensure scanning is only used for vibe discovery.
-- `BLUETOOTH_CONNECT`: Required to establish secure setup between voices.
-- `BLUETOOTH_ADVERTISE`: Required to make your presence felt in The Vibes.
+Blukit needs a few permissions to work:
+- **Bluetooth**: To find and connect to people nearby.
+- **WiFi**: To help speed up the connection if needed.
 
 ---
-**Last Updated**: August 15, 2026
+**Updated**: August 16, 2026

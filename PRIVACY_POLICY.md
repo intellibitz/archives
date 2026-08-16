@@ -1,35 +1,34 @@
-# Privacy Policy for Blukit - Spread the Vibes
+# Privacy Policy for Blukit
 
-**Effective Date: August 15, 2026**
+**Effective Date: August 16, 2026**
 
-Blukit ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains our practices regarding the process of connection through our mobile application, Blukit - Spread the Vibes.
+At Blukit, your privacy is our top priority. This policy explains how we keep things private when you use the app.
 
-## 1. Zero Data Collection
-Blukit is a smart, offline experience. **We do not collect, store, or transmit any of your personal data to any external servers.**
+## 1. We Don't Collect Your Data
+Blukit works entirely offline. **We don't collect, store, or send any of your personal info to any servers.**
 
-*   **User Identity**: Your nickname is stored strictly on your local device and is only shared with nearby voices via local radio links (Bluetooth).
-*   **Voices**: Your history is stored in a local encrypted database on your device and is never uploaded to a cloud.
-*   **Location Data**: While the app requires location permissions to perform Bluetooth scanning (on certain Android versions), **we never access, store, or share your actual GPS location.**
+*   **Your Name**: Your nickname is stored only on your phone. It's only shared with people nearby so they know who's talking.
+*   **Your Messages**: Your message history is stored only on your phone and is never uploaded anywhere.
+*   **Your Location**: Even though the app asks for location permission (which Android needs for Bluetooth), **we never actually track where you are.**
 
-## 2. Pervasive Voice Communication
-All communications occur directly between devices within radio range (typically 50–100 meters). Voices are transmitted over local radio frequencies and do not pass through the internet or any third-party infrastructure.
+## 2. Talk Directly to People Nearby
+All messages go directly from your phone to other phones nearby. They don't go through the internet or any other company's systems.
 
-## 3. Encryption & Safety
-To ensure the privacy of your private Ties, Blukit uses:
-*   **AES-256-GCM** encryption for all data in transit.
-*   **Diffie-Hellman (ECDH)** key exchange to establish secure sessions between voices.
-*   Keys are stored securely in the **Android Keystore System**.
+## 3. Safe and Secure
+To keep your private chats private, Blukit uses:
+*   Strong encryption (**AES-256**) for everything you send.
+*   Secure keys that are stored only on your phone.
 
-## 4. Data Retention (Ephemeral Process)
-Blukit is designed to be ephemeral.
-*   **Automatic Purge**: All local logs are automatically deleted from your device after 12 hours.
-*   **Manual Deletion**: You can forget your ties or reset your identity at any time within the hub settings.
+## 4. Messages Don't Last Forever
+Blukit is built to be temporary.
+*   **Automatic Clean-up**: All messages are deleted from your phone after 12 hours.
+*   **Manual Reset**: You can clear your messages or reset your profile whenever you want.
 
-## 5. Third-Party Services
-Blukit does not use any third-party analytics, advertising SDKs, or cloud services.
+## 5. No Third Parties
+Blukit doesn't use any ads, tracking, or cloud services.
 
-## 6. Changes to This Policy
-We may update our Privacy Policy as the vibes shift. Any changes will be reflected by updating the "Effective Date" at the top of this document.
+## 6. Changes
+We might update this policy from time to time. If we do, we'll change the date at the top.
 
-## 7. Contact Us
-If you have any questions about this connection process, please contact us at: **muthu.ramadoss@gmail.com**
+## 7. Get in Touch
+If you have questions, email us at: **muthu.ramadoss@gmail.com**
