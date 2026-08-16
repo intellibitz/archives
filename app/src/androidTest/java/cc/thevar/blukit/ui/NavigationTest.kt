@@ -57,12 +57,12 @@ class NavigationTest {
         composeTestRule.onNodeWithText("SPREAD VIBES").assertIsDisplayed()
 
         // 3. FRIENDS (Mutual) - Switch via visual picker
-        composeTestRule.onAllNodesWithText("FRIENDS", useUnmergedTree = true).onFirst().performClick()
+        composeTestRule.onNode(hasText("FRIENDS", substring = true), useUnmergedTree = true).performClick()
         // Check for specific "FRIENDS" stat in center or something unique to VIBES screen
-        composeTestRule.onAllNodesWithText("FRIENDS", useUnmergedTree = true).onLast().assertIsDisplayed()
+        composeTestRule.onAllNodes(hasText("FRIENDS", substring = true), useUnmergedTree = true).onLast().assertIsDisplayed()
         
         // 4. Back to CROWD - Switch via visual picker
-        composeTestRule.onAllNodesWithText("CROWD", useUnmergedTree = true).onFirst().performClick()
+        composeTestRule.onNodeWithText("CROWD", substring = true, useUnmergedTree = true).performClick()
         composeTestRule.onNodeWithText("SPREAD VIBES", substring = true).assertIsDisplayed()
     }
 

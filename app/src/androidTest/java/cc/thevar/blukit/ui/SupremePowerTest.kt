@@ -6,12 +6,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.power.SupremePowerReport
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalTestApi::class)
 class SupremePowerTest {
 
     @get:Rule
@@ -36,19 +36,16 @@ class SupremePowerTest {
                         rotation = 0f,
                         userCount = report.userCount,
                         linksCount = report.connectedLinksCount,
-                        roarsCount = report.totalMessages,
-                        vibesCount = 0,
                         lowPowerMode = true,
-                        currentBreeze = report.currentBreeze,
-                        isBluetoothEnabled = true,
-                        isLocationEnabled = true,
-                        isWifiEnabled = true,
                         permissionsGranted = true,
                         isPermanentlyDenied = false,
                         isStealthMode = false,
                         currentRoute = cc.thevar.blukit.ui.navigation.Route.Crowd,
                         nickname = "vibe",
-                        incomingLinkRequests = emptySet<P2PDevice>(),
+                        currentBreeze = report.currentBreeze,
+                        isBluetoothEnabled = true,
+                        isLocationEnabled = true,
+                        isWifiEnabled = true,
                         onNavigate = {},
                         onAwakenBluetooth = {},
                         onAwakenLocation = {},
@@ -59,9 +56,7 @@ class SupremePowerTest {
                         onToggleStealth = {},
                         onToggleLowPower = {},
                         onClearHistory = {},
-                        onLogout = {},
-                        onAcceptLink = {},
-                        onDenyLink = {}
+                        onLogout = {}
                 )
                 }
             }
@@ -69,22 +64,16 @@ class SupremePowerTest {
 
         // Check closed state
         composeTestRule.onNodeWithText("BLUKIT", substring = true).assertIsDisplayed()
-        composeTestRule.onNodeWithTag("IntelSection").assertDoesNotExist()
-
-        // Check stats in hub brain (center)
-        composeTestRule.onAllNodesWithText("CROWD", useUnmergedTree = true).onFirst().assertIsDisplayed()
-        composeTestRule.onNodeWithText("10", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("ROARS", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("5", useUnmergedTree = true).assertIsDisplayed()
-
-        // Click to collapse
-        composeTestRule.onNodeWithTag("BlukitBadge").performClick()
         
-        // Wait for collapse animation - check if IntelSection is no longer visible
-        composeTestRule.waitUntil(10000) {
-            composeTestRule.onAllNodesWithTag("IntelSection")
-                .fetchSemanticsNodes().isEmpty()
-        }
-        composeTestRule.onNodeWithTag("IntelSection").assertDoesNotExist()
+        // Check for picker content
+        composeTestRule.onNodeWithText("CROWD (10)", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("FRIENDS (2)", useUnmergedTree = true).assertIsDisplayed()
+
+        // Click BLUKIT icon to expand (Feedback 17 logic)
+        composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
+        
+        // Check expanded state - look for identity input
+        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("IdentityVibeInput"), 5000)
+        composeTestRule.onNodeWithTag("IdentityVibeInput").assertIsDisplayed()
     }
 }

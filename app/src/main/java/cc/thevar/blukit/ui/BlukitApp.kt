@@ -423,16 +423,17 @@ fun UnifiedBlukitBadge(
                     shape = RoundedCornerShape(24.dp)
                 )
                 .testTag("BlukitBadge")
-                .clickable { expanded = !expanded }
                 .padding(16.dp)
         ) {
-            // Feedback 14/15/16: Radios Bar at the TOP of the badge (Always visible)
+            // Feedback 14/15/16/17: Radios Bar at the TOP
             MagicBarContent(
                 isBluetoothOff = !isBluetoothEnabled,
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
                 isWifiOff = !isWifiEnabled,
                 isPermissionMissing = !permissionsGranted,
                 isPermanentlyDenied = isPermanentlyDenied,
+                isExpanded = expanded,
+                onToggleExpanded = { expanded = !expanded },
                 onAwakenBluetooth = onAwakenBluetooth,
                 onAwakenLocation = onAwakenLocation,
                 onAwakenWifi = onAwakenWifi,
@@ -446,7 +447,7 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Sentient Branding & Hub Toggle
+                // Left: Sentient Branding (Icon Clickable for HUB)
                 Column(
                     modifier = Modifier
                         .padding(end = 8.dp)
@@ -464,9 +465,9 @@ fun UnifiedBlukitBadge(
                         )
                     )
                     Text(
-                        text = if (expanded) "CLOSE HUB" else "OPEN HUB",
+                        text = (if (expanded) "CLOSE" else "HUB"),
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 5.sp,
+                            fontSize = 7.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White.copy(alpha = 0.5f)
                         )
@@ -541,7 +542,7 @@ fun UnifiedBlukitBadge(
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Right: User Identity (Feedback 11/16)
+                // Right: User Identity (Feedback 11/16/17)
                 Column(
                     horizontalAlignment = Alignment.End,
                     modifier = Modifier.padding(start = 8.dp)
@@ -618,7 +619,7 @@ fun UnifiedBlukitBadge(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Settings Sections (Feedback 10: Clubbed Row)
+                    // Settings Sections
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -671,7 +672,6 @@ fun UnifiedBlukitBadge(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Feedback 6: Top-level destructive buttons
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = { showClearHistoryDialog = true },
@@ -757,6 +757,8 @@ private fun MagicBarContent(
     isWifiOff: Boolean,
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
@@ -815,8 +817,9 @@ private fun MagicBarContent(
                 }
 
                 if (isStill) {
+                    val labelText = if (isPermissionMissing) "PERMISSIONS" else "RADIOS OFF"
                     Text(
-                        text = "RADIOS OFF",
+                        text = labelText,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Black,
@@ -838,8 +841,11 @@ private fun MagicBarContent(
                             color = Color.White,
                             shape = RoundedCornerShape(4.dp)
                         ) {
+                            val btnText = if (isPermissionMissing && isPermanentlyDenied) "SETTINGS" 
+                                          else if (isPermissionMissing) "GRANT" 
+                                          else "TURN ON"
                             Text(
-                                text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else if (isPermissionMissing) "GRANT" else "TURN ON",
+                                text = btnText,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 8.sp,
                                     fontWeight = FontWeight.Black,
@@ -850,6 +856,23 @@ private fun MagicBarContent(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
+                    }
+                } else {
+                    // Feedback 16/17: Expansion button in the radio bar when radios are ON
+                    Surface(
+                        onClick = onToggleExpanded,
+                        color = Color.White.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = (if (isExpanded) "CLOSE" else "HUB"),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = StealthPrimary
+                            ),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
                     }
                 }
             }
@@ -929,34 +952,5 @@ private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) {
             )
             drawCircle(brush = scanBrush, radius = radius, center = center)
         }
-    }
-}
-
-@Composable
-private fun HubStat(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelMedium.copy(
-                fontWeight = FontWeight.Black,
-                color = Color.White
-            )
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 6.sp,
-                fontWeight = FontWeight.Bold,
-                color = StealthPrimary.copy(alpha = 0.5f),
-                letterSpacing = 1.sp
-            )
-        )
     }
 }
