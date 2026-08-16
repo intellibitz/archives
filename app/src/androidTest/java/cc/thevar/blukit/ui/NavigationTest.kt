@@ -56,17 +56,14 @@ class NavigationTest {
         // 1. Initial State - Spread vibes
         composeTestRule.onNodeWithText("SPREAD VIBES").assertIsDisplayed()
 
-        // 2. Expand Hub
-        composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
-
-        // 3. Proximity (YOUR PROXIMITY) - Click Proximity stat row in expanded hub
-        composeTestRule.onNodeWithTag("TiesStat").performClick()
-        composeTestRule.onNodeWithText("ROARS 0", substring = true).assertIsDisplayed()
+        // 3. VIBES (Mutual) - Switch via visual picker
+        composeTestRule.onNodeWithText("VIBES", useUnmergedTree = true).performClick()
+        // Check for specific "VIBES" stat in center or something unique to VIBES screen
+        composeTestRule.onNodeWithText("FRIENDS", useUnmergedTree = true).assertIsDisplayed()
         
-        // 4. Back to Vibes - Click Branding Section then Vibes stat
-        composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
-        composeTestRule.onNodeWithTag("VibesStat").performClick()
-        composeTestRule.onNodeWithText("SPREAD VIBES").assertIsDisplayed()
+        // 4. Back to CROWD - Switch via visual picker
+        composeTestRule.onNodeWithText("ROARS", useUnmergedTree = true).performClick()
+        composeTestRule.onNodeWithText("SPREAD VIBES", substring = true).assertIsDisplayed()
     }
 
     private fun startApp() {

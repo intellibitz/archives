@@ -88,7 +88,7 @@ class FlowsTest {
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
 
         // Wait for the Incoming Vibe setup - look for the text in a more flexible way
-        composeTestRule.waitUntilAtLeastOneExists(hasText("PROXIMITY", substring = true).or(hasText("MYSTIC", substring = true)), 10000)
+        composeTestRule.waitUntilAtLeastOneExists(hasText("WANTS TO VIBE", substring = true).or(hasText("MYSTIC", substring = true)), 10000)
         
         // Roar the setup if visible
         composeTestRule.onNodeWithTag("AcceptLinkButton").performClick()
@@ -103,6 +103,9 @@ class FlowsTest {
         
         // Expand the Hub
         composeTestRule.onNodeWithTag("BlukitBadge").performClick()
+
+        // Wait for animation to finish and input to be available
+        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("IdentityVibeInput"), 10000)
         
         // Change nickname using the new IdentityVibeInput tag
         composeTestRule.onNodeWithTag("IdentityVibeInput").performTextReplacement("QuantumVibe")
@@ -121,8 +124,8 @@ class FlowsTest {
         // Wait for the Magic Bar to reflect the stillness of the vibes
         composeTestRule.waitUntilAtLeastOneExists(hasText("RADIOS OFF", substring = true), 10000)
         // Use onFirst() because multiple might be found if UI overlaps during animation
-        composeTestRule.waitUntilAtLeastOneExists(hasText("TURN ON", substring = true), 10000)
-        composeTestRule.onAllNodesWithText("TURN ON", substring = true).onFirst().assertIsDisplayed().assertHasClickAction()
+        composeTestRule.waitUntilAtLeastOneExists(hasText("ENABLE RADIOS", substring = true), 15000)
+        composeTestRule.onAllNodesWithText("ENABLE RADIOS", substring = true).onFirst().assertIsDisplayed().assertHasClickAction()
     }
 
     @Test

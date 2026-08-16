@@ -310,12 +310,11 @@ fun BlukitApp(
             },
             onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
             onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
+            onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
             onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
             onOpenSettings = {
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
-                }
-                context.startActivity(intent)
+                // Feedback 13: Fallback should go to Bluetooth settings, not app info
+                context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
             },
             onSaveNickname = viewModel::saveNickname,
             onToggleStealth = viewModel::toggleStealth,
@@ -369,6 +368,7 @@ fun UnifiedBlukitBadge(
     onNavigate: (Route) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
+    onAwakenWifi: () -> Unit,
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
     onSaveNickname: (String) -> Unit,
@@ -439,6 +439,7 @@ fun UnifiedBlukitBadge(
                 Spacer(modifier = Modifier.width(4.dp))
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Intelligence Stats (Hub Brain)
                     val statusText = when {
                         airIsStill -> "RADIOS OFF"
                         incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
@@ -461,57 +462,54 @@ fun UnifiedBlukitBadge(
                     // Feedback 11: ROARS / VIBES Picker (More Visual)
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.1f))
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color.White.copy(alpha = 0.08f))
                             .padding(2.dp),
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         val isRoars = currentRoute is Route.Crowd
-                        Surface(
-                            onClick = { onNavigate(Route.Crowd) },
-                            shape = RoundedCornerShape(6.dp),
-                            color = if (isRoars) StealthPrimary else Color.Transparent,
-                            modifier = Modifier.height(24.dp)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(if (isRoars) StealthPrimary else Color.Transparent)
+                                .clickable { onNavigate(Route.Crowd) }
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
-                                Text(
-                                    text = "ROARS",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 7.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
-                                    )
+                            Text(
+                                text = "ROARS",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
                                 )
-                            }
+                            )
                         }
-                        Surface(
-                            onClick = { onNavigate(Route.Vibes) },
-                            shape = RoundedCornerShape(6.dp),
-                            color = if (!isRoars) StealthPrimary else Color.Transparent,
-                            modifier = Modifier.height(24.dp)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(if (!isRoars) StealthPrimary else Color.Transparent)
+                                .clickable { onNavigate(Route.Vibes) }
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
-                                Text(
-                                    text = "VIBES",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 7.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (!isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
-                                    )
+                            Text(
+                                text = "VIBES",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (!isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
                                 )
-                            }
+                            )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Intelligence Stats (Hub Brain)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
                         if (currentRoute is Route.Vibes) {
-                            HubStat(label = "MUTUAL", value = linksCount.toString())
+                            HubStat(label = "FRIENDS", value = linksCount.toString())
                             Spacer(modifier = Modifier.width(16.dp))
                             HubStat(label = "VIBES", value = vibesCount.toString())
                         } else {
@@ -578,6 +576,7 @@ fun UnifiedBlukitBadge(
                             isPermanentlyDenied = isPermanentlyDenied,
                             onAwakenBluetooth = onAwakenBluetooth,
                             onAwakenLocation = onAwakenLocation,
+                            onAwakenWifi = onAwakenWifi,
                             onGrantPermissions = onGrantPermissions,
                             onOpenSettings = onOpenSettings
                         )
@@ -759,6 +758,7 @@ private fun MagicBarContent(
     isPermanentlyDenied: Boolean,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
+    onAwakenWifi: () -> Unit,
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -789,24 +789,27 @@ private fun MagicBarContent(
                 // Status Icons: Bluetooth (Mandatory), WiFi, Location (Optional)
                 Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     StatusIcon(
-                        icon = Icons.Rounded.Search, 
+                        icon = Icons.Rounded.Bluetooth, 
                         isOn = !isBluetoothOff, 
                         isPermissionMissing = isPermissionMissing,
-                        isMandatory = true
+                        isMandatory = true,
+                        onClick = onAwakenBluetooth
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     StatusIcon(
-                        icon = Icons.Rounded.Refresh, 
+                        icon = Icons.Rounded.Wifi, 
                         isOn = !isWifiOff, 
                         isPermissionMissing = isPermissionMissing,
-                        isMandatory = false
+                        isMandatory = false,
+                        onClick = onAwakenWifi
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     StatusIcon(
                         icon = Icons.Rounded.LocationOn, 
                         isOn = !isLocationOff, 
                         isPermissionMissing = isPermissionMissing,
-                        isMandatory = false
+                        isMandatory = false,
+                        onClick = onAwakenLocation
                     )
                 }
 
@@ -815,7 +818,7 @@ private fun MagicBarContent(
                         isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
                         isBluetoothOff -> onAwakenBluetooth
                         isLocationOff -> onAwakenLocation
-                        else -> null
+                        else -> onOpenSettings // Default to bluetooth/settings
                     }
 
                     if (action != null) {
@@ -845,7 +848,8 @@ private fun StatusIcon(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isOn: Boolean,
     isPermissionMissing: Boolean,
-    @Suppress("UNUSED_PARAMETER") isMandatory: Boolean
+    @Suppress("UNUSED_PARAMETER") isMandatory: Boolean,
+    onClick: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "StatusAnim")
     
@@ -884,7 +888,8 @@ private fun StatusIcon(
         contentDescription = null,
         tint = tint.copy(alpha = if (isOn) 0.8f else animAlpha),
         modifier = Modifier
-            .size(16.dp)
+            .size(20.dp) // Slightly larger for visual clickability
+            .clickable { onClick() }
             .graphicsLayer {
                 scaleX = if (isOn) animScale else 1f
                 scaleY = if (isOn) animScale else 1f
