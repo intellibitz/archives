@@ -189,6 +189,9 @@ fun BlukitApp(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             add(Manifest.permission.NEARBY_WIFI_DEVICES)
         }
+        if (Build.VERSION.SDK_INT >= 35) { // Android 15+
+            add("android.permission.ACCESS_LOCAL_NETWORK")
+        }
     }
     val permissionState = rememberSpreadPermissionsState(permissions = permissions)
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
