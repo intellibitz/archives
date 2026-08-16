@@ -45,9 +45,9 @@ class NearbyP2PController(
 
     private val tag = "BlukitP2P"
     private val connectionsClient = Nearby.getConnectionsClient(context)
-    private val serviceId = "cc.thevar.blukit.STADIUM_ID"
+    private val serviceId = "BLUKIT_VIBE"
 
-    private fun getStrategy() = Strategy.P2P_CLUSTER 
+    private fun getStrategy() = Strategy.P2P_CLUSTER
 
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 

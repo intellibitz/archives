@@ -88,8 +88,14 @@ import cc.thevar.blukit.ui.screens.BlukitInput
 fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissionsState {
     val context = LocalContext.current
     var allGranted by remember {
-        mutableStateOf(permissions.all {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        mutableStateOf(permissions.all { permission ->
+            val isRuntime = try {
+                val info = context.packageManager.getPermissionInfo(permission, 0)
+                (info.protectionLevel and android.content.pm.PermissionInfo.PROTECTION_DANGEROUS) != 0
+            } catch (e: Exception) { false }
+            
+            if (!isRuntime) true // Not a runtime permission, skip checking
+            else ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         })
     }
     var shouldShowRationale by remember {
@@ -101,7 +107,15 @@ fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissions
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
-        allGranted = result.values.all { it }
+        allGranted = permissions.all { permission ->
+            val isRuntime = try {
+                val info = context.packageManager.getPermissionInfo(permission, 0)
+                (info.protectionLevel and android.content.pm.PermissionInfo.PROTECTION_DANGEROUS) != 0
+            } catch (e: Exception) { false }
+            
+            if (!isRuntime) true
+            else result[permission] ?: (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED)
+        }
         shouldShowRationale = permissions.any {
             (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
         }
@@ -189,7 +203,7 @@ fun BlukitApp(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             add(Manifest.permission.NEARBY_WIFI_DEVICES)
         }
-        if (Build.VERSION.SDK_INT >= 35) { // Android 15+
+        if (Build.VERSION.SDK_INT >= 35) {
             add("android.permission.ACCESS_LOCAL_NETWORK")
         }
     }
