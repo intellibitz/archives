@@ -33,6 +33,7 @@ class PrinciplesTest {
     private val contactRepository: ContactRepository = mockk(relaxed = true)
     private val vibeStore: VibeStore = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
+    private val radioStateManager: cc.thevar.blukit.data.system.RadioStateManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -57,9 +58,10 @@ class PrinciplesTest {
         every { repository.getDeviceId() } returns "test-device-id"
         every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
         every { contactRepository.allContacts } returns flowOf(emptyList())
+        every { radioStateManager.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(true, true, true))
         
         controller = NearbyP2PController(
-            io.mockk.mockk(relaxed = true), repository, contactRepository, vibeStore, hapticManager, cryptoManager, testDispatcher
+            io.mockk.mockk(relaxed = true), repository, contactRepository, vibeStore, hapticManager, radioStateManager, cryptoManager, testDispatcher
         )
     }
 

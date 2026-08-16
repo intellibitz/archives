@@ -42,6 +42,7 @@ class NearbyP2PControllerTest {
     private val contactRepository: ContactRepository = mockk(relaxed = true)
     private val vibeStore: VibeStore = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
+    private val radioStateManager: cc.thevar.blukit.data.system.RadioStateManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
     private val connectionsClient: ConnectionsClient = mockk(relaxed = true)
 
@@ -87,6 +88,7 @@ class NearbyP2PControllerTest {
         every { repository.stealthMode } returns MutableStateFlow(false)
         every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
+        every { radioStateManager.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(true, true, true))
 
         // Mock CryptoManager to return valid keys/secrets
         val mockKeyPair = mockk<KeyPair>(relaxed = true)
@@ -96,7 +98,7 @@ class NearbyP2PControllerTest {
         every { cryptoManager.encrypt(any(), any()) } returns byteArrayOf(0x11)
 
         controller = NearbyP2PController(
-            context, repository, contactRepository, vibeStore, hapticManager, cryptoManager, testDispatcher
+            context, repository, contactRepository, vibeStore, hapticManager, radioStateManager, cryptoManager, testDispatcher
         )
     }
 

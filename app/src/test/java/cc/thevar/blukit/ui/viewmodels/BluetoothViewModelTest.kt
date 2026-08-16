@@ -29,7 +29,8 @@ class BluetoothViewModelTest {
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
     private lateinit var viewModel: BluetoothViewModel
 
-    private val harmonyFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = false, isLocationEnabled = false))
+    private val harmonyFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = false, isLocationEnabled = false, isWifiEnabled = false))
+    private val permissionFlow = MutableStateFlow(false)
     private val errorFlow = MutableStateFlow<cc.thevar.blukit.network.p2p.P2PError?>(null)
     
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -37,6 +38,12 @@ class BluetoothViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        
+        io.mockk.mockkStatic(android.util.Log::class)
+        every { android.util.Log.d(any<String>(), any<String>()) } returns 0
+        every { android.util.Log.i(any<String>(), any<String>()) } returns 0
+        every { android.util.Log.w(any<String>(), any<String>()) } returns 0
+        every { android.util.Log.e(any<String>(), any<String>()) } returns 0
         
         every { radioStateManager.radioStates } returns harmonyFlow
         every { p2pController.scannedDevices } returns MutableStateFlow(emptyList())
@@ -48,7 +55,10 @@ class BluetoothViewModelTest {
         every { p2pController.isConnected } returns MutableStateFlow(false)
         every { p2pController.messages } returns MutableStateFlow(emptyList())
 
-        viewModel = BluetoothViewModel(p2pController, radioStateManager)
+        val permissionManager = mockk<cc.thevar.blukit.data.system.SpreadPermissionManager>(relaxed = true)
+        every { permissionManager.permissionsGranted } returns permissionFlow
+
+        viewModel = BluetoothViewModel(p2pController, radioStateManager, permissionManager)
     }
 
     @After
@@ -64,7 +74,7 @@ class BluetoothViewModelTest {
             assertEquals("Harmony should start cold", false, initial.isBluetoothEnabled)
 
             // Awaken The Vibes
-            harmonyFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true)
+            harmonyFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true, isWifiEnabled = true)
             
             val active = awaitItem()
             assertTrue("The Vibes should be alive in Harmony", active.isBluetoothEnabled)

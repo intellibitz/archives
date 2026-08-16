@@ -36,7 +36,7 @@ class FlowsTest {
     private val p2pController: P2PController = mockk(relaxed = true)
     private val supremePowerManager: cc.thevar.blukit.data.power.SupremePowerManager = mockk(relaxed = true)
 
-    private val radioStatesFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = true, isLocationEnabled = true))
+    private val radioStatesFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = true, isLocationEnabled = true, isWifiEnabled = true))
     private val scannedDevicesFlow = MutableStateFlow<List<P2PDevice>>(emptyList())
     private val connectedLinksFlow = MutableStateFlow<Set<String>>(emptySet())
     private val incomingRequestsFlow = MutableStateFlow<Set<P2PDevice>>(emptySet())
@@ -117,7 +117,7 @@ class FlowsTest {
     @Test
     fun testHarmonyCheck() {
         // Break Harmony
-        radioStatesFlow.value = RadioStates(isBluetoothEnabled = false, isLocationEnabled = true)
+        radioStatesFlow.value = RadioStates(isBluetoothEnabled = false, isLocationEnabled = true, isWifiEnabled = true)
         
         startApp()
         
@@ -137,9 +137,9 @@ class FlowsTest {
 
         startApp()
         
-        // Click to navigate to the Tie screen - match the 6-char display limit
-        composeTestRule.waitUntilAtLeastOneExists(hasText("AURA V", substring = true), 5000)
-        composeTestRule.onNodeWithText("AURA V", substring = true).performClick()
+        // Click to navigate to the Tie screen - match the 7-char display limit for UNKNOWN
+        composeTestRule.waitUntilAtLeastOneExists(hasText("AURA VI", substring = true), 5000)
+        composeTestRule.onNodeWithText("AURA VI", substring = true).performClick()
         
         // Wait for the SendVibeInput to appear in the Tie screen
         composeTestRule.waitUntilAtLeastOneExists(hasTestTag("SendVibeInput"), 5000)

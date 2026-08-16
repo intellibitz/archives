@@ -45,7 +45,7 @@ class NavigationTest {
         every { p2pController.isConnected } returns MutableStateFlow(false)
         every { p2pController.messages } returns MutableStateFlow(emptyList())
         
-        every { radioStateManager.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(false, false))
+        every { radioStateManager.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(false, false, false))
         every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
     }
 
@@ -53,17 +53,17 @@ class NavigationTest {
     fun testBottomNavigation() {
         startApp()
         
-        // 1. Initial State - Spread vibes
-        composeTestRule.onNodeWithText("SPREAD VIBES", substring = true).assertIsDisplayed()
+        // 1. Initial State - Spread vibes (Input placeholder or empty screen hint)
+        composeTestRule.onNodeWithText("VIBE", substring = true).assertIsDisplayed()
 
-        // 3. FRIENDS (Mutual) - Switch via visual picker
-        composeTestRule.onNode(hasText("FRIENDS", substring = true), useUnmergedTree = true).performClick()
-        // Check for specific "FRIENDS" stat in center or something unique to VIBES screen
-        composeTestRule.onAllNodes(hasText("FRIENDS", substring = true), useUnmergedTree = true).onLast().assertIsDisplayed()
+        // 3. KNOWN (Mutual) - Switch via visual picker
+        composeTestRule.onNode(hasText("KNOWN", substring = true), useUnmergedTree = true).performClick()
+        // Check for specific "KNOWN" stat in center or something unique to VIBES screen
+        composeTestRule.onAllNodes(hasText("KNOWN", substring = true), useUnmergedTree = true).onLast().assertIsDisplayed()
         
-        // 4. Back to CROWD - Switch via visual picker
-        composeTestRule.onNode(hasText("CROWD", substring = true), useUnmergedTree = true).performClick()
-        composeTestRule.onAllNodesWithText("SPREAD VIBES", substring = true).onFirst().assertIsDisplayed()
+        // 4. Back to BLUKIT - Switch via visual picker
+        composeTestRule.onNode(hasText("BLUKIT", substring = true), useUnmergedTree = true).performClick()
+        composeTestRule.onAllNodesWithText("VIBE", substring = true).onFirst().assertIsDisplayed()
     }
 
     private fun startApp() {

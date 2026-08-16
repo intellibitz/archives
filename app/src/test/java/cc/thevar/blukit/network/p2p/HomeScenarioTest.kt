@@ -45,6 +45,7 @@ class HomeScenarioTest {
     private val contactRepository: ContactRepository = mockk(relaxed = true)
     private val vibeStore: VibeStore = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
+    private val radioStateManager: cc.thevar.blukit.data.system.RadioStateManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
     private val connectionsClient: ConnectionsClient = mockk(relaxed = true)
 
@@ -81,9 +82,10 @@ class HomeScenarioTest {
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { repository.getCurrentNickname() } returns "Mom"
         every { repository.getDeviceId() } returns "mom-device-id"
+        every { radioStateManager.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(true, true, true))
 
         controller = NearbyP2PController(
-            context, repository, contactRepository, vibeStore, hapticManager, cryptoManager, testDispatcher
+            context, repository, contactRepository, vibeStore, hapticManager, radioStateManager, cryptoManager, testDispatcher
         )
     }
 
