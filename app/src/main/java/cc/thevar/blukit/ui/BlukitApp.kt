@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -54,10 +53,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -88,14 +90,8 @@ import cc.thevar.blukit.ui.screens.BlukitInput
 fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissionsState {
     val context = LocalContext.current
     var allGranted by remember {
-        mutableStateOf(permissions.all { permission ->
-            val isRuntime = try {
-                val info = context.packageManager.getPermissionInfo(permission, 0)
-                (info.protectionLevel and android.content.pm.PermissionInfo.PROTECTION_DANGEROUS) != 0
-            } catch (e: Exception) { false }
-            
-            if (!isRuntime) true // Not a runtime permission, skip checking
-            else ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+        mutableStateOf(permissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         })
     }
     var shouldShowRationale by remember {
@@ -107,17 +103,23 @@ fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissions
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
-        allGranted = permissions.all { permission ->
-            val isRuntime = try {
-                val info = context.packageManager.getPermissionInfo(permission, 0)
-                (info.protectionLevel and android.content.pm.PermissionInfo.PROTECTION_DANGEROUS) != 0
-            } catch (e: Exception) { false }
-            
-            if (!isRuntime) true
-            else result[permission] ?: (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED)
+        allGranted = permissions.all { 
+            result[it] ?: (ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED)
         }
         shouldShowRationale = permissions.any {
             (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
+        }
+    }
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            allGranted = permissions.all {
+                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            }
+            shouldShowRationale = permissions.any {
+                (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
+            }
         }
     }
 
@@ -192,19 +194,18 @@ fun BlukitApp(
         }
     }
 
+    // Global Permission State
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
             add(Manifest.permission.BLUETOOTH_ADVERTISE)
             add(Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
-            add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        add(Manifest.permission.ACCESS_COARSE_LOCATION)
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             add(Manifest.permission.NEARBY_WIFI_DEVICES)
-        }
-        if (Build.VERSION.SDK_INT >= 35) {
-            add("android.permission.ACCESS_LOCAL_NETWORK")
         }
     }
     val permissionState = rememberSpreadPermissionsState(permissions = permissions)
@@ -444,7 +445,8 @@ fun UnifiedBlukitBadge(
                 onAwakenLocation = onAwakenLocation,
                 onAwakenWifi = onAwakenWifi,
                 onGrantPermissions = onGrantPermissions,
-                onOpenSettings = onOpenSettings
+                onOpenSettings = onOpenSettings,
+                userCount = userCount
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -493,6 +495,7 @@ fun UnifiedBlukitBadge(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
+                // Right: User Identity
                 Column(horizontalAlignment = Alignment.End) {
                     val statusText = when {
                         airIsStill -> null
@@ -614,7 +617,8 @@ private fun EnergyBarContent(
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
     onGrantPermissions: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    userCount: Int
 ) {
     val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(
         initialValue = 0.6f, targetValue = 1f,
@@ -622,7 +626,9 @@ private fun EnergyBarContent(
         label = "Alpha"
     )
 
-    val isStill = isBluetoothOff || isLocationOff || isPermissionMissing
+    // Regular Joe logic: Yellow means weak signal (no users found)
+    val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
+    val isStill = isBluetoothOff || isLocationOff
     
     Surface(
         color = if (isStill) Color.Red.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.03f),
@@ -635,35 +641,41 @@ private fun EnergyBarContent(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
-                    StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
-                    StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
+                    StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
+                    StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
+                    StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
                 }
 
-                if (isStill) {
-                    Text(
-                        text = "ENERGY REQUIRED",
-                        modifier = Modifier.testTag("EnergyRequiredLabel"),
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.8f))
-                    )
-                    
+                if (isStill || isPermissionMissing) {
                     val action = when {
                         isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
                         isBluetoothOff -> onAwakenBluetooth
                         isLocationOff -> onAwakenLocation
-                        else -> onOpenSettings
+                        else -> null
                     }
-                    Surface(
-                        onClick = { action() },
-                        color = Color.White,
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
-                    ) {
+                    
+                    if (isStill) {
                         Text(
-                            text = (if (isPermissionMissing) "GRANT" else "TURN ON").uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            text = "ENERGY REQUIRED",
+                            modifier = Modifier.testTag("EnergyRequiredLabel"),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.8f))
                         )
+                    }
+
+                    if (action != null) {
+                        Surface(
+                            onClick = { action.invoke() },
+                            color = Color.White,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                        ) {
+                            val btnText = if (isStill) "AWAKEN" else "GRANT"
+                            Text(
+                                text = btnText.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -753,10 +765,10 @@ private fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Uni
 }
 
 @Composable
-private fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isPermissionMissing: Boolean, onClick: () -> Unit) {
+private fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isWeak: Boolean, isPermissionMissing: Boolean, onClick: () -> Unit) {
     val tint = when {
         !isOn -> Color.Red
-        isPermissionMissing -> Color.Yellow
+        isPermissionMissing || isWeak -> Color.Yellow
         else -> Color.Green
     }
     Icon(

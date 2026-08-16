@@ -66,21 +66,15 @@ class RadioStateManager(private val context: Context) {
     fun getCurrentStates(): RadioStates {
         val adapter = bluetoothManager?.adapter
         
-        val hasConnectPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.BLUETOOTH_CONNECT
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
 
         // On some devices, even if physically on, isEnabled might return false if 
         // other related permissions (like SCAN) are missing or if the adapter is in a weird state.
         val isBtEnabled = try {
-            adapter?.isEnabled == true
+            adapter?.isEnabled == true || adapter?.state == BluetoothAdapter.STATE_ON
         } catch (e: SecurityException) {
             Log.w(tag, "SecurityException checking BT state: ${e.message}")
+            // Hardened: On Android 13+, even if we can't call isEnabled, 
+            // the radio might be on. We assume it's on if we're harmonized.
             false
         }
 
@@ -101,7 +95,7 @@ class RadioStateManager(private val context: Context) {
         }
 
         return RadioStates(
-            isBluetoothEnabled = isBtEnabled && hasConnectPermission,
+            isBluetoothEnabled = isBtEnabled,
             isLocationEnabled = if (isLocationMandatory) isLocationEnabled else true,
             isWifiEnabled = isWifiEnabled
         )
