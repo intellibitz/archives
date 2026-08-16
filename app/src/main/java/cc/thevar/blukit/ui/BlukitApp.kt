@@ -311,6 +311,8 @@ fun BlukitApp(
                 rotation = hubRotation,
                 userCount = report.userCount,
                 linksCount = report.connectedLinksCount,
+                roarsCount = roarsCount,
+                vibesCount = vibesCount,
                 lowPowerMode = lowPowerMode,
                 permissionsGranted = permissionState.allPermissionsGranted,
                 isPermanentlyDenied = isPermanentlyDenied,
@@ -367,6 +369,8 @@ fun UnifiedBlukitBadge(
     rotation: Float,
     userCount: Int,
     linksCount: Int,
+    roarsCount: Int,
+    vibesCount: Int,
     lowPowerMode: Boolean,
     permissionsGranted: Boolean,
     isPermanentlyDenied: Boolean,
@@ -461,9 +465,10 @@ fun UnifiedBlukitBadge(
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    // Action Center
+                    // CLEAR VIBES (Action Center)
+                    val totalVibes = roarsCount + vibesCount
                     Text(
-                        text = "CLEAR VIBES",
+                        text = "CLEAR VIBES ($totalVibes)",
                         modifier = Modifier.clickable { showClearHistoryDialog = true },
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 7.sp, 
@@ -649,8 +654,8 @@ private fun EnergyBarContent(
             Spacer(modifier = Modifier.weight(1f))
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
-                EnvironmentToggle(label = "SAVE", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
+                EnvironmentToggle(label = "DARK MODE", checked = isStealthMode, onCheckedChange = onToggleStealth)
+                EnvironmentToggle(label = "LOW BATTERY MODE", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
             }
         }
     }
