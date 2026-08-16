@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -177,7 +178,6 @@ fun BlukitApp(
         }
     }
 
-    // Global Permission State
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
@@ -207,6 +207,8 @@ fun BlukitApp(
     val listDetailSceneStrategy = rememberListDetailSceneStrategy<NavKey>()
 
     Box(modifier = modifier.fillMaxSize()) {
+        FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
+
         NavDisplay(
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
@@ -267,9 +269,6 @@ fun BlukitApp(
                 else -> NavEntry(key) { Text("Unknown") }
             }
         }
-        
-        // Global Lighthouse Scan
-        FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
 
         val roarsCount = remember(bluetoothState.messages) {
             bluetoothState.messages.count { it.receiverId.isNullOrBlank() }
@@ -282,7 +281,7 @@ fun BlukitApp(
         val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
         
         Column(
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp).zIndex(1f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AnimatedVisibility(
@@ -355,7 +354,7 @@ fun BlukitApp(
                 text = { Text("BLUKIT USES LOCAL RADIOS TO SYNC THE VIBE.", fontSize = 12.sp) },
                 confirmButton = {
                     TextButton(onClick = { permissionState.launchMultiplePermissionRequest() }) {
-                        Text("AWAKEN", color = StealthPrimary, fontWeight = FontWeight.Bold)
+                        Text("GRANT", color = StealthPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -405,7 +404,7 @@ fun UnifiedBlukitBadge(
 
     Surface(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        color = Color.Black.copy(alpha = 0.9f),
+        color = Color.Black.copy(alpha = 0.95f),
         shape = RoundedCornerShape(32.dp),
         border = BorderStroke(
             1.dp, 
@@ -414,7 +413,6 @@ fun UnifiedBlukitBadge(
         tonalElevation = 12.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Top: Energy Bar
             EnergyBarContent(
                 isBluetoothOff = !isBluetoothEnabled,
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
@@ -438,7 +436,6 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Sentient Branding
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
                     Text(
@@ -455,7 +452,6 @@ fun UnifiedBlukitBadge(
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    // CROWD / FRIENDS Picker
                     VisualEnergyPicker(
                         currentRoute = currentRoute,
                         userCount = userCount,
@@ -463,9 +459,8 @@ fun UnifiedBlukitBadge(
                         onNavigate = onNavigate
                     )
                     
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     
-                    // CLEAR VIBES (Action Center)
                     val totalVibes = roarsCount + vibesCount
                     Text(
                         text = "CLEAR VIBES ($totalVibes)",
@@ -481,7 +476,6 @@ fun UnifiedBlukitBadge(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Right: User Identity
                 Column(horizontalAlignment = Alignment.End) {
                     val statusText = when {
                         airIsStill -> null
@@ -630,6 +624,12 @@ private fun EnergyBarContent(
                 }
 
                 if (isStill) {
+                    Text(
+                        text = "ENERGY REQUIRED",
+                        modifier = Modifier.testTag("EnergyRequiredLabel"),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.8f))
+                    )
+                    
                     val action = when {
                         isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
                         isBluetoothOff -> onAwakenBluetooth
@@ -643,7 +643,7 @@ private fun EnergyBarContent(
                         modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                     ) {
                         Text(
-                            text = (if (isPermissionMissing) "GRANT" else "AWAKEN").uppercase(),
+                            text = (if (isPermissionMissing) "GRANT" else "TURN ON").uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )

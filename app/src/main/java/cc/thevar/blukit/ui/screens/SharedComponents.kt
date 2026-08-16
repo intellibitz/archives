@@ -174,24 +174,30 @@ fun BlukitInput(
                     }
                 }
                 
-                IconButton(
-                    onClick = onSend,
-                    enabled = value.isNotBlank(),
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            if (value.isNotBlank()) Brush.linearGradient(listOf(StealthPrimary, StealthAmber))
-                            else Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f))),
-                            CircleShape
-                        )
-                        .testTag("SendVibeButton")
+                Surface(
+                    onClick = { if (value.isNotBlank()) onSend() },
+                    shape = CircleShape,
+                    color = Color.Transparent,
+                    modifier = Modifier.testTag("SendVibeButton")
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Flare,
-                        contentDescription = "Vibe",
-                        tint = if (value.isNotBlank()) Color.Black else Color.White.copy(alpha = 0.2f),
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                if (value.isNotBlank()) 
+                                    Brush.linearGradient(listOf(StealthPrimary, StealthAmber))
+                                else 
+                                    Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f)))
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Flare,
+                            contentDescription = "Vibe",
+                            tint = if (value.isNotBlank()) Color.Black else Color.White.copy(alpha = 0.2f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         }
