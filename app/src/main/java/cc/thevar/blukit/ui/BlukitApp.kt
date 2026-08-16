@@ -331,6 +331,7 @@ fun BlukitApp(
                 isWifiEnabled = bluetoothState.isWifiEnabled,
                 currentRoute = (currentRoute as? Route) ?: initialRoute,
                 nickname = nickname ?: "vibe",
+                incomingLinkRequests = bluetoothState.incomingLinkRequests,
                 onNavigate = { route ->
                     if (currentRoute != route) {
                         backStack.add(route)
@@ -348,6 +349,8 @@ fun BlukitApp(
                 onToggleLowPower = viewModel::toggleLowPowerMode,
                 onClearHistory = viewModel::clearChatHistory,
                 onLogout = viewModel::logout,
+                onAcceptLink = bluetoothViewModel::acceptLink,
+                onDenyLink = bluetoothViewModel::denyLink,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
         }
@@ -386,6 +389,7 @@ fun UnifiedBlukitBadge(
     isWifiEnabled: Boolean,
     currentRoute: Route,
     nickname: String,
+    incomingLinkRequests: Set<P2PDevice>,
     onNavigate: (Route) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
@@ -397,6 +401,8 @@ fun UnifiedBlukitBadge(
     onToggleLowPower: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
+    onAcceptLink: (P2PDevice) -> Unit,
+    onDenyLink: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -425,7 +431,7 @@ fun UnifiedBlukitBadge(
                 .testTag("BlukitBadge")
                 .padding(16.dp)
         ) {
-            // Feedback 14/15/16/17: Radios Bar at the TOP
+            // Feedback 14/15/16/17/18: Unified Radio Alert Bar
             MagicBarContent(
                 isBluetoothOff = !isBluetoothEnabled,
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
@@ -465,9 +471,9 @@ fun UnifiedBlukitBadge(
                         )
                     )
                     Text(
-                        text = (if (expanded) "CLOSE" else "HUB"),
+                        text = (if (expanded) "CLOSE" else "HUB").uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 7.sp,
+                            fontSize = 5.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White.copy(alpha = 0.5f)
                         )
@@ -479,20 +485,35 @@ fun UnifiedBlukitBadge(
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     val statusText = when {
                         airIsStill -> null
+                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
                         !currentBreeze.isNullOrBlank() -> currentBreeze
                         else -> "HEAR THE CROWD ROAR"
                     }
                     
                     if (statusText != null) {
-                        Text(
-                            text = statusText.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 7.sp,
-                                fontWeight = FontWeight.Black,
-                                color = StealthPrimary.copy(alpha = 0.8f),
-                                letterSpacing = 0.5.sp
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = statusText.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = StealthPrimary.copy(alpha = 0.8f),
+                                    letterSpacing = 0.5.sp
+                                )
                             )
-                        )
+                            if (incomingLinkRequests.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "VIBE",
+                                    modifier = Modifier
+                                        .testTag("AcceptLinkButton")
+                                        .clickable { onAcceptLink(incomingLinkRequests.first()) },
+                                    color = StealthPrimary,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 8.sp
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
@@ -817,9 +838,8 @@ private fun MagicBarContent(
                 }
 
                 if (isStill) {
-                    val labelText = if (isPermissionMissing) "PERMISSIONS" else "RADIOS OFF"
                     Text(
-                        text = labelText,
+                        text = "ENERGY REQUIRED",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Black,
@@ -841,11 +861,8 @@ private fun MagicBarContent(
                             color = Color.White,
                             shape = RoundedCornerShape(4.dp)
                         ) {
-                            val btnText = if (isPermissionMissing && isPermanentlyDenied) "SETTINGS" 
-                                          else if (isPermissionMissing) "GRANT" 
-                                          else "TURN ON"
                             Text(
-                                text = btnText,
+                                text = "AWAKEN",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 8.sp,
                                     fontWeight = FontWeight.Black,
@@ -891,9 +908,9 @@ private fun StatusIcon(
     val infiniteTransition = rememberInfiniteTransition(label = "StatusAnim")
     
     val tint = when {
+        !isOn -> Color.Red
         isPermissionMissing -> Color.Yellow
-        isOn -> Color.Green
-        else -> Color.Red
+        else -> Color.Green
     }
 
     val animScale by infiniteTransition.animateFloat(

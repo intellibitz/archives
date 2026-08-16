@@ -1,11 +1,13 @@
 package cc.thevar.blukit.ui
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.power.SupremePowerReport
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import org.junit.Rule
@@ -15,7 +17,7 @@ import org.junit.Test
 class SupremePowerTest {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
     fun testSupremePowerBadge_ExpandAndCollapse() {
@@ -42,6 +44,7 @@ class SupremePowerTest {
                         isStealthMode = false,
                         currentRoute = cc.thevar.blukit.ui.navigation.Route.Crowd,
                         nickname = "vibe",
+                        incomingLinkRequests = emptySet<P2PDevice>(),
                         currentBreeze = report.currentBreeze,
                         isBluetoothEnabled = true,
                         isLocationEnabled = true,
@@ -56,7 +59,9 @@ class SupremePowerTest {
                         onToggleStealth = {},
                         onToggleLowPower = {},
                         onClearHistory = {},
-                        onLogout = {}
+                        onLogout = {},
+                        onAcceptLink = {},
+                        onDenyLink = {}
                 )
                 }
             }

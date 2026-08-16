@@ -62,8 +62,8 @@ class NavigationTest {
         composeTestRule.onAllNodes(hasText("FRIENDS", substring = true), useUnmergedTree = true).onLast().assertIsDisplayed()
         
         // 4. Back to CROWD - Switch via visual picker
-        composeTestRule.onNodeWithText("CROWD", substring = true, useUnmergedTree = true).performClick()
-        composeTestRule.onNodeWithText("SPREAD VIBES", substring = true).assertIsDisplayed()
+        composeTestRule.onNode(hasText("CROWD", substring = true), useUnmergedTree = true).performClick()
+        composeTestRule.onAllNodesWithText("SPREAD VIBES", substring = true).onFirst().assertIsDisplayed()
     }
 
     private fun startApp() {
