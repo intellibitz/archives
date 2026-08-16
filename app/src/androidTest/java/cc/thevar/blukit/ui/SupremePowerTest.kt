@@ -60,8 +60,7 @@ class SupremePowerTest {
                         onToggleLowPower = {},
                         onClearHistory = {},
                         onLogout = {},
-                        onAcceptLink = {},
-                        onDenyLink = {}
+                        onAcceptLink = {}
                 )
                 }
             }

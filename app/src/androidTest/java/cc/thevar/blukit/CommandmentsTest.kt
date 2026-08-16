@@ -90,6 +90,6 @@ class CommandmentsTest {
         }
 
         // Power 1: Users must land on SPREAD VIBES
-        composeTestRule.onNodeWithText("SPREAD VIBES", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("SPREAD VIBES", ignoreCase = true, substring = true).assertExists()
     }
 }

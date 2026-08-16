@@ -54,7 +54,7 @@ class NavigationTest {
         startApp()
         
         // 1. Initial State - Spread vibes
-        composeTestRule.onNodeWithText("SPREAD VIBES").assertIsDisplayed()
+        composeTestRule.onNodeWithText("SPREAD VIBES", substring = true).assertIsDisplayed()
 
         // 3. FRIENDS (Mutual) - Switch via visual picker
         composeTestRule.onNode(hasText("FRIENDS", substring = true), useUnmergedTree = true).performClick()

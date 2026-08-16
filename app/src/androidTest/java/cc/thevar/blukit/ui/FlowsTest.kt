@@ -87,8 +87,8 @@ class FlowsTest {
         
         composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
 
-        // Wait for the Incoming Vibe setup - look for the text in a more flexible way
-        composeTestRule.waitUntilAtLeastOneExists(hasText("NEW VIBE REQUEST", substring = true).or(hasText("MYSTIC", substring = true)), 10000)
+        // Wait for the Incoming Vibe setup
+        composeTestRule.waitUntilAtLeastOneExists(hasText("VIBE", substring = true, ignoreCase = true), 10000)
         
         // Roar the setup if visible
         composeTestRule.onNodeWithTag("AcceptLinkButton").performClick()

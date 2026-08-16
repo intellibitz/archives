@@ -33,6 +33,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -154,7 +156,6 @@ fun BlukitApp(
     )
     
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
-    val emojiAvatar by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
     val isStealthMode by viewModel.isStealthMode.collectAsStateWithLifecycle(initialValue = false)
     val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
@@ -165,12 +166,8 @@ fun BlukitApp(
 
     LaunchedEffect(bluetoothState.uiError) {
         bluetoothState.uiError?.let { error ->
-            val message = when (error) {
-                is UiError.SecureChannelFailed -> "ROAR FAIL: ${error.message.uppercase()}"
-                else -> error.message.uppercase()
-            }
             snackbarHostState.showSnackbar(
-                message = message,
+                message = error.message.uppercase(),
                 duration = if (error.isCritical) SnackbarDuration.Long else SnackbarDuration.Short
             )
         }
@@ -197,8 +194,7 @@ fun BlukitApp(
     val backStack = rememberNavBackStack(initialRoute)
     val currentRoute = backStack.lastOrNull()
 
-    val infiniteTransition = rememberInfiniteTransition(label = "HubLighthouse")
-    val hubRotation by infiniteTransition.animateFloat(
+    val hubRotation by rememberInfiniteTransition(label = "HubLighthouse").animateFloat(
         initialValue = 0f, 
         targetValue = 360f, 
         animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)), 
@@ -219,7 +215,7 @@ fun BlukitApp(
                     RipplesScreen(
                         state = bluetoothState,
                         localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
-                        localEmoji = emojiAvatar,
+                        localEmoji = "👤",
                         energySurge = energySurge,
                         lowPowerMode = lowPowerMode,
                         onStartScan = bluetoothViewModel::startScan,
@@ -238,7 +234,7 @@ fun BlukitApp(
                     TieScreen(
                         state = bluetoothState,
                         localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
-                        localEmoji = emojiAvatar,
+                        localEmoji = "👤",
                         vibeId = bluetoothState.connectedVibe?.id,
                         vibeName = bluetoothState.connectedVibe?.name,
                         vibeEmoji = bluetoothState.connectedVibe?.emoji,
@@ -253,7 +249,7 @@ fun BlukitApp(
                     RipplesScreen(
                         state = bluetoothState,
                         localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
-                        localEmoji = emojiAvatar,
+                        localEmoji = "👤",
                         energySurge = energySurge,
                         onlyTies = true,
                         lowPowerMode = lowPowerMode,
@@ -269,7 +265,7 @@ fun BlukitApp(
             }
         }
         
-        // Global Lighthouse Scan (Glows from the Hub Badge over the Field/Ticker)
+        // Global Lighthouse Scan
         FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
 
         SnackbarHost(
@@ -286,7 +282,6 @@ fun BlukitApp(
             bluetoothState.messages.count { !it.receiverId.isNullOrBlank() }
         }
 
-        // Global "SEND VIBES" input field positioned above the Hub
         var messageText by remember { mutableStateOf("") }
         val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
         
@@ -294,7 +289,6 @@ fun BlukitApp(
             modifier = Modifier.align(Alignment.BottomCenter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Feedback 15/16: Global Send Vibes field with count in corner
             AnimatedVisibility(
                 visible = currentRoute is Route.Crowd || currentRoute is Route.Vibes,
                 enter = fadeIn() + expandVertically(),
@@ -330,7 +324,7 @@ fun BlukitApp(
                 isLocationEnabled = bluetoothState.isLocationEnabled,
                 isWifiEnabled = bluetoothState.isWifiEnabled,
                 currentRoute = (currentRoute as? Route) ?: initialRoute,
-                nickname = nickname ?: "vibe",
+                nickname = nickname ?: "SOUL",
                 incomingLinkRequests = bluetoothState.incomingLinkRequests,
                 onNavigate = { route ->
                     if (currentRoute != route) {
@@ -350,7 +344,6 @@ fun BlukitApp(
                 onClearHistory = viewModel::clearChatHistory,
                 onLogout = viewModel::logout,
                 onAcceptLink = bluetoothViewModel::acceptLink,
-                onDenyLink = bluetoothViewModel::denyLink,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
         }
@@ -402,12 +395,13 @@ fun UnifiedBlukitBadge(
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
     onAcceptLink: (P2PDevice) -> Unit,
-    onDenyLink: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    
+    val focusRequester = remember { FocusRequester() }
     
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
@@ -431,7 +425,6 @@ fun UnifiedBlukitBadge(
                 .testTag("BlukitBadge")
                 .padding(16.dp)
         ) {
-            // Feedback 14/15/16/17/18: Unified Radio Alert Bar
             MagicBarContent(
                 isBluetoothOff = !isBluetoothEnabled,
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
@@ -453,7 +446,7 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Sentient Branding (Icon Clickable for HUB)
+                // Left: Sentient Branding & Hub Toggle
                 Column(
                     modifier = Modifier
                         .padding(end = 8.dp)
@@ -483,41 +476,40 @@ fun UnifiedBlukitBadge(
                 Spacer(modifier = Modifier.width(4.dp))
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    val statusText = when {
-                        airIsStill -> null
-                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
-                        !currentBreeze.isNullOrBlank() -> currentBreeze
-                        else -> "HEAR THE CROWD ROAR"
-                    }
-                    
-                    if (statusText != null) {
+                    // Top level Toggles (Collapsed View)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = statusText.uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = StealthPrimary.copy(alpha = 0.8f),
-                                    letterSpacing = 0.5.sp
-                                )
+                            Text("DARK", fontSize = 6.sp, fontWeight = FontWeight.Bold, color = if(isStealthMode) StealthPrimary else Color.White.copy(alpha = 0.4f))
+                            Switch(
+                                checked = isStealthMode,
+                                onCheckedChange = onToggleStealth,
+                                modifier = Modifier.scale(0.5f),
+                                colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary)
                             )
-                            if (incomingLinkRequests.isNotEmpty()) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "VIBE",
-                                    modifier = Modifier
-                                        .testTag("AcceptLinkButton")
-                                        .clickable { onAcceptLink(incomingLinkRequests.first()) },
-                                    color = StealthPrimary,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 8.sp
-                                )
-                            }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("SAVE", fontSize = 6.sp, fontWeight = FontWeight.Bold, color = if(lowPowerMode) StealthPrimary else Color.White.copy(alpha = 0.4f))
+                            Switch(
+                                checked = lowPowerMode,
+                                onCheckedChange = onToggleLowPower,
+                                modifier = Modifier.scale(0.5f),
+                                colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary)
+                            )
+                        }
                     }
 
-                    // Feedback 11/15/16: CROWD / FRIENDS Picker with counts
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // CROWD / FRIENDS Picker
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -563,11 +555,46 @@ fun UnifiedBlukitBadge(
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Right: User Identity (Feedback 11/16/17)
+                // Right: User Identity (Feedback 19: Focus persona on click)
                 Column(
                     horizontalAlignment = Alignment.End,
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .clickable { expanded = true }
                 ) {
+                    val statusText = when {
+                        airIsStill -> null
+                        !currentBreeze.isNullOrBlank() -> currentBreeze
+                        else -> "HEAR THE CROWD ROAR"
+                    }
+                    
+                    if (statusText != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = statusText.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = StealthPrimary.copy(alpha = 0.8f),
+                                    letterSpacing = 0.5.sp
+                                )
+                            )
+                            if (incomingLinkRequests.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "VIBE",
+                                    modifier = Modifier
+                                        .testTag("AcceptLinkButton")
+                                        .clickable { onAcceptLink(incomingLinkRequests.first()) },
+                                    color = StealthPrimary,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 7.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                    }
+
                     Text(
                         text = nickname.uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
@@ -584,18 +611,6 @@ fun UnifiedBlukitBadge(
                             fontWeight = FontWeight.Bold,
                             color = Color.White.copy(alpha = 0.4f),
                             letterSpacing = 0.5.sp
-                        )
-                    )
-                    
-                    Spacer(modifier = Modifier.height(2.dp))
-                    
-                    Text(
-                        text = "SPREAD VIBES",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.6f),
-                            letterSpacing = 1.sp
                         )
                     )
                 }
@@ -618,14 +633,22 @@ fun UnifiedBlukitBadge(
                             .background(Color.White.copy(alpha = 0.05f))
                             .padding(16.dp)
                     ) {
-                        var localNickname by remember(nickname) { mutableStateOf(nickname) }
+                        var localNickname by remember(nickname) { mutableStateOf(nickname ?: "") }
+                        
+                        LaunchedEffect(expanded) {
+                            if (expanded) focusRequester.requestFocus()
+                        }
+
                         TextField(
                             value = localNickname,
                             onValueChange = { 
                                 localNickname = it
-                                onSaveNickname(it.ifBlank { "vibe" })
+                                onSaveNickname(it.ifBlank { "SOUL" })
                             },
-                            modifier = Modifier.weight(1f).testTag("IdentityVibeInput"),
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester)
+                                .testTag("IdentityVibeInput"),
                             label = { Text("YOU", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
                             singleLine = true,
                             textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
@@ -636,59 +659,6 @@ fun UnifiedBlukitBadge(
                                 unfocusedIndicatorColor = StealthPrimary.copy(alpha = 0.2f)
                             )
                         )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Settings Sections
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // Dark Mode Toggle
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "DARK MODE",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Black,
-                                color = if (isStealthMode) StealthPrimary else Color.White.copy(alpha = 0.6f)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Switch(
-                                checked = isStealthMode,
-                                onCheckedChange = onToggleStealth,
-                                modifier = Modifier.scale(0.7f),
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = StealthPrimary,
-                                    checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
-                                )
-                            )
-                        }
-
-                        // Battery Saver Toggle
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "BATTERY SAVER",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Black,
-                                color = if (lowPowerMode) StealthPrimary else Color.White.copy(alpha = 0.6f)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Switch(
-                                checked = lowPowerMode,
-                                onCheckedChange = onToggleLowPower,
-                                modifier = Modifier.scale(0.7f),
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = StealthPrimary,
-                                    checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
-                                )
-                            )
-                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -810,7 +780,7 @@ private fun MagicBarContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Status Icons: Bluetooth (Mandatory), WiFi, Location (Optional)
+                // Status Icons
                 Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     StatusIcon(
                         icon = Icons.Rounded.Bluetooth, 
@@ -875,7 +845,6 @@ private fun MagicBarContent(
                         }
                     }
                 } else {
-                    // Feedback 16/17: Expansion button in the radio bar when radios are ON
                     Surface(
                         onClick = onToggleExpanded,
                         color = Color.White.copy(alpha = 0.1f),
