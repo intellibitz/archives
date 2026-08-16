@@ -409,8 +409,8 @@ fun UnifiedBlukitBadge(
     val focusRequester = remember { FocusRequester() }
     
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-    // Hardened: Only consider 'Still' if Bluetooth is physically OFF
-    val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled)
+    // Hardened: The air is still if Bluetooth is OFF OR critical permissions are missing
+    val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
 
     Surface(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -636,10 +636,10 @@ private fun EnergyBarContent(
                     StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
                 }
 
-                if (isStill) {
+                if (isStill || isPermissionMissing) {
                     val action = when {
-                        isBluetoothOff -> onAwakenBluetooth
-                        isLocationOff -> onAwakenLocation
+                        isStill -> if (isBluetoothOff) onAwakenBluetooth else onAwakenLocation
+                        isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
                         else -> null
                     }
                     
@@ -656,16 +656,14 @@ private fun EnergyBarContent(
                             shape = RoundedCornerShape(4.dp),
                             modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                         ) {
+                            val btnText = if (isStill) "AWAKEN" else "GRANT"
                             Text(
-                                text = "AWAKEN",
+                                text = btnText.uppercase(),
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
                     }
-                } else if (isPermissionMissing) {
-                    // Only show GRANT if radios are ON but permissions are actually blocking discovery.
-                    // This matches User Joe's intent: don't show GRANT in Yellow state (radios on).
                 }
             }
 

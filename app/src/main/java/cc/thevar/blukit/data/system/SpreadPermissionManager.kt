@@ -50,17 +50,20 @@ class SpreadPermissionManager(private val context: Context) {
      * Checks if all required permissions are currently healthy.
      */
     fun checkAllGranted(): Boolean {
-        return requiredPermissions.all { permission ->
+        val allOk = requiredPermissions.all { permission ->
             val isGranted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+            val isRuntime = isRuntimePermission(permission)
             
-            // Resilience: If a permission isn't considered "Runtime" on this device,
-            // we don't let it block the core logic.
-            if (!isGranted && !isRuntimePermission(permission)) {
+            android.util.Log.d("BlukitPermissions", "Check $permission: granted=$isGranted, runtime=$isRuntime")
+            
+            if (!isGranted && !isRuntime) {
                 return@all true 
             }
             
             isGranted
         }
+        android.util.Log.i("BlukitPermissions", "Final health check: $allOk")
+        return allOk
     }
 
     /**
