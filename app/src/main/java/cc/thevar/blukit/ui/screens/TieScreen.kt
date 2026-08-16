@@ -38,7 +38,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Ties: Secure private moments between vibes.
+ * Ties: Secure private vibes.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

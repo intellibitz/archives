@@ -5,6 +5,6 @@ data class SupremePowerReport(
     val connectedLinksCount: Int = 0,
     val totalMessages: Int = 0,
     val harmony: Float = 0f, // 0.0 to 1.0
-    val aiInsight: String = "Feeling for the vibes...",
+    val aiInsight: String = "SEARCHING THE AIR...",
     val currentBreeze: String? = null,
 )

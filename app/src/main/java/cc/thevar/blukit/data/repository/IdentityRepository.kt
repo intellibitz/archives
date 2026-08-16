@@ -112,7 +112,7 @@ class IdentityRepositoryImpl(
         _nickname.value = name
     }
 
-    override fun getCurrentNickname(): String = securePrefs.getString(KEY_NICKNAME, null) ?: "vibe"
+    override fun getCurrentNickname(): String = securePrefs.getString(KEY_NICKNAME, null) ?: "UNKNOWN"
 
     override fun saveEmoji(emoji: String) {
         securePrefs.edit { putString(KEY_EMOJI, emoji) }

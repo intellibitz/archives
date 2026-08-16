@@ -1,43 +1,44 @@
 <resources>
-    <string name="app_name">Blukit - The energy of proximity</string>
+    <string name="app_slogan">MAKE PEOPLE VIBE</string>
+    <string name="app_name">BLUKIT</string>
 
-    <string name="nav_watch">CROWD</string>
+    <string name="nav_watch">BLUKIT</string>
     <string name="nav_shout">ENERGY</string>
-    <string name="nav_whispers">FRIENDS</string>
+    <string name="nav_whispers">KNOWN</string>
     <string name="nav_mask">ME</string>
 
-    <!-- Crowd Screen (Landing) -->
-    <string name="watch_title">CROWD</string>
-    <string name="watch_broadcast_desc">%1$d VIBES NEARBY</string>
-    <string name="watch_welcome_title">SPREAD THE VIBES</string>
-    <string name="watch_welcome_desc">SPREAD VIBES. HEAR THE CROWD ROAR. CONNECT WITHOUT INTERNET.</string>
+    <!-- People Screen (Landing) -->
+    <string name="watch_title">BLUKIT</string>
+    <string name="watch_broadcast_desc">%1$d PEOPLE NEARBY</string>
+    <string name="watch_welcome_title">MAKE PEOPLE VIBE</string>
+    <string name="watch_welcome_desc">SPREAD VIBES. HEAR THE PEOPLE ROAR. CONNECT WITHOUT INTERNET.</string>
     <string name="watch_empty_hint">Start the vibe below!</string>
 
     <!-- Ripples Screen (Presence) -->
     <string name="shout_title">VIBES</string>
-    <string name="shout_radar_subtitle">CROWD ENERGY</string>
-    <string name="shout_make_visible">SPREAD THE VIBES</string>
-    <string name="shout_type_placeholder">VIBES…</string>
-    <string name="shout_empty_radar">HEAR THE CROWD ROAR…</string>
-    <string name="shout_scan_hint">SEARCHING FOR CROWD…</string>
+    <string name="shout_radar_subtitle">PEOPLE ENERGY</string>
+    <string name="shout_make_visible">MAKE PEOPLE VIBE</string>
+    <string name="shout_type_placeholder">VIBE…</string>
+    <string name="shout_empty_radar">HEAR THE PEOPLE ROAR…</string>
+    <string name="shout_scan_hint">SEARCHING THE AIR…</string>
 
-    <!-- Vibes Screen (Mutual) -->
-    <string name="whispers_title">FRIENDS</string>
-    <string name="whispers_empty_hint">FRIENDS 0</string>
+    <!-- Known Screen (Mutual) -->
+    <string name="whispers_title">KNOWN</string>
+    <string name="whispers_empty_hint">KNOWN 0</string>
     <string name="whispers_last_seen">LAST SEEN: %1$s</string>
     <string name="whispers_label">VIBING</string>
 
     <!-- Vibe Screen (Persona) -->
-    <string name="mask_title">MY VIBE</string>
+    <string name="mask_title">MY PROFILE</string>
     <string name="mask_nickname_label">MY NAME</string>
     <string name="mask_stealth_mode">DARK MODE</string>
     <string name="mask_stealth_desc">OLED ENERGY SAVER</string>
-    <string name="mask_start_exploring">JOIN THE CROWD</string>
+    <string name="mask_start_exploring">JOIN THE PEOPLE</string>
     <string name="mask_clear_whispers">CLEAR VIBES</string>
     <string name="mask_reset_profile">RESET PROFILE</string>
 
     <!-- Confirmation Dialogs -->
-    <string name="conf_delete_whispers_title">CLEAR ALL MESSAGES?</string>
+    <string name="conf_delete_whispers_title">CLEAR ALL VIBES?</string>
     <string name="conf_delete_whispers_desc">THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.</string>
     <string name="conf_reset_identity_title">RESET PROFILE?</string>
     <string name="conf_reset_identity_desc">THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.</string>
@@ -46,23 +47,23 @@
 
     <!-- Technical/System -->
     <string name="permission_title">BLUKIT</string>
-    <string name="permission_desc">BLUKIT USES RADIOS TO CONNECT WITH THE CROWD WITHOUT INTERNET.</string>
-    <string name="permission_grant">JOIN THE CROWD</string>
+    <string name="permission_desc">BLUKIT USES RADIOS TO CONNECT WITH PEOPLE WITHOUT INTERNET.</string>
+    <string name="permission_grant">JOIN THE PEOPLE</string>
     <string name="radio_warning_bluetooth">RADIOS OFF</string>
-    <string name="radio_warning_required">RADIOS MUST BE ON TO HEAR THE CROWD.</string>
+    <string name="radio_warning_required">RADIOS MUST BE ON TO HEAR THE PEOPLE.</string>
     <string name="radio_enable_btn">TURN ON</string>
-    <string name="anonymous">VIBE</string>
+    <string name="anonymous">UNKNOWN</string>
     <string name="error_connection_failed">ROAR FAIL: %1$s</string>
 
     <!-- Smart Flow -->
-    <string name="smart_flow_title">JOIN THE CROWD?</string>
-    <string name="smart_flow_desc">START SPREADING VIBES TO HEAR THE CROWD ROAR.</string>
+    <string name="smart_flow_title">JOIN THE PEOPLE?</string>
+    <string name="smart_flow_desc">START SPREADING VIBES TO HEAR THE PEOPLE ROAR.</string>
     <string name="smart_flow_action">JOIN</string>
 
     <!-- Shared UI -->
-    <string name="btn_send">Send</string>
+    <string name="btn_send">VIBE</string>
     <string name="btn_cancel">CANCEL</string>
     <string name="btn_block">BLOCK</string>
     <string name="mod_block_title">Block this person?</string>
-    <string name="mod_block_desc">You won\u0027t see messages from %1$s anymore.</string>
+    <string name="mod_block_desc">You won\'t see vibes from %1$s anymore.</string>
 </resources>

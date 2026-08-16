@@ -266,7 +266,7 @@ class NearbyP2PController(
 
     private fun handleLinkRequest(endpointId: String, payload: MessagePayload) {
         val device = _scannedDevices.value.find { it.id == endpointId }
-            ?: P2PDevice(endpointId, payload.senderName, payload.senderEmoji ?: "👤")
+            ?: P2PDevice(endpointId, payload.senderName.ifBlank { "UNKNOWN" }, payload.senderEmoji ?: "👤")
         _incomingLinkRequests.update { it + device }
     }
 
@@ -384,7 +384,7 @@ class NearbyP2PController(
 
             val newDevice = P2PDevice(
                 id = endpointId, 
-                name = parts[1], 
+                name = parts[1].ifBlank { "UNKNOWN" }, 
                 emoji = parts[0],
                 medium = peerMedium
             )

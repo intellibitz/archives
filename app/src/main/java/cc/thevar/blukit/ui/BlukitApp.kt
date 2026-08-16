@@ -304,7 +304,7 @@ fun BlukitApp(
                             focusManager.clearFocus()
                         }
                     },
-                    messageCount = if (currentRoute is Route.Vibes) vibesCount else roarsCount,
+                    vibeCount = if (currentRoute is Route.Vibes) vibesCount else roarsCount,
                     placeholder = "SPREAD VIBES…",
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -359,8 +359,8 @@ fun BlukitApp(
                 containerColor = Color.Black,
                 titleContentColor = StealthPrimary,
                 textContentColor = Color.White.copy(alpha = 0.7f),
-                title = { Text("ENERGY REQUIRED", fontWeight = FontWeight.Black) },
-                text = { Text("BLUKIT USES LOCAL RADIOS TO SYNC THE VIBE.", fontSize = 12.sp) },
+                title = { Text("MAKE PEOPLE VIBE", fontWeight = FontWeight.Black) },
+                text = { Text("BLUKIT USES LOCAL RADIOS TO SYNC THE VIBES.", fontSize = 12.sp) },
                 confirmButton = {
                     TextButton(onClick = { permissionState.launchMultiplePermissionRequest() }) {
                         Text("GRANT", color = StealthPrimary, fontWeight = FontWeight.Bold)
@@ -418,33 +418,12 @@ fun UnifiedBlukitBadge(
         shape = RoundedCornerShape(32.dp),
         border = BorderStroke(
             1.dp, 
-            if (airIsStill) Color.Red.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.2f)
+            if (airIsStill) Color.Red.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.15f)
         ),
         tonalElevation = 12.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            EnergyBarContent(
-                isBluetoothOff = !isBluetoothEnabled,
-                isLocationOff = isLocationMandatory && !isLocationEnabled,
-                isWifiOff = !isWifiEnabled,
-                isPermissionMissing = !permissionsGranted,
-                isStealthMode = isStealthMode,
-                lowPowerMode = lowPowerMode,
-                onToggleStealth = onToggleStealth,
-                onToggleLowPower = onToggleLowPower,
-                onAwakenBluetooth = onAwakenBluetooth,
-                onAwakenLocation = onAwakenLocation,
-                onAwakenWifi = onAwakenWifi,
-                userCount = userCount,
-                vibeCount = roarsCount + vibesCount,
-                isPermanentlyDenied = isPermanentlyDenied,
-                onGrantPermissions = onGrantPermissions,
-                onOpenSettings = onOpenSettings,
-                onClearHistory = { showClearHistoryDialog = true }
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-
+            // First Row: Badge & Navigation
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -464,36 +443,27 @@ fun UnifiedBlukitBadge(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(horizontalAlignment = Alignment.End) {
-                    val statusText = when {
-                        airIsStill -> null
-                        incomingLinkRequests.isNotEmpty() -> "VIBE REQUEST"
-                        !currentBreeze.isNullOrBlank() -> currentBreeze
-                        else -> "SYNCED"
-                    }
-                    
-                    if (statusText != null) {
+                    if (incomingLinkRequests.isNotEmpty()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = statusText.uppercase(),
+                                text = "VIBE REQUEST",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 5.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = if(incomingLinkRequests.isNotEmpty()) StealthPrimary else Color.White.copy(alpha = 0.4f),
+                                    color = StealthPrimary,
                                     letterSpacing = 0.5.sp
                                 )
                             )
-                            if (incomingLinkRequests.isNotEmpty()) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "JOIN",
-                                    modifier = Modifier
-                                        .testTag("AcceptLinkButton")
-                                        .clickable { onAcceptLink(incomingLinkRequests.first()) },
-                                    color = StealthPrimary,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 7.sp
-                                )
-                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "JOIN",
+                                modifier = Modifier
+                                    .testTag("AcceptLinkButton")
+                                    .clickable { onAcceptLink(incomingLinkRequests.first()) },
+                                color = StealthPrimary,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 7.sp
+                            )
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                     }
@@ -528,19 +498,32 @@ fun UnifiedBlukitBadge(
                             color = Color.White.copy(alpha = 0.3f)
                         )
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "RESET PROFILE",
-                        modifier = Modifier.clickable { showLogoutDialog = true },
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 6.sp, 
-                            fontWeight = FontWeight.Black, 
-                            color = Color.White.copy(alpha = 0.2f),
-                            letterSpacing = 0.5.sp
-                        )
-                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Second Row: Radio Bar
+            EnergyBarContent(
+                isBluetoothOff = !isBluetoothEnabled,
+                isLocationOff = isLocationMandatory && !isLocationEnabled,
+                isWifiOff = !isWifiEnabled,
+                isPermissionMissing = !permissionsGranted,
+                isStealthMode = isStealthMode,
+                lowPowerMode = lowPowerMode,
+                onToggleStealth = onToggleStealth,
+                onToggleLowPower = onToggleLowPower,
+                onAwakenBluetooth = onAwakenBluetooth,
+                onAwakenLocation = onAwakenLocation,
+                onAwakenWifi = onAwakenWifi,
+                userCount = userCount,
+                vibeCount = roarsCount + vibesCount,
+                isPermanentlyDenied = isPermanentlyDenied,
+                onGrantPermissions = onGrantPermissions,
+                onOpenSettings = onOpenSettings,
+                onClearHistory = { showClearHistoryDialog = true },
+                onResetProfile = { showLogoutDialog = true }
+            )
         }
     }
 
@@ -587,7 +570,8 @@ private fun EnergyBarContent(
     isPermanentlyDenied: Boolean,
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
-    onClearHistory: () -> Unit
+    onClearHistory: () -> Unit,
+    onResetProfile: () -> Unit
 ) {
     val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(
         initialValue = 0.6f, targetValue = 1f,
@@ -622,7 +606,7 @@ private fun EnergyBarContent(
                     }
                     
                     Text(
-                        text = "ENERGY REQUIRED",
+                        text = "MAKE PEOPLE VIBE",
                         modifier = Modifier.testTag("EnergyRequiredLabel"),
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.8f))
                     )
@@ -651,30 +635,62 @@ private fun EnergyBarContent(
                 EnvironmentToggle(label = "DARK MODE", checked = isStealthMode, onCheckedChange = onToggleStealth)
                 EnvironmentToggle(label = "LOW BATTERY MODE", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
                 
-                // Moved: Clear Vibes
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.05f))
-                        .clickable { onClearHistory() }
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = vibeCount.toString(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White.copy(alpha = 0.3f)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Clear Vibes
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .clickable { onClearHistory() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = vibeCount.toString(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White.copy(alpha = 0.3f)
+                            )
                         )
-                    )
-                    Icon(
-                        imageVector = Icons.Rounded.DeleteSweep,
-                        contentDescription = "Clear Vibes",
-                        tint = Color.White.copy(alpha = 0.3f),
-                        modifier = Modifier.size(14.dp)
-                    )
+                        Icon(
+                            imageVector = Icons.Rounded.DeleteSweep,
+                            contentDescription = "Clear Vibes",
+                            tint = Color.White.copy(alpha = 0.3f),
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+
+                    // Reset Profile
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .clickable { onResetProfile() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "RESET",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White.copy(alpha = 0.25f)
+                                )
+                            )
+                            Icon(
+                                imageVector = Icons.Rounded.RestartAlt,
+                                contentDescription = "Reset Profile",
+                                tint = Color.White.copy(alpha = 0.25f),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -720,53 +736,56 @@ private fun VisualEnergyPicker(
         // CROWD Tab (Replaced with Animated BLUKIT)
         Surface(
             onClick = { onNavigate(Route.Crowd) },
-            shape = RoundedCornerShape(10.dp),
-            color = if (isCrowd) StealthPrimary else Color.Transparent,
-            modifier = Modifier.height(44.dp)
+            shape = RoundedCornerShape(12.dp),
+            color = if (isCrowd) Color.White.copy(alpha = 0.12f) else Color.Transparent,
+            border = if (isCrowd) BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.5f)) else null,
+            modifier = Modifier.height(64.dp).weight(1f)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally, 
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                modifier = Modifier.padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.Center
             ) {
-                Box(modifier = Modifier.scale(0.5f)) {
-                    BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
+                Box(modifier = Modifier.size(28.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.scale(0.6f)) {
+                        BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
+                    }
                 }
                 Text(
                     text = "BLUKIT ($userCount)",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 7.sp, 
+                        fontSize = 10.sp, 
                         fontWeight = FontWeight.Black, 
-                        color = if (isCrowd) Color.Black else Color.White.copy(alpha = 0.4f),
+                        color = if (isCrowd) StealthPrimary else Color.White.copy(alpha = 0.4f),
                         letterSpacing = 0.5.sp
-                    )
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Visible
                 )
             }
         }
 
-        // FRIENDS Tab (Renamed to KNOWN)
-        EnergyButton(label = "KNOWN", count = linksCount, active = !isCrowd, onClick = { onNavigate(Route.Vibes) })
-    }
-}
-
-@Composable
-private fun EnergyButton(label: String, count: Int, active: Boolean, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(10.dp),
-        color = if (active) StealthPrimary else Color.Transparent,
-        modifier = Modifier.height(44.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
-            Text(
-                text = "$label ($count)",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 8.sp, 
-                    fontWeight = FontWeight.Black, 
-                    color = if (active) Color.Black else Color.White.copy(alpha = 0.4f),
-                    letterSpacing = 0.5.sp
+        // KNOWN Tab
+        Surface(
+            onClick = { onNavigate(Route.Vibes) },
+            shape = RoundedCornerShape(12.dp),
+            color = if (!isCrowd) Color.White.copy(alpha = 0.12f) else Color.Transparent,
+            border = if (!isCrowd) BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.5f)) else null,
+            modifier = Modifier.height(64.dp).weight(1f)
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 8.dp)) {
+                Text(
+                    text = "KNOWN ($linksCount)",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 10.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = if (!isCrowd) StealthPrimary else Color.White.copy(alpha = 0.4f),
+                        letterSpacing = 0.5.sp
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Visible
                 )
-            )
+            }
         }
     }
 }

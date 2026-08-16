@@ -1,4 +1,5 @@
 <resources>
+    <string name="app_slogan">MAKE PEOPLE VIBE</string>
     <string name="app_name">Blukit</string>
     <string name="profile_title">உங்கள் அடையாளத்தை அமைக்கவும்</string>
     <string name="profile_nickname_label">புனைப்பெயர்</string>

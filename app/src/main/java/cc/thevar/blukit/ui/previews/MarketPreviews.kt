@@ -23,6 +23,7 @@ import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.viewmodels.AirConnectionState
 import cc.thevar.blukit.ui.screens.RipplesField
 import cc.thevar.blukit.ui.theme.BlukitTheme
+import cc.thevar.blukit.ui.theme.StealthPrimary
 
 @Preview(name = "Radar - Phone", device = Devices.PHONE, showBackground = true)
 @Composable
@@ -31,9 +32,9 @@ fun PreviewRadarPhone() {
         RipplesField(
             state = BluetoothUiState(
                 scannedDevices = listOf(
-                    P2PDevice("1", "Vibe 1"),
-                    P2PDevice("2", "Vibe 2"),
-                    P2PDevice("3", "Vibe 3")
+                    P2PDevice("1", "UNKNOWN"),
+                    P2PDevice("2", "UNKNOWN"),
+                    P2PDevice("3", "UNKNOWN")
                 )
             ),
             localDeviceId = "me",
@@ -55,7 +56,7 @@ fun PreviewChatPhone() {
                     MessagePayload(
                         messageId = "1",
                         senderId = "user1",
-                        senderName = "Vibe 1",
+                        senderName = "UNKNOWN",
                         receiverId = "me",
                         content = "Hello!",
                         timestamp = 1628610000000,
@@ -71,12 +72,12 @@ fun PreviewChatPhone() {
                         status = MessagePayload.STATUS_SENT
                     )
                 ),
-                connectionState = AirConnectionState.Connected(P2PDevice("user1", "Vibe 1"))
+                connectionState = AirConnectionState.Connected(P2PDevice("user1", "UNKNOWN"))
             ),
             localDeviceId = "me",
             localEmoji = "👤",
             vibeId = "user1",
-            vibeName = "Vibe 1",
+            vibeName = "UNKNOWN",
             vibeEmoji = "👤",
             onDisconnect = {},
             onNavigateBack = {},
@@ -143,15 +144,16 @@ fun PreviewFeatureGraphic() {
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Blukit",
+                    text = "BLUKIT",
                     style = MaterialTheme.typography.displayLarge,
-                    color = Color(0xFFFFB300), 
-                    fontWeight = FontWeight.Bold
+                    color = StealthPrimary, 
+                    fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "Offline Air Chat",
+                    text = "MAKE PEOPLE VIBE",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

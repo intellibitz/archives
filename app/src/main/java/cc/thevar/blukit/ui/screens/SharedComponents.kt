@@ -104,7 +104,7 @@ fun BlukitInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
-    messageCount: Int = 0,
+    vibeCount: Int = 0,
     placeholder: String = "SPREAD VIBES...",
     modifier: Modifier = Modifier
 ) {
@@ -155,7 +155,7 @@ fun BlukitInput(
                     maxLines = 3
                 )
 
-                if (messageCount > 0) {
+                if (vibeCount > 0) {
                     Surface(
                         color = StealthPrimary.copy(alpha = 0.15f),
                         shape = CircleShape,
@@ -163,7 +163,7 @@ fun BlukitInput(
                         modifier = Modifier.padding(horizontal = 8.dp)
                     ) {
                         Text(
-                            text = messageCount.toString(),
+                            text = vibeCount.toString(),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Black,

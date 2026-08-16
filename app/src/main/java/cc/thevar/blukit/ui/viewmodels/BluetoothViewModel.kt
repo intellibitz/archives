@@ -95,7 +95,7 @@ class BluetoothViewModel(
             error != null -> AirConnectionState.Error(error.message)
             isConnected -> {
                 val vibe = scannedDevices.find { it.id in connectedLinks }
-                    ?: P2PDevice(id = connectedLinks.firstOrNull() ?: "", name = "vibe", emoji = "👤")
+                    ?: P2PDevice(id = connectedLinks.firstOrNull() ?: "", name = "UNKNOWN", emoji = "👤")
                 AirConnectionState.Connected(vibe)
             }
             isDiscovering || isAdvertising -> AirConnectionState.Scanning

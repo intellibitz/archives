@@ -56,7 +56,7 @@ fun ContactsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "The air is still. Find a vibe in the field to form a tie.",
+                    text = "THE AIR IS STILL. FIND SOMEONE IN THE FIELD TO FORM A TIE.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = StealthPrimary.copy(alpha = 0.6f),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,

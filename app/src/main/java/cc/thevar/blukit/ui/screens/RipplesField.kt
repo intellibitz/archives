@@ -355,7 +355,7 @@ private fun VibeNode(
                     tint = if (isVibed) StealthRose else Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size((nodeSize.value / 2.5f).dp)
                 )
-                val displayName = (device.name ?: "SOUL").take(6).uppercase()
+                val displayName = (device.name ?: "UNKNOWN").take(7).uppercase()
                 Text(
                     text = if (!onlyTies && isVibed) "$displayName+" else displayName,
                     fontSize = 8.sp,
