@@ -348,7 +348,12 @@ class NearbyP2PController(
             val vibeDeviceId = parts[2]
             val myDeviceId = repository.getDeviceId()
 
-            val newDevice = P2PDevice(id = endpointId, name = parts[1], emoji = parts[0])
+            val newDevice = P2PDevice(
+                id = endpointId, 
+                name = parts[1], 
+                emoji = parts[0],
+                medium = P2PDevice.ConnectionMedium.LOCATION
+            )
             _scannedDevices.update { it.filter { d -> d.id != endpointId } + newDevice }
 
             if (myDeviceId < vibeDeviceId && !activeConnections.contains(endpointId)) {
@@ -519,9 +524,20 @@ class NearbyP2PController(
     private fun updateScannedDevices() {
         _scannedDevices.update { current ->
             current.map { device ->
+                val tied = device.id in _connectedLinks.value
+                val connecting = device.id in pendingLinkRequests
+                
+                // Determine medium based on connectivity state
+                val medium = when {
+                    tied -> P2PDevice.ConnectionMedium.WIFI
+                    connecting || activeConnections.contains(device.id) -> P2PDevice.ConnectionMedium.BLUETOOTH
+                    else -> P2PDevice.ConnectionMedium.LOCATION
+                }
+                
                 device.copy(
-                    isConnected = device.id in _connectedLinks.value,
-                    isLinkPending = device.id in pendingLinkRequests
+                    isConnected = tied,
+                    isLinkPending = connecting,
+                    medium = medium
                 )
             }
         }

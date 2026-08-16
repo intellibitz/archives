@@ -343,8 +343,14 @@ private fun VibeNode(
             tonalElevation = 4.dp
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                val mediumIcon = when (device.medium) {
+                    P2PDevice.ConnectionMedium.BLUETOOTH -> Icons.Rounded.Bluetooth
+                    P2PDevice.ConnectionMedium.WIFI -> Icons.Rounded.Wifi
+                    P2PDevice.ConnectionMedium.LOCATION -> Icons.Rounded.LocationOn
+                }
+
                 Icon(
-                    imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Sync else Icons.Rounded.Person,
+                    imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Sync else mediumIcon,
                     contentDescription = null,
                     tint = if (isVibed) StealthRose else Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size((nodeSize.value / 2.5f).dp)

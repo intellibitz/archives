@@ -7,8 +7,14 @@ data class P2PDevice(
     val signalStrength: Int = 0, // RSSI value in dBm (-100 to 0)
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false,
-    val isLinkPending: Boolean = false
+    val isLinkPending: Boolean = false,
+    val medium: ConnectionMedium = ConnectionMedium.LOCATION
 ) {
+    enum class ConnectionMedium {
+        BLUETOOTH,
+        WIFI,
+        LOCATION
+    }
     /**
      * Returns a human-readable proximity label based on signal strength.
      * - Strong signal (>-50 dBm): "Very Close"

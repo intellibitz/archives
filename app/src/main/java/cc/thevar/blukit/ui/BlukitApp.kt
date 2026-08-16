@@ -89,10 +89,10 @@ import cc.thevar.blukit.ui.screens.BlukitInput
 @Composable
 fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissionsState {
     val context = LocalContext.current
+    val manager = remember { (context.applicationContext as BlukitApplication).spreadPermissionManager }
+    
     var allGranted by remember {
-        mutableStateOf(permissions.all {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        })
+        mutableStateOf(manager.checkAllGranted())
     }
     var shouldShowRationale by remember {
         mutableStateOf(permissions.any {
@@ -103,9 +103,7 @@ fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissions
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
-        allGranted = permissions.all { 
-            result[it] ?: (ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED)
-        }
+        allGranted = manager.checkAllGranted()
         shouldShowRationale = permissions.any {
             (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
         }
@@ -116,9 +114,7 @@ fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissions
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            allGranted = permissions.all {
-                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-            }
+            allGranted = manager.checkAllGranted()
             shouldShowRationale = permissions.any {
                 (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
             }
@@ -157,7 +153,6 @@ fun BlukitApp(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    
     val permissionManager = (context.applicationContext as BlukitApplication).spreadPermissionManager
     
     val viewModel: MainViewModel = viewModel(
@@ -202,11 +197,6 @@ fun BlukitApp(
 
     val permissionState = rememberSpreadPermissionsState(permissions = permissionManager.requiredPermissions)
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
-
-    // Sync external manager when state changes
-    SideEffect {
-        permissionManager.refresh()
-    }
 
     val initialRoute = Route.Crowd
     val backStack = rememberNavBackStack(initialRoute)
@@ -348,7 +338,9 @@ fun BlukitApp(
                 onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
                 onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
                 onOpenSettings = {
-                    context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    })
                 },
                 onSaveNickname = viewModel::saveNickname,
                 onToggleStealth = viewModel::toggleStealth,
@@ -433,7 +425,6 @@ fun UnifiedBlukitBadge(
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
                 isWifiOff = !isWifiEnabled,
                 isPermissionMissing = !permissionsGranted,
-                isPermanentlyDenied = isPermanentlyDenied,
                 isStealthMode = isStealthMode,
                 lowPowerMode = lowPowerMode,
                 onToggleStealth = onToggleStealth,
@@ -441,9 +432,10 @@ fun UnifiedBlukitBadge(
                 onAwakenBluetooth = onAwakenBluetooth,
                 onAwakenLocation = onAwakenLocation,
                 onAwakenWifi = onAwakenWifi,
+                userCount = userCount,
+                isPermanentlyDenied = isPermanentlyDenied,
                 onGrantPermissions = onGrantPermissions,
-                onOpenSettings = onOpenSettings,
-                userCount = userCount
+                onOpenSettings = onOpenSettings
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -492,7 +484,6 @@ fun UnifiedBlukitBadge(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Right: User Identity
                 Column(horizontalAlignment = Alignment.End) {
                     val statusText = when {
                         airIsStill -> null
@@ -605,7 +596,6 @@ private fun EnergyBarContent(
     isLocationOff: Boolean,
     isWifiOff: Boolean,
     isPermissionMissing: Boolean,
-    isPermanentlyDenied: Boolean,
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
     onToggleStealth: (Boolean) -> Unit,
@@ -613,9 +603,10 @@ private fun EnergyBarContent(
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
+    userCount: Int,
+    isPermanentlyDenied: Boolean,
     onGrantPermissions: () -> Unit,
-    onOpenSettings: () -> Unit,
-    userCount: Int
+    onOpenSettings: () -> Unit
 ) {
     val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(
         initialValue = 0.6f, targetValue = 1f,
@@ -623,7 +614,6 @@ private fun EnergyBarContent(
         label = "Alpha"
     )
 
-    // Regular Joe logic: Yellow means weak signal (no users found)
     val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
     val isStill = isBluetoothOff || isLocationOff
     
@@ -643,21 +633,18 @@ private fun EnergyBarContent(
                     StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
                 }
 
-                if (isStill || isPermissionMissing) {
+                if (isStill) {
                     val action = when {
-                        isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
                         isBluetoothOff -> onAwakenBluetooth
                         isLocationOff -> onAwakenLocation
                         else -> null
                     }
                     
-                    if (isStill) {
-                        Text(
-                            text = "ENERGY REQUIRED",
-                            modifier = Modifier.testTag("EnergyRequiredLabel"),
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.8f))
-                        )
-                    }
+                    Text(
+                        text = "ENERGY REQUIRED",
+                        modifier = Modifier.testTag("EnergyRequiredLabel"),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.8f))
+                    )
 
                     if (action != null) {
                         Surface(
@@ -666,14 +653,16 @@ private fun EnergyBarContent(
                             shape = RoundedCornerShape(4.dp),
                             modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                         ) {
-                            val btnText = if (isStill) "AWAKEN" else "GRANT"
                             Text(
-                                text = btnText.uppercase(),
+                                text = "AWAKEN",
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
                     }
+                } else if (isPermissionMissing) {
+                    // Only show GRANT if radios are ON but permissions are actually blocking discovery.
+                    // This matches User Joe's intent: don't show GRANT in Yellow state (radios on).
                 }
             }
 
