@@ -436,9 +436,11 @@ fun UnifiedBlukitBadge(
                 onAwakenLocation = onAwakenLocation,
                 onAwakenWifi = onAwakenWifi,
                 userCount = userCount,
+                vibeCount = roarsCount + vibesCount,
                 isPermanentlyDenied = isPermanentlyDenied,
                 onGrantPermissions = onGrantPermissions,
-                onOpenSettings = onOpenSettings
+                onOpenSettings = onOpenSettings,
+                onClearHistory = { showClearHistoryDialog = true }
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -447,41 +449,15 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
-                    Text(
-                        text = "BLUKIT",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
-                            color = if (airIsStill) Color.Red else StealthPrimary
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-                
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     VisualEnergyPicker(
                         currentRoute = currentRoute,
                         userCount = userCount,
                         linksCount = linksCount,
+                        energy = energy,
+                        rotation = rotation,
+                        lowPowerMode = lowPowerMode,
                         onNavigate = onNavigate
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    val totalVibes = roarsCount + vibesCount
-                    Text(
-                        text = "CLEAR VIBES ($totalVibes)",
-                        modifier = Modifier.clickable { showClearHistoryDialog = true },
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 7.sp, 
-                            fontWeight = FontWeight.ExtraBold, 
-                            color = Color.White.copy(alpha = 0.25f),
-                            letterSpacing = 1.sp
-                        )
                     )
                 }
 
@@ -607,9 +583,11 @@ private fun EnergyBarContent(
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
     userCount: Int,
+    vibeCount: Int,
     isPermanentlyDenied: Boolean,
     onGrantPermissions: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onClearHistory: () -> Unit
 ) {
     val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(
         initialValue = 0.6f, targetValue = 1f,
@@ -672,6 +650,32 @@ private fun EnergyBarContent(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 EnvironmentToggle(label = "DARK MODE", checked = isStealthMode, onCheckedChange = onToggleStealth)
                 EnvironmentToggle(label = "LOW BATTERY MODE", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
+                
+                // Moved: Clear Vibes
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.05f))
+                        .clickable { onClearHistory() }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = vibeCount.toString(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White.copy(alpha = 0.3f)
+                        )
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.DeleteSweep,
+                        contentDescription = "Clear Vibes",
+                        tint = Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
         }
     }
@@ -697,14 +701,51 @@ private fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: 
 }
 
 @Composable
-private fun VisualEnergyPicker(currentRoute: Route, userCount: Int, linksCount: Int, onNavigate: (Route) -> Unit) {
+private fun VisualEnergyPicker(
+    currentRoute: Route, 
+    userCount: Int, 
+    linksCount: Int, 
+    energy: Float,
+    rotation: Float,
+    lowPowerMode: Boolean,
+    onNavigate: (Route) -> Unit
+) {
     Row(
         modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).padding(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         val isCrowd = currentRoute is Route.Crowd
-        EnergyButton(label = "CROWD", count = userCount, active = isCrowd, onClick = { onNavigate(Route.Crowd) })
-        EnergyButton(label = "FRIENDS", count = linksCount, active = !isCrowd, onClick = { onNavigate(Route.Vibes) })
+        
+        // CROWD Tab (Replaced with Animated BLUKIT)
+        Surface(
+            onClick = { onNavigate(Route.Crowd) },
+            shape = RoundedCornerShape(10.dp),
+            color = if (isCrowd) StealthPrimary else Color.Transparent,
+            modifier = Modifier.height(44.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally, 
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(modifier = Modifier.scale(0.5f)) {
+                    BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
+                }
+                Text(
+                    text = "BLUKIT ($userCount)",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 7.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = if (isCrowd) Color.Black else Color.White.copy(alpha = 0.4f),
+                        letterSpacing = 0.5.sp
+                    )
+                )
+            }
+        }
+
+        // FRIENDS Tab (Renamed to KNOWN)
+        EnergyButton(label = "KNOWN", count = linksCount, active = !isCrowd, onClick = { onNavigate(Route.Vibes) })
     }
 }
 
@@ -714,15 +755,16 @@ private fun EnergyButton(label: String, count: Int, active: Boolean, onClick: ()
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
         color = if (active) StealthPrimary else Color.Transparent,
-        modifier = Modifier.height(28.dp)
+        modifier = Modifier.height(44.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
             Text(
                 text = "$label ($count)",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 7.sp, 
+                    fontSize = 8.sp, 
                     fontWeight = FontWeight.Black, 
-                    color = if (active) Color.Black else Color.White.copy(alpha = 0.4f)
+                    color = if (active) Color.Black else Color.White.copy(alpha = 0.4f),
+                    letterSpacing = 0.5.sp
                 )
             )
         }
