@@ -220,6 +220,7 @@ fun BlukitInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
+    messageCount: Int = 0,
     placeholder: String = "SPREAD VIBES...",
     modifier: Modifier = Modifier
 ) {
@@ -276,6 +277,19 @@ fun BlukitInput(
                 interactionSource = interactionSource,
                 maxLines = 4
             )
+
+            // Feedback 16: Message count in the corner of the input field
+            if (messageCount > 0) {
+                Text(
+                    text = messageCount.toString(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black,
+                        color = StealthPrimary.copy(alpha = 0.4f)
+                    ),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
             
             IconButton(
                 onClick = onSend,

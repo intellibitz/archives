@@ -294,7 +294,7 @@ fun BlukitApp(
             modifier = Modifier.align(Alignment.BottomCenter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Feedback 15: "send vibes" text field above the fields/hub
+            // Feedback 15/16: Global Send Vibes field with count in corner
             AnimatedVisibility(
                 visible = currentRoute is Route.Crowd || currentRoute is Route.Vibes,
                 enter = fadeIn() + expandVertically(),
@@ -310,6 +310,7 @@ fun BlukitApp(
                             focusManager.clearFocus()
                         }
                     },
+                    messageCount = if (currentRoute is Route.Vibes) vibesCount else roarsCount,
                     placeholder = "SPREAD VIBES…",
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -320,19 +321,16 @@ fun BlukitApp(
                 rotation = hubRotation,
                 userCount = report.userCount,
                 linksCount = report.connectedLinksCount,
-                roarsCount = roarsCount,
-                vibesCount = vibesCount,
                 lowPowerMode = lowPowerMode,
+                permissionsGranted = permissionState.allPermissionsGranted,
+                isPermanentlyDenied = isPermanentlyDenied,
+                isStealthMode = isStealthMode,
                 currentBreeze = report.currentBreeze,
                 isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
                 isLocationEnabled = bluetoothState.isLocationEnabled,
                 isWifiEnabled = bluetoothState.isWifiEnabled,
-                permissionsGranted = permissionState.allPermissionsGranted,
-                isPermanentlyDenied = isPermanentlyDenied,
-                isStealthMode = isStealthMode,
                 currentRoute = (currentRoute as? Route) ?: initialRoute,
                 nickname = nickname ?: "vibe",
-                incomingLinkRequests = bluetoothState.incomingLinkRequests,
                 onNavigate = { route ->
                     if (currentRoute != route) {
                         backStack.add(route)
@@ -350,8 +348,6 @@ fun BlukitApp(
                 onToggleLowPower = viewModel::toggleLowPowerMode,
                 onClearHistory = viewModel::clearChatHistory,
                 onLogout = viewModel::logout,
-                onAcceptLink = bluetoothViewModel::acceptLink,
-                onDenyLink = bluetoothViewModel::denyLink,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
         }
@@ -380,19 +376,16 @@ fun UnifiedBlukitBadge(
     rotation: Float,
     userCount: Int,
     linksCount: Int,
-    roarsCount: Int,
-    vibesCount: Int,
     lowPowerMode: Boolean,
+    permissionsGranted: Boolean,
+    isPermanentlyDenied: Boolean,
+    isStealthMode: Boolean,
     currentBreeze: String?,
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
     isWifiEnabled: Boolean,
-    permissionsGranted: Boolean,
-    isPermanentlyDenied: Boolean,
-    isStealthMode: Boolean,
     currentRoute: Route,
     nickname: String,
-    incomingLinkRequests: Set<P2PDevice>,
     onNavigate: (Route) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
@@ -404,8 +397,6 @@ fun UnifiedBlukitBadge(
     onToggleLowPower: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
-    onAcceptLink: (P2PDevice) -> Unit,
-    onDenyLink: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -435,7 +426,7 @@ fun UnifiedBlukitBadge(
                 .clickable { expanded = !expanded }
                 .padding(16.dp)
         ) {
-            // Feedback 14/15: Radios Bar at the TOP of the badge (Always visible)
+            // Feedback 14/15/16: Radios Bar at the TOP of the badge (Always visible)
             MagicBarContent(
                 isBluetoothOff = !isBluetoothEnabled,
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
@@ -483,10 +474,8 @@ fun UnifiedBlukitBadge(
                 Spacer(modifier = Modifier.width(4.dp))
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Intelligence Stats (Hub Brain)
                     val statusText = when {
-                        airIsStill -> null // Redundant with magic bar
-                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
+                        airIsStill -> null
                         !currentBreeze.isNullOrBlank() -> currentBreeze
                         else -> "HEAR THE CROWD ROAR"
                     }
@@ -504,72 +493,53 @@ fun UnifiedBlukitBadge(
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    // Feedback 11/15: CROWD / FRIENDS Picker
+                    // Feedback 11/15/16: CROWD / FRIENDS Picker with counts
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.1f))
+                            .background(Color.White.copy(alpha = 0.08f))
                             .padding(2.dp),
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         val isCrowd = currentRoute is Route.Crowd
-                        Surface(
-                            onClick = { onNavigate(Route.Crowd) },
-                            shape = RoundedCornerShape(6.dp),
-                            color = if (isCrowd) StealthPrimary else Color.Transparent,
-                            modifier = Modifier.height(24.dp)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isCrowd) StealthPrimary else Color.Transparent)
+                                .clickable { onNavigate(Route.Crowd) }
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
-                                Text(
-                                    text = "CROWD",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 7.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (isCrowd) Color.Black else Color.White.copy(alpha = 0.4f)
-                                    )
+                            Text(
+                                text = "CROWD ($userCount)",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (isCrowd) Color.Black else Color.White.copy(alpha = 0.4f)
                                 )
-                            }
+                            )
                         }
-                        Surface(
-                            onClick = { onNavigate(Route.Vibes) },
-                            shape = RoundedCornerShape(6.dp),
-                            color = if (!isCrowd) StealthPrimary else Color.Transparent,
-                            modifier = Modifier.height(24.dp)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (!isCrowd) StealthPrimary else Color.Transparent)
+                                .clickable { onNavigate(Route.Vibes) }
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
-                                Text(
-                                    text = "FRIENDS",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 7.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (!isCrowd) Color.Black else Color.White.copy(alpha = 0.4f)
-                                    )
+                            Text(
+                                text = "FRIENDS ($linksCount)",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (!isCrowd) Color.Black else Color.White.copy(alpha = 0.4f)
                                 )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        if (currentRoute is Route.Vibes) {
-                            HubStat(label = "FRIENDS", value = linksCount.toString())
-                            Spacer(modifier = Modifier.width(16.dp))
-                            HubStat(label = "VIBES", value = vibesCount.toString())
-                        } else {
-                            HubStat(label = "CROWD", value = userCount.toString())
-                            Spacer(modifier = Modifier.width(16.dp))
-                            HubStat(label = "ROARS", value = roarsCount.toString())
+                            )
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Right: User Identity (Feedback 11)
+                // Right: User Identity (Feedback 11/16)
                 Column(
                     horizontalAlignment = Alignment.End,
                     modifier = Modifier.padding(start = 8.dp)
@@ -595,16 +565,11 @@ fun UnifiedBlukitBadge(
                     
                     Spacer(modifier = Modifier.height(4.dp))
                     
-                    // Feedback 15: Expansion Action (Move outside radio bar)
-                    val needsPermission = !permissionsGranted
-                    val actionText = if (airIsStill) (if (needsPermission) "GRANT" else "TURN ON") else if (expanded) "CLOSE" else "SETUP"
+                    // Feedback 15/16: Expansion Action (HUB)
+                    val actionText = if (expanded) "CLOSE" else "HUB"
                     Surface(
-                        onClick = { 
-                            if (needsPermission) onGrantPermissions()
-                            else if (airIsStill) onAwakenBluetooth() 
-                            else expanded = !expanded 
-                        },
-                        color = if (airIsStill) Color.Red else Color.White.copy(alpha = 0.1f),
+                        onClick = { expanded = !expanded },
+                        color = Color.White.copy(alpha = 0.1f),
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
@@ -613,7 +578,7 @@ fun UnifiedBlukitBadge(
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 6.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = if (airIsStill) Color.White else StealthPrimary,
+                                color = StealthPrimary,
                                 letterSpacing = 1.sp
                             )
                         )
@@ -866,6 +831,30 @@ private fun MagicBarContent(
                         ),
                         modifier = Modifier.padding(end = 12.dp)
                     )
+
+                    val action = when {
+                        isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
+                        isBluetoothOff -> onAwakenBluetooth
+                        isLocationOff -> onAwakenLocation
+                        else -> onOpenSettings
+                    }
+
+                    if (action != null) {
+                        Text(
+                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else if (isPermissionMissing) "GRANT" else "TURN ON",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
+                            ),
+                            modifier = Modifier
+                                .graphicsLayer { alpha = pulseAlpha }
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color.White.copy(alpha = 0.2f))
+                                .clickable { action() }
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
         }
@@ -972,55 +961,6 @@ private fun HubStat(
                 color = StealthPrimary.copy(alpha = 0.5f),
                 letterSpacing = 1.sp
             )
-        )
-    }
-}
-
-@Composable
-private fun IntelRow(
-    label: String, 
-    value: String,
-    modifier: Modifier = Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    textIcon: String? = null,
-    onClick: (() -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = StealthPrimary.copy(alpha = 0.4f),
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            } else if (textIcon != null) {
-                Text(
-                    text = textIcon,
-                    fontSize = 12.sp,
-                    modifier = Modifier.alpha(0.6f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            Text(
-                text = label, 
-                style = MaterialTheme.typography.labelSmall, 
-                color = Color.White.copy(alpha = 0.4f)
-            )
-        }
-        Text(
-            text = value, 
-            style = MaterialTheme.typography.labelSmall, 
-            color = StealthPrimary, 
-            fontWeight = FontWeight.Bold
         )
     }
 }
