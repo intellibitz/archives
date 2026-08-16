@@ -461,43 +461,45 @@ fun UnifiedBlukitBadge(
                     // Feedback 11: ROARS / VIBES Picker (More Visual)
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.1f))
                             .padding(2.dp),
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         val isRoars = currentRoute is Route.Crowd
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(if (isRoars) StealthPrimary else Color.Transparent)
-                                .clickable { onNavigate(Route.Crowd) }
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        Surface(
+                            onClick = { onNavigate(Route.Crowd) },
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (isRoars) StealthPrimary else Color.Transparent,
+                            modifier = Modifier.height(24.dp)
                         ) {
-                            Text(
-                                text = "ROARS",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
+                                Text(
+                                    text = "ROARS",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 7.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = if (isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                                    )
                                 )
-                            )
+                            }
                         }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(if (!isRoars) StealthPrimary else Color.Transparent)
-                                .clickable { onNavigate(Route.Vibes) }
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        Surface(
+                            onClick = { onNavigate(Route.Vibes) },
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (!isRoars) StealthPrimary else Color.Transparent,
+                            modifier = Modifier.height(24.dp)
                         ) {
-                            Text(
-                                text = "VIBES",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (!isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
+                                Text(
+                                    text = "VIBES",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 7.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = if (!isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
 
