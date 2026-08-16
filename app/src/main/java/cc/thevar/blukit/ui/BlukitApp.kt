@@ -313,7 +313,7 @@ fun BlukitApp(
             onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
             onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
             onOpenSettings = {
-                // Feedback 13: Fallback should go to Bluetooth settings, not app info
+                // Feedback 13: Fallback should go to Bluetooth settings
                 context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
             },
             onSaveNickname = viewModel::saveNickname,
@@ -407,6 +407,22 @@ fun UnifiedBlukitBadge(
                 .clickable { expanded = !expanded }
                 .padding(16.dp)
         ) {
+            // Feedback 14: Radios Bar at the TOP of the badge
+            MagicBarContent(
+                isBluetoothOff = !isBluetoothEnabled,
+                isLocationOff = isLocationMandatory && !isLocationEnabled,
+                isWifiOff = !isWifiEnabled,
+                isPermissionMissing = !permissionsGranted,
+                isPermanentlyDenied = isPermanentlyDenied,
+                onAwakenBluetooth = onAwakenBluetooth,
+                onAwakenLocation = onAwakenLocation,
+                onAwakenWifi = onAwakenWifi,
+                onGrantPermissions = onGrantPermissions,
+                onOpenSettings = onOpenSettings
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -459,46 +475,48 @@ fun UnifiedBlukitBadge(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Feedback 11: ROARS / VIBES Picker (More Visual)
+                    // Feedback 11: ROARS / VIBES Picker
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.1f))
                             .padding(2.dp),
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         val isRoars = currentRoute is Route.Crowd
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(if (isRoars) StealthPrimary else Color.Transparent)
-                                .clickable { onNavigate(Route.Crowd) }
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        Surface(
+                            onClick = { onNavigate(Route.Crowd) },
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (isRoars) StealthPrimary else Color.Transparent,
+                            modifier = Modifier.height(24.dp)
                         ) {
-                            Text(
-                                text = "ROARS",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
+                                Text(
+                                    text = "ROARS",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 7.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = if (isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                                    )
                                 )
-                            )
+                            }
                         }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(if (!isRoars) StealthPrimary else Color.Transparent)
-                                .clickable { onNavigate(Route.Vibes) }
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        Surface(
+                            onClick = { onNavigate(Route.Vibes) },
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (!isRoars) StealthPrimary else Color.Transparent,
+                            modifier = Modifier.height(24.dp)
                         ) {
-                            Text(
-                                text = "VIBES",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (!isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
+                                Text(
+                                    text = "VIBES",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 7.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = if (!isRoars) Color.Black else Color.White.copy(alpha = 0.4f)
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
 
@@ -561,134 +579,116 @@ fun UnifiedBlukitBadge(
             }
 
             AnimatedVisibility(
-                visible = airIsStill || expanded || incomingLinkRequests.isNotEmpty(),
+                visible = expanded,
                 enter = expandVertically() + fadeIn(),
                 exit = shrinkVertically() + fadeOut()
             ) {
                 Column {
-                    if (airIsStill || incomingLinkRequests.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        MagicBarContent(
-                            isBluetoothOff = !isBluetoothEnabled,
-                            isLocationOff = isLocationMandatory && !isLocationEnabled,
-                            isWifiOff = !isWifiEnabled,
-                            isPermissionMissing = !permissionsGranted,
-                            isPermanentlyDenied = isPermanentlyDenied,
-                            onAwakenBluetooth = onAwakenBluetooth,
-                            onAwakenLocation = onAwakenLocation,
-                            onAwakenWifi = onAwakenWifi,
-                            onGrantPermissions = onGrantPermissions,
-                            onOpenSettings = onOpenSettings
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Integrated Vibe Identity
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .padding(16.dp)
+                    ) {
+                        var localNickname by remember(nickname) { mutableStateOf(nickname) }
+                        TextField(
+                            value = localNickname,
+                            onValueChange = { 
+                                localNickname = it
+                                onSaveNickname(it.ifBlank { "vibe" })
+                            },
+                            modifier = Modifier.weight(1f).testTag("IdentityVibeInput"),
+                            label = { Text("YOU", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = StealthPrimary,
+                                unfocusedIndicatorColor = StealthPrimary.copy(alpha = 0.2f)
+                            )
                         )
                     }
 
-                    if (expanded) {
-                        Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                        // Integrated Vibe Identity
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .padding(16.dp)
-                        ) {
-                            var localNickname by remember(nickname) { mutableStateOf(nickname) }
-                            TextField(
-                                value = localNickname,
-                                onValueChange = { 
-                                    localNickname = it
-                                    onSaveNickname(it.ifBlank { "vibe" })
-                                },
-                                modifier = Modifier.weight(1f).testTag("IdentityVibeInput"),
-                                label = { Text("YOU", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
-                                singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedIndicatorColor = StealthPrimary,
-                                    unfocusedIndicatorColor = StealthPrimary.copy(alpha = 0.2f)
+                    // Settings Sections (Feedback 10: Clubbed Row)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Dark Mode Toggle
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "DARK MODE",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Black,
+                                color = if (isStealthMode) StealthPrimary else Color.White.copy(alpha = 0.6f)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Switch(
+                                checked = isStealthMode,
+                                onCheckedChange = onToggleStealth,
+                                modifier = Modifier.scale(0.7f),
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = StealthPrimary,
+                                    checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
                                 )
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Settings Sections (Feedback 10: Clubbed Row)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            // Dark Mode Toggle
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "DARK MODE",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (isStealthMode) StealthPrimary else Color.White.copy(alpha = 0.6f)
+                        // Battery Saver Toggle
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "BATTERY SAVER",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Black,
+                                color = if (lowPowerMode) StealthPrimary else Color.White.copy(alpha = 0.6f)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Switch(
+                                checked = lowPowerMode,
+                                onCheckedChange = onToggleLowPower,
+                                modifier = Modifier.scale(0.7f),
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = StealthPrimary,
+                                    checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Switch(
-                                    checked = isStealthMode,
-                                    onCheckedChange = onToggleStealth,
-                                    modifier = Modifier.scale(0.7f),
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = StealthPrimary,
-                                        checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
-                                    )
-                                )
-                            }
-
-                            // Battery Saver Toggle
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "BATTERY SAVER",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (lowPowerMode) StealthPrimary else Color.White.copy(alpha = 0.6f)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Switch(
-                                    checked = lowPowerMode,
-                                    onCheckedChange = onToggleLowPower,
-                                    modifier = Modifier.scale(0.7f),
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = StealthPrimary,
-                                        checkedTrackColor = StealthPrimary.copy(alpha = 0.5f)
-                                    )
-                                )
-                            }
+                            )
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                        // Feedback 6: Top-level destructive buttons
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = { showClearHistoryDialog = true },
-                                modifier = Modifier.weight(1f),
-                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text("CLEAR VIBES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
-                            }
-                            OutlinedButton(
-                                onClick = { showLogoutDialog = true },
-                                modifier = Modifier.weight(1f),
-                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text("RESET PROFILE", fontSize = 7.sp, fontWeight = FontWeight.Bold)
-                            }
+                    // Feedback 6: Top-level destructive buttons
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { showClearHistoryDialog = true },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("CLEAR VIBES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                        }
+                        OutlinedButton(
+                            onClick = { showLogoutDialog = true },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("RESET PROFILE", fontSize = 7.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -774,11 +774,11 @@ private fun MagicBarContent(
     )
 
     val isStill = isBluetoothOff || isLocationOff || isPermissionMissing
-    
+
     Surface(
-        color = if (isStill) Color.Red else StealthPrimary.copy(alpha = 0.05f),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(0.5.dp, if (isStill) Color.White.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.3f)),
+        color = if (isStill) Color.Red.copy(alpha = 0.15f) else StealthPrimary.copy(alpha = 0.05f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(0.5.dp, if (isStill) Color.Red.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
@@ -795,7 +795,7 @@ private fun MagicBarContent(
                         isMandatory = true,
                         onClick = onAwakenBluetooth
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
                     StatusIcon(
                         icon = Icons.Rounded.Wifi, 
                         isOn = !isWifiOff, 
@@ -803,7 +803,7 @@ private fun MagicBarContent(
                         isMandatory = false,
                         onClick = onAwakenWifi
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
                     StatusIcon(
                         icon = Icons.Rounded.LocationOn, 
                         isOn = !isLocationOff, 
@@ -814,16 +814,26 @@ private fun MagicBarContent(
                 }
 
                 if (isStill) {
+                    Text(
+                        text = "RADIOS OFF",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        ),
+                        modifier = Modifier.padding(end = 12.dp)
+                    )
+
                     val action = when {
                         isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
                         isBluetoothOff -> onAwakenBluetooth
                         isLocationOff -> onAwakenLocation
-                        else -> onOpenSettings // Default to bluetooth/settings
+                        else -> onOpenSettings
                     }
 
                     if (action != null) {
                         Text(
-                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else "ENABLE RADIOS",
+                            text = if (isPermissionMissing && isPermanentlyDenied) "OPEN SETTINGS" else "TURN ON",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.ExtraBold,
@@ -888,7 +898,7 @@ private fun StatusIcon(
         contentDescription = null,
         tint = tint.copy(alpha = if (isOn) 0.8f else animAlpha),
         modifier = Modifier
-            .size(20.dp) // Slightly larger for visual clickability
+            .size(20.dp)
             .clickable { onClick() }
             .graphicsLayer {
                 scaleX = if (isOn) animScale else 1f
@@ -900,7 +910,7 @@ private fun StatusIcon(
 
 @Composable
 private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) {
-    if (lowPowerMode && rotation % 10 > 2) return // Skip rendering 80% of frames in battery saver? No, better use lower alpha/size
+    if (lowPowerMode && rotation % 10 > 2) return // Skip rendering 80% of frames in battery saver
     
     Canvas(modifier = Modifier.fillMaxSize()) {
         val center = Offset(56.dp.toPx(), size.height - 64.dp.toPx()) // Precisely aligned with the Hub Heartbeat

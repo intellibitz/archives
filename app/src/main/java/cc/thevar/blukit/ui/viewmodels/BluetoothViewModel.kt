@@ -28,9 +28,25 @@ class BluetoothViewModel(
     val energySurge = _energySurge.asStateFlow()
 
     init {
-        // Observe messages to trigger energy surges
+        // 1. Observe messages to trigger energy surges
         p2pController.messages
             .onEach { if (it.isNotEmpty()) triggerEnergySurge() }
+            .launchIn(viewModelScope)
+
+        // 2. Sentient Radio Management: Decouple P2P state from UI
+        // Automatically start/stop based on Bluetooth availability
+        radioStateManager.radioStates
+            .map { it.isBluetoothEnabled }
+            .distinctUntilChanged()
+            .onEach { isEnabled ->
+                if (isEnabled) {
+                    p2pController.startDiscovery()
+                    p2pController.startAdvertising()
+                } else {
+                    p2pController.stopDiscovery()
+                    p2pController.stopAdvertising()
+                }
+            }
             .launchIn(viewModelScope)
     }
 
