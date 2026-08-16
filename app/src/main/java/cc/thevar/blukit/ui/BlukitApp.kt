@@ -20,6 +20,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -38,6 +39,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -47,6 +49,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,6 +78,7 @@ import cc.thevar.blukit.ui.screens.RipplesScreen
 import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
+import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.*
 import cc.thevar.blukit.ui.viewmodels.ViewModelFactory
 import cc.thevar.blukit.ui.screens.BlukitInput
@@ -173,7 +177,7 @@ fun BlukitApp(
         }
     }
 
-    // Global Permission State for the Magic Bar
+    // Global Permission State
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
@@ -187,7 +191,6 @@ fun BlukitApp(
         }
     }
     val permissionState = rememberSpreadPermissionsState(permissions = permissions)
-    
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
 
     val initialRoute = Route.Crowd
@@ -268,13 +271,6 @@ fun BlukitApp(
         // Global Lighthouse Scan
         FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
 
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 16.dp)
-        )
-
         val roarsCount = remember(bluetoothState.messages) {
             bluetoothState.messages.count { it.receiverId.isNullOrBlank() }
         }
@@ -286,7 +282,7 @@ fun BlukitApp(
         val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
         
         Column(
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AnimatedVisibility(
@@ -320,12 +316,12 @@ fun BlukitApp(
                 isPermanentlyDenied = isPermanentlyDenied,
                 isStealthMode = isStealthMode,
                 currentBreeze = report.currentBreeze,
+                incomingLinkRequests = bluetoothState.incomingLinkRequests,
                 isBluetoothEnabled = bluetoothState.isBluetoothEnabled,
                 isLocationEnabled = bluetoothState.isLocationEnabled,
                 isWifiEnabled = bluetoothState.isWifiEnabled,
                 currentRoute = (currentRoute as? Route) ?: initialRoute,
                 nickname = nickname ?: "UNKNOWN",
-                incomingLinkRequests = bluetoothState.incomingLinkRequests,
                 onNavigate = { route ->
                     if (currentRoute != route) {
                         backStack.add(route)
@@ -343,22 +339,21 @@ fun BlukitApp(
                 onToggleLowPower = viewModel::toggleLowPowerMode,
                 onClearHistory = viewModel::clearChatHistory,
                 onLogout = viewModel::logout,
-                onAcceptLink = bluetoothViewModel::acceptLink,
-                modifier = Modifier.padding(bottom = 24.dp)
+                onAcceptLink = bluetoothViewModel::acceptLink
             )
         }
 
         if (permissionState.shouldShowRationale && !permissionState.allPermissionsGranted) {
             AlertDialog(
-                onDismissRequest = { /* Require choice */ },
+                onDismissRequest = { },
                 containerColor = Color.Black,
                 titleContentColor = StealthPrimary,
                 textContentColor = Color.White.copy(alpha = 0.7f),
-                title = { Text("BLUKIT ENERGY", fontWeight = FontWeight.Black) },
-                text = { Text("SPREAD VIBES. HEAR THE CROWD ROAR. PROXIMITY ENERGY.", fontSize = 12.sp) },
+                title = { Text("ENERGY REQUIRED", fontWeight = FontWeight.Black) },
+                text = { Text("BLUKIT USES LOCAL RADIOS TO SYNC THE VIBE.", fontSize = 12.sp) },
                 confirmButton = {
                     TextButton(onClick = { permissionState.launchMultiplePermissionRequest() }) {
-                        Text("VIBES", color = StealthPrimary, fontWeight = FontWeight.Bold)
+                        Text("AWAKEN", color = StealthPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -377,12 +372,12 @@ fun UnifiedBlukitBadge(
     isPermanentlyDenied: Boolean,
     isStealthMode: Boolean,
     currentBreeze: String?,
+    incomingLinkRequests: Set<P2PDevice>,
     isBluetoothEnabled: Boolean,
     isLocationEnabled: Boolean,
     isWifiEnabled: Boolean,
     currentRoute: Route,
     nickname: String,
-    incomingLinkRequests: Set<P2PDevice>,
     onNavigate: (Route) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
@@ -399,33 +394,24 @@ fun UnifiedBlukitBadge(
 ) {
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-    
     val focusRequester = remember { FocusRequester() }
     
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.BottomCenter
+    Surface(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        color = Color.Black.copy(alpha = 0.9f),
+        shape = RoundedCornerShape(32.dp),
+        border = BorderStroke(
+            1.dp, 
+            if (airIsStill) Color.Red.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.2f)
+        ),
+        tonalElevation = 12.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.Black.copy(alpha = 0.8f))
-                .border(
-                    width = 0.5.dp, 
-                    color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.3f), 
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .testTag("BlukitBadge")
-                .padding(16.dp)
-        ) {
-            // Feedback 14-20: Unified Radio Alert Bar with Toggles built-in
-            MagicBarContent(
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Top: Energy Bar
+            EnergyBarContent(
                 isBluetoothOff = !isBluetoothEnabled,
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
                 isWifiOff = !isWifiEnabled,
@@ -442,17 +428,14 @@ fun UnifiedBlukitBadge(
                 onOpenSettings = onOpenSettings
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 // Left: Sentient Branding
-                Column(
-                    modifier = Modifier.padding(end = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
                     Text(
                         text = "BLUKIT",
@@ -465,14 +448,41 @@ fun UnifiedBlukitBadge(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    // CROWD / FRIENDS Picker
+                    VisualEnergyPicker(
+                        currentRoute = currentRoute,
+                        userCount = userCount,
+                        linksCount = linksCount,
+                        onNavigate = onNavigate
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Action Center
+                    Text(
+                        text = "CLEAR VIBES",
+                        modifier = Modifier.clickable { showClearHistoryDialog = true },
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 7.sp, 
+                            fontWeight = FontWeight.ExtraBold, 
+                            color = Color.White.copy(alpha = 0.25f),
+                            letterSpacing = 1.sp
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Right: User Identity
+                Column(horizontalAlignment = Alignment.End) {
                     val statusText = when {
                         airIsStill -> null
-                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
+                        incomingLinkRequests.isNotEmpty() -> "VIBE REQUEST"
                         !currentBreeze.isNullOrBlank() -> currentBreeze
-                        else -> "HEAR THE CROWD ROAR"
+                        else -> "SYNCED"
                     }
                     
                     if (statusText != null) {
@@ -480,16 +490,16 @@ fun UnifiedBlukitBadge(
                             Text(
                                 text = statusText.uppercase(),
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
+                                    fontSize = 5.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = StealthPrimary.copy(alpha = 0.8f),
+                                    color = if(incomingLinkRequests.isNotEmpty()) StealthPrimary else Color.White.copy(alpha = 0.4f),
                                     letterSpacing = 0.5.sp
                                 )
                             )
                             if (incomingLinkRequests.isNotEmpty()) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "VIBE",
+                                    text = "JOIN",
                                     modifier = Modifier
                                         .testTag("AcceptLinkButton")
                                         .clickable { onAcceptLink(incomingLinkRequests.first()) },
@@ -499,112 +509,47 @@ fun UnifiedBlukitBadge(
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
                     }
 
-                    // CROWD / FRIENDS Picker with counts
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
-                            .padding(2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        val isCrowd = currentRoute is Route.Crowd
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(if (isCrowd) StealthPrimary else Color.Transparent)
-                                .clickable { onNavigate(Route.Crowd) }
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "CROWD ($userCount)",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (isCrowd) Color.Black else Color.White.copy(alpha = 0.4f)
-                                )
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(if (!isCrowd) StealthPrimary else Color.Transparent)
-                                .clickable { onNavigate(Route.Vibes) }
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "FRIENDS ($linksCount)",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (!isCrowd) Color.Black else Color.White.copy(alpha = 0.4f)
-                                )
-                            )
-                        }
-                    }
+                    var localNickname by remember(nickname) { mutableStateOf(nickname) }
                     
-                    // Feedback 20/21: CLEAR VIBES in center, RESET PROFILE moved to identity
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "CLEAR VIBES",
-                        modifier = Modifier.clickable { showClearHistoryDialog = true },
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.4f))
-                    )
-                }
-
-                Spacer(modifier = Modifier.weight(0.1f))
-
-                // Right: User Identity (Feedback 11/16/17/19/21)
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    modifier = Modifier.padding(start = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    var localNickname by remember(nickname) { mutableStateOf(nickname ?: "") }
-                    
-                    TextField(
+                    BasicTextField(
                         value = localNickname,
-                        onValueChange = { 
-                            localNickname = it
-                            onSaveNickname(it.ifBlank { "UNKNOWN" })
+                        onValueChange = { newName ->
+                            localNickname = newName
+                            onSaveNickname(newName.ifBlank { "UNKNOWN" })
                         },
                         modifier = Modifier
                             .width(80.dp)
                             .focusRequester(focusRequester)
                             .testTag("IdentityVibeInput"),
                         textStyle = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 8.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Black,
                             color = if (airIsStill) Color.Red else StealthPrimary,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.End
+                            textAlign = TextAlign.End,
+                            letterSpacing = 0.5.sp
                         ),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        singleLine = true
+                        singleLine = true,
+                        cursorBrush = SolidColor(StealthPrimary)
                     )
                     Text(
                         text = "(YOU)",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 6.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.4f),
-                            letterSpacing = 0.5.sp
+                            color = Color.White.copy(alpha = 0.3f)
                         )
                     )
-                    
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "RESET PROFILE",
                         modifier = Modifier.clickable { showLogoutDialog = true },
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 5.sp, 
+                            fontSize = 6.sp, 
                             fontWeight = FontWeight.Black, 
-                            color = Color.White.copy(alpha = 0.3f),
+                            color = Color.White.copy(alpha = 0.2f),
                             letterSpacing = 0.5.sp
                         )
                     )
@@ -614,60 +559,32 @@ fun UnifiedBlukitBadge(
     }
 
     if (showClearHistoryDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearHistoryDialog = false },
-            containerColor = Color.Black,
-            titleContentColor = StealthPrimary,
-            textContentColor = Color.White.copy(alpha = 0.7f),
-            title = { Text("CLEAR VIBES?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", fontSize = 12.sp) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onClearHistory()
-                        showClearHistoryDialog = false
-                    }
-                ) {
-                    Text("CLEAR", color = Color.Red, fontWeight = FontWeight.Bold)
-                }
+        ConfirmationDialog(
+            title = "CLEAR VIBES?",
+            text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.",
+            onConfirm = {
+                onClearHistory()
+                showClearHistoryDialog = false
             },
-            dismissButton = {
-                TextButton(onClick = { showClearHistoryDialog = false }) {
-                    Text("CANCEL", color = Color.White.copy(alpha = 0.4f))
-                }
-            }
+            onDismiss = { showClearHistoryDialog = false }
         )
     }
 
     if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            containerColor = Color.Black,
-            titleContentColor = StealthPrimary,
-            textContentColor = Color.White.copy(alpha = 0.7f),
-            title = { Text("RESET PROFILE?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) },
-            text = { Text("THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", fontSize = 12.sp) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onLogout()
-                        showLogoutDialog = false
-                    }
-                ) {
-                    Text("RESET", color = Color.Red, fontWeight = FontWeight.Bold)
-                }
+        ConfirmationDialog(
+            title = "RESET PROFILE?",
+            text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.",
+            onConfirm = {
+                onLogout()
+                showLogoutDialog = false
             },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("CANCEL", color = Color.White.copy(alpha = 0.4f))
-                }
-            }
+            onDismiss = { showLogoutDialog = false }
         )
     }
 }
 
 @Composable
-private fun MagicBarContent(
+private fun EnergyBarContent(
     isBluetoothOff: Boolean,
     isLocationOff: Boolean,
     isWifiOff: Boolean,
@@ -683,198 +600,161 @@ private fun MagicBarContent(
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
-    val pulseAlpha by rememberInfiniteTransition(label = "AwakenPulse").animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
+    val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(
+        initialValue = 0.6f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse),
         label = "Alpha"
     )
 
     val isStill = isBluetoothOff || isLocationOff || isPermissionMissing
     
     Surface(
-        color = if (isStill) Color.Red.copy(alpha = 0.15f) else StealthPrimary.copy(alpha = 0.05f),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(0.5.dp, if (isStill) Color.Red.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.3f)),
-        modifier = Modifier.fillMaxWidth()
+        color = if (isStill) Color.Red.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.03f),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, if (isStill) Color.Red.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f))
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Feedback 21: Icons and Grant as double liner
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // Status Icons Row
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        StatusIcon(
-                            icon = Icons.Rounded.Bluetooth, 
-                            isOn = !isBluetoothOff, 
-                            isPermissionMissing = isPermissionMissing,
-                            isMandatory = true,
-                            onClick = onAwakenBluetooth
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        StatusIcon(
-                            icon = Icons.Rounded.Wifi, 
-                            isOn = !isWifiOff, 
-                            isPermissionMissing = isPermissionMissing,
-                            isMandatory = false,
-                            onClick = onAwakenWifi
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        StatusIcon(
-                            icon = Icons.Rounded.LocationOn, 
-                            isOn = !isLocationOff, 
-                            isPermissionMissing = isPermissionMissing,
-                            isMandatory = false,
-                            onClick = onAwakenLocation
-                        )
-                    }
-
-                    if (isStill) {
-                        val action = when {
-                            isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
-                            isBluetoothOff -> onAwakenBluetooth
-                            isLocationOff -> onAwakenLocation
-                            else -> onOpenSettings
-                        }
-
-                        if (action != null) {
-                            Surface(
-                                onClick = { action() },
-                                color = Color.White,
-                                shape = RoundedCornerShape(2.dp)
-                            ) {
-                                val btnText = if (isPermissionMissing) "GRANT" else "TURN ON"
-                                Text(
-                                    text = btnText,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 7.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color.Red
-                                    ),
-                                    modifier = Modifier
-                                        .graphicsLayer { alpha = pulseAlpha }
-                                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-                    }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
+                    StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
+                    StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Feedback 21: Toggles as double liner
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Dark Mode Column
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "DARK", 
-                            fontSize = 6.sp, 
-                            fontWeight = FontWeight.Bold, 
-                            color = if(isStealthMode) StealthPrimary else Color.White.copy(alpha = 0.4f)
-                        )
-                        Switch(
-                            checked = isStealthMode,
-                            onCheckedChange = onToggleStealth,
-                            modifier = Modifier.scale(0.5f).height(16.dp),
-                            colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary)
-                        )
+                if (isStill) {
+                    val action = when {
+                        isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
+                        isBluetoothOff -> onAwakenBluetooth
+                        isLocationOff -> onAwakenLocation
+                        else -> onOpenSettings
                     }
-                    
-                    // Battery Saver Column
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Surface(
+                        onClick = { action() },
+                        color = Color.White,
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                    ) {
                         Text(
-                            "SAVE", 
-                            fontSize = 6.sp, 
-                            fontWeight = FontWeight.Bold, 
-                            color = if(lowPowerMode) StealthPrimary else Color.White.copy(alpha = 0.4f)
-                        )
-                        Switch(
-                            checked = lowPowerMode,
-                            onCheckedChange = onToggleLowPower,
-                            modifier = Modifier.scale(0.5f).height(16.dp),
-                            colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary)
+                            text = (if (isPermissionMissing) "GRANT" else "AWAKEN").uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
+                EnvironmentToggle(label = "SAVE", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
             }
         }
     }
 }
 
 @Composable
-private fun StatusIcon(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    isOn: Boolean,
-    isPermissionMissing: Boolean,
-    @Suppress("UNUSED_PARAMETER") isMandatory: Boolean,
-    onClick: () -> Unit
-) {
+private fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label, 
+            fontSize = 6.sp, 
+            fontWeight = FontWeight.Black, 
+            color = if(checked) StealthPrimary else Color.White.copy(alpha = 0.3f),
+            letterSpacing = 1.sp
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.scale(0.55f).height(20.dp),
+            colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary, checkedTrackColor = StealthPrimary.copy(alpha = 0.5f))
+        )
+    }
+}
+
+@Composable
+private fun VisualEnergyPicker(currentRoute: Route, userCount: Int, linksCount: Int, onNavigate: (Route) -> Unit) {
+    Row(
+        modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).padding(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        val isCrowd = currentRoute is Route.Crowd
+        EnergyButton(label = "CROWD", count = userCount, active = isCrowd, onClick = { onNavigate(Route.Crowd) })
+        EnergyButton(label = "FRIENDS", count = linksCount, active = !isCrowd, onClick = { onNavigate(Route.Vibes) })
+    }
+}
+
+@Composable
+private fun EnergyButton(label: String, count: Int, active: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(10.dp),
+        color = if (active) StealthPrimary else Color.Transparent,
+        modifier = Modifier.height(28.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
+            Text(
+                text = "$label ($count)",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 7.sp, 
+                    fontWeight = FontWeight.Black, 
+                    color = if (active) Color.Black else Color.White.copy(alpha = 0.4f)
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.Black,
+        titleContentColor = StealthPrimary,
+        textContentColor = Color.White.copy(alpha = 0.7f),
+        title = { Text(title, fontWeight = FontWeight.Black) },
+        text = { Text(text, fontSize = 12.sp) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("PROCEED", color = Color.Red, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onDismiss() }) {
+                Text("CANCEL", color = Color.White.copy(alpha = 0.4f))
+            }
+        }
+    )
+}
+
+@Composable
+private fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isPermissionMissing: Boolean, onClick: () -> Unit) {
     val tint = when {
         !isOn -> Color.Red
         isPermissionMissing -> Color.Yellow
         else -> Color.Green
     }
-
-    val infiniteTransition = rememberInfiniteTransition(label = "StatusAnim")
-    val animScale by infiniteTransition.animateFloat(
-        initialValue = if (isOn) 0.9f else 1f,
-        targetValue = if (isOn) 1.1f else 1f,
-        animationSpec = infiniteRepeatable(tween(1500), RepeatMode.Reverse),
-        label = "Scale"
-    )
-    val animAlpha by infiniteTransition.animateFloat(
-        initialValue = if (!isOn) 0.3f else 1f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(if (isPermissionMissing) 1000 else 500), 
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Alpha"
-    )
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = if (isOn) 360f else 0f,
-        animationSpec = infiniteRepeatable(tween(8000, easing = LinearEasing)),
-        label = "Rotate"
-    )
-
     Icon(
-        imageVector = icon,
-        contentDescription = null,
-        tint = tint.copy(alpha = if (isOn) 0.8f else animAlpha),
-        modifier = Modifier
-            .size(20.dp) 
-            .clickable { onClick() }
-            .graphicsLayer {
-                scaleX = if (isOn) animScale else 1f
-                scaleY = if (isOn) animScale else 1f
-                rotationZ = rotation
-            }
+        imageVector = icon, contentDescription = null, tint = tint.copy(alpha = 0.8f),
+        modifier = Modifier.size(20.dp).clickable { onClick() }
     )
 }
 
 @Composable
 private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) {
-    if (lowPowerMode && rotation % 10 > 2) return // Skip rendering 80% of frames in battery saver
-    
+    if (lowPowerMode && rotation % 10 > 2) return
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val center = Offset(56.dp.toPx(), size.height - 64.dp.toPx()) // Precisely aligned with the Hub Heartbeat
-        val radius = if (lowPowerMode) size.minDimension / 2 else size.maxDimension
-        
+        val center = Offset(56.dp.toPx(), size.height - 64.dp.toPx())
         rotate(rotation, pivot = center) {
             val scanBrush = Brush.sweepGradient(
-                0.0f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.1f else 0.3f), 
-                0.05f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.02f else 0.1f), 
-                0.15f to Color.Transparent, 
+                0.0f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.05f else 0.15f), 
+                0.1f to Color.Transparent, 
                 center = center
             )
-            drawCircle(brush = scanBrush, radius = radius, center = center)
+            drawCircle(brush = scanBrush, radius = size.maxDimension, center = center)
         }
     }
 }

@@ -5,21 +5,27 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Flare
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -32,102 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
-
-@Composable
-fun BlukitHeader(
-    title: String,
-    modifier: Modifier = Modifier,
-    actions: @Composable (RowScope.() -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 64.dp, bottom = 12.dp), // Padded for global badge
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title.uppercase(),
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Black,
-                letterSpacing = 6.sp,
-                color = Color.White
-            ),
-            modifier = Modifier.weight(1f)
-        )
-        
-        if (actions != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End,
-                content = actions
-            )
-        }
-    }
-}
-
-@Composable
-fun VibingVibesAnimation(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "VibingVibes")
-    val vibeScale by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "VibeScale"
-    )
-
-    val auraAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.1f,
-        targetValue = 0.4f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "AuraAlpha"
-    )
-
-    Box(contentAlignment = Alignment.Center, modifier = modifier.size(120.dp)) {
-        // Outer Aura
-        Canvas(modifier = Modifier.fillMaxSize().blur(24.dp)) {
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(StealthAmber.copy(alpha = auraAlpha), Color.Transparent)
-                ),
-                radius = size.minDimension / 1.5f * vibeScale
-            )
-        }
-        
-        // Inner Core
-        Surface(
-            shape = CircleShape,
-            color = StealthAmber.copy(alpha = 0.15f),
-            border = BorderStroke(2.dp, StealthAmber),
-            modifier = Modifier.size(64.dp * vibeScale)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                // Vibe is pure, no text or icons
-            }
-        }
-    }
-}
-
-@Composable
-fun StatusOverlay(
-    isDiscovering: Boolean,
-    isBluetoothEnabled: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        StatusItem("ENERGY", isBluetoothEnabled)
-        StatusItem("VIBES", isDiscovering)
-    }
-}
+import cc.thevar.blukit.ui.theme.StealthRose
 
 @Composable
 fun BlukitHeartbeat(
@@ -138,79 +49,52 @@ fun BlukitHeartbeat(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "Heartbeat")
     
-    // 1. Vibe Scaling (Pulse)
     val vibeScale by infiniteTransition.animateFloat(
-        initialValue = 0.85f + (energy * 0.2f),
-        targetValue = if (lowPowerMode) 1.0f else 1.35f + (energy * 0.4f), 
+        initialValue = 0.9f + (energy * 0.1f),
+        targetValue = if (lowPowerMode) 1.05f else 1.25f + (energy * 0.3f), 
         animationSpec = infiniteRepeatable(
-            animation = tween(if (lowPowerMode) 4000 else 2000, easing = FastOutSlowInEasing),
+            animation = tween(if (lowPowerMode) 3000 else 1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "VibeScale"
+        label = "Scale"
     )
 
-    // 2. Aura Alpha
     val auraAlpha by infiniteTransition.animateFloat(
-        initialValue = if (lowPowerMode) 0.1f else 0.3f,
-        targetValue = if (lowPowerMode) 0.2f else 0.7f,
+        initialValue = if (lowPowerMode) 0.1f else 0.2f,
+        targetValue = if (lowPowerMode) 0.3f else 0.6f,
         animationSpec = infiniteRepeatable(
-            animation = tween(if (lowPowerMode) 6000 else 3000, easing = LinearOutSlowInEasing),
+            animation = tween(if (lowPowerMode) 4000 else 2000, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "AuraAlpha"
+        label = "Alpha"
     )
 
-    Box(contentAlignment = Alignment.Center, modifier = modifier.size(48.dp)) {
-        // High-Fidelity Aura
-        Canvas(modifier = Modifier.fillMaxSize().blur(8.dp)) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier.size(52.dp)) {
+        Canvas(modifier = Modifier.fillMaxSize().blur(12.dp)) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(StealthAmber.copy(alpha = auraAlpha), Color.Transparent)
+                    colors = listOf(StealthPrimary.copy(alpha = auraAlpha), Color.Transparent)
                 ),
-                radius = size.minDimension / 1.3f * vibeScale
+                radius = size.minDimension / 1.2f * vibeScale
             )
         }
-
-        // Lighthouse Scan Animation
         Canvas(modifier = Modifier.fillMaxSize()) {
             rotate(rotation) {
                 val scanBrush = Brush.sweepGradient(
-                    0.0f to StealthPrimary.copy(alpha = 0.6f), 
-                    0.05f to StealthPrimary.copy(alpha = 0.1f), 
-                    0.15f to Color.Transparent, 
+                    0.0f to StealthPrimary.copy(alpha = 0.8f), 
+                    0.1f to StealthPrimary.copy(alpha = 0.1f), 
+                    0.25f to Color.Transparent, 
                     center = center
                 )
-                drawCircle(brush = scanBrush, radius = size.minDimension / 2)
+                drawCircle(brush = scanBrush, radius = size.minDimension / 2.2f)
             }
         }
-        
-        // Inner Vibe Body (Minimalist - No Text/Icon)
-        Surface(
-            shape = CircleShape,
-            color = Color.Black.copy(alpha = 0.6f),
-            border = BorderStroke(1.dp, Brush.radialGradient(listOf(StealthAmber, cc.thevar.blukit.ui.theme.StealthRose))),
-            modifier = Modifier.size(20.dp * vibeScale)
-        ) {
-            // Pure energy
-        }
-    }
-}
-
-@Composable
-private fun StatusItem(label: String, active: Boolean) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
-                .size(4.dp)
-                .background(if (active) StealthAmber else Color.White.copy(alpha = 0.2f), CircleShape)
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = label, 
-            fontSize = 7.sp, 
-            fontWeight = FontWeight.Black, 
-            letterSpacing = 1.sp,
-            color = Color.White.copy(alpha = 0.4f)
+                .size(24.dp * vibeScale)
+                .clip(CircleShape)
+                .background(Brush.linearGradient(listOf(StealthPrimary, StealthRose)))
+                .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
         )
     }
 }
@@ -226,94 +110,89 @@ fun BlukitInput(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val glowColor by animateColorAsState(
-        if (isFocused) StealthPrimary.copy(alpha = 0.4f) 
-        else StealthPrimary.copy(alpha = 0.05f),
-        label = "glow"
+    
+    val borderGlow by animateColorAsState(
+        if (isFocused) StealthPrimary.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.1f),
+        label = "BorderGlow"
     )
 
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .navigationBarsPadding()
-            .imePadding()
-            .shadow(
-                elevation = if (isFocused) 8.dp else 0.dp,
-                shape = CircleShape,
-                ambientColor = StealthPrimary,
-                spotColor = StealthPrimary
-            ),
-        color = Color(0xFF0A0C14),
-        shape = CircleShape,
-        border = BorderStroke(1.dp, glowColor)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+    Box(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding(),
+            color = Color.Black.copy(alpha = 0.85f),
+            shape = RoundedCornerShape(32.dp),
+            border = BorderStroke(1.dp, borderGlow),
+            tonalElevation = 8.dp
         ) {
-            TextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.weight(1f).testTag("SendVibeInput"),
-                placeholder = { 
-                    Text(
-                        placeholder.uppercase(), 
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            letterSpacing = 1.sp,
-                            color = Color.White.copy(alpha = 0.3f)
-                        )
-                    ) 
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                ),
-                interactionSource = interactionSource,
-                maxLines = 4
-            )
-
-            // Feedback 16: Message count in the corner of the input field
-            if (messageCount > 0) {
-                Text(
-                    text = messageCount.toString(),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Black,
-                        color = StealthPrimary.copy(alpha = 0.4f)
-                    ),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-            }
-            
-            IconButton(
-                onClick = onSend,
-                enabled = value.isNotBlank(),
-                modifier = Modifier
-                    .padding(4.dp)
-                    .size(44.dp)
-                    .background(
-                        if (value.isNotBlank()) StealthPrimary else Color.White.copy(alpha = 0.05f),
-                        CircleShape
-                    )
-                    .testTag("SendVibeButton")
-                    .semantics { contentDescription = "Send" }
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.AccountCircle,
-                    contentDescription = null,
-                    tint = if (value.isNotBlank()) Color.Black else StealthPrimary,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .graphicsLayer {
-                            alpha = if (value.isNotBlank()) 1f else 0.4f
-                        }
+                TextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier = Modifier.weight(1f).testTag("SendVibeInput"),
+                    placeholder = { 
+                        Text(
+                            placeholder.uppercase(), 
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                color = Color.White.copy(alpha = 0.25f)
+                            )
+                        ) 
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White
+                    ),
+                    interactionSource = interactionSource,
+                    maxLines = 3
                 )
+
+                if (messageCount > 0) {
+                    Surface(
+                        color = StealthPrimary.copy(alpha = 0.15f),
+                        shape = CircleShape,
+                        border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    ) {
+                        Text(
+                            text = messageCount.toString(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = StealthPrimary
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                
+                IconButton(
+                    onClick = onSend,
+                    enabled = value.isNotBlank(),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            if (value.isNotBlank()) Brush.linearGradient(listOf(StealthPrimary, StealthAmber))
+                            else Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f))),
+                            CircleShape
+                        )
+                        .testTag("SendVibeButton")
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Flare,
+                        contentDescription = "Vibe",
+                        tint = if (value.isNotBlank()) Color.Black else Color.White.copy(alpha = 0.2f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }

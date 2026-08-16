@@ -72,7 +72,7 @@ data class VibeRipple(
 )
 
 /**
- * BLUKIT: ENERGY PROXIMITY.
+ * BLUKIT: THE ATMOSPHERIC FIELD.
  */
 @Composable
 fun RipplesField(
@@ -90,25 +90,20 @@ fun RipplesField(
 ) {
     val density = LocalDensity.current
 
-    // 1. Relay, Vibe Ripples & Collective Energy State
     val relayEvents = remember { mutableStateListOf<RelayEvent>() }
     val vibeRipples = remember { mutableStateListOf<VibeRipple>() }
     val processedRelayIds = remember { mutableSetOf<String>() }
     var collectiveEnergy by remember { mutableStateOf(0f) }
 
-    // 2. Logic: Trigger Relay Lines & Vibe Ripples when a new bubble appears
     LaunchedEffect(activeBubbles.size) {
         if (activeBubbles.isNotEmpty()) {
             val last = activeBubbles.last()
             if (last.messageId !in processedRelayIds) {
                 processedRelayIds.add(last.messageId)
+                collectiveEnergy = (collectiveEnergy + 0.35f).coerceAtMost(1.0f)
                 
-                // Surge Collective Energy
-                collectiveEnergy = (collectiveEnergy + 0.4f).coerceAtMost(1.0f)
-                
-                // Calculate Target Position
                 val deviceIndex = state.scannedDevices.indexOfFirst { it.id == last.senderId }
-                val proximity = if (deviceIndex != -1) state.scannedDevices[deviceIndex].proximityFactor else 1.0f
+                val proximity = if (deviceIndex != -1) state.scannedDevices[deviceIndex].proximityFactor else 0.5f
                 onVibeSurge(proximity)
 
                 val targetOffset = if (deviceIndex != -1) {
@@ -119,218 +114,94 @@ fun RipplesField(
                     Offset((radiusValue * cos(angle)).toFloat(), (radiusValue * sin(angle)).toFloat())
                 } else Offset.Zero
 
-                val startOffset = Offset((Random.nextFloat() - 0.5f) * 1000f, (Random.nextFloat() - 0.5f) * 1600f)
+                val startOffset = Offset((Random.nextFloat() - 0.5f) * 1200f, (Random.nextFloat() - 0.5f) * 1800f)
                 relayEvents.add(RelayEvent(last.messageId, startOffset, targetOffset, System.currentTimeMillis()))
                 
-                // Add a Ripple at the target location
-                val rippleColor = if (last.isPrivate) StealthRose else StealthAmber
+                val rippleColor = if (last.isPrivate) StealthRose else StealthPrimary
                 vibeRipples.add(VibeRipple(last.messageId, targetOffset, System.currentTimeMillis(), rippleColor))
             }
         }
     }
 
-    // Cleanup & Decay logic
     LaunchedEffect(Unit) {
         while (true) {
             val now = System.currentTimeMillis()
             relayEvents.removeAll { now - it.startTime > 800 }
             vibeRipples.removeAll { now - it.startTime > 2000 }
-            
-            // Decay Energy
-            if (collectiveEnergy > 0f) {
-                collectiveEnergy = (collectiveEnergy - 0.05f).coerceAtLeast(0f)
-            }
+            if (collectiveEnergy > 0f) collectiveEnergy = (collectiveEnergy - 0.04f).coerceAtLeast(0f)
             delay(100)
         }
     }
 
     val finalEnergy = (collectiveEnergy + externalEnergy).coerceAtMost(1.0f)
 
-    Column(
-        modifier = modifier.fillMaxSize().background(Color.Transparent) 
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            StadiumBackground(energy = finalEnergy, lowPowerMode = lowPowerMode)
-            RelayLayer(relayEvents)
-            // Filter devices if only ties are requested
-            val displayDevices = if (onlyTies) {
-                state.scannedDevices.filter { it.id in state.connectedLinks }
-            } else {
-                state.scannedDevices
-            }
-
-            VibeRippleLayer(vibeRipples)
-            VibesConnectivity(displayDevices)
-            
-            // Center Node (Removed - moved to badge)
-            Box(contentAlignment = Alignment.Center) {
-                val myBubble = activeBubbles.findLast { it.senderId == localDeviceId }
-                val myBubbleColor = if (myBubble?.isPrivate == true) StealthRose else Color.White
-                BubbleWrapper(activeBubble = myBubble, color = myBubbleColor)
-            }
-
-            // Vibe nodes and bubbles
-            if (displayDevices.isNotEmpty()) {
-                VibeNodes(
-                    devices = displayDevices,
-                    connectedLinks = state.connectedLinks,
-                    activeBubbles = activeBubbles,
-                    onlyTies = onlyTies,
-                    onDeviceClick = onDeviceClick
-                )
-            }
+    Box(modifier = modifier.fillMaxSize().background(Color.Transparent), contentAlignment = Alignment.Center) {
+        StadiumBackground(energy = finalEnergy, lowPowerMode = lowPowerMode)
+        
+        RelayLayer(relayEvents)
+        
+        val displayDevices = if (onlyTies) {
+            state.scannedDevices.filter { it.id in state.connectedLinks }
+        } else {
+            state.scannedDevices
         }
-    }
-}
 
-@Composable
-private fun BubbleWrapper(activeBubble: BubbleData?, color: Color) {
-    val bubbleScale by animateFloatAsState(
-        targetValue = if (activeBubble != null) 1f else 0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "Scale"
-    )
-    val bubbleAlpha by animateFloatAsState(targetValue = if (activeBubble != null) 1f else 0f, animationSpec = tween(400), label = "Alpha")
-    val bubbleBlur by animateFloatAsState(targetValue = if (activeBubble != null) 0f else 12f, animationSpec = tween(600), label = "Blur")
-
-    if (bubbleAlpha > 0.01f) {
-        Box(
-            modifier = Modifier
-                .offset(y = (-72).dp)
-                .graphicsLayer {
-                    scaleX = bubbleScale
-                    scaleY = bubbleScale
-                    alpha = bubbleAlpha
-                }
-                .blur(bubbleBlur.dp)
-        ) {
-            activeBubble?.let {
-                Bubble(content = it.content, color = color)
-            }
+        VibeRippleLayer(vibeRipples)
+        VibesConnectivity(displayDevices)
+        
+        if (displayDevices.isNotEmpty()) {
+            VibeNodes(
+                devices = displayDevices,
+                connectedLinks = state.connectedLinks,
+                activeBubbles = activeBubbles,
+                onlyTies = onlyTies,
+                onDeviceClick = onDeviceClick
+            )
         }
-    }
-}
-
-@Composable
-private fun Bubble(content: String, color: Color) {
-    Surface(
-        color = color.copy(alpha = 0.95f),
-        shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp),
-        modifier = Modifier.widthIn(max = 160.dp),
-        shadowElevation = 8.dp
-    ) {
-        Text(
-            text = content,
-            fontSize = 12.sp,
-            color = Color.Black,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            maxLines = 4,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
 @Composable
 private fun StadiumBackground(energy: Float, lowPowerMode: Boolean) {
-    val dotsCount = if (lowPowerMode) 300 else 1200 // Refined: Significant reduction for battery saver
+    val dotsCount = if (lowPowerMode) 200 else 800
     val points = remember {
         List(dotsCount) { 
-            Triple(
-                Offset(Random.nextFloat(), Random.nextFloat()), 
-                0.2f + Random.nextFloat() * 1.2f, 
-                Random.nextFloat()
-            ) 
+            Triple(Offset(Random.nextFloat(), Random.nextFloat()), 0.5f + Random.nextFloat() * 1.5f, Random.nextFloat()) 
         }
     }
     
-    val rippleCount = 40 // Background atmospheric ripples
-    val ripples = remember {
-        List(rippleCount) {
-            Triple(
-                Offset(Random.nextFloat(), Random.nextFloat()),
-                Random.nextFloat(), // scale offset
-                Random.nextFloat()  // speed multiplier
-            )
-        }
-    }
-
-    val infiniteTransition = rememberInfiniteTransition(label = "Stadium")
+    val infiniteTransition = rememberInfiniteTransition(label = "Atmosphere")
     val time by infiniteTransition.animateFloat(
-        initialValue = 0f, 
-        targetValue = 2 * PI.toFloat(), 
-        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing)), 
-        label = "T"
+        initialValue = 0f, targetValue = 1f, 
+        animationSpec = infiniteRepeatable(tween(30000, easing = LinearEasing)), 
+        label = "Time"
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        // 0. Collective Glow: Screen-Wide Bloom when energy is high
-        if (energy > 0.5f) {
-            val bloomAlpha = ((energy - 0.5f) * 0.15f).coerceIn(0f, 0.08f)
+        // High-Fidelity Energy Bloom
+        if (energy > 0.4f) {
+            val bloomAlpha = ((energy - 0.4f) * 0.12f).coerceIn(0f, 0.1f)
             drawCircle(
                 brush = Brush.radialGradient(
-                    0.0f to StealthAmber.copy(alpha = bloomAlpha),
+                    0.0f to StealthPrimary.copy(alpha = bloomAlpha),
                     1.0f to Color.Transparent,
                     center = center
                 ),
-                radius = size.maxDimension * 0.8f,
+                radius = size.maxDimension * 0.7f,
                 center = center
             )
         }
 
-        // 1. Atmosphere: Distant souls as points
-        points.forEach { (offset, dotSize, colorShift) ->
-            val movementScale = 15f + energy * 25f
-            val dx = sin(time + offset.x * 20) * movementScale
-            val dy = cos(time + offset.y * 20) * movementScale
+        points.forEach { (offset, dotSize, seed) ->
+            val movementProgress = (time + seed) % 1f
+            val driftX = sin(movementProgress * 2 * PI.toFloat()) * 20f * energy
+            val driftY = cos(movementProgress * 2 * PI.toFloat()) * 20f * energy
             
-            val color = if (colorShift > 0.95f) StealthRose else StealthAmber
-            val alpha = (0.02f + 0.08f * abs(sin(time * 0.5f + colorShift * 10)) + energy * 0.15f).coerceIn(0.01f, 0.3f)
+            val alpha = (0.05f + 0.15f * abs(sin(movementProgress * PI.toFloat() * 4)) + energy * 0.2f).coerceIn(0.02f, 0.4f)
+            val currentPos = Offset(offset.x * size.width + driftX, offset.y * size.height + driftY)
             
-            val currentPos = Offset(offset.x * size.width + dx, offset.y * size.height + dy)
-
-            // Motion Blur Effect: Disable if battery saver is on
-            if (!lowPowerMode && energy > 0.6f) {
-                val tailCount = 3
-                for (i in 1..tailCount) {
-                    val tailAlpha = alpha * (1f - i.toFloat() / (tailCount + 1))
-                    val tailOffset = 1.2f * i 
-                    // Approximate previous position by reversing a bit of the oscillation
-                    val tPrev = time - 0.05f * i
-                    val pdx = sin(tPrev + offset.x * 20) * movementScale
-                    val pdy = cos(tPrev + offset.y * 20) * movementScale
-                    val prevPos = Offset(offset.x * size.width + pdx, offset.y * size.height + pdy)
-                    
-                    drawCircle(
-                        color = color.copy(alpha = tailAlpha),
-                        radius = dotSize.dp.toPx() * (1f + energy * 0.4f) * (1f - i * 0.2f),
-                        center = prevPos
-                    )
-                }
-            }
-
-            drawCircle(
-                color = color.copy(alpha = alpha), 
-                radius = dotSize.dp.toPx() * (1f + energy * 0.5f), 
-                center = currentPos
-            )
-        }
-
-        // 2. Atmosphere: Collective ripples
-        ripples.forEach { (offset, scaleOffset, speed) ->
-            val progress = (time * (0.2f + speed * 0.3f + energy * 0.5f) + scaleOffset) % 1f
-            val radius = progress * (200.dp.toPx() + energy * 100.dp.toPx())
-            val alpha = (1f - progress) * (0.05f + energy * 0.1f)
-            
-            drawCircle(
-                color = StealthAmber.copy(alpha = alpha),
-                radius = radius,
-                center = Offset(offset.x * size.width, offset.y * size.height),
-                style = Stroke(width = (0.5.dp.toPx() + energy.dp.toPx()))
-            )
+            val color = if (seed > 0.8f) StealthRose else StealthPrimary
+            drawCircle(color = color.copy(alpha = alpha), radius = dotSize.dp.toPx() * (1f + energy * 0.5f), center = currentPos)
         }
     }
 }
@@ -342,25 +213,17 @@ private fun VibeRippleLayer(ripples: List<VibeRipple>) {
         ripples.forEach { ripple ->
             val progress = ((now - ripple.startTime) / 2000f).coerceIn(0f, 1f)
             val alpha = 1f - progress
-            val radius = progress * 300.dp.toPx()
+            val radius = progress * 400.dp.toPx()
             
             drawCircle(
-                color = ripple.color.copy(alpha = alpha * 0.3f),
+                color = ripple.color.copy(alpha = alpha * 0.2f),
                 radius = radius,
                 center = center + ripple.center,
-                style = Stroke(width = 2.dp.toPx())
-            )
-            
-            drawCircle(
-                color = ripple.color.copy(alpha = alpha * 0.1f),
-                radius = radius * 0.7f,
-                center = center + ripple.center,
-                style = Stroke(width = 1.dp.toPx())
+                style = Stroke(width = 1.5.dp.toPx())
             )
         }
     }
 }
-
 
 @Composable
 private fun RelayLayer(events: List<RelayEvent>) {
@@ -372,24 +235,17 @@ private fun RelayLayer(events: List<RelayEvent>) {
                 val startPos = center + event.start
                 val endPos = center + event.end
                 
-                // Refined: Particle Trail instead of just a line and dot
-                val trailParticles = 6
+                val trailParticles = 8
                 for (i in 0 until trailParticles) {
-                    val p = (progress - i * 0.04f).coerceIn(0f, 1f)
-                    val particlePos = Offset(
-                        lerp(startPos.x, endPos.x, p),
-                        lerp(startPos.y, endPos.y, p)
-                    )
+                    val p = (progress - i * 0.03f).coerceIn(0f, 1f)
+                    val particlePos = Offset(lerp(startPos.x, endPos.x, p), lerp(startPos.y, endPos.y, p))
                     val pAlpha = (1f - progress) * (1f - i.toFloat() / trailParticles)
                     drawCircle(
-                        color = StealthPrimary.copy(alpha = pAlpha),
-                        radius = (2.dp.toPx() * (1f - i.toFloat() / trailParticles)).coerceAtLeast(0.5.dp.toPx()),
+                        color = StealthPrimary.copy(alpha = pAlpha * 0.8f),
+                        radius = (3.dp.toPx() * (1f - i.toFloat() / trailParticles)).coerceAtLeast(1.dp.toPx()),
                         center = particlePos
                     )
                 }
-
-                val currentHead = Offset(lerp(startPos.x, endPos.x, progress), lerp(startPos.y, endPos.y, progress))
-                drawCircle(color = Color.White.copy(alpha = 0.8f * (1f - progress)), radius = 2.dp.toPx(), center = currentHead)
             }
         }
     }
@@ -399,15 +255,22 @@ private fun RelayLayer(events: List<RelayEvent>) {
 private fun VibesConnectivity(devices: List<P2PDevice>) {
     val connectedDevices = devices.filter { it.isConnected }
     if (connectedDevices.isEmpty()) return
-    val infiniteTransition = rememberInfiniteTransition(label = "TheVibes")
-    val flow by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "F")
+    val flow by rememberInfiniteTransition(label = "EnergyFlow").animateFloat(
+        initialValue = 0f, targetValue = 1f, 
+        animationSpec = infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), RepeatMode.Reverse), 
+        label = "F"
+    )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         connectedDevices.forEach { device ->
             val radiusPx = (1f - device.proximityFactor) * 140.dp.toPx() + 60.dp.toPx()
             val angle = (devices.indexOf(device).toDouble() / devices.size) * 2 * PI
             val target = Offset(center.x + (radiusPx * cos(angle)).toFloat(), center.y + (radiusPx * sin(angle)).toFloat())
-            drawLine(color = StealthPrimary.copy(alpha = 0.05f + 0.2f * flow), start = center, end = target, strokeWidth = (1f + flow).dp.toPx())
+            
+            drawLine(
+                brush = Brush.linearGradient(listOf(StealthPrimary.copy(alpha = 0.02f), StealthPrimary.copy(alpha = 0.1f + 0.1f * flow))),
+                start = center, end = target, strokeWidth = (1f + flow * 2f).dp.toPx()
+            )
         }
     }
 }
@@ -425,7 +288,6 @@ private fun VibeNodes(
             val radiusValue = (1f - device.proximityFactor) * 140f + 60f
             val angle = (index.toDouble() / devices.size) * 2 * PI
             val activeBubble = activeBubbles.findLast { it.senderId == device.id }
-            val bubbleColor = if (activeBubble?.isPrivate == true) StealthRose else StealthAmber
             val isVibed = device.id in connectedLinks
             
             VibeNode(
@@ -435,7 +297,6 @@ private fun VibeNodes(
                 xOffset = (radiusValue * cos(angle)).toFloat().dp, 
                 yOffset = (radiusValue * sin(angle)).toFloat().dp, 
                 activeBubble = activeBubble,
-                bubbleColor = bubbleColor,
                 onClick = { onDeviceClick(device) }
             )
         }
@@ -450,100 +311,74 @@ private fun VibeNode(
     xOffset: Dp, 
     yOffset: Dp, 
     activeBubble: BubbleData?, 
-    bubbleColor: Color,
     onClick: () -> Unit
 ) {
-    val vibeDuration = (3000 - (device.proximityFactor * 2200)).toInt().coerceIn(500, 3000)
-    val infiniteTransition = rememberInfiniteTransition(label = "Node")
-    val vibeScale by infiniteTransition.animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "NodeAnim")
+    val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 1.1f + (device.proximityFactor * 0.15f),
-        animationSpec = infiniteRepeatable(
-            animation = tween(vibeDuration),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "S"
-    )
-    val nodeSize = if (device.proximityFactor > 0.7f) 56.dp else 44.dp
-
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (isVibed) 0.8f else 0.2f,
-        animationSpec = tween(1000),
-        label = "GlowAlpha"
+        targetValue = 1.15f + (device.proximityFactor * 0.1f),
+        animationSpec = infiniteRepeatable(tween(2000 + (device.proximityFactor * 1000).toInt(), easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "Pulse"
     )
 
-    Box(modifier = Modifier.offset(xOffset, yOffset).size(nodeSize * 3.5f), contentAlignment = Alignment.Center) {
-        BubbleWrapper(activeBubble = activeBubble, color = bubbleColor)
-        
-        // Dynamic Halo
-        Box(
-            modifier = Modifier
-                .size(nodeSize * vibeScale * 1.5f)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            (if (isVibed) StealthAmber else colorForProximity(device.proximityLabel)).copy(alpha = 0.2f * glowAlpha),
-                            Color.Transparent
-                        )
-                    ),
-                    CircleShape
-                )
-        )
+    val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
 
-        // Main Node Body
-        Box(
-            modifier = Modifier
-                .size(nodeSize)
-                .clip(CircleShape)
-                .background(
-                    if (isVibed) {
-                        Brush.linearGradient(listOf(StealthAmber, StealthRose))
-                    } else {
-                        Brush.linearGradient(listOf(Color(0xFF1A1D26), Color(0xFF0A0C14)))
-                    }
-                )
-                .border(
-                    if (isVibed) 2.dp else 1.dp,
-                    if (isVibed) Color.White else Color.White.copy(alpha = 0.15f),
-                    CircleShape
-                )
-                .clickable { onClick() },
-            contentAlignment = Alignment.Center
+    Box(modifier = Modifier.offset(xOffset, yOffset).size(nodeSize * 2f), contentAlignment = Alignment.Center) {
+        // High-Fidelity Halo
+        Surface(
+            shape = CircleShape,
+            color = (if (isVibed) StealthRose else StealthPrimary).copy(alpha = 0.05f * pulseScale),
+            modifier = Modifier.size(nodeSize * pulseScale * 1.6f)
+        ) {}
+
+        // Main Body
+        Surface(
+            modifier = Modifier.size(nodeSize).clip(CircleShape).clickable { onClick() },
+            color = if (isVibed) StealthRose.copy(alpha = 0.15f) else Color(0xFF12141A),
+            border = BorderStroke(
+                if (isVibed) 2.dp else 1.dp,
+                if (isVibed) StealthRose else Color.White.copy(alpha = 0.15f)
+            ),
+            shape = CircleShape,
+            tonalElevation = 4.dp
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Icon(
-                    imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Refresh else Icons.Rounded.Person,
+                    imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Sync else Icons.Rounded.Person,
                     contentDescription = null,
-                    tint = if (isVibed) Color.Black else if (device.isLinkPending) StealthAmber else Color.White,
-                    modifier = Modifier.size((nodeSize.value / 2.2f).dp).graphicsLayer {
-                        if (isVibed || device.isLinkPending) {
-                            scaleX = vibeScale
-                            scaleY = vibeScale
-                        }
-                    }
+                    tint = if (isVibed) StealthRose else Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size((nodeSize.value / 2.5f).dp)
                 )
-                val baseName = (device.name ?: stringResource(R.string.anonymous)).take(6).uppercase()
-                val displayName = if (!onlyTies && isVibed) "$baseName (MUTUAL)" else baseName
+                val displayName = (device.name ?: "SOUL").take(6).uppercase()
                 Text(
-                    text = displayName,
-                    fontSize = 7.sp,
-                    color = if (isVibed) Color.Black else Color.White.copy(alpha = 0.7f),
+                    text = if (!onlyTies && isVibed) "$displayName+" else displayName,
+                    fontSize = 8.sp,
+                    color = if (isVibed) StealthRose else Color.White.copy(alpha = 0.6f),
                     fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    letterSpacing = 0.5.sp
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun colorForProximity(group: String): Color {
-    return when (group) {
-        "Very Close" -> Color(0xFF00FF88)
-        "Close" -> Color(0xFF00FFCC)
-        "Moderate" -> Color(0xFFFFE500)
-        else -> Color(0xFFFF1744)
+        // Active Bubble Overlay
+        activeBubble?.let {
+            Box(modifier = Modifier.offset(y = (-48).dp)) {
+                Surface(
+                    color = (if (it.isPrivate) StealthRose else StealthPrimary).copy(alpha = 0.95f),
+                    shape = RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp),
+                    modifier = Modifier.widthIn(max = 140.dp)
+                ) {
+                    Text(
+                        text = it.content,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.Black,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
     }
 }

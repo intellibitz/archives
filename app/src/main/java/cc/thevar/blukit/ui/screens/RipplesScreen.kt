@@ -5,8 +5,7 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,10 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,7 +49,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * VIBES: CROWD ENERGY.
+ * THE VIBES: CROWD ENERGY TICKER.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,22 +69,6 @@ fun RipplesScreen(
     val context = LocalContext.current
     val hapticManager = remember { (context.applicationContext as BlukitApplication).hapticManager }
     
-    val permissions = buildList {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            add(Manifest.permission.BLUETOOTH_SCAN)
-            add(Manifest.permission.BLUETOOTH_ADVERTISE)
-            add(Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
-            add(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            add(Manifest.permission.NEARBY_WIFI_DEVICES)
-        }
-    }
-
-    val permissionState = rememberSpreadPermissionsState(permissions = permissions)
-
-    // Chat Bubbles logic for Radar visualization
     val activeBubbles = remember { mutableStateListOf<BubbleData>() }
     val processedMessageIds = remember { mutableSetOf<String>() }
 
@@ -111,27 +91,12 @@ fun RipplesScreen(
     LaunchedEffect(Unit) {
         while (true) {
             val now = System.currentTimeMillis()
-            activeBubbles.removeAll { now - it.timestamp > 5000 }
+            activeBubbles.removeAll { now - it.timestamp > 4000 }
             delay(1000)
         }
     }
 
-    DisposableEffect(permissionState.allPermissionsGranted) {
-        if (permissionState.allPermissionsGranted) {
-            onStartScan()
-        }
-        onDispose { }
-    }
-
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = Color.Transparent,
-        topBar = {
-            // Space for global badge
-            Spacer(modifier = Modifier.statusBarsPadding().height(64.dp))
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { innerPadding ->
+    Box(modifier = modifier.fillMaxSize()) {
         val vibes = remember(state.messages, onlyTies) {
             if (onlyTies) {
                 state.messages.filter { !it.receiverId.isNullOrBlank() }
@@ -140,56 +105,31 @@ fun RipplesScreen(
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            val fieldBubbles = remember(activeBubbles, onlyTies) {
-                if (onlyTies) {
-                    activeBubbles.filter { it.isPrivate }
-                } else {
-                    activeBubbles.filter { !it.isPrivate }
-                }
-            }
-
-            RipplesField(
-                state = state,
-                localDeviceId = localDeviceId,
-                localEmoji = localEmoji,
-                activeBubbles = fieldBubbles,
-                externalEnergy = energySurge,
-                onlyTies = onlyTies,
-                lowPowerMode = lowPowerMode,
-                onDeviceClick = onDeviceClick,
-                onStartScan = onStartScan,
-                onVibeSurge = { proximity ->
-                    hapticManager.triggerProximityVibe(proximity)
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-            
-            // Full Screen Vibes Ticker
-            VibingVibesTicker(
-                state = state,
-                vibes = vibes,
-                localDeviceId = localDeviceId,
-                onlyTies = onlyTies,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            state.uiError?.let { error ->
-                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
-                    Snackbar(
-                        modifier = Modifier.padding(16.dp),
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    ) {
-                        Text(text = error.message)
-                    }
-                }
-            }
+        val fieldBubbles = remember(activeBubbles, onlyTies) {
+            if (onlyTies) activeBubbles.filter { it.isPrivate } else activeBubbles.filter { !it.isPrivate }
         }
+
+        RipplesField(
+            state = state,
+            localDeviceId = localDeviceId,
+            localEmoji = localEmoji,
+            activeBubbles = fieldBubbles,
+            externalEnergy = energySurge,
+            onlyTies = onlyTies,
+            lowPowerMode = lowPowerMode,
+            onDeviceClick = onDeviceClick,
+            onStartScan = onStartScan,
+            onVibeSurge = { hapticManager.triggerProximityVibe(it) },
+            modifier = Modifier.fillMaxSize()
+        )
+        
+        VibingVibesTicker(
+            state = state,
+            vibes = vibes,
+            localDeviceId = localDeviceId,
+            onlyTies = onlyTies,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
@@ -204,58 +144,31 @@ private fun VibingVibesTicker(
     val listState = rememberLazyListState()
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
-    var focusedVibeId by remember { mutableStateOf<String?>(null) }
-
     LaunchedEffect(vibes.size) {
         if (vibes.isNotEmpty()) {
             listState.animateScrollToItem(vibes.size - 1)
         }
     }
 
-    Box(
-        modifier = modifier
-    ) {
-            if (vibes.isEmpty()) {
-                // Empty state handled by Hub
-            } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.Bottom,
-                contentPadding = PaddingValues(top = 120.dp, bottom = 120.dp)
-            ) {
-                items(vibes, key = { it.messageId }) { msg ->
-                    val isMe = msg.senderId == localDeviceId
-                    val isFocused = focusedVibeId == msg.senderId
-                    
-                    // Look up proximity factor (0.0 to 1.0)
-                    val proximity = if (isMe) 1.0f else {
-                        state.scannedDevices.find { it.id == msg.senderId }?.proximityFactor ?: 0.5f
-                    }
-                    
-                    val alpha by animateFloatAsState(
-                        if (focusedVibeId == null || isFocused || isMe) proximity.coerceAtLeast(0.3f) else 0.1f,
-                        label = "VibeAlpha"
-                    )
-
-                    AnimatedVibeItem(
-                        msg = msg,
-                        isMe = isMe,
-                        isMutual = msg.senderId in state.connectedLinks,
-                        isFocused = isFocused,
-                        onlyTies = onlyTies,
-                        timestamp = timeFormatter.format(Date(msg.timestamp)),
-                        alpha = alpha,
-                        onClick = {
-                            focusedVibeId = if (focusedVibeId == msg.senderId) null else msg.senderId
-                        }
-                    )
-                }
+    Box(modifier = modifier) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.Bottom,
+            contentPadding = PaddingValues(top = 100.dp, bottom = 180.dp)
+        ) {
+            items(vibes, key = { it.messageId }) { msg ->
+                val isMe = msg.senderId == localDeviceId
+                
+                AnimatedVibeItem(
+                    msg = msg,
+                    isMe = isMe,
+                    isMutual = msg.senderId in state.connectedLinks,
+                    onlyTies = onlyTies,
+                    timestamp = timeFormatter.format(Date(msg.timestamp))
+                )
             }
         }
-        
     }
 }
 
@@ -264,80 +177,69 @@ private fun AnimatedVibeItem(
     msg: cc.thevar.blukit.domain.model.MessagePayload,
     isMe: Boolean,
     isMutual: Boolean,
-    isFocused: Boolean,
     onlyTies: Boolean,
-    timestamp: String,
-    alpha: Float,
-    onClick: () -> Unit
+    timestamp: String
 ) {
-    val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, label = "Scale")
-
     Row(
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer { 
-                this.alpha = alpha
-                scaleX = scale
-                scaleY = scale
-            }
-            .clickable { onClick() }
-            .padding(vertical = 6.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).animateContentSize()
     ) {
         if (!isMe) {
-            Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp, modifier = Modifier.padding(end = 8.dp))
-            Column {
-                val displayName = if (!onlyTies && isMutual) {
-                    "${msg.senderName.uppercase()} (MUTUAL)"
-                } else {
-                    msg.senderName.uppercase()
+            Surface(
+                color = if (isMutual) StealthRose.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.05f),
+                shape = RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp),
+                border = BorderStroke(0.5.dp, if(isMutual) StealthRose.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)),
+                modifier = Modifier.widthIn(max = 280.dp)
+            ) {
+                Column(modifier = Modifier.padding(10.dp)) {
+                    val displayName = if (!onlyTies && isMutual) "${msg.senderName}+" else msg.senderName
+                    Text(
+                        text = displayName.uppercase(),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (isMutual) StealthRose else StealthPrimary,
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = msg.content,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.95f)
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        Text(text = timestamp, fontSize = 7.sp, color = Color.White.copy(alpha = 0.2f))
+                    }
                 }
-                Text(
-                    text = displayName,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isFocused) StealthAmber else if (isMutual) StealthPrimary else Color.White.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = msg.content.uppercase(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isFocused) StealthAmber else Color.White.copy(alpha = 0.9f),
-                    fontWeight = if (isFocused) FontWeight.Black else FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = timestamp,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.2f),
-                    fontSize = 7.sp
-                )
             }
         } else {
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "${msg.senderName.uppercase()} (YOU)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = StealthPrimary.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = msg.content.uppercase(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = StealthPrimary,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = timestamp,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = StealthPrimary.copy(alpha = 0.3f),
-                    fontSize = 7.sp
-                )
+            Surface(
+                color = StealthPrimary.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(12.dp, 12.dp, 2.dp, 12.dp),
+                border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)),
+                modifier = Modifier.widthIn(max = 280.dp)
+            ) {
+                Column(modifier = Modifier.padding(10.dp)) {
+                    Text(
+                        text = "YOU",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        color = StealthPrimary,
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = msg.content,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                        Text(text = timestamp, fontSize = 7.sp, color = StealthPrimary.copy(alpha = 0.3f))
+                    }
+                }
             }
-            Text(text = msg.senderEmoji ?: "👤", fontSize = 12.sp, modifier = Modifier.padding(start = 8.dp))
         }
     }
 }
