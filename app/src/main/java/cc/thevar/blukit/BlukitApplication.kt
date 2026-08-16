@@ -24,6 +24,8 @@ class BlukitApplication : Application() {
     lateinit var contactRepository: ContactRepository
     lateinit var p2pController: P2PController
     lateinit var radioStateManager: RadioStateManager
+    private lateinit var _spreadPermissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager
+    val spreadPermissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager get() = _spreadPermissionManager
     lateinit var supremePowerManager: SupremePowerManager
     lateinit var vibeStore: VibeStore
     lateinit var hapticManager: HapticManager
@@ -39,6 +41,7 @@ class BlukitApplication : Application() {
         identityRepository = IdentityRepositoryImpl(this)
         contactRepository = ContactRepository(vibeStore) 
         radioStateManager = RadioStateManager(this)
+        _spreadPermissionManager = cc.thevar.blukit.data.system.SpreadPermissionManager(this)
         hapticManager = HapticManager(this)
         
         p2pController = NearbyP2PController(

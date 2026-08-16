@@ -6,31 +6,28 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.net.wifi.WifiManager
 import android.os.Build
-import androidx.core.content.ContextCompat
-import kotlinx.coroutines.channels.awaitClose
+import android.util.Log
 import kotlinx.coroutines.flow.*
 
-import android.util.Log
-
+/**
+ * THE RADIO CORE.
+ * The unbreakable monitor for hardware radio states.
+ */
 data class RadioStates(
     val isBluetoothEnabled: Boolean,
     val isLocationEnabled: Boolean,
-    val isWifiEnabled: Boolean = true
+    val isWifiEnabled: Boolean
 )
 
-/**
- * Hardened Radio State Manager.
- * Monitors Bluetooth and Location states reactively.
- */
 class RadioStateManager(private val context: Context) {
 
     private val tag = "BlukitRadio"
     private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    private val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+    private val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
     private val _radioStates = MutableStateFlow(getCurrentStates())
     val radioStates: StateFlow<RadioStates> = _radioStates.asStateFlow()
@@ -38,7 +35,7 @@ class RadioStateManager(private val context: Context) {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val newState = getCurrentStates()
-            Log.d(tag, "Radio state changed: BT=${newState.isBluetoothEnabled}, GPS=${newState.isLocationEnabled}")
+            Log.d(tag, "Radio Hardware Shift: BT=${newState.isBluetoothEnabled}, GPS=${newState.isLocationEnabled}, WiFi=${newState.isWifiEnabled}")
             _radioStates.value = newState
         }
     }
@@ -47,7 +44,10 @@ class RadioStateManager(private val context: Context) {
         val filter = IntentFilter().apply {
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
             addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
-            addAction(android.net.wifi.WifiManager.WIFI_STATE_CHANGED_ACTION)
+            addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                addAction(LocationManager.MODE_CHANGED_ACTION)
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -57,47 +57,53 @@ class RadioStateManager(private val context: Context) {
         }
     }
 
+    /**
+     * Force a fresh check of all hardware radios.
+     */
     fun triggerRefresh() {
-        val newState = getCurrentStates()
-        Log.d(tag, "Manual refresh: BT=${newState.isBluetoothEnabled}")
-        _radioStates.value = newState
+        _radioStates.value = getCurrentStates()
     }
 
+    /**
+     * Deep hardware interrogation.
+     * Handles device-specific quirks like SecurityExceptions or stale adapter states.
+     */
     fun getCurrentStates(): RadioStates {
         val adapter = bluetoothManager?.adapter
         
-
-        // On some devices, even if physically on, isEnabled might return false if 
-        // other related permissions (like SCAN) are missing or if the adapter is in a weird state.
-        val isBtEnabled = try {
+        // INTERROGATION: Bluetooth
+        val isBtOn = try {
             adapter?.isEnabled == true || adapter?.state == BluetoothAdapter.STATE_ON
         } catch (e: SecurityException) {
-            Log.w(tag, "SecurityException checking BT state: ${e.message}")
-            // Hardened: On Android 13+, even if we can't call isEnabled, 
-            // the radio might be on. We assume it's on if we're harmonized.
+            Log.w(tag, "Quirk: BT SecurityException. Defaulting to false.")
             false
         }
 
-        val isLocationEnabled = try {
+        // INTERROGATION: Location (Required for BLE/Nearby discovery on most Androids)
+        val isGpsOn = try {
             locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                     locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
         } catch (e: Exception) {
-            Log.w(tag, "Exception checking Location state: ${e.message}")
+            Log.w(tag, "Quirk: Location interrogation failed.")
             false
         }
 
-        val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-        
-        val isWifiEnabled = try {
+        // INTERROGATION: WiFi
+        val isWifiOn = try {
             wifiManager.isWifiEnabled
         } catch (e: Exception) {
-            true
+            // Resilience: If WiFi interrogation fails, we assume it shouldn't block the air.
+            true 
         }
 
+        // Hardened logic: On Android 12+, Location isn't strictly mandatory for "nearby" if 
+        // neverForLocation is used, but we keep it for maximum fidelity across the fleet.
+        val locationIsMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+
         return RadioStates(
-            isBluetoothEnabled = isBtEnabled,
-            isLocationEnabled = if (isLocationMandatory) isLocationEnabled else true,
-            isWifiEnabled = isWifiEnabled
+            isBluetoothEnabled = isBtOn,
+            isLocationEnabled = if (locationIsMandatory) isGpsOn else true, // GPS only blocks old phones
+            isWifiEnabled = isWifiOn
         )
     }
 }

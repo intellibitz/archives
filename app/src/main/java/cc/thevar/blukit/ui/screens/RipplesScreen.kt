@@ -96,13 +96,6 @@ fun RipplesScreen(
         }
     }
 
-    // Restore: Auto-awaken discovery when screen is active and permissions are healthy
-    LaunchedEffect(state.isBluetoothEnabled, state.isLocationEnabled) {
-        if (state.isBluetoothEnabled && state.isLocationEnabled) {
-            onStartScan()
-        }
-    }
-
     Box(modifier = modifier.fillMaxSize()) {
         val vibes = remember(state.messages, onlyTies) {
             if (onlyTies) {

@@ -109,6 +109,8 @@ fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissions
         shouldShowRationale = permissions.any {
             (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
         }
+        // Hardened: Sync with global manager
+        (context.applicationContext as? BlukitApplication)?.spreadPermissionManager?.refresh()
     }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -120,6 +122,8 @@ fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissions
             shouldShowRationale = permissions.any {
                 (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true
             }
+            // Hardened: Sync with the global manager so the VM reacts
+            (context.applicationContext as? BlukitApplication)?.spreadPermissionManager?.refresh()
         }
     }
 
@@ -154,6 +158,8 @@ fun BlukitApp(
 ) {
     val context = LocalContext.current
     
+    val permissionManager = (context.applicationContext as BlukitApplication).spreadPermissionManager
+    
     val viewModel: MainViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -164,7 +170,7 @@ fun BlukitApp(
     val bluetoothViewModel: BluetoothViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return BluetoothViewModel(p2pController, radioStateManager) as T
+                return BluetoothViewModel(p2pController, radioStateManager, permissionManager) as T
             }
         }
     )
@@ -194,22 +200,13 @@ fun BlukitApp(
         }
     }
 
-    // Global Permission State
-    val permissions = buildList {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            add(Manifest.permission.BLUETOOTH_SCAN)
-            add(Manifest.permission.BLUETOOTH_ADVERTISE)
-            add(Manifest.permission.BLUETOOTH_CONNECT)
-        }
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
-        add(Manifest.permission.ACCESS_COARSE_LOCATION)
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            add(Manifest.permission.NEARBY_WIFI_DEVICES)
-        }
-    }
-    val permissionState = rememberSpreadPermissionsState(permissions = permissions)
+    val permissionState = rememberSpreadPermissionsState(permissions = permissionManager.requiredPermissions)
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
+
+    // Sync external manager when state changes
+    SideEffect {
+        permissionManager.refresh()
+    }
 
     val initialRoute = Route.Crowd
     val backStack = rememberNavBackStack(initialRoute)

@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 class BluetoothViewModel(
     private val p2pController: P2PController,
     private val radioStateManager: RadioStateManager,
+    private val permissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager,
 ) : ViewModel() {
 
     private val _manualConnectionState = MutableStateFlow<AirConnectionState?>(null)
@@ -33,16 +34,22 @@ class BluetoothViewModel(
             .onEach { if (it.isNotEmpty()) triggerEnergySurge() }
             .launchIn(viewModelScope)
 
-        // 2. Sentient Radio Management: Decouple P2P state from UI
-        // Automatically start/stop based on Bluetooth availability
-        radioStateManager.radioStates
-            .map { it.isBluetoothEnabled }
+        // 2. THE UNBREAKABLE CORE: Sentient Radio & Permission Management
+        // Automatically start/stop based on Bluetooth availability AND Permissions
+        combine(
+            radioStateManager.radioStates,
+            permissionManager.permissionsGranted
+        ) { radios, permissionsGranted ->
+            radios.isBluetoothEnabled && permissionsGranted
+        }
             .distinctUntilChanged()
-            .onEach { isEnabled ->
-                if (isEnabled) {
+            .onEach { isHealthy ->
+                if (isHealthy) {
+                    android.util.Log.d("BlukitP2P", "CORE: Harmony achieved. Awakening the air.")
                     p2pController.startDiscovery()
                     p2pController.startAdvertising()
                 } else {
+                    android.util.Log.w("BlukitP2P", "CORE: Harmony lost. Air is still.")
                     p2pController.stopDiscovery()
                     p2pController.stopAdvertising()
                 }
@@ -68,7 +75,8 @@ class BluetoothViewModel(
         p2pController.isAdvertising,
         p2pController.errors,
         p2pController.messages,
-        _manualConnectionState
+        _manualConnectionState,
+        permissionManager.permissionsGranted
     ) { args: Array<Any?> ->
         val scannedDevices = args[0] as List<P2PDevice>
         val radioStates = args[1] as cc.thevar.blukit.data.system.RadioStates
@@ -80,6 +88,7 @@ class BluetoothViewModel(
         val error = args[7] as? cc.thevar.blukit.network.p2p.P2PError
         val messages = args[8] as List<cc.thevar.blukit.domain.model.MessagePayload>
         val manualState = args[9] as? AirConnectionState
+        val permissionsGranted = args[10] as Boolean
 
         val connectionState = when {
             manualState != null -> manualState
@@ -101,6 +110,7 @@ class BluetoothViewModel(
             isBluetoothEnabled = radioStates.isBluetoothEnabled,
             isLocationEnabled = radioStates.isLocationEnabled,
             isWifiEnabled = radioStates.isWifiEnabled,
+            permissionsGranted = permissionsGranted,
             isDiscovering = isDiscovering,
             isAdvertising = isAdvertising,
             messages = messages,
