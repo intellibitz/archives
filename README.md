@@ -1,41 +1,41 @@
-# BLUKIT: THE ENERGY OF PROXIMITY
+# BLUKIT: CROWD ENERGY
 
-**SPREAD VIBES. HEAR THE CROWD ROAR.**
+**SPREAD VIBES. MAKE THE CROWD VIBE.**
 
-Blukit is a sentient, offline proximity experience designed for high-density human gatherings. It leverages local radios to bridge the distance between souls instantly—no internet, no cloud, no compromise.
-
----
-
-## 🫂 THE CROWD (Public Energy)
-When you open Blukit, you land in the **CROWD**. This is the collective pulse of everyone around you.
-- **Vibes**: Send a collective **VIBE** and see the stadium glow instantly.
-- **Collective Field**: Every soul identified as **NAME (YOU)**, **NAME+** (MUTUAL), or **NAME**.
-
-## ✨ FRIENDS (Mutual Energy)
-Form an intentional link through **MUTUAL APPROVAL**. 
-- **Mutual**: Select a soul from the crowd to initiate a private connection. Once both souls **VIBE**, you form a private proximity group.
-- **Friends Field**: The same atmospheric UX, filtered strictly for your mutual approvals.
+Blukit is an app for every crowd. Whether you're in a movie hall, a theater, a stadium, a mall, at college, or even just at home with friends—Blukit lets you connect with people nearby without needing the internet.
 
 ---
 
-## 🧠 OMNIPOTENT HUB
-The **Blukit Badge** at the bottom is the all-in-one command center:
-- **Energy Bar**: Persistent status for Bluetooth, WiFi, and Location, with double-liner stacks for **DARK MODE** and **LOW BATTERY MODE**.
-- **Smart Switcher**: Instantly toggle between **CROWD** and **FRIENDS** with real-time density counts.
-- **Identity**: Your visage is editable right from the hub. Stacked with **(YOU)** and a direct **RESET PROFILE** action.
-- **Action Center**: Instantly **CLEAR VIBES (n)** from the center column.
+## 🫂 THE CROWD (Public Vibes)
+When you open Blukit, you're in the **CROWD**. This is where you see everyone around you.
+- **Spread Vibes**: Send a message to the whole crowd and see the screen light up.
+- **Everyone Nearby**: See who else is in the stadium or theater with you.
+
+## ✨ FRIENDS (Private Vibes)
+Want to talk more privately? Connect with someone from the crowd.
+- **Mutual Connection**: Once you both agree to connect, you can send private vibes back and forth.
+- **Friends Only**: Switch to the Friends view to focus only on the people you've connected with.
 
 ---
 
-## ⚡ THE COMMANDMENTS
-1. **PROXIMITY ONLY**: Radios are the only bridge.
-2. **MUTUAL ENERGY**: Private vibes require explicit mutual approval.
-3. **EPHEMERAL VIBES**: All data vanishes like a memory every 12 hours.
-4. **NO COMPROMISE**: Privacy, security, and safety are the core energy.
+## 📱 THE BLUKIT HUB
+Everything you need is right at the bottom of the screen:
+- **Energy Bar**: Quickly check if your Bluetooth, WiFi, and GPS are ready to go. Toggle **Dark Mode** or **Low Battery Mode** right there.
+- **The Switcher**: Easily jump between the **CROWD** and your **FRIENDS**. It even shows you how many people are active in each.
+- **Your Name**: Change your nickname whenever you want. You start as "UNKNOWN".
+- **Clear & Reset**: Clean up your message history or start fresh with a new profile in one tap.
 
 ---
 
-## 🚀 SPREAD VIBES
+## 🛠️ SIMPLE RULES
+1. **Nearby Only**: You only see people who are actually close to you.
+2. **Both Agree**: Private connections require both people to say "Yes."
+3. **Everything Vanishes**: Messages don't last forever. They clear out every 12 hours.
+4. **No Internet Needed**: Blukit works entirely through your phone's radios.
+
+---
+
+## 🚀 START THE VIBE
 ```bash
 ./gradlew installDebug
 ```
@@ -43,4 +43,4 @@ The **Blukit Badge** at the bottom is the all-in-one command center:
 ---
 
 *Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*  
-*SPREAD VIBES. HEAR THE CROWD ROAR.*
+*SPREAD VIBES. MAKE THE CROWD VIBE.*
