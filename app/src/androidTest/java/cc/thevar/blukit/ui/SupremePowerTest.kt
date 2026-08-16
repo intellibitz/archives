@@ -73,11 +73,11 @@ class SupremePowerTest {
         composeTestRule.onNodeWithText("CROWD (10)", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("FRIENDS (2)", useUnmergedTree = true).assertIsDisplayed()
 
-        // Click BLUKIT icon to expand (Feedback 17 logic)
-        composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
-        
-        // Check expanded state - look for identity input
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("IdentityVibeInput"), 5000)
+        // Check for persona input
         composeTestRule.onNodeWithTag("IdentityVibeInput").assertIsDisplayed()
+        
+        // Destructive buttons are now top-level
+        composeTestRule.onNodeWithText("CLEAR VIBES", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("RESET PROFILE", substring = true).assertIsDisplayed()
     }
 }

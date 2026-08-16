@@ -101,13 +101,7 @@ class FlowsTest {
     fun testNavigateToVibeAndChangeIdentity() {
         startApp()
         
-        // Expand the Hub via the BLUKIT icon (Feedback 17 logic)
-        composeTestRule.onNodeWithText("BLUKIT", substring = true).performClick()
-
-        // Wait for animation to finish and input to be available
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("IdentityVibeInput"), 10000)
-        
-        // Change nickname using the new IdentityVibeInput tag
+        // Persona field is now always visible in the omnipotent hub
         composeTestRule.onNodeWithTag("IdentityVibeInput").performTextReplacement("QuantumVibe")
         
         // Verify repository update

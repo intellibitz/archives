@@ -8,7 +8,7 @@ Blukit is a sentient, offline proximity experience designed for high-density hum
 
 ## 🫂 THE CROWD (Public Energy)
 When you open Blukit, you land in the **CROWD**. This is the collective pulse of everyone around you.
-- **The Roar**: Send a public **VIBE** and hear the crowd roar instantly.
+- **Vibes**: Send a collective **VIBE** and see the stadium glow instantly.
 - **Collective Field**: Every soul identified as **NAME (YOU)**, **NAME (MUTUAL)**, or **NAME**.
 
 ## ✨ FRIENDS (Mutual Energy)
@@ -18,13 +18,12 @@ Form an intentional link through **MUTUAL APPROVAL**.
 
 ---
 
-## 🧠 SUPER INTELLIGENT HUB
-The **Blukit Badge** at the bottom is the sentient brain of the system:
-- **Radio Bar**: Always-on traffic-light status for Bluetooth, WiFi, and Location.
-- **Smart Switcher**: Instantly toggle between **CROWD** (Public) and **FRIENDS** (Mutual).
-- **Intelligence Stats**: Real-time counts of **CROWD/ROARS** or **FRIENDS/VIBES**.
-- **User Identity**: Your name and presence are always anchored.
-- **Send Vibes**: Global input field positioned perfectly for the roar.
+## 🧠 OMNIPOTENT HUB
+The **Blukit Badge** at the bottom is the all-in-one control center:
+- **Energy Bar**: Persistent traffic-light status for Bluetooth, WiFi, and Location, including Dark Mode and Battery Saver toggles.
+- **Smart Switcher**: Instantly toggle between **CROWD** and **FRIENDS** with real-time density counts.
+- **Identity**: Your persona is editable right from the hub.
+- **Destructive Roar**: Instantly clear history or reset your profile from the center.
 
 ---
 

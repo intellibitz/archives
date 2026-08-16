@@ -289,6 +289,7 @@ fun BlukitApp(
             modifier = Modifier.align(Alignment.BottomCenter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Feedback 15/16/19: Global Send Vibes field with prominent count
             AnimatedVisibility(
                 visible = currentRoute is Route.Crowd || currentRoute is Route.Vibes,
                 enter = fadeIn() + expandVertically(),
@@ -397,7 +398,6 @@ fun UnifiedBlukitBadge(
     onAcceptLink: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     
@@ -425,14 +425,17 @@ fun UnifiedBlukitBadge(
                 .testTag("BlukitBadge")
                 .padding(16.dp)
         ) {
+            // Feedback 20: Radio Bar contains Toggles + Radio status
             MagicBarContent(
                 isBluetoothOff = !isBluetoothEnabled,
                 isLocationOff = isLocationMandatory && !isLocationEnabled,
                 isWifiOff = !isWifiEnabled,
                 isPermissionMissing = !permissionsGranted,
                 isPermanentlyDenied = isPermanentlyDenied,
-                isExpanded = expanded,
-                onToggleExpanded = { expanded = !expanded },
+                isStealthMode = isStealthMode,
+                lowPowerMode = lowPowerMode,
+                onToggleStealth = onToggleStealth,
+                onToggleLowPower = onToggleLowPower,
                 onAwakenBluetooth = onAwakenBluetooth,
                 onAwakenLocation = onAwakenLocation,
                 onAwakenWifi = onAwakenWifi,
@@ -446,11 +449,9 @@ fun UnifiedBlukitBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Left: Sentient Branding & Hub Toggle
+                // Left: Sentient Branding
                 Column(
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .clickable { expanded = !expanded },
+                    modifier = Modifier.padding(end = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     BlukitHeartbeat(energy = energy, rotation = rotation, lowPowerMode = lowPowerMode)
@@ -463,51 +464,44 @@ fun UnifiedBlukitBadge(
                             color = if (airIsStill) Color.Red else StealthPrimary
                         )
                     )
-                    Text(
-                        text = (if (expanded) "CLOSE" else "HUB").uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.5f)
-                        )
-                    )
                 }
 
                 Spacer(modifier = Modifier.width(4.dp))
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Top level Toggles (Collapsed View)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("DARK", fontSize = 6.sp, fontWeight = FontWeight.Bold, color = if(isStealthMode) StealthPrimary else Color.White.copy(alpha = 0.4f))
-                            Switch(
-                                checked = isStealthMode,
-                                onCheckedChange = onToggleStealth,
-                                modifier = Modifier.scale(0.5f),
-                                colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary)
-                            )
-                        }
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("SAVE", fontSize = 6.sp, fontWeight = FontWeight.Bold, color = if(lowPowerMode) StealthPrimary else Color.White.copy(alpha = 0.4f))
-                            Switch(
-                                checked = lowPowerMode,
-                                onCheckedChange = onToggleLowPower,
-                                modifier = Modifier.scale(0.5f),
-                                colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary)
-                            )
-                        }
+                    val statusText = when {
+                        airIsStill -> null
+                        incomingLinkRequests.isNotEmpty() -> "NEW VIBE REQUEST"
+                        !currentBreeze.isNullOrBlank() -> currentBreeze
+                        else -> "HEAR THE CROWD ROAR"
                     }
-
-                    Spacer(modifier = Modifier.height(6.dp))
+                    
+                    if (statusText != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = statusText.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = StealthPrimary.copy(alpha = 0.8f),
+                                    letterSpacing = 0.5.sp
+                                )
+                            )
+                            if (incomingLinkRequests.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "VIBE",
+                                    modifier = Modifier
+                                        .testTag("AcceptLinkButton")
+                                        .clickable { onAcceptLink(incomingLinkRequests.first()) },
+                                    color = StealthPrimary,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 7.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
 
                     // CROWD / FRIENDS Picker
                     Row(
@@ -551,58 +545,55 @@ fun UnifiedBlukitBadge(
                             )
                         }
                     }
+                    
+                    // Feedback 20: Destructive buttons directly in the badge row below picker
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "CLEAR VIBES",
+                            modifier = Modifier.clickable { showClearHistoryDialog = true },
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.4f))
+                        )
+                        Text(
+                            text = "RESET PROFILE",
+                            modifier = Modifier.clickable { showLogoutDialog = true },
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.4f))
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Right: User Identity (Feedback 19: Focus persona on click)
+                // Right: User Identity (Persona field always active)
                 Column(
                     horizontalAlignment = Alignment.End,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .clickable { expanded = true }
+                    modifier = Modifier.padding(start = 8.dp)
                 ) {
-                    val statusText = when {
-                        airIsStill -> null
-                        !currentBreeze.isNullOrBlank() -> currentBreeze
-                        else -> "HEAR THE CROWD ROAR"
-                    }
+                    var localNickname by remember(nickname) { mutableStateOf(nickname ?: "") }
                     
-                    if (statusText != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = statusText.uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 5.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = StealthPrimary.copy(alpha = 0.8f),
-                                    letterSpacing = 0.5.sp
-                                )
-                            )
-                            if (incomingLinkRequests.isNotEmpty()) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "VIBE",
-                                    modifier = Modifier
-                                        .testTag("AcceptLinkButton")
-                                        .clickable { onAcceptLink(incomingLinkRequests.first()) },
-                                    color = StealthPrimary,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 7.sp
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(2.dp))
-                    }
-
-                    Text(
-                        text = nickname.uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(
+                    TextField(
+                        value = localNickname,
+                        onValueChange = { 
+                            localNickname = it
+                            onSaveNickname(it.ifBlank { "SOUL" })
+                        },
+                        modifier = Modifier
+                            .width(80.dp)
+                            .focusRequester(focusRequester)
+                            .testTag("IdentityVibeInput"),
+                        textStyle = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Black,
                             color = if (airIsStill) Color.Red else StealthPrimary,
-                            letterSpacing = 1.sp
-                        )
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End
+                        ),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        singleLine = true
                     )
                     Text(
                         text = "(YOU)",
@@ -613,76 +604,6 @@ fun UnifiedBlukitBadge(
                             letterSpacing = 0.5.sp
                         )
                     )
-                }
-            }
-
-            AnimatedVisibility(
-                visible = expanded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Integrated Vibe Identity
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
-                            .padding(16.dp)
-                    ) {
-                        var localNickname by remember(nickname) { mutableStateOf(nickname ?: "") }
-                        
-                        LaunchedEffect(expanded) {
-                            if (expanded) focusRequester.requestFocus()
-                        }
-
-                        TextField(
-                            value = localNickname,
-                            onValueChange = { 
-                                localNickname = it
-                                onSaveNickname(it.ifBlank { "SOUL" })
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .focusRequester(focusRequester)
-                                .testTag("IdentityVibeInput"),
-                            label = { Text("YOU", fontSize = 8.sp, color = StealthPrimary.copy(alpha = 0.5f)) },
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White, fontWeight = FontWeight.Bold),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = StealthPrimary,
-                                unfocusedIndicatorColor = StealthPrimary.copy(alpha = 0.2f)
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { showClearHistoryDialog = true },
-                            modifier = Modifier.weight(1f),
-                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("CLEAR VIBES", fontSize = 7.sp, fontWeight = FontWeight.Bold)
-                        }
-                        OutlinedButton(
-                            onClick = { showLogoutDialog = true },
-                            modifier = Modifier.weight(1f),
-                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("RESET PROFILE", fontSize = 7.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
                 }
             }
         }
@@ -748,8 +669,10 @@ private fun MagicBarContent(
     isWifiOff: Boolean,
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
-    isExpanded: Boolean,
-    onToggleExpanded: () -> Unit,
+    isStealthMode: Boolean,
+    lowPowerMode: Boolean,
+    onToggleStealth: (Boolean) -> Unit,
+    onToggleLowPower: (Boolean) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
@@ -775,7 +698,7 @@ private fun MagicBarContent(
         border = BorderStroke(0.5.dp, if (isStill) Color.Red.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -808,8 +731,9 @@ private fun MagicBarContent(
                 }
 
                 if (isStill) {
+                    val labelText = if (isPermissionMissing) "ENERGY REQUIRED" else "RADIOS OFF"
                     Text(
-                        text = "ENERGY REQUIRED",
+                        text = labelText,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Black,
@@ -845,20 +769,27 @@ private fun MagicBarContent(
                         }
                     }
                 } else {
-                    Surface(
-                        onClick = onToggleExpanded,
-                        color = Color.White.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text(
-                            text = (if (isExpanded) "CLOSE" else "HUB"),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = StealthPrimary
-                            ),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                    // Feedback 20: Toggles inside the radio bar
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("DARK", fontSize = 6.sp, fontWeight = FontWeight.Bold, color = if(isStealthMode) StealthPrimary else Color.White.copy(alpha = 0.4f))
+                            Switch(
+                                checked = isStealthMode,
+                                onCheckedChange = onToggleStealth,
+                                modifier = Modifier.scale(0.5f),
+                                colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("SAVE", fontSize = 6.sp, fontWeight = FontWeight.Bold, color = if(lowPowerMode) StealthPrimary else Color.White.copy(alpha = 0.4f))
+                            Switch(
+                                checked = lowPowerMode,
+                                onCheckedChange = onToggleLowPower,
+                                modifier = Modifier.scale(0.5f),
+                                colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary)
+                            )
+                        }
                     }
                 }
             }
