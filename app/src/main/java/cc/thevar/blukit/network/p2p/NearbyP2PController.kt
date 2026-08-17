@@ -16,6 +16,7 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
+import android.os.Build
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
@@ -52,6 +53,10 @@ class NearbyP2PController(
 
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
+    private val hasRttSupport = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_WIFI_RTT)
+    } else false
+    
     private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
     override val scannedDevices = _scannedDevices.asStateFlow()
 
@@ -108,11 +113,18 @@ class NearbyP2PController(
 
     private fun getRadioFlag(): String {
         val states = radioStateManager.radioStates.value
-        return when {
+        val lowPower = repository.lowPowerMode.value
+        val vibeCount = messages.value.size
+        
+        val radioChar = when {
             states.isWifiEnabled -> "W"
             states.isBluetoothEnabled -> "B"
             else -> "L"
         }
+        val powerChar = if (lowPower) "P" else "H" // Power: Low (P) or High (H)
+        
+        // Format: FLAG|COUNT|POWER
+        return "$radioChar|$vibeCount|$powerChar"
     }
 
     private fun observeIdentityChanges() {
@@ -178,6 +190,26 @@ class NearbyP2PController(
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
             Log.i(tag, "INIT: $endpointId (${info.endpointName})")
+            
+            // Extract peer state from connection info name if available
+            val parts = info.endpointName.split("|")
+            if (parts.size >= 4) {
+                val peerMedium = when (parts[3]) {
+                    "W" -> P2PDevice.ConnectionMedium.WIFI
+                    "B" -> P2PDevice.ConnectionMedium.BLUETOOTH
+                    else -> P2PDevice.ConnectionMedium.LOCATION
+                }
+                val peerVibeCount = parts.getOrNull(4)?.toIntOrNull() ?: 0
+                val peerIsLowPower = parts.getOrNull(5) == "P"
+                
+                _scannedDevices.update { current ->
+                    current.map { 
+                        if (it.id == endpointId) it.copy(medium = peerMedium, vibeCount = peerVibeCount, isLowPower = peerIsLowPower) 
+                        else it 
+                    }
+                }
+            }
+            
             connectionsClient.acceptConnection(endpointId, payloadCallback)
                 .addOnSuccessListener { Log.i(tag, "ACCEPTED: $endpointId") }
                 .addOnFailureListener { e -> Log.e(tag, "ACCEPT FAIL: ${e.message}") }
@@ -285,9 +317,16 @@ class NearbyP2PController(
         // 1. Send ACK back immediately
         sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
 
-        // 2. Relay if it's a broadcast/shout
+        // 2. Sentient Mesh Relay: Gossip protocol
+        // If it's a broadcast vibe and we are in a healthy state, relay it.
         if (payload.receiverId.isNullOrEmpty()) {
-            relayMessage(endpointId, payload)
+            val senderDevice = _scannedDevices.value.find { it.id == endpointId }
+            val isStrongVibe = (senderDevice?.signalStrength ?: -100) > -60
+            
+            // Heuristic: Strong vibes from the Inner Circle get prioritized relay
+            if (isStrongVibe || payload.hopCount < 2) {
+                relayMessage(endpointId, payload)
+            }
         }
 
         // 3. Save to Local DB
@@ -345,7 +384,7 @@ class NearbyP2PController(
     }
 
     override fun startDiscovery() {
-        Log.i(tag, "EXEC: startDiscovery() - Bluetooth Primary, Wi-Fi Optional")
+        Log.i(tag, "EXEC: startDiscovery() - Sentient Mesh Mode. RTT Support: $hasRttSupport")
         if (_isDiscovering.value) return
         _isDiscovering.value = true
         internalScope.launch(ioDispatcher) {
@@ -365,13 +404,14 @@ class NearbyP2PController(
 
     private fun createDiscoveryCallback() = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            Log.i(tag, "VIBE FOUND: $endpointId (${info.endpointName}). Updating CROWD.")
-            val parts = info.endpointName.split("|", limit = 3)
+            Log.i(tag, "VIBE FOUND: $endpointId (${info.endpointName}). Updating PEOPLE.")
+            val parts = info.endpointName.split("|")
             if (parts.size < 3) return
             val vibeDeviceId = parts[2]
             val myDeviceId = repository.getDeviceId()
 
-            // Sentient detection of peer medium based on name flags
+            // Sentient detection of peer state based on packed flags
+            // Format: emoji|nickname|deviceId|RADIO|COUNT|POWER
             val peerMedium = if (parts.size >= 4) {
                 when (parts[3]) {
                     "W" -> P2PDevice.ConnectionMedium.WIFI
@@ -381,18 +421,23 @@ class NearbyP2PController(
             } else {
                 P2PDevice.ConnectionMedium.LOCATION
             }
+            
+            val peerVibeCount = parts.getOrNull(4)?.toIntOrNull() ?: 0
+            val peerIsLowPower = parts.getOrNull(5) == "P"
 
             val newDevice = P2PDevice(
                 id = endpointId, 
                 name = parts[1].ifBlank { "UNKNOWN" }, 
                 emoji = parts[0],
-                medium = peerMedium
+                medium = peerMedium,
+                vibeCount = peerVibeCount,
+                isLowPower = peerIsLowPower
             )
             _scannedDevices.update { it.filter { d -> d.id != endpointId } + newDevice }
 
             if (myDeviceId < vibeDeviceId && !activeConnections.contains(endpointId)) {
                 Log.i(tag, "THE AIR: Requesting $endpointId")
-                val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId"
+                val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId|${getRadioFlag()}"
                 connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback)
                     .addOnFailureListener { e ->
                         Log.w(tag, "REQ FAIL: ${e.message}")
