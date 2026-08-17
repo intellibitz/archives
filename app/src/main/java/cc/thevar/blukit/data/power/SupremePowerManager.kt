@@ -89,7 +89,7 @@ class SupremePowerManager(
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("CROWD ENERGY")
+                if (new > old) emitBreeze("PEOPLE ENERGY")
             }.launchIn(scope)
 
         // Messages Relayed

@@ -407,17 +407,17 @@ fun UnifiedBlukitBadge(
     val focusRequester = remember { FocusRequester() }
     
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-    // Hardened: The air is still if Bluetooth is OFF OR critical permissions are missing
-    val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
+    val hubBorderColor = when {
+        !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) -> Color.Red.copy(alpha = 0.5f)
+        !permissionsGranted -> Color(0xFFF4511E).copy(alpha = 0.5f) // Orange Border for Blocked
+        else -> StealthPrimary.copy(alpha = 0.15f)
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
         color = Color.Black.copy(alpha = 0.95f),
         shape = RoundedCornerShape(32.dp),
-        border = BorderStroke(
-            1.dp, 
-            if (airIsStill) Color.Red.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.15f)
-        ),
+        border = BorderStroke(1.dp, hubBorderColor),
         tonalElevation = 12.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -467,6 +467,8 @@ fun UnifiedBlukitBadge(
                     }
 
                     var localNickname by remember(nickname) { mutableStateOf(nickname) }
+                    
+                    val airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted
                     
                     BasicTextField(
                         value = localNickname,
@@ -572,10 +574,16 @@ private fun EnergyBarContent(
     val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
     val isStill = isBluetoothOff || isLocationOff
     
+    val barBorderColor = when {
+        isStill -> Color.Red.copy(alpha = 0.4f)
+        isPermissionMissing -> Color(0xFFF4511E).copy(alpha = 0.4f) // Orange border
+        else -> Color.White.copy(alpha = 0.05f)
+    }
+
     Surface(
-        color = if (isStill) Color.Red.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.03f),
+        color = if (isStill) Color.Red.copy(alpha = 0.1f) else if (isPermissionMissing) Color(0xFFF4511E).copy(alpha = 0.1f) else Color.White.copy(alpha = 0.03f),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, if (isStill) Color.Red.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f))
+        border = BorderStroke(1.dp, barBorderColor)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
@@ -806,8 +814,9 @@ private fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Uni
 private fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isWeak: Boolean, isPermissionMissing: Boolean, onClick: () -> Unit) {
     val tint = when {
         !isOn -> Color.Red
-        isPermissionMissing || isWeak -> Color.Yellow
-        else -> Color.Green
+        isPermissionMissing -> Color(0xFFF4511E) // Deep Orange: ACTION REQUIRED
+        isWeak -> Color.Yellow // Yellow: SEARCHING / ALONE
+        else -> Color.Green // Green: HARMONIZED
     }
     Icon(
         imageVector = icon, contentDescription = null, tint = tint.copy(alpha = 0.8f),

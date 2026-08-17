@@ -49,7 +49,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * THE VIBES: CROWD ENERGY TICKER.
+ * THE VIBES: PEOPLE ENERGY TICKER.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

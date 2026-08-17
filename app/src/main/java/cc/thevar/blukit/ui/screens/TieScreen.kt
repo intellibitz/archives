@@ -55,13 +55,13 @@ fun TieScreen(
     onBlockUser: (String) -> Unit,
     onEnterPip: () -> Unit,
 ) {
-    var message by remember { mutableStateOf("") }
+    var vibeText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
 
-    val chatMessages = remember(state.messages, vibeId, localDeviceId) {
+    val chatVibes = remember(state.messages, vibeId, localDeviceId) {
         if (vibeId == null) {
             emptyList()
         } else {
@@ -72,9 +72,9 @@ fun TieScreen(
         }
     }
 
-    LaunchedEffect(chatMessages.size) {
-        if (chatMessages.isNotEmpty()) {
-            listState.animateScrollToItem(chatMessages.size - 1)
+    LaunchedEffect(chatVibes.size) {
+        if (chatVibes.isNotEmpty()) {
+            listState.animateScrollToItem(chatVibes.size - 1)
         }
     }
 
@@ -138,7 +138,7 @@ fun TieScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(chatMessages, key = { it.messageId }) { payload ->
+                items(chatVibes, key = { it.messageId }) { payload ->
                     ChatMessage(
                         payload = payload,
                         isFromLocalUser = payload.senderId == localDeviceId,
@@ -149,12 +149,12 @@ fun TieScreen(
             }
             
             BlukitInput(
-                value = message,
-                onValueChange = { message = it },
+                value = vibeText,
+                onValueChange = { vibeText = it },
                 onSend = {
-                    if (message.isNotBlank()) {
-                        onSendMessage(message)
-                        message = ""
+                    if (vibeText.isNotBlank()) {
+                        onSendMessage(vibeText)
+                        vibeText = ""
                         focusManager.clearFocus()
                     }
                 },
