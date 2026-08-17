@@ -488,14 +488,6 @@ fun UnifiedBlukitBadge(
                         singleLine = true,
                         cursorBrush = SolidColor(StealthPrimary)
                     )
-                    Text(
-                        text = "(YOU)",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.3f)
-                        )
-                    )
                 }
             }
 
