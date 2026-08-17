@@ -32,9 +32,9 @@ fun PreviewRadarPhone() {
         RipplesField(
             state = BluetoothUiState(
                 scannedDevices = listOf(
-                    P2PDevice("1", "UNKNOWN"),
-                    P2PDevice("2", "UNKNOWN"),
-                    P2PDevice("3", "UNKNOWN")
+                    P2PDevice("1", "?"),
+                    P2PDevice("2", "?"),
+                    P2PDevice("3", "?")
                 )
             ),
             localDeviceId = "me",
@@ -56,7 +56,7 @@ fun PreviewChatPhone() {
                     MessagePayload(
                         messageId = "1",
                         senderId = "user1",
-                        senderName = "UNKNOWN",
+                        senderName = "?",
                         receiverId = "me",
                         content = "Hello!",
                         timestamp = 1628610000000,
@@ -72,16 +72,16 @@ fun PreviewChatPhone() {
                         status = MessagePayload.STATUS_SENT
                     )
                 ),
-                connectionState = AirConnectionState.Connected(P2PDevice("user1", "UNKNOWN"))
+                connectionState = AirConnectionState.Connected(P2PDevice("user1", "?"))
             ),
             localDeviceId = "me",
             localEmoji = "👤",
-            vibeId = "user1",
-            vibeName = "UNKNOWN",
-            vibeEmoji = "👤",
+            localNickname = "Me",
+            onNicknameChange = {},
+            groupId = "group1",
             onDisconnect = {},
             onNavigateBack = {},
-            onSendMessage = {},
+            onSendMessage = { _, _ -> },
             onBlockUser = {},
             onEnterPip = {}
         )

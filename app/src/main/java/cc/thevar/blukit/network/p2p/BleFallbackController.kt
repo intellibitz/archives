@@ -545,6 +545,16 @@ class BleFallbackController(
         return sendMessage(content, null)
     }
 
+    override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
+        // BLE implementation: Send to all connected links
+        // In a real scenario, this would need group addressing
+        return sendMessage(content, null)?.copy(groupId = groupId)
+    }
+
+    override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
+        return UUID.randomUUID().toString() // Stub
+    }
+
     override fun closeConnection() {
         activeGatts.values.forEach { 
             try { it.disconnect(); it.close() } catch (e: Exception) {}

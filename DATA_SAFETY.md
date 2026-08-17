@@ -34,4 +34,4 @@ Blukit needs a few permissions to work:
 - **WiFi**: To help speed up the connection if needed.
 
 ---
-**Updated**: August 17, 2026
+**Updated**: August 18, 2026

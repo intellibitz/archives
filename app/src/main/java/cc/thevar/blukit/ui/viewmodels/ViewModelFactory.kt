@@ -17,7 +17,9 @@ class ViewModelFactory(private val application: BlukitApplication) : ViewModelPr
                 BluetoothViewModel(
                     application.p2pController,
                     application.radioStateManager,
-                    application.spreadPermissionManager
+                    application.identityRepository,
+                    application.spreadPermissionManager,
+                    application.vibeStore
                 ) as T
             }
             modelClass.isAssignableFrom(SupremePowerViewModel::class.java) -> {

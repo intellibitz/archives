@@ -102,6 +102,14 @@ class CompositeP2PController(
         return nearby ?: ble
     }
 
+    override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
+        return nearbyController.sendGroupMessage(content, groupId) ?: bleController.sendGroupMessage(content, groupId)
+    }
+
+    override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
+        return nearbyController.startGroupVibe(name, members, type)
+    }
+
     override fun requestLink(device: P2PDevice) {
         if (device.id.startsWith("nearby:")) {
             nearbyController.requestLink(device)

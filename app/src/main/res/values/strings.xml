@@ -52,7 +52,7 @@
     <string name="radio_warning_bluetooth">RADIOS OFF</string>
     <string name="radio_warning_required">RADIOS MUST BE ON TO HEAR THE PEOPLE.</string>
     <string name="radio_enable_btn">TURN ON</string>
-    <string name="anonymous">UNKNOWN</string>
+    <string name="anonymous">\?</string>
     <string name="error_connection_failed">ROAR FAIL: %1$s</string>
 
     <!-- Smart Flow -->

@@ -7,4 +7,5 @@ data class SupremePowerReport(
     val harmony: Float = 0f, // 0.0 to 1.0
     val aiInsight: String = "SEARCHING THE AIR...",
     val currentBreeze: String? = null,
+    val lowPowerMode: Boolean = false,
 )

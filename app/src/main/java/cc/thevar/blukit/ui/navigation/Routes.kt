@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 sealed interface Route : NavKey {
     @Serializable
-    data object Crowd : Route
+    data object Blukit : Route
     
     @Serializable
     data object Energy : Route
@@ -17,5 +17,8 @@ sealed interface Route : NavKey {
     data object Vibes : Route
 
     @Serializable
-    data object Blukit : Route
+    data object Focus : Route
+
+    @Serializable
+    data class VibeDetail(val groupId: String) : Route
 }

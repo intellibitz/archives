@@ -44,6 +44,12 @@ class MainViewModel(
         }
     }
 
+    fun toggleVibePeer(deviceId: String) {
+        viewModelScope.launch {
+            repository.toggleVibePeer(deviceId)
+        }
+    }
+
     fun blockUser(userId: String) {
         viewModelScope.launch {
             repository.blockUser(userId)

@@ -49,7 +49,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * THE VIBES: PEOPLE ENERGY TICKER.
+ * THE VIBES: BLUKIT ENERGY TICKER.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,10 +59,13 @@ fun RipplesScreen(
     localEmoji: String,
     energySurge: Float = 0f,
     onlyTies: Boolean = false,
+    isFilterMode: Boolean = false,
+    vibedPeers: Set<String> = emptySet(),
     lowPowerMode: Boolean = false,
     onStartScan: () -> Unit,
     onStopScan: () -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
+    onDeviceLongClick: (P2PDevice) -> Unit = {},
     onBroadcastMessage: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -97,32 +100,53 @@ fun RipplesScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        val vibes = remember(state.messages, onlyTies) {
-            if (onlyTies) {
+        val vibes = remember(state.messages, onlyTies, vibedPeers, isFilterMode) {
+            val filtered = if (onlyTies) {
                 state.messages.filter { !it.receiverId.isNullOrBlank() }
+            } else if (isFilterMode) {
+                state.messages.filter { 
+                    it.receiverId.isNullOrBlank() && (it.senderId in vibedPeers || it.senderId == localDeviceId)
+                }
             } else {
                 state.messages.filter { it.receiverId.isNullOrBlank() }
             }
+            filtered.distinctBy { it.messageId }
         }
 
-        val fieldBubbles = remember(activeBubbles, onlyTies) {
-            if (onlyTies) activeBubbles.filter { it.isPrivate } else activeBubbles.filter { !it.isPrivate }
+        val fieldBubbles = remember(activeBubbles, onlyTies, vibedPeers, isFilterMode) {
+            val filtered = if (onlyTies) {
+                activeBubbles.filter { it.isPrivate } 
+            } else if (isFilterMode) {
+                activeBubbles.filter { 
+                    !it.isPrivate && (it.senderId in vibedPeers || it.senderId == localDeviceId)
+                }
+            } else {
+                activeBubbles.filter { !it.isPrivate }
+            }
+            filtered.distinctBy { it.messageId }
         }
 
+        // LAYER 1: Atmosphere (Background + Arcs + Ripples)
         RipplesField(
             state = state,
             localDeviceId = localDeviceId,
             localEmoji = localEmoji,
             activeBubbles = fieldBubbles,
+            selectedDevices = state.selectedDevices,
+            vibedPeers = vibedPeers,
             externalEnergy = energySurge,
             onlyTies = onlyTies,
             lowPowerMode = lowPowerMode,
-            onDeviceClick = onDeviceClick,
+            onDeviceClick = {}, // Disable clicks on this layer
+            onDeviceLongClick = {},
             onStartScan = onStartScan,
             onVibeSurge = { hapticManager.triggerProximityVibe(it) },
+            drawBackground = true,
+            drawNodes = false, // We will draw nodes in a separate top layer
             modifier = Modifier.fillMaxSize()
         )
         
+        // LAYER 2: Vibes Ticker
         VibingVibesTicker(
             state = state,
             vibes = vibes,
@@ -130,6 +154,57 @@ fun RipplesScreen(
             onlyTies = onlyTies,
             modifier = Modifier.fillMaxSize()
         )
+
+        // LAYER 3: Vibe Nodes (Front layer for clicks)
+        RipplesField(
+            state = state,
+            localDeviceId = localDeviceId,
+            localEmoji = localEmoji,
+            activeBubbles = fieldBubbles,
+            selectedDevices = state.selectedDevices,
+            vibedPeers = vibedPeers,
+            externalEnergy = energySurge,
+            onlyTies = onlyTies,
+            isFilterMode = isFilterMode,
+            lowPowerMode = lowPowerMode,
+            onDeviceClick = onDeviceClick,
+            onDeviceLongClick = onDeviceLongClick,
+            onStartScan = onStartScan,
+            onVibeSurge = {}, 
+            drawBackground = false, // No background here
+            drawNodes = true,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // LAYER 4: Empty State Hints
+        if (isFilterMode && vibedPeers.isEmpty()) {
+            EmptyFocusHint("FOCUS")
+        } else if (onlyTies && state.connectedLinks.isEmpty()) {
+            EmptyFocusHint("VIBES")
+        }
+    }
+}
+
+@Composable
+private fun EmptyFocusHint(tab: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "NO $tab YET",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White.copy(alpha = 0.2f),
+                letterSpacing = 2.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (tab == "FOCUS") "TAP SOULS IN BLUKIT FIELD TO FOCUS." else "ESTABLISH SECURE LINKS TO VIBE.",
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.15f),
+                letterSpacing = 1.sp
+            )
+        }
     }
 }
 

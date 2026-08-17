@@ -52,6 +52,10 @@ interface P2PController {
 
     suspend fun broadcastMessage(content: String): MessagePayload?
 
+    suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload?
+
+    fun startGroupVibe(name: String, members: Set<String>, type: Int): String
+
     fun closeConnection()
     fun release()
 }

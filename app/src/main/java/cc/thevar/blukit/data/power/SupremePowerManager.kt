@@ -19,6 +19,7 @@ import kotlin.time.Duration.Companion.seconds
 class SupremePowerManager(
     private val p2pController: P2PController,
     private val vibeStore: VibeStore,
+    private val identityRepository: cc.thevar.blukit.data.repository.IdentityRepository,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager? = null
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -38,11 +39,13 @@ class SupremePowerManager(
                 p2pController.scannedDevices,
                 p2pController.connectedLinks,
                 vibeStore.getAllMessages(),
+                identityRepository.lowPowerMode,
                 _breezeFlow.onStart { emit("") }
             ) { args: Array<Any?> ->
                 val scanned = args[0] as List<cc.thevar.blukit.domain.model.P2PDevice>
                 val connected = args[1] as Set<String>
                 val messages = args[2] as List<cc.thevar.blukit.domain.model.MessagePayload>
+                val lowPower = args[3] as Boolean
                 
                 val userCount = scanned.size
                 val linksCount = connected.size
@@ -54,8 +57,8 @@ class SupremePowerManager(
                 } else 0f
 
                 // AI Insight Generation (Heuristic-based)
-                val insight = generateAiInsight(userCount, linksCount, msgCount, vibeHarmony)
-                val breeze = args.getOrNull(3) as? String
+                val insight = generateAiInsight(userCount, linksCount, msgCount, vibeHarmony, lowPower)
+                val breeze = args.getOrNull(4) as? String
 
                 SupremePowerReport(
                     userCount = userCount,
@@ -64,6 +67,7 @@ class SupremePowerManager(
                     harmony = vibeHarmony,
                     aiInsight = insight,
                     currentBreeze = breeze,
+                    lowPowerMode = lowPower
                 )
             }.collect {
                 _report.value = it
@@ -113,12 +117,15 @@ class SupremePowerManager(
         }
     }
 
-    private fun generateAiInsight(users: Int, links: Int, msgs: Int, harmony: Float): String {
+    private fun generateAiInsight(users: Int, links: Int, msgs: Int, harmony: Float, lowPower: Boolean): String {
+        if (lowPower) return "ENERGY SAVER ACTIVE"
+        
         return when {
             users == 0 -> "MAKE PEOPLE VIBE"
-            harmony < 0.3f -> "PEOPLE NEARBY"
-            users > 10 && harmony > 0.8f -> "PEOPLE ROAR"
-            links == 0 && users > 0 -> "PEOPLE ENERGY"
+            users > 15 -> "CROWD ROAR: MESH DENSE"
+            harmony < 0.3f -> "BLUKIT NEARBY: SPREAD VIBES"
+            users > 10 && harmony > 0.8f -> "CROWD ROAR"
+            links == 0 && users > 0 -> "CROWD ENERGY"
             msgs > 100 -> "BLUKIT ROAR"
             else -> "MAKE PEOPLE VIBE"
         }

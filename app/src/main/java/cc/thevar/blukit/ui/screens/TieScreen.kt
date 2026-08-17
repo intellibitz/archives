@@ -46,29 +46,32 @@ fun TieScreen(
     state: BluetoothUiState,
     localDeviceId: String,
     localEmoji: String,
-    vibeId: String?,
-    vibeName: String?,
-    vibeEmoji: String?,
+    localNickname: String,
+    onNicknameChange: (String) -> Unit,
+    groupId: String?,
     onDisconnect: () -> Unit,
     onNavigateBack: () -> Unit,
-    onSendMessage: (String) -> Unit,
+    onSendMessage: (String, String) -> Unit,
+    onStartSideVibe: (String) -> Unit = {},
     onBlockUser: (String) -> Unit,
     onEnterPip: () -> Unit,
 ) {
     var vibeText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
+    val personaFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+
+    val group = remember(groupId, state.groups) {
+        state.groups.find { it.id == groupId }
+    }
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
 
-    val chatVibes = remember(state.messages, vibeId, localDeviceId) {
-        if (vibeId == null) {
+    val chatVibes = remember(state.messages, groupId, localDeviceId) {
+        if (groupId == null) {
             emptyList()
         } else {
-            state.messages.filter { 
-                (it.senderId == localDeviceId && it.receiverId == vibeId) ||
-                (it.senderId == vibeId && it.receiverId == localDeviceId)
-            }
+            state.messages.filter { it.groupId == groupId }.distinctBy { it.messageId }
         }
     }
 
@@ -116,6 +119,11 @@ fun TieScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
                 }
+                Text(
+                    text = (group?.name ?: "VIBE").uppercase(),
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Black, color = StealthPrimary),
+                    modifier = Modifier.weight(1f).padding(start = 8.dp)
+                )
                 IconButton(onClick = onEnterPip) {
                     Icon(Icons.Rounded.Info, contentDescription = "PiP", tint = Color.White)
                 }
@@ -143,17 +151,27 @@ fun TieScreen(
                         payload = payload,
                         isFromLocalUser = payload.senderId == localDeviceId,
                         localEmoji = localEmoji,
+                        onClick = {
+                            if (payload.senderId != localDeviceId) {
+                                onStartSideVibe(payload.senderId)
+                            }
+                        },
                         onLongClick = { if (payload.senderId != localDeviceId) userToBlock = payload }
                     )
                 }
             }
             
             BlukitInput(
+                nickname = localNickname,
+                emoji = localEmoji,
+                airIsStill = !state.isBluetoothEnabled || !state.permissionsGranted,
+                onNicknameChange = onNicknameChange,
+                personaFocusRequester = personaFocusRequester,
                 value = vibeText,
                 onValueChange = { vibeText = it },
                 onSend = {
-                    if (vibeText.isNotBlank()) {
-                        onSendMessage(vibeText)
+                    if (vibeText.isNotBlank() && groupId != null) {
+                        onSendMessage(vibeText, groupId)
                         vibeText = ""
                         focusManager.clearFocus()
                     }
@@ -170,6 +188,7 @@ fun ChatMessage(
     payload: MessagePayload,
     isFromLocalUser: Boolean,
     localEmoji: String,
+    onClick: () -> Unit = {},
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -239,7 +258,7 @@ fun ChatMessage(
                 ),
                 modifier = Modifier
                     .widthIn(max = 280.dp)
-                    .combinedClickable(onClick = {}, onLongClick = onLongClick)
+                    .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             ) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                     Text(text = payload.content, style = MaterialTheme.typography.bodyMedium)

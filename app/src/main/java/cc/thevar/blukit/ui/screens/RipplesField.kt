@@ -6,9 +6,11 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import androidx.compose.ui.zIndex
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -80,13 +83,20 @@ fun RipplesField(
     localDeviceId: String,
     localEmoji: String,
     activeBubbles: List<BubbleData>,
+    selectedDevices: Set<String> = emptySet(),
+    vibedPeers: Set<String> = emptySet(),
     externalEnergy: Float = 0f,
     onlyTies: Boolean = false,
+    isFilterMode: Boolean = false,
     lowPowerMode: Boolean = false,
     onDeviceClick: (P2PDevice) -> Unit,
+    onDeviceLongClick: (P2PDevice) -> Unit = {},
     onStartScan: () -> Unit,
     onVibeSurge: (Float) -> Unit = {},
-    modifier: Modifier = Modifier
+    drawBackground: Boolean = true,
+    drawNodes: Boolean = true,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit = {}
 ) {
     val density = LocalDensity.current
 
@@ -136,27 +146,88 @@ fun RipplesField(
     val finalEnergy = (collectiveEnergy + externalEnergy).coerceAtMost(1.0f)
 
     Box(modifier = modifier.fillMaxSize().background(Color.Transparent), contentAlignment = Alignment.Center) {
-        StadiumBackground(energy = finalEnergy, lowPowerMode = lowPowerMode)
+        if (drawBackground) {
+            StadiumBackground(energy = finalEnergy, lowPowerMode = lowPowerMode)
+        }
         
         RelayLayer(relayEvents)
         
         val displayDevices = if (onlyTies) {
             state.scannedDevices.filter { it.id in state.connectedLinks }
+        } else if (isFilterMode) {
+            state.scannedDevices.filter { it.persistentId in vibedPeers || it.id in vibedPeers }
         } else {
             state.scannedDevices
         }
 
+        ResonanceArcs(displayDevices, finalEnergy)
         VibeRippleLayer(vibeRipples)
         VibesConnectivity(displayDevices)
+
+        // Overlay Content (e.g. Vibes Ticker)
+        Box(modifier = Modifier.zIndex(0f)) {
+            content()
+        }
         
-        if (displayDevices.isNotEmpty()) {
-            VibeNodes(
-                devices = displayDevices,
-                connectedLinks = state.connectedLinks,
-                activeBubbles = activeBubbles,
-                onlyTies = onlyTies,
-                onDeviceClick = onDeviceClick
-            )
+        if (drawNodes && displayDevices.isNotEmpty()) {
+            Box(modifier = Modifier.zIndex(1f)) {
+                VibeNodes(
+                    devices = displayDevices,
+                    connectedLinks = state.connectedLinks,
+                    selectedDevices = selectedDevices,
+                    vibedPeers = vibedPeers,
+                    activeBubbles = activeBubbles,
+                    onlyTies = onlyTies,
+                    isFilterMode = isFilterMode,
+                    onDeviceClick = onDeviceClick,
+                    onDeviceLongClick = onDeviceLongClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResonanceArcs(devices: List<P2PDevice>, energy: Float) {
+    if (devices.size < 2 || energy < 0.2f) return
+    
+    val infiniteTransition = rememberInfiniteTransition(label = "Resonance")
+    val flow by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
+        label = "Flow"
+    )
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val nodeOffsets = devices.mapIndexed { index, device ->
+            val radiusPx = (1f - device.proximityFactor) * 140.dp.toPx() + 60.dp.toPx()
+            val angle = (index.toDouble() / devices.size) * 2 * PI
+            center + Offset((radiusPx * cos(angle)).toFloat(), (radiusPx * sin(angle)).toFloat())
+        }
+
+        for (i in devices.indices) {
+            for (j in i + 1 until devices.indices.last + 1) {
+                val d1 = devices[i]
+                val d2 = devices[j]
+                val dist = (nodeOffsets[i] - nodeOffsets[j]).getDistance()
+                
+                // Only resonate if they are "close" in the field and energy is high
+                if (dist < 300.dp.toPx()) {
+                    val alpha = ((1f - dist / 300.dp.toPx()) * energy * 0.3f).coerceIn(0f, 0.2f)
+                    val color = if (d1.isConnected && d2.isConnected) StealthRose else StealthPrimary
+                    
+                    drawLine(
+                        color = color.copy(alpha = alpha),
+                        start = nodeOffsets[i],
+                        end = nodeOffsets[j],
+                        strokeWidth = 1.dp.toPx(),
+                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+                            floatArrayOf(10f, 20f),
+                            flow * 30f
+                        )
+                    )
+                }
+            }
         }
     }
 }
@@ -194,14 +265,15 @@ private fun StadiumBackground(energy: Float, lowPowerMode: Boolean) {
 
         points.forEach { (offset, dotSize, seed) ->
             val movementProgress = (time + seed) % 1f
-            val driftX = sin(movementProgress * 2 * PI.toFloat()) * 20f * energy
-            val driftY = cos(movementProgress * 2 * PI.toFloat()) * 20f * energy
+            val speedFactor = 1f + energy * 2f
+            val driftX = sin(movementProgress * 2 * PI.toFloat() * speedFactor) * 30f * energy
+            val driftY = cos(movementProgress * 2 * PI.toFloat() * speedFactor) * 30f * energy
             
-            val alpha = (0.05f + 0.15f * abs(sin(movementProgress * PI.toFloat() * 4)) + energy * 0.2f).coerceIn(0.02f, 0.4f)
+            val alpha = (0.05f + 0.15f * abs(sin(movementProgress * PI.toFloat() * 4)) + energy * 0.3f).coerceIn(0.02f, 0.5f)
             val currentPos = Offset(offset.x * size.width + driftX, offset.y * size.height + driftY)
             
             val color = if (seed > 0.8f) StealthRose else StealthPrimary
-            drawCircle(color = color.copy(alpha = alpha), radius = dotSize.dp.toPx() * (1f + energy * 0.5f), center = currentPos)
+            drawCircle(color = color.copy(alpha = alpha), radius = dotSize.dp.toPx() * (1f + energy * 0.8f), center = currentPos)
         }
     }
 }
@@ -279,39 +351,97 @@ private fun VibesConnectivity(devices: List<P2PDevice>) {
 private fun VibeNodes(
     devices: List<P2PDevice>, 
     connectedLinks: Set<String>,
+    selectedDevices: Set<String>,
+    vibedPeers: Set<String>,
     activeBubbles: List<BubbleData>, 
     onlyTies: Boolean,
-    onDeviceClick: (P2PDevice) -> Unit
+    isFilterMode: Boolean,
+    onDeviceClick: (P2PDevice) -> Unit,
+    onDeviceLongClick: (P2PDevice) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         devices.forEachIndexed { index, device ->
             val radiusValue = (1f - device.proximityFactor) * 140f + 60f
             val angle = (index.toDouble() / devices.size) * 2 * PI
             val activeBubble = activeBubbles.findLast { it.senderId == device.id }
-            val isVibed = device.id in connectedLinks
+            val isTied = device.id in connectedLinks
+            val isVibed = device.persistentId in vibedPeers || device.id in vibedPeers
+            val isSelected = device.id in selectedDevices
             
-            VibeNode(
-                device = device, 
-                isVibed = isVibed,
-                onlyTies = onlyTies,
-                xOffset = (radiusValue * cos(angle)).toFloat().dp, 
-                yOffset = (radiusValue * sin(angle)).toFloat().dp, 
-                activeBubble = activeBubble,
-                onClick = { onDeviceClick(device) }
-            )
+            val xOffset = (radiusValue * cos(angle)).toFloat().dp
+            val yOffset = (radiusValue * sin(angle)).toFloat().dp
+
+            // Better Filter Visuals: Glimmers (Dots) vs Blossoms (Nodes)
+            // Show as Dot if in Blukit tab and not vibed/tied
+            if (!isFilterMode && !onlyTies && !isVibed && !isTied) {
+                VibeDot(
+                    device = device,
+                    xOffset = xOffset,
+                    yOffset = yOffset,
+                    onClick = { onDeviceClick(device) }
+                )
+            } else {
+                VibeNode(
+                    device = device, 
+                    isVibed = isTied, // If it's a Tie, it uses Rose
+                    isSelected = isSelected,
+                    isPeerVibed = isVibed, // Filter highlighting
+                    onlyTies = onlyTies,
+                    xOffset = xOffset, 
+                    yOffset = yOffset, 
+                    activeBubble = activeBubble,
+                    onClick = { onDeviceClick(device) },
+                    onLongClick = { onDeviceLongClick(device) }
+                )
+            }
         }
     }
 }
 
 @Composable
+private fun VibeDot(
+    device: P2PDevice,
+    xOffset: Dp,
+    yOffset: Dp,
+    onClick: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "DotAnim")
+    val dotAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(tween(2000 + (device.proximityFactor * 1000).toInt(), easing = LinearEasing), RepeatMode.Reverse),
+        label = "Alpha"
+    )
+
+    Box(
+        modifier = Modifier
+            .offset(xOffset, yOffset)
+            .size(32.dp) // Large touch area
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            modifier = Modifier.size(6.dp),
+            shape = CircleShape,
+            color = StealthPrimary.copy(alpha = dotAlpha),
+            border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f))
+        ) {}
+    }
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
 private fun VibeNode(
     device: P2PDevice, 
     isVibed: Boolean,
+    isSelected: Boolean,
+    isPeerVibed: Boolean,
     onlyTies: Boolean,
     xOffset: Dp, 
     yOffset: Dp, 
     activeBubble: BubbleData?, 
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "NodeAnim")
     val pulseScale by infiniteTransition.animateFloat(
@@ -322,22 +452,33 @@ private fun VibeNode(
     )
 
     val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
+    val proximityGlow = (device.proximityFactor * 0.4f).coerceAtLeast(0f)
 
     Box(modifier = Modifier.offset(xOffset, yOffset).size(nodeSize * 2f), contentAlignment = Alignment.Center) {
         // High-Fidelity Halo
         Surface(
             shape = CircleShape,
-            color = (if (isVibed) StealthRose else StealthPrimary).copy(alpha = 0.05f * pulseScale),
-            modifier = Modifier.size(nodeSize * pulseScale * 1.6f)
+            color = (if (isSelected) Color.White else if (isVibed) StealthRose else if (isPeerVibed) StealthAmber else StealthPrimary).copy(alpha = (0.05f + proximityGlow) * pulseScale),
+            modifier = Modifier.size(nodeSize * pulseScale * (1.6f + proximityGlow))
         ) {}
 
         // Main Body
         Surface(
-            modifier = Modifier.size(nodeSize).clip(CircleShape).clickable { onClick() },
-            color = if (isVibed) StealthRose.copy(alpha = 0.15f) else Color(0xFF12141A),
+            modifier = Modifier.size(nodeSize).clip(CircleShape).combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            color = when {
+                isSelected -> Color.White.copy(alpha = 0.2f)
+                isVibed -> StealthRose.copy(alpha = 0.15f)
+                isPeerVibed -> StealthAmber.copy(alpha = 0.15f)
+                else -> Color(0xFF12141A)
+            },
             border = BorderStroke(
-                if (isVibed) 2.dp else 1.dp,
-                if (isVibed) StealthRose else Color.White.copy(alpha = 0.15f)
+                if (isSelected || isVibed || isPeerVibed) 2.dp else 1.dp,
+                when {
+                    isSelected -> Color.White
+                    isVibed -> StealthRose
+                    isPeerVibed -> StealthAmber
+                    else -> Color.White.copy(alpha = 0.15f)
+                }
             ),
             shape = CircleShape,
             tonalElevation = 4.dp
@@ -350,16 +491,26 @@ private fun VibeNode(
                 }
 
                 Icon(
-                    imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Sync else mediumIcon,
+                    imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Sync else if (isSelected) Icons.Rounded.CheckCircle else mediumIcon,
                     contentDescription = null,
-                    tint = if (isVibed) StealthRose else Color.White.copy(alpha = 0.7f),
+                    tint = when {
+                        isSelected -> Color.White
+                        isVibed -> StealthRose
+                        isPeerVibed -> StealthAmber
+                        else -> Color.White.copy(alpha = 0.7f)
+                    },
                     modifier = Modifier.size((nodeSize.value / 2.5f).dp)
                 )
-                val displayName = (device.name ?: "UNKNOWN").take(7).uppercase()
+                val displayName = (device.name ?: "?").take(7).uppercase()
                 Text(
                     text = if (!onlyTies && isVibed) "$displayName+" else displayName,
                     fontSize = 8.sp,
-                    color = if (isVibed) StealthRose else Color.White.copy(alpha = 0.6f),
+                    color = when {
+                        isSelected -> Color.White
+                        isVibed -> StealthRose
+                        isPeerVibed -> StealthAmber
+                        else -> Color.White.copy(alpha = 0.6f)
+                    },
                     fontWeight = FontWeight.Black,
                     letterSpacing = 0.5.sp
                 )

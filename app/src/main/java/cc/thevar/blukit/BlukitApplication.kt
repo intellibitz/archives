@@ -58,6 +58,7 @@ class BlukitApplication : Application() {
         supremePowerManager = SupremePowerManager(
             p2pController = p2pController,
             vibeStore = vibeStore,
+            identityRepository = identityRepository,
             hapticManager = hapticManager
         )
 

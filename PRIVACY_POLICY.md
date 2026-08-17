@@ -1,6 +1,6 @@
 # Privacy Policy for Blukit
 
-**Effective Date: August 17, 2026**
+**Effective Date: August 18, 2026**
 
 At Blukit, your privacy is our top priority. This policy explains how we keep things private when you use the app.
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.VibeGroup
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.ui.toUiError
@@ -21,10 +22,13 @@ import kotlinx.coroutines.launch
 class BluetoothViewModel(
     private val p2pController: P2PController,
     private val radioStateManager: RadioStateManager,
+    private val repository: cc.thevar.blukit.data.repository.IdentityRepository,
     private val permissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager,
+    private val vibeStore: cc.thevar.blukit.data.local.VibeStore
 ) : ViewModel() {
 
     private val _manualConnectionState = MutableStateFlow<AirConnectionState?>(null)
+    private val _selectedDevices = MutableStateFlow<Set<String>>(emptySet())
     private val _energySurge = MutableStateFlow(0f)
     val energySurge = _energySurge.asStateFlow()
 
@@ -75,6 +79,9 @@ class BluetoothViewModel(
         p2pController.isAdvertising,
         p2pController.errors,
         p2pController.messages,
+        vibeStore.groups,
+        _selectedDevices,
+        repository.vibedPeers,
         _manualConnectionState,
         permissionManager.permissionsGranted
     ) { args: Array<Any?> ->
@@ -87,15 +94,20 @@ class BluetoothViewModel(
         val isAdvertising = args[6] as Boolean
         val error = args[7] as? cc.thevar.blukit.network.p2p.P2PError
         val messages = args[8] as List<cc.thevar.blukit.domain.model.MessagePayload>
-        val manualState = args[9] as? AirConnectionState
-        val permissionsGranted = args[10] as Boolean
+        val groups = args[9] as List<VibeGroup>
+        val selectedDevices = args[10] as Set<String>
+        val vibedPeers = args[11] as Set<String>
+        val manualState = args[12] as? AirConnectionState
+        val permissionsGranted = args[13] as Boolean
+
+        android.util.Log.d("BlukitUI", "STATE: vibedPeers=${vibedPeers.size}, isConnected=$isConnected")
 
         val connectionState = when {
             manualState != null -> manualState
             error != null -> AirConnectionState.Error(error.message)
             isConnected -> {
                 val vibe = scannedDevices.find { it.id in connectedLinks }
-                    ?: P2PDevice(id = connectedLinks.firstOrNull() ?: "", name = "UNKNOWN", emoji = "👤")
+                    ?: P2PDevice(id = connectedLinks.firstOrNull() ?: "", name = "?", emoji = "👤")
                 AirConnectionState.Connected(vibe)
             }
             isDiscovering || isAdvertising -> AirConnectionState.Scanning
@@ -104,6 +116,8 @@ class BluetoothViewModel(
 
         BluetoothUiState(
             scannedDevices = scannedDevices,
+            selectedDevices = selectedDevices,
+            vibedPeers = vibedPeers,
             connectionState = connectionState,
             connectedLinks = connectedLinks,
             incomingLinkRequests = incomingLinkRequests,
@@ -114,6 +128,7 @@ class BluetoothViewModel(
             isDiscovering = isDiscovering,
             isAdvertising = isAdvertising,
             messages = messages,
+            groups = groups,
             uiError = error?.toUiError()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BluetoothUiState())
@@ -157,14 +172,36 @@ class BluetoothViewModel(
         p2pController.acceptLink(device)
     }
 
+    fun toggleDeviceSelection(deviceId: String) {
+        _selectedDevices.update { 
+            if (it.contains(deviceId)) it - deviceId else it + deviceId
+        }
+    }
+
+    fun clearSelection() {
+        _selectedDevices.value = emptySet()
+    }
+
+    fun startGroupVibe(name: String, members: Set<String>? = null, isTie: Boolean): String {
+        val targetMembers = members ?: _selectedDevices.value
+        val type = if (isTie) VibeGroup.TYPE_TIE else VibeGroup.TYPE_SIDE
+        val groupId = p2pController.startGroupVibe(name, targetMembers, type)
+        if (members == null) _selectedDevices.value = emptySet()
+        return groupId
+    }
+
     fun denyLink(device: P2PDevice) {
         p2pController.denyLink(device)
     }
 
-    fun sendMessage(message: String) {
+    fun sendMessage(message: String, groupId: String? = null) {
         viewModelScope.launch {
-            val vibeId = state.value.connectedVibe?.id
-            p2pController.sendMessage(message, vibeId)
+            if (groupId != null) {
+                p2pController.sendGroupMessage(message, groupId)
+            } else {
+                val vibeId = state.value.connectedVibe?.id
+                p2pController.sendMessage(message, vibeId)
+            }
         }
     }
 

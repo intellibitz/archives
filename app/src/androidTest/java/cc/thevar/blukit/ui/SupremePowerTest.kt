@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.power.SupremePowerReport
 import cc.thevar.blukit.ui.theme.BlukitTheme
+import cc.thevar.blukit.ui.navigation.Route
 import org.junit.Rule
 import org.junit.Test
 
@@ -20,14 +21,13 @@ class SupremePowerTest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun testSupremePowerBadge_ExpandAndCollapse() {
+    fun testSupremePowerBadge_DisplaysTerminology() {
         val report = SupremePowerReport(
             userCount = 10,
             connectedLinksCount = 2,
             totalMessages = 5,
             harmony = 0.4f,
-            aiInsight = "The Vibes are healthy",
-            currentBreeze = null
+            aiInsight = "The Vibes are healthy"
         )
 
         composeTestRule.setContent {
@@ -39,18 +39,18 @@ class SupremePowerTest {
                         userCount = report.userCount,
                         linksCount = report.connectedLinksCount,
                         roarsCount = 5,
-                        vibesCount = 0,
-                        lowPowerMode = true,
+                        vibesCount = 3,
+                        lowPowerMode = false,
                         permissionsGranted = true,
                         isPermanentlyDenied = false,
                         isStealthMode = false,
-                        currentBreeze = report.currentBreeze,
                         incomingLinkRequests = emptySet<P2PDevice>(),
                         isBluetoothEnabled = true,
                         isLocationEnabled = true,
                         isWifiEnabled = true,
-                        currentRoute = cc.thevar.blukit.ui.navigation.Route.Crowd,
+                        currentRoute = Route.Blukit,
                         nickname = "vibe",
+                        emoji = "👤",
                         onNavigate = {},
                         onAwakenBluetooth = {},
                         onAwakenLocation = {},
@@ -68,18 +68,12 @@ class SupremePowerTest {
             }
         }
 
-        // Check closed state
-        composeTestRule.onNodeWithText("BLUKIT", substring = true).assertIsDisplayed()
-        
-        // Check for picker content
-        composeTestRule.onNodeWithText("CROWD (10)", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("FRIENDS (2)", useUnmergedTree = true).assertIsDisplayed()
+        // Check for new terminology
+        composeTestRule.onNodeWithText("BLUKIT (10)", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("VIBES (3)", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("TIES (2)", substring = true, useUnmergedTree = true).assertIsDisplayed()
 
-        // Check for persona input
+        // Check for persona section
         composeTestRule.onNodeWithTag("IdentityVibeInput").assertIsDisplayed()
-        
-        // Destructive buttons are now top-level
-        composeTestRule.onNodeWithText("CLEAR VIBES", substring = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("RESET PROFILE", substring = true).assertIsDisplayed()
     }
 }

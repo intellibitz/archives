@@ -13,6 +13,7 @@ import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.VibeGroup
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
@@ -20,6 +21,7 @@ import android.os.Build
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
+import kotlin.random.Random
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
@@ -48,6 +50,7 @@ class NearbyP2PController(
     private val tag = "BlukitP2P"
     private val connectionsClient = Nearby.getConnectionsClient(context)
     private val serviceId = "BLUKIT_VIBE"
+    private val PROXIMITY_THRESHOLD_DBM = -100
 
     private fun getStrategy() = Strategy.P2P_CLUSTER
 
@@ -77,6 +80,8 @@ class NearbyP2PController(
 
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
+
+    private var lowPowerDutyCycleJob: Job? = null
 
     override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
         .stateIn(
@@ -145,17 +150,40 @@ class NearbyP2PController(
         internalScope.launch {
             repository.lowPowerMode
                 .drop(1)
-                .collect {
-                    Log.i(tag, "POWER: Low Power Mode changed to $it. Adapting strategy.")
-                    if (_isAdvertising.value) {
-                        stopAdvertising()
-                        startAdvertising()
-                    }
-                    if (_isDiscovering.value) {
-                        stopDiscovery()
-                        startDiscovery()
+                .collect { isLowPower ->
+                    Log.i(tag, "POWER: Low Power Mode changed to $isLowPower. Adapting strategy.")
+                    
+                    lowPowerDutyCycleJob?.cancel()
+                    if (isLowPower) {
+                        startLowPowerDutyCycle()
+                    } else {
+                        // Reset to full power
+                        if (_isAdvertising.value) {
+                            stopAdvertising()
+                            startAdvertising()
+                        }
+                        if (_isDiscovering.value) {
+                            stopDiscovery()
+                            startDiscovery()
+                        }
                     }
                 }
+        }
+    }
+
+    private fun startLowPowerDutyCycle() {
+        lowPowerDutyCycleJob = internalScope.launch {
+            while (isActive) {
+                // Active phase
+                if (!_isAdvertising.value) startAdvertising()
+                if (!_isDiscovering.value) startDiscovery()
+                delay(10.seconds)
+                
+                // Idle phase to save battery
+                if (_isAdvertising.value) stopAdvertising()
+                if (_isDiscovering.value) stopDiscovery()
+                delay(20.seconds)
+            }
         }
     }
 
@@ -298,7 +326,7 @@ class NearbyP2PController(
 
     private fun handleLinkRequest(endpointId: String, payload: MessagePayload) {
         val device = _scannedDevices.value.find { it.id == endpointId }
-            ?: P2PDevice(endpointId, payload.senderName.ifBlank { "UNKNOWN" }, payload.senderEmoji ?: "👤")
+            ?: P2PDevice(endpointId, payload.senderName.ifBlank { "?" }, payload.senderEmoji ?: "👤")
         _incomingLinkRequests.update { it + device }
     }
 
@@ -323,8 +351,23 @@ class NearbyP2PController(
             val senderDevice = _scannedDevices.value.find { it.id == endpointId }
             val isStrongVibe = (senderDevice?.signalStrength ?: -100) > -60
             
-            // Heuristic: Strong vibes from the Inner Circle get prioritized relay
-            if (isStrongVibe || payload.hopCount < 2) {
+            // Targeted relaying for groups
+            val shouldRelay = if (payload.groupId != null) {
+                // If we are part of the group, or we are a relay node in a dense mesh
+                val myGroup = vibeStore.groups.value.find { it.id == payload.groupId }
+                myGroup != null || payload.hopCount < 3
+            } else {
+                // Public vibes logic
+                val density = _scannedDevices.value.size
+                val relayProbability = when {
+                    density > 20 -> 0.2f
+                    density > 10 -> 0.5f
+                    else -> 1.0f
+                }
+                (isStrongVibe || payload.hopCount < 2) && Random.nextFloat() <= relayProbability
+            }
+
+            if (shouldRelay) {
                 relayMessage(endpointId, payload)
             }
         }
@@ -427,8 +470,9 @@ class NearbyP2PController(
 
             val newDevice = P2PDevice(
                 id = endpointId, 
-                name = parts[1].ifBlank { "UNKNOWN" }, 
+                name = parts[1].ifBlank { "?" }, 
                 emoji = parts[0],
+                persistentId = vibeDeviceId,
                 medium = peerMedium,
                 vibeCount = peerVibeCount,
                 isLowPower = peerIsLowPower
@@ -493,6 +537,13 @@ class NearbyP2PController(
     }
 
     override fun requestLink(device: P2PDevice) {
+        // Proximity Gating: Hardened check for physical closeness
+        if (device.signalStrength < PROXIMITY_THRESHOLD_DBM && device.signalStrength != 0) {
+            Log.w(tag, "LINK DENIED: Device too far (${device.signalStrength} dBm)")
+            handleNearbyError(P2PError.ConnectionError("DEVICE TOO FAR TO TIE"))
+            return
+        }
+
         pendingLinkRequests.add(device.id)
         updateScannedDevices()
         internalScope.launch(ioDispatcher) {
@@ -584,7 +635,7 @@ class NearbyP2PController(
                     }
                 }
             }
-            synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 100) messageIdHistory.removeAt(0) }
+            synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
             vibeStore.insertMessage(payload)
             return payload
         } catch (e: Exception) { return null }
@@ -592,10 +643,66 @@ class NearbyP2PController(
 
     override suspend fun broadcastMessage(content: String): MessagePayload? = sendMessage(content, null)
 
+    override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
+        val group = vibeStore.getGroup(groupId) ?: return null
+        val payload = MessagePayload(
+            messageId = UUID.randomUUID().toString(),
+            senderId = repository.getDeviceId(),
+            senderName = repository.getCurrentNickname(),
+            senderEmoji = repository.emojiAvatar.value,
+            groupId = groupId,
+            content = content,
+            timestamp = System.currentTimeMillis(),
+            vibeType = if (group.type == VibeGroup.TYPE_TIE) MessagePayload.VIBE_TIE else MessagePayload.VIBE_SIDE
+        )
+        val json = Json.encodeToString(MessagePayload.serializer(), payload)
+        val bytes = json.toByteArray()
+
+        try {
+            // Multicast to all known group members who are currently connected
+            group.memberIds.forEach { memberId ->
+                internalScope.launch(ioDispatcher) {
+                    vibeKeys[memberId]?.let { key ->
+                        try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {}
+                    }
+                }
+            }
+            
+            // Also broadcast it for relaying to non-directly connected members
+            activeConnections.filter { it !in group.memberIds }.forEach { target ->
+                internalScope.launch(ioDispatcher) {
+                    vibeKeys[target]?.let { key ->
+                        try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {}
+                    }
+                }
+            }
+
+            synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
+            vibeStore.insertMessage(payload)
+            vibeStore.updateGroupLastVibe(groupId, payload.timestamp)
+            return payload
+        } catch (e: Exception) { return null }
+    }
+
+    override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
+        val groupId = UUID.randomUUID().toString()
+        val group = VibeGroup(
+            id = groupId,
+            name = name,
+            memberIds = members + repository.getDeviceId(),
+            type = type,
+            isPersistent = type == VibeGroup.TYPE_TIE
+        )
+        internalScope.launch(ioDispatcher) {
+            vibeStore.insertGroup(group)
+        }
+        return groupId
+    }
+
     private fun isNewMessage(id: String): Boolean = synchronized(messageIdHistory) {
         if (messageIdHistory.contains(id)) false else {
             messageIdHistory.add(id)
-            if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
+            if (messageIdHistory.size > 500) messageIdHistory.removeAt(0)
             true
         }
     }

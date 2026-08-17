@@ -4,6 +4,7 @@ data class P2PDevice(
     val id: String,
     val name: String?,
     val emoji: String = "👤",
+    val persistentId: String? = null,
     val signalStrength: Int = 0, // RSSI value in dBm (-100 to 0)
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false,

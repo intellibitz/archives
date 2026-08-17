@@ -9,9 +9,11 @@ data class MessagePayload(
     val senderName: String,
     val senderEmoji: String? = null,
     val receiverId: String? = null,
+    val groupId: String? = null,
     val content: String,
     val timestamp: Long,
     val type: Int = TYPE_TEXT,
+    val vibeType: Int = VIBE_PUBLIC,
     val status: Int = STATUS_SENT,
     val hopCount: Int = 0
 ) {
@@ -22,6 +24,10 @@ data class MessagePayload(
         const val TYPE_LINK_REQUEST = 4
         const val TYPE_LINK_ACCEPT = 5
         const val TYPE_LINK_DENY = 6
+
+        const val VIBE_PUBLIC = 0
+        const val VIBE_SIDE = 1
+        const val VIBE_TIE = 2
 
         const val STATUS_PENDING = 0
         const val STATUS_SENT = 1

@@ -2,6 +2,7 @@ package cc.thevar.blukit.ui.viewmodels
 
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.VibeGroup
 import cc.thevar.blukit.network.p2p.P2PError
 
 /**
@@ -18,6 +19,8 @@ sealed interface AirConnectionState {
 
 data class BluetoothUiState(
     val scannedDevices: List<P2PDevice> = emptyList(),
+    val selectedDevices: Set<String> = emptySet(),
+    val vibedPeers: Set<String> = emptySet(),
     val connectionState: AirConnectionState = AirConnectionState.Disconnected,
     val isDiscovering: Boolean = false,
     val isAdvertising: Boolean = false,
@@ -25,6 +28,7 @@ data class BluetoothUiState(
     val incomingLinkRequests: Set<P2PDevice> = emptySet(),
     val uiError: cc.thevar.blukit.ui.UiError? = null,
     val messages: List<MessagePayload> = emptyList(),
+    val groups: List<VibeGroup> = emptyList(),
     val isBluetoothEnabled: Boolean = false,
     val isLocationEnabled: Boolean = false,
     val isWifiEnabled: Boolean = false,

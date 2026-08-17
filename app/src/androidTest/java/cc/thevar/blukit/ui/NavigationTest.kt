@@ -56,10 +56,10 @@ class NavigationTest {
         // 1. Initial State - Spread vibes (Input placeholder or empty screen hint)
         composeTestRule.onNodeWithText("VIBE", substring = true).assertIsDisplayed()
 
-        // 3. KNOWN (Mutual) - Switch via visual picker
-        composeTestRule.onNode(hasText("KNOWN", substring = true), useUnmergedTree = true).performClick()
-        // Check for specific "KNOWN" stat in center or something unique to VIBES screen
-        composeTestRule.onAllNodes(hasText("KNOWN", substring = true), useUnmergedTree = true).onLast().assertIsDisplayed()
+        // 3. TIES (Mutual) - Switch via visual picker
+        composeTestRule.onNode(hasText("TIES", substring = true), useUnmergedTree = true).performClick()
+        // Check for specific "TIES" stat in center or something unique to VIBES screen
+        composeTestRule.onAllNodes(hasText("TIES", substring = true), useUnmergedTree = true).onLast().assertIsDisplayed()
         
         // 4. Back to BLUKIT - Switch via visual picker
         composeTestRule.onNode(hasText("BLUKIT", substring = true), useUnmergedTree = true).performClick()
