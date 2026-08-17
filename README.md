@@ -6,11 +6,11 @@ Blukit is an app for every crowd. Whether you're in a movie hall, a theater, a s
 
 ---
 
-## 🫂 BLUKIT (The Field)
-When you open the app, you're in the **BLUKIT** field. This is where you see everyone around you.
-- **Glimmers and Blossoms**: To keep the crowd noise low, most people start as subtle pulsing **Glimmers** (dots).
+## 👥 ALL (The Field)
+When you open the app, you're in the **ALL** field. This is where you see everyone around you.
+- **Glimmers and Blossoms**: To keep the crowd noise low, people start as subtle pulsing **Glimmers** (dots).
 - **Blossom to Focus**: Tap any glimmer to blossom it into a full **Node**, showing their identity. This signifies your focused attention.
-- **Everyone Nearby**: See who else is in the stadium or theater with you, rendered in a high-fidelity OLED stealth radar.
+- **Presence Cloud**: Non-active students stay in an **Idle Row**, while those who speak move to the **Active Row** in the Hub's persona cloud.
 
 ## 🎯 FOCUS (Noise Reduction)
 Want to cut out the crowd and listen only to a few?
@@ -19,18 +19,24 @@ Want to cut out the crowd and listen only to a few?
 - **Listen Only**: Communication is disabled here to ensure you stay focused on your selected group.
 
 ## ✨ VIBES (Private Resonance)
-Established secure, persistent private resonances (formerly Ties).
-- **Mutual Connection**: Long-press a blossomed node to request a persistent **VIBE**. Once they agree, you are securely linked.
-- **Side-Vibes**: Once you have an established Vibe, you can initiate ephemeral **Side-Vibes** (1-on-1 whispers) contextual within that group.
+Established secure, persistent private resonances.
+- **Mutual Connection**: Use the Student Options Menu (tap any persona) to request a persistent **VIBE**. Once they agree, you are securely linked.
+- **Vibing List**: View and manage all your secure private group resonances.
+
+## 🤝 1-1 (Intimate Whispers)
+Ephemeral, private one-on-one whispers.
+- **Direct Link**: Once you have an established Vibe, you can initiate ephemeral **1-1** whispers contextual within that group.
+- **Messenger Persona**: Click any message in the ticker to immediately Focus or Vibe with that student.
 
 ---
 
 ## 📱 THE BLUKIT HUB
-Everything you need is integrated into the Hub at the bottom:
-- **Send Vibes**: Integrated communication bar with your **Node-Styled Persona**. Tapping your avatar allows you to change your identity at any time. Your default identity is **`?`**.
-- **Visual Picker**: Easily jump between **BLUKIT** (The Field), **FOCUS** (Filtered), and **VIBES** (Persistent Private).
-- **Radio Bar**: Quickly check if your Bluetooth, WiFi, and GPS are ready to go. Toggle **Dark Mode** or **Low Battery Mode** right there.
-- **Resets**: Clean up your history or reset your local identity in one tap from the radio bar.
+Everything you need is integrated into the full-width Hub at the bottom:
+- **Presence Cloud**: Always see who's **Active** and who's **Idle** nearby. Tap personas to blossom or manage your connection.
+- **Send Vibes**: Full-width segmented bar with your **Node-Styled Persona** and integrated **Blukit Logo**. Default identity is **`?`**.
+- **Visual Picker**: Easily jump between **ALL** (Public), **FOCUS** (Filtered), **VIBES** (Groups), and **1-1** (Private).
+- **Radio Bar**: Quickly check if your Bluetooth, WiFi, and GPS are ready to go. Toggle **Dark Mode** or **Low Battery Mode**.
+- **Resets**: Clean up your history or reset your local identity in one tap.
 
 ---
 

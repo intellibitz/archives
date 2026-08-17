@@ -66,6 +66,8 @@ import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.screens.RipplesScreen
 import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.screens.ConversationsScreen
+import cc.thevar.blukit.ui.screens.UnifiedPersonaCloud
+import cc.thevar.blukit.ui.screens.BubbleData
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -222,6 +224,7 @@ fun BlukitApp(
                         RipplesScreen(
                             state = bluetoothState,
                             localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
+                            localNickname = nickname ?: "?",
                             localEmoji = emoji,
                             energySurge = energySurge,
                             lowPowerMode = lowPowerMode,
@@ -289,6 +292,7 @@ fun BlukitApp(
                         RipplesScreen(
                             state = bluetoothState,
                             localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
+                            localNickname = nickname ?: "?",
                             localEmoji = emoji,
                             energySurge = energySurge,
                             vibedPeers = bluetoothState.vibedPeers,
@@ -317,6 +321,7 @@ fun BlukitApp(
                         RipplesScreen(
                             state = bluetoothState,
                             localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
+                            localNickname = nickname ?: "?",
                             localEmoji = emoji,
                             energySurge = energySurge,
                             onlyTies = true, // Show established private vibes
@@ -339,6 +344,15 @@ fun BlukitApp(
                                 }
                             },
                             onBroadcastMessage = bluetoothViewModel::roar
+                        )
+                    }
+                    Route.SideVibes -> NavEntry(key) {
+                        // 1-1 Vibes List
+                        ConversationsScreen(
+                            state = bluetoothState,
+                            onVibeClick = { group ->
+                                backStack.add(Route.VibeDetail(group.id))
+                            }
                         )
                     }
                     else -> NavEntry(key) { Text("Unknown") }
@@ -377,7 +391,20 @@ fun BlukitApp(
                 isStealthMode = isStealthMode,
                 incomingLinkRequests = bluetoothState.incomingLinkRequests,
                 selectedDevices = bluetoothState.selectedDevices,
+                scannedDevices = bluetoothState.scannedDevices,
+                connectedLinks = bluetoothState.connectedLinks,
+                vibedPeers = bluetoothState.vibedPeers,
+                messages = bluetoothState.messages,
                 onNavigate = { route -> if (currentRoute != route) backStack.add(route) },
+                onDeviceClick = { device ->
+                    if (bluetoothState.selectedDevices.isEmpty()) {
+                        device.persistentId?.let { pid ->
+                            viewModel.toggleVibePeer(pid)
+                        } ?: viewModel.toggleVibePeer(device.id)
+                    } else {
+                        bluetoothViewModel.toggleDeviceSelection(device.id)
+                    }
+                },
                 onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
                 onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                 onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
@@ -458,7 +485,12 @@ fun BlukitHub(
     isStealthMode: Boolean,
     incomingLinkRequests: Set<P2PDevice>,
     selectedDevices: Set<String>,
+    scannedDevices: List<P2PDevice>,
+    connectedLinks: Set<String>,
+    vibedPeers: Set<String>,
+    messages: List<cc.thevar.blukit.domain.model.MessagePayload>,
     onNavigate: (Route) -> Unit,
+    onDeviceClick: (P2PDevice) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
@@ -515,13 +547,42 @@ fun BlukitHub(
 
         // THE INTEGRATED HUB SURFACE
         Surface(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
             color = Color.Black.copy(alpha = 0.95f),
             shape = RoundedCornerShape(32.dp),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
             tonalElevation = 12.dp
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
+            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)) {
+                // ROW 0: UNIFIED PERSONA CLOUD (Active & Idle)
+                val displayDevices = if (currentRoute is Route.Focus) {
+                    scannedDevices.filter { it.persistentId in vibedPeers || it.id in vibedPeers }
+                } else {
+                    scannedDevices
+                }
+                
+                AnimatedVisibility(
+                    visible = currentRoute is Route.Blukit || currentRoute is Route.Focus,
+                ) {
+                    UnifiedPersonaCloud(
+                        devices = displayDevices,
+                        vibedPeers = vibedPeers,
+                        connectedLinks = connectedLinks,
+                        activeBubbles = messages.map { msg ->
+                            BubbleData(
+                                msg.senderId,
+                                msg.content,
+                                msg.timestamp,
+                                msg.messageId,
+                                !msg.receiverId.isNullOrBlank()
+                            )
+                        },
+                        onDeviceClick = onDeviceClick
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 // ROW 1: SEND VIBES
                 AnimatedVisibility(
                     visible = currentRoute is Route.Blukit || currentRoute is Route.Vibes,
@@ -726,92 +787,88 @@ private fun VisualEnergyPicker(
         val isBlukit = currentRoute is Route.Blukit
         val isFocus = currentRoute is Route.Focus
         val isVibes = currentRoute is Route.Vibes
-        
-        // Tab 1: BLUKIT
-        Surface(
-            onClick = { onNavigate(Route.Blukit) },
-            shape = RoundedCornerShape(12.dp),
-            color = if (isBlukit) Color.White.copy(alpha = 0.12f) else Color.Transparent,
-            border = if (isBlukit) BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.5f)) else null,
-            modifier = Modifier.height(56.dp).weight(1f)
+        val isSide = currentRoute is Route.SideVibes
+
+        // SEGMENT 1: PUBLIC (BLUKIT + FOCUS)
+        Row(
+            modifier = Modifier.weight(1.1f).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.03f)),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally, 
-                verticalArrangement = Arrangement.Center
+            // ALL (Formerly Blukit)
+            Surface(
+                onClick = { onNavigate(Route.Blukit) },
+                shape = RoundedCornerShape(10.dp, 0.dp, 0.dp, 10.dp),
+                color = if (isBlukit) Color.White.copy(alpha = 0.12f) else Color.Transparent,
+                modifier = Modifier.height(52.dp).weight(1f)
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_blukit_logo),
-                    contentDescription = null,
-                    tint = if (isBlukit) StealthPrimary else Color.White.copy(alpha = 0.4f),
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = "BLUKIT",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp, 
-                        fontWeight = FontWeight.Black, 
-                        color = if (isBlukit) StealthPrimary else Color.White.copy(alpha = 0.4f)
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.Groups,
+                        contentDescription = null,
+                        tint = if (isBlukit) StealthPrimary else Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(18.dp)
                     )
-                )
+                    Text("ALL", fontSize = 8.sp, fontWeight = FontWeight.Black, color = if (isBlukit) StealthPrimary else Color.White.copy(alpha = 0.3f))
+                }
+            }
+            // FOCUS
+            Surface(
+                onClick = { onNavigate(Route.Focus) },
+                shape = RoundedCornerShape(0.dp, 10.dp, 10.dp, 0.dp),
+                color = if (isFocus) Color.White.copy(alpha = 0.12f) else Color.Transparent,
+                modifier = Modifier.height(52.dp).weight(1f)
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.FilterCenterFocus,
+                        contentDescription = null,
+                        tint = if (isFocus) StealthPrimary else Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text("FOCUS", fontSize = 8.sp, fontWeight = FontWeight.Black, color = if (isFocus) StealthPrimary else Color.White.copy(alpha = 0.3f))
+                }
             }
         }
 
-        // Tab 2: FOCUS
-        Surface(
-            onClick = { onNavigate(Route.Focus) },
-            shape = RoundedCornerShape(12.dp),
-            color = if (isFocus) Color.White.copy(alpha = 0.12f) else Color.Transparent,
-            border = if (isFocus) BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.5f)) else null,
-            modifier = Modifier.height(56.dp).weight(1f)
+        // SEGMENT 2: PRIVATE (VIBES + SIDE)
+        Row(
+            modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.03f)),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally, 
-                verticalArrangement = Arrangement.Center
+            // VIBES (Groups)
+            Surface(
+                onClick = { onNavigate(Route.Vibes) },
+                shape = RoundedCornerShape(10.dp, 0.dp, 0.dp, 10.dp),
+                color = if (isVibes) Color.White.copy(alpha = 0.12f) else Color.Transparent,
+                modifier = Modifier.height(52.dp).weight(1f)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.FilterCenterFocus,
-                    contentDescription = null,
-                    tint = if (isFocus) StealthPrimary else Color.White.copy(alpha = 0.4f),
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = "FOCUS",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp, 
-                        fontWeight = FontWeight.Black, 
-                        color = if (isFocus) StealthPrimary else Color.White.copy(alpha = 0.4f)
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.Flare,
+                        contentDescription = null,
+                        tint = if (isVibes) StealthRose else Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(18.dp)
                     )
-                )
+                    Text("VIBES", fontSize = 8.sp, fontWeight = FontWeight.Black, color = if (isVibes) StealthRose else Color.White.copy(alpha = 0.3f))
+                }
             }
-        }
-
-        // Tab 3: VIBES
-        Surface(
-            onClick = { onNavigate(Route.Vibes) },
-            shape = RoundedCornerShape(12.dp),
-            color = if (isVibes) Color.White.copy(alpha = 0.12f) else Color.Transparent,
-            border = if (isVibes) BorderStroke(1.dp, StealthRose.copy(alpha = 0.5f)) else null,
-            modifier = Modifier.height(56.dp).weight(1f)
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally, 
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Flare,
-                    contentDescription = null,
-                    tint = if (isVibes) StealthRose else Color.White.copy(alpha = 0.4f),
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = "VIBES",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp, 
-                        fontWeight = FontWeight.Black, 
-                        color = if (isVibes) StealthRose else Color.White.copy(alpha = 0.4f)
-                    )
-                )
-            }
+                    // SIDE (1-1)
+                    Surface(
+                        onClick = { onNavigate(Route.SideVibes) },
+                        shape = RoundedCornerShape(0.dp, 10.dp, 10.dp, 0.dp),
+                        color = if (isSide) Color.White.copy(alpha = 0.12f) else Color.Transparent,
+                        modifier = Modifier.height(52.dp).weight(1f)
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.AutoAwesome,
+                                contentDescription = null,
+                                tint = if (isSide) StealthRose else Color.White.copy(alpha = 0.3f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text("1-1", fontSize = 8.sp, fontWeight = FontWeight.Black, color = if (isSide) StealthRose else Color.White.copy(alpha = 0.3f))
+                        }
+                    }
         }
     }
 }

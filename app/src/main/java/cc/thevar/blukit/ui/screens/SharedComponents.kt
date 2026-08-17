@@ -7,6 +7,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
@@ -15,10 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Flare
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,13 +34,17 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cc.thevar.blukit.R
+import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -127,102 +130,126 @@ fun BlukitInput(
         label = "BorderGlow"
     )
 
-    Box(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+    Box(modifier = modifier.fillMaxWidth()) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp), // Slim fixed height
+                .height(64.dp), // Slightly taller for segmented feel
             color = Color.Black.copy(alpha = 0.85f),
             shape = RoundedCornerShape(32.dp),
             border = BorderStroke(1.dp, borderGlow),
             tonalElevation = 8.dp
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 8.dp),
+                modifier = Modifier.padding(2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                UserPersona(
-                    nickname = nickname,
-                    emoji = emoji,
-                    airIsStill = airIsStill,
-                    onNicknameChange = onNicknameChange,
-                    focusRequester = personaFocusRequester
-                )
-
-                TextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    modifier = Modifier.weight(1f).testTag("SendVibeInput"),
-                    placeholder = { 
-                        Text(
-                            text = placeholder.uppercase(), 
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Visible,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 7.sp, // Tiny horizontal label
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 0.5.sp,
-                                color = Color.White.copy(alpha = 0.2f)
-                            )
-                        ) 
-                    },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    ),
-                    interactionSource = interactionSource,
-                    singleLine = true,
-                    maxLines = 1
-                )
-
-                if (vibeCount > 0) {
-                    Surface(
-                        color = StealthPrimary.copy(alpha = 0.15f),
-                        shape = CircleShape,
-                        border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)),
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    ) {
-                        Text(
-                            text = vibeCount.toString(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Black,
-                                color = StealthPrimary
-                            ),
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-                
-                Surface(
-                    onClick = { if (value.isNotBlank()) onSend() },
-                    shape = CircleShape,
-                    color = Color.Transparent,
-                    modifier = Modifier.testTag("SendVibeButton")
+                // SEGMENT 1: IDENTITY (Persona)
+                Row(
+                    modifier = Modifier
+                        .weight(0.6f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(30.dp, 4.dp, 4.dp, 30.dp))
+                        .background(Color.White.copy(alpha = 0.03f))
+                        .padding(start = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                if (value.isNotBlank()) 
-                                    Brush.linearGradient(listOf(StealthPrimary, StealthAmber))
-                                else 
-                                    Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f)))
-                            ),
-                        contentAlignment = Alignment.Center
+                    UserPersona(
+                        nickname = nickname,
+                        emoji = emoji,
+                        airIsStill = airIsStill,
+                        onNicknameChange = onNicknameChange,
+                        focusRequester = personaFocusRequester
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                // SEGMENT 2: VIBE ACTION (Input + Send)
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(4.dp, 30.dp, 30.dp, 4.dp))
+                        .background(Color.White.copy(alpha = 0.03f))
+                        .padding(end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        modifier = Modifier.weight(1f).testTag("SendVibeInput"),
+                        placeholder = { 
+                            Text(
+                                text = placeholder.uppercase(), 
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Visible,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 0.5.sp,
+                                    color = Color.White.copy(alpha = 0.2f)
+                                )
+                            ) 
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        interactionSource = interactionSource,
+                        singleLine = true,
+                        maxLines = 1
+                    )
+
+                    if (vibeCount > 0) {
+                        Surface(
+                            color = StealthPrimary.copy(alpha = 0.15f),
+                            shape = CircleShape,
+                            border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)),
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Text(
+                                text = vibeCount.toString(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = StealthPrimary
+                                ),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    
+                    Surface(
+                        onClick = { if (value.isNotBlank()) onSend() },
+                        shape = CircleShape,
+                        color = Color.Transparent,
+                        modifier = Modifier.testTag("SendVibeButton")
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Flare,
-                            contentDescription = "Vibe",
-                            tint = if (value.isNotBlank()) Color.Black else Color.White.copy(alpha = 0.2f),
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(
+                                    if (value.isNotBlank()) 
+                                        Brush.linearGradient(listOf(StealthPrimary, StealthAmber))
+                                    else 
+                                        Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f)))
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Flare,
+                                contentDescription = "Vibe",
+                                tint = if (value.isNotBlank()) Color.Black else Color.White.copy(alpha = 0.2f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -278,6 +305,19 @@ private fun UserPersona(
                     Text(text = emoji, fontSize = 16.sp)
                 }
             }
+
+            // Tiny Blukit Logo Badge
+            Icon(
+                painter = painterResource(id = R.drawable.ic_blukit_logo),
+                contentDescription = null,
+                tint = if (isUnknown) StealthAmber else StealthPrimary,
+                modifier = Modifier
+                    .size(12.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 4.dp, y = 4.dp)
+                    .background(Color.Black, CircleShape)
+                    .padding(1.dp)
+            )
         }
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -310,6 +350,253 @@ private fun UserPersona(
                 color = if (isUnknown) StealthAmber else Color.White.copy(alpha = 0.2f),
                 letterSpacing = 0.5.sp
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun VibeNode(
+    device: P2PDevice, 
+    isVibed: Boolean,
+    isSelected: Boolean,
+    isPeerVibed: Boolean,
+    onlyTies: Boolean,
+    activeBubble: String? = null, 
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "NodeAnim")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = 1.15f + (device.proximityFactor * 0.1f),
+        animationSpec = infiniteRepeatable(tween(2000 + (device.proximityFactor * 1000).toInt(), easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "Pulse"
+    )
+
+    val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
+    val proximityGlow = (device.proximityFactor * 0.4f).coerceAtLeast(0f)
+
+    Box(modifier = modifier.size(nodeSize * 2f), contentAlignment = Alignment.Center) {
+        // High-Fidelity Halo
+        Surface(
+            shape = CircleShape,
+            color = (if (isSelected) Color.White else if (isVibed) StealthRose else if (isPeerVibed) StealthAmber else StealthPrimary).copy(alpha = (0.05f + proximityGlow) * pulseScale),
+            modifier = Modifier.size(nodeSize * pulseScale * (1.6f + proximityGlow))
+        ) {}
+
+        // Main Body
+        Surface(
+            modifier = Modifier.size(nodeSize).clip(CircleShape).combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            color = when {
+                isSelected -> Color.White.copy(alpha = 0.2f)
+                isVibed -> StealthRose.copy(alpha = 0.15f)
+                isPeerVibed -> StealthAmber.copy(alpha = 0.15f)
+                else -> Color(0xFF12141A)
+            },
+            border = BorderStroke(
+                if (isSelected || isVibed || isPeerVibed) 2.dp else 1.dp,
+                when {
+                    isSelected -> Color.White
+                    isVibed -> StealthRose
+                    isPeerVibed -> StealthAmber
+                    else -> Color.White.copy(alpha = 0.15f)
+                }
+            ),
+            shape = CircleShape,
+            tonalElevation = 4.dp
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                val mediumIcon = when (device.medium) {
+                    P2PDevice.ConnectionMedium.BLUETOOTH -> Icons.Rounded.Bluetooth
+                    P2PDevice.ConnectionMedium.WIFI -> Icons.Rounded.Wifi
+                    P2PDevice.ConnectionMedium.LOCATION -> Icons.Rounded.LocationOn
+                }
+
+                Icon(
+                    imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Sync else if (isSelected) Icons.Rounded.CheckCircle else mediumIcon,
+                    contentDescription = null,
+                    tint = when {
+                        isSelected -> Color.White
+                        isVibed -> StealthRose
+                        isPeerVibed -> StealthAmber
+                        else -> Color.White.copy(alpha = 0.7f)
+                    },
+                    modifier = Modifier.size((nodeSize.value / 2.5f).dp)
+                )
+                val displayName = (device.name ?: "?").take(7).uppercase()
+                Text(
+                    text = if (!onlyTies && isVibed) "$displayName+" else displayName,
+                    fontSize = 8.sp,
+                    color = when {
+                        isSelected -> Color.White
+                        isVibed -> StealthRose
+                        isPeerVibed -> StealthAmber
+                        else -> Color.White.copy(alpha = 0.6f)
+                    },
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp
+                )
+            }
+        }
+
+        // Active Bubble Overlay
+        activeBubble?.let {
+            Box(modifier = Modifier.offset(y = (-48).dp)) {
+                Surface(
+                    color = StealthPrimary.copy(alpha = 0.95f),
+                    shape = RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp),
+                    modifier = Modifier.widthIn(max = 140.dp)
+                ) {
+                    Text(
+                        text = it,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.Black,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VibeDot(
+    device: P2PDevice,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "DotAnim")
+    val dotAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(tween(2000 + (device.proximityFactor * 1000).toInt(), easing = LinearEasing), RepeatMode.Reverse),
+        label = "Alpha"
+    )
+
+    Box(
+        modifier = modifier
+            .size(32.dp) // Large touch area
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            modifier = Modifier.size(12.dp), // Tiny persona container
+            shape = CircleShape,
+            color = StealthPrimary.copy(alpha = 0.1f * dotAlpha),
+            border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = dotAlpha))
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Rounded.Person,
+                    contentDescription = null,
+                    tint = StealthPrimary.copy(alpha = dotAlpha),
+                    modifier = Modifier.size(8.dp)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun UnifiedPersonaCloud(
+    devices: List<P2PDevice>,
+    vibedPeers: Set<String>,
+    connectedLinks: Set<String>,
+    activeBubbles: List<BubbleData>,
+    onDeviceClick: (P2PDevice) -> Unit
+) {
+    val activeSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
+    
+    val activeDevices = remember(devices, activeSenders) {
+        devices.filter { it.id in activeSenders || it.persistentId in activeSenders }
+               .sortedByDescending { it.proximityFactor }
+               .take(6) // Keep active row slim
+    }
+    
+    val idleDevices = remember(devices, activeSenders) {
+        devices.filter { it.id !in activeSenders && it.persistentId !in activeSenders }
+               .sortedByDescending { it.proximityFactor }
+               .take(12) 
+    }
+
+    Column(
+        modifier = Modifier
+            .padding(vertical = 4.dp, horizontal = 12.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // ACTIVE ROW
+        if (activeDevices.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    "ACTIVE", 
+                    fontSize = 6.sp, 
+                    fontWeight = FontWeight.Black, 
+                    color = StealthPrimary.copy(alpha = 0.4f),
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.Center,
+                    maxItemsInEachRow = 6
+                ) {
+                    activeDevices.forEach { device ->
+                        val isTied = device.id in connectedLinks
+                        val isVibed = device.persistentId in vibedPeers || device.id in vibedPeers
+                        VibeNode(
+                            device = device,
+                            isVibed = isTied,
+                            isSelected = false,
+                            isPeerVibed = isVibed,
+                            onlyTies = false,
+                            modifier = Modifier.size(42.dp).padding(2.dp),
+                            onClick = { onDeviceClick(device) },
+                            onLongClick = { onDeviceClick(device) } // Menu on long click
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+
+        // IDLE ROW
+        if (idleDevices.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    "IDLE", 
+                    fontSize = 6.sp, 
+                    fontWeight = FontWeight.Black, 
+                    color = Color.White.copy(alpha = 0.2f),
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.Center,
+                    maxItemsInEachRow = 10
+                ) {
+                    idleDevices.forEach { device ->
+                        VibeDot(
+                            device = device,
+                            modifier = Modifier.padding(2.dp),
+                            onClick = { onDeviceClick(device) }
+                        )
+                    }
+                }
+            }
         }
     }
 }

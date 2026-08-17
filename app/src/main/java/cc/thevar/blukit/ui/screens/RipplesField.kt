@@ -143,9 +143,9 @@ fun RipplesField(
         }
     }
 
-    val finalEnergy = (collectiveEnergy + externalEnergy).coerceAtMost(1.0f)
+        val finalEnergy = (collectiveEnergy + externalEnergy).coerceAtMost(1.0f)
 
-    Box(modifier = modifier.fillMaxSize().background(Color.Transparent), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.fillMaxSize().background(Color.Transparent), contentAlignment = Alignment.BottomCenter) {
         if (drawBackground) {
             StadiumBackground(energy = finalEnergy, lowPowerMode = lowPowerMode)
         }
@@ -160,29 +160,9 @@ fun RipplesField(
             state.scannedDevices
         }
 
-        ResonanceArcs(displayDevices, finalEnergy)
-        VibeRippleLayer(vibeRipples)
-        VibesConnectivity(displayDevices)
-
-        // Overlay Content (e.g. Vibes Ticker)
-        Box(modifier = Modifier.zIndex(0f)) {
+        // LAYER 2: Overlay Content (Vibes Ticker - Bottom Layer)
+        Box(modifier = Modifier.fillMaxSize().zIndex(0.5f)) {
             content()
-        }
-        
-        if (drawNodes && displayDevices.isNotEmpty()) {
-            Box(modifier = Modifier.zIndex(1f)) {
-                VibeNodes(
-                    devices = displayDevices,
-                    connectedLinks = state.connectedLinks,
-                    selectedDevices = selectedDevices,
-                    vibedPeers = vibedPeers,
-                    activeBubbles = activeBubbles,
-                    onlyTies = onlyTies,
-                    isFilterMode = isFilterMode,
-                    onDeviceClick = onDeviceClick,
-                    onDeviceLongClick = onDeviceLongClick
-                )
-            }
         }
     }
 }
@@ -407,8 +387,8 @@ private fun VibeDot(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "DotAnim")
     val dotAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 0.6f,
+        initialValue = 0.3f,
+        targetValue = 0.7f,
         animationSpec = infiniteRepeatable(tween(2000 + (device.proximityFactor * 1000).toInt(), easing = LinearEasing), RepeatMode.Reverse),
         label = "Alpha"
     )
@@ -421,11 +401,20 @@ private fun VibeDot(
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            modifier = Modifier.size(6.dp),
+            modifier = Modifier.size(12.dp), // Tiny persona container
             shape = CircleShape,
-            color = StealthPrimary.copy(alpha = dotAlpha),
-            border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f))
-        ) {}
+            color = StealthPrimary.copy(alpha = 0.1f * dotAlpha),
+            border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = dotAlpha))
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Rounded.Person,
+                    contentDescription = null,
+                    tint = StealthPrimary.copy(alpha = dotAlpha),
+                    modifier = Modifier.size(8.dp)
+                )
+            }
+        }
     }
 }
 

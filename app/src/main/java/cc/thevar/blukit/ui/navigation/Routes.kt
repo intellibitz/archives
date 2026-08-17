@@ -17,6 +17,9 @@ sealed interface Route : NavKey {
     data object Vibes : Route
 
     @Serializable
+    data object SideVibes : Route
+
+    @Serializable
     data object Focus : Route
 
     @Serializable
