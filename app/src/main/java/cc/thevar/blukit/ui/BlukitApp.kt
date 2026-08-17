@@ -571,6 +571,8 @@ private fun EnergyBarContent(
         label = "Alpha"
     )
 
+    var pendingHint by remember { mutableStateOf<Pair<String, () -> Unit>?>(null) }
+
     val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
     val isStill = isBluetoothOff || isLocationOff
     
@@ -578,6 +580,31 @@ private fun EnergyBarContent(
         isStill -> Color.Red.copy(alpha = 0.4f)
         isPermissionMissing -> Color(0xFFF4511E).copy(alpha = 0.4f) // Orange border
         else -> Color.White.copy(alpha = 0.05f)
+    }
+
+    if (pendingHint != null) {
+        val (text, action) = pendingHint!!
+        AlertDialog(
+            onDismissRequest = { pendingHint = null },
+            containerColor = Color.Black,
+            titleContentColor = StealthPrimary,
+            textContentColor = Color.White.copy(alpha = 0.8f),
+            title = { Text("ACTION REQUIRED", fontWeight = FontWeight.Black) },
+            text = { Text(text.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.Bold) },
+            confirmButton = {
+                TextButton(onClick = { 
+                    action.invoke()
+                    pendingHint = null
+                }) {
+                    Text("PROCEED", color = StealthPrimary, fontWeight = FontWeight.Black)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingHint = null }) {
+                    Text("CANCEL", color = Color.White.copy(alpha = 0.4f))
+                }
+            }
+        )
     }
 
     Surface(
@@ -597,9 +624,20 @@ private fun EnergyBarContent(
                 }
 
                 if (isStill || isPermissionMissing) {
-                    val action = when {
-                        isStill -> if (isBluetoothOff) onAwakenBluetooth else onAwakenLocation
-                        isPermissionMissing -> if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
+                    val actionData = when {
+                        isStill -> {
+                            val hint = if (isBluetoothOff) "PLEASE TURN ON YOUR BLUETOOTH IN SYSTEM SETTINGS." 
+                                      else "PLEASE TURN ON YOUR LOCATION IN SYSTEM SETTINGS."
+                            val act = if (isBluetoothOff) onAwakenBluetooth else onAwakenLocation
+                            Triple("AWAKEN", hint, act)
+                        }
+                        isPermissionMissing -> {
+                            val hint = if (isPermanentlyDenied) "ANDROID HAS BLOCKED THE DIALOG. PLEASE GO TO PERMISSIONS AND MANUALLY ALLOW 'NEARBY DEVICES' AND 'LOCATION'."
+                                      else "PLEASE TAP 'ALLOW' ON THE SYSTEM DIALOG TO LET BLUKIT SCAN FOR NEARBY PEOPLE."
+                            val label = if (isPermanentlyDenied) "SETTINGS" else "GRANT"
+                            val act = if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
+                            Triple(label, hint, act)
+                        }
                         else -> null
                     }
                     
@@ -609,20 +647,15 @@ private fun EnergyBarContent(
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.8f))
                     )
 
-                    if (action != null) {
+                    if (actionData != null) {
                         Surface(
-                            onClick = { action.invoke() },
+                            onClick = { pendingHint = actionData.second to actionData.third },
                             color = Color.White,
                             shape = RoundedCornerShape(4.dp),
                             modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                         ) {
-                            val btnText = when {
-                                isStill -> "AWAKEN"
-                                isPermanentlyDenied -> "SETTINGS"
-                                else -> "GRANT"
-                            }
                             Text(
-                                text = btnText,
+                                text = actionData.first,
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
