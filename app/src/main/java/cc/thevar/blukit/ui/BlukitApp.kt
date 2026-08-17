@@ -616,9 +616,13 @@ private fun EnergyBarContent(
                             shape = RoundedCornerShape(4.dp),
                             modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                         ) {
-                            val btnText = if (isStill) "AWAKEN" else "GRANT"
+                            val btnText = when {
+                                isStill -> "AWAKEN"
+                                isPermanentlyDenied -> "SETTINGS"
+                                else -> "GRANT"
+                            }
                             Text(
-                                text = btnText.uppercase(),
+                                text = btnText,
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
