@@ -29,6 +29,7 @@ data class BluetoothUiState(
     val uiError: cc.thevar.blukit.ui.UiError? = null,
     val messages: List<MessagePayload> = emptyList(),
     val groups: List<VibeGroup> = emptyList(),
+    val blockedUsers: Set<String> = emptySet(),
     val isBluetoothEnabled: Boolean = false,
     val isLocationEnabled: Boolean = false,
     val isWifiEnabled: Boolean = false,

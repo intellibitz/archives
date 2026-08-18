@@ -82,6 +82,10 @@ class NearbyP2PController(
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
     private val outgoingQueues = Collections.synchronizedMap(mutableMapOf<String, kotlinx.coroutines.channels.Channel<Payload>>())
     private val pendingLinkRequests = Collections.synchronizedSet(mutableSetOf<String>())
+    
+    // SPAM FILTER STATE
+    private val senderRateLimits = Collections.synchronizedMap(mutableMapOf<String, MutableList<Long>>())
+    private val blockedFingerprints = Collections.synchronizedSet(mutableSetOf<String>())
 
     init {
         observeIdentityChanges()
@@ -253,6 +257,12 @@ class NearbyP2PController(
     }
 
     private fun handleChatMessage(endpointId: String, payload: MessagePayload, secretKey: SecretKey) {
+        // 1. STRICT SPAM FILTER
+        if (isSpam(payload)) {
+            Log.w(tag, "SPAM DROPPED: ${payload.senderId}")
+            return
+        }
+
         sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
         if (payload.receiverId.isNullOrEmpty()) {
             val senderDevice = _scannedDevices.value.find { it.id == endpointId }
@@ -415,6 +425,21 @@ class NearbyP2PController(
         val groupId = UUID.randomUUID().toString()
         internalScope.launch(ioDispatcher) { vibeStore.insertGroup(VibeGroup(id = groupId, name = name, memberIds = members + repository.getDeviceId(), type = type, isPersistent = type == VibeGroup.TYPE_TIE)) }
         return groupId
+    }
+
+    private fun isSpam(payload: MessagePayload): Boolean {
+        if (payload.senderId in repository.blockedUsers.value || blockedFingerprints.contains(payload.senderId)) return true
+        val now = System.currentTimeMillis()
+        val timestamps = senderRateLimits.getOrPut(payload.senderId) { mutableListOf() }
+        timestamps.removeAll { now - it > 10000 }
+        if (timestamps.size > 5) {
+            blockedFingerprints.add(payload.senderId)
+            return true
+        }
+        timestamps.add(now)
+        val recentContent = messages.value.takeLast(10).map { it.content }
+        if (payload.content.length > 5 && recentContent.count { it == payload.content } > 2) return true
+        return false
     }
 
     private fun isNewMessage(id: String): Boolean = synchronized(messageIdHistory) { if (messageIdHistory.contains(id)) false else { messageIdHistory.add(id); if (messageIdHistory.size > 100) messageIdHistory.removeAt(0); true } }

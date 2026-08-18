@@ -221,6 +221,11 @@ class VibeStore(
         if (messagesLogFile.exists()) messagesLogFile.delete()
     }
 
+    suspend fun deleteMessage(messageId: String) {
+        _messages.update { it.filter { m -> m.messageId != messageId } }
+        compactMessages() // Rewrite log without this message
+    }
+
     // Group Operations
     fun getAllGroups() = groups
 

@@ -71,6 +71,9 @@ fun RipplesScreen(
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
     onBroadcastMessage: (String, Boolean) -> Unit,
+    onDeleteVibe: (String) -> Unit,
+    onBlockUser: (String) -> Unit,
+    onUnblockUser: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -79,6 +82,7 @@ fun RipplesScreen(
     val activeBubbles = remember { mutableStateListOf<BubbleData>() }
     val processedMessageIds = remember { mutableSetOf<String>() }
     var selectedPersonaForMenu by remember { mutableStateOf<P2PDevice?>(null) }
+    var messageToDelete by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(state.messages) {
         val newMessages = state.messages.filter { it.messageId !in processedMessageIds }
@@ -170,11 +174,11 @@ fun RipplesScreen(
                     state = state,
                     vibes = vibes,
                     localDeviceId = localDeviceId,
-                    localNickname = localNickname,
                     onlyTies = onlyTies,
                     vibedPeers = vibedPeers,
                     onDeviceClick = { selectedPersonaForMenu = it },
                     onDeviceLongClick = { selectedPersonaForMenu = it },
+                    onDeleteVibe = { messageToDelete = it },
                     modifier = Modifier.fillMaxSize().zIndex(10f)
                 )
         }
@@ -186,6 +190,7 @@ fun RipplesScreen(
                 device = selectedPersonaForMenu!!,
                 isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in vibedPeers,
                 isTied = selectedPersonaForMenu!!.id in state.connectedLinks,
+                isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in state.blockedUsers,
                 onFocus = {
                     onDeviceClick(selectedPersonaForMenu!!)
                     selectedPersonaForMenu = null
@@ -194,11 +199,46 @@ fun RipplesScreen(
                     onDeviceLongClick(selectedPersonaForMenu!!)
                     selectedPersonaForMenu = null
                 },
+                onBlock = {
+                    val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id
+                    onBlockUser(id)
+                    selectedPersonaForMenu = null
+                },
+                onUnblock = {
+                    val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id
+                    onUnblockUser(id)
+                    selectedPersonaForMenu = null
+                },
                 onDismiss = { selectedPersonaForMenu = null }
             )
         }
 
-        // LAYER 5: Empty State Hints
+        // LAYER 5: Delete Confirmation
+        if (messageToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { messageToDelete = null },
+                containerColor = Color.Black,
+                titleContentColor = StealthPrimary,
+                textContentColor = Color.White,
+                title = { Text("DELETE VIBE?", fontWeight = FontWeight.Black) },
+                text = { Text("THIS WILL REMOVE THIS MESSAGE FROM YOUR HISTORY.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        onDeleteVibe(messageToDelete!!)
+                        messageToDelete = null
+                    }) {
+                        Text("DELETE", color = Color.Red, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { messageToDelete = null }) {
+                        Text("CANCEL")
+                    }
+                }
+            )
+        }
+
+        // LAYER 6: Empty State Hints
         if (isFilterMode && vibedPeers.isEmpty()) {
             EmptyFocusHint("FOCUS")
         } else if (onlyTies && state.connectedLinks.isEmpty()) {
@@ -235,11 +275,11 @@ private fun VibingVibesTicker(
     state: BluetoothUiState,
     vibes: List<cc.thevar.blukit.domain.model.MessagePayload>,
     localDeviceId: String,
-    localNickname: String,
     onlyTies: Boolean,
     vibedPeers: Set<String>,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit,
+    onDeleteVibe: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -268,13 +308,13 @@ private fun VibingVibesTicker(
                         msg = msg,
                         isMe = isMe,
                         senderDevice = senderDevice,
-                        localNickname = localNickname,
                         isVibed = msg.senderId in vibedPeers,
                         isMutual = msg.senderId in state.connectedLinks,
                         onlyTies = onlyTies,
                         timestamp = timeFormatter.format(Date(msg.timestamp)),
                         onClick = { senderDevice?.let { onDeviceClick(it) } },
-                        onLongClick = { senderDevice?.let { onDeviceLongClick(it) } }
+                        onLongClick = { senderDevice?.let { onDeviceLongClick(it) } },
+                        onDelete = { onDeleteVibe(msg.messageId) }
                     )
             }
         }
@@ -287,45 +327,61 @@ private fun AnimatedVibeItem(
     msg: cc.thevar.blukit.domain.model.MessagePayload,
     isMe: Boolean,
     senderDevice: P2PDevice?,
-    localNickname: String,
     isVibed: Boolean,
     isMutual: Boolean,
     onlyTies: Boolean,
     timestamp: String,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).animateContentSize()
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).animateContentSize()
     ) {
         if (!isMe) {
-            Surface(
-                color = if (isMutual) StealthRose.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.05f),
-                shape = RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp),
-                border = BorderStroke(0.5.dp, if(isMutual) StealthRose.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)),
+            Box(
                 modifier = Modifier
                     .widthIn(max = 280.dp)
-                    .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                    .background(
+                        if (isMutual) StealthRose.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.04f),
+                        RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp)
+                    )
+                    .border(
+                        0.5.dp, 
+                        if (isMutual) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.08f),
+                        RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp)
+                    )
+                    .combinedClickable(
+                        onClick = onClick, 
+                        onLongClick = onLongClick
+                    )
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
+                    // Message Content
+                    Text(
+                        text = msg.content,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.95f),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+
+                    // Unified Footer: Identity + Time
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
+                        verticalAlignment = Alignment.Bottom
                     ) {
-                        val displayName = if (!onlyTies && isMutual) "${msg.senderName}+" else msg.senderName
                         Text(
-                            text = displayName.uppercase(),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (isMutual) StealthRose else StealthPrimary,
-                            letterSpacing = 0.5.sp,
-                            modifier = Modifier.weight(1f)
+                            text = timestamp, 
+                            fontSize = 7.sp, 
+                            color = Color.White.copy(alpha = 0.2f),
+                            fontWeight = FontWeight.Bold
                         )
                         
-                        // Attached Persona Node INSIDE bubble, top right
+                        // Unified Identity Node inside bubble (Right side)
                         if (senderDevice != null) {
                             VibeNode(
                                 device = senderDevice,
@@ -335,48 +391,42 @@ private fun AnimatedVibeItem(
                                 onlyTies = onlyTies,
                                 onClick = onClick,
                                 onLongClick = onLongClick,
-                                modifier = Modifier.size(42.dp)
+                                modifier = Modifier.size(36.dp)
                             )
                         }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = msg.content,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.95f)
-                    )
-                    
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Text(
-                            text = timestamp, 
-                            fontSize = 7.sp, 
-                            color = Color.White.copy(alpha = 0.2f),
-                            fontWeight = FontWeight.Bold
-                        )
                     }
                 }
             }
         } else {
-            Surface(
-                color = StealthPrimary.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(12.dp, 12.dp, 2.dp, 12.dp),
-                border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)),
-                modifier = Modifier.widthIn(max = 240.dp)
+            // My Message
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 240.dp)
+                    .background(StealthPrimary.copy(alpha = 0.12f), RoundedCornerShape(12.dp, 12.dp, 2.dp, 12.dp))
+                    .border(0.5.dp, StealthPrimary.copy(alpha = 0.2f), RoundedCornerShape(12.dp, 12.dp, 2.dp, 12.dp))
+                    .combinedClickable(
+                        onClick = {}, 
+                        onLongClick = onDelete
+                    )
+                    .padding(10.dp)
             ) {
-                Column(modifier = Modifier.padding(10.dp)) {
+                Column {
+                    Text(
+                        text = msg.content,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = "YOU ($localNickname)".uppercase(),
-                            fontSize = 9.sp,
+                            text = "YOU".uppercase(),
+                            fontSize = 8.sp,
                             fontWeight = FontWeight.Black,
-                            color = StealthPrimary,
-                            letterSpacing = 0.5.sp
+                            color = StealthPrimary.copy(alpha = 0.4f)
                         )
                         Text(
                             text = timestamp, 
@@ -385,13 +435,6 @@ private fun AnimatedVibeItem(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = msg.content,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
                 }
             }
         }

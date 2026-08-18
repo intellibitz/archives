@@ -1,6 +1,6 @@
 # blukit: spread vibes
 
-**SPREAD VIBES. CONNECT ANYWHERE.**
+**SPREAD (B) VIBES. CONNECT ANYWHERE.**
 
 blukit is for any crowd. Sports venues, movie halls, universities, subways—anywhere a crowd forms, blukit lets you connect and spread vibes without the internet. It is anonymous, safe, secure, and private.
 
@@ -11,7 +11,7 @@ The **ALL** field is where you see everyone around you.
 - **Anonymous Presence**: People appear as pulsing glimmers decorated with a tiny persona icon.
 - **Unified Interactions**: 
     - **Tap**: Blossom/Focus a persona. Tapping in the Hub immediately switches you to the **FOCUS** tab.
-    - **Long-Tap**: Open the **Vibe (Link)** menu for secure group establishment.
+    - **Long-Tap**: Open the **Options Menu** for focus management, blocking, or secure vibe requests.
 - **Active vs. Idle**: Non-active users stay in the **IDLE** row, while those who speak move to the **ACTIVE** row in the hub.
 
 ## 🎯 FOCUS (Filtered Field)
@@ -25,23 +25,27 @@ Cut out the crowd and listen only to those you've blossomed.
 Establish secure, persistent private group resonances.
 - **Mutual Permission**: Use the Options Menu to request a **VIBE**. Once agreed, you are securely linked in a private group.
 - **Secure Communication**: All group vibes are encrypted and private.
+- **Resonance Management**: Conversations can be permanently removed via long-press.
 
 ## 🤝 1-1 (Personal Vibes)
 Intimate, ephemeral one-on-one whispers.
 - **Direct Resonance**: Start a **1-1** whisper contextual within an established vibe.
-- **Inside the Bubble**: Student personas (avatars/names) are now located **inside the message bubble** (top-right).
+- **Inside the Bubble**: Student personas (avatars/names) are now located **inside the message bubble** (top-right) for maximum efficiency.
 - **Instant Action**: Tapping the persona inside a message bubble focuses them; long-pressing opens the vibe menu.
 
 ---
 
 ## 📱 THE HUB
 Everything you need is integrated into the full-width Hub at the bottom:
-- **Presence Zone**: Unified cloud categorized by **ACTIVE** and **IDLE** rows. Personas are sorted by proximity and activity. Includes tips like *"TAP TO FOCUS • LONG PRESS TO VIBE"*.
+- **Presence Zone**: Unified cloud categorized by **ACTIVE** and **IDLE** rows. Personas are sorted by proximity and activity.
 - **Spread Vibes Widget**: 
+    - **Lightweight & Efficient**: Custom high-fidelity widgets replace bulky Material components to ensure all-day battery life.
     - **Unified Identity**: Avatar, nickname, and "(YOU)" label condensed into a clean 1-column layout.
-    - **Keyboard-Aware**: The Hub floats above the keyboard when typing.
-    - **Auto-Focus Clear**: Switching tabs automatically clears focus from the text field.
-- **Privacy First**: blukit never collects data of any kind. No tracking. No telemetry. No location sharing.
+    - **Keyboard-Aware**: The Hub floats above the keyboard when typing using `imePadding()`.
+- **Privacy & Safety**: 
+    - **Spam Filter**: Strict rate limiting (5 vibes / 10s) and duplicate detection drop trolls and bots instantly.
+    - **User Control**: Block/Unblock users and delete individual vibes from history.
+    - **Zero Telemetry**: blukit never collects data of any kind. No tracking. No telemetry.
 
 ---
 
@@ -61,4 +65,4 @@ Everything you need is integrated into the full-width Hub at the bottom:
 ---
 
 *Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*  
-*SPREAD VIBES. CONNECT ANYWHERE.*
+*SPREAD (B) VIBES. CONNECT ANYWHERE.*

@@ -12,6 +12,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -118,24 +119,9 @@ fun BlukitApp(
 ) {
     val context = LocalContext.current
     val permissionManager = (context.applicationContext as BlukitApplication).spreadPermissionManager
-    val viewModel: MainViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, vibeStore) as T
-        }
-    )
-    val bluetoothViewModel: BluetoothViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore) as T
-        }
-    )
-    val supremePowerViewModel: SupremePowerViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = SupremePowerViewModel(supremePowerManager) as T
-        }
-    )
+    val viewModel: MainViewModel = viewModel(factory = object : ViewModelProvider.Factory { @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, vibeStore) as T })
+    val bluetoothViewModel: BluetoothViewModel = viewModel(factory = object : ViewModelProvider.Factory { @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore) as T })
+    val supremePowerViewModel: SupremePowerViewModel = viewModel(factory = object : ViewModelProvider.Factory { @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = SupremePowerViewModel(supremePowerManager) as T })
     
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emoji by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
@@ -201,7 +187,10 @@ fun BlukitApp(
                                 }
                             },
                             onDeviceLongClick = { selectedPersonaForMenu = it },
-                            onBroadcastMessage = bluetoothViewModel::roar
+                            onBroadcastMessage = bluetoothViewModel::roar,
+                            onDeleteVibe = viewModel::deleteVibe,
+                            onBlockUser = viewModel::blockUser,
+                            onUnblockUser = viewModel::unblockUser
                         )
                     }
                     Route.Focus -> NavEntry(key) {
@@ -218,17 +207,36 @@ fun BlukitApp(
                             onStopScan = bluetoothViewModel::stopScan,
                             onDeviceClick = { device ->
                                 if (bluetoothState.selectedDevices.isEmpty()) {
+                                    val isVibed = (device.persistentId ?: device.id) in bluetoothState.vibedPeers
                                     device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id)
+                                    if (!isVibed) backStack.add(Route.Focus)
                                 } else {
                                     bluetoothViewModel.toggleDeviceSelection(device.id)
                                 }
                             },
                             onDeviceLongClick = { selectedPersonaForMenu = it },
-                            onBroadcastMessage = bluetoothViewModel::roar
+                            onBroadcastMessage = bluetoothViewModel::roar,
+                            onDeleteVibe = viewModel::deleteVibe,
+                            onBlockUser = viewModel::blockUser,
+                            onUnblockUser = viewModel::unblockUser
                         )
                     }
-                    Route.Vibes -> NavEntry(key) { ConversationsScreen(state = bluetoothState, isGroupType = true, onVibeClick = { backStack.add(Route.VibeDetail(it.id)) }) }
-                    Route.SideVibes -> NavEntry(key) { ConversationsScreen(state = bluetoothState, isGroupType = false, onVibeClick = { backStack.add(Route.VibeDetail(it.id)) }) }
+                    Route.Vibes -> NavEntry(key) { 
+                        ConversationsScreen(
+                            state = bluetoothState, 
+                            isGroupType = true, 
+                            onVibeClick = { backStack.add(Route.VibeDetail(it.id)) },
+                            onDeleteGroup = bluetoothViewModel::deleteGroup
+                        ) 
+                    }
+                    Route.SideVibes -> NavEntry(key) { 
+                        ConversationsScreen(
+                            state = bluetoothState, 
+                            isGroupType = false, 
+                            onVibeClick = { backStack.add(Route.VibeDetail(it.id)) },
+                            onDeleteGroup = bluetoothViewModel::deleteGroup
+                        ) 
+                    }
                     Route.Chat -> NavEntry(key) { 
                         TieScreen(
                             state = bluetoothState, 
@@ -245,7 +253,9 @@ fun BlukitApp(
                                 backStack.add(Route.VibeDetail(gid)) 
                             }, 
                             onToggleFocus = { device -> 
+                                val isVibed = (device.persistentId ?: device.id) in bluetoothState.vibedPeers
                                 device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id) 
+                                if (!isVibed) backStack.add(Route.Focus)
                             }, 
                             onBlockUser = viewModel::blockUser, 
                             onEnterPip = onEnterPip
@@ -267,7 +277,9 @@ fun BlukitApp(
                                 backStack.add(Route.VibeDetail(gid)) 
                             }, 
                             onToggleFocus = { device -> 
+                                val isVibed = (device.persistentId ?: device.id) in bluetoothState.vibedPeers
                                 device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id) 
+                                if (!isVibed) backStack.add(Route.Focus)
                             }, 
                             onBlockUser = viewModel::blockUser, 
                             onEnterPip = onEnterPip
@@ -350,6 +362,7 @@ fun BlukitApp(
                 device = selectedPersonaForMenu!!,
                 isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.vibedPeers,
                 isTied = selectedPersonaForMenu!!.id in bluetoothState.connectedLinks,
+                isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.blockedUsers,
                 onFocus = {
                     val device = selectedPersonaForMenu!!
                     val isVibed = (device.persistentId ?: device.id) in bluetoothState.vibedPeers
@@ -360,6 +373,16 @@ fun BlukitApp(
                 onVibe = {
                     val device = selectedPersonaForMenu!!
                     if (device.id !in bluetoothState.connectedLinks) bluetoothViewModel.connectToDevice(device)
+                    selectedPersonaForMenu = null
+                },
+                onBlock = {
+                    val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id
+                    viewModel.blockUser(id)
+                    selectedPersonaForMenu = null
+                },
+                onUnblock = {
+                    val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id
+                    viewModel.unblockUser(id)
                     selectedPersonaForMenu = null
                 },
                 onDismiss = { selectedPersonaForMenu = null }
@@ -426,7 +449,14 @@ fun BlukitHub(
             }
         }
 
-        Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), color = Color.Black.copy(alpha = 0.95f), shape = RoundedCornerShape(32.dp), border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)), tonalElevation = 12.dp) {
+        // THE INTEGRATED HUB (Lightweight custom surface)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .background(Color.Black.copy(alpha = 0.96f), RoundedCornerShape(32.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(32.dp))
+        ) {
             Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp).imePadding()) {
                 val cloudDevices = if (currentRoute is Route.Focus) scannedDevices.filter { it.persistentId in vibedPeers || it.id in vibedPeers } else scannedDevices
                 AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Focus || currentRoute is Route.Vibes || currentRoute is Route.SideVibes) {
@@ -481,10 +511,7 @@ fun UnifiedBlukitBadge(
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                VisualEnergyPicker(
-                    currentRoute = currentRoute,
-                    onNavigate = onNavigate
-                )
+                VisualEnergyPicker(currentRoute = currentRoute, onNavigate = onNavigate)
             }
             if (incomingLinkRequests.isNotEmpty()) {
                 Spacer(modifier = Modifier.width(12.dp))
@@ -506,66 +533,31 @@ fun UnifiedBlukitBadge(
 
 @Composable
 private fun VisualEnergyPicker(
-    currentRoute: Route,
+    currentRoute: Route, 
     onNavigate: (Route) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.05f))
+            .background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(14.dp))
             .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        val isAll = currentRoute is Route.Blukit
-        Surface(
-            onClick = { onNavigate(Route.Blukit) }, 
-            shape = RoundedCornerShape(12.dp), 
-            color = if (isAll) Color.White.copy(alpha = 0.12f) else Color.Transparent, 
-            modifier = Modifier.height(56.dp).weight(1.5f).testTag("HubTab_ALL")
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(imageVector = Icons.Rounded.Groups, contentDescription = null, tint = if (isAll) StealthPrimary else Color.White.copy(alpha = 0.3f), modifier = Modifier.size(20.dp))
-                Text("ALL", fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (isAll) StealthPrimary else Color.White.copy(alpha = 0.3f), letterSpacing = 1.sp)
-            }
-        }
-        val isFocus = currentRoute is Route.Focus
-        Surface(
-            onClick = { onNavigate(Route.Focus) }, 
-            shape = RoundedCornerShape(12.dp), 
-            color = if (isFocus) Color.White.copy(alpha = 0.08f) else Color.Transparent, 
-            modifier = Modifier.height(56.dp).weight(1f).testTag("HubTab_FOCUS")
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(imageVector = Icons.Rounded.FilterCenterFocus, contentDescription = null, tint = if (isFocus) StealthPrimary else Color.White.copy(alpha = 0.2f), modifier = Modifier.size(16.dp))
-                Text("FOCUS", fontSize = 7.sp, fontWeight = FontWeight.Bold, color = if (isFocus) StealthPrimary else Color.White.copy(alpha = 0.2f))
-            }
-        }
-        Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
-        val isVibes = currentRoute is Route.Vibes
-        Surface(
-            onClick = { onNavigate(Route.Vibes) }, 
-            shape = RoundedCornerShape(12.dp), 
-            color = if (isVibes) Color.White.copy(alpha = 0.12f) else Color.Transparent, 
-            modifier = Modifier.height(56.dp).weight(1.5f).testTag("HubTab_VIBES")
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = if (isVibes) StealthRose else Color.White.copy(alpha = 0.3f), modifier = Modifier.size(20.dp))
-                Text("VIBES", fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (isVibes) StealthRose else Color.White.copy(alpha = 0.3f), letterSpacing = 1.sp)
-            }
-        }
-        val isSide = currentRoute is Route.SideVibes
-        Surface(
-            onClick = { onNavigate(Route.SideVibes) }, 
-            shape = RoundedCornerShape(12.dp), 
-            color = if (isSide) Color.White.copy(alpha = 0.08f) else Color.Transparent, 
-            modifier = Modifier.height(56.dp).weight(1f).testTag("HubTab_1-1")
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(imageVector = Icons.Rounded.AutoAwesome, contentDescription = null, tint = if (isSide) StealthRose else Color.White.copy(alpha = 0.2f), modifier = Modifier.size(16.dp))
-                Text("1-1", fontSize = 7.sp, fontWeight = FontWeight.Bold, color = if (isSide) StealthRose else Color.White.copy(alpha = 0.2f))
-            }
+        HubTab(label = "ALL", icon = Icons.Rounded.Groups, isSelected = currentRoute is Route.Blukit, weight = 1.5f, testTag = "HubTab_ALL", onClick = { onNavigate(Route.Blukit) })
+        HubTab(label = "FOCUS", icon = Icons.Rounded.FilterCenterFocus, isSelected = currentRoute is Route.Focus, weight = 1f, testTag = "HubTab_FOCUS", onClick = { onNavigate(Route.Focus) })
+        Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.08f)))
+        HubTab(label = "VIBES", icon = Icons.Rounded.Flare, isSelected = currentRoute is Route.Vibes, weight = 1.5f, testTag = "HubTab_VIBES", onClick = { onNavigate(Route.Vibes) })
+        HubTab(label = "1-1", icon = Icons.Rounded.AutoAwesome, isSelected = currentRoute is Route.SideVibes, weight = 1f, testTag = "HubTab_1-1", onClick = { onNavigate(Route.SideVibes) })
+    }
+}
+
+@Composable
+private fun RowScope.HubTab(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, isSelected: Boolean, weight: Float, testTag: String, onClick: () -> Unit) {
+    Box(modifier = Modifier.height(52.dp).weight(weight).clip(RoundedCornerShape(12.dp)).background(if (isSelected) Color.White.copy(alpha = 0.08f) else Color.Transparent).clickable { onClick() }.testTag(testTag), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(imageVector = icon, contentDescription = null, tint = if (isSelected) (if (label == "VIBES" || label == "1-1") StealthRose else StealthPrimary) else Color.White.copy(alpha = 0.25f), modifier = Modifier.size(if (weight > 1.2f) 20.dp else 16.dp))
+            Text(text = label, fontSize = if (weight > 1.2f) 10.sp else 7.sp, fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold, color = if (isSelected) (if (label == "VIBES" || label == "1-1") StealthRose else StealthPrimary) else Color.White.copy(alpha = 0.25f), letterSpacing = if (weight > 1.2f) 1.sp else 0.sp)
         }
     }
 }

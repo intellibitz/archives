@@ -56,6 +56,18 @@ class MainViewModel(
         }
     }
 
+    fun unblockUser(userId: String) {
+        viewModelScope.launch {
+            repository.unblockUser(userId)
+        }
+    }
+
+    fun deleteVibe(messageId: String) {
+        viewModelScope.launch {
+            vibeStore.deleteMessage(messageId)
+        }
+    }
+
     fun clearChatHistory() {
         viewModelScope.launch {
             vibeStore.clearAllMessages()

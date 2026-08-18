@@ -22,6 +22,10 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.Json
+import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -89,6 +93,28 @@ class StadiumSurgeTest {
     fun tearDown() {
         Dispatchers.resetMain()
         unmockkStatic(Nearby::class)
+    }
+
+    @Test
+    fun `cinema hall scenario - moto focus and vibes with redmi and oneplus`() = runTest {
+        val moto = "moto-id"
+        val redmi = "redmi-id"
+        val oneplus = "oneplus-id"
+        
+        val controllerMoto = mockk<P2PController>(relaxed = true)
+        val viewModelMoto = BluetoothViewModel(controllerMoto, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+        
+        // 1. Moto starts high-level Vibe (Tie) with Redmi
+        viewModelMoto.connectToDevice(P2PDevice(redmi, "Redmi", "📱"))
+        verify { controllerMoto.connectToDevice(any()) }
+        
+        // 2. Start a Group Vibe (Tie)
+        val gid = viewModelMoto.startGroupVibe("MOVIE", setOf(redmi, oneplus), isTie = true)
+        assertNotNull(gid)
+        
+        // 3. Start a Side Vibe (1-1)
+        val sideGid = viewModelMoto.startGroupVibe("WHISPER", setOf(redmi), isTie = false)
+        assertNotNull(sideGid)
     }
 
     @Test

@@ -1,8 +1,10 @@
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,8 +36,11 @@ fun ConversationsScreen(
     state: BluetoothUiState,
     isGroupType: Boolean,
     onVibeClick: (VibeGroup) -> Unit,
+    onDeleteGroup: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var groupToDelete by remember { mutableStateOf<VibeGroup?>(null) }
+
     Column(modifier = modifier.fillMaxSize()) {
         val title = if (isGroupType) "VIBES" else "1-1"
         val icon = if (isGroupType) Icons.Rounded.Flare else Icons.Rounded.AutoAwesome
@@ -62,29 +67,58 @@ fun ConversationsScreen(
                 }
             }
             items(conversations, key = { it.id }) { group ->
-                VibeGroupItem(group, state.messages, onVibeClick)
+                VibeGroupItem(group, state.messages, onVibeClick, { groupToDelete = it })
             }
         }
     }
+
+    if (groupToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { groupToDelete = null },
+            containerColor = Color.Black,
+            titleContentColor = StealthRose,
+            textContentColor = Color.White,
+            title = { Text("DELETE RESONANCE?", fontWeight = FontWeight.Black) },
+            text = { Text("THIS WILL PERMANENTLY REMOVE THIS CONVERSATION.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeleteGroup(groupToDelete!!.id)
+                    groupToDelete = null
+                }) {
+                    Text("DELETE", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { groupToDelete = null }) {
+                    Text("CANCEL")
+                }
+            }
+        )
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun VibeGroupItem(
     group: VibeGroup,
     messages: List<MessagePayload>,
-    onVibeClick: (VibeGroup) -> Unit
+    onVibeClick: (VibeGroup) -> Unit,
+    onLongClick: (VibeGroup) -> Unit
 ) {
     val lastMessage = remember(group.id, messages) {
         messages.filter { it.groupId == group.id }.lastOrNull()
     }
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
-    Surface(
-        onClick = { onVibeClick(group) },
-        color = Color.White.copy(alpha = 0.05f),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
-        modifier = Modifier.fillMaxWidth()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+            .combinedClickable(
+                onClick = { onVibeClick(group) },
+                onLongClick = { onLongClick(group) }
+            )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

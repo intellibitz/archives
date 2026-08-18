@@ -82,6 +82,7 @@ class BluetoothViewModel(
         vibeStore.groups,
         _selectedDevices,
         repository.vibedPeers,
+        repository.blockedUsers,
         _manualConnectionState,
         permissionManager.permissionsGranted
     ) { args: Array<Any?> ->
@@ -97,8 +98,9 @@ class BluetoothViewModel(
         val groups = args[9] as List<VibeGroup>
         val selectedDevices = args[10] as Set<String>
         val vibedPeers = args[11] as Set<String>
-        val manualState = args[12] as? AirConnectionState
-        val permissionsGranted = args[13] as Boolean
+        val blockedUsers = args[12] as Set<String>
+        val manualState = args[13] as? AirConnectionState
+        val permissionsGranted = args[14] as Boolean
 
         android.util.Log.d("BlukitUI", "STATE: vibedPeers=${vibedPeers.size}, isConnected=$isConnected")
 
@@ -129,6 +131,7 @@ class BluetoothViewModel(
             isAdvertising = isAdvertising,
             messages = messages,
             groups = groups,
+            blockedUsers = blockedUsers,
             uiError = error?.toUiError()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BluetoothUiState())
@@ -232,6 +235,12 @@ class BluetoothViewModel(
     fun disconnect() {
         p2pController.closeConnection()
         _manualConnectionState.value = null
+    }
+
+    fun deleteGroup(groupId: String) {
+        viewModelScope.launch {
+            vibeStore.deleteGroup(groupId)
+        }
     }
 
     override fun onCleared() {

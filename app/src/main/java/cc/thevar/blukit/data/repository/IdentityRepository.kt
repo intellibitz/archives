@@ -29,6 +29,7 @@ interface IdentityRepository {
     fun toggleLowPowerMode(enabled: Boolean)
     fun toggleVibePeer(deviceId: String)
     fun blockUser(deviceId: String)
+    fun unblockUser(deviceId: String)
     fun logout()
 }
 
@@ -140,7 +141,14 @@ class IdentityRepositoryImpl(
     override fun blockUser(deviceId: String) {
         val current = _blockedUsers.value.toMutableSet()
         current.add(deviceId)
-        securePrefs.edit { putStringSet(KEY_BLOCKED_USERS, current) }
+        securePrefs.edit { putStringSet(KEY_BLOCKED_USERS, current.filterNotNull().toSet()) }
+        _blockedUsers.value = current
+    }
+
+    override fun unblockUser(deviceId: String) {
+        val current = _blockedUsers.value.toMutableSet()
+        current.remove(deviceId)
+        securePrefs.edit { putStringSet(KEY_BLOCKED_USERS, current.filterNotNull().toSet()) }
         _blockedUsers.value = current
     }
 
