@@ -71,7 +71,7 @@ fun BlukitTopTitle(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "BLUKIT",
+                text = "SPREAD VIBES",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Black,
                     letterSpacing = 4.sp,

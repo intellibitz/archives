@@ -1,34 +1,31 @@
-# Privacy Policy for Blukit
+# Privacy Policy for blukit
 
 **Effective Date: August 18, 2026**
 
-At Blukit, your privacy is our top priority. This policy explains how we keep things private when you use the app.
+**blukit** is built on a vision of total anonymity and local resonance. We value your privacy above all else.
 
-## 1. We Don't Collect Your Data
-Blukit works entirely offline. **We don't collect, store, or send any of your personal info to any servers.**
+## 1. No Data Collection or Telemetry
+We do **not** collect, store, or transmit any data to any servers. 
+- **No Analytics**: We don't track how you use the app.
+- **No Crashes Shared**: We don't collect crash reports or performance metrics.
+- **No User Profiles**: We don't build profiles or track who you are.
 
-*   **Your Name**: Your nickname is stored only on your phone. It's only shared with people nearby so they know who's syncing vibes.
-*   **Your Vibes**: Your vibe history is stored only on your phone and is never uploaded anywhere.
-*   **Your Location**: Even though the app asks for hardware permissions (which Android needs for Bluetooth), **we never actually track where you are.**
+## 2. No Location Tracking
+While blukit requires hardware permissions to use Bluetooth and WiFi radios (as mandated by Android), **we never track, store, or share your location.** Your physical position is never revealed to anyone.
 
-## 2. Sync Directly with People Nearby
-All vibes go directly from your phone to other phones nearby. They don't go through the internet or any other company's systems.
+## 3. Offline & Anonymous
+blukit works entirely through peer-to-peer radios. Your communication never touches the internet. 
+- You start as anonymous (**?**).
+- You can change your nickname anytime—it stays only on your device.
 
-## 3. Safe and Secure
-To keep your private ties private, Blukit uses:
-*   Strong encryption (**AES-256**) for every vibe you send.
-*   Secure keys that are stored only on your phone.
+## 4. End-to-End Security
+Private vibes (VIBES and 1-1) are secured using **AES-256** encryption. Keys are generated locally and are never shared with anyone outside your sync.
 
-## 4. Vibes Don't Last Forever
-Blukit is built to be temporary.
-*   **Automatic Clean-up**: All vibes are deleted from your phone after 12 hours.
-*   **Manual Reset**: You can clear your vibes or reset your profile whenever you want.
-
-## 5. No Third Parties
-Blukit doesn't use any ads, tracking, or cloud services.
+## 5. Ephemeral Nature
+Vibes are temporary. All history is automatically cleared from your device every 12 hours.
 
 ## 6. Changes
-We might update this policy from time to time. If we do, we'll change the date at the top.
+Any changes to this policy will be focused on increasing your privacy.
 
-## 7. Get in Touch
-If you have questions, email us at: **muthu.ramadoss@gmail.com**
+## 7. Contact
+muthu.ramadoss@gmail.com

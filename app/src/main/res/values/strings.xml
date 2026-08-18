@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_slogan">MAKE PEOPLE VIBE</string>
-    <string name="app_name">BLUKIT</string>
+    <string name="app_slogan">SPREAD VIBES</string>
+    <string name="app_name">blukit</string>
 
     <string name="nav_watch">BLUKIT</string>
     <string name="nav_shout">ENERGY</string>
@@ -10,8 +10,8 @@
     <!-- People Screen (Landing) -->
     <string name="watch_title">BLUKIT</string>
     <string name="watch_broadcast_desc">%1$d PEOPLE NEARBY</string>
-    <string name="watch_welcome_title">MAKE PEOPLE VIBE</string>
-    <string name="watch_welcome_desc">SPREAD VIBES. HEAR THE PEOPLE ROAR. CONNECT WITHOUT INTERNET.</string>
+    <string name="watch_welcome_title">SPREAD VIBES</string>
+    <string name="watch_welcome_desc">CONNECT WITH ANY CROWD. ANONYMOUS, SAFE, SECURE. NO INTERNET NEEDED.</string>
     <string name="watch_empty_hint">Start the vibe below!</string>
 
     <!-- Ripples Screen (Presence) -->
@@ -47,7 +47,7 @@
 
     <!-- Technical/System -->
     <string name="permission_title">BLUKIT</string>
-    <string name="permission_desc">BLUKIT USES RADIOS TO CONNECT WITH PEOPLE WITHOUT INTERNET.</string>
+    <string name="permission_desc">BLUKIT USES LOCAL RADIOS TO SPREAD VIBES WITHOUT INTERNET or DATA COLLECTION.</string>
     <string name="permission_grant">JOIN THE PEOPLE</string>
     <string name="radio_warning_bluetooth">RADIOS OFF</string>
     <string name="radio_warning_required">RADIOS MUST BE ON TO HEAR THE PEOPLE.</string>
