@@ -264,12 +264,12 @@ fun BlukitInput(
                 // SEGMENT 1: IDENTITY (Persona)
                 Row(
                     modifier = Modifier
-                        .weight(0.6f)
+                        .weight(0.4f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(30.dp, 4.dp, 4.dp, 30.dp))
-                        .background(Color.White.copy(alpha = 0.03f))
-                        .padding(start = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(Color.White.copy(alpha = 0.03f)),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     UserPersona(
                         nickname = nickname,
@@ -361,8 +361,8 @@ fun BlukitInput(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Flare,
-                                contentDescription = "Vibe",
+                                imageVector = Icons.AutoMirrored.Rounded.Send,
+                                contentDescription = "Send",
                                 tint = if (value.isNotBlank()) Color.Black else Color.White.copy(alpha = 0.2f),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -393,19 +393,19 @@ private fun UserPersona(
         label = "Pulse"
     )
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .padding(horizontal = 8.dp)
-            .height(56.dp)
+            .fillMaxHeight()
+            .padding(horizontal = 4.dp)
     ) {
-        Box(contentAlignment = Alignment.Center) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
             Surface(
                 shape = CircleShape,
                 color = (if (isUnknown) StealthAmber else StealthPrimary).copy(alpha = 0.1f),
                 modifier = Modifier
-                    .size(42.dp)
+                    .fillMaxSize()
                     .graphicsLayer {
                         scaleX = pulseScale
                         scaleY = pulseScale
@@ -415,11 +415,11 @@ private fun UserPersona(
             Surface(
                 shape = CircleShape,
                 color = Color(0xFF12141A),
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(24.dp),
                 border = BorderStroke(1.dp, if (isUnknown) StealthAmber.copy(alpha = 0.5f) else StealthPrimary.copy(alpha = 0.5f))
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(text = emoji, fontSize = 16.sp)
+                    Text(text = emoji, fontSize = 12.sp)
                 }
             }
 
@@ -428,45 +428,34 @@ private fun UserPersona(
                 contentDescription = null,
                 tint = if (isUnknown) StealthAmber else StealthPrimary,
                 modifier = Modifier
-                    .size(12.dp)
+                    .size(10.dp)
                     .align(Alignment.BottomEnd)
-                    .offset(x = 4.dp, y = 4.dp)
+                    .offset(x = 2.dp, y = 2.dp)
                     .background(Color.Black, CircleShape)
                     .padding(1.dp)
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            BasicTextField(
-                value = localNickname,
-                onValueChange = { newName ->
-                    localNickname = newName
-                    onNicknameChange(newName.ifBlank { "?" })
-                },
-                modifier = Modifier
-                    .widthIn(max = 100.dp)
-                    .focusRequester(focusRequester)
-                    .testTag("IdentityVibeInput"),
-                textStyle = MaterialTheme.typography.labelLarge.copy(
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Black,
-                    color = if (airIsStill) Color.Red else if (isUnknown) Color.White.copy(alpha = 0.4f) else StealthPrimary,
-                    textAlign = TextAlign.Center,
-                    letterSpacing = 1.sp
-                ),
-                singleLine = true,
-                cursorBrush = SolidColor(StealthPrimary)
-            )
-            Text(
-                text = if (isUnknown) "SET NAME" else "PERSONA",
-                fontSize = 6.sp,
+        BasicTextField(
+            value = localNickname,
+            onValueChange = { newName ->
+                localNickname = newName
+                onNicknameChange(newName.ifBlank { "?" })
+            },
+            modifier = Modifier
+                .widthIn(max = 80.dp)
+                .focusRequester(focusRequester)
+                .testTag("IdentityVibeInput"),
+            textStyle = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 8.sp,
                 fontWeight = FontWeight.Black,
-                color = if (isUnknown) StealthAmber else Color.White.copy(alpha = 0.2f),
-                letterSpacing = 1.sp
-            )
-        }
+                color = if (airIsStill) Color.Red else if (isUnknown) Color.White.copy(alpha = 0.4f) else StealthPrimary,
+                textAlign = TextAlign.Center,
+                letterSpacing = 0.5.sp
+            ),
+            singleLine = true,
+            cursorBrush = SolidColor(StealthPrimary)
+        )
     }
 }
 
@@ -521,36 +510,34 @@ fun VibeNode(
             shape = CircleShape,
             tonalElevation = 4.dp
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Box(contentAlignment = Alignment.Center) { // NAME CENTERED OVER ICON
                 val mediumIcon = when (device.medium) {
                     P2PDevice.ConnectionMedium.BLUETOOTH -> Icons.Rounded.Bluetooth
                     P2PDevice.ConnectionMedium.WIFI -> Icons.Rounded.Wifi
                     P2PDevice.ConnectionMedium.LOCATION -> Icons.Rounded.LocationOn
+                    else -> Icons.Rounded.LocationOn
                 }
 
                 Icon(
                     imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Sync else if (isSelected) Icons.Rounded.CheckCircle else mediumIcon,
                     contentDescription = null,
                     tint = when {
-                        isSelected -> Color.White
-                        isVibed -> StealthRose
-                        isPeerVibed -> StealthAmber
-                        else -> Color.White.copy(alpha = 0.7f)
+                        isSelected -> Color.White.copy(alpha = 0.1f)
+                        isVibed -> StealthRose.copy(alpha = 0.1f)
+                        isPeerVibed -> StealthAmber.copy(alpha = 0.1f)
+                        else -> Color.White.copy(alpha = 0.05f)
                     },
-                    modifier = Modifier.size((nodeSize.value / 2.5f).dp)
+                    modifier = Modifier.size((nodeSize.value / 1.5f).dp)
                 )
-                val displayName = (device.name ?: "?").take(7).uppercase()
+                
+                val displayName = (device.name ?: "?").take(4).uppercase()
                 Text(
                     text = if (!onlyTies && isVibed) "$displayName+" else displayName,
-                    fontSize = 8.sp,
-                    color = when {
-                        isSelected -> Color.White
-                        isVibed -> StealthRose
-                        isPeerVibed -> StealthAmber
-                        else -> Color.White.copy(alpha = 0.6f)
-                    },
+                    fontSize = 11.sp,
+                    color = Color.White,
                     fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp
+                    letterSpacing = 0.5.sp,
+                    modifier = Modifier.graphicsLayer { alpha = 0.9f }
                 )
             }
         }
