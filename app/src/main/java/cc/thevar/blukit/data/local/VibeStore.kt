@@ -8,6 +8,7 @@ import cc.thevar.blukit.data.local.entities.ContactEntity
 import cc.thevar.blukit.data.local.entities.PeerEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,14 +28,15 @@ import java.io.File
  */
 class VibeStore(
     private val context: Context,
-    private val cryptoManager: CryptoManager
+    private val cryptoManager: CryptoManager,
+    private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO
 ) {
     private val messagesLogFile = File(context.filesDir, "vibes_log.bin")
     private val groupsFile = File(context.filesDir, "groups.bin")
     private val peersFile = File(context.filesDir, "peers.bin")
     private val contactsFile = File(context.filesDir, "contacts.bin")
 
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     private val _messages = MutableStateFlow<List<MessagePayload>>(emptyList())
     val messages: StateFlow<List<MessagePayload>> = _messages.asStateFlow()

@@ -79,7 +79,6 @@ class CommandmentsTest {
             BlukitTheme {
                 BlukitApp(
                     repository = repository,
-                    contactRepository = contactRepository,
                     vibeStore = vibeStore,
                     radioStateManager = radioStateManager,
                     p2pController = p2p,
@@ -90,6 +89,6 @@ class CommandmentsTest {
         }
 
         // Power 1: Users must land on SPREAD VIBES
-        composeTestRule.onNodeWithText("SPREAD VIBES", ignoreCase = true, substring = true).assertExists()
+        composeTestRule.onAllNodesWithText("SPREAD VIBES", ignoreCase = true, substring = true).onFirst().assertExists()
     }
 }

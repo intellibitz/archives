@@ -27,11 +27,17 @@ class BluetoothViewModelTest {
 
     private val p2pController: P2PController = mockk(relaxed = true)
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
+    private val repository: cc.thevar.blukit.data.repository.IdentityRepository = mockk(relaxed = true)
+    private val vibeStore: cc.thevar.blukit.data.local.VibeStore = mockk(relaxed = true)
     private lateinit var viewModel: BluetoothViewModel
 
     private val harmonyFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = false, isLocationEnabled = false, isWifiEnabled = false))
     private val permissionFlow = MutableStateFlow(false)
     private val errorFlow = MutableStateFlow<cc.thevar.blukit.network.p2p.P2PError?>(null)
+    private val scannedDevicesFlow = MutableStateFlow<List<cc.thevar.blukit.domain.model.P2PDevice>>(emptyList())
+    private val messagesFlow = MutableStateFlow<List<cc.thevar.blukit.domain.model.MessagePayload>>(emptyList())
+    private val groupsFlow = MutableStateFlow<List<cc.thevar.blukit.domain.model.VibeGroup>>(emptyList())
+    private val connectedLinksFlow = MutableStateFlow<Set<String>>(emptySet())
     
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -46,19 +52,22 @@ class BluetoothViewModelTest {
         every { android.util.Log.e(any<String>(), any<String>()) } returns 0
         
         every { radioStateManager.radioStates } returns harmonyFlow
-        every { p2pController.scannedDevices } returns MutableStateFlow(emptyList())
-        every { p2pController.connectedLinks } returns MutableStateFlow(emptySet())
+        every { p2pController.scannedDevices } returns scannedDevicesFlow
+        every { p2pController.connectedLinks } returns connectedLinksFlow
         every { p2pController.incomingLinkRequests } returns MutableStateFlow(emptySet())
         every { p2pController.isDiscovering } returns MutableStateFlow(false)
         every { p2pController.isAdvertising } returns MutableStateFlow(false)
         every { p2pController.errors } returns errorFlow
         every { p2pController.isConnected } returns MutableStateFlow(false)
-        every { p2pController.messages } returns MutableStateFlow(emptyList())
+        every { p2pController.messages } returns messagesFlow
+        
+        every { repository.vibedPeers } returns MutableStateFlow(emptySet())
+        every { vibeStore.groups } returns groupsFlow
 
         val permissionManager = mockk<cc.thevar.blukit.data.system.SpreadPermissionManager>(relaxed = true)
         every { permissionManager.permissionsGranted } returns permissionFlow
 
-        viewModel = BluetoothViewModel(p2pController, radioStateManager, permissionManager)
+        viewModel = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore)
     }
 
     @After
@@ -86,6 +95,9 @@ class BluetoothViewModelTest {
 
     @Test
     fun `test Awakening The Vibes triggers discovery`() {
+        harmonyFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true, isWifiEnabled = true)
+        permissionFlow.value = true
+        
         viewModel.startScan()
         verify { p2pController.startDiscovery() }
         verify { p2pController.startAdvertising() }
@@ -109,6 +121,50 @@ class BluetoothViewModelTest {
             assertEquals("The Vibes must reflect the disturbed Air", "The Air is Disturbed", disturbed.uiError?.message)
             
             cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `test automatic scan when healthy`() = runTest {
+        // healthy radios + permissions
+        harmonyFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true, isWifiEnabled = true)
+        permissionFlow.value = true
+        
+        // Use TestScope to let background jobs run
+        advanceUntilIdle()
+        
+        verify { p2pController.startDiscovery() }
+        verify { p2pController.startAdvertising() }
+    }
+
+    @Test
+    fun `test selection management`() = runTest {
+        viewModel.state.test {
+            skipItems(1) // Initial empty state
+            
+            viewModel.toggleDeviceSelection("device-1")
+            assertTrue(awaitItem().selectedDevices.contains("device-1"))
+            
+            viewModel.toggleDeviceSelection("device-1")
+            assertTrue(awaitItem().selectedDevices.isEmpty())
+            
+            viewModel.toggleDeviceSelection("device-2")
+            assertTrue(awaitItem().selectedDevices.contains("device-2"))
+            
+            viewModel.clearSelection()
+            assertTrue(awaitItem().selectedDevices.isEmpty())
+        }
+    }
+
+    @Test
+    fun `test energy surge on message`() = runTest {
+        viewModel.energySurge.test {
+            assertEquals(0f, awaitItem())
+            
+            messagesFlow.value = listOf(mockk(relaxed = true))
+            
+            assertEquals(1f, awaitItem())
+            assertEquals(0f, awaitItem())
         }
     }
 }

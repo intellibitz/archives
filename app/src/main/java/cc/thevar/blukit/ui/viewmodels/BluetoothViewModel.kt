@@ -135,8 +135,10 @@ class BluetoothViewModel(
 
     fun startScan() {
         refreshRadios()
-        p2pController.startDiscovery()
-        p2pController.startAdvertising()
+        if (state.value.isBluetoothEnabled && state.value.permissionsGranted) {
+            p2pController.startDiscovery()
+            p2pController.startAdvertising()
+        }
     }
 
     fun refreshRadios() {
@@ -154,6 +156,13 @@ class BluetoothViewModel(
     }
 
     fun connectToDevice(device: P2PDevice) {
+        if (state.value.connectedLinks.contains(device.id)) return
+        
+        if (p2pController.isNearbyConnected(device.id)) {
+             p2pController.requestLink(device)
+             return
+        }
+
         _manualConnectionState.value = AirConnectionState.Connecting
         p2pController.connectToDevice(device)
             .onEach { status ->

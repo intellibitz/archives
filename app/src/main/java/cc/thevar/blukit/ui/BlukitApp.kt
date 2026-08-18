@@ -12,7 +12,6 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -111,7 +110,6 @@ interface SpreadPermissionsState {
 fun BlukitApp(
     onEnterPip: () -> Unit,
     repository: IdentityRepository,
-    contactRepository: ContactRepository,
     vibeStore: VibeStore,
     radioStateManager: RadioStateManager,
     p2pController: P2PController,
@@ -120,9 +118,24 @@ fun BlukitApp(
 ) {
     val context = LocalContext.current
     val permissionManager = (context.applicationContext as BlukitApplication).spreadPermissionManager
-    val viewModel: MainViewModel = viewModel(factory = object : ViewModelProvider.Factory { override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, vibeStore) as T })
-    val bluetoothViewModel: BluetoothViewModel = viewModel(factory = object : ViewModelProvider.Factory { override fun <T : ViewModel> create(modelClass: Class<T>): T = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore) as T })
-    val supremePowerViewModel: SupremePowerViewModel = viewModel(factory = object : ViewModelProvider.Factory { override fun <T : ViewModel> create(modelClass: Class<T>): T = SupremePowerViewModel(supremePowerManager) as T })
+    val viewModel: MainViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, vibeStore) as T
+        }
+    )
+    val bluetoothViewModel: BluetoothViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore) as T
+        }
+    )
+    val supremePowerViewModel: SupremePowerViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = SupremePowerViewModel(supremePowerManager) as T
+        }
+    )
     
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emoji by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
@@ -180,7 +193,9 @@ fun BlukitApp(
                             onStopScan = bluetoothViewModel::stopScan,
                             onDeviceClick = { device ->
                                 if (bluetoothState.selectedDevices.isEmpty()) {
+                                    val isVibed = (device.persistentId ?: device.id) in bluetoothState.vibedPeers
                                     device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id)
+                                    if (!isVibed) backStack.add(Route.Focus)
                                 } else {
                                     bluetoothViewModel.toggleDeviceSelection(device.id)
                                 }
@@ -275,14 +290,27 @@ fun BlukitApp(
                 roarsCount = roarsCount, vibesCount = vibesCount, lowPowerMode = lowPowerMode, isStealthMode = isStealthMode,
                 incomingLinkRequests = bluetoothState.incomingLinkRequests, selectedDevices = bluetoothState.selectedDevices, scannedDevices = bluetoothState.scannedDevices,
                 connectedLinks = bluetoothState.connectedLinks, vibedPeers = bluetoothState.vibedPeers, messages = bluetoothState.messages,
-                onNavigate = { route -> if (currentRoute != route) backStack.add(route) },
+                onNavigate = { route -> 
+                    if (currentRoute != route) {
+                        focusManager.clearFocus()
+                        backStack.add(route) 
+                    }
+                },
                 onDeviceClick = { device ->
                     if (bluetoothState.selectedDevices.isEmpty()) {
                         if (currentRoute is Route.Vibes || currentRoute is Route.SideVibes) {
                             val group = bluetoothState.groups.find { it.memberIds.contains(device.id) || it.memberIds.contains(device.persistentId) }
                             if (group != null) backStack.add(Route.VibeDetail(group.id))
-                            else { device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id) }
-                        } else { device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id) }
+                            else { 
+                                val isVibed = (device.persistentId ?: device.id) in bluetoothState.vibedPeers
+                                device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id) 
+                                if (!isVibed) backStack.add(Route.Focus)
+                            }
+                        } else { 
+                            val isVibed = (device.persistentId ?: device.id) in bluetoothState.vibedPeers
+                            device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id) 
+                            if (!isVibed) backStack.add(Route.Focus)
+                        }
                     } else { bluetoothViewModel.toggleDeviceSelection(device.id) }
                 },
                 onDeviceLongClick = { selectedPersonaForMenu = it },
@@ -324,7 +352,9 @@ fun BlukitApp(
                 isTied = selectedPersonaForMenu!!.id in bluetoothState.connectedLinks,
                 onFocus = {
                     val device = selectedPersonaForMenu!!
+                    val isVibed = (device.persistentId ?: device.id) in bluetoothState.vibedPeers
                     device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id)
+                    if (!isVibed) backStack.add(Route.Focus)
                     selectedPersonaForMenu = null
                 },
                 onVibe = {
@@ -397,14 +427,15 @@ fun BlukitHub(
         }
 
         Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), color = Color.Black.copy(alpha = 0.95f), shape = RoundedCornerShape(32.dp), border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)), tonalElevation = 12.dp) {
-            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)) {
+            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp).imePadding()) {
                 val cloudDevices = if (currentRoute is Route.Focus) scannedDevices.filter { it.persistentId in vibedPeers || it.id in vibedPeers } else scannedDevices
                 AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Focus || currentRoute is Route.Vibes || currentRoute is Route.SideVibes) {
-                    UnifiedPersonaCloud(devices = cloudDevices, vibedPeers = vibedPeers, connectedLinks = connectedLinks, activeBubbles = messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, onDeviceClick = onDeviceClick, onDeviceLongClick = onDeviceLongClick)
+                    val actualDevices = if (currentRoute is Route.Focus) scannedDevices else cloudDevices
+                    UnifiedPersonaCloud(devices = actualDevices, vibedPeers = vibedPeers, connectedLinks = connectedLinks, activeBubbles = messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, onDeviceClick = onDeviceClick, onDeviceLongClick = onDeviceLongClick)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Vibes) {
-                    BlukitInput(nickname = nickname, emoji = emoji, airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted, onNicknameChange = onSaveNickname, personaFocusRequester = personaFocusRequester, value = messageText, onValueChange = onMessageChange, onSend = onSend, vibeCount = vibeCount, placeholder = "SPREAD VIBES…", modifier = Modifier.fillMaxWidth())
+                    BlukitInput(nickname = nickname, emoji = emoji, airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted, onNicknameChange = onSaveNickname, personaFocusRequester = personaFocusRequester, value = messageText, onValueChange = onMessageChange, onSend = onSend, vibeCount = vibeCount, modifier = Modifier.fillMaxWidth())
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 UnifiedBlukitBadge(energy = energySurge, rotation = hubRotation, userCount = userCount, linksCount = linksCount, roarsCount = roarsCount, vibesCount = vibesCount, lowPowerMode = lowPowerMode, permissionsGranted = permissionsGranted, isPermanentlyDenied = isPermanentlyDenied, isStealthMode = isStealthMode, incomingLinkRequests = incomingLinkRequests, isBluetoothEnabled = isBluetoothEnabled, isLocationEnabled = isLocationEnabled, isWifiEnabled = isWifiEnabled, currentRoute = currentRoute, onNavigate = onNavigate, onAwakenBluetooth = onAwakenBluetooth, onAwakenLocation = onAwakenLocation, onAwakenWifi = onAwakenWifi, onGrantPermissions = onGrantPermissions, onOpenSettings = onOpenSettings, onToggleStealth = onToggleStealth, onToggleLowPower = onToggleLowPower, onClearHistory = onClearHistory, onLogout = onLogout, onAcceptLink = onAcceptLink)
@@ -450,7 +481,10 @@ fun UnifiedBlukitBadge(
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                VisualEnergyPicker(currentRoute = currentRoute, userCount = userCount, linksCount = linksCount, vibeCount = vibesCount, energy = energy, rotation = rotation, lowPowerMode = lowPowerMode, onNavigate = onNavigate)
+                VisualEnergyPicker(
+                    currentRoute = currentRoute,
+                    onNavigate = onNavigate
+                )
             }
             if (incomingLinkRequests.isNotEmpty()) {
                 Spacer(modifier = Modifier.width(12.dp))
@@ -471,17 +505,38 @@ fun UnifiedBlukitBadge(
 }
 
 @Composable
-private fun VisualEnergyPicker(currentRoute: Route, userCount: Int, linksCount: Int, vibeCount: Int, energy: Float, rotation: Float, lowPowerMode: Boolean, onNavigate: (Route) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.05f)).padding(2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+private fun VisualEnergyPicker(
+    currentRoute: Route,
+    onNavigate: (Route) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White.copy(alpha = 0.05f))
+            .padding(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         val isAll = currentRoute is Route.Blukit
-        Surface(onClick = { onNavigate(Route.Blukit) }, shape = RoundedCornerShape(12.dp), color = if (isAll) Color.White.copy(alpha = 0.12f) else Color.Transparent, modifier = Modifier.height(56.dp).weight(1.5f)) {
+        Surface(
+            onClick = { onNavigate(Route.Blukit) }, 
+            shape = RoundedCornerShape(12.dp), 
+            color = if (isAll) Color.White.copy(alpha = 0.12f) else Color.Transparent, 
+            modifier = Modifier.height(56.dp).weight(1.5f).testTag("HubTab_ALL")
+        ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Icon(imageVector = Icons.Rounded.Groups, contentDescription = null, tint = if (isAll) StealthPrimary else Color.White.copy(alpha = 0.3f), modifier = Modifier.size(20.dp))
                 Text("ALL", fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (isAll) StealthPrimary else Color.White.copy(alpha = 0.3f), letterSpacing = 1.sp)
             }
         }
         val isFocus = currentRoute is Route.Focus
-        Surface(onClick = { onNavigate(Route.Focus) }, shape = RoundedCornerShape(12.dp), color = if (isFocus) Color.White.copy(alpha = 0.08f) else Color.Transparent, modifier = Modifier.height(56.dp).weight(1f)) {
+        Surface(
+            onClick = { onNavigate(Route.Focus) }, 
+            shape = RoundedCornerShape(12.dp), 
+            color = if (isFocus) Color.White.copy(alpha = 0.08f) else Color.Transparent, 
+            modifier = Modifier.height(56.dp).weight(1f).testTag("HubTab_FOCUS")
+        ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Icon(imageVector = Icons.Rounded.FilterCenterFocus, contentDescription = null, tint = if (isFocus) StealthPrimary else Color.White.copy(alpha = 0.2f), modifier = Modifier.size(16.dp))
                 Text("FOCUS", fontSize = 7.sp, fontWeight = FontWeight.Bold, color = if (isFocus) StealthPrimary else Color.White.copy(alpha = 0.2f))
@@ -489,14 +544,24 @@ private fun VisualEnergyPicker(currentRoute: Route, userCount: Int, linksCount: 
         }
         Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
         val isVibes = currentRoute is Route.Vibes
-        Surface(onClick = { onNavigate(Route.Vibes) }, shape = RoundedCornerShape(12.dp), color = if (isVibes) Color.White.copy(alpha = 0.12f) else Color.Transparent, modifier = Modifier.height(56.dp).weight(1.5f)) {
+        Surface(
+            onClick = { onNavigate(Route.Vibes) }, 
+            shape = RoundedCornerShape(12.dp), 
+            color = if (isVibes) Color.White.copy(alpha = 0.12f) else Color.Transparent, 
+            modifier = Modifier.height(56.dp).weight(1.5f).testTag("HubTab_VIBES")
+        ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = if (isVibes) StealthRose else Color.White.copy(alpha = 0.3f), modifier = Modifier.size(20.dp))
                 Text("VIBES", fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (isVibes) StealthRose else Color.White.copy(alpha = 0.3f), letterSpacing = 1.sp)
             }
         }
         val isSide = currentRoute is Route.SideVibes
-        Surface(onClick = { onNavigate(Route.SideVibes) }, shape = RoundedCornerShape(12.dp), color = if (isSide) Color.White.copy(alpha = 0.08f) else Color.Transparent, modifier = Modifier.height(56.dp).weight(1f)) {
+        Surface(
+            onClick = { onNavigate(Route.SideVibes) }, 
+            shape = RoundedCornerShape(12.dp), 
+            color = if (isSide) Color.White.copy(alpha = 0.08f) else Color.Transparent, 
+            modifier = Modifier.height(56.dp).weight(1f).testTag("HubTab_1-1")
+        ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Icon(imageVector = Icons.Rounded.AutoAwesome, contentDescription = null, tint = if (isSide) StealthRose else Color.White.copy(alpha = 0.2f), modifier = Modifier.size(16.dp))
                 Text("1-1", fontSize = 7.sp, fontWeight = FontWeight.Bold, color = if (isSide) StealthRose else Color.White.copy(alpha = 0.2f))

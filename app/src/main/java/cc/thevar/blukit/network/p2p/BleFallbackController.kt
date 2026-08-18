@@ -442,6 +442,7 @@ class BleFallbackController(
         sendHandshake(device.id)
     }
 
+    override fun isNearbyConnected(endpointId: String): Boolean = false
     override fun acceptLink(device: P2PDevice) {
         pendingLinkRequests.remove(device.id)
         _incomingLinkRequests.update { it - device }

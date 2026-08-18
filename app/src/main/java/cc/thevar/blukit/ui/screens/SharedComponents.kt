@@ -3,7 +3,6 @@ package cc.thevar.blukit.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,7 +21,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -142,7 +140,7 @@ fun PersonaOptionsMenu(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = if (isVibed) "REMOVE FOCUS" else "FOCUS (BLOSSOM)", fontWeight = FontWeight.Black)
+                    Text(text = if (isVibed) "UNFOCUS" else "FOCUS", fontWeight = FontWeight.Black)
                 }
 
                 Button(
@@ -154,7 +152,7 @@ fun PersonaOptionsMenu(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = if (isTied) "ALREADY VIBED" else "SECURE VIBE (LINK)", fontWeight = FontWeight.Black)
+                    Text(text = if (isTied) "ALREADY VIBED" else "VIBE", fontWeight = FontWeight.Black)
                 }
             }
         },
@@ -164,65 +162,6 @@ fun PersonaOptionsMenu(
             }
         }
     )
-}
-
-@Composable
-fun BlukitHeartbeat(
-    energy: Float,
-    rotation: Float,
-    lowPowerMode: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "Heartbeat")
-    
-    val vibeScale by infiniteTransition.animateFloat(
-        initialValue = 0.9f + (energy * 0.1f),
-        targetValue = if (lowPowerMode) 1.05f else 1.25f + (energy * 0.3f), 
-        animationSpec = infiniteRepeatable(
-            animation = tween(if (lowPowerMode) 3000 else 1500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Scale"
-    )
-
-    val auraAlpha by infiniteTransition.animateFloat(
-        initialValue = if (lowPowerMode) 0.1f else 0.2f,
-        targetValue = if (lowPowerMode) 0.3f else 0.6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(if (lowPowerMode) 4000 else 2000, easing = LinearOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Alpha"
-    )
-
-    Box(contentAlignment = Alignment.Center, modifier = modifier.size(52.dp)) {
-        Canvas(modifier = Modifier.fillMaxSize().blur(12.dp)) {
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(StealthPrimary.copy(alpha = auraAlpha), Color.Transparent)
-                ),
-                radius = size.minDimension / 1.2f * vibeScale
-            )
-        }
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            rotate(rotation) {
-                val scanBrush = Brush.sweepGradient(
-                    0.0f to StealthPrimary.copy(alpha = 0.8f), 
-                    0.1f to StealthPrimary.copy(alpha = 0.1f), 
-                    0.25f to Color.Transparent, 
-                    center = center
-                )
-                drawCircle(brush = scanBrush, radius = size.minDimension / 2.2f)
-            }
-        }
-        Box(
-            modifier = Modifier
-                .size(24.dp * vibeScale)
-                .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(StealthPrimary, StealthRose)))
-                .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
-        )
-    }
 }
 
 @Composable
@@ -236,7 +175,6 @@ fun BlukitInput(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     vibeCount: Int = 0,
-    placeholder: String = "SPREAD VIBES...",
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -251,7 +189,7 @@ fun BlukitInput(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp), // Slightly taller for segmented feel
+                .height(64.dp), 
             color = Color.Black.copy(alpha = 0.85f),
             shape = RoundedCornerShape(32.dp),
             border = BorderStroke(1.dp, borderGlow),
@@ -262,14 +200,14 @@ fun BlukitInput(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // SEGMENT 1: IDENTITY (Persona)
-                Row(
+                Box(
                     modifier = Modifier
-                        .weight(0.4f)
+                        .weight(0.35f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(30.dp, 4.dp, 4.dp, 30.dp))
-                        .background(Color.White.copy(alpha = 0.03f)),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                        .background(Color.White.copy(alpha = 0.03f))
+                        .clickable { personaFocusRequester.requestFocus() },
+                    contentAlignment = Alignment.Center
                 ) {
                     UserPersona(
                         nickname = nickname,
@@ -396,9 +334,7 @@ private fun UserPersona(
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxHeight()
-            .padding(horizontal = 4.dp)
+        modifier = Modifier.fillMaxHeight().padding(horizontal = 4.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
             Surface(
@@ -436,26 +372,35 @@ private fun UserPersona(
             )
         }
 
-        BasicTextField(
-            value = localNickname,
-            onValueChange = { newName ->
-                localNickname = newName
-                onNicknameChange(newName.ifBlank { "?" })
-            },
-            modifier = Modifier
-                .widthIn(max = 80.dp)
-                .focusRequester(focusRequester)
-                .testTag("IdentityVibeInput"),
-            textStyle = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Black,
-                color = if (airIsStill) Color.Red else if (isUnknown) Color.White.copy(alpha = 0.4f) else StealthPrimary,
-                textAlign = TextAlign.Center,
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            BasicTextField(
+                value = localNickname,
+                onValueChange = { newName ->
+                    localNickname = newName
+                    onNicknameChange(newName.ifBlank { "?" })
+                },
+                modifier = Modifier
+                    .widthIn(max = 60.dp)
+                    .focusRequester(focusRequester)
+                    .testTag("IdentityVibeInput"),
+                textStyle = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (airIsStill) Color.Red else if (isUnknown) Color.White.copy(alpha = 0.4f) else StealthPrimary,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.5.sp
+                ),
+                singleLine = true,
+                cursorBrush = SolidColor(StealthPrimary)
+            )
+            Text(
+                text = " (YOU)",
+                fontSize = 5.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.2f),
                 letterSpacing = 0.5.sp
-            ),
-            singleLine = true,
-            cursorBrush = SolidColor(StealthPrimary)
-        )
+            )
+        }
     }
 }
 
@@ -491,7 +436,11 @@ fun VibeNode(
         ) {}
 
         Surface(
-            modifier = Modifier.size(nodeSize).clip(CircleShape).combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            modifier = Modifier
+                .size(nodeSize)
+                .clip(CircleShape)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .testTag("PersonaNode_${device.id}"),
             color = when {
                 isSelected -> Color.White.copy(alpha = 0.2f)
                 isVibed -> StealthRose.copy(alpha = 0.15f)
@@ -510,12 +459,11 @@ fun VibeNode(
             shape = CircleShape,
             tonalElevation = 4.dp
         ) {
-            Box(contentAlignment = Alignment.Center) { // NAME CENTERED OVER ICON
+            Box(contentAlignment = Alignment.Center) {
                 val mediumIcon = when (device.medium) {
                     P2PDevice.ConnectionMedium.BLUETOOTH -> Icons.Rounded.Bluetooth
                     P2PDevice.ConnectionMedium.WIFI -> Icons.Rounded.Wifi
                     P2PDevice.ConnectionMedium.LOCATION -> Icons.Rounded.LocationOn
-                    else -> Icons.Rounded.LocationOn
                 }
 
                 Icon(
@@ -530,14 +478,16 @@ fun VibeNode(
                     modifier = Modifier.size((nodeSize.value / 1.5f).dp)
                 )
                 
-                val displayName = (device.name ?: "?").take(4).uppercase()
+                val displayName = (device.name ?: "?").take(7).uppercase()
                 Text(
                     text = if (!onlyTies && isVibed) "$displayName+" else displayName,
                     fontSize = 11.sp,
                     color = Color.White,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 0.5.sp,
-                    modifier = Modifier.graphicsLayer { alpha = 0.9f }
+                    modifier = Modifier
+                        .graphicsLayer { alpha = 0.9f }
+                        .testTag("PersonaNodeName")
                 )
             }
         }
@@ -622,37 +572,56 @@ fun UnifiedPersonaCloud(
         ).take(18)
     }
 
-    FlowRow(
-        modifier = Modifier
-            .padding(vertical = 4.dp, horizontal = 12.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalArrangement = Arrangement.Center,
-        maxItemsInEachRow = 9
+    Surface(
+        color = Color.White.copy(alpha = 0.02f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.05f)),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
     ) {
-        sortedDevices.forEach { device ->
-            val isActive = device.id in activeSenders || device.persistentId in activeSenders
-            val isTied = device.id in connectedLinks
-            val isVibed = device.persistentId in vibedPeers || device.id in vibedPeers
-            
-            if (isActive) {
-                VibeNode(
-                    device = device,
-                    isVibed = isTied,
-                    isSelected = false,
-                    isPeerVibed = isVibed,
-                    onlyTies = false,
-                    modifier = Modifier.size(42.dp).padding(2.dp),
-                    onClick = { onDeviceClick(device) },
-                    onLongClick = { onDeviceLongClick(device) }
-                )
-            } else {
-                VibeDot(
-                    device = device,
-                    modifier = Modifier.padding(2.dp),
-                    onClick = { onDeviceClick(device) },
-                    onLongClick = { onDeviceLongClick(device) }
-                )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "TAP TO FOCUS • LONG PRESS TO VIBE",
+                fontSize = 5.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White.copy(alpha = 0.2f),
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            FlowRow(
+                modifier = Modifier
+                    .padding(vertical = 4.dp, horizontal = 8.dp)
+                    .fillMaxWidth()
+                    .testTag("PersonaCloudRow"),
+                horizontalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.Center,
+                maxItemsInEachRow = 9
+            ) {
+                sortedDevices.forEach { device ->
+                    val isActive = device.id in activeSenders || device.persistentId in activeSenders
+                    val isTied = device.id in connectedLinks
+                    val isVibed = device.persistentId in vibedPeers || device.id in vibedPeers
+                    
+                    if (isActive) {
+                        VibeNode(
+                            device = device,
+                            isVibed = isTied,
+                            isSelected = false,
+                            isPeerVibed = isVibed,
+                            onlyTies = false,
+                            modifier = Modifier.size(42.dp).padding(2.dp),
+                            onClick = { onDeviceClick(device) },
+                            onLongClick = { onDeviceLongClick(device) }
+                        )
+                    } else {
+                        VibeDot(
+                            device = device,
+                            modifier = Modifier.padding(2.dp),
+                            onClick = { onDeviceClick(device) },
+                            onLongClick = { onDeviceLongClick(device) }
+                        )
+                    }
+                }
             }
         }
     }

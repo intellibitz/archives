@@ -25,7 +25,6 @@ class MainActivity : ComponentActivity() {
             BlukitTheme(stealthMode = isStealthMode) {
                 BlukitApp(
                     repository = app.identityRepository,
-                    contactRepository = app.contactRepository,
                     vibeStore = app.vibeStore,
                     radioStateManager = app.radioStateManager,
                     p2pController = app.p2pController,

@@ -256,7 +256,7 @@ private fun VibingVibesTicker(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.Bottom,
-            contentPadding = PaddingValues(top = 100.dp, bottom = 180.dp)
+            contentPadding = PaddingValues(top = 100.dp, bottom = 40.dp)
              ) {
             items(vibes, key = { it.messageId }) { msg ->
                 val isMe = msg.senderId == localDeviceId
@@ -296,39 +296,24 @@ private fun AnimatedVibeItem(
     onLongClick: () -> Unit
 ) {
     Row(
-        verticalAlignment = Alignment.Bottom, // Align with bubble bottom
+        verticalAlignment = Alignment.Bottom,
         horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).animateContentSize()
     ) {
         if (!isMe) {
-            // Attached Persona Node
-            if (senderDevice != null) {
-                VibeNode(
-                    device = senderDevice,
-                    isVibed = isMutual,
-                    isSelected = false,
-                    isPeerVibed = isVibed,
-                    onlyTies = onlyTies,
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                    modifier = Modifier.size(56.dp).padding(bottom = 4.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-
             Surface(
                 color = if (isMutual) StealthRose.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.05f),
                 shape = RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp),
                 border = BorderStroke(0.5.dp, if(isMutual) StealthRose.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)),
                 modifier = Modifier
-                    .widthIn(max = 240.dp)
+                    .widthIn(max = 280.dp)
                     .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.Top
                     ) {
                         val displayName = if (!onlyTies && isMutual) "${msg.senderName}+" else msg.senderName
                         Text(
@@ -336,15 +321,25 @@ private fun AnimatedVibeItem(
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Black,
                             color = if (isMutual) StealthRose else StealthPrimary,
-                            letterSpacing = 0.5.sp
+                            letterSpacing = 0.5.sp,
+                            modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            text = timestamp, 
-                            fontSize = 7.sp, 
-                            color = Color.White.copy(alpha = 0.2f),
-                            fontWeight = FontWeight.Bold
-                        )
+                        
+                        // Attached Persona Node INSIDE bubble, top right
+                        if (senderDevice != null) {
+                            VibeNode(
+                                device = senderDevice,
+                                isVibed = isMutual,
+                                isSelected = false,
+                                isPeerVibed = isVibed,
+                                onlyTies = onlyTies,
+                                onClick = onClick,
+                                onLongClick = onLongClick,
+                                modifier = Modifier.size(42.dp)
+                            )
+                        }
                     }
+                    
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = msg.content,
@@ -352,6 +347,15 @@ private fun AnimatedVibeItem(
                         fontWeight = FontWeight.Bold,
                         color = Color.White.copy(alpha = 0.95f)
                     )
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        Text(
+                            text = timestamp, 
+                            fontSize = 7.sp, 
+                            color = Color.White.copy(alpha = 0.2f),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         } else {

@@ -69,21 +69,50 @@ class IdentityRepositoryTest {
     }
 
     @Test
-    fun testBlockingUsers() = runTest {
-        repository.blockedUsers.test {
+    fun testVibedPeersManagement() = runTest {
+        repository.vibedPeers.test {
             assertTrue(awaitItem().isEmpty())
         }
         
-        repository.blockUser("user1")
-        repository.blockedUsers.test {
-            assertTrue(awaitItem().contains("user1"))
+        repository.toggleVibePeer("peer1")
+        repository.vibedPeers.test {
+            assertTrue(awaitItem().contains("peer1"))
         }
         
-        repository.blockUser("user2")
-        repository.blockedUsers.test {
-            val blocked = awaitItem()
-            assertTrue(blocked.contains("user1"))
-            assertTrue(blocked.contains("user2"))
+        repository.toggleVibePeer("peer1") // Toggle off
+        repository.vibedPeers.test {
+            assertTrue(awaitItem().isEmpty())
         }
+    }
+
+    @Test
+    fun testLowPowerModeToggle() = runTest {
+        repository.lowPowerMode.test {
+            assertFalse(awaitItem())
+        }
+        
+        repository.toggleLowPowerMode(true)
+        repository.lowPowerMode.test {
+            assertTrue(awaitItem())
+        }
+    }
+
+    @Test
+    fun testGetCurrentNickname() = runTest {
+        assertEquals("?", repository.getCurrentNickname())
+        
+        repository.saveNickname("Alice")
+        assertEquals("Alice", repository.getCurrentNickname())
+    }
+
+    @Test
+    fun testPersistenceAcrossReinitialization() = runTest {
+        repository.saveNickname("Alice")
+        repository.saveEmoji("🌹")
+        
+        // Re-init repository
+        val newRepo = IdentityRepositoryImpl(ApplicationProvider.getApplicationContext())
+        assertEquals("Alice", newRepo.getCurrentNickname())
+        assertEquals("🌹", newRepo.emojiAvatar.value)
     }
 }

@@ -39,20 +39,39 @@ class CryptoManagerTest {
     }
 
     @Test
-    fun testSharedSecretDerivation() {
+    fun testLocalEncryptionDecryption() {
+        val originalText = "Sensitive Local Data"
+        val originalBytes = originalText.toByteArray()
+
+        val encryptedBytes = cryptoManager.encryptLocal(originalBytes)
+        assertNotEquals(originalText, encryptedBytes.decodeToString())
+
+        val decryptedBytes = cryptoManager.decryptLocal(encryptedBytes)
+        assertEquals(originalText, decryptedBytes.decodeToString())
+    }
+
+    @Test
+    fun testSharedSecretDerivation_Consistency() {
         val managerA = CryptoManager()
-        val managerB = CryptoManager() // In real test, this would be on a different device
+        val managerB = CryptoManager()
 
-        // This is a simplified test on a single device
-        // We'll use managerA's keys to derive secrets with a hypothetical peerB
         val keyPairA = managerA.getLocalKeyPair()
-        
-        // Hypothetical Peer B (we'll just generate another one on the fly for testing)
-        // In reality, this peer public key comes over the wire
-        val keyPairB = managerA.getLocalKeyPair() 
+        val keyPairB = managerB.getLocalKeyPair()
 
+        // ECDH: A(pubB) == B(pubA)
         val secretA = managerA.deriveSharedSecret(keyPairB.public)
-        assertNotNull(secretA)
-        assertEquals("AES", secretA.algorithm)
+        val secretB = managerB.deriveSharedSecret(keyPairA.public)
+
+        assertArrayEquals(secretA.encoded, secretB.encoded)
+    }
+
+    @Test(expected = Exception::class)
+    fun testDecryptionWithWrongKey() {
+        val key1 = SecretKeySpec(ByteArray(32) { 1 }, "AES")
+        val key2 = SecretKeySpec(ByteArray(32) { 2 }, "AES")
+        val data = "Hello".toByteArray()
+
+        val encrypted = cryptoManager.encrypt(data, key1)
+        cryptoManager.decrypt(encrypted, key2) // Should throw
     }
 }

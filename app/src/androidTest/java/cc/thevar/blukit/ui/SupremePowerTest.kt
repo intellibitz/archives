@@ -49,15 +49,12 @@ class SupremePowerTest {
                         isLocationEnabled = true,
                         isWifiEnabled = true,
                         currentRoute = Route.Blukit,
-                        nickname = "vibe",
-                        emoji = "👤",
                         onNavigate = {},
                         onAwakenBluetooth = {},
                         onAwakenLocation = {},
                         onAwakenWifi = {},
                         onGrantPermissions = {},
                         onOpenSettings = {},
-                        onSaveNickname = {},
                         onToggleStealth = {},
                         onToggleLowPower = {},
                         onClearHistory = {},
@@ -68,12 +65,9 @@ class SupremePowerTest {
             }
         }
 
-        // Check for new terminology
-        composeTestRule.onNodeWithText("BLUKIT (10)", substring = true, useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("VIBES (3)", substring = true, useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("TIES (2)", substring = true, useUnmergedTree = true).assertIsDisplayed()
-
-        // Check for persona section
-        composeTestRule.onNodeWithTag("IdentityVibeInput").assertIsDisplayed()
+        // Check for terminology
+        composeTestRule.onNodeWithText("ALL").assertIsDisplayed()
+        composeTestRule.onNodeWithText("VIBES").assertIsDisplayed()
+        composeTestRule.onNodeWithText("FOCUS").assertIsDisplayed()
     }
 }

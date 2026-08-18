@@ -350,6 +350,8 @@ class NearbyP2PController(
         return flow.asSharedFlow()
     }
 
+    override fun isNearbyConnected(endpointId: String): Boolean = activeConnections.contains(endpointId)
+
     override fun requestLink(device: P2PDevice) {
         pendingLinkRequests.add(device.id)
         updateScannedDevices()

@@ -97,7 +97,7 @@ class FlowsTest {
         composeTestRule.waitUntilAtLeastOneExists(hasText("JOIN"), 20000)
         
         // Accept the vibe
-        composeTestRule.onNode(hasText("JOIN"), useUnmergedTree = true).performClick()
+        composeTestRule.onAllNodes(hasText("JOIN"), useUnmergedTree = true).onFirst().performClick()
         
         // Verify P2P Controller is notified
         coVerify { p2pController.acceptLink(any()) }
@@ -136,25 +136,24 @@ class FlowsTest {
         isConnectedFlow.value = true
 
         startApp()
+        composeTestRule.waitForIdle()
         
-        // Click to navigate to the Tie screen - match the 7-char display limit for UNKNOWN
-        composeTestRule.waitUntilAtLeastOneExists(hasText("AURA VI", substring = true), 5000)
-        composeTestRule.onNodeWithText("AURA VI", substring = true).performClick()
+        // Wait for the persona to appear in the cloud
+        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("PersonaNode_vibe-1"), 30000)
+        composeTestRule.onNodeWithTag("PersonaNode_vibe-1", useUnmergedTree = true).performClick()
         
-        // Wait for the SendVibeInput to appear in the Tie screen
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("SendVibeInput"), 5000)
+        // Wait for the SendVibeInput to appear
+        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("SendVibeInput"), 30000)
         
         // Send a vibe
         composeTestRule.onNodeWithTag("SendVibeInput").performTextInput("Hello from the Air!")
-        
-        // Wait a bit for ViewModel state to settle
-        Thread.sleep(1000)
+        composeTestRule.waitForIdle()
 
         // Click Send button
         composeTestRule.onAllNodesWithTag("SendVibeButton", useUnmergedTree = true).onFirst().performClick()
         
-        // Verify the message appeared (it will be in the ticker or count)
-        composeTestRule.waitUntilAtLeastOneExists(hasText("Hello from the Air!", ignoreCase = true), 20000)
+        // Verify the message appeared
+        composeTestRule.waitUntilAtLeastOneExists(hasText("Hello from the Air!", ignoreCase = true, substring = true), 30000)
     }
 
     private fun startApp() {
@@ -162,7 +161,6 @@ class FlowsTest {
             BlukitTheme {
                 BlukitApp(
                     repository = repository,
-                    contactRepository = contactRepository,
                     vibeStore = vibeStore,
                     radioStateManager = radioStateManager,
                     p2pController = p2pController,

@@ -118,6 +118,8 @@ class CompositeP2PController(
         }
     }
 
+    override fun isNearbyConnected(endpointId: String): Boolean = 
+        nearbyController.isNearbyConnected(endpointId) || bleController.isNearbyConnected(endpointId)
     override fun acceptLink(device: P2PDevice) {
         if (device.id.startsWith("nearby:")) {
             nearbyController.acceptLink(device)

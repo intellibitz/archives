@@ -45,6 +45,7 @@ interface P2PController {
     fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus>
     
     fun requestLink(device: P2PDevice)
+    fun isNearbyConnected(endpointId: String): Boolean
     fun acceptLink(device: P2PDevice)
     fun denyLink(device: P2PDevice)
 

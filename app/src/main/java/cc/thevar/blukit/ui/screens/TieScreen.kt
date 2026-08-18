@@ -183,8 +183,7 @@ fun TieScreen(
                         vibeText = ""
                         focusManager.clearFocus()
                     }
-                },
-                placeholder = "SPREAD VIBES..."
+                }
             )
         }
     }
