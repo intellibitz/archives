@@ -144,7 +144,7 @@ fun BlukitApp(
 
     val hubRotation by rememberInfiniteTransition(label = "HubScan").animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)), label = "Scan")
 
-    var selectedStudentForMenu by remember { mutableStateOf<P2PDevice?>(null) }
+    var selectedPersonaForMenu by remember { mutableStateOf<P2PDevice?>(null) }
 
     LaunchedEffect(currentRoute, bluetoothState.vibedPeers) {
         if (currentRoute is Route.Focus && bluetoothState.vibedPeers.isEmpty()) {
@@ -185,7 +185,7 @@ fun BlukitApp(
                                     bluetoothViewModel.toggleDeviceSelection(device.id)
                                 }
                             },
-                            onDeviceLongClick = { selectedStudentForMenu = it },
+                            onDeviceLongClick = { selectedPersonaForMenu = it },
                             onBroadcastMessage = bluetoothViewModel::roar
                         )
                     }
@@ -208,7 +208,7 @@ fun BlukitApp(
                                     bluetoothViewModel.toggleDeviceSelection(device.id)
                                 }
                             },
-                            onDeviceLongClick = { selectedStudentForMenu = it },
+                            onDeviceLongClick = { selectedPersonaForMenu = it },
                             onBroadcastMessage = bluetoothViewModel::roar
                         )
                     }
@@ -285,7 +285,7 @@ fun BlukitApp(
                         } else { device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id) }
                     } else { bluetoothViewModel.toggleDeviceSelection(device.id) }
                 },
-                onDeviceLongClick = { selectedStudentForMenu = it },
+                onDeviceLongClick = { selectedPersonaForMenu = it },
                 onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
                 onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                 onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
@@ -317,22 +317,22 @@ fun BlukitApp(
             )
         }
 
-        if (selectedStudentForMenu != null) {
-            StudentOptionsMenu(
-                device = selectedStudentForMenu!!,
-                isVibed = (selectedStudentForMenu!!.persistentId ?: selectedStudentForMenu!!.id) in bluetoothState.vibedPeers,
-                isTied = selectedStudentForMenu!!.id in bluetoothState.connectedLinks,
+        if (selectedPersonaForMenu != null) {
+            PersonaOptionsMenu(
+                device = selectedPersonaForMenu!!,
+                isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.vibedPeers,
+                isTied = selectedPersonaForMenu!!.id in bluetoothState.connectedLinks,
                 onFocus = {
-                    val device = selectedStudentForMenu!!
+                    val device = selectedPersonaForMenu!!
                     device.persistentId?.let { pid -> viewModel.toggleVibePeer(pid) } ?: viewModel.toggleVibePeer(device.id)
-                    selectedStudentForMenu = null
+                    selectedPersonaForMenu = null
                 },
                 onVibe = {
-                    val device = selectedStudentForMenu!!
+                    val device = selectedPersonaForMenu!!
                     if (device.id !in bluetoothState.connectedLinks) bluetoothViewModel.connectToDevice(device)
-                    selectedStudentForMenu = null
+                    selectedPersonaForMenu = null
                 },
-                onDismiss = { selectedStudentForMenu = null }
+                onDismiss = { selectedPersonaForMenu = null }
             )
         }
     }
@@ -408,6 +408,30 @@ fun BlukitHub(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 UnifiedBlukitBadge(energy = energySurge, rotation = hubRotation, userCount = userCount, linksCount = linksCount, roarsCount = roarsCount, vibesCount = vibesCount, lowPowerMode = lowPowerMode, permissionsGranted = permissionsGranted, isPermanentlyDenied = isPermanentlyDenied, isStealthMode = isStealthMode, incomingLinkRequests = incomingLinkRequests, isBluetoothEnabled = isBluetoothEnabled, isLocationEnabled = isLocationEnabled, isWifiEnabled = isWifiEnabled, currentRoute = currentRoute, onNavigate = onNavigate, onAwakenBluetooth = onAwakenBluetooth, onAwakenLocation = onAwakenLocation, onAwakenWifi = onAwakenWifi, onGrantPermissions = onGrantPermissions, onOpenSettings = onOpenSettings, onToggleStealth = onToggleStealth, onToggleLowPower = onToggleLowPower, onClearHistory = onClearHistory, onLogout = onLogout, onAcceptLink = onAcceptLink)
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // BOTTOM BRANDING
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_blukit_logo),
+                        contentDescription = null,
+                        tint = StealthPrimary.copy(alpha = 0.3f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "blukit: spread vibes",
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black,
+                        color = StealthPrimary.copy(alpha = 0.3f),
+                        letterSpacing = 1.sp
+                    )
+                }
             }
         }
     }

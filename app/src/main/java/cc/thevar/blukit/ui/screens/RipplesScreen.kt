@@ -78,7 +78,7 @@ fun RipplesScreen(
     
     val activeBubbles = remember { mutableStateListOf<BubbleData>() }
     val processedMessageIds = remember { mutableSetOf<String>() }
-    var selectedStudentForMenu by remember { mutableStateOf<P2PDevice?>(null) }
+    var selectedPersonaForMenu by remember { mutableStateOf<P2PDevice?>(null) }
 
     LaunchedEffect(state.messages) {
         val newMessages = state.messages.filter { it.messageId !in processedMessageIds }
@@ -157,8 +157,8 @@ fun RipplesScreen(
                 onlyTies = onlyTies,
                 isFilterMode = isFilterMode,
                 lowPowerMode = lowPowerMode,
-                onDeviceClick = { selectedStudentForMenu = it },
-                onDeviceLongClick = { selectedStudentForMenu = it },
+                onDeviceClick = { selectedPersonaForMenu = it },
+                onDeviceLongClick = { selectedPersonaForMenu = it },
                 onStartScan = onStartScan,
                 onVibeSurge = { hapticManager.triggerProximityVibe(it) },
                 drawBackground = true,
@@ -173,28 +173,28 @@ fun RipplesScreen(
                     localNickname = localNickname,
                     onlyTies = onlyTies,
                     vibedPeers = vibedPeers,
-                    onDeviceClick = { selectedStudentForMenu = it },
-                    onDeviceLongClick = { selectedStudentForMenu = it },
+                    onDeviceClick = { selectedPersonaForMenu = it },
+                    onDeviceLongClick = { selectedPersonaForMenu = it },
                     modifier = Modifier.fillMaxSize().zIndex(10f)
                 )
-            }
+        }
         }
 
-        // LAYER 4: Student Context Menu
-        if (selectedStudentForMenu != null) {
-            StudentOptionsMenu(
-                device = selectedStudentForMenu!!,
-                isVibed = (selectedStudentForMenu!!.persistentId ?: selectedStudentForMenu!!.id) in vibedPeers,
-                isTied = selectedStudentForMenu!!.id in state.connectedLinks,
+        // LAYER 4: Persona Context Menu
+        if (selectedPersonaForMenu != null) {
+            PersonaOptionsMenu(
+                device = selectedPersonaForMenu!!,
+                isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in vibedPeers,
+                isTied = selectedPersonaForMenu!!.id in state.connectedLinks,
                 onFocus = {
-                    onDeviceClick(selectedStudentForMenu!!)
-                    selectedStudentForMenu = null
+                    onDeviceClick(selectedPersonaForMenu!!)
+                    selectedPersonaForMenu = null
                 },
                 onVibe = {
-                    onDeviceLongClick(selectedStudentForMenu!!)
-                    selectedStudentForMenu = null
+                    onDeviceLongClick(selectedPersonaForMenu!!)
+                    selectedPersonaForMenu = null
                 },
-                onDismiss = { selectedStudentForMenu = null }
+                onDismiss = { selectedPersonaForMenu = null }
             )
         }
 
@@ -220,7 +220,7 @@ private fun EmptyFocusHint(tab: String) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (tab == "FOCUS") "TAP SOULS IN BLUKIT FIELD TO FOCUS." else "ESTABLISH SECURE LINKS TO VIBE.",
+                text = if (tab == "FOCUS") "TAP PERSONAS IN ALL FIELD TO FOCUS." else "ESTABLISH SECURE LINKS TO VIBE.",
                 fontSize = 8.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White.copy(alpha = 0.15f),
@@ -257,25 +257,25 @@ private fun VibingVibesTicker(
             modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.Bottom,
             contentPadding = PaddingValues(top = 100.dp, bottom = 180.dp)
-        ) {
+             ) {
             items(vibes, key = { it.messageId }) { msg ->
                 val isMe = msg.senderId == localDeviceId
                 val senderDevice = remember(msg.senderId, state.scannedDevices) {
                     state.scannedDevices.find { it.id == msg.senderId || it.persistentId == msg.senderId }
                 }
                 
-                AnimatedVibeItem(
-                    msg = msg,
-                    isMe = isMe,
-                    senderDevice = senderDevice,
-                    localNickname = localNickname,
-                    isVibed = msg.senderId in vibedPeers,
-                    isMutual = msg.senderId in state.connectedLinks,
-                    onlyTies = onlyTies,
-                    timestamp = timeFormatter.format(Date(msg.timestamp)),
-                    onClick = { senderDevice?.let { onDeviceClick(it) } },
-                    onLongClick = { senderDevice?.let { onDeviceLongClick(it) } }
-                )
+                    AnimatedVibeItem(
+                        msg = msg,
+                        isMe = isMe,
+                        senderDevice = senderDevice,
+                        localNickname = localNickname,
+                        isVibed = msg.senderId in vibedPeers,
+                        isMutual = msg.senderId in state.connectedLinks,
+                        onlyTies = onlyTies,
+                        timestamp = timeFormatter.format(Date(msg.timestamp)),
+                        onClick = { senderDevice?.let { onDeviceClick(it) } },
+                        onLongClick = { senderDevice?.let { onDeviceLongClick(it) } }
+                    )
             }
         }
     }

@@ -14,12 +14,12 @@ The **ALL** field is where you see everyone around you.
 
 ## 🎯 FOCUS (Filtered Field)
 Cut out the crowd and listen only to those you've blossomed.
-- **Zero-Noise**: Only see and hear vibes from your focused students or friends.
-- **Smart Logic**: Focus lights up the moment you blossom someone, letting you jump to your filtered field anytime. If you unvibe everyone in FOCUS, blukit automatically returns you to the ALL field.
+- **Zero-Noise**: Only see and hear vibes from those you have focused on.
+- **Smart Logic**: Focus lights up the moment you blossom someone, letting you jump to your filtered field anytime. If you unfocus everyone in FOCUS, blukit automatically returns you to the ALL field.
 
 ## ✨ VIBES (Mutual Resonance)
 Establish secure, persistent private group resonances.
-- **Mutual Permission**: Use the **Student Options Menu** (tap or long-press any persona) to request a **VIBE**. Once agreed, you are securely linked in a private group.
+- **Mutual Permission**: Use the **Options Menu** (tap or long-press any persona) to request a **VIBE**. Once agreed, you are securely linked in a private group.
 - **Secure Communication**: All group vibes are encrypted and private.
 
 ## 🤝 1-1 (Personal Vibes)

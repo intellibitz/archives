@@ -103,7 +103,7 @@ fun BlukitTopTitle(
 }
 
 @Composable
-fun StudentOptionsMenu(
+fun PersonaOptionsMenu(
     device: P2PDevice,
     isVibed: Boolean,
     isTied: Boolean,
@@ -154,7 +154,7 @@ fun StudentOptionsMenu(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = if (isTied) "ALREADY VIBED" else "VIBE (SECURE LINK)", fontWeight = FontWeight.Black)
+                    Text(text = if (isTied) "ALREADY VIBED" else "SECURE VIBE (LINK)", fontWeight = FontWeight.Black)
                 }
             }
         },
