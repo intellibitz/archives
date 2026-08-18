@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.VibeGroup
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.viewmodels.AirConnectionState
 import androidx.compose.ui.graphics.Brush
@@ -33,6 +35,8 @@ import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthRose
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.rounded.Flare
+import androidx.compose.material.icons.rounded.AutoAwesome
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -53,6 +57,7 @@ fun TieScreen(
     onNavigateBack: () -> Unit,
     onSendMessage: (String, String) -> Unit,
     onStartSideVibe: (String) -> Unit = {},
+    onToggleFocus: (P2PDevice) -> Unit = {},
     onBlockUser: (String) -> Unit,
     onEnterPip: () -> Unit,
 ) {
@@ -107,30 +112,10 @@ fun TieScreen(
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            // Space for global badge + actions in top right
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
-                }
-                Text(
-                    text = (group?.name ?: "VIBE").uppercase(),
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Black, color = StealthPrimary),
-                    modifier = Modifier.weight(1f).padding(start = 8.dp)
-                )
-                IconButton(onClick = onEnterPip) {
-                    Icon(Icons.Rounded.Info, contentDescription = "PiP", tint = Color.White)
-                }
-                IconButton(onClick = onDisconnect) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Disconnect", tint = Color.White)
-                }
-            }
+            BlukitTopTitle(
+                title = group?.name ?: "VIBE",
+                icon = if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.AutoAwesome
+            )
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
@@ -140,6 +125,29 @@ fun TieScreen(
                 .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
         ) {
+            // Contextual Persona Cloud: Users in this Tie
+            if (group != null) {
+                val groupMembers = remember(group.memberIds, state.scannedDevices) {
+                    state.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
+                }
+                
+                UnifiedPersonaCloud(
+                    devices = groupMembers,
+                    vibedPeers = state.vibedPeers,
+                    connectedLinks = state.connectedLinks,
+                    activeBubbles = state.messages.map { msg ->
+                        BubbleData(
+                            msg.senderId,
+                            msg.content,
+                            msg.timestamp,
+                            msg.messageId,
+                            !msg.receiverId.isNullOrBlank()
+                        )
+                    },
+                    onDeviceClick = onToggleFocus
+                )
+            }
+
             LazyColumn(
                 state = listState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),

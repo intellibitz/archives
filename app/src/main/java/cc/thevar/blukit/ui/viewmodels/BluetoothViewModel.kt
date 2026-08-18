@@ -159,6 +159,7 @@ class BluetoothViewModel(
             .onEach { status ->
                 when (status) {
                     is ConnectionStatus.Connected -> {
+                        android.util.Log.d("BlukitP2P", "CONNECTED level Nearby. Requesting Link (Tie).")
                         _manualConnectionState.value = null
                         p2pController.requestLink(device)
                     }

@@ -131,38 +131,53 @@ fun RipplesScreen(
             filtered.distinctBy { it.messageId }
         }
 
-        // UNIFIED HUB: Messenger Persona Architecture
-        RipplesField(
-            state = state,
-            localDeviceId = localDeviceId,
-            localEmoji = localEmoji,
-            activeBubbles = activeBubbles,
-            selectedDevices = state.selectedDevices,
-            vibedPeers = vibedPeers,
-            externalEnergy = energySurge,
-            onlyTies = onlyTies,
-            isFilterMode = isFilterMode,
-            lowPowerMode = lowPowerMode,
-            onDeviceClick = { selectedStudentForMenu = it },
-            onDeviceLongClick = { selectedStudentForMenu = it },
-            onStartScan = onStartScan,
-            onVibeSurge = { hapticManager.triggerProximityVibe(it) },
-            drawBackground = true,
-            drawNodes = true,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // LAYER 2: Top-level Interactive Ticker
-            VibingVibesTicker(
+        // LAYER 1: Atmosphere (Background + Arcs + Ripples)
+        Column(modifier = Modifier.fillMaxSize()) {
+            val titleIcon = when {
+                onlyTies -> Icons.Rounded.Flare
+                isFilterMode -> Icons.Rounded.FilterCenterFocus
+                else -> Icons.Rounded.Groups
+            }
+            val titleText = when {
+                onlyTies -> "VIBES"
+                isFilterMode -> "FOCUS"
+                else -> "ALL"
+            }
+            
+            BlukitTopTitle(title = titleText, icon = titleIcon)
+            
+            RipplesField(
                 state = state,
-                vibes = vibes,
                 localDeviceId = localDeviceId,
-                localNickname = localNickname,
-                onlyTies = onlyTies,
+                localEmoji = localEmoji,
+                activeBubbles = activeBubbles,
+                selectedDevices = state.selectedDevices,
                 vibedPeers = vibedPeers,
+                externalEnergy = energySurge,
+                onlyTies = onlyTies,
+                isFilterMode = isFilterMode,
+                lowPowerMode = lowPowerMode,
                 onDeviceClick = { selectedStudentForMenu = it },
                 onDeviceLongClick = { selectedStudentForMenu = it },
-                modifier = Modifier.fillMaxSize().zIndex(10f)
-            )
+                onStartScan = onStartScan,
+                onVibeSurge = { hapticManager.triggerProximityVibe(it) },
+                drawBackground = true,
+                drawNodes = true,
+                modifier = Modifier.weight(1f)
+            ) {
+                // LAYER 2: Top-level Interactive Ticker
+                VibingVibesTicker(
+                    state = state,
+                    vibes = vibes,
+                    localDeviceId = localDeviceId,
+                    localNickname = localNickname,
+                    onlyTies = onlyTies,
+                    vibedPeers = vibedPeers,
+                    onDeviceClick = { selectedStudentForMenu = it },
+                    onDeviceLongClick = { selectedStudentForMenu = it },
+                    modifier = Modifier.fillMaxSize().zIndex(10f)
+                )
+            }
         }
 
         // LAYER 4: Student Context Menu
@@ -213,70 +228,6 @@ private fun EmptyFocusHint(tab: String) {
             )
         }
     }
-}
-
-@Composable
-private fun StudentOptionsMenu(
-    device: P2PDevice,
-    isVibed: Boolean,
-    isTied: Boolean,
-    onFocus: () -> Unit,
-    onVibe: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Color.Black.copy(alpha = 0.95f),
-        titleContentColor = StealthPrimary,
-        textContentColor = Color.White,
-        tonalElevation = 12.dp,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = device.emoji, fontSize = 24.sp)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black)
-            }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = "DISTANCE: ${device.proximityLabel.uppercase()}", 
-                    fontSize = 10.sp, 
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White.copy(alpha = 0.4f)
-                )
-                
-                Button(
-                    onClick = onFocus,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isVibed) Color.White.copy(alpha = 0.1f) else StealthPrimary,
-                        contentColor = if (isVibed) Color.White else Color.Black
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(text = if (isVibed) "REMOVE FOCUS" else "FOCUS (BLOSSOM)", fontWeight = FontWeight.Black)
-                }
-
-                Button(
-                    onClick = onVibe,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isTied) StealthRose.copy(alpha = 0.2f) else StealthRose,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(text = if (isTied) "ALREADY VIBED" else "VIBE (SECURE LINK)", fontWeight = FontWeight.Black)
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("CLOSE", color = Color.White.copy(alpha = 0.4f))
-            }
-        }
-    )
 }
 
 @Composable

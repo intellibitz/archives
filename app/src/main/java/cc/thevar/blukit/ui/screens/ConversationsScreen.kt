@@ -1,5 +1,6 @@
 package cc.thevar.blukit.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,140 +14,130 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.VibeGroup
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ConversationsScreen(
     state: BluetoothUiState,
+    isGroupType: Boolean,
     onVibeClick: (VibeGroup) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-
-    Column(modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        Spacer(modifier = Modifier.height(64.dp))
-        Text(
-            text = "ACTIVE VIBES",
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp,
-                color = StealthPrimary
-            )
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (state.groups.isEmpty()) {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "NO PRIVATE VIBES YET",
-                    color = Color.White.copy(alpha = 0.3f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
+    Column(modifier = modifier.fillMaxSize()) {
+        val title = if (isGroupType) "VIBES" else "1-1"
+        val icon = if (isGroupType) Icons.Rounded.Flare else Icons.Rounded.AutoAwesome
+        BlukitTopTitle(title = title, icon = icon)
+        
+        LazyColumn(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            val conversations = state.groups.filter { 
+                if (isGroupType) it.type == VibeGroup.TYPE_TIE else it.type == VibeGroup.TYPE_SIDE 
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 120.dp)
-            ) {
-                items(state.groups.sortedByDescending { it.lastVibeTimestamp }) { group ->
-                    VibeConversationItem(
-                        group = group,
-                        lastMessage = state.messages.findLast { it.groupId == group.id }?.content ?: "START THE VIBE...",
-                        time = timeFormatter.format(Date(group.lastVibeTimestamp)),
-                        onClick = { onVibeClick(group) }
-                    )
+            if (conversations.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "NO $title YET", 
+                            color = Color.White.copy(alpha = 0.2f), 
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        )
+                    }
                 }
+            }
+            items(conversations, key = { it.id }) { group ->
+                VibeGroupItem(group, state.messages, onVibeClick)
             }
         }
     }
 }
 
 @Composable
-fun VibeConversationItem(
+private fun VibeGroupItem(
     group: VibeGroup,
-    lastMessage: String,
-    time: String,
-    onClick: () -> Unit
+    messages: List<MessagePayload>,
+    onVibeClick: (VibeGroup) -> Unit
 ) {
-    val isTie = group.type == VibeGroup.TYPE_TIE
-    
+    val lastMessage = remember(group.id, messages) {
+        messages.filter { it.groupId == group.id }.lastOrNull()
+    }
+    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
     Surface(
-        onClick = onClick,
+        onClick = { onVibeClick(group) },
         color = Color.White.copy(alpha = 0.05f),
         shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp, 
-            if (isTie) StealthRose.copy(alpha = 0.3f) else StealthPrimary.copy(alpha = 0.3f)
-        )
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        if (isTie) StealthRose.copy(alpha = 0.1f) else StealthPrimary.copy(alpha = 0.1f),
-                        CircleShape
-                    ),
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(if (group.type == VibeGroup.TYPE_TIE) StealthRose.copy(alpha = 0.2f) else StealthPrimary.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (isTie) Icons.Rounded.VerifiedUser else Icons.Rounded.Groups,
+                    imageVector = if (group.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.AutoAwesome,
                     contentDescription = null,
-                    tint = if (isTie) StealthRose else StealthPrimary,
-                    modifier = Modifier.size(24.dp)
+                    tint = if (group.type == VibeGroup.TYPE_TIE) StealthRose else StealthPrimary,
+                    modifier = Modifier.size(20.dp)
                 )
             }
             
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = group.name.uppercase(),
                         fontWeight = FontWeight.Black,
-                        fontSize = 14.sp,
+                        fontSize = 11.sp,
                         color = Color.White
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    if (isTie) {
+                    if (lastMessage != null) {
                         Text(
-                            text = "TIE",
+                            text = timeFormatter.format(Date(lastMessage.timestamp)),
                             fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = StealthRose,
-                            modifier = Modifier
-                                .background(StealthRose.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                            color = Color.White.copy(alpha = 0.3f)
                         )
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
                 Text(
-                    text = lastMessage,
+                    text = lastMessage?.content ?: "No vibes yet...",
                     fontSize = 12.sp,
                     color = Color.White.copy(alpha = 0.6f),
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            
-            Text(
-                text = time,
-                fontSize = 10.sp,
-                color = Color.White.copy(alpha = 0.3f)
-            )
         }
     }
 }
