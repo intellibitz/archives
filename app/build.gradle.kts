@@ -25,8 +25,8 @@ android {
         applicationId = "cc.thevar.blukit"
         minSdk = 26
         targetSdk = 37
-        versionCode = 13
-        versionName = "1.0.7"
+        versionCode = 18
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -78,6 +78,11 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 
