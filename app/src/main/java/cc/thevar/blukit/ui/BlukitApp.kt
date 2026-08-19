@@ -586,6 +586,13 @@ private fun EnergyBarContent(isBluetoothOff: Boolean, isLocationOff: Boolean, is
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { onClearHistory() }.padding(horizontal = 8.dp, vertical = 4.dp)) { Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.3f))); Icon(imageVector = Icons.Rounded.DeleteSweep, contentDescription = "Clear Vibes", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(14.dp)) }
                     Box(modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { onResetProfile() }.padding(horizontal = 8.dp, vertical = 4.dp), contentAlignment = Alignment.Center) { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Text(text = "RESET", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.25f))); Icon(imageVector = Icons.Rounded.RestartAlt, contentDescription = "Reset Profile", tint = Color.White.copy(alpha = 0.25f), modifier = Modifier.size(14.dp)) } }
                 }
+                val context = androidx.compose.ui.platform.LocalContext.current
+                Box(modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { 
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
+                    context.startActivity(intent)
+                }.padding(horizontal = 8.dp, vertical = 4.dp), contentAlignment = Alignment.Center) {
+                    Text(text = "PRIVACY", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.25f)))
+                }
             }
         }
     }

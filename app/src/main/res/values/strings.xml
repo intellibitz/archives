@@ -36,6 +36,7 @@
     <string name="mask_start_exploring">JOIN THE PEOPLE</string>
     <string name="mask_clear_whispers">CLEAR VIBES</string>
     <string name="mask_reset_profile">RESET PROFILE</string>
+    <string name="mask_privacy_policy" translatable="false">PRIVACY POLICY</string>
 
     <!-- Confirmation Dialogs -->
     <string name="conf_delete_whispers_title">CLEAR ALL VIBES?</string>
