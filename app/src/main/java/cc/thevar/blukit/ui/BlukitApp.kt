@@ -159,19 +159,27 @@ fun BlukitApp(
         FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
 
         Column(modifier = Modifier.fillMaxSize()) {
-            val topTitle = when (currentRoute) {
-                Route.Blukit -> "ALL"
-                Route.Mine -> "MINE"
-                is Route.VibeDetail -> {
+            var focusedSenderId by remember { mutableStateOf<String?>(null) }
+            
+            val topTitle = when {
+                focusedSenderId != null -> {
+                    val device = bluetoothState.scannedDevices.find { it.id == focusedSenderId || it.persistentId == focusedSenderId }
+                    device?.name?.uppercase() ?: "USER"
+                }
+                currentRoute is Route.Blukit -> "ALL"
+                currentRoute is Route.Mine -> "MINE"
+                currentRoute is Route.VibeDetail -> {
                     val group = bluetoothState.groups.find { it.id == currentRoute.groupId }
                     group?.name ?: "VIBE"
                 }
                 else -> "BLUKIT"
             }
-            val topIcon = when (currentRoute) {
-                Route.Blukit -> Icons.Rounded.Groups
-                Route.Mine -> Icons.Rounded.Flare
-                is Route.VibeDetail -> {
+            
+            val topIcon = when {
+                focusedSenderId != null -> Icons.Rounded.Person
+                currentRoute is Route.Blukit -> Icons.Rounded.Groups
+                currentRoute is Route.Mine -> Icons.Rounded.Flare
+                currentRoute is Route.VibeDetail -> {
                     val group = bluetoothState.groups.find { it.id == currentRoute.groupId }
                     if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing
                 }
@@ -181,7 +189,12 @@ fun BlukitApp(
             BlukitTopTitle(
                 title = topTitle, 
                 icon = topIcon,
-                onBack = if (currentRoute is Route.VibeDetail) { { backStack.removeLastOrNull() } } else null,
+                onBack = if (focusedSenderId != null || currentRoute is Route.VibeDetail) { 
+                    { 
+                        if (focusedSenderId != null) focusedSenderId = null 
+                        else backStack.removeLastOrNull() 
+                    } 
+                } else null,
                 onManage = if (currentRoute is Route.VibeDetail) { { showManageDialog = true } } else null
             )
 
@@ -214,7 +227,9 @@ fun BlukitApp(
                                 onBlockUser = viewModel::blockUser, 
                                 onUnblockUser = viewModel::unblockUser,
                                 onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) },
-                                hasSidebar = showUPH
+                                hasSidebar = showUPH,
+                                externalFocusedId = focusedSenderId,
+                                onFocusChange = { focusedSenderId = it }
                             ) 
                         }
                         Route.Mine -> NavEntry(key) { 
@@ -241,7 +256,9 @@ fun BlukitApp(
                                 onRemoveMember = bluetoothViewModel::removeMemberFromGroup,
                                 showMemberManagement = showManageDialog,
                                 onDismissManagement = { showManageDialog = false },
-                                onEnterPip = onEnterPip
+                                onEnterPip = onEnterPip,
+                                externalFocusedId = focusedSenderId,
+                                onFocusChange = { focusedSenderId = it }
                             ) 
                         }
                         else -> NavEntry(key) { Text("Unknown") }

@@ -8,7 +8,9 @@ blukit is for any crowd. Sports venues, movie halls, universities, subways—any
 
 ## 👥 ALL (Public Vibes)
 The **ALL** field is where you see everyone around you.
-- **Anonymous Presence**: People appear as pulsing glimmers decorated with their name and a tiny `blukit` icon.
+- **Condensed Ticker**: Experience a clutter-free field with **One-User-One-Entry** grouping. See the latest resonance from every nearby person at a glance.
+- **Drill-Down History**: Tap any entry to expand and explore the full chronological history of vibes from that specific user.
+- **Vibe Energy**: Inline counters (`+5 ⇅`) show you exactly how many resonances each user has shared, with clear visual signals for expansion.
 - **Noise Filter**: Integrated filtering allows you to cut out the crowd and listen only to those you've blossomed (vibed) without leaving the ALL view.
 - **Unified Interactions**: 
     - **Tap**: Blossom/Focus a persona in the **Vertical Persona Hub**. 

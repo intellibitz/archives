@@ -63,6 +63,8 @@ fun RipplesScreen(
     onUnblockUser: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
     hasSidebar: Boolean = false,
+    externalFocusedId: String? = null,
+    onFocusChange: (String?) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -98,8 +100,8 @@ fun RipplesScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        val vibes = remember(state.messages, onlyTies, vibedPeers, noiseFilterEnabled) {
-            val filtered = if (onlyTies) {
+        val vibesData = remember(state.messages, onlyTies, vibedPeers, noiseFilterEnabled, externalFocusedId) {
+            val baseVibes = if (onlyTies) {
                 state.messages.filter { !it.receiverId.isNullOrBlank() }
             } else if (noiseFilterEnabled && vibedPeers.isNotEmpty()) {
                 state.messages.filter { 
@@ -108,8 +110,21 @@ fun RipplesScreen(
             } else {
                 state.messages.filter { it.receiverId.isNullOrBlank() }
             }
-            filtered.distinctBy { it.messageId }
+            
+            val counts = baseVibes.groupBy { it.senderId }.mapValues { it.value.size }
+            
+            val filtered = if (externalFocusedId != null) {
+                baseVibes.filter { it.senderId == externalFocusedId }
+            } else {
+                baseVibes.groupBy { it.senderId }
+                    .map { entry -> entry.value.maxBy { it.timestamp } }
+            }
+            
+            val sorted = filtered.sortedBy { it.timestamp }.distinctBy { it.messageId }
+            Triple(sorted, counts, externalFocusedId != null)
         }
+
+        val (vibes, vibeCounts, isDetailView) = vibesData
 
         // LAYER 1: Atmosphere (Background + Arcs + Ripples)
         Column(modifier = Modifier.fillMaxSize()) {
@@ -122,7 +137,7 @@ fun RipplesScreen(
                 vibedPeers = vibedPeers,
                 externalEnergy = energySurge,
                 onlyTies = onlyTies,
-                isFilterMode = noiseFilterEnabled,
+                isFilterMode = noiseFilterEnabled || isDetailView,
                 lowPowerMode = lowPowerMode,
                 onDeviceClick = { selectedPersonaForMenu = it },
                 onDeviceLongClick = { selectedPersonaForMenu = it },
@@ -138,9 +153,17 @@ fun RipplesScreen(
                 VibingVibesTicker(
                     state = state,
                     vibes = vibes,
+                    vibeCounts = vibeCounts,
                     localDeviceId = localDeviceId,
                     vibedPeers = vibedPeers,
-                    onDeviceClick = { selectedPersonaForMenu = it },
+                    isGrouped = !isDetailView,
+                    onVibeClick = { senderId -> 
+                        if (externalFocusedId == null) {
+                            onFocusChange(senderId)
+                        } else {
+                            onFocusChange(null) 
+                        }
+                    },
                     onDeviceLongClick = { selectedPersonaForMenu = it },
                     onDeleteVibe = { messageToDelete = it },
                     modifier = Modifier.fillMaxSize().zIndex(10f)
@@ -240,9 +263,11 @@ private fun EmptyFocusHint() {
 private fun VibingVibesTicker(
     state: BluetoothUiState,
     vibes: List<cc.thevar.blukit.domain.model.MessagePayload>,
+    vibeCounts: Map<String, Int>,
     localDeviceId: String,
     vibedPeers: Set<String>,
-    onDeviceClick: (P2PDevice) -> Unit,
+    isGrouped: Boolean,
+    onVibeClick: (String) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit,
     onDeleteVibe: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -262,7 +287,7 @@ private fun VibingVibesTicker(
             modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
             contentPadding = PaddingValues(top = 8.dp, bottom = 40.dp)
              ) {
-            items(vibes, key = { it.messageId }) { msg ->
+            items(vibes, key = { if (isGrouped) it.senderId else it.messageId }) { msg ->
                 val isMe = msg.senderId == localDeviceId
                 val senderDevice = remember(msg.senderId, state.scannedDevices) {
                     state.scannedDevices.find { it.id == msg.senderId || it.persistentId == msg.senderId }
@@ -272,10 +297,12 @@ private fun VibingVibesTicker(
                         msg = msg,
                         isMe = isMe,
                         senderDevice = senderDevice,
+                        vibeCount = vibeCounts[msg.senderId] ?: 1,
                         isVibed = msg.senderId in vibedPeers,
                         isMutual = msg.senderId in state.connectedLinks,
+                        isGrouped = isGrouped,
                         timestamp = timeFormatter.format(Date(msg.timestamp)),
-                        onClick = { senderDevice?.let { onDeviceClick(it) } },
+                        onClick = { onVibeClick(msg.senderId) },
                         onLongClick = { senderDevice?.let { onDeviceLongClick(it) } },
                         onDelete = { onDeleteVibe(msg.messageId) }
                     )
@@ -290,8 +317,10 @@ private fun AnimatedVibeItem(
     msg: cc.thevar.blukit.domain.model.MessagePayload,
     isMe: Boolean,
     senderDevice: P2PDevice?,
+    vibeCount: Int,
     isVibed: Boolean,
     isMutual: Boolean,
+    isGrouped: Boolean,
     timestamp: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -379,8 +408,52 @@ private fun AnimatedVibeItem(
             color = Color.White.copy(alpha = 0.9f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f, fill = false)
         )
+
+        // VIBE COUNT & EXPAND INDICATOR (Moved after message)
+        if (isGrouped && vibeCount > 1) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Box(
+                modifier = Modifier
+                    .background(
+                        (if (isMutual) StealthRose else StealthPrimary).copy(alpha = 0.15f),
+                        RoundedCornerShape(4.dp)
+                    )
+                    .border(
+                        0.5.dp,
+                        (if (isMutual) StealthRose else StealthPrimary).copy(alpha = 0.3f),
+                        RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "+$vibeCount",
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (isMutual) StealthRose else StealthPrimary
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.UnfoldMore,
+                        contentDescription = null,
+                        tint = (if (isMutual) StealthRose else StealthPrimary).copy(alpha = 0.6f),
+                        modifier = Modifier.size(8.dp)
+                    )
+                }
+            }
+        } else if (!isGrouped) {
+             Spacer(modifier = Modifier.width(6.dp))
+             Icon(
+                imageVector = Icons.Rounded.History,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.1f),
+                modifier = Modifier.size(10.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
         
         if (isMutual) {
             Icon(

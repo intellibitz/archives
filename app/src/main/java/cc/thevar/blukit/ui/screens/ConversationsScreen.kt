@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -89,7 +90,12 @@ fun ConversationsScreen(
                 }
             }
             items(conversations, key = { it.id }) { group ->
-                VibeGroupItem(group, state.messages, onVibeClick, { groupToDelete = it })
+                VibeTickerTitleEntry(
+                    group = group,
+                    state = state,
+                    onClick = { onVibeClick(group) },
+                    onLongClick = { groupToDelete = it }
+                )
             }
         }
     }
@@ -158,77 +164,98 @@ private fun VibeRequestItem(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun VibeGroupItem(
+private fun VibeTickerTitleEntry(
     group: VibeGroup,
-    messages: List<MessagePayload>,
-    onVibeClick: (VibeGroup) -> Unit,
+    state: BluetoothUiState,
+    onClick: () -> Unit,
     onLongClick: (VibeGroup) -> Unit
 ) {
-    val lastMessage = remember(group.id, messages) {
-        messages.filter { it.groupId == group.id }.lastOrNull()
+    val lastMessage = remember(group.id, state.messages) {
+        state.messages.filter { it.groupId == group.id }.lastOrNull()
     }
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    
+    val members = remember(group.memberIds, state.scannedDevices) {
+        state.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+            .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
             .combinedClickable(
-                onClick = { onVibeClick(group) },
+                onClick = onClick,
                 onLongClick = { onLongClick(group) }
             )
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .background(if (group.type == VibeGroup.TYPE_TIE) StealthRose.copy(alpha = 0.2f) else StealthPrimary.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (group.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing,
-                    contentDescription = null,
-                    tint = if (group.type == VibeGroup.TYPE_TIE) StealthRose else StealthPrimary.copy(alpha = 0.7f),
-                    modifier = Modifier.size(if (group.type == VibeGroup.TYPE_TIE) 20.dp else 16.dp)
-                )
+            // Participant Emojis Ticker
+            Row(horizontalArrangement = Arrangement.spacedBy((-4).dp)) {
+                if (members.isEmpty()) {
+                    Text(text = "👤", fontSize = 16.sp, modifier = Modifier.alpha(0.5f))
+                } else {
+                    members.take(3).forEach { member ->
+                        Text(text = member.emoji, fontSize = 16.sp)
+                    }
+                    if (members.size > 3) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .background(Color.White.copy(alpha = 0.1f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "+${members.size - 3}", fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.White)
+                        }
+                    }
+                }
             }
             
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (group.type == VibeGroup.TYPE_TIE) "TIE" else "SIDE",
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Black,
+                        color = (if (group.type == VibeGroup.TYPE_TIE) StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                        letterSpacing = 1.sp,
+                        modifier = Modifier
+                            .border(0.5.dp, (if (group.type == VibeGroup.TYPE_TIE) StealthRose else StealthPrimary).copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = group.name.uppercase(),
                         fontWeight = FontWeight.Black,
                         fontSize = 11.sp,
-                        color = Color.White
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    if (lastMessage != null) {
-                        Text(
-                            text = timeFormatter.format(Date(lastMessage.timestamp)),
-                            fontSize = 8.sp,
-                            color = Color.White.copy(alpha = 0.3f)
-                        )
-                    }
                 }
                 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 
                 Text(
-                    text = lastMessage?.content ?: "No vibes yet...",
-                    fontSize = 12.sp,
-                    color = Color.White.copy(alpha = 0.6f),
+                    text = lastMessage?.content ?: "Awaiting resonance...",
+                    fontSize = 10.sp,
+                    color = Color.White.copy(alpha = 0.5f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
+                )
+            }
+            
+            if (lastMessage != null) {
+                Text(
+                    text = timeFormatter.format(Date(lastMessage.timestamp)),
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White.copy(alpha = 0.3f)
                 )
             }
         }

@@ -20,8 +20,8 @@ android {
         applicationId = "cc.thevar.blukit"
         minSdk = 30
         targetSdk = 35
-        versionCode = 19
-        versionName = "1.1.1"
+        versionCode = 21
+        versionName = "1.1.3"
     }
 
     signingConfigs {

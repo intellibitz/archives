@@ -1,6 +1,7 @@
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AccountCircle
@@ -25,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
@@ -64,6 +67,8 @@ fun TieScreen(
     showMemberManagement: Boolean = false,
     onDismissManagement: () -> Unit = {},
     onEnterPip: () -> Unit,
+    externalFocusedId: String? = null,
+    onFocusChange: (String?) -> Unit = {},
 ) {
     var vibeText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
@@ -75,13 +80,25 @@ fun TieScreen(
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
 
-    val chatVibes = remember(state.messages, groupId, localDeviceId) {
+    val vibesData = remember(state.messages, groupId, localDeviceId, externalFocusedId) {
         if (groupId == null) {
-            emptyList()
+            Triple(emptyList<MessagePayload>(), emptyMap<String, Int>(), false)
         } else {
-            state.messages.filter { it.groupId == groupId }.distinctBy { it.messageId }
+            val baseVibes = state.messages.filter { it.groupId == groupId }.distinctBy { it.messageId }
+            val counts = baseVibes.groupBy { it.senderId }.mapValues { it.value.size }
+            
+            val filtered = if (externalFocusedId != null) {
+                baseVibes.filter { it.senderId == externalFocusedId }
+            } else {
+                baseVibes.groupBy { it.senderId }
+                    .map { entry -> entry.value.maxBy { it.timestamp } }
+            }
+            val sorted = filtered.sortedBy { it.timestamp }
+            Triple(sorted, counts, externalFocusedId != null)
         }
     }
+
+    val (chatVibes, vibeCounts, isDetailView) = vibesData
 
     LaunchedEffect(chatVibes.size) {
         if (chatVibes.isNotEmpty()) {
@@ -207,14 +224,18 @@ fun TieScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(chatVibes, key = { it.messageId }) { payload ->
+            items(chatVibes, key = { if (!isDetailView) it.senderId else it.messageId }) { payload ->
                 ChatMessage(
                     payload = payload,
                     isFromLocalUser = payload.senderId == localDeviceId,
                     localEmoji = localEmoji,
+                    vibeCount = vibeCounts[payload.senderId] ?: 1,
+                    isGrouped = !isDetailView,
                     onClick = {
-                        if (payload.senderId != localDeviceId) {
-                            onStartSideVibe(payload.senderId)
+                        if (externalFocusedId == null) {
+                            onFocusChange(payload.senderId)
+                        } else {
+                            onFocusChange(null)
                         }
                     },
                     onLongClick = { if (payload.senderId != localDeviceId) userToBlock = payload }
@@ -243,6 +264,8 @@ fun ChatMessage(
     payload: MessagePayload,
     isFromLocalUser: Boolean,
     localEmoji: String,
+    vibeCount: Int = 1,
+    isGrouped: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -295,13 +318,15 @@ fun ChatMessage(
 
         Column(horizontalAlignment = if (isFromLocalUser) Alignment.End else Alignment.Start) {
             if (!isFromLocalUser) {
-                Text(
-                    text = payload.senderName.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                    fontWeight = FontWeight.Black,
-                    color = StealthPrimary,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = payload.senderName.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                        fontWeight = FontWeight.Black,
+                        color = StealthPrimary,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    )
+                }
             }
             
             Surface(
@@ -316,7 +341,55 @@ fun ChatMessage(
                     .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             ) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                    Text(text = payload.content, style = MaterialTheme.typography.bodyMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = payload.content,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = if (isGrouped) 1 else Int.MAX_VALUE,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        
+                        if (isGrouped && vibeCount > 1) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        (if (isFromLocalUser) Color.Black else StealthPrimary).copy(alpha = 0.15f),
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .border(
+                                        0.5.dp,
+                                        (if (isFromLocalUser) Color.Black else StealthPrimary).copy(alpha = 0.3f),
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "+$vibeCount",
+                                        fontSize = 7.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = if (isFromLocalUser) Color.Black else StealthPrimary
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Rounded.UnfoldMore,
+                                        contentDescription = null,
+                                        tint = (if (isFromLocalUser) Color.Black else StealthPrimary).copy(alpha = 0.6f),
+                                        modifier = Modifier.size(8.dp)
+                                    )
+                                }
+                            }
+                        } else if (!isGrouped && !isFromLocalUser) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.History,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.1f),
+                                modifier = Modifier.size(8.dp)
+                            )
+                        }
+                    }
                     Row(modifier = Modifier.align(Alignment.End).padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = timeString,
