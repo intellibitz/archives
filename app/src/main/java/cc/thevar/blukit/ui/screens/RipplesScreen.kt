@@ -50,6 +50,7 @@ fun RipplesScreen(
     energySurge: Float = 0f,
     onlyTies: Boolean = false,
     vibedPeers: Set<String> = emptySet(),
+    noiseFilterEnabled: Boolean = false,
     lowPowerMode: Boolean = false,
     onStartScan: () -> Unit,
     onStopScan: () -> Unit,
@@ -69,7 +70,6 @@ fun RipplesScreen(
     val processedMessageIds = remember { mutableSetOf<String>() }
     var selectedPersonaForMenu by remember { mutableStateOf<P2PDevice?>(null) }
     var messageToDelete by remember { mutableStateOf<String?>(null) }
-    var noiseFilterEnabled by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.messages) {
         val newMessages = state.messages.filter { it.messageId !in processedMessageIds }
@@ -112,29 +112,10 @@ fun RipplesScreen(
         // LAYER 1: Atmosphere (Background + Arcs + Ripples)
         Column(modifier = Modifier.fillMaxSize()) {
             val titleIcon = if (onlyTies) Icons.Rounded.Flare else Icons.Rounded.Groups
-            val titleText = if (onlyTies) "VIBES" else "ALL"
+            val titleText = if (onlyTies) "GROUPS" else "ALL"
             
             Box(modifier = Modifier.fillMaxWidth()) {
                 BlukitTopTitle(title = titleText, icon = titleIcon)
-                
-                // NOISE FILTER TOGGLE
-                if (!onlyTies && vibedPeers.isNotEmpty()) {
-                    IconButton(
-                        onClick = { noiseFilterEnabled = !noiseFilterEnabled },
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(top = 40.dp, end = 20.dp)
-                            .background(if (noiseFilterEnabled) StealthPrimary.copy(alpha = 0.1f) else Color.Transparent, CircleShape)
-                            .border(0.5.dp, if (noiseFilterEnabled) StealthPrimary else Color.White.copy(alpha = 0.2f), CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = if (noiseFilterEnabled) Icons.Rounded.FilterAlt else Icons.Rounded.FilterAltOff,
-                            contentDescription = "Noise Filter",
-                            tint = if (noiseFilterEnabled) StealthPrimary else Color.White.copy(alpha = 0.4f),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
             }
             
             RipplesField(
@@ -241,7 +222,7 @@ private fun EmptyFocusHint() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "NO VIBES YET",
+                text = "NO GROUPS YET",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Black,
                 color = Color.White.copy(alpha = 0.2f),

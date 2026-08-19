@@ -14,7 +14,7 @@ sealed interface Route : NavKey {
     data object Chat : Route
 
     @Serializable
-    data object Vibes : Route
+    data object Groups : Route
 
     @Serializable
     data object SideVibes : Route

@@ -42,8 +42,8 @@ fun ConversationsScreen(
     var groupToDelete by remember { mutableStateOf<VibeGroup?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
-        val title = if (isGroupType) "VIBES" else "1-1"
-        val icon = if (isGroupType) Icons.Rounded.Flare else Icons.Rounded.AutoAwesome
+        val title = if (isGroupType) "GROUPS" else "WHISPER"
+        val icon = if (isGroupType) Icons.Rounded.Flare else Icons.Rounded.Hearing
         BlukitTopTitle(title = title, icon = icon)
         
         LazyColumn(

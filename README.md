@@ -15,7 +15,7 @@ The **ALL** field is where you see everyone around you.
     - **Long-Tap**: Open the **Options Menu** for focus management, blocking, or secure WHISPER requests.
 - **Active vs. Idle**: Active users who speak move to the forefront, while others stay in the **IDLE** row with their names visible for quick identification.
 
-## ✨ VIBES (Mutual Resonance)
+## ✨ GROUPS (Mutual Resonance)
 Establish secure, persistent private group resonances.
 - **Mutual Permission**: Use the Options Menu to request a **VIBE**. Once both sides agree (**JOIN**), you are securely linked in a private group.
 - **Secure Communication**: All group vibes are encrypted and private.

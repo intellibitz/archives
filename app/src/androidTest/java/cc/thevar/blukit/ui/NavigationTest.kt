@@ -57,10 +57,10 @@ class NavigationTest {
         // 1. Initial State - ALL field
         composeTestRule.onNodeWithTag("HubTab_ALL").assertIsDisplayed()
 
-        // 3. VIBES (Mutual) - Switch via tag
-        composeTestRule.onNodeWithTag("HubTab_VIBES").performClick()
+        // 3. GROUPS (Mutual) - Switch via tag
+        composeTestRule.onNodeWithTag("HubTab_GROUPS").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithTag("HubTab_VIBES").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("HubTab_GROUPS").assertIsDisplayed()
         
         // 4. Back to ALL - Switch via tag
         composeTestRule.onNodeWithTag("HubTab_ALL").performClick()

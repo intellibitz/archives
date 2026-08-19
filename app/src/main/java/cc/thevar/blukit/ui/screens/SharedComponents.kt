@@ -263,6 +263,7 @@ fun BlukitInput(
     nickname: String,
     emoji: String,
     airIsStill: Boolean,
+    isReadOnly: Boolean = false,
     onNicknameChange: (String) -> Unit,
     personaFocusRequester: FocusRequester,
     value: String,
@@ -289,22 +290,46 @@ fun BlukitInput(
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(30.dp, 4.dp, 4.dp, 30.dp))
                     .background(Color.White.copy(alpha = 0.03f))
-                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { personaFocusRequester.requestFocus() },
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { if (!isReadOnly) personaFocusRequester.requestFocus() },
                 contentAlignment = Alignment.Center
             ) {
                 UserPersona(nickname = nickname, emoji = emoji, airIsStill = airIsStill, onNicknameChange = onNicknameChange, focusRequester = personaFocusRequester)
             }
             Spacer(modifier = Modifier.width(4.dp))
             Row(
-                modifier = Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(4.dp, 30.dp, 30.dp, 4.dp)).background(Color.White.copy(alpha = 0.03f)).padding(end = 4.dp),
+                modifier = Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(4.dp, 30.dp, 30.dp, 4.dp)).background(if (isReadOnly) StealthPrimary.copy(alpha = 0.02f) else Color.White.copy(alpha = 0.03f)).padding(end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(modifier = Modifier.weight(1f).padding(start = 12.dp), contentAlignment = Alignment.CenterStart) {
-                    if (value.isEmpty()) { Text(text = "TYPE TO SPREAD VIBES", fontSize = 7.sp, fontWeight = FontWeight.Black, letterSpacing = 0.5.sp, color = Color.White.copy(alpha = 0.4f)) }
-                    BasicTextField(value = value, onValueChange = onValueChange, modifier = Modifier.fillMaxWidth().testTag("SendVibeInput"), textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White, fontSize = 13.sp), interactionSource = interactionSource, cursorBrush = SolidColor(StealthPrimary), singleLine = true)
+                    if (value.isEmpty()) { 
+                        Text(
+                            text = if (isReadOnly) "FILTER MODE: READ ONLY" else "TYPE TO SPREAD VIBES", 
+                            fontSize = 7.sp, 
+                            fontWeight = FontWeight.Black, 
+                            letterSpacing = 0.5.sp, 
+                            color = if (isReadOnly) StealthPrimary.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.4f)
+                        ) 
+                    }
+                    BasicTextField(
+                        value = if (isReadOnly) "" else value, 
+                        onValueChange = { if (!isReadOnly) onValueChange(it) }, 
+                        modifier = Modifier.fillMaxWidth().testTag("SendVibeInput"), 
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White, fontSize = 13.sp), 
+                        interactionSource = interactionSource, 
+                        cursorBrush = SolidColor(StealthPrimary), 
+                        singleLine = true,
+                        enabled = !isReadOnly
+                    )
                 }
-                if (vibeCount > 0) { Box(modifier = Modifier.padding(horizontal = 4.dp).background(StealthPrimary.copy(alpha = 0.15f), CircleShape).border(0.5.dp, StealthPrimary.copy(alpha = 0.3f), CircleShape).padding(horizontal = 6.dp, vertical = 2.dp)) { Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Black, color = StealthPrimary)) } }
-                Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(if (value.isNotBlank()) Brush.linearGradient(listOf(StealthPrimary, StealthAmber)) else Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f)))).clickable(enabled = value.isNotBlank()) { onSend() }.testTag("SendVibeButton"), contentAlignment = Alignment.Center) { Icon(imageVector = Icons.AutoMirrored.Rounded.Send, contentDescription = "Send", tint = if (value.isNotBlank()) Color.Black else Color.White.copy(alpha = 0.2f), modifier = Modifier.size(20.dp)) }
+                if (vibeCount > 0 && !isReadOnly) { Box(modifier = Modifier.padding(horizontal = 4.dp).background(StealthPrimary.copy(alpha = 0.15f), CircleShape).border(0.5.dp, StealthPrimary.copy(alpha = 0.3f), CircleShape).padding(horizontal = 6.dp, vertical = 2.dp)) { Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Black, color = StealthPrimary)) } }
+                Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(if (value.isNotBlank() && !isReadOnly) Brush.linearGradient(listOf(StealthPrimary, StealthAmber)) else Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f)))).clickable(enabled = value.isNotBlank() && !isReadOnly) { onSend() }.testTag("SendVibeButton"), contentAlignment = Alignment.Center) { 
+                    Icon(
+                        imageVector = if (isReadOnly) Icons.Rounded.Lock else Icons.AutoMirrored.Rounded.Send, 
+                        contentDescription = if (isReadOnly) "Locked" else "Send", 
+                        tint = if (value.isNotBlank() && !isReadOnly) Color.Black else Color.White.copy(alpha = 0.2f), 
+                        modifier = Modifier.size(20.dp)
+                    ) 
+                }
             }
         }
     }
