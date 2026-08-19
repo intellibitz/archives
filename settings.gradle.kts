@@ -24,3 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "blukit"
 include(":app")
+include(":wear")
+include(":core")

@@ -2,9 +2,9 @@ import java.util.Properties
 import java.io.FileInputStream
 
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.jetbrains.kotlin.plugin.serialization)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -82,6 +82,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.adaptive)
@@ -109,6 +110,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.play.services.nearby)
     implementation(libs.androidx.security.crypto)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.junit)

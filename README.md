@@ -2,7 +2,7 @@
 
 **SPREAD (B) VIBES. CONNECT ANYWHERE.**
 
-blukit is for any crowd. Sports venues, movie halls, universities, subways—anywhere a crowd forms, blukit lets you connect and spread vibes without the internet. It is anonymous, safe, secure, and private.
+blukit is for any crowd. Sports venues, movie halls, universities, subways—anywhere a crowd forms, blukit lets you connect and spread vibes without the internet. It is anonymous, safe, secure, and private. Now universal across **Phones**, **Watches**, and **Home Screens**.
 
 ---
 
@@ -19,41 +19,33 @@ Cut out the crowd and listen only to those you've blossomed.
 - **Zero-Noise**: Only see and hear vibes from those you have focused on.
 - **Smart Switch**: Focusing a persona from the Hub immediately activates this field.
 - **Auto-Return**: If you unfocus everyone in FOCUS, blukit automatically returns you to the ALL field.
-- **Full Control**: The FOCUS tab displays the **full list of users** in its persona cloud, allowing you to manage your focused soul-list directly.
 
 ## ✨ VIBES (Mutual Resonance)
 Establish secure, persistent private group resonances.
 - **Mutual Permission**: Use the Options Menu to request a **VIBE**. Once agreed, you are securely linked in a private group.
 - **Secure Communication**: All group vibes are encrypted and private.
-- **Resonance Management**: Conversations can be permanently removed via long-press.
 
 ## 🤝 1-1 (Personal Vibes)
 Intimate, ephemeral one-on-one whispers.
 - **Direct Resonance**: Start a **1-1** whisper contextual within an established vibe.
 - **Inside the Bubble**: Student personas (avatars/names) are now located **inside the message bubble** (top-right) for maximum efficiency.
-- **Instant Action**: Tapping the persona inside a message bubble focuses them; long-pressing opens the vibe menu.
 
 ---
 
-## 📱 THE HUB
-Everything you need is integrated into the full-width Hub at the bottom:
-- **Presence Zone**: Unified cloud categorized by **ACTIVE** and **IDLE** rows. Personas are sorted by proximity and activity.
-- **Spread Vibes Widget**: 
-    - **Lightweight & Efficient**: Custom high-fidelity widgets replace bulky Material components to ensure all-day battery life.
-    - **Unified Identity**: Avatar, nickname, and "(YOU)" label condensed into a clean 1-column layout.
-    - **Keyboard-Aware**: The Hub floats above the keyboard when typing using `imePadding()`.
-- **Privacy & Safety**: 
-    - **Spam Filter**: Strict rate limiting (5 vibes / 10s) and duplicate detection drop trolls and bots instantly.
-    - **User Control**: Block/Unblock users and delete individual vibes from history.
-    - **Zero Telemetry**: blukit never collects data of any kind. No tracking. No telemetry.
+## 📱 UNIVERSAL ECOSYSTEM
+Everything you need, everywhere you are:
+- **Wear OS Support**: Native Wear OS app to see nearby vibes directly on your wrist with high-efficiency scaling lists.
+- **Adaptive Hub**: Full-width Hub on phones. In **Landscape Mode**, the Hub transforms into a slim side navigation rail, maximizing your view of the field.
+- **Home Screen Widget**: Modern Glance-based widget showing live "Vibe Counts" around you with one-tap access to the field.
+- **Keyboard-Aware**: The Hub surface floats elegantly above the keyboard using `imePadding()`.
 
 ---
 
-## 🛠️ SIMPLE RULES
-1. **Nearby Only**: Only see people who are actually close to you through phone-to-phone radios.
-2. **Mutual Consent**: Private vibes require both people to agree.
-3. **Everything Vanishes**: Vibes clear out every 12 hours.
-4. **Offline First**: Works entirely through your phone's radios.
+## 🛠️ LEAN ARCHITECTURE
+1. **Zero-Bulk**: No heavy frameworks. Custom-drawn `Canvas` widgets replace bulky Material components for maximum battery life.
+2. **Offline-First**: 100% phone-to-phone radios. No internet. No data collection.
+3. **Everything Vanishes**: Vibes and ephemeral groups clear out every 12 hours.
+4. **Sentient Radios**: Radio activity is strictly gated by harmony and power states.
 
 ---
 
