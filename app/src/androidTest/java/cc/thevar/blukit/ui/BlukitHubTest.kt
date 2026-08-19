@@ -55,6 +55,8 @@ class BlukitHubTest {
                     connectedLinks = emptySet(),
                     vibedPeers = emptySet(),
                     messages = emptyList(),
+                    isNoiseFilterActive = false,
+                    onToggleNoiseFilter = {},
                     onNavigate = onNavigate,
                     onDeviceClick = {},
                     onDeviceLongClick = {},
@@ -68,6 +70,7 @@ class BlukitHubTest {
                     onClearHistory = {},
                     onLogout = {},
                     onAcceptLink = {},
+                    onDenyLink = {},
                     onStartSideVibe = {},
                     onStartTie = {},
                     onClearSelection = {}
@@ -75,16 +78,12 @@ class BlukitHubTest {
             }
         }
 
-        // Click FOCUS tab
-        composeTestRule.onNodeWithText("FOCUS").performClick()
-        verify { onNavigate(Route.Focus) }
-
         // Click VIBES tab
         composeTestRule.onNodeWithText("VIBES").performClick()
         verify { onNavigate(Route.Vibes) }
 
-        // Click 1-1 tab
-        composeTestRule.onNodeWithText("1-1").performClick()
+        // Click WHISPER tab
+        composeTestRule.onNodeWithTag("HubTab_WHISPER").performClick()
         verify { onNavigate(Route.SideVibes) }
     }
 
@@ -125,6 +124,8 @@ class BlukitHubTest {
                     connectedLinks = emptySet(),
                     vibedPeers = emptySet(),
                     messages = emptyList(),
+                    isNoiseFilterActive = false,
+                    onToggleNoiseFilter = {},
                     onNavigate = {},
                     onDeviceClick = {},
                     onDeviceLongClick = {},
@@ -138,6 +139,7 @@ class BlukitHubTest {
                     onClearHistory = {},
                     onLogout = {},
                     onAcceptLink = {},
+                    onDenyLink = {},
                     onStartSideVibe = {},
                     onStartTie = {},
                     onClearSelection = {}
@@ -200,6 +202,8 @@ class BlukitHubTest {
                     connectedLinks = emptySet(),
                     vibedPeers = emptySet(),
                     messages = listOf(message),
+                    isNoiseFilterActive = false,
+                    onToggleNoiseFilter = {},
                     onNavigate = {},
                     onDeviceClick = {},
                     onDeviceLongClick = {},
@@ -213,6 +217,7 @@ class BlukitHubTest {
                     onClearHistory = {},
                     onLogout = {},
                     onAcceptLink = {},
+                    onDenyLink = {},
                     onStartSideVibe = {},
                     onStartTie = {},
                     onClearSelection = {}
@@ -221,6 +226,6 @@ class BlukitHubTest {
         }
 
         // Verify Active row has student name (substring match on tip text or persona)
-        composeTestRule.onNodeWithText("TAP TO FOCUS", substring = true).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("WHISPER", substring = true).onFirst().assertIsDisplayed()
     }
 }

@@ -59,7 +59,8 @@ class SupremePowerTest {
                         onToggleLowPower = {},
                         onClearHistory = {},
                         onLogout = {},
-                        onAcceptLink = {}
+                        onAcceptLink = {},
+                        onDenyLink = {}
                 )
                 }
             }
@@ -68,6 +69,6 @@ class SupremePowerTest {
         // Check for terminology
         composeTestRule.onNodeWithText("ALL").assertIsDisplayed()
         composeTestRule.onNodeWithText("VIBES").assertIsDisplayed()
-        composeTestRule.onNodeWithText("FOCUS").assertIsDisplayed()
+        composeTestRule.onNodeWithText("WHISPER").assertIsDisplayed()
     }
 }

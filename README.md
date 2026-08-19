@@ -8,27 +8,22 @@ blukit is for any crowd. Sports venues, movie halls, universities, subways—any
 
 ## 👥 ALL (Public Vibes)
 The **ALL** field is where you see everyone around you.
-- **Anonymous Presence**: People appear as pulsing glimmers decorated with a tiny persona icon.
+- **Anonymous Presence**: People appear as pulsing glimmers decorated with their name and a tiny `blukit` icon.
+- **Noise Filter**: Integrated filtering allows you to cut out the crowd and listen only to those you've blossomed (vibed) without leaving the ALL view.
 - **Unified Interactions**: 
-    - **Tap**: Blossom/Focus a persona. Tapping in the Hub immediately switches you to the **FOCUS** tab.
-    - **Long-Tap**: Open the **Options Menu** for focus management, blocking, or secure vibe requests.
-- **Active vs. Idle**: Non-active users stay in the **IDLE** row, while those who speak move to the **ACTIVE** row in the hub.
-
-## 🎯 FOCUS (Filtered Field)
-Cut out the crowd and listen only to those you've blossomed.
-- **Zero-Noise**: Only see and hear vibes from those you have focused on.
-- **Smart Switch**: Focusing a persona from the Hub immediately activates this field.
-- **Auto-Return**: If you unfocus everyone in FOCUS, blukit automatically returns you to the ALL field.
+    - **Tap**: Blossom/Focus a persona. 
+    - **Long-Tap**: Open the **Options Menu** for focus management, blocking, or secure WHISPER requests.
+- **Active vs. Idle**: Active users who speak move to the forefront, while others stay in the **IDLE** row with their names visible for quick identification.
 
 ## ✨ VIBES (Mutual Resonance)
 Establish secure, persistent private group resonances.
-- **Mutual Permission**: Use the Options Menu to request a **VIBE**. Once agreed, you are securely linked in a private group.
+- **Mutual Permission**: Use the Options Menu to request a **VIBE**. Once both sides agree (**JOIN**), you are securely linked in a private group.
 - **Secure Communication**: All group vibes are encrypted and private.
 
-## 🤝 1-1 (Personal Vibes)
-Intimate, ephemeral one-on-one whispers.
-- **Direct Resonance**: Start a **1-1** whisper contextual within an established vibe.
-- **Inside the Bubble**: Student personas (avatars/names) are now located **inside the message bubble** (top-right) for maximum efficiency.
+## 🤝 WHISPER (Side-Vibes)
+Intimate, ephemeral side conversations.
+- **Direct Resonance**: Start a **WHISPER** contextual within an established vibe or directly from the persona cloud.
+- **Anonymous Whispering**: Student personas (avatars/names) are now located **inside the message bubble** (top-right) for maximum efficiency.
 
 ---
 

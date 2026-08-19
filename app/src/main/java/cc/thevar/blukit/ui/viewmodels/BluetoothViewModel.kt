@@ -181,6 +181,12 @@ class BluetoothViewModel(
             }.launchIn(viewModelScope)
     }
 
+    fun requestWhisper(device: P2PDevice) {
+        // For 1-1, we use the same connection logic but could tag it differently if needed.
+        // Currently, requestLink handles the UI request state.
+        connectToDevice(device)
+    }
+
     fun acceptLink(device: P2PDevice) {
         p2pController.acceptLink(device)
     }

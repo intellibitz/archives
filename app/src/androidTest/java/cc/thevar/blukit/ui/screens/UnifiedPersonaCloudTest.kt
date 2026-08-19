@@ -34,6 +34,10 @@ class UnifiedPersonaCloudTest {
         }
 
         // Check for headers (now in tips text)
-        composeTestRule.onAllNodesWithText("TAP TO FOCUS", ignoreCase = true, substring = true).onFirst().assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("WHISPER", ignoreCase = true, substring = true).onFirst().assertIsDisplayed()
+        
+        // Verify names are displayed
+        composeTestRule.onNodeWithText("ACTIVE", ignoreCase = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("IDLE", ignoreCase = true).assertIsDisplayed()
     }
 }

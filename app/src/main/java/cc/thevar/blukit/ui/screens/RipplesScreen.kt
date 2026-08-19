@@ -1,9 +1,5 @@
 package cc.thevar.blukit.ui.screens
 
-import android.Manifest
-import android.content.Intent
-import android.os.Build
-import android.provider.Settings
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -25,26 +21,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import cc.thevar.blukit.R
 import cc.thevar.blukit.BlukitApplication
-import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.AirConnectionState
-import cc.thevar.blukit.ui.rememberSpreadPermissionsState
 import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthRose
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -54,7 +41,6 @@ import java.util.Locale
 /**
  * THE VIBES: BLUKIT ENERGY TICKER.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RipplesScreen(
     state: BluetoothUiState,
@@ -63,7 +49,6 @@ fun RipplesScreen(
     localEmoji: String,
     energySurge: Float = 0f,
     onlyTies: Boolean = false,
-    isFilterMode: Boolean = false,
     vibedPeers: Set<String> = emptySet(),
     lowPowerMode: Boolean = false,
     onStartScan: () -> Unit,
@@ -74,6 +59,7 @@ fun RipplesScreen(
     onDeleteVibe: (String) -> Unit,
     onBlockUser: (String) -> Unit,
     onUnblockUser: (String) -> Unit,
+    onWhisper: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -83,6 +69,7 @@ fun RipplesScreen(
     val processedMessageIds = remember { mutableSetOf<String>() }
     var selectedPersonaForMenu by remember { mutableStateOf<P2PDevice?>(null) }
     var messageToDelete by remember { mutableStateOf<String?>(null) }
+    var noiseFilterEnabled by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.messages) {
         val newMessages = state.messages.filter { it.messageId !in processedMessageIds }
@@ -109,10 +96,10 @@ fun RipplesScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        val vibes = remember(state.messages, onlyTies, vibedPeers, isFilterMode) {
+        val vibes = remember(state.messages, onlyTies, vibedPeers, noiseFilterEnabled) {
             val filtered = if (onlyTies) {
                 state.messages.filter { !it.receiverId.isNullOrBlank() }
-            } else if (isFilterMode) {
+            } else if (noiseFilterEnabled && vibedPeers.isNotEmpty()) {
                 state.messages.filter { 
                     it.receiverId.isNullOrBlank() && (it.senderId in vibedPeers || it.senderId == localDeviceId)
                 }
@@ -122,33 +109,33 @@ fun RipplesScreen(
             filtered.distinctBy { it.messageId }
         }
 
-        val fieldBubbles = remember(activeBubbles, onlyTies, vibedPeers, isFilterMode) {
-            val filtered = if (onlyTies) {
-                activeBubbles.filter { it.isPrivate } 
-            } else if (isFilterMode) {
-                activeBubbles.filter { 
-                    !it.isPrivate && (it.senderId in vibedPeers || it.senderId == localDeviceId)
-                }
-            } else {
-                activeBubbles.filter { !it.isPrivate }
-            }
-            filtered.distinctBy { it.messageId }
-        }
-
         // LAYER 1: Atmosphere (Background + Arcs + Ripples)
         Column(modifier = Modifier.fillMaxSize()) {
-            val titleIcon = when {
-                onlyTies -> Icons.Rounded.Flare
-                isFilterMode -> Icons.Rounded.FilterCenterFocus
-                else -> Icons.Rounded.Groups
-            }
-            val titleText = when {
-                onlyTies -> "VIBES"
-                isFilterMode -> "FOCUS"
-                else -> "ALL"
-            }
+            val titleIcon = if (onlyTies) Icons.Rounded.Flare else Icons.Rounded.Groups
+            val titleText = if (onlyTies) "VIBES" else "ALL"
             
-            BlukitTopTitle(title = titleText, icon = titleIcon)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BlukitTopTitle(title = titleText, icon = titleIcon)
+                
+                // NOISE FILTER TOGGLE
+                if (!onlyTies && vibedPeers.isNotEmpty()) {
+                    IconButton(
+                        onClick = { noiseFilterEnabled = !noiseFilterEnabled },
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(top = 40.dp, end = 20.dp)
+                            .background(if (noiseFilterEnabled) StealthPrimary.copy(alpha = 0.1f) else Color.Transparent, CircleShape)
+                            .border(0.5.dp, if (noiseFilterEnabled) StealthPrimary else Color.White.copy(alpha = 0.2f), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = if (noiseFilterEnabled) Icons.Rounded.FilterAlt else Icons.Rounded.FilterAltOff,
+                            contentDescription = "Noise Filter",
+                            tint = if (noiseFilterEnabled) StealthPrimary else Color.White.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
             
             RipplesField(
                 state = state,
@@ -159,7 +146,7 @@ fun RipplesScreen(
                 vibedPeers = vibedPeers,
                 externalEnergy = energySurge,
                 onlyTies = onlyTies,
-                isFilterMode = isFilterMode,
+                isFilterMode = noiseFilterEnabled,
                 lowPowerMode = lowPowerMode,
                 onDeviceClick = { selectedPersonaForMenu = it },
                 onDeviceLongClick = { selectedPersonaForMenu = it },
@@ -181,7 +168,7 @@ fun RipplesScreen(
                     onDeleteVibe = { messageToDelete = it },
                     modifier = Modifier.fillMaxSize().zIndex(10f)
                 )
-        }
+            }
         }
 
         // LAYER 4: Persona Context Menu
@@ -197,6 +184,10 @@ fun RipplesScreen(
                 },
                 onVibe = {
                     onDeviceLongClick(selectedPersonaForMenu!!)
+                    selectedPersonaForMenu = null
+                },
+                onWhisper = {
+                    onWhisper(selectedPersonaForMenu!!)
                     selectedPersonaForMenu = null
                 },
                 onBlock = {
@@ -239,20 +230,18 @@ fun RipplesScreen(
         }
 
         // LAYER 6: Empty State Hints
-        if (isFilterMode && vibedPeers.isEmpty()) {
-            EmptyFocusHint("FOCUS")
-        } else if (onlyTies && state.connectedLinks.isEmpty()) {
-            EmptyFocusHint("VIBES")
+        if (onlyTies && state.connectedLinks.isEmpty()) {
+            EmptyFocusHint()
         }
     }
 }
 
 @Composable
-private fun EmptyFocusHint(tab: String) {
+private fun EmptyFocusHint() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "NO $tab YET",
+                text = "NO VIBES YET",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Black,
                 color = Color.White.copy(alpha = 0.2f),
@@ -260,7 +249,7 @@ private fun EmptyFocusHint(tab: String) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (tab == "FOCUS") "TAP PERSONAS IN ALL FIELD TO FOCUS." else "ESTABLISH SECURE LINKS TO VIBE.",
+                text = "ESTABLISH SECURE LINKS TO VIBE.",
                 fontSize = 8.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White.copy(alpha = 0.15f),
