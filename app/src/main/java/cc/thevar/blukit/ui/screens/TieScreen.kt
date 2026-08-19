@@ -1,5 +1,7 @@
 package cc.thevar.blukit.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -13,10 +15,12 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -112,10 +116,24 @@ fun TieScreen(
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            BlukitTopTitle(
-                title = group?.name ?: "VIBE",
-                icon = if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.AutoAwesome
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                BlukitTopTitle(
+                    title = group?.name ?: "VIBE",
+                    icon = if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .padding(end = 16.dp, top = 24.dp)
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.05f))
+                        .clickable { personaFocusRequester.requestFocus() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    UserPersona(nickname = localNickname, emoji = localEmoji, airIsStill = !state.isBluetoothEnabled || !state.permissionsGranted, onNicknameChange = onNicknameChange, focusRequester = personaFocusRequester)
+                }
+            }
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
@@ -170,11 +188,7 @@ fun TieScreen(
             }
             
             BlukitInput(
-                nickname = localNickname,
-                emoji = localEmoji,
                 airIsStill = !state.isBluetoothEnabled || !state.permissionsGranted,
-                onNicknameChange = onNicknameChange,
-                personaFocusRequester = personaFocusRequester,
                 value = vibeText,
                 onValueChange = { vibeText = it },
                 onSend = {

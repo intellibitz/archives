@@ -31,6 +31,7 @@ class SupremePowerTest {
         )
 
         composeTestRule.setContent {
+            val focusRequester = androidx.compose.runtime.remember { androidx.compose.ui.focus.FocusRequester() }
             BlukitTheme {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                     UnifiedBlukitBadge(
@@ -60,7 +61,11 @@ class SupremePowerTest {
                         onClearHistory = {},
                         onLogout = {},
                         onAcceptLink = {},
-                        onDenyLink = {}
+                        onDenyLink = {},
+                        nickname = "Me",
+                        emoji = "👤",
+                        onSaveNickname = {},
+                        personaFocusRequester = focusRequester
                 )
                 }
             }

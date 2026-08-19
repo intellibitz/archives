@@ -221,7 +221,8 @@ class BlukitHubTest {
             }
         }
 
-        // Verify Active row has student name (substring match on tip text or persona)
-        composeTestRule.onAllNodesWithText("WHISPER", substring = true).onFirst().assertIsDisplayed()
+        // Verify Active row has student name
+        composeTestRule.onNodeWithTag("PersonaNode_id-active").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("PersonaNode_id-idle").assertIsDisplayed()
     }
 }

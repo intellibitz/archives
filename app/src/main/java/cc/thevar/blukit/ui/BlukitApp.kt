@@ -275,42 +275,83 @@ fun BlukitHub(
             }
         }
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp).background(Color.Black.copy(alpha = 0.96f), RoundedCornerShape(32.dp)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(32.dp))) {
-            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp).imePadding()) {
-                val cloudDevices = scannedDevices
-                AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Mine) {
-                    UnifiedPersonaCloud(devices = cloudDevices, vibedPeers = vibedPeers, connectedLinks = connectedLinks, activeBubbles = messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, onDeviceClick = onDeviceClick, onDeviceLongClick = onDeviceLongClick)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Mine) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp).imePadding(), verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Mine) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                         BlukitInput(
-                            nickname = nickname ?: "?", 
-                            emoji = emoji, 
                             airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted, 
                             isReadOnly = isNoiseFilterActive && currentRoute is Route.Blukit,
-                            onNicknameChange = onSaveNickname, 
-                            personaFocusRequester = personaFocusRequester, 
                             value = messageText, 
                             onValueChange = onMessageChange, 
                             onSend = onSend, 
                             vibeCount = vibeCount, 
                             modifier = Modifier.weight(1f)
                         )
-                        if (currentRoute is Route.Blukit) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            IconButton(onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, modifier = Modifier.size(48.dp).background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape).border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)) {
-                                Icon(imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, contentDescription = "Filter", tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
+                            if (currentRoute is Route.Blukit) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                IconButton(onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, modifier = Modifier.size(48.dp).background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape).border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)) {
+                                    Icon(imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, contentDescription = "Filter", tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
+                                }
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    UnifiedBlukitBadge(
+                        energy = energySurge, 
+                        rotation = hubRotation, 
+                        userCount = userCount, 
+                        linksCount = linksCount, 
+                        roarsCount = roarsCount, 
+                        vibesCount = vibesCount, 
+                        lowPowerMode = lowPowerMode, 
+                        permissionsGranted = permissionsGranted, 
+                        isPermanentlyDenied = isPermanentlyDenied, 
+                        isStealthMode = isStealthMode, 
+                        incomingLinkRequests = incomingLinkRequests, 
+                        isBluetoothEnabled = isBluetoothEnabled, 
+                        isLocationEnabled = isLocationEnabled, 
+                        isWifiEnabled = isWifiEnabled, 
+                        currentRoute = currentRoute, 
+                        onNavigate = onNavigate, 
+                        onAwakenBluetooth = onAwakenBluetooth, 
+                        onAwakenLocation = onAwakenLocation, 
+                        onAwakenWifi = onAwakenWifi, 
+                        onGrantPermissions = onGrantPermissions, 
+                        onOpenSettings = onOpenSettings, 
+                        onToggleStealth = onToggleStealth, 
+                        onToggleLowPower = onToggleLowPower, 
+                        onClearHistory = onClearHistory, 
+                        onLogout = onLogout, 
+                        onAcceptLink = onAcceptLink, 
+                        onDenyLink = onDenyLink,
+                        nickname = nickname,
+                        emoji = emoji,
+                        onSaveNickname = onSaveNickname,
+                        personaFocusRequester = personaFocusRequester
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = StealthPrimary.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = "blukit: spread vibes", fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.3f), letterSpacing = 1.sp)
+                    }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                UnifiedBlukitBadge(energy = energySurge, rotation = hubRotation, userCount = userCount, linksCount = linksCount, roarsCount = roarsCount, vibesCount = vibesCount, lowPowerMode = lowPowerMode, permissionsGranted = permissionsGranted, isPermanentlyDenied = isPermanentlyDenied, isStealthMode = isStealthMode, incomingLinkRequests = incomingLinkRequests, isBluetoothEnabled = isBluetoothEnabled, isLocationEnabled = isLocationEnabled, isWifiEnabled = isWifiEnabled, currentRoute = currentRoute, onNavigate = onNavigate, onAwakenBluetooth = onAwakenBluetooth, onAwakenLocation = onAwakenLocation, onAwakenWifi = onAwakenWifi, onGrantPermissions = onGrantPermissions, onOpenSettings = onOpenSettings, onToggleStealth = onToggleStealth, onToggleLowPower = onToggleLowPower, onClearHistory = onClearHistory, onLogout = onLogout, onAcceptLink = onAcceptLink, onDenyLink = onDenyLink)
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = StealthPrimary.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "blukit: spread vibes", fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.3f), letterSpacing = 1.sp)
+                
+                val cloudDevices = scannedDevices
+                AnimatedVisibility(visible = (currentRoute is Route.Blukit || currentRoute is Route.Mine) && cloudDevices.isNotEmpty()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        UnifiedPersonaCloud(
+                            devices = cloudDevices, 
+                            vibedPeers = vibedPeers, 
+                            connectedLinks = connectedLinks, 
+                            activeBubbles = messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
+                            onDeviceClick = onDeviceClick, 
+                            onDeviceLongClick = onDeviceLongClick,
+                            isVertical = true
+                        )
+                    }
                 }
             }
         }
@@ -319,14 +360,29 @@ fun BlukitHub(
 
 @Composable
 fun UnifiedBlukitBadge(
-    energy: Float, rotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, vibesCount: Int, lowPowerMode: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, currentRoute: Route, onNavigate: (Route) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit, modifier: Modifier = Modifier
+    energy: Float, rotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, vibesCount: Int, lowPowerMode: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, currentRoute: Route, onNavigate: (Route) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit,
+    nickname: String,
+    emoji: String,
+    onSaveNickname: (String) -> Unit,
+    personaFocusRequester: FocusRequester,
+    modifier: Modifier = Modifier
 ) {
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) { VisualEnergyPicker(currentRoute = currentRoute, onNavigate = onNavigate) }
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) { 
+                VisualEnergyPicker(
+                    currentRoute = currentRoute, 
+                    onNavigate = onNavigate,
+                    nickname = nickname,
+                    emoji = emoji,
+                    airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted,
+                    onSaveNickname = onSaveNickname,
+                    personaFocusRequester = personaFocusRequester
+                ) 
+            }
             if (incomingLinkRequests.isNotEmpty()) {
                 val request = incomingLinkRequests.first()
                 Spacer(modifier = Modifier.width(12.dp))
@@ -347,11 +403,31 @@ fun UnifiedBlukitBadge(
 }
 
 @Composable
-private fun VisualEnergyPicker(currentRoute: Route, onNavigate: (Route) -> Unit) {
+private fun VisualEnergyPicker(
+    currentRoute: Route, 
+    onNavigate: (Route) -> Unit,
+    nickname: String,
+    emoji: String,
+    airIsStill: Boolean,
+    onSaveNickname: (String) -> Unit,
+    personaFocusRequester: FocusRequester
+) {
     Row(modifier = Modifier.fillMaxWidth().background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(14.dp)).padding(2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        HubTab(label = "ALL", icon = Icons.Rounded.Groups, isSelected = currentRoute is Route.Blukit, weight = 1.5f, testTag = "HubTab_ALL", onClick = { onNavigate(Route.Blukit) })
+        HubTab(label = "ALL", icon = Icons.Rounded.Groups, isSelected = currentRoute is Route.Blukit, weight = 1.2f, testTag = "HubTab_ALL", onClick = { onNavigate(Route.Blukit) })
         Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.08f)))
-        HubTab(label = "MINE", icon = Icons.Rounded.Flare, isSelected = currentRoute is Route.Mine, weight = 1.5f, testTag = "HubTab_MINE", onClick = { onNavigate(Route.Mine) })
+        HubTab(label = "MINE", icon = Icons.Rounded.Flare, isSelected = currentRoute is Route.Mine, weight = 1.2f, testTag = "HubTab_MINE", onClick = { onNavigate(Route.Mine) })
+        Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.08f)))
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.White.copy(alpha = 0.04f))
+                .clickable { personaFocusRequester.requestFocus() },
+            contentAlignment = Alignment.Center
+        ) {
+            UserPersona(nickname = nickname, emoji = emoji, airIsStill = airIsStill, onNicknameChange = onSaveNickname, focusRequester = personaFocusRequester)
+        }
     }
 }
 
