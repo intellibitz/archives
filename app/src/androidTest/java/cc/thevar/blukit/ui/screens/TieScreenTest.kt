@@ -33,11 +33,8 @@ class TieScreenTest {
                     ),
                     localDeviceId = "me",
                     localEmoji = "👤",
-                    localNickname = "hero",
-                    onNicknameChange = {},
                     groupId = "group-1",
                     onDisconnect = {},
-                    onNavigateBack = {},
                     onSendMessage = onSendMessage,
                     onBlockUser = {},
                     onEnterPip = {}
@@ -73,11 +70,8 @@ class TieScreenTest {
                     ),
                     localDeviceId = "me",
                     localEmoji = "👤",
-                    localNickname = "hero",
-                    onNicknameChange = {},
                     groupId = "group-1",
                     onDisconnect = {},
-                    onNavigateBack = {},
                     onSendMessage = { _, _ -> },
                     onBlockUser = {},
                     onEnterPip = {}

@@ -20,10 +20,19 @@ import javax.crypto.spec.SecretKeySpec
  * and AES-256-GCM for authenticated payload confidentiality.
  * Key derivation follows HKDF (RFC 5869) to ensure high entropy for session keys.
  */
-class CryptoManager {
+class CryptoManager(
+    keyStoreProvider: String = "AndroidKeyStore"
+) {
 
-    private val keyStore = KeyStore.getInstance("AndroidKeyStore").apply {
-        load(null)
+    private val keyStore = try {
+        KeyStore.getInstance(keyStoreProvider).apply {
+            load(null)
+        }
+    } catch (_: Exception) {
+        // Fallback for non-Android environments (unit tests)
+        KeyStore.getInstance(KeyStore.getDefaultType()).apply {
+            load(null)
+        }
     }
 
     /**

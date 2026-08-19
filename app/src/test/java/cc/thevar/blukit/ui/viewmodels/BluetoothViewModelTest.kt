@@ -62,6 +62,7 @@ class BluetoothViewModelTest {
         every { p2pController.messages } returns messagesFlow
         
         every { repository.vibedPeers } returns MutableStateFlow(emptySet())
+        every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { vibeStore.groups } returns groupsFlow
 
         val permissionManager = mockk<cc.thevar.blukit.data.system.SpreadPermissionManager>(relaxed = true)

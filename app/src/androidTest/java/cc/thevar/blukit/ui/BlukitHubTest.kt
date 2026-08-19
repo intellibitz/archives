@@ -46,20 +46,16 @@ class BlukitHubTest {
                     userCount = 0,
                     linksCount = 0,
                     roarsCount = 0,
-                    vibesCount = 0,
+                    mineCount = 0,
                     lowPowerMode = false,
                     isStealthMode = false,
                     incomingLinkRequests = emptySet(),
                     selectedDevices = emptySet(),
-                    scannedDevices = emptyList(),
                     connectedLinks = emptySet(),
                     vibedPeers = emptySet(),
-                    messages = emptyList(),
                     isNoiseFilterActive = false,
                     onToggleNoiseFilter = {},
                     onNavigate = onNavigate,
-                    onDeviceClick = {},
-                    onDeviceLongClick = {},
                     onAwakenBluetooth = {},
                     onAwakenLocation = {},
                     onAwakenWifi = {},
@@ -111,20 +107,16 @@ class BlukitHubTest {
                     userCount = 0,
                     linksCount = 0,
                     roarsCount = 0,
-                    vibesCount = 0,
+                    mineCount = 0,
                     lowPowerMode = false,
                     isStealthMode = false,
                     incomingLinkRequests = emptySet(),
                     selectedDevices = emptySet(),
-                    scannedDevices = emptyList(),
                     connectedLinks = emptySet(),
                     vibedPeers = emptySet(),
-                    messages = emptyList(),
                     isNoiseFilterActive = false,
                     onToggleNoiseFilter = {},
                     onNavigate = {},
-                    onDeviceClick = {},
-                    onDeviceLongClick = {},
                     onAwakenBluetooth = {},
                     onAwakenLocation = {},
                     onAwakenWifi = {},
@@ -149,80 +141,5 @@ class BlukitHubTest {
         // Change nickname
         composeTestRule.onNodeWithTag("IdentityVibeInput").performTextReplacement("Quantum")
         verify { onSaveNickname("Quantum") }
-    }
-
-    @Test
-    fun testHub_PersonaCloudCategorization() {
-        val deviceActive = P2PDevice("id-active", "Active", "🔥")
-        val deviceIdle = P2PDevice("id-idle", "Idle", "💤")
-        
-        // Mock a message from "Active" to move it to Active row
-        val message = cc.thevar.blukit.domain.model.MessagePayload(
-            messageId = "msg-1",
-            senderId = "id-active",
-            senderName = "Active",
-            content = "I am speaking",
-            timestamp = System.currentTimeMillis()
-        )
-
-        composeTestRule.setContent {
-            val focusRequester = remember { FocusRequester() }
-            BlukitTheme {
-                BlukitHub(
-                    currentRoute = Route.Blukit,
-                    nickname = "me",
-                    emoji = "👤",
-                    isBluetoothEnabled = true,
-                    isLocationEnabled = true,
-                    isWifiEnabled = true,
-                    isLocationMandatory = false,
-                    permissionsGranted = true,
-                    isPermanentlyDenied = false,
-                    onSaveNickname = {},
-                    personaFocusRequester = focusRequester,
-                    messageText = "",
-                    onMessageChange = {},
-                    onSend = {},
-                    vibeCount = 0,
-                    energySurge = 0f,
-                    hubRotation = 0f,
-                    userCount = 2,
-                    linksCount = 0,
-                    roarsCount = 1,
-                    vibesCount = 0,
-                    lowPowerMode = false,
-                    isStealthMode = false,
-                    incomingLinkRequests = emptySet(),
-                    selectedDevices = emptySet(),
-                    scannedDevices = listOf(deviceActive, deviceIdle),
-                    connectedLinks = emptySet(),
-                    vibedPeers = emptySet(),
-                    messages = listOf(message),
-                    isNoiseFilterActive = false,
-                    onToggleNoiseFilter = {},
-                    onNavigate = {},
-                    onDeviceClick = {},
-                    onDeviceLongClick = {},
-                    onAwakenBluetooth = {},
-                    onAwakenLocation = {},
-                    onAwakenWifi = {},
-                    onGrantPermissions = {},
-                    onOpenSettings = {},
-                    onToggleStealth = {},
-                    onToggleLowPower = {},
-                    onClearHistory = {},
-                    onLogout = {},
-                    onAcceptLink = {},
-                    onDenyLink = {},
-                    onStartSideVibe = {},
-                    onStartTie = {},
-                    onClearSelection = {}
-                )
-            }
-        }
-
-        // Verify Active row has student name
-        composeTestRule.onNodeWithTag("PersonaNode_id-active").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("PersonaNode_id-idle").assertIsDisplayed()
     }
 }
