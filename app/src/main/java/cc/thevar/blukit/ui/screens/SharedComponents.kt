@@ -338,7 +338,7 @@ fun BlukitInput(
 fun UserPersona(
     nickname: String, emoji: String, airIsStill: Boolean, onNicknameChange: (String) -> Unit, focusRequester: FocusRequester
 ) {
-    var localNickname by remember(nickname) { mutableStateOf(nickname) }
+    var localNickname by remember(nickname) { mutableStateOf(if (nickname == "?") "" else nickname) }
     val isUnknown = nickname == "?"
     val pulseScale by rememberInfiniteTransition(label = "NodeAnim").animateFloat(initialValue = 1.0f, targetValue = 1.1f, animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "Pulse")
     Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxHeight().padding(horizontal = 4.dp)) {
@@ -348,7 +348,25 @@ fun UserPersona(
             Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = if (isUnknown) StealthAmber else StealthPrimary, modifier = Modifier.size(9.dp).align(Alignment.BottomEnd).offset(x = 1.dp, y = 1.dp).background(Color.Black, CircleShape).padding(1.dp))
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            BasicTextField(value = localNickname, onValueChange = { localNickname = it; onNicknameChange(it.ifBlank { "?" }) }, modifier = Modifier.widthIn(max = 60.dp).focusRequester(focusRequester).testTag("IdentityVibeInput"), textStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, fontWeight = FontWeight.Black, color = if (airIsStill) Color.Red else if (isUnknown) Color.White.copy(alpha = 0.4f) else StealthPrimary, textAlign = TextAlign.Center, letterSpacing = 0.5.sp), singleLine = true, cursorBrush = SolidColor(StealthPrimary))
+            Box(contentAlignment = Alignment.Center) {
+                if (localNickname.isEmpty()) {
+                    Text(
+                        text = "SET NAME",
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Black,
+                        color = StealthAmber.copy(alpha = 0.6f),
+                        letterSpacing = 0.5.sp
+                    )
+                }
+                BasicTextField(
+                    value = localNickname, 
+                    onValueChange = { localNickname = it; onNicknameChange(it.ifBlank { "?" }) }, 
+                    modifier = Modifier.widthIn(min = 10.dp, max = 60.dp).focusRequester(focusRequester).testTag("IdentityVibeInput"), 
+                    textStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, fontWeight = FontWeight.Black, color = if (airIsStill) Color.Red else if (isUnknown) StealthAmber else StealthPrimary, textAlign = TextAlign.Center, letterSpacing = 0.5.sp), 
+                    singleLine = true, 
+                    cursorBrush = SolidColor(StealthPrimary)
+                )
+            }
             Text(text = " (YOU)", fontSize = 5.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.15f), letterSpacing = 0.5.sp)
         }
     }
@@ -427,8 +445,8 @@ fun UnifiedPersonaCloud(
                     .fillMaxHeight()
                     .testTag("PersonaCloudColumn"),
                 horizontalArrangement = Arrangement.Center,
-                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
-                maxItemsInEachColumn = 8
+                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom),
+                maxItemsInEachColumn = 10
             ) {
                 sortedDevices.forEach { device ->
                     PersonaCloudItem(

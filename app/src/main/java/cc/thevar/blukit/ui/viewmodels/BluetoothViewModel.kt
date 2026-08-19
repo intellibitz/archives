@@ -209,6 +209,17 @@ class BluetoothViewModel(
         return groupId
     }
 
+    fun addMemberToGroup(groupId: String, deviceId: String) {
+        val group = state.value.groups.find { it.id == groupId } ?: return
+        p2pController.updateGroupMembers(groupId, group.memberIds + deviceId)
+    }
+
+    fun removeMemberFromGroup(groupId: String, deviceId: String) {
+        val group = state.value.groups.find { it.id == groupId } ?: return
+        if (deviceId == repository.getDeviceId()) return // Can't remove self this way (use delete group)
+        p2pController.updateGroupMembers(groupId, group.memberIds - deviceId)
+    }
+
     fun denyLink(device: P2PDevice) {
         p2pController.denyLink(device)
     }

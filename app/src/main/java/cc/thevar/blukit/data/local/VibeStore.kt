@@ -236,6 +236,15 @@ class VibeStore(
 
     suspend fun getGroup(id: String) = _groups.value[id]
 
+    suspend fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
+        _groups.update { current ->
+            current[groupId]?.let { 
+                current + (groupId to it.copy(memberIds = memberIds))
+            } ?: current
+        }
+        saveData()
+    }
+
     suspend fun updateGroupLastVibe(groupId: String, timestamp: Long) {
         _groups.update { current ->
             current[groupId]?.let { 

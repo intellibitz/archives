@@ -158,36 +158,97 @@ fun BlukitApp(
         FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
 
         Column(modifier = Modifier.fillMaxSize()) {
-            NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.weight(1f).fillMaxWidth()) { key ->
-                when (key) {
-                    Route.Blukit -> NavEntry(key) { 
-                        RipplesScreen(
+            Row(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.fillMaxSize()) { key ->
+                        when (key) {
+                            Route.Blukit -> NavEntry(key) { 
+                                RipplesScreen(
+                                    state = bluetoothState, 
+                                    localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
+                                    localNickname = nickname ?: "?", 
+                                    localEmoji = emoji, 
+                                    energySurge = energySurge, 
+                                    lowPowerMode = lowPowerMode, 
+                                    vibedPeers = bluetoothState.vibedPeers, 
+                                    noiseFilterEnabled = isNoiseFilterActive,
+                                    onStartScan = bluetoothViewModel::startScan, 
+                                    onStopScan = bluetoothViewModel::stopScan, 
+                                    onDeviceClick = { device -> 
+                                        val id = device.persistentId ?: device.id
+                                        viewModel.toggleVibePeer(id)
+                                        isNoiseFilterActive = true
+                                    }, 
+                                    onDeviceLongClick = { selectedPersonaForMenu = it }, 
+                                    onBroadcastMessage = bluetoothViewModel::roar, 
+                                    onDeleteVibe = viewModel::deleteVibe, 
+                                    onBlockUser = viewModel::blockUser, 
+                                    onUnblockUser = viewModel::unblockUser,
+                                    onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) }
+                                ) 
+                            }
+                            Route.Mine -> NavEntry(key) { 
+                        ConversationsScreen(
                             state = bluetoothState, 
-                            localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
-                            localNickname = nickname ?: "?", 
-                            localEmoji = emoji, 
-                            energySurge = energySurge, 
-                            lowPowerMode = lowPowerMode, 
-                            vibedPeers = bluetoothState.vibedPeers, 
-                            noiseFilterEnabled = isNoiseFilterActive,
-                            onStartScan = bluetoothViewModel::startScan, 
-                            onStopScan = bluetoothViewModel::stopScan, 
-                            onDeviceClick = { device -> 
-                                val id = device.persistentId ?: device.id
-                                viewModel.toggleVibePeer(id)
-                                isNoiseFilterActive = true
-                            }, 
-                            onDeviceLongClick = { selectedPersonaForMenu = it }, 
-                            onBroadcastMessage = bluetoothViewModel::roar, 
-                            onDeleteVibe = viewModel::deleteVibe, 
-                            onBlockUser = viewModel::blockUser, 
-                            onUnblockUser = viewModel::unblockUser,
-                            onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) }
+                            onVibeClick = { backStack.add(Route.VibeDetail(it.id)) }, 
+                            onDeleteGroup = bluetoothViewModel::deleteGroup,
+                            onAcceptLink = bluetoothViewModel::acceptLink,
+                            onDenyLink = bluetoothViewModel::denyLink
                         ) 
                     }
-                    Route.Mine -> NavEntry(key) { ConversationsScreen(state = bluetoothState, onVibeClick = { backStack.add(Route.VibeDetail(it.id)) }, onDeleteGroup = bluetoothViewModel::deleteGroup) }
-                    is Route.VibeDetail -> NavEntry(key) { TieScreen(state = bluetoothState, localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, localEmoji = emoji, localNickname = nickname ?: "?", onNicknameChange = viewModel::saveNickname, groupId = key.groupId, onDisconnect = bluetoothViewModel::disconnect, onNavigateBack = { backStack.removeLastOrNull() }, onSendMessage = bluetoothViewModel::sendMessage, onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, onBlockUser = viewModel::blockUser, onEnterPip = onEnterPip) }
-                    else -> NavEntry(key) { Text("Unknown") }
+                            is Route.VibeDetail -> NavEntry(key) { 
+                        TieScreen(
+                            state = bluetoothState, 
+                            localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
+                            localEmoji = emoji, 
+                            localNickname = nickname ?: "?", 
+                            onNicknameChange = viewModel::saveNickname, 
+                            groupId = key.groupId, 
+                            onDisconnect = bluetoothViewModel::disconnect, 
+                            onNavigateBack = { backStack.removeLastOrNull() }, 
+                            onSendMessage = bluetoothViewModel::sendMessage, 
+                            onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, 
+                            onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, 
+                            onBlockUser = viewModel::blockUser, 
+                            onAddMember = bluetoothViewModel::addMemberToGroup,
+                            onRemoveMember = bluetoothViewModel::removeMemberFromGroup,
+                            onEnterPip = onEnterPip
+                        ) 
+                    }
+                            else -> NavEntry(key) { Text("Unknown") }
+                        }
+                    }
+                }
+
+                val cloudDevices = bluetoothState.scannedDevices
+                AnimatedVisibility(
+                    visible = (currentRoute is Route.Blukit || currentRoute is Route.Mine) && cloudDevices.isNotEmpty(),
+                    enter = expandHorizontally() + fadeIn(),
+                    exit = shrinkHorizontally() + fadeOut(),
+                    modifier = Modifier.padding(end = 4.dp, bottom = 4.dp)
+                ) {
+                    UnifiedPersonaCloud(
+                        devices = cloudDevices, 
+                        vibedPeers = bluetoothState.vibedPeers, 
+                        connectedLinks = bluetoothState.connectedLinks, 
+                        activeBubbles = bluetoothState.messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
+                        onDeviceClick = { device -> 
+                            if (bluetoothState.selectedDevices.isEmpty()) { 
+                                val id = device.persistentId ?: device.id
+                                viewModel.toggleVibePeer(id)
+                                if (currentRoute is Route.Blukit) {
+                                    isNoiseFilterActive = true
+                                }
+                            } else { 
+                                bluetoothViewModel.toggleDeviceSelection(device.id) 
+                            } 
+                        }, 
+                        onDeviceLongClick = { selectedPersonaForMenu = it },
+                        isVertical = true
+                    )
                 }
             }
 
@@ -201,9 +262,9 @@ fun BlukitApp(
                 onSend = { if (messageText.isNotBlank()) { bluetoothViewModel.roar(messageText, currentRoute is Route.Mine); messageText = ""; focusManager.clearFocus() } },
                 vibeCount = if (currentRoute is Route.Mine) mineCount else roarsCount,
                 energySurge = energySurge, hubRotation = hubRotation, userCount = report.userCount, linksCount = report.connectedLinksCount,
-                roarsCount = roarsCount, vibesCount = mineCount, lowPowerMode = lowPowerMode, isStealthMode = isStealthMode,
-                incomingLinkRequests = bluetoothState.incomingLinkRequests, selectedDevices = bluetoothState.selectedDevices, scannedDevices = bluetoothState.scannedDevices,
-                connectedLinks = bluetoothState.connectedLinks, vibedPeers = bluetoothState.vibedPeers, messages = bluetoothState.messages,
+                roarsCount = roarsCount, mineCount = mineCount, lowPowerMode = lowPowerMode, isStealthMode = isStealthMode,
+                incomingLinkRequests = bluetoothState.incomingLinkRequests, selectedDevices = bluetoothState.selectedDevices,
+                connectedLinks = bluetoothState.connectedLinks, vibedPeers = bluetoothState.vibedPeers,
                 isNoiseFilterActive = isNoiseFilterActive,
                 onToggleNoiseFilter = { isNoiseFilterActive = it },
                 onNavigate = { route -> 
@@ -215,18 +276,6 @@ fun BlukitApp(
                         backStack.add(route) 
                     } 
                 },
-                onDeviceClick = { device -> 
-                    if (bluetoothState.selectedDevices.isEmpty()) { 
-                        val id = device.persistentId ?: device.id
-                        viewModel.toggleVibePeer(id)
-                        if (currentRoute is Route.Blukit) {
-                            isNoiseFilterActive = true
-                        }
-                    } else { 
-                        bluetoothViewModel.toggleDeviceSelection(device.id) 
-                    } 
-                },
-                onDeviceLongClick = { selectedPersonaForMenu = it },
                 onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
                 onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                 onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
@@ -264,7 +313,7 @@ fun BlukitApp(
 
 @Composable
 fun BlukitHub(
-    currentRoute: Route, nickname: String, emoji: String, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, isLocationMandatory: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, onSaveNickname: (String) -> Unit, personaFocusRequester: FocusRequester, messageText: String, onMessageChange: (String) -> Unit, onSend: () -> Unit, vibeCount: Int, energySurge: Float, hubRotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, vibesCount: Int, lowPowerMode: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, selectedDevices: Set<String>, scannedDevices: List<P2PDevice>, connectedLinks: Set<String>, vibedPeers: Set<String>, messages: List<cc.thevar.blukit.domain.model.MessagePayload>, isNoiseFilterActive: Boolean, onToggleNoiseFilter: (Boolean) -> Unit, onNavigate: (Route) -> Unit, onDeviceClick: (P2PDevice) -> Unit, onDeviceLongClick: (P2PDevice) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit, onStartSideVibe: () -> Unit, onStartTie: () -> Unit, onClearSelection: () -> Unit, modifier: Modifier = Modifier
+    currentRoute: Route, nickname: String, emoji: String, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, isLocationMandatory: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, onSaveNickname: (String) -> Unit, personaFocusRequester: FocusRequester, messageText: String, onMessageChange: (String) -> Unit, onSend: () -> Unit, vibeCount: Int, energySurge: Float, hubRotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, mineCount: Int, lowPowerMode: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, selectedDevices: Set<String>, connectedLinks: Set<String>, vibedPeers: Set<String>, isNoiseFilterActive: Boolean, onToggleNoiseFilter: (Boolean) -> Unit, onNavigate: (Route) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit, onStartSideVibe: () -> Unit, onStartTie: () -> Unit, onClearSelection: () -> Unit, modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth().zIndex(1f), horizontalAlignment = Alignment.CenterHorizontally) {
         AnimatedVisibility(visible = selectedDevices.isNotEmpty(), enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
@@ -274,11 +323,10 @@ fun BlukitHub(
                 IconButton(onClick = onClearSelection, modifier = Modifier.background(Color.White.copy(alpha = 0.1f), CircleShape)) { Icon(Icons.Rounded.Close, tint = Color.White, contentDescription = "Cancel") }
             }
         }
-        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp).background(Color.Black.copy(alpha = 0.96f), RoundedCornerShape(32.dp)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(32.dp))) {
-            Row(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp).imePadding(), verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Mine) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.96f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))) {
+            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp).imePadding()) {
+                AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Mine) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         BlukitInput(
                             airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted, 
                             isReadOnly = isNoiseFilterActive && currentRoute is Route.Blukit,
@@ -288,70 +336,53 @@ fun BlukitHub(
                             vibeCount = vibeCount, 
                             modifier = Modifier.weight(1f)
                         )
-                            if (currentRoute is Route.Blukit) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                IconButton(onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, modifier = Modifier.size(48.dp).background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape).border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)) {
-                                    Icon(imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, contentDescription = "Filter", tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
-                                }
+                        if (currentRoute is Route.Blukit) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            IconButton(onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, modifier = Modifier.size(48.dp).background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape).border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)) {
+                                Icon(imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, contentDescription = "Filter", tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    UnifiedBlukitBadge(
-                        energy = energySurge, 
-                        rotation = hubRotation, 
-                        userCount = userCount, 
-                        linksCount = linksCount, 
-                        roarsCount = roarsCount, 
-                        vibesCount = vibesCount, 
-                        lowPowerMode = lowPowerMode, 
-                        permissionsGranted = permissionsGranted, 
-                        isPermanentlyDenied = isPermanentlyDenied, 
-                        isStealthMode = isStealthMode, 
-                        incomingLinkRequests = incomingLinkRequests, 
-                        isBluetoothEnabled = isBluetoothEnabled, 
-                        isLocationEnabled = isLocationEnabled, 
-                        isWifiEnabled = isWifiEnabled, 
-                        currentRoute = currentRoute, 
-                        onNavigate = onNavigate, 
-                        onAwakenBluetooth = onAwakenBluetooth, 
-                        onAwakenLocation = onAwakenLocation, 
-                        onAwakenWifi = onAwakenWifi, 
-                        onGrantPermissions = onGrantPermissions, 
-                        onOpenSettings = onOpenSettings, 
-                        onToggleStealth = onToggleStealth, 
-                        onToggleLowPower = onToggleLowPower, 
-                        onClearHistory = onClearHistory, 
-                        onLogout = onLogout, 
-                        onAcceptLink = onAcceptLink, 
-                        onDenyLink = onDenyLink,
-                        nickname = nickname,
-                        emoji = emoji,
-                        onSaveNickname = onSaveNickname,
-                        personaFocusRequester = personaFocusRequester
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = StealthPrimary.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "blukit: spread vibes", fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.3f), letterSpacing = 1.sp)
-                    }
                 }
-                
-                val cloudDevices = scannedDevices
-                AnimatedVisibility(visible = (currentRoute is Route.Blukit || currentRoute is Route.Mine) && cloudDevices.isNotEmpty()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        UnifiedPersonaCloud(
-                            devices = cloudDevices, 
-                            vibedPeers = vibedPeers, 
-                            connectedLinks = connectedLinks, 
-                            activeBubbles = messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
-                            onDeviceClick = onDeviceClick, 
-                            onDeviceLongClick = onDeviceLongClick,
-                            isVertical = true
-                        )
-                    }
+                Spacer(modifier = Modifier.height(8.dp))
+                UnifiedBlukitBadge(
+                    energy = energySurge, 
+                    rotation = hubRotation, 
+                    userCount = userCount, 
+                    linksCount = linksCount, 
+                    roarsCount = roarsCount, 
+                    vibesCount = mineCount, 
+                    lowPowerMode = lowPowerMode, 
+                    permissionsGranted = permissionsGranted, 
+                    isPermanentlyDenied = isPermanentlyDenied, 
+                    isStealthMode = isStealthMode, 
+                    incomingLinkRequests = incomingLinkRequests, 
+                    isBluetoothEnabled = isBluetoothEnabled, 
+                    isLocationEnabled = isLocationEnabled, 
+                    isWifiEnabled = isWifiEnabled, 
+                    currentRoute = currentRoute, 
+                    onNavigate = onNavigate, 
+                    onAwakenBluetooth = onAwakenBluetooth, 
+                    onAwakenLocation = onAwakenLocation, 
+                    onAwakenWifi = onAwakenWifi, 
+                    onGrantPermissions = onGrantPermissions, 
+                    onOpenSettings = onOpenSettings, 
+                    onToggleStealth = onToggleStealth, 
+                    onToggleLowPower = onToggleLowPower, 
+                    onClearHistory = onClearHistory, 
+                    onLogout = onLogout, 
+                    onAcceptLink = onAcceptLink, 
+                    onDenyLink = onDenyLink,
+                    nickname = nickname,
+                    emoji = emoji,
+                    onSaveNickname = onSaveNickname,
+                    personaFocusRequester = personaFocusRequester
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = StealthPrimary.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = "blukit: spread vibes", fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.3f), letterSpacing = 1.sp)
                 }
             }
         }

@@ -13,6 +13,7 @@ import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.VibeGroup
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
@@ -553,7 +554,17 @@ class BleFallbackController(
     }
 
     override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
-        return UUID.randomUUID().toString() // Stub
+        val groupId = UUID.randomUUID().toString()
+        internalScope.launch(ioDispatcher) {
+            vibeStore.insertGroup(VibeGroup(id = groupId, name = name, memberIds = members + repository.getDeviceId(), type = type, isPersistent = type == VibeGroup.TYPE_TIE))
+        }
+        return groupId
+    }
+
+    override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
+        internalScope.launch(ioDispatcher) {
+            vibeStore.updateGroupMembers(groupId, memberIds)
+        }
     }
 
     override fun closeConnection() {

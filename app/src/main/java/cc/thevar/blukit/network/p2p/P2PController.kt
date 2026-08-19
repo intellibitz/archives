@@ -57,6 +57,8 @@ interface P2PController {
 
     fun startGroupVibe(name: String, members: Set<String>, type: Int): String
 
+    fun updateGroupMembers(groupId: String, memberIds: Set<String>)
+
     fun closeConnection()
     fun release()
 }

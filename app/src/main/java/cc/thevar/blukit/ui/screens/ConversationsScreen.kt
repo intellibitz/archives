@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.VibeGroup
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -36,6 +37,8 @@ fun ConversationsScreen(
     state: BluetoothUiState,
     onVibeClick: (VibeGroup) -> Unit,
     onDeleteGroup: (String) -> Unit,
+    onAcceptLink: (P2PDevice) -> Unit,
+    onDenyLink: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var groupToDelete by remember { mutableStateOf<VibeGroup?>(null) }
@@ -50,10 +53,36 @@ fun ConversationsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (state.incomingLinkRequests.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "VIBE REQUESTS",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Black,
+                        color = StealthPrimary,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                items(state.incomingLinkRequests.toList(), key = { it.id }) { request ->
+                    VibeRequestItem(request, onAcceptLink, onDenyLink)
+                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
+
+            item {
+                Text(
+                    text = "ACTIVE RESONANCES",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
             val conversations = state.groups
             if (conversations.isEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                         Text(
                             text = "NO VIBES YET", 
                             color = Color.White.copy(alpha = 0.2f), 
@@ -91,6 +120,43 @@ fun ConversationsScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun VibeRequestItem(
+    device: P2PDevice,
+    onAccept: (P2PDevice) -> Unit,
+    onDeny: (P2PDevice) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(StealthPrimary.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
+            .border(1.dp, StealthPrimary.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = device.emoji, fontSize = 24.sp)
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 12.sp)
+                Text(text = "Wants to vibe with you", fontSize = 8.sp, color = Color.White.copy(alpha = 0.4f))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = { onDeny(device) }) {
+                    Text("DENY", color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                }
+                Button(
+                    onClick = { onAccept(device) },
+                    colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    Text("JOIN", fontWeight = FontWeight.Black, fontSize = 10.sp)
+                }
+            }
+        }
     }
 }
 

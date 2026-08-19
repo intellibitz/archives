@@ -63,6 +63,8 @@ fun TieScreen(
     onStartSideVibe: (String) -> Unit = {},
     onToggleFocus: (P2PDevice) -> Unit = {},
     onBlockUser: (String) -> Unit,
+    onAddMember: (String, String) -> Unit = { _, _ -> },
+    onRemoveMember: (String, String) -> Unit = { _, _ -> },
     onEnterPip: () -> Unit,
 ) {
     var vibeText by remember { mutableStateOf("") }
@@ -75,6 +77,7 @@ fun TieScreen(
     }
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
+    var showMemberManagement by remember { mutableStateOf(false) }
 
     val chatVibes = remember(state.messages, groupId, localDeviceId) {
         if (groupId == null) {
@@ -93,8 +96,11 @@ fun TieScreen(
     if (userToBlock != null) {
         AlertDialog(
             onDismissRequest = { userToBlock = null },
-            title = { Text(stringResource(R.string.mod_block_title)) },
-            text = { Text(stringResource(R.string.mod_block_desc, userToBlock?.senderName ?: "")) },
+            containerColor = Color.Black,
+            titleContentColor = StealthRose,
+            textContentColor = Color.White,
+            title = { Text("BLOCK USER?", fontWeight = FontWeight.Black) },
+            text = { Text("YOU WILL NO LONGER RECEIVE VIBES FROM ${userToBlock?.senderName?.uppercase()}.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -102,12 +108,61 @@ fun TieScreen(
                         userToBlock = null
                     }
                 ) {
-                    Text(stringResource(R.string.btn_block))
+                    Text("BLOCK", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { userToBlock = null }) {
-                    Text(stringResource(R.string.btn_cancel))
+                    Text("CANCEL")
+                }
+            }
+        )
+    }
+
+    if (showMemberManagement && group != null) {
+        AlertDialog(
+            onDismissRequest = { showMemberManagement = false },
+            containerColor = Color.Black,
+            titleContentColor = StealthPrimary,
+            textContentColor = Color.White,
+            title = { Text("MANAGE TIE", fontWeight = FontWeight.Black) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("MEMBERS", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
+                    group.memberIds.forEach { memberId ->
+                        val member = state.scannedDevices.find { it.id == memberId || it.persistentId == memberId }
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = member?.emoji ?: "👤", fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = (member?.name ?: if(memberId == localDeviceId) "YOU" else "UNKNOWN").uppercase(), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            if (memberId != localDeviceId) {
+                                IconButton(onClick = { onRemoveMember(group.id, memberId) }) {
+                                    Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Remove", tint = Color.Red.copy(alpha = 0.6f))
+                                }
+                            }
+                        }
+                    }
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                    Text("ADD NEARBY", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
+                    val nearbyNotMembers = state.scannedDevices.filter { it.id !in group.memberIds && it.persistentId !in group.memberIds }
+                    if (nearbyNotMembers.isEmpty()) {
+                        Text("No one else nearby", fontSize = 10.sp, color = Color.White.copy(alpha = 0.2f))
+                    }
+                    nearbyNotMembers.forEach { device ->
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = device.emoji, fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = (device.name ?: "?").uppercase(), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            IconButton(onClick = { onAddMember(group.id, device.id) }) {
+                                Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Add", tint = StealthPrimary)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showMemberManagement = false }) {
+                    Text("DONE", color = StealthPrimary, fontWeight = FontWeight.Black)
                 }
             }
         )
@@ -117,11 +172,17 @@ fun TieScreen(
         containerColor = Color.Transparent,
         topBar = {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                IconButton(onClick = onNavigateBack, modifier = Modifier.padding(top = 24.dp)) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
                 BlukitTopTitle(
                     title = group?.name ?: "VIBE",
                     icon = if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing,
                     modifier = Modifier.weight(1f)
                 )
+                IconButton(onClick = { showMemberManagement = true }, modifier = Modifier.padding(top = 24.dp)) {
+                    Icon(Icons.Rounded.People, contentDescription = "Members", tint = Color.White.copy(alpha = 0.6f))
+                }
                 Box(
                     modifier = Modifier
                         .padding(end = 16.dp, top = 24.dp)
@@ -143,6 +204,19 @@ fun TieScreen(
                 .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
         ) {
+            // Contextual tips
+            if (chatVibes.isEmpty()) {
+                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "TIP: TAP THE PEOPLE ICON TO MANAGE THIS TIE.",
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black,
+                        color = StealthPrimary.copy(alpha = 0.4f),
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+
             // Contextual Persona Cloud: Users in this Tie
             if (group != null) {
                 val groupMembers = remember(group.memberIds, state.scannedDevices) {

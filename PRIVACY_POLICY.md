@@ -15,7 +15,8 @@ While blukit requires hardware permissions to use Bluetooth and WiFi radios (as 
 
 ## 3. Offline & Anonymous
 blukit works entirely through peer-to-peer radios. Your communication never touches the internet. 
-- You start as anonymous (**?**).
+- You start as anonymous (**YOU**).
+- blukit will gently nudge you to **SET NAME** until you choose a local nickname.
 - You can change your nickname anytime—it stays only on your device.
 
 ## 4. End-to-End Security

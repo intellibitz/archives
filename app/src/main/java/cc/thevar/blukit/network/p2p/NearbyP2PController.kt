@@ -427,6 +427,12 @@ class NearbyP2PController(
         return groupId
     }
 
+    override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
+        internalScope.launch(ioDispatcher) {
+            vibeStore.updateGroupMembers(groupId, memberIds)
+        }
+    }
+
     private fun isSpam(payload: MessagePayload): Boolean {
         if (payload.senderId in repository.blockedUsers.value || blockedFingerprints.contains(payload.senderId)) return true
         val now = System.currentTimeMillis()

@@ -110,6 +110,11 @@ class CompositeP2PController(
         return nearbyController.startGroupVibe(name, members, type)
     }
 
+    override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
+        nearbyController.updateGroupMembers(groupId, memberIds)
+        bleController.updateGroupMembers(groupId, memberIds)
+    }
+
     override fun requestLink(device: P2PDevice) {
         if (device.id.startsWith("nearby:")) {
             nearbyController.requestLink(device)
