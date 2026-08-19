@@ -44,10 +44,6 @@ fun ConversationsScreen(
     var groupToDelete by remember { mutableStateOf<VibeGroup?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
-        val title = "MINE"
-        val icon = Icons.Rounded.Flare
-        BlukitTopTitle(title = title, icon = icon)
-        
         LazyColumn(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),

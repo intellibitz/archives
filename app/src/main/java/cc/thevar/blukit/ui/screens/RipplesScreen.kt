@@ -62,6 +62,7 @@ fun RipplesScreen(
     onBlockUser: (String) -> Unit,
     onUnblockUser: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
+    hasSidebar: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -112,10 +113,6 @@ fun RipplesScreen(
 
         // LAYER 1: Atmosphere (Background + Arcs + Ripples)
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                BlukitTopTitle(title = "ALL", icon = Icons.Rounded.Groups)
-            }
-            
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
@@ -133,7 +130,9 @@ fun RipplesScreen(
                 onVibeSurge = { hapticManager.triggerProximityVibe(it) },
                 drawBackground = true,
                 drawNodes = true,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = if (hasSidebar) 64.dp else 0.dp)
             ) {
                 // LAYER 2: Top-level Interactive Ticker
                 VibingVibesTicker(

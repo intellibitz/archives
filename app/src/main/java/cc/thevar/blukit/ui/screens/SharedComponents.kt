@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -107,40 +108,58 @@ fun RadioB(
 fun BlukitTopTitle(
     title: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onBack: (() -> Unit)? = null,
+    onManage: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "SPREAD",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 2.sp,
-                    color = Color.White.copy(alpha = 0.9f)
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            if (onBack != null) {
+                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f))
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "SPREAD",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 2.sp,
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 12.sp
+                    )
                 )
-            )
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            RadioB(modifier = Modifier.size(28.dp))
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Text(
-                text = "VIBES",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 2.sp,
-                    color = Color.White.copy(alpha = 0.9f)
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                RadioB(modifier = Modifier.size(36.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Text(
+                    text = "VIBES",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 2.sp,
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 12.sp
+                    )
                 )
-            )
+            }
+
+            if (onManage != null) {
+                IconButton(onClick = onManage, modifier = Modifier.align(Alignment.CenterEnd)) {
+                    Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f))
+                }
+            }
         }
         
         Spacer(modifier = Modifier.height(4.dp))
@@ -149,16 +168,17 @@ fun BlukitTopTitle(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = StealthPrimary.copy(alpha = 0.6f),
-                modifier = Modifier.size(12.dp)
+                tint = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.6f),
+                modifier = Modifier.size(10.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = title.uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
-                    color = StealthPrimary.copy(alpha = 0.7f)
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp,
+                    color = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.7f),
+                    fontSize = 8.sp
                 )
             )
         }

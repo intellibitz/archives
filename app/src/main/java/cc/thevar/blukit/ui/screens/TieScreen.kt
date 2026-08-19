@@ -48,36 +48,32 @@ import java.util.Locale
 /**
  * Ties: Secure private vibes.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TieScreen(
     state: BluetoothUiState,
     localDeviceId: String,
     localEmoji: String,
-    localNickname: String,
-    onNicknameChange: (String) -> Unit,
     groupId: String?,
     onDisconnect: () -> Unit,
-    onNavigateBack: () -> Unit,
     onSendMessage: (String, String) -> Unit,
     onStartSideVibe: (String) -> Unit = {},
     onToggleFocus: (P2PDevice) -> Unit = {},
     onBlockUser: (String) -> Unit,
     onAddMember: (String, String) -> Unit = { _, _ -> },
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
+    showMemberManagement: Boolean = false,
+    onDismissManagement: () -> Unit = {},
     onEnterPip: () -> Unit,
 ) {
     var vibeText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
-    val personaFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
 
     val group = remember(groupId, state.groups) {
         state.groups.find { it.id == groupId }
     }
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
-    var showMemberManagement by remember { mutableStateOf(false) }
 
     val chatVibes = remember(state.messages, groupId, localDeviceId) {
         if (groupId == null) {
@@ -121,7 +117,7 @@ fun TieScreen(
 
     if (showMemberManagement && group != null) {
         AlertDialog(
-            onDismissRequest = { showMemberManagement = false },
+            onDismissRequest = onDismissManagement,
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White,
@@ -161,119 +157,83 @@ fun TieScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showMemberManagement = false }) {
+                TextButton(onClick = onDismissManagement) {
                     Text("DONE", color = StealthPrimary, fontWeight = FontWeight.Black)
                 }
             }
         )
     }
 
-    Scaffold(
-        containerColor = Color.Transparent,
-        topBar = {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                IconButton(onClick = onNavigateBack, modifier = Modifier.padding(top = 24.dp)) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
-                }
-                BlukitTopTitle(
-                    title = group?.name ?: "VIBE",
-                    icon = if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = { showMemberManagement = true }, modifier = Modifier.padding(top = 24.dp)) {
-                    Icon(Icons.Rounded.People, contentDescription = "Members", tint = Color.White.copy(alpha = 0.6f))
-                }
-                Box(
-                    modifier = Modifier
-                        .padding(end = 16.dp, top = 24.dp)
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.05f))
-                        .clickable { personaFocusRequester.requestFocus() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    UserPersona(nickname = localNickname, emoji = localEmoji, airIsStill = !state.isBluetoothEnabled || !state.permissionsGranted, onNicknameChange = onNicknameChange, focusRequester = personaFocusRequester)
-                }
-            }
-        },
-        contentWindowInsets = WindowInsets.safeDrawing
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                .fillMaxSize()
-        ) {
-            // Contextual tips
-            if (chatVibes.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "TIP: TAP THE PEOPLE ICON TO MANAGE THIS TIE.",
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Black,
-                        color = StealthPrimary.copy(alpha = 0.4f),
-                        letterSpacing = 1.sp
-                    )
-                }
-            }
-
-            // Contextual Persona Cloud: Users in this Tie
-            if (group != null) {
-                val groupMembers = remember(group.memberIds, state.scannedDevices) {
-                    state.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
-                }
-                
-                UnifiedPersonaCloud(
-                    devices = groupMembers,
-                    vibedPeers = state.vibedPeers,
-                    connectedLinks = state.connectedLinks,
-                    activeBubbles = state.messages.map { msg ->
-                        BubbleData(
-                            msg.senderId,
-                            msg.content,
-                            msg.timestamp,
-                            msg.messageId,
-                            !msg.receiverId.isNullOrBlank()
-                        )
-                    },
-                    onDeviceClick = onToggleFocus
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Contextual tips
+        if (chatVibes.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "TIP: TAP THE PEOPLE ICON TO MANAGE THIS TIE.",
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Black,
+                    color = StealthPrimary.copy(alpha = 0.4f),
+                    letterSpacing = 1.sp
                 )
             }
+        }
 
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(chatVibes, key = { it.messageId }) { payload ->
-                    ChatMessage(
-                        payload = payload,
-                        isFromLocalUser = payload.senderId == localDeviceId,
-                        localEmoji = localEmoji,
-                        onClick = {
-                            if (payload.senderId != localDeviceId) {
-                                onStartSideVibe(payload.senderId)
-                            }
-                        },
-                        onLongClick = { if (payload.senderId != localDeviceId) userToBlock = payload }
-                    )
-                }
+        // Contextual Persona Cloud: Users in this Tie
+        if (group != null) {
+            val groupMembers = remember(group.memberIds, state.scannedDevices) {
+                state.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
             }
             
-            BlukitInput(
-                airIsStill = !state.isBluetoothEnabled || !state.permissionsGranted,
-                value = vibeText,
-                onValueChange = { vibeText = it },
-                onSend = {
-                    if (vibeText.isNotBlank() && groupId != null) {
-                        onSendMessage(vibeText, groupId)
-                        vibeText = ""
-                        focusManager.clearFocus()
-                    }
-                }
+            UnifiedPersonaCloud(
+                devices = groupMembers,
+                vibedPeers = state.vibedPeers,
+                connectedLinks = state.connectedLinks,
+                activeBubbles = state.messages.map { msg ->
+                    BubbleData(
+                        msg.senderId,
+                        msg.content,
+                        msg.timestamp,
+                        msg.messageId,
+                        !msg.receiverId.isNullOrBlank()
+                    )
+                },
+                onDeviceClick = onToggleFocus
             )
         }
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(chatVibes, key = { it.messageId }) { payload ->
+                ChatMessage(
+                    payload = payload,
+                    isFromLocalUser = payload.senderId == localDeviceId,
+                    localEmoji = localEmoji,
+                    onClick = {
+                        if (payload.senderId != localDeviceId) {
+                            onStartSideVibe(payload.senderId)
+                        }
+                    },
+                    onLongClick = { if (payload.senderId != localDeviceId) userToBlock = payload }
+                )
+            }
+        }
+        
+        BlukitInput(
+            airIsStill = !state.isBluetoothEnabled || !state.permissionsGranted,
+            value = vibeText,
+            onValueChange = { vibeText = it },
+            onSend = {
+                if (vibeText.isNotBlank() && groupId != null) {
+                    onSendMessage(vibeText, groupId)
+                    vibeText = ""
+                    focusManager.clearFocus()
+                }
+            }
+        )
     }
 }
 

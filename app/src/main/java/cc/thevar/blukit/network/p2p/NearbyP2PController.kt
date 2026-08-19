@@ -310,7 +310,20 @@ class NearbyP2PController(
         internalScope.launch(ioDispatcher) {
             val options = DiscoveryOptions.Builder().setStrategy(getStrategy()).build()
             connectionsClient.startDiscovery(serviceId, createDiscoveryCallback(), options)
-                .addOnFailureListener { _isDiscovering.value = false }
+                .addOnFailureListener { 
+                    Log.e(tag, "Discovery failed to start: ${it.message}")
+                    _isDiscovering.value = false 
+                }
+            
+            // Resilience: Periodic nudge to discovery
+            while (_isDiscovering.value) {
+                delay(30000) // 30 seconds
+                if (_isDiscovering.value && _scannedDevices.value.isEmpty()) {
+                    Log.i(tag, "Resilience: Empty air. Nudging discovery.")
+                    connectionsClient.stopDiscovery()
+                    connectionsClient.startDiscovery(serviceId, createDiscoveryCallback(), options)
+                }
+            }
         }
     }
 

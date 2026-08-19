@@ -96,13 +96,9 @@ class RadioStateManager(private val context: Context) {
             true 
         }
 
-        // Hardened logic: On Android 12+, Location isn't strictly mandatory for "nearby" if 
-        // neverForLocation is used, but we keep it for maximum fidelity across the fleet.
-        val locationIsMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-
         return RadioStates(
             isBluetoothEnabled = isBtOn,
-            isLocationEnabled = if (locationIsMandatory) isGpsOn else true, // GPS only blocks old phones
+            isLocationEnabled = isGpsOn, // Always reflect actual hardware state
             isWifiEnabled = isWifiOn
         )
     }

@@ -76,11 +76,8 @@ fun PreviewChatPhone() {
             ),
             localDeviceId = "me",
             localEmoji = "👤",
-            localNickname = "Me",
-            onNicknameChange = {},
             groupId = "group1",
             onDisconnect = {},
-            onNavigateBack = {},
             onSendMessage = { _, _ -> },
             onBlockUser = {},
             onEnterPip = {}
