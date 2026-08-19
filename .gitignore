@@ -54,3 +54,4 @@ keystore.properties
 
 # Temporary files
 tmp/
+.artifacts/
