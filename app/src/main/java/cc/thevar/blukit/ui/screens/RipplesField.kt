@@ -154,11 +154,26 @@ fun RipplesField(
         
         val displayDevices = if (onlyTies) {
             state.scannedDevices.filter { it.id in state.connectedLinks }
-        } else if (isFilterMode) {
-            state.scannedDevices.filter { it.persistentId in vibedPeers || it.id in vibedPeers }
         } else {
             state.scannedDevices
         }
+
+        if (drawNodes) {
+            ResonanceArcs(devices = displayDevices, energy = finalEnergy)
+            VibeNodes(
+                devices = displayDevices,
+                connectedLinks = state.connectedLinks,
+                selectedDevices = selectedDevices,
+                vibedPeers = vibedPeers,
+                activeBubbles = activeBubbles,
+                onlyTies = onlyTies,
+                isFilterMode = isFilterMode,
+                onDeviceClick = onDeviceClick,
+                onDeviceLongClick = onDeviceLongClick
+            )
+        }
+
+        VibesConnectivity(devices = state.scannedDevices)
 
         // LAYER 2: Overlay Content (Vibes Ticker - Bottom Layer)
         Box(modifier = Modifier.fillMaxSize().zIndex(0.5f)) {

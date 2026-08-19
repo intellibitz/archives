@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -111,11 +112,8 @@ fun RipplesScreen(
 
         // LAYER 1: Atmosphere (Background + Arcs + Ripples)
         Column(modifier = Modifier.fillMaxSize()) {
-            val titleIcon = if (onlyTies) Icons.Rounded.Flare else Icons.Rounded.Groups
-            val titleText = if (onlyTies) "GROUPS" else "ALL"
-            
             Box(modifier = Modifier.fillMaxWidth()) {
-                BlukitTopTitle(title = titleText, icon = titleIcon)
+                BlukitTopTitle(title = "ALL", icon = Icons.Rounded.Groups)
             }
             
             RipplesField(
@@ -142,7 +140,6 @@ fun RipplesScreen(
                     state = state,
                     vibes = vibes,
                     localDeviceId = localDeviceId,
-                    onlyTies = onlyTies,
                     vibedPeers = vibedPeers,
                     onDeviceClick = { selectedPersonaForMenu = it },
                     onDeviceLongClick = { selectedPersonaForMenu = it },
@@ -245,7 +242,6 @@ private fun VibingVibesTicker(
     state: BluetoothUiState,
     vibes: List<cc.thevar.blukit.domain.model.MessagePayload>,
     localDeviceId: String,
-    onlyTies: Boolean,
     vibedPeers: Set<String>,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit,
@@ -265,8 +261,7 @@ private fun VibingVibesTicker(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.Bottom,
-            contentPadding = PaddingValues(top = 100.dp, bottom = 40.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 40.dp)
              ) {
             items(vibes, key = { it.messageId }) { msg ->
                 val isMe = msg.senderId == localDeviceId
@@ -280,7 +275,6 @@ private fun VibingVibesTicker(
                         senderDevice = senderDevice,
                         isVibed = msg.senderId in vibedPeers,
                         isMutual = msg.senderId in state.connectedLinks,
-                        onlyTies = onlyTies,
                         timestamp = timeFormatter.format(Date(msg.timestamp)),
                         onClick = { senderDevice?.let { onDeviceClick(it) } },
                         onLongClick = { senderDevice?.let { onDeviceLongClick(it) } },
@@ -299,114 +293,103 @@ private fun AnimatedVibeItem(
     senderDevice: P2PDevice?,
     isVibed: Boolean,
     isMutual: Boolean,
-    onlyTies: Boolean,
     timestamp: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     Row(
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).animateContentSize()
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+            .animateContentSize()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = if (isMe) onDelete else onLongClick
+            )
+            .background(
+                if (isMutual) StealthRose.copy(alpha = 0.05f) 
+                else if (isVibed) StealthPrimary.copy(alpha = 0.03f) 
+                else Color.Transparent,
+                RoundedCornerShape(4.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        if (!isMe) {
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 280.dp)
-                    .background(
-                        if (isMutual) StealthRose.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.04f),
-                        RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp)
-                    )
-                    .border(
-                        0.5.dp, 
-                        if (isMutual) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.08f),
-                        RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp)
-                    )
-                    .combinedClickable(
-                        onClick = onClick, 
-                        onLongClick = onLongClick
-                    )
-            ) {
-                Column(modifier = Modifier.padding(10.dp)) {
-                    // Message Content
-                    Text(
-                        text = msg.content,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.95f),
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
+        // PREFIX: (YOU) or PERSONA
+        if (isMe) {
+            Text(
+                text = "(YOU)",
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Black,
+                color = StealthPrimary.copy(alpha = 0.6f),
+                letterSpacing = 0.5.sp
+            )
+            Text(
+                text = " : ",
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.1f)
+            )
+        }
 
-                    // Unified Footer: Identity + Time
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Text(
-                            text = timestamp, 
-                            fontSize = 7.sp, 
-                            color = Color.White.copy(alpha = 0.2f),
-                            fontWeight = FontWeight.Bold
-                        )
-                        
-                        // Unified Identity Node inside bubble (Right side)
-                        if (senderDevice != null) {
-                            VibeNode(
-                                device = senderDevice,
-                                isVibed = isMutual,
-                                isSelected = false,
-                                isPeerVibed = isVibed,
-                                onlyTies = onlyTies,
-                                onClick = onClick,
-                                onLongClick = onLongClick,
-                                modifier = Modifier.size(36.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        } else {
-            // My Message
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 240.dp)
-                    .background(StealthPrimary.copy(alpha = 0.12f), RoundedCornerShape(12.dp, 12.dp, 2.dp, 12.dp))
-                    .border(0.5.dp, StealthPrimary.copy(alpha = 0.2f), RoundedCornerShape(12.dp, 12.dp, 2.dp, 12.dp))
-                    .combinedClickable(
-                        onClick = {}, 
-                        onLongClick = onDelete
-                    )
-                    .padding(10.dp)
-            ) {
-                Column {
-                    Text(
-                        text = msg.content,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Text(
-                            text = "YOU".uppercase(),
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = StealthPrimary.copy(alpha = 0.4f)
-                        )
-                        Text(
-                            text = timestamp, 
-                            fontSize = 7.sp, 
-                            color = StealthPrimary.copy(alpha = 0.3f),
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
+        // PERSONA: Emoji + Name
+        val displayName = (senderDevice?.name ?: msg.senderName).uppercase().take(8)
+        val emoji = senderDevice?.emoji ?: msg.senderEmoji ?: "👤"
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = emoji, fontSize = 10.sp)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = displayName,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (isMe) StealthPrimary else if (isMutual) StealthRose else Color.White.copy(alpha = 0.7f),
+                letterSpacing = 0.5.sp
+            )
+        }
+
+        Text(
+            text = " : ",
+            fontSize = 8.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White.copy(alpha = 0.1f)
+        )
+
+        // TIMESTAMP
+        Text(
+            text = timestamp,
+            fontSize = 8.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.White.copy(alpha = 0.3f)
+        )
+
+        Text(
+            text = " . ",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Black,
+            color = if (isMutual) StealthRose else StealthPrimary,
+            modifier = Modifier.offset(y = (-1).dp)
+        )
+
+        // MESSAGE CONTENT
+        Text(
+            text = msg.content,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White.copy(alpha = 0.9f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        
+        if (isMutual) {
+            Icon(
+                imageVector = Icons.Rounded.Flare,
+                contentDescription = null,
+                tint = StealthRose.copy(alpha = 0.4f),
+                modifier = Modifier.size(10.dp)
+            )
         }
     }
 }

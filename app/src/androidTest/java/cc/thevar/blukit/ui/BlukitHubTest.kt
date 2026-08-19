@@ -78,13 +78,9 @@ class BlukitHubTest {
             }
         }
 
-        // Click GROUPS tab
-        composeTestRule.onNodeWithText("GROUPS").performClick()
-        verify { onNavigate(Route.Groups) }
-
-        // Click WHISPER tab
-        composeTestRule.onNodeWithTag("HubTab_WHISPER").performClick()
-        verify { onNavigate(Route.SideVibes) }
+        // Click MINE tab
+        composeTestRule.onNodeWithText("MINE").performClick()
+        verify { onNavigate(Route.Mine) }
     }
 
     @Test

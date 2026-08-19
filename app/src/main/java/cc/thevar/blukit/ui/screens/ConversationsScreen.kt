@@ -34,7 +34,6 @@ import java.util.Locale
 @Composable
 fun ConversationsScreen(
     state: BluetoothUiState,
-    isGroupType: Boolean,
     onVibeClick: (VibeGroup) -> Unit,
     onDeleteGroup: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -42,8 +41,8 @@ fun ConversationsScreen(
     var groupToDelete by remember { mutableStateOf<VibeGroup?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
-        val title = if (isGroupType) "GROUPS" else "WHISPER"
-        val icon = if (isGroupType) Icons.Rounded.Flare else Icons.Rounded.Hearing
+        val title = "MINE"
+        val icon = Icons.Rounded.Flare
         BlukitTopTitle(title = title, icon = icon)
         
         LazyColumn(
@@ -51,14 +50,12 @@ fun ConversationsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val conversations = state.groups.filter { 
-                if (isGroupType) it.type == VibeGroup.TYPE_TIE else it.type == VibeGroup.TYPE_SIDE 
-            }
+            val conversations = state.groups
             if (conversations.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "NO $title YET", 
+                            text = "NO VIBES YET", 
                             color = Color.White.copy(alpha = 0.2f), 
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp
@@ -128,14 +125,14 @@ private fun VibeGroupItem(
                 modifier = Modifier
                     .size(42.dp)
                     .clip(CircleShape)
-                    .background(if (group.type == VibeGroup.TYPE_TIE) StealthRose.copy(alpha = 0.2f) else StealthPrimary.copy(alpha = 0.2f)),
+                    .background(if (group.type == VibeGroup.TYPE_TIE) StealthRose.copy(alpha = 0.2f) else StealthPrimary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (group.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.AutoAwesome,
+                    imageVector = if (group.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing,
                     contentDescription = null,
-                    tint = if (group.type == VibeGroup.TYPE_TIE) StealthRose else StealthPrimary,
-                    modifier = Modifier.size(20.dp)
+                    tint = if (group.type == VibeGroup.TYPE_TIE) StealthRose else StealthPrimary.copy(alpha = 0.7f),
+                    modifier = Modifier.size(if (group.type == VibeGroup.TYPE_TIE) 20.dp else 16.dp)
                 )
             }
             

@@ -15,15 +15,12 @@ The **ALL** field is where you see everyone around you.
     - **Long-Tap**: Open the **Options Menu** for focus management, blocking, or secure WHISPER requests.
 - **Active vs. Idle**: Active users who speak move to the forefront, while others stay in the **IDLE** row with their names visible for quick identification.
 
-## ✨ GROUPS (Mutual Resonance)
-Establish secure, persistent private group resonances.
-- **Mutual Permission**: Use the Options Menu to request a **VIBE**. Once both sides agree (**JOIN**), you are securely linked in a private group.
-- **Secure Communication**: All group vibes are encrypted and private.
-
-## 🤝 WHISPER (Side-Vibes)
-Intimate, ephemeral side conversations.
-- **Direct Resonance**: Start a **WHISPER** contextual within an established vibe or directly from the persona cloud.
-- **Anonymous Whispering**: Student personas (avatars/names) are now located **inside the message bubble** (top-right) for maximum efficiency.
+## ✨ MINE (Personal Vibes)
+Your private space for mutual resonances and intimate whispers.
+- **Mutual Permission**: Establishing a **VIBE** requires agreement (**JOIN**) from both sides, creating a secure, private group.
+- **Side Conversations**: Start a **WHISPER** for contextual one-on-one interactions within a group or directly from the field.
+- **Merged View**: All your private interactions—whether group-wide or person-to-person—are managed in this single, unified field.
+- **Secure Communication**: Every interaction in MINE is hardware-encrypted and strictly local.
 
 ---
 

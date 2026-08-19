@@ -57,10 +57,10 @@ class NavigationTest {
         // 1. Initial State - ALL field
         composeTestRule.onNodeWithTag("HubTab_ALL").assertIsDisplayed()
 
-        // 3. GROUPS (Mutual) - Switch via tag
-        composeTestRule.onNodeWithTag("HubTab_GROUPS").performClick()
+        // 3. MINE (Mutual) - Switch via tag
+        composeTestRule.onNodeWithTag("HubTab_MINE").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithTag("HubTab_GROUPS").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("HubTab_MINE").assertIsDisplayed()
         
         // 4. Back to ALL - Switch via tag
         composeTestRule.onNodeWithTag("HubTab_ALL").performClick()
