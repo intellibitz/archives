@@ -114,6 +114,13 @@ fun BlukitHarmonyTopBar(
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
     userCount: Int,
+    isStealthMode: Boolean,
+    lowPowerMode: Boolean,
+    vibeCount: Int,
+    onToggleStealth: (Boolean) -> Unit,
+    onToggleLowPower: (Boolean) -> Unit,
+    onClearHistory: () -> Unit,
+    onResetProfile: () -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
@@ -129,6 +136,9 @@ fun BlukitHarmonyTopBar(
         label = "Alpha"
     )
     
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
     val isStill = isBluetoothOff || isLocationOff
     val barColor = when { 
@@ -141,22 +151,22 @@ fun BlukitHarmonyTopBar(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 4.dp, vertical = 4.dp)
             .background(barColor, RoundedCornerShape(20.dp))
             .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             // LEFT: Back Action + Radios
-            Row(modifier = Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(modifier = Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (onBack != null) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                    IconButton(onClick = onBack, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
                     }
                 }
                 
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
                     StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
                     StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
@@ -165,15 +175,15 @@ fun BlukitHarmonyTopBar(
 
             // CENTER: Branding
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "SPREAD", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
-                Spacer(modifier = Modifier.width(8.dp))
-                RadioB(modifier = Modifier.size(28.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "VIBES", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
+                Text(text = "SPREAD", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
+                Spacer(modifier = Modifier.width(6.dp))
+                RadioB(modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(text = "VIBES", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
             }
 
-            // RIGHT: Manage Action or Permission Button
-            Box(modifier = Modifier.align(Alignment.CenterEnd), contentAlignment = Alignment.CenterEnd) {
+            // RIGHT: Settings Row + Manage/Permission
+            Row(modifier = Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (isPermissionMissing) {
                     Surface(
                         onClick = { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() },
@@ -184,18 +194,44 @@ fun BlukitHarmonyTopBar(
                         Text(
                             text = if (isPermanentlyDenied) "SETTINGS" else "ALLOW",
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
-                } else if (onManage != null) {
-                    IconButton(onClick = onManage, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                } else {
+                    // Small Settings Icons
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
+                        EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
+                        
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .clickable { showClearHistoryDialog = true }
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) { 
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.4f)))
+                                Icon(imageVector = Icons.Rounded.DeleteSweep, contentDescription = "Clear", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(10.dp))
+                            }
+                        }
+
+                        IconButton(onClick = { showLogoutDialog = true }, modifier = Modifier.size(24.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.05f))) {
+                            Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(12.dp))
+                        }
+                    }
+
+                    if (onManage != null) {
+                        VerticalDivider(modifier = Modifier.height(16.dp).padding(horizontal = 2.dp), color = Color.White.copy(alpha = 0.1f))
+                        IconButton(onClick = onManage, modifier = Modifier.size(28.dp)) {
+                            Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
+                        }
                     }
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(2.dp))
         
         // SUBTITLE: Screen Context (ALL, MINE, etc.)
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -230,6 +266,36 @@ fun BlukitHarmonyTopBar(
             }
         }
     }
+    
+    if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
+    if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onResetProfile(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
+}
+
+@Composable
+fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) { 
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 2.dp)) { 
+        Text(text = label, fontSize = 5.sp, fontWeight = FontWeight.Black, color = if(checked) StealthPrimary else Color.White.copy(alpha = 0.3f), letterSpacing = 0.5.sp)
+        Switch(
+            checked = checked, 
+            onCheckedChange = onCheckedChange, 
+            modifier = Modifier.scale(0.45f).height(16.dp), 
+            colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary, checkedTrackColor = StealthPrimary.copy(alpha = 0.5f))
+        ) 
+    } 
+}
+
+@Composable
+fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Unit, onDismiss: () -> Unit) { 
+    AlertDialog(
+        onDismissRequest = onDismiss, 
+        containerColor = Color.Black, 
+        titleContentColor = StealthPrimary, 
+        textContentColor = Color.White.copy(alpha = 0.7f), 
+        title = { Text(title, fontWeight = FontWeight.Black, fontSize = 14.sp) }, 
+        text = { Text(text, fontSize = 11.sp) }, 
+        confirmButton = { TextButton(onClick = onConfirm) { Text("PROCEED", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 12.sp) } }, 
+        dismissButton = { TextButton(onClick = onDismiss) { Text("CANCEL", color = Color.White.copy(alpha = 0.4f), fontSize = 12.sp) } }
+    ) 
 }
 
 @Composable

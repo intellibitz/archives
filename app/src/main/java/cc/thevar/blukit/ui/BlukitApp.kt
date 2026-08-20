@@ -193,6 +193,13 @@ fun BlukitApp(
                 isPermissionMissing = !permissionState.allPermissionsGranted,
                 isPermanentlyDenied = isPermanentlyDenied,
                 userCount = report.userCount,
+                isStealthMode = isStealthMode,
+                lowPowerMode = lowPowerMode,
+                vibeCount = roarsCount + mineCount,
+                onToggleStealth = viewModel::toggleStealth,
+                onToggleLowPower = viewModel::toggleLowPowerMode,
+                onClearHistory = viewModel::clearChatHistory,
+                onResetProfile = viewModel::logout,
                 onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
                 onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                 onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
@@ -326,8 +333,6 @@ fun BlukitApp(
                 },
                 vibeCount = roarsCount + mineCount,
                 airIsStill = !bluetoothState.harmony.isBluetoothEnabled || (isLocationMandatory && !bluetoothState.harmony.isLocationEnabled) || !permissionState.allPermissionsGranted,
-                lowPowerMode = lowPowerMode, 
-                isStealthMode = isStealthMode,
                 incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
                 selectedDevices = bluetoothState.crowd.selectedDevices,
                 isNoiseFilterActive = isNoiseFilterActive,
@@ -339,10 +344,6 @@ fun BlukitApp(
                         backStack.add(route) 
                     } 
                 },
-                onToggleStealth = viewModel::toggleStealth, 
-                onToggleLowPower = viewModel::toggleLowPowerMode, 
-                onClearHistory = viewModel::clearChatHistory,
-                onLogout = viewModel::logout, 
                 onAcceptLink = bluetoothViewModel::acceptLink, 
                 onDenyLink = bluetoothViewModel::denyLink,
                 onStartSideVibe = { 
@@ -385,17 +386,11 @@ fun BlukitHub(
     onSend: () -> Unit, 
     vibeCount: Int, 
     airIsStill: Boolean,
-    lowPowerMode: Boolean, 
-    isStealthMode: Boolean, 
     incomingLinkRequests: Set<P2PDevice>, 
     selectedDevices: Set<String>, 
     isNoiseFilterActive: Boolean, 
     onToggleNoiseFilter: (Boolean) -> Unit, 
     onNavigate: (Route) -> Unit, 
-    onToggleStealth: (Boolean) -> Unit, 
-    onToggleLowPower: (Boolean) -> Unit, 
-    onClearHistory: () -> Unit, 
-    onLogout: () -> Unit, 
     onAcceptLink: (P2PDevice) -> Unit, 
     onDenyLink: (P2PDevice) -> Unit, 
     onStartSideVibe: () -> Unit, 
@@ -403,7 +398,6 @@ fun BlukitHub(
     onClearSelection: () -> Unit, 
     modifier: Modifier = Modifier
 ) {
-    val localContext = LocalContext.current
     Column(modifier = modifier.fillMaxWidth().zIndex(1f), horizontalAlignment = Alignment.CenterHorizontally) {
         AnimatedVisibility(visible = selectedDevices.isNotEmpty(), enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             Row(modifier = Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -435,20 +429,14 @@ fun BlukitHub(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 UnifiedBlukitBadge(
-                    lowPowerMode = lowPowerMode, 
-                    isStealthMode = isStealthMode, 
                     incomingLinkRequests = incomingLinkRequests, 
                     currentRoute = currentRoute, 
                     onNavigate = onNavigate, 
-                    onToggleStealth = onToggleStealth, 
-                    onToggleLowPower = onToggleLowPower, 
-                    onClearHistory = onClearHistory, 
-                    onLogout = onLogout, 
                     onAcceptLink = onAcceptLink, 
-                    onDenyLink = onDenyLink,
-                    vibeCount = vibeCount
+                    onDenyLink = onDenyLink
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+                val localContext = LocalContext.current
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = StealthPrimary.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
@@ -468,22 +456,13 @@ fun BlukitHub(
 
 @Composable
 fun UnifiedBlukitBadge(
-    lowPowerMode: Boolean, 
-    isStealthMode: Boolean, 
     incomingLinkRequests: Set<P2PDevice>, 
     currentRoute: Route, 
     onNavigate: (Route) -> Unit, 
-    onToggleStealth: (Boolean) -> Unit, 
-    onToggleLowPower: (Boolean) -> Unit, 
-    onClearHistory: () -> Unit, 
-    onLogout: () -> Unit, 
     onAcceptLink: (P2PDevice) -> Unit, 
     onDenyLink: (P2PDevice) -> Unit,
-    vibeCount: Int,
     modifier: Modifier = Modifier
 ) {
-    var showClearHistoryDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) { 
@@ -504,49 +483,7 @@ fun UnifiedBlukitBadge(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        
-        // Settings Row
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
-            EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
-            
-            VerticalDivider(modifier = Modifier.height(20.dp), color = Color.White.copy(alpha = 0.1f))
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically, 
-                horizontalArrangement = Arrangement.spacedBy(4.dp), 
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White.copy(alpha = 0.05f))
-                    .clickable { showClearHistoryDialog = true }
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
-            ) { 
-                Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.5f)))
-                Icon(imageVector = Icons.Rounded.DeleteSweep, contentDescription = "Clear Vibes", tint = Color.White.copy(alpha = 0.4f), modifier = Modifier.size(14.dp)) 
-            }
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White.copy(alpha = 0.05f))
-                    .clickable { showLogoutDialog = true }
-                    .padding(horizontal = 8.dp, vertical = 6.dp), 
-                contentAlignment = Alignment.Center
-            ) { 
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { 
-                    Text(text = "RESET", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.3f)))
-                    Icon(imageVector = Icons.Rounded.RestartAlt, contentDescription = "Reset Profile", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(12.dp)) 
-                } 
-            }
-        }
     }
-    if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-    if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onLogout(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
 }
 
 @Composable
@@ -570,12 +507,6 @@ private fun RowScope.HubTab(label: String, icon: androidx.compose.ui.graphics.ve
         }
     }
 }
-
-@Composable
-private fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) { Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(text = label, fontSize = 6.sp, fontWeight = FontWeight.Black, color = if(checked) StealthPrimary else Color.White.copy(alpha = 0.3f), letterSpacing = 1.sp); Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = Modifier.scale(0.55f).height(20.dp), colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary, checkedTrackColor = StealthPrimary.copy(alpha = 0.5f))) } }
-
-@Composable
-private fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Unit, onDismiss: () -> Unit) { AlertDialog(onDismissRequest = onDismiss, containerColor = Color.Black, titleContentColor = StealthPrimary, textContentColor = Color.White.copy(alpha = 0.7f), title = { Text(title, fontWeight = FontWeight.Black) }, text = { Text(text, fontSize = 12.sp) }, confirmButton = { TextButton(onClick = onConfirm) { Text("PROCEED", color = Color.Red, fontWeight = FontWeight.Bold) } }, dismissButton = { TextButton(onClick = { onDismiss() }) { Text("CANCEL", color = Color.White.copy(alpha = 0.4f)) } }) }
 
 @Composable
 private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) { if (lowPowerMode && rotation % 10 > 2) return; Canvas(modifier = Modifier.fillMaxSize()) { val center = Offset(56.dp.toPx(), size.height - 64.dp.toPx()); rotate(rotation, pivot = center) { val scanBrush = Brush.sweepGradient(0.0f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.05f else 0.15f), 0.1f to Color.Transparent, center = center); drawCircle(brush = scanBrush, radius = size.maxDimension, center = center) } } }
