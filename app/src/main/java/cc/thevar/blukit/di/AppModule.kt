@@ -1,0 +1,62 @@
+package cc.thevar.blukit.di
+
+import cc.thevar.blukit.data.crypto.CryptoManager
+import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.power.SupremePowerManager
+import cc.thevar.blukit.data.repository.*
+import cc.thevar.blukit.data.system.HapticManager
+import cc.thevar.blukit.data.system.RadioStateManager
+import cc.thevar.blukit.data.system.SpreadPermissionManager
+import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
+import cc.thevar.blukit.network.p2p.NearbyP2PController
+import cc.thevar.blukit.network.p2p.P2PController
+import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
+import cc.thevar.blukit.ui.viewmodels.ContactsViewModel
+import cc.thevar.blukit.ui.viewmodels.MainViewModel
+import cc.thevar.blukit.ui.viewmodels.SupremePowerViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.dsl.module
+
+val appModule = module {
+    // Infrastructure
+    single { CryptoManager() }
+    single { VibeStore(androidContext(), get()) }
+    single { RadioStateManager(androidContext()) }
+    single { SpreadPermissionManager(androidContext()) }
+    single { HapticManager(androidContext()) }
+    
+    // Scopes
+    single { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
+    
+    // Repositories
+    single<IdentityRepository> { IdentityRepositoryImpl(androidContext()) }
+    single { ContactRepository(get()) }
+    
+    // Controllers
+    single<P2PController> { 
+        NearbyP2PController(
+            context = androidContext(),
+            repository = get(),
+            contactRepository = get(),
+            vibeStore = get(),
+            hapticManager = get(),
+            radioStateManager = get(),
+            cryptoManager = get(),
+            ioDispatcher = Dispatchers.IO
+        )
+    }
+    
+    // Use Cases & Managers
+    single { SupremePowerManager(get(), get(), get(), get()) }
+    single { ConnectivityUseCase(get(), get(), get(), get()) }
+    
+    // ViewModels
+    viewModel { MainViewModel(get(), get()) }
+    viewModel { BluetoothViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { SupremePowerViewModel(get()) }
+    viewModel { ContactsViewModel(get()) }
+}

@@ -50,7 +50,7 @@ fun ConversationsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (state.incomingLinkRequests.isNotEmpty()) {
+            if (state.crowd.incomingLinkRequests.isNotEmpty()) {
                 item {
                     Text(
                         text = "VIBE REQUESTS",
@@ -60,7 +60,7 @@ fun ConversationsScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-                items(state.incomingLinkRequests.toList(), key = { it.id }) { request ->
+                items(state.crowd.incomingLinkRequests.toList(), key = { it.id }) { request ->
                     VibeRequestItem(request, onAcceptLink, onDenyLink)
                 }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -76,7 +76,7 @@ fun ConversationsScreen(
                 )
             }
 
-            val conversations = state.groups
+            val conversations = state.session.groups
             if (conversations.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
@@ -170,13 +170,13 @@ private fun VibeTickerTitleEntry(
     onClick: () -> Unit,
     onLongClick: (VibeGroup) -> Unit
 ) {
-    val lastMessage = remember(group.id, state.messages) {
-        state.messages.filter { it.groupId == group.id }.lastOrNull()
+    val lastMessage = remember(group.id, state.session.messages) {
+        state.session.messages.filter { it.groupId == group.id }.lastOrNull()
     }
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
     
-    val members = remember(group.memberIds, state.scannedDevices) {
-        state.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
+    val members = remember(group.memberIds, state.crowd.scannedDevices) {
+        state.crowd.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
     }
 
     Box(

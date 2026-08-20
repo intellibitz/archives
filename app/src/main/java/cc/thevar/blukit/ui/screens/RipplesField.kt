@@ -112,15 +112,15 @@ fun RipplesField(
                 processedRelayIds.add(last.messageId)
                 collectiveEnergy = (collectiveEnergy + 0.35f).coerceAtMost(1.0f)
                 
-                val deviceIndex = state.scannedDevices.indexOfFirst { it.id == last.senderId }
-                val proximity = if (deviceIndex != -1) state.scannedDevices[deviceIndex].proximityFactor else 0.5f
+                val deviceIndex = state.crowd.scannedDevices.indexOfFirst { it.id == last.senderId }
+                val proximity = if (deviceIndex != -1) state.crowd.scannedDevices[deviceIndex].proximityFactor else 0.5f
                 onVibeSurge(proximity)
 
                 val targetOffset = if (deviceIndex != -1) {
-                    val device = state.scannedDevices[deviceIndex]
+                    val device = state.crowd.scannedDevices[deviceIndex]
                     val maxRadiusPx = with(density) { 140.dp.toPx() }
                     val radiusValue = (1f - device.proximityFactor) * maxRadiusPx + with(density) { 60.dp.toPx() }
-                    val angle = (deviceIndex.toDouble() / state.scannedDevices.size) * 2 * PI
+                    val angle = (deviceIndex.toDouble() / state.crowd.scannedDevices.size) * 2 * PI
                     Offset((radiusValue * cos(angle)).toFloat(), (radiusValue * sin(angle)).toFloat())
                 } else Offset.Zero
 
@@ -153,16 +153,16 @@ fun RipplesField(
         RelayLayer(relayEvents)
         
         val displayDevices = if (onlyTies) {
-            state.scannedDevices.filter { it.id in state.connectedLinks }
+            state.crowd.scannedDevices.filter { it.id in state.session.connectedLinks }
         } else {
-            state.scannedDevices
+            state.crowd.scannedDevices
         }
 
         if (drawNodes) {
             ResonanceArcs(devices = displayDevices, energy = finalEnergy)
             VibeNodes(
                 devices = displayDevices,
-                connectedLinks = state.connectedLinks,
+                connectedLinks = state.session.connectedLinks,
                 selectedDevices = selectedDevices,
                 vibedPeers = vibedPeers,
                 activeBubbles = activeBubbles,
@@ -173,7 +173,7 @@ fun RipplesField(
             )
         }
 
-        VibesConnectivity(devices = state.scannedDevices)
+        VibesConnectivity(devices = state.crowd.scannedDevices)
 
         // LAYER 2: Overlay Content (Vibes Ticker - Bottom Layer)
         Box(modifier = Modifier.fillMaxSize().zIndex(0.5f)) {

@@ -119,6 +119,10 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
+    
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.junit)

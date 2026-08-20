@@ -39,6 +39,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import org.koin.compose.koinInject
+
 /**
  * THE VIBES: BLUKIT ENERGY TICKER.
  */
@@ -67,16 +69,15 @@ fun RipplesScreen(
     onFocusChange: (String?) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val hapticManager = remember { (context.applicationContext as BlukitApplication).hapticManager }
+    val hapticManager: cc.thevar.blukit.data.system.HapticManager = koinInject()
     
     val activeBubbles = remember { mutableStateListOf<BubbleData>() }
     val processedMessageIds = remember { mutableSetOf<String>() }
     var selectedPersonaForMenu by remember { mutableStateOf<P2PDevice?>(null) }
     var messageToDelete by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(state.messages) {
-        val newMessages = state.messages.filter { it.messageId !in processedMessageIds }
+    LaunchedEffect(state.session.messages) {
+        val newMessages = state.session.messages.filter { it.messageId !in processedMessageIds }
         newMessages.forEach { msg ->
             activeBubbles.add(
                 BubbleData(
@@ -100,15 +101,15 @@ fun RipplesScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        val vibesData = remember(state.messages, onlyTies, vibedPeers, noiseFilterEnabled, externalFocusedId) {
+        val vibesData = remember(state.session.messages, onlyTies, vibedPeers, noiseFilterEnabled, externalFocusedId) {
             val baseVibes = if (onlyTies) {
-                state.messages.filter { !it.receiverId.isNullOrBlank() }
+                state.session.messages.filter { !it.receiverId.isNullOrBlank() }
             } else if (noiseFilterEnabled && vibedPeers.isNotEmpty()) {
-                state.messages.filter { 
+                state.session.messages.filter { 
                     it.receiverId.isNullOrBlank() && (it.senderId in vibedPeers || it.senderId == localDeviceId)
                 }
             } else {
-                state.messages.filter { it.receiverId.isNullOrBlank() }
+                state.session.messages.filter { it.receiverId.isNullOrBlank() }
             }
             
             val counts = baseVibes.groupBy { it.senderId }.mapValues { it.value.size }
@@ -133,7 +134,7 @@ fun RipplesScreen(
                 localDeviceId = localDeviceId,
                 localEmoji = localEmoji,
                 activeBubbles = activeBubbles,
-                selectedDevices = state.selectedDevices,
+                selectedDevices = state.crowd.selectedDevices,
                 vibedPeers = vibedPeers,
                 externalEnergy = energySurge,
                 onlyTies = onlyTies,
@@ -176,8 +177,8 @@ fun RipplesScreen(
             PersonaOptionsMenu(
                 device = selectedPersonaForMenu!!,
                 isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in vibedPeers,
-                isTied = selectedPersonaForMenu!!.id in state.connectedLinks,
-                isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in state.blockedUsers,
+                isTied = selectedPersonaForMenu!!.id in state.session.connectedLinks,
+                isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in state.crowd.blockedUsers,
                 onFocus = {
                     onDeviceClick(selectedPersonaForMenu!!)
                     selectedPersonaForMenu = null
@@ -230,7 +231,7 @@ fun RipplesScreen(
         }
 
         // LAYER 6: Empty State Hints
-        if (onlyTies && state.connectedLinks.isEmpty()) {
+        if (onlyTies && state.session.connectedLinks.isEmpty()) {
             EmptyFocusHint()
         }
     }
@@ -289,8 +290,8 @@ private fun VibingVibesTicker(
              ) {
             items(vibes, key = { if (isGrouped) it.senderId else it.messageId }) { msg ->
                 val isMe = msg.senderId == localDeviceId
-                val senderDevice = remember(msg.senderId, state.scannedDevices) {
-                    state.scannedDevices.find { it.id == msg.senderId || it.persistentId == msg.senderId }
+                val senderDevice = remember(msg.senderId, state.crowd.scannedDevices) {
+                    state.crowd.scannedDevices.find { it.id == msg.senderId || it.persistentId == msg.senderId }
                 }
                 
                     AnimatedVibeItem(
@@ -299,7 +300,7 @@ private fun VibingVibesTicker(
                         senderDevice = senderDevice,
                         vibeCount = vibeCounts[msg.senderId] ?: 1,
                         isVibed = msg.senderId in vibedPeers,
-                        isMutual = msg.senderId in state.connectedLinks,
+                        isMutual = msg.senderId in state.session.connectedLinks,
                         isGrouped = isGrouped,
                         timestamp = timeFormatter.format(Date(msg.timestamp)),
                         onClick = { onVibeClick(msg.senderId) },

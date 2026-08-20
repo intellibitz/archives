@@ -74,17 +74,17 @@ fun TieScreen(
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
 
-    val group = remember(groupId, state.groups) {
-        state.groups.find { it.id == groupId }
+    val group = remember(groupId, state.session.groups) {
+        state.session.groups.find { it.id == groupId }
     }
 
     var userToBlock by remember { mutableStateOf<MessagePayload?>(null) }
 
-    val vibesData = remember(state.messages, groupId, localDeviceId, externalFocusedId) {
+    val vibesData = remember(state.session.messages, groupId, localDeviceId, externalFocusedId) {
         if (groupId == null) {
             Triple(emptyList<MessagePayload>(), emptyMap<String, Int>(), false)
         } else {
-            val baseVibes = state.messages.filter { it.groupId == groupId }.distinctBy { it.messageId }
+            val baseVibes = state.session.messages.filter { it.groupId == groupId }.distinctBy { it.messageId }
             val counts = baseVibes.groupBy { it.senderId }.mapValues { it.value.size }
             
             val filtered = if (externalFocusedId != null) {
@@ -143,7 +143,7 @@ fun TieScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("MEMBERS", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
                     group.memberIds.forEach { memberId ->
-                        val member = state.scannedDevices.find { it.id == memberId || it.persistentId == memberId }
+                        val member = state.crowd.scannedDevices.find { it.id == memberId || it.persistentId == memberId }
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text(text = member?.emoji ?: "👤", fontSize = 16.sp)
                             Spacer(modifier = Modifier.width(8.dp))
@@ -157,7 +157,7 @@ fun TieScreen(
                     }
                     HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                     Text("ADD NEARBY", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
-                    val nearbyNotMembers = state.scannedDevices.filter { it.id !in group.memberIds && it.persistentId !in group.memberIds }
+                    val nearbyNotMembers = state.crowd.scannedDevices.filter { it.id !in group.memberIds && it.persistentId !in group.memberIds }
                     if (nearbyNotMembers.isEmpty()) {
                         Text("No one else nearby", fontSize = 10.sp, color = Color.White.copy(alpha = 0.2f))
                     }
@@ -197,15 +197,15 @@ fun TieScreen(
 
         // Contextual Persona Cloud: Users in this Tie
         if (group != null) {
-            val groupMembers = remember(group.memberIds, state.scannedDevices) {
-                state.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
+            val groupMembers = remember(group.memberIds, state.crowd.scannedDevices) {
+                state.crowd.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
             }
             
             UnifiedPersonaCloud(
                 devices = groupMembers,
-                vibedPeers = state.vibedPeers,
-                connectedLinks = state.connectedLinks,
-                activeBubbles = state.messages.map { msg ->
+                vibedPeers = state.crowd.vibedPeers,
+                connectedLinks = state.session.connectedLinks,
+                activeBubbles = state.session.messages.map { msg ->
                     BubbleData(
                         msg.senderId,
                         msg.content,
@@ -244,7 +244,7 @@ fun TieScreen(
         }
         
         BlukitInput(
-            airIsStill = !state.isBluetoothEnabled || !state.permissionsGranted,
+            airIsStill = !state.harmony.isBluetoothEnabled || !state.harmony.permissionsGranted,
             value = vibeText,
             onValueChange = { vibeText = it },
             onSend = {

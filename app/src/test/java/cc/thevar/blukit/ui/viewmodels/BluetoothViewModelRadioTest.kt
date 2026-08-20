@@ -10,10 +10,7 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -27,7 +24,6 @@ class BluetoothViewModelRadioTest {
     private val permissionManager: SpreadPermissionManager = mockk(relaxed = true)
     private val vibeStore: VibeStore = mockk(relaxed = true)
 
-    private lateinit var viewModel: BluetoothViewModel
     private val radioStates = MutableStateFlow(RadioStates(true, true, true))
     private val permissionsGranted = MutableStateFlow(true)
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -53,8 +49,6 @@ class BluetoothViewModelRadioTest {
         every { p2pController.isAdvertising } returns MutableStateFlow(false)
         every { p2pController.errors } returns MutableStateFlow(null)
         every { permissionManager.permissionsGranted } returns permissionsGranted
-        
-        viewModel = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore)
     }
 
     @After
@@ -65,8 +59,15 @@ class BluetoothViewModelRadioTest {
 
     @Test
     fun `scan starts when radios are on and permissions granted`() = runTest {
+        val useCase = cc.thevar.blukit.domain.usecase.ConnectivityUseCase(
+            p2pController, radioStateManager, permissionManager, backgroundScope
+        )
+        val viewModel = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore, useCase)
+        
         permissionsGranted.value = true
         radioStates.value = RadioStates(true, true, true)
+        
+        runCurrent()
         
         viewModel.startScan()
         
@@ -76,11 +77,17 @@ class BluetoothViewModelRadioTest {
 
     @Test
     fun `scan does not start if bluetooth is off`() = runTest {
+        val useCase = cc.thevar.blukit.domain.usecase.ConnectivityUseCase(
+            p2pController, radioStateManager, permissionManager, backgroundScope
+        )
+        val viewModel = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore, useCase)
+
         permissionsGranted.value = true
         radioStates.value = RadioStates(false, true, true)
         
-        // Wait for init's healthy observer to potentially call stop
-        // Then clear recorded calls to check startScan specifically
+        runCurrent()
+        
+        // Clear recorded calls from init's harmony observer
         clearMocks(p2pController, recordedCalls = true, answers = false)
         
         viewModel.startScan()

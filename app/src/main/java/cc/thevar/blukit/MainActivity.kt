@@ -7,10 +7,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.ui.BlukitApp
 import cc.thevar.blukit.ui.theme.BlukitTheme
+import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
+
+    private val identityRepository: IdentityRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,16 +23,10 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         setContent {
-            val app = application as BlukitApplication
-            val isStealthMode by app.identityRepository.stealthMode.collectAsStateWithLifecycle(initialValue = false)
+            val isStealthMode by identityRepository.stealthMode.collectAsStateWithLifecycle(initialValue = false)
             
             BlukitTheme(stealthMode = isStealthMode) {
                 BlukitApp(
-                    repository = app.identityRepository,
-                    vibeStore = app.vibeStore,
-                    radioStateManager = app.radioStateManager,
-                    p2pController = app.p2pController,
-                    supremePowerManager = app.supremePowerManager,
                     onEnterPip = {
                         enterPictureInPictureMode(
                             android.app.PictureInPictureParams.Builder().build()

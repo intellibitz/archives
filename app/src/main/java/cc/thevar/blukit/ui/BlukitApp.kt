@@ -50,6 +50,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -73,20 +75,20 @@ import cc.thevar.blukit.ui.viewmodels.*
 @Composable
 fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissionsState {
     val context = LocalContext.current
-    val manager = remember { (context.applicationContext as BlukitApplication).spreadPermissionManager }
+    val manager: cc.thevar.blukit.data.system.SpreadPermissionManager = koinInject()
     var allGranted by remember { mutableStateOf(manager.checkAllGranted()) }
     var shouldShowRationale by remember { mutableStateOf(permissions.any { (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true }) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         allGranted = manager.checkAllGranted()
         shouldShowRationale = permissions.any { (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true }
-        (context.applicationContext as? BlukitApplication)?.spreadPermissionManager?.refresh()
+        manager.refresh()
     }
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             allGranted = manager.checkAllGranted()
             shouldShowRationale = permissions.any { (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true }
-            (context.applicationContext as? BlukitApplication)?.spreadPermissionManager?.refresh()
+            manager.refresh()
         }
     }
     return remember(allGranted, shouldShowRationale) {
@@ -108,18 +110,14 @@ interface SpreadPermissionsState {
 @Composable
 fun BlukitApp(
     onEnterPip: () -> Unit,
-    repository: IdentityRepository,
-    vibeStore: VibeStore,
-    radioStateManager: RadioStateManager,
-    p2pController: P2PController,
-    supremePowerManager: SupremePowerManager,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val permissionManager = (context.applicationContext as BlukitApplication).spreadPermissionManager
-    val viewModel: MainViewModel = viewModel(factory = object : ViewModelProvider.Factory { @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, vibeStore) as T })
-    val bluetoothViewModel: BluetoothViewModel = viewModel(factory = object : ViewModelProvider.Factory { @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = BluetoothViewModel(p2pController, radioStateManager, repository, permissionManager, vibeStore) as T })
-    val supremePowerViewModel: SupremePowerViewModel = viewModel(factory = object : ViewModelProvider.Factory { @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = SupremePowerViewModel(supremePowerManager) as T })
+    val permissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager = koinInject()
+    
+    val viewModel: MainViewModel = koinViewModel()
+    val bluetoothViewModel: BluetoothViewModel = koinViewModel()
+    val supremePowerViewModel: SupremePowerViewModel = koinViewModel()
     
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emoji by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
@@ -130,7 +128,7 @@ fun BlukitApp(
     val energySurge by bluetoothViewModel.energySurge.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(bluetoothState.uiError) { bluetoothState.uiError?.let { snackbarHostState.showSnackbar(it.message.uppercase()) } }
+    LaunchedEffect(bluetoothState.activity.uiError) { bluetoothState.activity.uiError?.let { snackbarHostState.showSnackbar(it.message.uppercase()) } }
 
     val permissionState = rememberSpreadPermissionsState(permissions = permissionManager.requiredPermissions)
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
@@ -148,8 +146,8 @@ fun BlukitApp(
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     var messageText by remember { mutableStateOf("") }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
-    val roarsCount = remember(bluetoothState.messages) { bluetoothState.messages.count { it.receiverId.isNullOrBlank() } }
-    val mineCount = remember(bluetoothState.messages) { bluetoothState.messages.count { !it.receiverId.isNullOrBlank() } }
+    val roarsCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { it.receiverId.isNullOrBlank() } }
+    val mineCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { !it.receiverId.isNullOrBlank() } }
 
     val config = LocalConfiguration.current
     val isLandscape = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -163,13 +161,13 @@ fun BlukitApp(
             
             val topTitle = when {
                 focusedSenderId != null -> {
-                    val device = bluetoothState.scannedDevices.find { it.id == focusedSenderId || it.persistentId == focusedSenderId }
+                    val device = bluetoothState.crowd.scannedDevices.find { it.id == focusedSenderId || it.persistentId == focusedSenderId }
                     device?.name?.uppercase() ?: "USER"
                 }
                 currentRoute is Route.Blukit -> "ALL"
                 currentRoute is Route.Mine -> "MINE"
                 currentRoute is Route.VibeDetail -> {
-                    val group = bluetoothState.groups.find { it.id == currentRoute.groupId }
+                    val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
                     group?.name ?: "VIBE"
                 }
                 else -> "BLUKIT"
@@ -180,7 +178,7 @@ fun BlukitApp(
                 currentRoute is Route.Blukit -> Icons.Rounded.Groups
                 currentRoute is Route.Mine -> Icons.Rounded.Flare
                 currentRoute is Route.VibeDetail -> {
-                    val group = bluetoothState.groups.find { it.id == currentRoute.groupId }
+                    val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
                     if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing
                 }
                 else -> Icons.Rounded.Hub
@@ -199,7 +197,7 @@ fun BlukitApp(
             )
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                val cloudDevices = bluetoothState.scannedDevices
+                val cloudDevices = bluetoothState.crowd.scannedDevices
                 val showUPH = (currentRoute is Route.Blukit || currentRoute is Route.Mine) && cloudDevices.isNotEmpty()
 
                 NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.fillMaxSize()) { key ->
@@ -212,7 +210,7 @@ fun BlukitApp(
                                 localEmoji = emoji, 
                                 energySurge = energySurge, 
                                 lowPowerMode = lowPowerMode, 
-                                vibedPeers = bluetoothState.vibedPeers, 
+                                vibedPeers = bluetoothState.crowd.vibedPeers, 
                                 noiseFilterEnabled = isNoiseFilterActive,
                                 onStartScan = bluetoothViewModel::startScan, 
                                 onStopScan = bluetoothViewModel::stopScan, 
@@ -273,11 +271,11 @@ fun BlukitApp(
                     ) {
                         UnifiedPersonaCloud(
                             devices = cloudDevices, 
-                            vibedPeers = bluetoothState.vibedPeers, 
-                            connectedLinks = bluetoothState.connectedLinks, 
-                            activeBubbles = bluetoothState.messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
+                            vibedPeers = bluetoothState.crowd.vibedPeers, 
+                            connectedLinks = bluetoothState.session.connectedLinks, 
+                            activeBubbles = bluetoothState.session.messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
                             onDeviceClick = { device -> 
-                                if (bluetoothState.selectedDevices.isEmpty()) { 
+                                if (bluetoothState.crowd.selectedDevices.isEmpty()) { 
                                     val id = device.persistentId ?: device.id
                                     viewModel.toggleVibePeer(id)
                                     if (currentRoute is Route.Blukit) {
@@ -297,7 +295,7 @@ fun BlukitApp(
             BlukitHub(
                 currentRoute = (currentRoute as? Route) ?: initialRoute,
                 nickname = nickname ?: "?", emoji = emoji,
-                isBluetoothEnabled = bluetoothState.isBluetoothEnabled, isLocationEnabled = bluetoothState.isLocationEnabled, isWifiEnabled = bluetoothState.isWifiEnabled,
+                isBluetoothEnabled = bluetoothState.harmony.isBluetoothEnabled, isLocationEnabled = bluetoothState.harmony.isLocationEnabled, isWifiEnabled = bluetoothState.harmony.isWifiEnabled,
                 isLocationMandatory = isLocationMandatory, permissionsGranted = permissionState.allPermissionsGranted, isPermanentlyDenied = isPermanentlyDenied,
                 onSaveNickname = viewModel::saveNickname, personaFocusRequester = personaFocusRequester, messageText = messageText,
                 onMessageChange = { messageText = it },
@@ -305,8 +303,8 @@ fun BlukitApp(
                 vibeCount = if (currentRoute is Route.Mine) mineCount else roarsCount,
                 energySurge = energySurge, hubRotation = hubRotation, userCount = report.userCount, linksCount = report.connectedLinksCount,
                 roarsCount = roarsCount, mineCount = mineCount, lowPowerMode = lowPowerMode, isStealthMode = isStealthMode,
-                incomingLinkRequests = bluetoothState.incomingLinkRequests, selectedDevices = bluetoothState.selectedDevices,
-                connectedLinks = bluetoothState.connectedLinks, vibedPeers = bluetoothState.vibedPeers,
+                incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, selectedDevices = bluetoothState.crowd.selectedDevices,
+                connectedLinks = bluetoothState.session.connectedLinks, vibedPeers = bluetoothState.crowd.vibedPeers,
                 isNoiseFilterActive = isNoiseFilterActive,
                 onToggleNoiseFilter = { isNoiseFilterActive = it },
                 onNavigate = { route -> 
@@ -330,8 +328,8 @@ fun BlukitApp(
                 },
                 onToggleStealth = viewModel::toggleStealth, onToggleLowPower = viewModel::toggleLowPowerMode, onClearHistory = viewModel::clearChatHistory,
                 onLogout = viewModel::logout, onAcceptLink = bluetoothViewModel::acceptLink, onDenyLink = bluetoothViewModel::denyLink,
-                onStartSideVibe = { val members = bluetoothState.selectedDevices; if (members.all { it in bluetoothState.connectedLinks }) { val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false); backStack.add(Route.VibeDetail(gid)) } },
-                onStartTie = { val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.selectedDevices, isTie = true); backStack.add(Route.VibeDetail(gid)) },
+                onStartSideVibe = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedLinks }) { val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false); backStack.add(Route.VibeDetail(gid)) } },
+                onStartTie = { val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.crowd.selectedDevices, isTie = true); backStack.add(Route.VibeDetail(gid)) },
                 onClearSelection = bluetoothViewModel::clearSelection
             )
         }
@@ -339,11 +337,11 @@ fun BlukitApp(
         if (selectedPersonaForMenu != null) {
             PersonaOptionsMenu(
                 device = selectedPersonaForMenu!!,
-                isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.vibedPeers,
-                isTied = selectedPersonaForMenu!!.id in bluetoothState.connectedLinks,
-                isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.blockedUsers,
+                isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.vibedPeers,
+                isTied = selectedPersonaForMenu!!.id in bluetoothState.session.connectedLinks,
+                isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.blockedUsers,
                 onFocus = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.toggleVibePeer(id); selectedPersonaForMenu = null },
-                onVibe = { if (selectedPersonaForMenu!!.id !in bluetoothState.connectedLinks) bluetoothViewModel.connectToDevice(selectedPersonaForMenu!!); selectedPersonaForMenu = null },
+                onVibe = { if (selectedPersonaForMenu!!.id !in bluetoothState.session.connectedLinks) bluetoothViewModel.connectToDevice(selectedPersonaForMenu!!); selectedPersonaForMenu = null },
                 onWhisper = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)); selectedPersonaForMenu = null },
                 onBlock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.blockUser(id); selectedPersonaForMenu = null },
                 onUnblock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.unblockUser(id); selectedPersonaForMenu = null },

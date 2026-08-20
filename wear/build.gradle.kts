@@ -79,4 +79,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.play.services.nearby)
+    
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 }

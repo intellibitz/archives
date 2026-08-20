@@ -1,17 +1,12 @@
 package cc.thevar.blukit
 
 import android.app.Application
-import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.data.local.VibeStore
-import cc.thevar.blukit.data.power.SupremePowerManager
-import cc.thevar.blukit.data.repository.ContactRepository
-import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.data.repository.IdentityRepositoryImpl
-import cc.thevar.blukit.data.system.HapticManager
-import cc.thevar.blukit.data.system.RadioStateManager
-import cc.thevar.blukit.network.p2p.NearbyP2PController
-import cc.thevar.blukit.network.p2p.P2PController
+import cc.thevar.blukit.di.appModule
 import kotlinx.coroutines.*
+import org.koin.android.ext.android.inject
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.hours
 
@@ -20,47 +15,16 @@ import kotlin.time.Duration.Companion.hours
  */
 class BlukitApplication : Application() {
 
-    lateinit var identityRepository: IdentityRepository
-    lateinit var contactRepository: ContactRepository
-    lateinit var p2pController: P2PController
-    lateinit var radioStateManager: RadioStateManager
-    private lateinit var _spreadPermissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager
-    val spreadPermissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager get() = _spreadPermissionManager
-    lateinit var supremePowerManager: SupremePowerManager
-    lateinit var vibeStore: VibeStore
-    lateinit var hapticManager: HapticManager
-    lateinit var cryptoManager: CryptoManager
-    
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val vibeStore: VibeStore by inject()
+    private val applicationScope: CoroutineScope by inject()
 
     override fun onCreate() {
         super.onCreate()
-        
-        cryptoManager = CryptoManager()
-        vibeStore = VibeStore(this, cryptoManager)
-        identityRepository = IdentityRepositoryImpl(this)
-        contactRepository = ContactRepository(vibeStore) 
-        radioStateManager = RadioStateManager(this)
-        _spreadPermissionManager = cc.thevar.blukit.data.system.SpreadPermissionManager(this)
-        hapticManager = HapticManager(this)
-        
-        p2pController = NearbyP2PController(
-            context = this,
-            repository = identityRepository,
-            contactRepository = contactRepository,
-            vibeStore = vibeStore,
-            hapticManager = hapticManager,
-            radioStateManager = radioStateManager,
-            cryptoManager = cryptoManager,
-            ioDispatcher = Dispatchers.IO
-        )
-        
-        supremePowerManager = SupremePowerManager(
-            p2pController = p2pController,
-            vibeStore = vibeStore,
-            identityRepository = identityRepository,
-            hapticManager = hapticManager
-        )
+
+        startKoin {
+            androidContext(this@BlukitApplication)
+            modules(appModule)
+        }
 
         start12HourPurge()
     }

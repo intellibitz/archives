@@ -19,8 +19,7 @@ import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.screens.TieScreen
-import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.AirConnectionState
+import cc.thevar.blukit.ui.viewmodels.*
 import cc.thevar.blukit.ui.screens.RipplesField
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import cc.thevar.blukit.ui.theme.StealthPrimary
@@ -31,10 +30,12 @@ fun PreviewRadarPhone() {
     BlukitTheme {
         RipplesField(
             state = BluetoothUiState(
-                scannedDevices = listOf(
-                    P2PDevice("1", "?"),
-                    P2PDevice("2", "?"),
-                    P2PDevice("3", "?")
+                crowd = MeshCrowd(
+                    scannedDevices = listOf(
+                        P2PDevice("1", "?"),
+                        P2PDevice("2", "?"),
+                        P2PDevice("3", "?")
+                    )
                 )
             ),
             localDeviceId = "me",
@@ -52,27 +53,29 @@ fun PreviewChatPhone() {
     BlukitTheme {
         TieScreen(
             state = BluetoothUiState(
-                messages = listOf(
-                    MessagePayload(
-                        messageId = "1",
-                        senderId = "user1",
-                        senderName = "?",
-                        receiverId = "me",
-                        content = "Hello!",
-                        timestamp = 1628610000000,
-                        status = MessagePayload.STATUS_DELIVERED
+                session = ResonanceSession(
+                    messages = listOf(
+                        MessagePayload(
+                            messageId = "1",
+                            senderId = "user1",
+                            senderName = "?",
+                            receiverId = "me",
+                            content = "Hello!",
+                            timestamp = 1628610000000,
+                            status = MessagePayload.STATUS_DELIVERED
+                        ),
+                        MessagePayload(
+                            messageId = "2",
+                            senderId = "me",
+                            senderName = "Me",
+                            receiverId = "user1",
+                            content = "Hey there!",
+                            timestamp = 1628610060000,
+                            status = MessagePayload.STATUS_SENT
+                        )
                     ),
-                    MessagePayload(
-                        messageId = "2",
-                        senderId = "me",
-                        senderName = "Me",
-                        receiverId = "user1",
-                        content = "Hey there!",
-                        timestamp = 1628610060000,
-                        status = MessagePayload.STATUS_SENT
-                    )
-                ),
-                connectionState = AirConnectionState.Connected(P2PDevice("user1", "?"))
+                    connectionState = AirConnectionState.Connected(P2PDevice("user1", "?"))
+                )
             ),
             localDeviceId = "me",
             localEmoji = "👤",
@@ -91,11 +94,13 @@ fun PreviewRadarTablet() {
     BlukitTheme {
         RipplesField(
             state = BluetoothUiState(
-                scannedDevices = listOf(
-                    P2PDevice("1", "Vibe 1"),
-                    P2PDevice("2", "Vibe 2"),
-                    P2PDevice("3", "Vibe 3"),
-                    P2PDevice("4", "Vibe 4")
+                crowd = MeshCrowd(
+                    scannedDevices = listOf(
+                        P2PDevice("1", "Vibe 1"),
+                        P2PDevice("2", "Vibe 2"),
+                        P2PDevice("3", "Vibe 3"),
+                        P2PDevice("4", "Vibe 4")
+                    )
                 )
             ),
             localDeviceId = "me",

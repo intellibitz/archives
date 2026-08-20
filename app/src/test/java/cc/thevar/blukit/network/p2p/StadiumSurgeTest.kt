@@ -102,7 +102,18 @@ class StadiumSurgeTest {
         val oneplus = "oneplus-id"
         
         val controllerMoto = mockk<P2PController>(relaxed = true)
-        val viewModelMoto = BluetoothViewModel(controllerMoto, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+        val radioMoto = mockk<cc.thevar.blukit.data.system.RadioStateManager>(relaxed = true)
+        val permissionsMoto = mockk<cc.thevar.blukit.data.system.SpreadPermissionManager>(relaxed = true)
+        every { radioMoto.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(true, true, true))
+        every { permissionsMoto.permissionsGranted } returns MutableStateFlow(true)
+        
+        val useCaseMoto = cc.thevar.blukit.domain.usecase.ConnectivityUseCase(
+            controllerMoto, radioMoto, permissionsMoto, backgroundScope
+        )
+        
+        val viewModelMoto = BluetoothViewModel(
+            controllerMoto, radioMoto, mockk(relaxed = true), permissionsMoto, mockk(relaxed = true), useCaseMoto
+        )
         
         // 1. Moto starts high-level Vibe (Tie) with Redmi
         viewModelMoto.connectToDevice(P2PDevice(redmi, "Redmi", "📱"))

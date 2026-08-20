@@ -23,14 +23,14 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import cc.thevar.blukit.MainActivity
-import cc.thevar.blukit.BlukitApplication
+import org.koin.core.context.GlobalContext
+import cc.thevar.blukit.data.local.VibeStore
 
 class BlukitWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            val app = context.applicationContext as BlukitApplication
-            val vibeStore = app.vibeStore
+            val vibeStore = GlobalContext.get().get<VibeStore>()
             val messages by vibeStore.messages.collectAsState(initial = emptyList())
             val count = messages.size
 
