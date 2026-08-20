@@ -25,4 +25,4 @@ blukit **never** collects data of any kind.
 - **Local Keys**: Secure keys are generated and stored only on your device.
 
 ---
-**Updated**: August 18, 2026
+**Updated**: August 21, 2026

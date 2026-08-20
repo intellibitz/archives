@@ -1,6 +1,6 @@
 # Privacy Policy for blukit
 
-**Effective Date: August 18, 2026**
+**Effective Date: August 21, 2026**
 
 **blukit** is built on a vision of total anonymity and local resonance. We value your privacy above all else.
 

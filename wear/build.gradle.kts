@@ -2,8 +2,8 @@ import java.util.Properties
 import java.io.FileInputStream
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
 }
 
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -19,7 +19,7 @@ android {
     defaultConfig {
         applicationId = "cc.thevar.blukit"
         minSdk = 30
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 21
         versionName = "1.1.3"
     }
@@ -52,6 +52,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     lint {
@@ -65,6 +66,7 @@ kotlin {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(project(":core"))
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
