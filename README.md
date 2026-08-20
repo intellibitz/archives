@@ -30,16 +30,17 @@ Your private space for mutual resonances and intimate whispers.
 
 ## 📱 UNIVERSAL ECOSYSTEM
 Everything you need, everywhere you are:
+- **Harmony Top Bar**: A unified system dashboard managing hardware radios (Bluetooth, Wi-Fi, Location) and environment settings (Dark/Eco modes) in a clean 3-row architecture.
 - **Wear OS Support**: Native Wear OS app to see nearby vibes directly on your wrist with high-efficiency scaling lists.
-- **Grounded Hub**: Full-width Hub at the absolute bottom provides a solid foundation for input and navigation. In **Landscape Mode**, the Hub transforms into a slim side navigation rail.
-- **Vertical Persona Sidebar**: Positioned above the hub, the vertical persona cloud keeps crowd focus within thumb's reach without overlapping content.
+- **Grounded Hub**: Full-width Hub at the absolute bottom provides a solid foundation for navigation and high-priority vibe input.
+- **Vertical Persona Sidebar**: A scrollable sidebar on the right where nearby personas are anchored by your own identity at the top.
 - **Home Screen Widget**: Modern Glance-based widget showing live "Vibe Counts" around you with one-tap access to the field.
 - **Keyboard-Aware**: The Hub surface floats elegantly above the keyboard using `imePadding()`.
 
 ---
 
 ## 🛠️ LEAN ARCHITECTURE
-1. **Zero-Bulk**: No heavy frameworks. Custom-drawn `Canvas` widgets replace bulky Material components for maximum battery life.
+1. **Zero-Bulk**: Custom-drawn `Canvas` widgets replace bulky Material components. Powered by **Koin** for lightweight, reflection-free Dependency Injection.
 2. **Offline-First**: 100% phone-to-phone radios. No internet. No data collection.
 3. **Everything Vanishes**: Vibes and ephemeral groups clear out every 12 hours.
 4. **Sentient Radios**: Radio activity is strictly gated by harmony and power states.

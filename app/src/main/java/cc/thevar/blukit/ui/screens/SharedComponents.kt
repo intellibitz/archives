@@ -187,9 +187,9 @@ fun BlukitHarmonyTopBar(
             }
         }
 
-        // ROW 2: Alerts | Branding | Context
-        Box(modifier = Modifier.fillMaxWidth().heightIn(min = 32.dp), contentAlignment = Alignment.Center) {
-            // LEFT: Status Text / Permission Required
+        // ROW 2: Alerts (Left) | Branding (Center)
+        Box(modifier = Modifier.fillMaxWidth().heightIn(min = 24.dp), contentAlignment = Alignment.Center) {
+            // LEFT: Status Text / Permission required (Moved to Row 2)
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
                 if (isPermissionMissing) {
                     Surface(
@@ -221,9 +221,18 @@ fun BlukitHarmonyTopBar(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = "VIBES", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
             }
+        }
 
-            // RIGHT: Screen Title
-            Row(modifier = Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        // ROW 3: Environment (Left) | Context (Right)
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            // LEFT: DARK, ECO (Moved to Row 3)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
+                EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
+            }
+
+            // RIGHT: Screen Title (ALL, MINE, etc.)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
@@ -245,12 +254,6 @@ fun BlukitHarmonyTopBar(
                     }
                 }
             }
-        }
-
-        // ROW 3: DARK/ECO (Moved from Row 1)
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
-            EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
-            EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
         }
 
         if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
