@@ -440,7 +440,12 @@ fun UnifiedPersonaCloud(
     activeBubbles: List<BubbleData>,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
-    isVertical: Boolean = false
+    isVertical: Boolean = false,
+    userNickname: String = "",
+    userEmoji: String = "",
+    onUserNicknameChange: (String) -> Unit = {},
+    userFocusRequester: FocusRequester? = null,
+    airIsStill: Boolean = false
 ) {
     val activeSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
     val sortedDevices = remember(devices, activeSenders, vibedPeers, connectedLinks) {
@@ -466,8 +471,28 @@ fun UnifiedPersonaCloud(
                     .testTag("PersonaCloudColumn"),
                 horizontalArrangement = Arrangement.Center,
                 verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom),
-                maxItemsInEachColumn = 10
+                maxItemsInEachColumn = 11 // Adjusted for user persona
             ) {
+                // ANCHOR: User Persona
+                if (userFocusRequester != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.04f))
+                            .clickable { userFocusRequester.requestFocus() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        UserPersona(
+                            nickname = userNickname,
+                            emoji = userEmoji,
+                            airIsStill = airIsStill,
+                            onNicknameChange = onUserNicknameChange,
+                            focusRequester = userFocusRequester
+                        )
+                    }
+                }
+
                 sortedDevices.forEach { device ->
                     PersonaCloudItem(
                         device = device,
@@ -497,8 +522,28 @@ fun UnifiedPersonaCloud(
                         .testTag("PersonaCloudRow"),
                     horizontalArrangement = Arrangement.Center,
                     verticalArrangement = Arrangement.Center,
-                    maxItemsInEachRow = 9
+                    maxItemsInEachRow = 10 // Adjusted for user persona
                 ) {
+                    // ANCHOR: User Persona
+                    if (userFocusRequester != null) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.04f))
+                                .clickable { userFocusRequester.requestFocus() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            UserPersona(
+                                nickname = userNickname,
+                                emoji = userEmoji,
+                                airIsStill = airIsStill,
+                                onNicknameChange = onUserNicknameChange,
+                                focusRequester = userFocusRequester
+                            )
+                        }
+                    }
+
                     sortedDevices.forEach { device ->
                         PersonaCloudItem(
                             device = device,

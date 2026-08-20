@@ -214,7 +214,12 @@ fun TieScreen(
                         !msg.receiverId.isNullOrBlank()
                     )
                 },
-                onDeviceClick = onToggleFocus
+                onDeviceClick = onToggleFocus,
+                userNickname = "?", // Placeholder for Tie screen context if needed
+                userEmoji = "👤",
+                onUserNicknameChange = {},
+                userFocusRequester = null, // Disable user persona in Tie screen cloud for now
+                airIsStill = !state.harmony.isBluetoothEnabled || !state.harmony.permissionsGranted
             )
         }
 

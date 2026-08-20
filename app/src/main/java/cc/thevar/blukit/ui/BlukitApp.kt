@@ -286,7 +286,12 @@ fun BlukitApp(
                                 } 
                             }, 
                             onDeviceLongClick = { selectedPersonaForMenu = it },
-                            isVertical = true
+                            isVertical = true,
+                            userNickname = nickname ?: "?",
+                            userEmoji = emoji,
+                            onUserNicknameChange = viewModel::saveNickname,
+                            userFocusRequester = personaFocusRequester,
+                            airIsStill = !bluetoothState.harmony.isBluetoothEnabled || (isLocationMandatory && !bluetoothState.harmony.isLocationEnabled) || !permissionState.allPermissionsGranted
                         )
                     }
                 }
@@ -294,10 +299,9 @@ fun BlukitApp(
 
             BlukitHub(
                 currentRoute = (currentRoute as? Route) ?: initialRoute,
-                nickname = nickname ?: "?", emoji = emoji,
                 isBluetoothEnabled = bluetoothState.harmony.isBluetoothEnabled, isLocationEnabled = bluetoothState.harmony.isLocationEnabled, isWifiEnabled = bluetoothState.harmony.isWifiEnabled,
                 isLocationMandatory = isLocationMandatory, permissionsGranted = permissionState.allPermissionsGranted, isPermanentlyDenied = isPermanentlyDenied,
-                onSaveNickname = viewModel::saveNickname, personaFocusRequester = personaFocusRequester, messageText = messageText,
+                messageText = messageText,
                 onMessageChange = { messageText = it },
                 onSend = { if (messageText.isNotBlank()) { bluetoothViewModel.roar(messageText, currentRoute is Route.Mine); messageText = ""; focusManager.clearFocus() } },
                 vibeCount = if (currentRoute is Route.Mine) mineCount else roarsCount,
@@ -353,8 +357,9 @@ fun BlukitApp(
 
 @Composable
 fun BlukitHub(
-    currentRoute: Route, nickname: String, emoji: String, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, isLocationMandatory: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, onSaveNickname: (String) -> Unit, personaFocusRequester: FocusRequester, messageText: String, onMessageChange: (String) -> Unit, onSend: () -> Unit, vibeCount: Int, energySurge: Float, hubRotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, mineCount: Int, lowPowerMode: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, selectedDevices: Set<String>, connectedLinks: Set<String>, vibedPeers: Set<String>, isNoiseFilterActive: Boolean, onToggleNoiseFilter: (Boolean) -> Unit, onNavigate: (Route) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit, onStartSideVibe: () -> Unit, onStartTie: () -> Unit, onClearSelection: () -> Unit, modifier: Modifier = Modifier
+    currentRoute: Route, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, isLocationMandatory: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, messageText: String, onMessageChange: (String) -> Unit, onSend: () -> Unit, vibeCount: Int, energySurge: Float, hubRotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, mineCount: Int, lowPowerMode: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, selectedDevices: Set<String>, connectedLinks: Set<String>, vibedPeers: Set<String>, isNoiseFilterActive: Boolean, onToggleNoiseFilter: (Boolean) -> Unit, onNavigate: (Route) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit, onStartSideVibe: () -> Unit, onStartTie: () -> Unit, onClearSelection: () -> Unit, modifier: Modifier = Modifier
 ) {
+    val localContext = LocalContext.current
     Column(modifier = modifier.fillMaxWidth().zIndex(1f), horizontalAlignment = Alignment.CenterHorizontally) {
         AnimatedVisibility(visible = selectedDevices.isNotEmpty(), enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             Row(modifier = Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -412,17 +417,20 @@ fun BlukitHub(
                     onClearHistory = onClearHistory, 
                     onLogout = onLogout, 
                     onAcceptLink = onAcceptLink, 
-                    onDenyLink = onDenyLink,
-                    nickname = nickname,
-                    emoji = emoji,
-                    onSaveNickname = onSaveNickname,
-                    personaFocusRequester = personaFocusRequester
+                    onDenyLink = onDenyLink
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = StealthPrimary.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(text = "blukit: spread vibes", fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.3f), letterSpacing = 1.sp)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Box(modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { 
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
+                        localContext.startActivity(intent)
+                    }.padding(horizontal = 8.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
+                        Text(text = "PRIVACY", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.25f)))
+                    }
                 }
             }
         }
@@ -432,26 +440,16 @@ fun BlukitHub(
 @Composable
 fun UnifiedBlukitBadge(
     energy: Float, rotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, vibesCount: Int, lowPowerMode: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, currentRoute: Route, onNavigate: (Route) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit,
-    nickname: String,
-    emoji: String,
-    onSaveNickname: (String) -> Unit,
-    personaFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-    val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) { 
                 VisualEnergyPicker(
                     currentRoute = currentRoute, 
-                    onNavigate = onNavigate,
-                    nickname = nickname,
-                    emoji = emoji,
-                    airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted,
-                    onSaveNickname = onSaveNickname,
-                    personaFocusRequester = personaFocusRequester
+                    onNavigate = onNavigate
                 ) 
             }
             if (incomingLinkRequests.isNotEmpty()) {
@@ -495,29 +493,12 @@ fun UnifiedBlukitBadge(
 @Composable
 private fun VisualEnergyPicker(
     currentRoute: Route, 
-    onNavigate: (Route) -> Unit,
-    nickname: String,
-    emoji: String,
-    airIsStill: Boolean,
-    onSaveNickname: (String) -> Unit,
-    personaFocusRequester: FocusRequester
+    onNavigate: (Route) -> Unit
 ) {
     Row(modifier = Modifier.fillMaxWidth().background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(14.dp)).padding(2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         HubTab(label = "ALL", icon = Icons.Rounded.Groups, isSelected = currentRoute is Route.Blukit, weight = 1.2f, testTag = "HubTab_ALL", onClick = { onNavigate(Route.Blukit) })
         Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.08f)))
         HubTab(label = "MINE", icon = Icons.Rounded.Flare, isSelected = currentRoute is Route.Mine, weight = 1.2f, testTag = "HubTab_MINE", onClick = { onNavigate(Route.Mine) })
-        Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.08f)))
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(52.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.White.copy(alpha = 0.04f))
-                .clickable { personaFocusRequester.requestFocus() },
-            contentAlignment = Alignment.Center
-        ) {
-            UserPersona(nickname = nickname, emoji = emoji, airIsStill = airIsStill, onNicknameChange = onSaveNickname, focusRequester = personaFocusRequester)
-        }
     }
 }
 
@@ -600,13 +581,6 @@ private fun EnergyBarContent(isBluetoothOff: Boolean, isLocationOff: Boolean, is
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { onClearHistory() }.padding(horizontal = 8.dp, vertical = 4.dp)) { Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.3f))); Icon(imageVector = Icons.Rounded.DeleteSweep, contentDescription = "Clear Vibes", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(14.dp)) }
                     Box(modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { onResetProfile() }.padding(horizontal = 8.dp, vertical = 4.dp), contentAlignment = Alignment.Center) { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Text(text = "RESET", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.25f))); Icon(imageVector = Icons.Rounded.RestartAlt, contentDescription = "Reset Profile", tint = Color.White.copy(alpha = 0.25f), modifier = Modifier.size(14.dp)) } }
-                }
-                val context = androidx.compose.ui.platform.LocalContext.current
-                Box(modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { 
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
-                    context.startActivity(intent)
-                }.padding(horizontal = 8.dp, vertical = 4.dp), contentAlignment = Alignment.Center) {
-                    Text(text = "PRIVACY", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.25f)))
                 }
             }
         }
