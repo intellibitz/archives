@@ -184,9 +184,25 @@ fun BlukitApp(
                 else -> Icons.Rounded.Hub
             }
 
-            BlukitTopTitle(
+            BlukitHarmonyTopBar(
                 title = topTitle, 
                 icon = topIcon,
+                isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
+                isLocationOff = !bluetoothState.harmony.isLocationEnabled,
+                isWifiOff = !bluetoothState.harmony.isWifiEnabled,
+                isPermissionMissing = !permissionState.allPermissionsGranted,
+                isPermanentlyDenied = isPermanentlyDenied,
+                userCount = report.userCount,
+                onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
+                onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
+                onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
+                onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
+                onOpenSettings = { 
+                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { 
+                        data = Uri.fromParts("package", context.packageName, null)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }) 
+                },
                 onBack = if (focusedSenderId != null || currentRoute is Route.VibeDetail) { 
                     { 
                         if (focusedSenderId != null) focusedSenderId = null 
@@ -198,7 +214,7 @@ fun BlukitApp(
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 val cloudDevices = bluetoothState.crowd.scannedDevices
-                val showUPH = (currentRoute is Route.Blukit || currentRoute is Route.Mine) && cloudDevices.isNotEmpty()
+                val showUPH = (currentRoute is Route.Blukit || currentRoute is Route.Mine)
 
                 NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.fillMaxSize()) { key ->
                     when (key) {
@@ -299,41 +315,47 @@ fun BlukitApp(
 
             BlukitHub(
                 currentRoute = (currentRoute as? Route) ?: initialRoute,
-                isBluetoothEnabled = bluetoothState.harmony.isBluetoothEnabled, isLocationEnabled = bluetoothState.harmony.isLocationEnabled, isWifiEnabled = bluetoothState.harmony.isWifiEnabled,
-                isLocationMandatory = isLocationMandatory, permissionsGranted = permissionState.allPermissionsGranted, isPermanentlyDenied = isPermanentlyDenied,
                 messageText = messageText,
                 onMessageChange = { messageText = it },
-                onSend = { if (messageText.isNotBlank()) { bluetoothViewModel.roar(messageText, currentRoute is Route.Mine); messageText = ""; focusManager.clearFocus() } },
-                vibeCount = if (currentRoute is Route.Mine) mineCount else roarsCount,
-                energySurge = energySurge, hubRotation = hubRotation, userCount = report.userCount, linksCount = report.connectedLinksCount,
-                roarsCount = roarsCount, mineCount = mineCount, lowPowerMode = lowPowerMode, isStealthMode = isStealthMode,
-                incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, selectedDevices = bluetoothState.crowd.selectedDevices,
-                connectedLinks = bluetoothState.session.connectedLinks, vibedPeers = bluetoothState.crowd.vibedPeers,
+                onSend = { 
+                    if (messageText.isNotBlank()) { 
+                        bluetoothViewModel.roar(messageText, currentRoute is Route.Mine)
+                        messageText = ""
+                        focusManager.clearFocus() 
+                    } 
+                },
+                vibeCount = roarsCount + mineCount,
+                airIsStill = !bluetoothState.harmony.isBluetoothEnabled || (isLocationMandatory && !bluetoothState.harmony.isLocationEnabled) || !permissionState.allPermissionsGranted,
+                lowPowerMode = lowPowerMode, 
+                isStealthMode = isStealthMode,
+                incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
+                selectedDevices = bluetoothState.crowd.selectedDevices,
                 isNoiseFilterActive = isNoiseFilterActive,
                 onToggleNoiseFilter = { isNoiseFilterActive = it },
                 onNavigate = { route -> 
-                    if (route == Route.Blukit) {
-                        isNoiseFilterActive = false
-                    }
+                    if (route == Route.Blukit) isNoiseFilterActive = false
                     if (currentRoute != route) { 
                         focusManager.clearFocus()
                         backStack.add(route) 
                     } 
                 },
-                onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
-                onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
-                onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
-                onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
-                onOpenSettings = { 
-                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { 
-                        data = Uri.fromParts("package", context.packageName, null)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }) 
+                onToggleStealth = viewModel::toggleStealth, 
+                onToggleLowPower = viewModel::toggleLowPowerMode, 
+                onClearHistory = viewModel::clearChatHistory,
+                onLogout = viewModel::logout, 
+                onAcceptLink = bluetoothViewModel::acceptLink, 
+                onDenyLink = bluetoothViewModel::denyLink,
+                onStartSideVibe = { 
+                    val members = bluetoothState.crowd.selectedDevices
+                    if (members.all { it in bluetoothState.session.connectedLinks }) { 
+                        val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false)
+                        backStack.add(Route.VibeDetail(gid)) 
+                    } 
                 },
-                onToggleStealth = viewModel::toggleStealth, onToggleLowPower = viewModel::toggleLowPowerMode, onClearHistory = viewModel::clearChatHistory,
-                onLogout = viewModel::logout, onAcceptLink = bluetoothViewModel::acceptLink, onDenyLink = bluetoothViewModel::denyLink,
-                onStartSideVibe = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedLinks }) { val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false); backStack.add(Route.VibeDetail(gid)) } },
-                onStartTie = { val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.crowd.selectedDevices, isTie = true); backStack.add(Route.VibeDetail(gid)) },
+                onStartTie = { 
+                    val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.crowd.selectedDevices, isTie = true)
+                    backStack.add(Route.VibeDetail(gid)) 
+                },
                 onClearSelection = bluetoothViewModel::clearSelection
             )
         }
@@ -357,7 +379,29 @@ fun BlukitApp(
 
 @Composable
 fun BlukitHub(
-    currentRoute: Route, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, isLocationMandatory: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, messageText: String, onMessageChange: (String) -> Unit, onSend: () -> Unit, vibeCount: Int, energySurge: Float, hubRotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, mineCount: Int, lowPowerMode: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, selectedDevices: Set<String>, connectedLinks: Set<String>, vibedPeers: Set<String>, isNoiseFilterActive: Boolean, onToggleNoiseFilter: (Boolean) -> Unit, onNavigate: (Route) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit, onStartSideVibe: () -> Unit, onStartTie: () -> Unit, onClearSelection: () -> Unit, modifier: Modifier = Modifier
+    currentRoute: Route, 
+    messageText: String, 
+    onMessageChange: (String) -> Unit, 
+    onSend: () -> Unit, 
+    vibeCount: Int, 
+    airIsStill: Boolean,
+    lowPowerMode: Boolean, 
+    isStealthMode: Boolean, 
+    incomingLinkRequests: Set<P2PDevice>, 
+    selectedDevices: Set<String>, 
+    isNoiseFilterActive: Boolean, 
+    onToggleNoiseFilter: (Boolean) -> Unit, 
+    onNavigate: (Route) -> Unit, 
+    onToggleStealth: (Boolean) -> Unit, 
+    onToggleLowPower: (Boolean) -> Unit, 
+    onClearHistory: () -> Unit, 
+    onLogout: () -> Unit, 
+    onAcceptLink: (P2PDevice) -> Unit, 
+    onDenyLink: (P2PDevice) -> Unit, 
+    onStartSideVibe: () -> Unit, 
+    onStartTie: () -> Unit, 
+    onClearSelection: () -> Unit, 
+    modifier: Modifier = Modifier
 ) {
     val localContext = LocalContext.current
     Column(modifier = modifier.fillMaxWidth().zIndex(1f), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -373,7 +417,7 @@ fun BlukitHub(
                 AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Mine) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         BlukitInput(
-                            airIsStill = !isBluetoothEnabled || (isLocationMandatory && !isLocationEnabled) || !permissionsGranted, 
+                            airIsStill = airIsStill, 
                             isReadOnly = isNoiseFilterActive && currentRoute is Route.Blukit,
                             value = messageText, 
                             onValueChange = onMessageChange, 
@@ -391,33 +435,18 @@ fun BlukitHub(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 UnifiedBlukitBadge(
-                    energy = energySurge, 
-                    rotation = hubRotation, 
-                    userCount = userCount, 
-                    linksCount = linksCount, 
-                    roarsCount = roarsCount, 
-                    vibesCount = mineCount, 
                     lowPowerMode = lowPowerMode, 
-                    permissionsGranted = permissionsGranted, 
-                    isPermanentlyDenied = isPermanentlyDenied, 
                     isStealthMode = isStealthMode, 
                     incomingLinkRequests = incomingLinkRequests, 
-                    isBluetoothEnabled = isBluetoothEnabled, 
-                    isLocationEnabled = isLocationEnabled, 
-                    isWifiEnabled = isWifiEnabled, 
                     currentRoute = currentRoute, 
                     onNavigate = onNavigate, 
-                    onAwakenBluetooth = onAwakenBluetooth, 
-                    onAwakenLocation = onAwakenLocation, 
-                    onAwakenWifi = onAwakenWifi, 
-                    onGrantPermissions = onGrantPermissions, 
-                    onOpenSettings = onOpenSettings, 
                     onToggleStealth = onToggleStealth, 
                     onToggleLowPower = onToggleLowPower, 
                     onClearHistory = onClearHistory, 
                     onLogout = onLogout, 
                     onAcceptLink = onAcceptLink, 
-                    onDenyLink = onDenyLink
+                    onDenyLink = onDenyLink,
+                    vibeCount = vibeCount
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -439,7 +468,18 @@ fun BlukitHub(
 
 @Composable
 fun UnifiedBlukitBadge(
-    energy: Float, rotation: Float, userCount: Int, linksCount: Int, roarsCount: Int, vibesCount: Int, lowPowerMode: Boolean, permissionsGranted: Boolean, isPermanentlyDenied: Boolean, isStealthMode: Boolean, incomingLinkRequests: Set<P2PDevice>, isBluetoothEnabled: Boolean, isLocationEnabled: Boolean, isWifiEnabled: Boolean, currentRoute: Route, onNavigate: (Route) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onClearHistory: () -> Unit, onLogout: () -> Unit, onAcceptLink: (P2PDevice) -> Unit, onDenyLink: (P2PDevice) -> Unit,
+    lowPowerMode: Boolean, 
+    isStealthMode: Boolean, 
+    incomingLinkRequests: Set<P2PDevice>, 
+    currentRoute: Route, 
+    onNavigate: (Route) -> Unit, 
+    onToggleStealth: (Boolean) -> Unit, 
+    onToggleLowPower: (Boolean) -> Unit, 
+    onClearHistory: () -> Unit, 
+    onLogout: () -> Unit, 
+    onAcceptLink: (P2PDevice) -> Unit, 
+    onDenyLink: (P2PDevice) -> Unit,
+    vibeCount: Int,
     modifier: Modifier = Modifier
 ) {
     var showClearHistoryDialog by remember { mutableStateOf(false) }
@@ -464,27 +504,46 @@ fun UnifiedBlukitBadge(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        EnergyBarContent(
-            isBluetoothOff = !isBluetoothEnabled, 
-            isLocationOff = !isLocationEnabled, 
-            isWifiOff = !isWifiEnabled, 
-            isPermissionMissing = !permissionsGranted, 
-            isStealthMode = isStealthMode, 
-            lowPowerMode = lowPowerMode, 
-            onToggleStealth = onToggleStealth, 
-            onToggleLowPower = onToggleLowPower, 
-            onAwakenBluetooth = onAwakenBluetooth, 
-            onAwakenLocation = onAwakenLocation, 
-            onAwakenWifi = onAwakenWifi, 
-            userCount = userCount, 
-            vibeCount = roarsCount + vibesCount, 
-            isPermanentlyDenied = isPermanentlyDenied, 
-            onGrantPermissions = onGrantPermissions, 
-            onOpenSettings = onOpenSettings, 
-            onClearHistory = { showClearHistoryDialog = true }, 
-            onResetProfile = { showLogoutDialog = true }
-        )
+        Spacer(modifier = Modifier.height(10.dp))
+        
+        // Settings Row
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
+            EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
+            
+            VerticalDivider(modifier = Modifier.height(20.dp), color = Color.White.copy(alpha = 0.1f))
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically, 
+                horizontalArrangement = Arrangement.spacedBy(4.dp), 
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.05f))
+                    .clickable { showClearHistoryDialog = true }
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            ) { 
+                Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.5f)))
+                Icon(imageVector = Icons.Rounded.DeleteSweep, contentDescription = "Clear Vibes", tint = Color.White.copy(alpha = 0.4f), modifier = Modifier.size(14.dp)) 
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.05f))
+                    .clickable { showLogoutDialog = true }
+                    .padding(horizontal = 8.dp, vertical = 6.dp), 
+                contentAlignment = Alignment.Center
+            ) { 
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { 
+                    Text(text = "RESET", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.3f)))
+                    Icon(imageVector = Icons.Rounded.RestartAlt, contentDescription = "Reset Profile", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(12.dp)) 
+                } 
+            }
+        }
     }
     if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
     if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onLogout(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
@@ -513,88 +572,10 @@ private fun RowScope.HubTab(label: String, icon: androidx.compose.ui.graphics.ve
 }
 
 @Composable
-private fun EnergyBarContent(isBluetoothOff: Boolean, isLocationOff: Boolean, isWifiOff: Boolean, isPermissionMissing: Boolean, isStealthMode: Boolean, lowPowerMode: Boolean, onToggleStealth: (Boolean) -> Unit, onToggleLowPower: (Boolean) -> Unit, onAwakenBluetooth: () -> Unit, onAwakenLocation: () -> Unit, onAwakenWifi: () -> Unit, userCount: Int, vibeCount: Int, isPermanentlyDenied: Boolean, onGrantPermissions: () -> Unit, onOpenSettings: () -> Unit, onClearHistory: () -> Unit, onResetProfile: () -> Unit) {
-    val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(initialValue = 0.6f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
-    var pendingHint by remember { mutableStateOf<Triple<String, String, () -> Unit>?>(null) }
-    val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
-    val isStill = isBluetoothOff || isLocationOff
-    val barBorderColor = when { isStill -> Color.Red.copy(alpha = 0.4f); isPermissionMissing -> Color(0xFFF4511E).copy(alpha = 0.4f); else -> Color.White.copy(alpha = 0.05f) }
-    if (pendingHint != null) { 
-        val (label, text, action) = pendingHint!! 
-        AlertDialog(
-            onDismissRequest = { pendingHint = null }, 
-            containerColor = Color.Black, 
-            titleContentColor = StealthPrimary, 
-            textContentColor = Color.White.copy(alpha = 0.8f), 
-            title = { Text("ACTION REQUIRED", fontWeight = FontWeight.Black) }, 
-            text = { Text(text.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.Bold) }, 
-            confirmButton = { 
-                TextButton(onClick = { action.invoke(); pendingHint = null }) { 
-                    val btnText = when(label) {
-                        "SETTINGS" -> "OPEN SETTINGS"
-                        "GRANT" -> "GRANT PERMISSION"
-                        "AWAKEN" -> "AWAKEN RADIO"
-                        else -> "PROCEED"
-                    }
-                    Text(btnText, color = StealthPrimary, fontWeight = FontWeight.Black) 
-                } 
-            }, 
-            dismissButton = { 
-                TextButton(onClick = { pendingHint = null }) { 
-                    Text("CANCEL", color = Color.White.copy(alpha = 0.4f)) 
-                } 
-            }
-        ) 
-    }
-    Surface(color = if (isStill) Color.Red.copy(alpha = 0.1f) else if (isPermissionMissing) Color(0xFFF4511E).copy(alpha = 0.1f) else Color.White.copy(alpha = 0.03f), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, barBorderColor)) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth); StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi); StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation) }
-                if (isStill || isPermissionMissing || isWeak) { 
-                    val actionData = when { 
-                        isStill -> { 
-                            val hint = if (isBluetoothOff) "PLEASE TURN ON YOUR BLUETOOTH IN SYSTEM SETTINGS." else "PLEASE TURN ON YOUR LOCATION IN SYSTEM SETTINGS."
-                            val act = if (isBluetoothOff) onAwakenBluetooth else onAwakenLocation
-                            Triple("AWAKEN", hint, act) 
-                        }
-                        isPermissionMissing -> { 
-                            val hint = if (isPermanentlyDenied) "ANDROID HAS BLOCKED THE DIALOG. PLEASE GO TO PERMISSIONS AND MANUALLY ALLOW 'NEARBY DEVICES' AND 'LOCATION'." else "PLEASE TAP 'ALLOW' ON THE SYSTEM DIALOG TO LET BLUKIT SCAN FOR NEARBY PEOPLE."
-                            val label = if (isPermanentlyDenied) "SETTINGS" else "GRANT"
-                            val act = if (isPermanentlyDenied) onOpenSettings else onGrantPermissions
-                            Triple(label, hint, act) 
-                        }
-                        isWeak -> Triple("SEARCHING", "BLUKIT IS SCANNING FOR NEARBY PEOPLE. MAKE SURE OTHERS HAVE BLUKIT OPEN.", {})
-                        else -> null 
-                    }; 
-                    Text(text = if (isWeak && !isStill && !isPermissionMissing) "SEARCHING" else "SPREAD VIBES", modifier = Modifier.testTag("EnergyRequiredLabel"), style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = if(isWeak && !isStill) Color.Yellow.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.8f))); 
-                    if (actionData != null && actionData.first != "SEARCHING") { 
-                        Surface(onClick = { pendingHint = actionData }, color = Color.White, shape = RoundedCornerShape(4.dp), modifier = Modifier.graphicsLayer { alpha = pulseAlpha }) { 
-                            Text(text = actionData.first, style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)) 
-                        } 
-                    } 
-                }
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                EnvironmentToggle(label = "DARK MODE", checked = isStealthMode, onCheckedChange = onToggleStealth)
-                EnvironmentToggle(label = "LOW BATTERY MODE", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { onClearHistory() }.padding(horizontal = 8.dp, vertical = 4.dp)) { Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.3f))); Icon(imageVector = Icons.Rounded.DeleteSweep, contentDescription = "Clear Vibes", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(14.dp)) }
-                    Box(modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { onResetProfile() }.padding(horizontal = 8.dp, vertical = 4.dp), contentAlignment = Alignment.Center) { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Text(text = "RESET", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.25f))); Icon(imageVector = Icons.Rounded.RestartAlt, contentDescription = "Reset Profile", tint = Color.White.copy(alpha = 0.25f), modifier = Modifier.size(14.dp)) } }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) { Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(text = label, fontSize = 6.sp, fontWeight = FontWeight.Black, color = if(checked) StealthPrimary else Color.White.copy(alpha = 0.3f), letterSpacing = 1.sp); Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = Modifier.scale(0.55f).height(20.dp), colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary, checkedTrackColor = StealthPrimary.copy(alpha = 0.5f))) } }
 
 @Composable
 private fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Unit, onDismiss: () -> Unit) { AlertDialog(onDismissRequest = onDismiss, containerColor = Color.Black, titleContentColor = StealthPrimary, textContentColor = Color.White.copy(alpha = 0.7f), title = { Text(title, fontWeight = FontWeight.Black) }, text = { Text(text, fontSize = 12.sp) }, confirmButton = { TextButton(onClick = onConfirm) { Text("PROCEED", color = Color.Red, fontWeight = FontWeight.Bold) } }, dismissButton = { TextButton(onClick = { onDismiss() }) { Text("CANCEL", color = Color.White.copy(alpha = 0.4f)) } }) }
-
-@Composable
-private fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isWeak: Boolean, isPermissionMissing: Boolean, onClick: () -> Unit) { val tint = when { !isOn -> Color.Red; isPermissionMissing -> Color(0xFFF4511E); isWeak -> Color.Yellow; else -> Color.Green }; Icon(imageVector = icon, contentDescription = null, tint = tint.copy(alpha = 0.8f), modifier = Modifier.size(20.dp).clickable { onClick() }) }
 
 @Composable
 private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) { if (lowPowerMode && rotation % 10 > 2) return; Canvas(modifier = Modifier.fillMaxSize()) { val center = Offset(56.dp.toPx(), size.height - 64.dp.toPx()); rotate(rotation, pivot = center) { val scanBrush = Brush.sweepGradient(0.0f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.05f else 0.15f), 0.1f to Color.Transparent, center = center); drawCircle(brush = scanBrush, radius = size.maxDimension, center = center) } } }

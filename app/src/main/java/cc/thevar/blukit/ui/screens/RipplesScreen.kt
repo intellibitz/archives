@@ -148,7 +148,7 @@ fun RipplesScreen(
                 drawNodes = true,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = if (hasSidebar) 64.dp else 0.dp)
+                    .padding(end = if (hasSidebar) 72.dp else 0.dp)
             ) {
                 // LAYER 2: Top-level Interactive Ticker
                 VibingVibesTicker(

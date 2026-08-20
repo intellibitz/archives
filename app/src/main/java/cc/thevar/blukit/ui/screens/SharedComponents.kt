@@ -105,70 +105,104 @@ fun RadioB(
 }
 
 @Composable
-fun BlukitTopTitle(
+fun BlukitHarmonyTopBar(
     title: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isBluetoothOff: Boolean,
+    isLocationOff: Boolean,
+    isWifiOff: Boolean,
+    isPermissionMissing: Boolean,
+    isPermanentlyDenied: Boolean,
+    userCount: Int,
+    onAwakenBluetooth: () -> Unit,
+    onAwakenLocation: () -> Unit,
+    onAwakenWifi: () -> Unit,
+    onGrantPermissions: () -> Unit,
+    onOpenSettings: () -> Unit,
     onBack: (() -> Unit)? = null,
     onManage: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(
+        initialValue = 0.6f, targetValue = 1f, 
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), 
+        label = "Alpha"
+    )
+    
+    val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
+    val isStill = isBluetoothOff || isLocationOff
+    val barColor = when { 
+        isStill -> Color.Red.copy(alpha = 0.15f)
+        isPermissionMissing -> Color(0xFFF4511E).copy(alpha = 0.15f)
+        else -> Color.White.copy(alpha = 0.05f) 
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .background(barColor, RoundedCornerShape(20.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(20.dp))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            if (onBack != null) {
-                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f))
+            // LEFT: Back Action + Radios
+            Row(modifier = Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (onBack != null) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                    }
+                }
+                
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
+                    StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
+                    StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
                 }
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "SPREAD",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp,
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 12.sp
-                    )
-                )
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                RadioB(modifier = Modifier.size(36.dp))
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                Text(
-                    text = "VIBES",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp,
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 12.sp
-                    )
-                )
+            // CENTER: Branding
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "SPREAD", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
+                Spacer(modifier = Modifier.width(8.dp))
+                RadioB(modifier = Modifier.size(28.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "VIBES", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
             }
 
-            if (onManage != null) {
-                IconButton(onClick = onManage, modifier = Modifier.align(Alignment.CenterEnd)) {
-                    Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f))
+            // RIGHT: Manage Action or Permission Button
+            Box(modifier = Modifier.align(Alignment.CenterEnd), contentAlignment = Alignment.CenterEnd) {
+                if (isPermissionMissing) {
+                    Surface(
+                        onClick = { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() },
+                        color = Color.White,
+                        shape = RoundedCornerShape(6.dp),
+                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                    ) {
+                        Text(
+                            text = if (isPermanentlyDenied) "SETTINGS" else "ALLOW",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                } else if (onManage != null) {
+                    IconButton(onClick = onManage, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                    }
                 }
             }
         }
         
         Spacer(modifier = Modifier.height(4.dp))
         
+        // SUBTITLE: Screen Context (ALL, MINE, etc.)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.6f),
+                tint = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
                 modifier = Modifier.size(10.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
@@ -177,12 +211,41 @@ fun BlukitTopTitle(
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.sp,
-                    color = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.7f),
+                    color = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
                     fontSize = 8.sp
                 )
             )
+            
+            if (isStill || isPermissionMissing || isWeak) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = when {
+                        isStill -> "AIR IS STILL"
+                        isPermissionMissing -> "PERMISSION REQUIRED"
+                        else -> "SEARCHING"
+                    },
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
+                    modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isWeak: Boolean, isPermissionMissing: Boolean, onClick: () -> Unit) { 
+    val tint = when { 
+        !isOn -> Color.Red
+        isPermissionMissing -> Color(0xFFF4511E)
+        isWeak -> Color.Yellow
+        else -> Color.Green 
+    }
+    Icon(
+        imageVector = icon, 
+        contentDescription = null, 
+        tint = tint.copy(alpha = 0.7f), 
+        modifier = Modifier.size(14.dp).clickable { onClick() }
+    ) 
 }
 
 @Composable

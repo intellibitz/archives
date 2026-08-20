@@ -17,7 +17,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "cc.thevar.blukit"
+        applicationId = "cc.thevar.blukit.wear"
         minSdk = 30
         targetSdk = 37
         versionCode = 21
