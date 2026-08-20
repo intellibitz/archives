@@ -154,121 +154,108 @@ fun BlukitHarmonyTopBar(
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .background(barColor, RoundedCornerShape(20.dp))
             .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            // LEFT: Back Action + Radios
-            Row(modifier = Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        // ROW 1: Radios | Delete/Reset
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            // LEFT: Back + Radios
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (onBack != null) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(28.dp)) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(24.dp)) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
                     }
                 }
-                
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
-                    StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
-                    StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
+                StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
+                StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
+                StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
+            }
+
+            // RIGHT: DELETE, RESET
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                IconButton(onClick = { showClearHistoryDialog = true }, modifier = Modifier.size(28.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f))) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = vibeCount.toString(), fontSize = 5.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                        Icon(Icons.Rounded.DeleteSweep, contentDescription = "Delete", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                    }
+                }
+
+                IconButton(onClick = { showLogoutDialog = true }, modifier = Modifier.size(28.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f))) {
+                    Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
                 }
             }
+        }
 
-            // CENTER: Branding
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "SPREAD", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
-                Spacer(modifier = Modifier.width(6.dp))
-                RadioB(modifier = Modifier.size(24.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "VIBES", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
-            }
-
-            // RIGHT: Settings Row + Manage/Permission
-            Row(modifier = Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // ROW 2: Alerts | Branding | Context
+        Box(modifier = Modifier.fillMaxWidth().heightIn(min = 32.dp), contentAlignment = Alignment.Center) {
+            // LEFT: Status Text / Permission Required
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
                 if (isPermissionMissing) {
                     Surface(
                         onClick = { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() },
                         color = Color.White,
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                     ) {
                         Text(
                             text = if (isPermanentlyDenied) "SETTINGS" else "ALLOW",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.Red),
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.Red),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                         )
                     }
-                } else {
-                    // Small Settings Icons
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
-                        EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
-                        
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .clickable { showClearHistoryDialog = true }
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        ) { 
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(text = vibeCount.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.4f)))
-                                Icon(imageVector = Icons.Rounded.DeleteSweep, contentDescription = "Clear", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(10.dp))
-                            }
-                        }
+                } else if (isStill || isWeak) {
+                    Text(
+                        text = if (isStill) "AIR IS STILL" else "SEARCHING",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
+                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                    )
+                }
+            }
+            
+            // CENTER: Branding
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "SPREAD", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
+                Spacer(modifier = Modifier.width(8.dp))
+                RadioB(modifier = Modifier.size(28.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "VIBES", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
+            }
 
-                        IconButton(onClick = { showLogoutDialog = true }, modifier = Modifier.size(24.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.05f))) {
-                            Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(12.dp))
-                        }
-                    }
-
-                    if (onManage != null) {
-                        VerticalDivider(modifier = Modifier.height(16.dp).padding(horizontal = 2.dp), color = Color.White.copy(alpha = 0.1f))
-                        IconButton(onClick = onManage, modifier = Modifier.size(28.dp)) {
-                            Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                        }
+            // RIGHT: Screen Title
+            Row(modifier = Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                    modifier = Modifier.size(12.dp)
+                )
+                Text(
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 0.5.sp,
+                        color = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                        fontSize = 8.sp
+                    )
+                )
+                if (onManage != null) {
+                    IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
+                        Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
                     }
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(2.dp))
-        
-        // SUBTITLE: Screen Context (ALL, MINE, etc.)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                modifier = Modifier.size(10.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = title.uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp,
-                    color = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                    fontSize = 8.sp
-                )
-            )
-            
-            if (isStill || isPermissionMissing || isWeak) {
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = when {
-                        isStill -> "AIR IS STILL"
-                        isPermissionMissing -> "PERMISSION REQUIRED"
-                        else -> "SEARCHING"
-                    },
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
-                    modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
-                )
-            }
+
+        // ROW 3: DARK/ECO (Moved from Row 1)
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
+            EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
+            EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
         }
+
+        if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
+        if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onResetProfile(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
     }
-    
-    if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-    if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onResetProfile(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
 }
 
 @Composable

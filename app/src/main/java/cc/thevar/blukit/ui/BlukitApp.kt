@@ -428,12 +428,35 @@ fun BlukitHub(
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                UnifiedBlukitBadge(
-                    incomingLinkRequests = incomingLinkRequests, 
+                
+                // VIBE REQUEST Row
+                if (incomingLinkRequests.isNotEmpty()) {
+                    val request = incomingLinkRequests.first()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .background(StealthPrimary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                            .border(1.dp, StealthPrimary.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = request.emoji, fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "VIBE REQUEST FROM ${(request.name ?: "?").uppercase()}", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black, color = StealthPrimary, fontSize = 8.sp)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(text = "DENY", modifier = Modifier.clickable { onDenyLink(request) }, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Bold, fontSize = 9.sp)
+                            Text(text = "JOIN", modifier = Modifier.testTag("AcceptLinkButton").clickable { onAcceptLink(request) }, color = StealthPrimary, fontWeight = FontWeight.Black, fontSize = 9.sp)
+                        }
+                    }
+                }
+
+                VisualEnergyPicker(
                     currentRoute = currentRoute, 
-                    onNavigate = onNavigate, 
-                    onAcceptLink = onAcceptLink, 
-                    onDenyLink = onDenyLink
+                    onNavigate = onNavigate
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 val localContext = LocalContext.current
@@ -447,38 +470,6 @@ fun BlukitHub(
                         localContext.startActivity(intent)
                     }.padding(horizontal = 8.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
                         Text(text = "PRIVACY", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.25f)))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun UnifiedBlukitBadge(
-    incomingLinkRequests: Set<P2PDevice>, 
-    currentRoute: Route, 
-    onNavigate: (Route) -> Unit, 
-    onAcceptLink: (P2PDevice) -> Unit, 
-    onDenyLink: (P2PDevice) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) { 
-                VisualEnergyPicker(
-                    currentRoute = currentRoute, 
-                    onNavigate = onNavigate
-                ) 
-            }
-            if (incomingLinkRequests.isNotEmpty()) {
-                val request = incomingLinkRequests.first()
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(text = "VIBE REQUEST", style = MaterialTheme.typography.labelSmall.copy(fontSize = 5.sp, fontWeight = FontWeight.Black, color = StealthPrimary, letterSpacing = 0.5.sp))
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(text = "DENY", modifier = Modifier.clickable { onDenyLink(request) }, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Bold, fontSize = 7.sp)
-                        Text(text = "JOIN", modifier = Modifier.testTag("AcceptLinkButton").clickable { onAcceptLink(request) }, color = StealthPrimary, fontWeight = FontWeight.Black, fontSize = 7.sp)
                     }
                 }
             }
