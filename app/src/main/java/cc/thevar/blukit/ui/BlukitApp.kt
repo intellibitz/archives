@@ -230,8 +230,8 @@ fun BlukitApp(
                         val device = bluetoothState.crowd.scannedDevices.find { it.id == focusedSenderId || it.persistentId == focusedSenderId }
                         device?.name?.uppercase() ?: "USER"
                     }
-                    currentRoute is Route.Blukit -> "ALL"
-                    currentRoute is Route.Vibes -> "VIBES"
+                    currentRoute is Route.Blukit -> "PUBLIC VIBES"
+                    currentRoute is Route.Vibes -> "PRIVATE VIBES"
                     currentRoute is Route.VibeDetail -> {
                         val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
                         group?.name ?: "VIBE"

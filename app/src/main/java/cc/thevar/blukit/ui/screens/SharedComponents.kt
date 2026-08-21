@@ -160,7 +160,7 @@ fun BlukitHarmonyTopBar(
         else -> Color.White.copy(alpha = 0.05f) 
     }
 
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -249,7 +249,7 @@ fun BlukitHarmonyTopBar(
         }
 
         // ROW 2: Screen Title (Only if not main UPH anchors)
-        if (title != "ALL" && title != "VIBES") {
+        if (title != "PUBLIC VIBES" && title != "PRIVATE VIBES") {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(
@@ -280,10 +280,10 @@ fun BlukitHarmonyTopBar(
         // Border Decorator
         Surface(
             color = Color.Black,
-            modifier = Modifier.offset(y = 1.dp)
+            modifier = Modifier.offset(y = (-1).dp)
         ) {
             Text(
-                text = "HARMONY",
+                text = "BLUKIT",
                 fontSize = 6.sp,
                 fontWeight = FontWeight.Black,
                 color = Color.White.copy(alpha = 0.2f),
@@ -546,7 +546,7 @@ fun UnifiedPersonaCloud(
             .padding(horizontal = 2.dp)
             .background(Color.White.copy(alpha = 0.01f), RoundedCornerShape(12.dp))
             .border(0.5.dp, Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp)),
-        contentAlignment = if (isVertical) Alignment.CenterStart else Alignment.BottomCenter
+        contentAlignment = if (isVertical) Alignment.TopStart else Alignment.TopCenter
     ) {
         if (isVertical) {
             Column(
@@ -562,7 +562,7 @@ fun UnifiedPersonaCloud(
                 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     if (isAllSelected && isFocusAll) {
-                        Text(text = "ALL VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary, modifier = Modifier.padding(end = 4.dp))
+                        Text(text = "PUBLIC VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary, modifier = Modifier.padding(end = 4.dp))
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(
@@ -575,12 +575,12 @@ fun UnifiedPersonaCloud(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Groups,
-                                contentDescription = "All",
+                                contentDescription = "Public",
                                 tint = if (isGlowingAll) StealthPrimary else Color.White.copy(alpha = 0.4f),
                                 modifier = Modifier.size(16.dp)
                             )
                         }
-                        Text(text = "ALL", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isGlowingAll) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                        Text(text = "PUBLIC", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isGlowingAll) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                     }
                 }
 
@@ -589,7 +589,7 @@ fun UnifiedPersonaCloud(
                 val isVibesSelected = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     if (isVibesSelected) {
-                        val vibesStatus = if (currentRoute is Route.VibeDetail) "SECURE VIBE" else "VIBES"
+                        val vibesStatus = if (currentRoute is Route.VibeDetail) "SECURE VIBE" else "PRIVATE VIBES"
                         Text(text = vibesStatus, fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthRose, modifier = Modifier.padding(end = 4.dp))
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -607,12 +607,12 @@ fun UnifiedPersonaCloud(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Flare, 
-                                contentDescription = "Vibes", 
+                                contentDescription = "Private", 
                                 tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
                                 modifier = Modifier.size(16.dp)
                             )
                         }
-                        Text(text = "VIBES", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                        Text(text = "PRIVATE", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                     }
                 }
 
@@ -731,10 +731,10 @@ fun UnifiedPersonaCloud(
         // Border Decorator
         Surface(
             color = Color.Black,
-            modifier = Modifier.then(if (isVertical) Modifier.rotate(-90f).offset(y = (-32).dp) else Modifier.offset(y = 1.dp))
+            modifier = Modifier.then(if (isVertical) Modifier.rotate(-90f).offset(y = (-32).dp) else Modifier.offset(y = (-1).dp))
         ) {
             Text(
-                text = if (isVertical) "PERSONA HUB" else "CROWD HUB",
+                text = "USERS",
                 fontSize = 6.sp,
                 fontWeight = FontWeight.Black,
                 color = Color.White.copy(alpha = 0.2f),
