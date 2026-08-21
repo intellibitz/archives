@@ -698,6 +698,7 @@ fun UnifiedPersonaCloud(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PersonaCloudItem(
     device: P2PDevice,
@@ -724,7 +725,10 @@ private fun PersonaCloudItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .width(if (isVertical) 52.dp else 44.dp)
-            .clickable { onDeviceClick(device) }
+            .combinedClickable(
+                onClick = { onDeviceClick(device) },
+                onLongClick = { onDeviceLongClick(device) }
+            )
             .padding(2.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(if (isVertical) 32.dp else 24.dp)) {

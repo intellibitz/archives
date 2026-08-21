@@ -386,10 +386,6 @@ private fun AnimatedVibeItem(
                 coordinates[rowId] = current.copy(ticker = it.positionInRoot())
             }
             .animateContentSize()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = if (isMe) onDelete else onLongClick
-            )
             .background(
                 if (isMe) StealthPrimary.copy(alpha = 0.12f)
                 else if (isSelected) Color.White.copy(alpha = 0.1f)
@@ -402,6 +398,10 @@ private fun AnimatedVibeItem(
                 if (isMe) 1.5.dp else if (isSelected) 1.dp else 0.dp,
                 if (isMe) StealthPrimary.copy(alpha = 0.3f) else if (isSelected) Color.White else Color.Transparent,
                 RoundedCornerShape(8.dp)
+            )
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = if (isMe) onDelete else onLongClick
             )
             .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {

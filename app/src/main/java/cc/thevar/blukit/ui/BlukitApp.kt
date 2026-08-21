@@ -302,11 +302,7 @@ fun BlukitApp(
                                         }
                                     }, 
                                     onDeviceLongClick = { device -> 
-                                        if (bluetoothState.crowd.selectedDevices.isEmpty()) {
-                                            selectedPersonaForMenu = device
-                                        } else {
-                                            bluetoothViewModel.toggleDeviceSelection(device.id)
-                                        }
+                                        bluetoothViewModel.toggleDeviceSelection(device.id)
                                     }, 
                                     onBroadcastMessage = bluetoothViewModel::roar, 
                                     onDeleteVibe = viewModel::deleteVibe, 
@@ -369,19 +365,15 @@ fun BlukitApp(
                                 selectedDevices = bluetoothState.crowd.selectedDevices,
                                 activeBubbles = bluetoothState.session.messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
                                 onDeviceClick = { device -> 
-                                    if (bluetoothState.crowd.selectedDevices.isEmpty()) { 
+                                    if (bluetoothState.crowd.selectedDevices.isNotEmpty()) {
+                                        bluetoothViewModel.toggleDeviceSelection(device.id)
+                                    } else {
                                         val id = device.persistentId ?: device.id
                                         viewModel.toggleVibePeer(id)
-                                    } else { 
-                                        bluetoothViewModel.toggleDeviceSelection(device.id) 
-                                    } 
+                                    }
                                 }, 
                                 onDeviceLongClick = { device -> 
-                                    if (bluetoothState.crowd.selectedDevices.isEmpty()) {
-                                        selectedPersonaForMenu = device
-                                    } else {
-                                        bluetoothViewModel.toggleDeviceSelection(device.id)
-                                    }
+                                    bluetoothViewModel.toggleDeviceSelection(device.id)
                                 },
                                 isVertical = true,
                                 userNickname = nickname ?: "?",
