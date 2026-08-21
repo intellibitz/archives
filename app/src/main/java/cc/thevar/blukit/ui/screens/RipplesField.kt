@@ -382,28 +382,34 @@ private fun VibeNodes(
             val xOffset = (radiusValue * cos(angle)).toFloat().dp
             val yOffset = (radiusValue * sin(angle)).toFloat().dp
 
-            // Better Filter Visuals: Glimmers (Dots) vs Blossoms (Nodes)
-            // Show as Dot if in Blukit tab and not vibed/tied
-            if (!isFilterMode && !onlyTies && !isVibed && !isTied) {
-                VibeDot(
-                    device = device,
-                    xOffset = xOffset,
-                    yOffset = yOffset,
-                    onClick = { onDeviceClick(device) }
-                )
-            } else {
-                VibeNode(
-                    device = device, 
-                    isVibed = isTied, // If it's a Tie, it uses Rose
-                    isSelected = isSelected,
-                    isPeerVibed = isVibed, // Filter highlighting
-                    onlyTies = onlyTies,
-                    xOffset = xOffset, 
-                    yOffset = yOffset, 
-                    activeBubble = activeBubble,
-                    onClick = { onDeviceClick(device) },
-                    onLongClick = { onDeviceLongClick(device) }
-                )
+            val isImportant = isVibed || isTied || isSelected
+            val noiseDimAlpha = if (isFilterMode && !isImportant) 0.05f else 1f
+
+            Box(modifier = Modifier.graphicsLayer { alpha = noiseDimAlpha }) {
+                // Better Filter Visuals: Glimmers (Dots) vs Blossoms (Nodes)
+                // Show as Dot if in Blukit tab and not vibed/tied
+                if (!isFilterMode && !onlyTies && !isVibed && !isTied) {
+                    VibeDot(
+                        device = device,
+                        xOffset = xOffset,
+                        yOffset = yOffset,
+                        onClick = { onDeviceClick(device) }
+                    )
+                } else {
+                    VibeNode(
+                        device = device, 
+                        isVibed = isTied, // If it's a Tie, it uses Rose
+                        isSelected = isSelected,
+                        isPeerVibed = isVibed, // Filter highlighting
+                        onlyTies = onlyTies,
+                        xOffset = xOffset, 
+                        yOffset = yOffset, 
+                        activeBubble = activeBubble,
+                        onClick = { onDeviceClick(device) },
+                        onLongClick = { onDeviceLongClick(device) },
+                        isFilterActive = isFilterMode
+                    )
+                }
             }
         }
     }
@@ -466,19 +472,23 @@ private fun VibeNode(
     yOffset: Dp, 
     activeBubble: BubbleData?, 
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    isFilterActive: Boolean = false
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val infiniteTransition = rememberInfiniteTransition(label = "NodeAnim")
+    
+    val targetPulse = if (isFilterActive && (isVibed || isPeerVibed)) 1.25f else 1.15f
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 1.15f + (device.proximityFactor * 0.1f),
+        targetValue = targetPulse + (device.proximityFactor * 0.1f),
         animationSpec = infiniteRepeatable(tween(2000 + (device.proximityFactor * 1000).toInt(), easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "Pulse"
     )
 
     val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
     val proximityGlow = (device.proximityFactor * 0.4f).coerceAtLeast(0f)
+    val bloomBoost = if (isFilterActive && (isVibed || isPeerVibed)) 0.2f else 0f
 
     Box(
         modifier = Modifier
@@ -493,8 +503,8 @@ private fun VibeNode(
         // High-Fidelity Halo
         Surface(
             shape = CircleShape,
-            color = (if (isSelected) Color.White else if (isVibed) StealthRose else if (isPeerVibed) StealthAmber else StealthPrimary).copy(alpha = (0.05f + proximityGlow) * pulseScale),
-            modifier = Modifier.size(nodeSize * pulseScale * (1.6f + proximityGlow))
+            color = (if (isSelected) Color.White else if (isVibed) StealthRose else if (isPeerVibed) StealthAmber else StealthPrimary).copy(alpha = (0.05f + proximityGlow + bloomBoost) * pulseScale),
+            modifier = Modifier.size(nodeSize * pulseScale * (1.6f + proximityGlow + bloomBoost))
         ) {}
 
         // Main Body

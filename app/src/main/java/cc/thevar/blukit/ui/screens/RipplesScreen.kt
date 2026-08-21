@@ -66,6 +66,7 @@ fun RipplesScreen(
     onBlockUser: (String) -> Unit,
     onUnblockUser: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
+    onClearFocus: () -> Unit,
     hasSidebar: Boolean = false,
     externalFocusedId: String? = null,
     onFocusChange: (String?) -> Unit = {},
@@ -235,6 +236,40 @@ fun RipplesScreen(
         // LAYER 6: Empty State Hints
         if (onlyTies && state.session.connectedLinks.isEmpty()) {
             EmptyFocusHint()
+        }
+        
+        // LAYER 7: Noise Filter HUD
+        if (noiseFilterEnabled && !onlyTies) {
+            val focusPulse by rememberInfiniteTransition(label = "FocusPulse").animateFloat(
+                initialValue = 0.4f, targetValue = 1f,
+                animationSpec = infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                label = "Alpha"
+            )
+            
+            Box(modifier = Modifier.fillMaxWidth().padding(top = 110.dp), contentAlignment = Alignment.TopCenter) {
+                Surface(
+                    onClick = onClearFocus, // Clear the focus circle
+                    color = StealthPrimary.copy(alpha = 0.08f * focusPulse),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.2f * focusPulse))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Rounded.FilterCenterFocus, contentDescription = null, tint = StealthPrimary, modifier = Modifier.size(12.dp))
+                        Text(
+                            text = "FOCUS MODE: ${vibedPeers.size} PERSONAS",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Black,
+                            color = StealthPrimary,
+                            letterSpacing = 1.sp
+                        )
+                        Icon(Icons.Rounded.Close, contentDescription = "Clear", tint = StealthPrimary.copy(alpha = 0.6f), modifier = Modifier.size(10.dp))
+                    }
+                }
+            }
         }
     }
 }

@@ -28,6 +28,7 @@ interface IdentityRepository {
     fun toggleStealth(enabled: Boolean)
     fun toggleLowPowerMode(enabled: Boolean)
     fun toggleVibePeer(deviceId: String)
+    fun clearVibedPeers()
     fun blockUser(deviceId: String)
     fun unblockUser(deviceId: String)
     fun logout()
@@ -157,6 +158,11 @@ class IdentityRepositoryImpl(
         if (current.contains(deviceId)) current.remove(deviceId) else current.add(deviceId)
         securePrefs.edit { putStringSet(KEY_VIBED_PEERS, current) }
         _vibedPeers.value = current
+    }
+
+    override fun clearVibedPeers() {
+        securePrefs.edit { putStringSet(KEY_VIBED_PEERS, emptySet()) }
+        _vibedPeers.value = emptySet()
     }
 
     override fun logout() {

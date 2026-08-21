@@ -196,6 +196,7 @@ fun BlukitHarmonyTopBar(
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
     vibeCount: Int,
+    vibedPeersCount: Int = 0,
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
@@ -324,12 +325,17 @@ fun BlukitHarmonyTopBar(
                             .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape)
                             .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)
                     ) {
-                        Icon(
-                            imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
-                            contentDescription = "Filter", 
-                            tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
-                            modifier = Modifier.size(14.dp)
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (vibedPeersCount > 0) {
+                                Text(text = vibedPeersCount.toString(), fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                            }
+                            Icon(
+                                imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
+                                contentDescription = "Filter", 
+                                tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
+                                modifier = Modifier.size(12.dp)
+                            )
+                        }
                     }
                 }
 
@@ -595,7 +601,8 @@ fun UnifiedPersonaCloud(
     userEmoji: String = "",
     onUserNicknameChange: (String) -> Unit = {},
     userFocusRequester: FocusRequester? = null,
-    airIsStill: Boolean = false
+    airIsStill: Boolean = false,
+    isNoiseFilterActive: Boolean = false
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val activeSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
@@ -632,6 +639,9 @@ fun UnifiedPersonaCloud(
                 ) {
                     items(sortedDevices.size) { index ->
                         val device = sortedDevices[index]
+                        val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
+                        val dimAlpha = if (isNoiseFilterActive && !isFocused) 0.1f else 1f
+                        
                         PersonaCloudItem(
                             device = device,
                             activeSenders = activeSenders,
@@ -640,10 +650,12 @@ fun UnifiedPersonaCloud(
                             onDeviceClick = onDeviceClick,
                             onDeviceLongClick = onDeviceLongClick,
                             isVertical = true,
-                            modifier = Modifier.onGloballyPositioned { 
-                                val current = coordinates[device.id] ?: PersonaConnectionPoints()
-                                coordinates[device.id] = current.copy(uph = it.positionInRoot())
-                            }
+                            modifier = Modifier
+                                .graphicsLayer { alpha = dimAlpha }
+                                .onGloballyPositioned { 
+                                    val current = coordinates[device.id] ?: PersonaConnectionPoints()
+                                    coordinates[device.id] = current.copy(uph = it.positionInRoot())
+                                }
                         )
                     }
                 }
@@ -694,18 +706,23 @@ fun UnifiedPersonaCloud(
                     maxItemsInEachRow = 8
                 ) {
                     sortedDevices.forEach { device ->
+                        val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
+                        val dimAlpha = if (isNoiseFilterActive && !isFocused) 0.1f else 1f
+                        
                         PersonaCloudItem(
                             device = device,
                             activeSenders = activeSenders,
                             connectedLinks = connectedLinks,
                             vibedPeers = vibedPeers,
-                            onDeviceClick = onDeviceClick,
-                            onDeviceLongClick = onDeviceLongClick,
+                            onDeviceClick = { onDeviceClick(device) },
+                            onDeviceLongClick = { onDeviceLongClick(device) },
                             isVertical = false,
-                            modifier = Modifier.onGloballyPositioned { 
-                                val current = coordinates[device.id] ?: PersonaConnectionPoints()
-                                coordinates[device.id] = current.copy(uph = it.positionInRoot())
-                            }
+                            modifier = Modifier
+                                .graphicsLayer { alpha = dimAlpha }
+                                .onGloballyPositioned { 
+                                    val current = coordinates[device.id] ?: PersonaConnectionPoints()
+                                    coordinates[device.id] = current.copy(uph = it.positionInRoot())
+                                }
                         )
                     }
                 }
@@ -787,6 +804,7 @@ fun BlukitInput(
     onSend: () -> Unit,
     vibeCount: Int = 0,
     isReadOnly: Boolean = false,
+    isFilterActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -806,7 +824,7 @@ fun BlukitInput(
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
                     Text(
-                        text = if (isReadOnly) "NOISE FILTER ACTIVE" else "SPREAD A VIBE...",
+                        text = if (isReadOnly) "FILTER MODE: READ ONLY" else if (isFilterActive) "ROAR TO ALL..." else "SPREAD A VIBE...",
                         color = Color.White.copy(alpha = 0.3f),
                         style = MaterialTheme.typography.bodyMedium
                     )

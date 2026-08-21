@@ -183,12 +183,16 @@ fun BlukitApp(
             // Visual Connections Layer
             Canvas(modifier = Modifier.fillMaxSize().zIndex(5f)) {
                 personaCoordinates.forEach { (id, points) ->
+                    val isFocused = id == "YOU" || id in bluetoothState.crowd.vibedPeers || id in bluetoothState.session.connectedLinks
+                    if (isNoiseFilterActive && !isFocused) return@forEach // Skip non-focused lines in filter mode
+                    
                     val color = if (id == "YOU") StealthPrimary else if (id in bluetoothState.session.connectedLinks) StealthRose else StealthPrimary.copy(alpha = 0.4f)
+                    val alphaMultiplier = if (isNoiseFilterActive) 1f else 0.6f
                     
                     // UPH -> Field
                     if (points.uph != null && points.field != null) {
                         drawLine(
-                            color = color.copy(alpha = 0.15f),
+                            color = color.copy(alpha = 0.15f * alphaMultiplier),
                             start = points.uph + Offset(26.dp.toPx(), 26.dp.toPx()),
                             end = points.field + Offset(32.dp.toPx(), 32.dp.toPx()),
                             strokeWidth = 1.dp.toPx(),
@@ -199,7 +203,7 @@ fun BlukitApp(
                     // Field -> Ticker
                     if (points.field != null && points.ticker != null) {
                         drawLine(
-                            color = color.copy(alpha = 0.1f),
+                            color = color.copy(alpha = 0.1f * alphaMultiplier),
                             start = points.field + Offset(32.dp.toPx(), 32.dp.toPx()),
                             end = points.ticker + Offset(20.dp.toPx(), 20.dp.toPx()),
                             strokeWidth = 0.5.dp.toPx()
@@ -258,6 +262,7 @@ fun BlukitApp(
                     isStealthMode = isStealthMode,
                     lowPowerMode = lowPowerMode,
                     vibeCount = roarsCount + mineCount,
+                    vibedPeersCount = bluetoothState.crowd.vibedPeers.size,
                     onToggleStealth = viewModel::toggleStealth,
                     onToggleLowPower = viewModel::toggleLowPowerMode,
                     onClearHistory = viewModel::clearChatHistory,
@@ -302,7 +307,6 @@ fun BlukitApp(
                                     onDeviceClick = { device -> 
                                         val id = device.persistentId ?: device.id
                                         viewModel.toggleVibePeer(id)
-                                        isNoiseFilterActive = true
                                     }, 
                                     onDeviceLongClick = { selectedPersonaForMenu = it }, 
                                     onBroadcastMessage = bluetoothViewModel::roar, 
@@ -310,6 +314,10 @@ fun BlukitApp(
                                     onBlockUser = viewModel::blockUser, 
                                     onUnblockUser = viewModel::unblockUser,
                                     onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) },
+                                    onClearFocus = { 
+                                        viewModel.clearVibedPeers()
+                                        isNoiseFilterActive = false
+                                    },
                                     hasSidebar = showUPH,
                                     externalFocusedId = focusedSenderId,
                                     onFocusChange = { focusedSenderId = it }
@@ -363,9 +371,6 @@ fun BlukitApp(
                                     if (bluetoothState.crowd.selectedDevices.isEmpty()) { 
                                         val id = device.persistentId ?: device.id
                                         viewModel.toggleVibePeer(id)
-                                        if (currentRoute is Route.Blukit) {
-                                            isNoiseFilterActive = true
-                                        }
                                     } else { 
                                         bluetoothViewModel.toggleDeviceSelection(device.id) 
                                     } 
@@ -376,7 +381,8 @@ fun BlukitApp(
                                 userEmoji = emoji,
                                 onUserNicknameChange = viewModel::saveNickname,
                                 userFocusRequester = personaFocusRequester,
-                                airIsStill = airIsStill
+                                airIsStill = airIsStill,
+                                isNoiseFilterActive = isNoiseFilterActive
                             )
                         }
                     }
@@ -472,7 +478,8 @@ fun BlukitHub(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         BlukitInput(
                             airIsStill = airIsStill, 
-                            isReadOnly = isNoiseFilterActive && currentRoute is Route.Blukit,
+                            isReadOnly = false, 
+                            isFilterActive = isNoiseFilterActive,
                             value = messageText, 
                             onValueChange = onMessageChange, 
                             onSend = onSend, 
@@ -481,6 +488,18 @@ fun BlukitHub(
                         )
                     }
                 }
+                
+                if (isNoiseFilterActive && currentRoute is Route.Blukit) {
+                    Text(
+                        text = "LISTENING TO FOCUS • ROARING TO ALL",
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Black,
+                        color = StealthPrimary.copy(alpha = 0.5f),
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(top = 4.dp, start = 8.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 // VIBE REQUEST Row

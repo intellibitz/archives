@@ -50,6 +50,12 @@ class MainViewModel(
         }
     }
 
+    fun clearVibedPeers() {
+        viewModelScope.launch {
+            repository.clearVibedPeers()
+        }
+    }
+
     fun blockUser(userId: String) {
         viewModelScope.launch {
             repository.blockUser(userId)
