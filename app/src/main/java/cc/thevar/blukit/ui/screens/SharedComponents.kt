@@ -224,39 +224,27 @@ fun BlukitHarmonyTopBar(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // ROW 1: Alerts (Left) | Branding (Center)
-        Box(modifier = Modifier.fillMaxWidth().heightIn(min = 20.dp), contentAlignment = Alignment.Center) {
-            // LEFT: Status Text / Permission required
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
-                if (isPermissionMissing) {
-                    Surface(
-                        onClick = { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() },
-                        color = Color.White,
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
-                    ) {
-                        Text(
-                            text = if (isPermanentlyDenied) "SETTINGS" else "ALLOW",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.Red),
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
-                } else if (isStill || isWeak) {
+        // ROW 1: Alerts
+        Box(modifier = Modifier.fillMaxWidth().heightIn(min = 20.dp), contentAlignment = Alignment.CenterStart) {
+            if (isPermissionMissing) {
+                Surface(
+                    onClick = { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() },
+                    color = Color.White,
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                ) {
                     Text(
-                        text = if (isStill) "AIR IS STILL" else "SEARCHING",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
-                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                        text = if (isPermanentlyDenied) "SETTINGS" else "ALLOW",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.Red),
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                     )
                 }
-            }
-            
-            // CENTER: Branding
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "V I", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
-                Spacer(modifier = Modifier.width(6.dp))
-                RadioB(modifier = Modifier.size(22.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "E S", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
+            } else if (isStill || isWeak) {
+                Text(
+                    text = if (isStill) "AIR IS STILL" else "SEARCHING",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
+                    modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                )
             }
         }
 

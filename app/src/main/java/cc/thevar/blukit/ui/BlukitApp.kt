@@ -450,16 +450,41 @@ fun BlukitHub(
 
                 // Hub logo and privacy
                 val localContext = LocalContext.current
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = StealthPrimary.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "blukit: spread vibes", fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.3f), letterSpacing = 1.sp)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Box(modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).clickable { 
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
-                        localContext.startActivity(intent)
-                    }.padding(horizontal = 8.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
-                        Text(text = "PRIVACY", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.25f)))
+                Row(
+                    modifier = Modifier.fillMaxWidth(), 
+                    horizontalArrangement = Arrangement.Center, 
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Branding: V I (B) E S
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "V I", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        RadioB(modifier = Modifier.size(20.dp), color = StealthPrimary.copy(alpha = 0.4f))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = "E S", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp))
+                    }
+                    
+                    Spacer(modifier = Modifier.width(16.dp))
+                    
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .clickable { 
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
+                                localContext.startActivity(intent)
+                            }
+                            .padding(horizontal = 8.dp, vertical = 2.dp), 
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "PRIVACY", 
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 7.sp, 
+                                fontWeight = FontWeight.Black, 
+                                color = Color.White.copy(alpha = 0.25f)
+                            )
+                        )
                     }
                 }
             }
