@@ -514,7 +514,7 @@ fun BlukitHub(
                 IconButton(onClick = onClearSelection, modifier = Modifier.background(Color.White.copy(alpha = 0.1f), CircleShape)) { Icon(Icons.Rounded.Close, tint = Color.White, contentDescription = "Cancel") }
             }
         }
-        Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.96f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))) {
+        Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.96f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)), contentAlignment = Alignment.BottomCenter) {
             Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp).imePadding()) {
                 AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Vibes) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -531,7 +531,7 @@ fun BlukitHub(
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 // VIBE REQUEST Row
                 if (incomingLinkRequests.isNotEmpty()) {
@@ -559,6 +559,21 @@ fun BlukitHub(
                 }
 
                 // Hub logo and actions removed (moved to top)
+            }
+            
+            // Border Decorator
+            Surface(
+                color = Color.Black,
+                modifier = Modifier.offset(y = 1.dp)
+            ) {
+                Text(
+                    text = "VIBES ECOSYSTEM",
+                    fontSize = 6.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White.copy(alpha = 0.2f),
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
             }
         }
         

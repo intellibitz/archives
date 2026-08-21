@@ -37,7 +37,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.drawscope.rotate as drawRotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -159,17 +160,18 @@ fun BlukitHarmonyTopBar(
         else -> Color.White.copy(alpha = 0.05f) 
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 4.dp)
-            .background(barColor, RoundedCornerShape(20.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 4.dp, vertical = 4.dp)
+                .background(barColor, RoundedCornerShape(20.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(20.dp))
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
         // ROW 1: Environment (Left) | Branding (Center) | Radios (Right)
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             // LEFT: DARK, ECO
@@ -272,6 +274,22 @@ fun BlukitHarmonyTopBar(
                     }
                 }
             }
+            }
+        }
+        
+        // Border Decorator
+        Surface(
+            color = Color.Black,
+            modifier = Modifier.offset(y = 1.dp)
+        ) {
+            Text(
+                text = "HARMONY",
+                fontSize = 6.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White.copy(alpha = 0.2f),
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
         }
     }
 }
@@ -527,7 +545,8 @@ fun UnifiedPersonaCloud(
         modifier = (if (isVertical) Modifier.fillMaxHeight().width(64.dp) else Modifier.fillMaxWidth())
             .padding(horizontal = 2.dp)
             .background(Color.White.copy(alpha = 0.01f), RoundedCornerShape(12.dp))
-            .border(0.5.dp, Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
+            .border(0.5.dp, Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp)),
+        contentAlignment = if (isVertical) Alignment.CenterStart else Alignment.BottomCenter
     ) {
         if (isVertical) {
             Column(
@@ -740,6 +759,21 @@ fun UnifiedPersonaCloud(
             }
         }
         
+        // Border Decorator
+        Surface(
+            color = Color.Black,
+            modifier = Modifier.then(if (isVertical) Modifier.rotate(-90f).offset(y = (-32).dp) else Modifier.offset(y = 1.dp))
+        ) {
+            Text(
+                text = if (isVertical) "PERSONA HUB" else "CROWD HUB",
+                fontSize = 6.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White.copy(alpha = 0.2f),
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(horizontal = 6.dp)
+            )
+        }
+        
         if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
     }
 }
@@ -827,49 +861,72 @@ fun BlukitInput(
     isFilterActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp))
-            .border(1.dp, if (airIsStill) Color.Red.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            enabled = !isReadOnly,
-            modifier = Modifier.weight(1f),
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-            cursorBrush = SolidColor(StealthPrimary),
-            decorationBox = { innerTextField ->
-                if (value.isEmpty()) {
-                    Text(
-                        text = if (isReadOnly) "FOCUS VIBES: READ ONLY" else if (isFilterActive) "VIBE TO ALL..." else "SPREAD A VIBE...",
-                        color = Color.White.copy(alpha = 0.3f),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                innerTextField()
-            }
-        )
-        if (vibeCount > 0) {
-            Text(
-                text = vibeCount.toString(),
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Black,
-                color = StealthPrimary,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-        IconButton(
-            onClick = onSend,
-            enabled = value.isNotBlank() && !isReadOnly,
-            modifier = Modifier.size(32.dp)
+    val borderColor = if (airIsStill) Color.Red.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)
+    val decoratorText = if (isReadOnly) "FOCUS VIBES: READ ONLY" else if (isFilterActive) "VIBE TO ALL" else "SPREAD A VIBE"
+    
+    Box(modifier = modifier, contentAlignment = Alignment.BottomCenter) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp))
+                .border(1.dp, borderColor, RoundedCornerShape(24.dp))
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.Send,
-                contentDescription = "Send",
-                tint = if (value.isNotBlank()) StealthPrimary else Color.White.copy(alpha = 0.2f)
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                enabled = !isReadOnly,
+                modifier = Modifier.weight(1f),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                cursorBrush = SolidColor(StealthPrimary),
+                decorationBox = { innerTextField ->
+                    if (value.isEmpty()) {
+                        Text(
+                            text = if (isReadOnly) "FILTERED" else if (isFilterActive) "TYPE TO ALL..." else "TYPE A VIBE...",
+                            color = Color.White.copy(alpha = 0.3f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    innerTextField()
+                }
+            )
+            if (vibeCount > 0) {
+                Text(
+                    text = vibeCount.toString(),
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Black,
+                    color = StealthPrimary,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+            IconButton(
+                onClick = onSend,
+                enabled = value.isNotBlank() && !isReadOnly,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.Send,
+                    contentDescription = "Send",
+                    tint = if (value.isNotBlank()) StealthPrimary else Color.White.copy(alpha = 0.2f)
+                )
+            }
+        }
+        
+        // Border Decorator
+        Surface(
+            color = Color.Black,
+            modifier = Modifier
+                .offset(y = 1.dp)
+                .padding(bottom = 0.dp)
+        ) {
+            Text(
+                text = decoratorText,
+                fontSize = 6.sp,
+                fontWeight = FontWeight.Black,
+                color = (if (airIsStill) Color.Red else StealthPrimary).copy(alpha = 0.6f),
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(horizontal = 6.dp)
             )
         }
     }
