@@ -33,7 +33,7 @@ Everything you need, everywhere you are:
 - **Harmony Top Bar**: A unified 2-row dashboard. Row 1 hosts Alerts, `V I (B) E S` branding with centered Privacy access, and Radios. Row 2 hosts core actions (Dark/Eco/Filter/Reset) and Navigation.
 - **Wear OS Support**: Native Wear OS app to see nearby vibes directly on your wrist with high-efficiency scaling lists.
 - **Grounded Hub**: Minimalist bottom anchor for high-priority vibe input, providing a clean surface for spreading vibes.
-- **Vertical Persona Sidebar**: A scrollable sidebar on the right where nearby personas are anchored by your own identity at the top.
+- **Vertical Persona Sidebar**: A scrollable sidebar on the right where nearby personas are anchored by your own identity at the bottom.
 - **Home Screen Widget**: Modern Glance-based widget showing live "Vibe Counts" around you with one-tap access to the field.
 - **Keyboard-Aware**: The Hub surface floats elegantly above the keyboard using `imePadding()`.
 

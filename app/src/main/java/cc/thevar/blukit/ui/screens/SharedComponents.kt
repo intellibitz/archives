@@ -708,16 +708,35 @@ fun UnifiedPersonaCloud(
             .border(0.5.dp, Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
     ) {
         if (isVertical) {
-            FlowColumn(
+            Column(
                 modifier = Modifier
                     .padding(vertical = 4.dp, horizontal = 4.dp)
-                    .fillMaxHeight()
-                    .testTag("PersonaCloudColumn"),
-                horizontalArrangement = Arrangement.Center,
-                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom),
-                maxItemsInEachColumn = 11 // Adjusted for user persona
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom)
             ) {
-                // ANCHOR: User Persona
+                FlowColumn(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .testTag("PersonaCloudColumn"),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom),
+                    maxItemsInEachColumn = 10
+                ) {
+                    sortedDevices.forEach { device ->
+                        PersonaCloudItem(
+                            device = device,
+                            activeSenders = activeSenders,
+                            connectedLinks = connectedLinks,
+                            vibedPeers = vibedPeers,
+                            onDeviceClick = onDeviceClick,
+                            onDeviceLongClick = onDeviceLongClick,
+                            isVertical = true
+                        )
+                    }
+                }
+
+                // ANCHOR: User Persona - Fixed at the bottom
                 if (userFocusRequester != null) {
                     Box(
                         modifier = Modifier
@@ -735,18 +754,6 @@ fun UnifiedPersonaCloud(
                             focusRequester = userFocusRequester
                         )
                     }
-                }
-
-                sortedDevices.forEach { device ->
-                    PersonaCloudItem(
-                        device = device,
-                        activeSenders = activeSenders,
-                        connectedLinks = connectedLinks,
-                        vibedPeers = vibedPeers,
-                        onDeviceClick = onDeviceClick,
-                        onDeviceLongClick = onDeviceLongClick,
-                        isVertical = true
-                    )
                 }
             }
         } else {
