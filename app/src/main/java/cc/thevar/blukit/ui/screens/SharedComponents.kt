@@ -132,10 +132,8 @@ fun BlukitHarmonyTopBar(
     userCount: Int,
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
-    vibeCount: Int,
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
-    onClearHistory: () -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
@@ -151,7 +149,6 @@ fun BlukitHarmonyTopBar(
         label = "Alpha"
     )
 
-    var showClearHistoryDialog by remember { mutableStateOf(false) }
     val localContext = LocalContext.current
 
     val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
@@ -225,9 +222,9 @@ fun BlukitHarmonyTopBar(
             }
         }
 
-        // ROW 2: Alerts + Actions (Left) | Tabs/Title (Right)
+        // ROW 2: Alerts + Context (Right)
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            // LEFT ACTIONS: Alerts + Filter, Delete, Reset
+            // LEFT ACTIONS: Alerts
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 // Alerts integrated into Row 2 Actions
                 if (isPermissionMissing) {
@@ -249,18 +246,6 @@ fun BlukitHarmonyTopBar(
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
                         modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                     )
-                }
-
-                IconButton(
-                    onClick = { showClearHistoryDialog = true }, 
-                    modifier = Modifier.size(24.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.05f))
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        if (vibeCount > 0) {
-                            Text(text = vibeCount.toString(), fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                        }
-                        Icon(Icons.Rounded.DeleteSweep, contentDescription = "Delete", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
-                    }
                 }
             }
 
@@ -290,8 +275,6 @@ fun BlukitHarmonyTopBar(
                 }
             }
         }
-
-        if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
     }
 }
 
@@ -524,12 +507,15 @@ fun UnifiedPersonaCloud(
     isNoiseFilterActive: Boolean = false,
     vibedPeersCount: Int = 0,
     onToggleNoiseFilter: (Boolean) -> Unit = {},
+    onClearHistory: () -> Unit = {},
     showFilter: Boolean = false,
     currentRoute: Route = Route.Blukit,
     onNavigate: (Route) -> Unit = {}
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val activeSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
+    
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
     val sortedDevices = remember(devices, activeSenders, vibedPeers, connectedLinks) {
         devices.sortedWith(
             compareByDescending<P2PDevice> { 
@@ -587,72 +573,85 @@ fun UnifiedPersonaCloud(
                 }
 
                 if (showFilter) {
-                    // ANCHOR 3: Vibes Toggle (Personal/Mutual)
+                    // ANCHOR 3: VIBES Toggle (Navigation)
                     Spacer(modifier = Modifier.height(8.dp))
                     val isVibesSelected = currentRoute is Route.Vibes
-                    IconButton(
-                        onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                            .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Flare, 
-                            contentDescription = "Vibes", 
-                            tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-
-                    // ANCHOR 2: Noise Filter Toggle
-                    Spacer(modifier = Modifier.height(8.dp))
-                    IconButton(
-                        onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                            .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            if (vibedPeersCount > 0) {
-                                Text(text = vibedPeersCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                            }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                                .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
+                                .combinedClickable(
+                                    onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) },
+                                    onLongClick = { showClearHistoryDialog = true }
+                                )
+                        ) {
                             Icon(
-                                imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
-                                contentDescription = "Filter", 
-                                tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
+                                imageVector = Icons.Rounded.Flare, 
+                                contentDescription = "Vibes", 
+                                tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
                                 modifier = Modifier.size(16.dp)
                             )
                         }
+                        Text(text = "VIBES", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    }
+
+                    // ANCHOR 2: FOCUS Toggle (Noise Filter)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                                .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                if (vibedPeersCount > 0) {
+                                    Text(text = vibedPeersCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                                }
+                                Icon(
+                                    imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
+                                    contentDescription = "Filter", 
+                                    tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                        Text(text = "FOCUS", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // ANCHOR 1: User Persona - Fixed at the bottom
+                // ANCHOR 1: RESET (User Persona)
                 if (userFocusRequester != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White.copy(alpha = 0.04f))
-                            .clickable { userFocusRequester.requestFocus() }
-                            .onGloballyPositioned { 
-                                val current = coordinates["YOU"] ?: PersonaConnectionPoints()
-                                coordinates["YOU"] = current.copy(uph = it.positionInRoot())
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        UserPersona(
-                            nickname = userNickname,
-                            emoji = userEmoji,
-                            airIsStill = airIsStill,
-                            onNicknameChange = onUserNicknameChange,
-                            focusRequester = userFocusRequester
-                        )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.04f))
+                                .clickable { userFocusRequester.requestFocus() }
+                                .onGloballyPositioned { 
+                                    val current = coordinates["YOU"] ?: PersonaConnectionPoints()
+                                    coordinates["YOU"] = current.copy(uph = it.positionInRoot())
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            UserPersona(
+                                nickname = userNickname,
+                                emoji = userEmoji,
+                                airIsStill = airIsStill,
+                                onNicknameChange = onUserNicknameChange,
+                                focusRequester = userFocusRequester
+                            )
+                        }
+                        Text(text = "RESET", fontSize = 5.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                     }
                 }
             }
@@ -700,6 +699,8 @@ fun UnifiedPersonaCloud(
                 }
             }
         }
+        
+        if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
     }
 }
 

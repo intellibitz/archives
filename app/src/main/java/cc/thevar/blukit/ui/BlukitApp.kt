@@ -260,10 +260,8 @@ fun BlukitApp(
                     userCount = report.userCount,
                     isStealthMode = isStealthMode,
                     lowPowerMode = lowPowerMode,
-                    vibeCount = roarsCount + vibesCount,
                     onToggleStealth = viewModel::toggleStealth,
                     onToggleLowPower = viewModel::toggleLowPowerMode,
-                    onClearHistory = viewModel::clearChatHistory,
                     onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
                     onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                     onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
@@ -393,6 +391,7 @@ fun BlukitApp(
                                 isNoiseFilterActive = isNoiseFilterActive,
                                 vibedPeersCount = bluetoothState.crowd.vibedPeers.size,
                                 onToggleNoiseFilter = { isNoiseFilterActive = it },
+                                onClearHistory = viewModel::clearChatHistory,
                                 showFilter = currentRoute is Route.Blukit,
                                 currentRoute = (currentRoute as? Route) ?: initialRoute,
                                 onNavigate = { route -> 
