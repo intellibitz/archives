@@ -257,12 +257,9 @@ fun BlukitApp(
                     isPermissionMissing = !permissionState.allPermissionsGranted,
                     isPermanentlyDenied = isPermanentlyDenied,
                     userCount = report.userCount,
-                    isNoiseFilterActive = isNoiseFilterActive,
-                    onToggleNoiseFilter = { isNoiseFilterActive = it },
                     isStealthMode = isStealthMode,
                     lowPowerMode = lowPowerMode,
                     vibeCount = roarsCount + mineCount,
-                    vibedPeersCount = bluetoothState.crowd.vibedPeers.size,
                     onToggleStealth = viewModel::toggleStealth,
                     onToggleLowPower = viewModel::toggleLowPowerMode,
                     onClearHistory = viewModel::clearChatHistory,
@@ -380,9 +377,12 @@ fun BlukitApp(
                                 userNickname = nickname ?: "?",
                                 userEmoji = emoji,
                                 onUserNicknameChange = viewModel::saveNickname,
-                                userFocusRequester = personaFocusRequester,
+                                    userFocusRequester = personaFocusRequester,
                                 airIsStill = airIsStill,
-                                isNoiseFilterActive = isNoiseFilterActive
+                                isNoiseFilterActive = isNoiseFilterActive,
+                                vibedPeersCount = bluetoothState.crowd.vibedPeers.size,
+                                onToggleNoiseFilter = { isNoiseFilterActive = it },
+                                showFilter = currentRoute is Route.Blukit
                             )
                         }
                     }

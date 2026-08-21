@@ -191,12 +191,9 @@ fun BlukitHarmonyTopBar(
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
     userCount: Int,
-    isNoiseFilterActive: Boolean,
-    onToggleNoiseFilter: (Boolean) -> Unit,
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
     vibeCount: Int,
-    vibedPeersCount: Int = 0,
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
@@ -315,28 +312,6 @@ fun BlukitHarmonyTopBar(
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
                         modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                     )
-                }
-
-                if (currentRoute is Route.Blukit) {
-                    IconButton(
-                        onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
-                        modifier = Modifier
-                            .size(24.dp)
-                            .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape)
-                            .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            if (vibedPeersCount > 0) {
-                                Text(text = vibedPeersCount.toString(), fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                            }
-                            Icon(
-                                imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
-                                contentDescription = "Filter", 
-                                tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
-                                modifier = Modifier.size(12.dp)
-                            )
-                        }
-                    }
                 }
 
                 IconButton(
@@ -602,7 +577,10 @@ fun UnifiedPersonaCloud(
     onUserNicknameChange: (String) -> Unit = {},
     userFocusRequester: FocusRequester? = null,
     airIsStill: Boolean = false,
-    isNoiseFilterActive: Boolean = false
+    isNoiseFilterActive: Boolean = false,
+    vibedPeersCount: Int = 0,
+    onToggleNoiseFilter: (Boolean) -> Unit = {},
+    showFilter: Boolean = false
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val activeSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
@@ -660,9 +638,33 @@ fun UnifiedPersonaCloud(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                if (showFilter) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    IconButton(
+                        onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                            .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (vibedPeersCount > 0) {
+                                Text(text = vibedPeersCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                            }
+                            Icon(
+                                imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
+                                contentDescription = "Filter", 
+                                tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
 
-                // ANCHOR: User Persona - Fixed at the bottom
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // ANCHOR 1: User Persona - Fixed at the bottom
                 if (userFocusRequester != null) {
                     Box(
                         modifier = Modifier
