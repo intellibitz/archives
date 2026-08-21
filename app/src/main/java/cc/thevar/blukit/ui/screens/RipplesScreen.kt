@@ -67,6 +67,10 @@ fun RipplesScreen(
     onUnblockUser: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
     onToggleSelection: (String) -> Unit,
+    onAcceptLink: (P2PDevice) -> Unit,
+    onDenyLink: (P2PDevice) -> Unit,
+    onDisconnect: () -> Unit,
+    onIdentifyUser: (String) -> Unit = {},
     onClearFocus: () -> Unit,
     hasSidebar: Boolean = false,
     externalFocusedId: String? = null,
@@ -178,26 +182,46 @@ fun RipplesScreen(
 
         // LAYER 4: Persona Context Menu
         if (selectedPersonaForMenu != null) {
+            val menuDevice = selectedPersonaForMenu!!
+            val menuId = menuDevice.persistentId ?: menuDevice.id
+            
             PersonaOptionsMenu(
-                device = selectedPersonaForMenu!!,
-                isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in vibedPeers,
-                isTied = selectedPersonaForMenu!!.id in state.session.connectedLinks,
-                isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in state.crowd.blockedUsers,
-                isSelected = selectedPersonaForMenu!!.id in state.crowd.selectedDevices,
+                device = menuDevice,
+                isVibed = menuId in vibedPeers,
+                isTied = menuDevice.id in state.session.connectedLinks,
+                isBlocked = menuId in state.crowd.blockedUsers,
+                isSelected = menuDevice.id in state.crowd.selectedDevices,
+                isRequesting = state.crowd.incomingLinkRequests.any { it.id == menuDevice.id },
                 onFocus = {
-                    onDeviceClick(selectedPersonaForMenu!!)
+                    onDeviceClick(menuDevice)
                     selectedPersonaForMenu = null
                 },
                 onVibe = {
-                    onDeviceLongClick(selectedPersonaForMenu!!)
+                    onDeviceLongClick(menuDevice)
                     selectedPersonaForMenu = null
                 },
                 onSelect = {
-                    onToggleSelection(selectedPersonaForMenu!!.id)
+                    onToggleSelection(menuDevice.id)
+                    selectedPersonaForMenu = null
+                },
+                onAccept = {
+                    onAcceptLink(menuDevice)
+                    selectedPersonaForMenu = null
+                },
+                onDeny = {
+                    onDenyLink(menuDevice)
+                    selectedPersonaForMenu = null
+                },
+                onDisconnect = {
+                    onDisconnect()
+                    selectedPersonaForMenu = null
+                },
+                onIdentify = {
+                    onIdentifyUser(menuId)
                     selectedPersonaForMenu = null
                 },
                 onWhisper = {
-                    onWhisper(selectedPersonaForMenu!!)
+                    onWhisper(menuDevice)
                     selectedPersonaForMenu = null
                 },
                 onBlock = {

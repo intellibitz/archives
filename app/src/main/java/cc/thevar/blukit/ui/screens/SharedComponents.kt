@@ -363,12 +363,17 @@ fun PersonaOptionsMenu(
     isTied: Boolean,
     isBlocked: Boolean,
     isSelected: Boolean,
+    isRequesting: Boolean = false,
     onFocus: () -> Unit,
     onVibe: () -> Unit,
     onWhisper: () -> Unit,
     onSelect: () -> Unit,
+    onAccept: () -> Unit = {},
+    onDeny: () -> Unit = {},
+    onDisconnect: () -> Unit = {},
     onBlock: () -> Unit,
     onUnblock: () -> Unit,
+    onIdentify: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -386,16 +391,26 @@ fun PersonaOptionsMenu(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                MenuActionItem(icon = Icons.Rounded.FilterCenterFocus, label = if (isVibed) "UNFOCUS PERSONA" else "FOCUS PERSONA", color = StealthPrimary, onClick = onFocus)
-                if (!isTied) {
-                    MenuActionItem(icon = Icons.Rounded.Flare, label = "DIRECT VIBE REQUEST", color = StealthRose, onClick = onVibe)
+                if (isRequesting) {
+                    MenuActionItem(icon = Icons.Rounded.CheckCircle, label = "ACCEPT VIBE REQUEST", color = StealthPrimary, onClick = { onAccept(); onDismiss() })
+                    MenuActionItem(icon = Icons.Rounded.Cancel, label = "DENY VIBE REQUEST", color = Color.White.copy(alpha = 0.4f), onClick = { onDeny(); onDismiss() })
                 }
-                MenuActionItem(icon = if (isSelected) Icons.Rounded.RemoveCircleOutline else Icons.Rounded.AddCircleOutline, label = if (isSelected) "REMOVE FROM SELECTION" else "ADD TO VIBE SELECTION", color = if (isSelected) Color.White.copy(alpha = 0.6f) else StealthPrimary, onClick = onSelect)
-                MenuActionItem(icon = Icons.Rounded.ChatBubbleOutline, label = "SECURE WHISPER", color = StealthPrimary, onClick = onWhisper)
+                
+                if (isTied) {
+                    MenuActionItem(icon = Icons.Rounded.LinkOff, label = "DISCONNECT VIBE", color = StealthRose, onClick = { onDisconnect(); onDismiss() })
+                } else if (!isRequesting) {
+                    MenuActionItem(icon = Icons.Rounded.Flare, label = "DIRECT VIBE REQUEST", color = StealthRose, onClick = { onVibe(); onDismiss() })
+                }
+
+                MenuActionItem(icon = Icons.Rounded.FilterCenterFocus, label = if (isVibed) "UNFOCUS PERSONA" else "FOCUS PERSONA", color = StealthPrimary, onClick = { onFocus(); onDismiss() })
+                MenuActionItem(icon = if (isSelected) Icons.Rounded.RemoveCircleOutline else Icons.Rounded.AddCircleOutline, label = if (isSelected) "REMOVE FROM SELECTION" else "ADD TO VIBE SELECTION", color = if (isSelected) Color.White.copy(alpha = 0.6f) else StealthPrimary, onClick = { onSelect(); onDismiss() })
+                MenuActionItem(icon = Icons.Rounded.ChatBubbleOutline, label = "SECURE WHISPER", color = StealthPrimary, onClick = { onWhisper(); onDismiss() })
+                MenuActionItem(icon = Icons.Rounded.Radar, label = "SEARCH / IDENTIFY", color = StealthPrimary.copy(alpha = 0.8f), onClick = { onIdentify(); onDismiss() })
+                
                 if (isBlocked) {
-                    MenuActionItem(icon = Icons.Rounded.Block, label = "UNBLOCK USER", color = Color.Gray, onClick = onUnblock)
+                    MenuActionItem(icon = Icons.Rounded.Block, label = "UNBLOCK USER", color = Color.Gray, onClick = { onUnblock(); onDismiss() })
                 } else {
-                    MenuActionItem(icon = Icons.Rounded.Block, label = "BLOCK USER", color = Color.Red, onClick = onBlock)
+                    MenuActionItem(icon = Icons.Rounded.Block, label = "BLOCK USER", color = Color.Red, onClick = { onBlock(); onDismiss() })
                 }
             }
         },

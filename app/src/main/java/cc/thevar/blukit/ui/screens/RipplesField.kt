@@ -91,6 +91,7 @@ fun RipplesField(
     onlyTies: Boolean = false,
     isFilterMode: Boolean = false,
     lowPowerMode: Boolean = false,
+    highlightedUserId: String? = null,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
     onStartScan: () -> Unit,
@@ -184,6 +185,7 @@ fun RipplesField(
                 activeBubbles = activeBubbles,
                 onlyTies = onlyTies,
                 isFilterMode = isFilterMode,
+                highlightedUserId = highlightedUserId,
                 onDeviceClick = onDeviceClick,
                 onDeviceLongClick = onDeviceLongClick
             )
@@ -367,6 +369,7 @@ private fun VibeNodes(
     activeBubbles: List<BubbleData>, 
     onlyTies: Boolean,
     isFilterMode: Boolean,
+    highlightedUserId: String? = null,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit
 ) {
@@ -390,11 +393,12 @@ private fun VibeNodes(
                 // Show as Dot if in Blukit tab and not vibed/tied
                 if (!isFilterMode && !onlyTies && !isVibed && !isTied) {
                     VibeDot(
-                        device = device,
-                        xOffset = xOffset,
-                        yOffset = yOffset,
-                        onClick = { onDeviceClick(device) }
-                    )
+                    device = device,
+                    xOffset = xOffset,
+                    yOffset = yOffset,
+                    onClick = { onDeviceClick(device) },
+                    isHighlighted = device.id == highlightedUserId
+                )
                 } else {
                     VibeNode(
                         device = device, 
@@ -407,7 +411,8 @@ private fun VibeNodes(
                         activeBubble = activeBubble,
                         onClick = { onDeviceClick(device) },
                         onLongClick = { onDeviceLongClick(device) },
-                        isFilterActive = isFilterMode
+                        isFilterActive = isFilterMode,
+                        isHighlighted = device.id == highlightedUserId
                     )
                 }
             }
@@ -420,14 +425,15 @@ private fun VibeDot(
     device: P2PDevice,
     xOffset: Dp,
     yOffset: Dp,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isHighlighted: Boolean = false
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val infiniteTransition = rememberInfiniteTransition(label = "DotAnim")
     val dotAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(tween(2000 + (device.proximityFactor * 1000).toInt(), easing = LinearEasing), RepeatMode.Reverse),
+        initialValue = if (isHighlighted) 0.8f else 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(if (isHighlighted) 500 else 2000 + (device.proximityFactor * 1000).toInt(), easing = LinearEasing), RepeatMode.Reverse),
         label = "Alpha"
     )
 
@@ -443,10 +449,10 @@ private fun VibeDot(
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            modifier = Modifier.size(12.dp), // Tiny persona container
+            modifier = Modifier.size(if (isHighlighted) 16.dp else 12.dp), 
             shape = CircleShape,
-            color = StealthPrimary.copy(alpha = 0.1f * dotAlpha),
-            border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = dotAlpha))
+            color = (if (isHighlighted) StealthAmber else StealthPrimary).copy(alpha = 0.1f * dotAlpha),
+            border = BorderStroke(if (isHighlighted) 1.5.dp else 0.5.dp, (if (isHighlighted) StealthAmber else StealthPrimary).copy(alpha = dotAlpha))
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
@@ -473,22 +479,23 @@ private fun VibeNode(
     activeBubble: BubbleData?, 
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    isFilterActive: Boolean = false
+    isFilterActive: Boolean = false,
+    isHighlighted: Boolean = false
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val infiniteTransition = rememberInfiniteTransition(label = "NodeAnim")
     
-    val targetPulse = if (isFilterActive && (isVibed || isPeerVibed)) 1.25f else 1.15f
+    val targetPulse = if (isHighlighted) 1.5f else if (isFilterActive && (isVibed || isPeerVibed)) 1.25f else 1.15f
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
         targetValue = targetPulse + (device.proximityFactor * 0.1f),
-        animationSpec = infiniteRepeatable(tween(2000 + (device.proximityFactor * 1000).toInt(), easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(if (isHighlighted) 500 else 2000 + (device.proximityFactor * 1000).toInt(), easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "Pulse"
     )
 
     val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
     val proximityGlow = (device.proximityFactor * 0.4f).coerceAtLeast(0f)
-    val bloomBoost = if (isFilterActive && (isVibed || isPeerVibed)) 0.2f else 0f
+    val bloomBoost = if (isHighlighted) 0.4f else if (isFilterActive && (isVibed || isPeerVibed)) 0.2f else 0f
 
     Box(
         modifier = Modifier
@@ -503,7 +510,7 @@ private fun VibeNode(
         // High-Fidelity Halo
         Surface(
             shape = CircleShape,
-            color = (if (isSelected) Color.White else if (isVibed) StealthRose else if (isPeerVibed) StealthAmber else StealthPrimary).copy(alpha = (0.05f + proximityGlow + bloomBoost) * pulseScale),
+            color = (if (isHighlighted) StealthAmber else if (isSelected) Color.White else if (isVibed) StealthRose else if (isPeerVibed) StealthAmber else StealthPrimary).copy(alpha = (if (isHighlighted) 0.3f else 0.05f + proximityGlow + bloomBoost) * pulseScale),
             modifier = Modifier.size(nodeSize * pulseScale * (1.6f + proximityGlow + bloomBoost))
         ) {}
 

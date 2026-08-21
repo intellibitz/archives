@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.delay
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -175,6 +176,14 @@ fun BlukitApp(
     var showManageDialog by remember { mutableStateOf(false) }
 
     val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
+    var highlightedUserId by remember { mutableStateOf<String?>(null) }
+    
+    LaunchedEffect(highlightedUserId) {
+        if (highlightedUserId != null) {
+            delay(3000)
+            highlightedUserId = null
+        }
+    }
 
     CompositionLocalProvider(LocalPersonaCoordinates provides personaCoordinates) {
         Box(modifier = modifier.fillMaxSize()) {
@@ -310,6 +319,10 @@ fun BlukitApp(
                                     onUnblockUser = viewModel::unblockUser,
                                     onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) },
                                     onToggleSelection = bluetoothViewModel::toggleDeviceSelection,
+                                    onAcceptLink = bluetoothViewModel::acceptLink,
+                                    onDenyLink = bluetoothViewModel::denyLink,
+                                    onDisconnect = bluetoothViewModel::disconnect,
+                                    onIdentifyUser = { highlightedUserId = it },
                                     onClearFocus = { 
                                         viewModel.clearVibedPeers()
                                         isNoiseFilterActive = false
@@ -338,6 +351,7 @@ fun BlukitApp(
                                     onSendMessage = bluetoothViewModel::sendMessage, 
                                     onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, 
                                     onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, 
+                                    onDeviceLongClick = { selectedPersonaForMenu = it },
                                     onBlockUser = viewModel::blockUser, 
                                     onAddMember = bluetoothViewModel::addMemberToGroup,
                                     onRemoveMember = bluetoothViewModel::removeMemberFromGroup,
@@ -434,18 +448,26 @@ fun BlukitApp(
             }
 
             if (selectedPersonaForMenu != null) {
+                val menuDevice = selectedPersonaForMenu!!
+                val menuId = menuDevice.persistentId ?: menuDevice.id
+                
                 PersonaOptionsMenu(
-                    device = selectedPersonaForMenu!!,
-                    isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.vibedPeers,
-                    isTied = selectedPersonaForMenu!!.id in bluetoothState.session.connectedLinks,
-                    isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.blockedUsers,
-                    isSelected = selectedPersonaForMenu!!.id in bluetoothState.crowd.selectedDevices,
-                    onFocus = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.toggleVibePeer(id); selectedPersonaForMenu = null },
-                    onVibe = { if (selectedPersonaForMenu!!.id !in bluetoothState.session.connectedLinks) bluetoothViewModel.connectToDevice(selectedPersonaForMenu!!); selectedPersonaForMenu = null },
-                    onSelect = { bluetoothViewModel.toggleDeviceSelection(selectedPersonaForMenu!!.id); selectedPersonaForMenu = null },
-                    onWhisper = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)); selectedPersonaForMenu = null },
-                    onBlock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.blockUser(id); selectedPersonaForMenu = null },
-                    onUnblock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.unblockUser(id); selectedPersonaForMenu = null },
+                    device = menuDevice,
+                    isVibed = menuId in bluetoothState.crowd.vibedPeers,
+                    isTied = menuDevice.id in bluetoothState.session.connectedLinks,
+                    isBlocked = menuId in bluetoothState.crowd.blockedUsers,
+                    isSelected = menuDevice.id in bluetoothState.crowd.selectedDevices,
+                    isRequesting = bluetoothState.crowd.incomingLinkRequests.any { it.id == menuDevice.id },
+                    onFocus = { viewModel.toggleVibePeer(menuId) },
+                    onVibe = { bluetoothViewModel.connectToDevice(menuDevice) },
+                    onAccept = { bluetoothViewModel.acceptLink(menuDevice) },
+                    onDeny = { bluetoothViewModel.denyLink(menuDevice) },
+                    onDisconnect = { bluetoothViewModel.disconnect() },
+                    onSelect = { bluetoothViewModel.toggleDeviceSelection(menuDevice.id) },
+                    onIdentify = { highlightedUserId = menuId },
+                    onWhisper = { val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(menuId), isTie = false); backStack.add(Route.VibeDetail(gid)) },
+                    onBlock = { viewModel.blockUser(menuId) },
+                    onUnblock = { viewModel.unblockUser(menuId) },
                     onDismiss = { selectedPersonaForMenu = null }
                 )
             }

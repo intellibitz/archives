@@ -61,6 +61,7 @@ fun TieScreen(
     onSendMessage: (String, String) -> Unit,
     onStartSideVibe: (String) -> Unit = {},
     onToggleFocus: (P2PDevice) -> Unit = {},
+    onDeviceLongClick: (P2PDevice) -> Unit = {},
     onBlockUser: (String) -> Unit,
     onAddMember: (String, String) -> Unit = { _, _ -> },
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
@@ -230,6 +231,7 @@ fun TieScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(chatVibes, key = { if (!isDetailView) it.senderId else it.messageId }) { payload ->
+                val sender = state.crowd.scannedDevices.find { it.id == payload.senderId || it.persistentId == payload.senderId }
                 ChatMessage(
                     payload = payload,
                     isFromLocalUser = payload.senderId == localDeviceId,
@@ -243,7 +245,11 @@ fun TieScreen(
                             onFocusChange(null)
                         }
                     },
-                    onLongClick = { if (payload.senderId != localDeviceId) userToBlock = payload }
+                    onLongClick = { 
+                        if (payload.senderId != localDeviceId) {
+                            sender?.let { onDeviceLongClick(it) } ?: run { userToBlock = payload }
+                        }
+                    }
                 )
             }
         }
