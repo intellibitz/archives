@@ -73,6 +73,6 @@ class SupremePowerTest {
 
         // Check for terminology
         composeTestRule.onNodeWithText("ALL").assertIsDisplayed()
-        composeTestRule.onNodeWithText("MINE").assertIsDisplayed()
+        composeTestRule.onNodeWithText("VIBES").assertIsDisplayed()
     }
 }

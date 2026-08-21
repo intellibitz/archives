@@ -74,9 +74,9 @@ class BlukitHubTest {
             }
         }
 
-        // Click MINE tab
-        composeTestRule.onNodeWithText("MINE").performClick()
-        verify { onNavigate(Route.Mine) }
+        // Click VIBES tab
+        composeTestRule.onNodeWithText("VIBES").performClick()
+        verify { onNavigate(Route.Vibes) }
     }
 
     @Test

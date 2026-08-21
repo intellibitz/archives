@@ -118,64 +118,10 @@ fun RadioB(
     }
 }
 
-@Composable
-fun TopHubTabs(
-    currentRoute: Route,
-    onNavigate: (Route) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(12.dp))
-            .padding(2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        TopHubTab(
-            label = "ALL",
-            icon = Icons.Rounded.Groups,
-            isSelected = currentRoute is Route.Blukit,
-            onClick = { onNavigate(Route.Blukit) }
-        )
-    }
-}
 
-@Composable
-private fun TopHubTab(
-    label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) Color.White.copy(alpha = 0.1f) else Color.Transparent)
-            .clickable { onClick() }
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (isSelected) (if (label == "VIBES") StealthRose else StealthPrimary) else Color.White.copy(alpha = 0.3f),
-            modifier = Modifier.size(10.dp)
-        )
-        Text(
-            text = label,
-            fontSize = 7.sp,
-            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
-            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.3f),
-            letterSpacing = 0.5.sp
-        )
-    }
-}
 
 @Composable
 fun BlukitHarmonyTopBar(
-    currentRoute: Route,
-    onNavigate: (Route) -> Unit,
     title: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isBluetoothOff: Boolean,
@@ -327,31 +273,27 @@ fun BlukitHarmonyTopBar(
                 }
             }
 
-            // RIGHT: Screen Title OR Tabs
+            // RIGHT: Screen Title
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (currentRoute is Route.Blukit || currentRoute is Route.Vibes) {
-                    TopHubTabs(currentRoute = currentRoute, onNavigate = onNavigate)
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                            modifier = Modifier.size(16.dp)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = title.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.5.sp,
+                            color = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                            fontSize = 10.sp
                         )
-                        Text(
-                            text = title.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 0.5.sp,
-                                color = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                                fontSize = 10.sp
-                            )
-                        )
-                        if (onManage != null) {
-                            IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
-                                Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
-                            }
+                    )
+                    if (onManage != null) {
+                        IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
+                            Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
                         }
                     }
                 }

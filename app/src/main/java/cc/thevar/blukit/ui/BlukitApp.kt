@@ -241,14 +241,6 @@ fun BlukitApp(
                 }
 
                 BlukitHarmonyTopBar(
-                    currentRoute = (currentRoute as? Route) ?: initialRoute,
-                    onNavigate = { route -> 
-                        if (route == Route.Blukit) isNoiseFilterActive = false
-                        if (currentRoute != route) { 
-                            focusManager.clearFocus() 
-                            backStack.add(route) 
-                        } 
-                    },
                     title = topTitle, 
                     icon = topIcon,
                     isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
