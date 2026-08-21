@@ -19,13 +19,13 @@ The **ALL** field is where you see everyone around you.
 - **Persistent Sidebar**: All nearby personas are always visible in the vertical sidebar on the right, allowing you to "click/unclick" to curate your filtered field without the cloud collapsing.
 - **Active vs. Idle**: Active users who speak move to the forefront, while others stay in the **IDLE** row with their names visible for quick identification.
 
-## ✨ MINE (Personal Vibes)
+## ✨ VIBES (Personal Vibes)
 Your private space for mutual resonances and intimate whispers.
 - **Mutual Permission**: Establishing a **VIBE** requires agreement (**JOIN**) from both sides, creating a secure, private group.
 - **Manage Ties**: Expand your circle by adding more nearby users or shorten it by removing members directly from the vibe view.
 - **Side Conversations**: Start a **WHISPER** for contextual one-on-one interactions within a group or directly from the field.
 - **Merged View**: All your private interactions—whether group-wide or person-to-person—are managed in this single, unified field.
-- **Secure Communication**: Every interaction in MINE is hardware-encrypted and strictly local.
+- **Secure Communication**: Every interaction in VIBES is hardware-encrypted and strictly local.
 
 ---
 

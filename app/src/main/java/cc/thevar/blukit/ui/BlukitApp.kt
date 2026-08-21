@@ -168,7 +168,7 @@ fun BlukitApp(
     var messageText by remember { mutableStateOf("") }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     val roarsCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { it.receiverId.isNullOrBlank() } }
-    val mineCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { !it.receiverId.isNullOrBlank() } }
+    val vibesCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { !it.receiverId.isNullOrBlank() } }
 
     val config = LocalConfiguration.current
     val isLandscape = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -221,7 +221,7 @@ fun BlukitApp(
                         device?.name?.uppercase() ?: "USER"
                     }
                     currentRoute is Route.Blukit -> "ALL"
-                    currentRoute is Route.Mine -> "MINE"
+                    currentRoute is Route.Vibes -> "VIBES"
                     currentRoute is Route.VibeDetail -> {
                         val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
                         group?.name ?: "VIBE"
@@ -232,7 +232,7 @@ fun BlukitApp(
                 val topIcon = when {
                     focusedSenderId != null -> Icons.Rounded.Person
                     currentRoute is Route.Blukit -> Icons.Rounded.Groups
-                    currentRoute is Route.Mine -> Icons.Rounded.Flare
+                    currentRoute is Route.Vibes -> Icons.Rounded.Flare
                     currentRoute is Route.VibeDetail -> {
                         val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
                         if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing
@@ -259,7 +259,7 @@ fun BlukitApp(
                     userCount = report.userCount,
                     isStealthMode = isStealthMode,
                     lowPowerMode = lowPowerMode,
-                    vibeCount = roarsCount + mineCount,
+                    vibeCount = roarsCount + vibesCount,
                     onToggleStealth = viewModel::toggleStealth,
                     onToggleLowPower = viewModel::toggleLowPowerMode,
                     onClearHistory = viewModel::clearChatHistory,
@@ -285,7 +285,7 @@ fun BlukitApp(
 
                 Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                     val cloudDevices = bluetoothState.crowd.scannedDevices
-                    val showUPH = (currentRoute is Route.Blukit || currentRoute is Route.Mine)
+                    val showUPH = (currentRoute is Route.Blukit || currentRoute is Route.Vibes)
 
                     NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.fillMaxSize()) { key ->
                         when (key) {
@@ -331,7 +331,7 @@ fun BlukitApp(
                                     onFocusChange = { focusedSenderId = it }
                                 ) 
                             }
-                            Route.Mine -> NavEntry(key) { 
+                            Route.Vibes -> NavEntry(key) { 
                                 ConversationsScreen(
                                     state = bluetoothState, 
                                     onVibeClick = { backStack.add(Route.VibeDetail(it.id)) }, 
@@ -400,7 +400,15 @@ fun BlukitApp(
                                 isNoiseFilterActive = isNoiseFilterActive,
                                 vibedPeersCount = bluetoothState.crowd.vibedPeers.size,
                                 onToggleNoiseFilter = { isNoiseFilterActive = it },
-                                showFilter = currentRoute is Route.Blukit
+                                showFilter = currentRoute is Route.Blukit,
+                                currentRoute = (currentRoute as? Route) ?: initialRoute,
+                                onNavigate = { route -> 
+                                    if (route == Route.Blukit) isNoiseFilterActive = false
+                                    if (currentRoute != route) { 
+                                        focusManager.clearFocus() 
+                                        backStack.add(route) 
+                                    } 
+                                }
                             )
                         }
                     }
@@ -412,12 +420,12 @@ fun BlukitApp(
                     onMessageChange = { messageText = it },
                     onSend = { 
                         if (messageText.isNotBlank()) { 
-                            bluetoothViewModel.roar(messageText, currentRoute is Route.Mine)
+                            bluetoothViewModel.roar(messageText, currentRoute is Route.Vibes)
                             messageText = ""
                             focusManager.clearFocus() 
                         } 
                     },
-                    vibeCount = roarsCount + mineCount,
+                    vibeCount = roarsCount + vibesCount,
                     airIsStill = airIsStill,
                     incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
                     selectedDevices = bluetoothState.crowd.selectedDevices,
@@ -494,7 +502,7 @@ fun BlukitHub(
         }
         Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.96f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))) {
             Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp).imePadding()) {
-                AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Mine) {
+                AnimatedVisibility(visible = currentRoute is Route.Blukit || currentRoute is Route.Vibes) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         BlukitInput(
                             airIsStill = airIsStill, 

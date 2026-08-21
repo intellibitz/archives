@@ -137,13 +137,6 @@ fun TopHubTabs(
             isSelected = currentRoute is Route.Blukit,
             onClick = { onNavigate(Route.Blukit) }
         )
-        Box(modifier = Modifier.width(1.dp).height(12.dp).background(Color.White.copy(alpha = 0.08f)))
-        TopHubTab(
-            label = "MINE",
-            icon = Icons.Rounded.Flare,
-            isSelected = currentRoute is Route.Mine,
-            onClick = { onNavigate(Route.Mine) }
-        )
     }
 }
 
@@ -166,7 +159,7 @@ private fun TopHubTab(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (isSelected) (if (label == "MINE") StealthRose else StealthPrimary) else Color.White.copy(alpha = 0.3f),
+            tint = if (isSelected) (if (label == "VIBES") StealthRose else StealthPrimary) else Color.White.copy(alpha = 0.3f),
             modifier = Modifier.size(10.dp)
         )
         Text(
@@ -336,14 +329,14 @@ fun BlukitHarmonyTopBar(
 
             // RIGHT: Screen Title OR Tabs
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (currentRoute is Route.Blukit || currentRoute is Route.Mine) {
+                if (currentRoute is Route.Blukit || currentRoute is Route.Vibes) {
                     TopHubTabs(currentRoute = currentRoute, onNavigate = onNavigate)
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                            tint = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
@@ -351,7 +344,7 @@ fun BlukitHarmonyTopBar(
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = 0.5.sp,
-                                color = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                                color = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
                                 fontSize = 10.sp
                             )
                         )
@@ -584,7 +577,9 @@ fun UnifiedPersonaCloud(
     isNoiseFilterActive: Boolean = false,
     vibedPeersCount: Int = 0,
     onToggleNoiseFilter: (Boolean) -> Unit = {},
-    showFilter: Boolean = false
+    showFilter: Boolean = false,
+    currentRoute: Route = Route.Blukit,
+    onNavigate: (Route) -> Unit = {}
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val activeSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
@@ -645,6 +640,26 @@ fun UnifiedPersonaCloud(
                 }
 
                 if (showFilter) {
+                    // ANCHOR 3: Vibes Toggle (Personal/Mutual)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val isVibesSelected = currentRoute is Route.Vibes
+                    IconButton(
+                        onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                            .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Flare, 
+                            contentDescription = "Vibes", 
+                            tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    // ANCHOR 2: Noise Filter Toggle
                     Spacer(modifier = Modifier.height(8.dp))
                     IconButton(
                         onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
