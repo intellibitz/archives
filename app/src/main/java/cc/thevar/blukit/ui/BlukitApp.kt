@@ -395,6 +395,7 @@ fun BlukitApp(
                                 onClearHistory = viewModel::clearChatHistory,
                                 showFilter = currentRoute is Route.Blukit,
                                 currentRoute = (currentRoute as? Route) ?: initialRoute,
+                                subjectId = focusedSenderId,
                                 onNavigate = { route -> 
                                     if (route == Route.Blukit) isNoiseFilterActive = false
                                     if (currentRoute != route) { 

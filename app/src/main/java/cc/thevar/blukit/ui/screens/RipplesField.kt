@@ -92,6 +92,7 @@ fun RipplesField(
     isFilterMode: Boolean = false,
     lowPowerMode: Boolean = false,
     highlightedUserId: String? = null,
+    subjectId: String? = null,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
     onStartScan: () -> Unit,
@@ -186,6 +187,7 @@ fun RipplesField(
                 onlyTies = onlyTies,
                 isFilterMode = isFilterMode,
                 highlightedUserId = highlightedUserId,
+                subjectId = subjectId,
                 onDeviceClick = onDeviceClick,
                 onDeviceLongClick = onDeviceLongClick
             )
@@ -370,6 +372,7 @@ private fun VibeNodes(
     onlyTies: Boolean,
     isFilterMode: Boolean,
     highlightedUserId: String? = null,
+    subjectId: String? = null,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit
 ) {
@@ -385,8 +388,8 @@ private fun VibeNodes(
             val xOffset = (radiusValue * cos(angle)).toFloat().dp
             val yOffset = (radiusValue * sin(angle)).toFloat().dp
 
-            val isFocused = isVibed || isTied || isSelected
-            val isBroadFocus = isFilterMode && vibedPeers.isEmpty()
+            val isFocused = isVibed || isTied || isSelected || device.id == subjectId || device.persistentId == subjectId
+            val isBroadFocus = isFilterMode && vibedPeers.isEmpty() && subjectId == null
             val noiseDimAlpha = if (isFilterMode && !isFocused && !isBroadFocus) 0.05f else 1f
 
             Box(modifier = Modifier.graphicsLayer { alpha = noiseDimAlpha }) {

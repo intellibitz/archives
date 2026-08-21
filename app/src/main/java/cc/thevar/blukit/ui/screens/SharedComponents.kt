@@ -526,6 +526,7 @@ fun UnifiedPersonaCloud(
     onClearHistory: () -> Unit = {},
     showFilter: Boolean = false,
     currentRoute: Route = Route.Blukit,
+    subjectId: String? = null,
     onNavigate: (Route) -> Unit = {}
 ) {
     val coordinates = LocalPersonaCoordinates.current
@@ -557,8 +558,8 @@ fun UnifiedPersonaCloud(
             ) {
                 // ANCHOR 1: ALL Toggle (Top)
                 val isAllSelected = currentRoute is Route.Blukit
-                val isFocusAll = isNoiseFilterActive && vibedPeersCount == 0
-                val isGlowingAll = isAllSelected || isFocusAll
+                val isFocusAll = isNoiseFilterActive && vibedPeersCount == 0 && subjectId == null
+                val isGlowingAll = (isAllSelected && subjectId == null) || isFocusAll
                 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     if (isFocusAll) {
@@ -586,19 +587,20 @@ fun UnifiedPersonaCloud(
 
                 // ANCHOR 2: FOCUS Toggle
                 Spacer(modifier = Modifier.height(8.dp))
-                val isSelectiveFocus = isNoiseFilterActive && vibedPeersCount > 0
+                val isSelectiveFocus = (isNoiseFilterActive && vibedPeersCount > 0) || subjectId != null
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    if (isSelectiveFocus) {
+                    if (isSelectiveFocus && subjectId == null) {
                         Text(text = "FOCUS VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary, modifier = Modifier.padding(end = 4.dp))
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val isFocusGlowing = isNoiseFilterActive || subjectId != null
                         IconButton(
                             onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
                             modifier = Modifier
                                 .size(42.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                                .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
+                                .background(if (isFocusGlowing) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                                .border(1.dp, if (isFocusGlowing) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 if (vibedPeersCount > 0) {
@@ -690,8 +692,8 @@ fun UnifiedPersonaCloud(
                     items(sortedDevices.size) { index ->
                         val device = sortedDevices[index]
                         val isSelected = device.id in selectedDevices
-                        val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
-                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty()
+                        val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks || device.id == subjectId || device.persistentId == subjectId
+                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty() && subjectId == null
                         val dimAlpha = if (isNoiseFilterActive && !isFocused && !isBroadFocus) 0.1f else 1f
                         
                         PersonaCloudItem(
@@ -734,8 +736,8 @@ fun UnifiedPersonaCloud(
                 ) {
                     sortedDevices.forEach { device ->
                         val isSelected = device.id in selectedDevices
-                        val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
-                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty()
+                        val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks || device.id == subjectId || device.persistentId == subjectId
+                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty() && subjectId == null
                         val dimAlpha = if (isNoiseFilterActive && !isFocused && !isBroadFocus) 0.1f else 1f
                         
                         PersonaCloudItem(

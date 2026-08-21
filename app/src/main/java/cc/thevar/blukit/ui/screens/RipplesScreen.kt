@@ -148,6 +148,7 @@ fun RipplesScreen(
                 onlyTies = onlyTies,
                 isFilterMode = noiseFilterEnabled || isDetailView,
                 lowPowerMode = lowPowerMode,
+                subjectId = externalFocusedId,
                 onDeviceClick = { selectedPersonaForMenu = it },
                 onDeviceLongClick = { selectedPersonaForMenu = it },
                 onStartScan = onStartScan,
