@@ -170,8 +170,6 @@ private fun TopHubTab(
 fun BlukitHarmonyTopBar(
     currentRoute: Route,
     onNavigate: (Route) -> Unit,
-    isNoiseFilterActive: Boolean,
-    onToggleNoiseFilter: (Boolean) -> Unit,
     title: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isBluetoothOff: Boolean,
@@ -180,13 +178,6 @@ fun BlukitHarmonyTopBar(
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
     userCount: Int,
-    isStealthMode: Boolean,
-    lowPowerMode: Boolean,
-    vibeCount: Int,
-    onToggleStealth: (Boolean) -> Unit,
-    onToggleLowPower: (Boolean) -> Unit,
-    onClearHistory: () -> Unit,
-    onResetProfile: () -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
@@ -201,9 +192,6 @@ fun BlukitHarmonyTopBar(
         animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), 
         label = "Alpha"
     )
-    
-    var showClearHistoryDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
 
     val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
     val isStill = isBluetoothOff || isLocationOff
@@ -248,7 +236,7 @@ fun BlukitHarmonyTopBar(
             }
         }
 
-        // ROW 2: Radios | Delete/Reset
+        // ROW 2: Radios | Tabs/Title
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             // LEFT: Back + Radios
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -262,64 +250,8 @@ fun BlukitHarmonyTopBar(
                 StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
             }
 
-            // RIGHT: DELETE, RESET
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(
-                    onClick = { showClearHistoryDialog = true }, 
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.12f))
-                        .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        if (vibeCount > 0) {
-                            Text(text = vibeCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                        }
-                        Icon(Icons.Rounded.DeleteSweep, contentDescription = "Delete", tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
-                    }
-                }
-
-                IconButton(
-                    onClick = { showLogoutDialog = true }, 
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.12f))
-                        .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape)
-                ) {
-                    Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset", tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(20.dp))
-                }
-            }
-        }
-
-        // ROW 3: Environment (Left) | Context (Right)
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            // LEFT: DARK, ECO (Moved to Row 3)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
-                EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
-            }
-
             // RIGHT: Screen Title (ALL, MINE, etc.) OR Tabs
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (currentRoute is Route.Blukit) {
-                    IconButton(
-                        onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
-                        modifier = Modifier
-                            .size(28.dp)
-                            .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape)
-                            .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
-                            contentDescription = "Filter", 
-                            tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-
                 if (currentRoute is Route.Blukit || currentRoute is Route.Mine) {
                     TopHubTabs(currentRoute = currentRoute, onNavigate = onNavigate)
                 } else {
@@ -348,9 +280,6 @@ fun BlukitHarmonyTopBar(
                 }
             }
         }
-
-        if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-        if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onResetProfile(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
     }
 }
 

@@ -189,12 +189,10 @@ fun BlukitApp(
                 onNavigate = { route -> 
                     if (route == Route.Blukit) isNoiseFilterActive = false
                     if (currentRoute != route) { 
-                        focusManager.clearFocus()
+                        focusManager.clearFocus() 
                         backStack.add(route) 
                     } 
                 },
-                isNoiseFilterActive = isNoiseFilterActive,
-                onToggleNoiseFilter = { isNoiseFilterActive = it },
                 title = topTitle, 
                 icon = topIcon,
                 isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
@@ -203,13 +201,6 @@ fun BlukitApp(
                 isPermissionMissing = !permissionState.allPermissionsGranted,
                 isPermanentlyDenied = isPermanentlyDenied,
                 userCount = report.userCount,
-                isStealthMode = isStealthMode,
-                lowPowerMode = lowPowerMode,
-                vibeCount = roarsCount + mineCount,
-                onToggleStealth = viewModel::toggleStealth,
-                onToggleLowPower = viewModel::toggleLowPowerMode,
-                onClearHistory = viewModel::clearChatHistory,
-                onResetProfile = viewModel::logout,
                 onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
                 onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                 onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
@@ -346,6 +337,13 @@ fun BlukitApp(
                 incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
                 selectedDevices = bluetoothState.crowd.selectedDevices,
                 isNoiseFilterActive = isNoiseFilterActive,
+                onToggleNoiseFilter = { isNoiseFilterActive = it },
+                isStealthMode = isStealthMode,
+                lowPowerMode = lowPowerMode,
+                onToggleStealth = viewModel::toggleStealth,
+                onToggleLowPower = viewModel::toggleLowPowerMode,
+                onClearHistory = viewModel::clearChatHistory,
+                onResetProfile = viewModel::logout,
                 onAcceptLink = bluetoothViewModel::acceptLink, 
                 onDenyLink = bluetoothViewModel::denyLink,
                 onStartSideVibe = { 
@@ -391,6 +389,13 @@ fun BlukitHub(
     incomingLinkRequests: Set<P2PDevice>, 
     selectedDevices: Set<String>, 
     isNoiseFilterActive: Boolean,
+    onToggleNoiseFilter: (Boolean) -> Unit,
+    isStealthMode: Boolean,
+    lowPowerMode: Boolean,
+    onToggleStealth: (Boolean) -> Unit,
+    onToggleLowPower: (Boolean) -> Unit,
+    onClearHistory: () -> Unit,
+    onResetProfile: () -> Unit,
     onAcceptLink: (P2PDevice) -> Unit, 
     onDenyLink: (P2PDevice) -> Unit, 
     onStartSideVibe: () -> Unit, 
@@ -398,6 +403,9 @@ fun BlukitHub(
     onClearSelection: () -> Unit, 
     modifier: Modifier = Modifier
 ) {
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     Column(modifier = modifier.fillMaxWidth().zIndex(1f), horizontalAlignment = Alignment.CenterHorizontally) {
         AnimatedVisibility(visible = selectedDevices.isNotEmpty(), enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             Row(modifier = Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -448,47 +456,95 @@ fun BlukitHub(
                     }
                 }
 
-                // Hub logo and privacy
+                // Hub logo and actions
                 val localContext = LocalContext.current
                 Row(
                     modifier = Modifier.fillMaxWidth(), 
-                    horizontalArrangement = Arrangement.Center, 
+                    horizontalArrangement = Arrangement.SpaceBetween, 
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Branding: V I (B) E S
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "V I", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        RadioB(modifier = Modifier.size(20.dp), color = StealthPrimary.copy(alpha = 0.4f))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "E S", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp))
-                    }
-                    
-                    Spacer(modifier = Modifier.width(16.dp))
-                    
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
-                            .clickable { 
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
-                                localContext.startActivity(intent)
+                    // LEFT ACTIONS: Dark, Eco, Filter, Delete, Reset
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
+                        EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
+                        
+                        if (currentRoute is Route.Blukit) {
+                            IconButton(
+                                onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape)
+                                    .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
+                                    contentDescription = "Filter", 
+                                    tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
+                                    modifier = Modifier.size(14.dp)
+                                )
                             }
-                            .padding(horizontal = 8.dp, vertical = 2.dp), 
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "PRIVACY", 
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 7.sp, 
-                                fontWeight = FontWeight.Black, 
-                                color = Color.White.copy(alpha = 0.25f)
+                        }
+
+                        IconButton(
+                            onClick = { showClearHistoryDialog = true }, 
+                            modifier = Modifier.size(24.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.05f))
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                if (vibeCount > 0) {
+                                    Text(text = vibeCount.toString(), fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                                }
+                                Icon(Icons.Rounded.DeleteSweep, contentDescription = "Delete", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                            }
+                        }
+
+                        IconButton(
+                            onClick = { showLogoutDialog = true }, 
+                            modifier = Modifier.size(24.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.05f))
+                        ) {
+                            Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                        }
+                    }
+
+                    // RIGHT Branding + Privacy
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Branding: V I (B) E S
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "V I", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            RadioB(modifier = Modifier.size(20.dp), color = StealthPrimary.copy(alpha = 0.4f))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "E S", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp))
+                        }
+                        
+                        Spacer(modifier = Modifier.width(12.dp))
+                        
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .clickable { 
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
+                                    localContext.startActivity(intent)
+                                }
+                                .padding(horizontal = 8.dp, vertical = 2.dp), 
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "PRIVACY", 
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 7.sp, 
+                                    fontWeight = FontWeight.Black, 
+                                    color = Color.White.copy(alpha = 0.25f)
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
         }
+        
+        if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
+        if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onResetProfile(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
     }
 }
 
