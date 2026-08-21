@@ -254,13 +254,35 @@ fun BlukitHarmonyTopBar(
                 }
             }
 
-            // CENTER: Branding
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.Center) {
-                Text(text = "V I", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
-                Spacer(modifier = Modifier.width(6.dp))
-                RadioB(modifier = Modifier.size(22.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "E S", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
+            // CENTER: Branding + Privacy
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "V I", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    RadioB(modifier = Modifier.size(22.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = "E S", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.05f))
+                        .clickable { 
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
+                            localContext.startActivity(intent)
+                        }
+                        .padding(horizontal = 6.dp, vertical = 1.dp), 
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "PRIVACY", 
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 6.sp, 
+                            fontWeight = FontWeight.Black, 
+                            color = Color.White.copy(alpha = 0.2f)
+                        )
+                    )
+                }
             }
 
             // RIGHT: Back + Radios
@@ -347,27 +369,6 @@ fun BlukitHarmonyTopBar(
                             }
                         }
                     }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.05f))
-                        .clickable { 
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/intellibitz/blukit/blob/main/PRIVACY_POLICY.md"))
-                            localContext.startActivity(intent)
-                        }
-                        .padding(horizontal = 8.dp, vertical = 2.dp), 
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "PRIVACY", 
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 7.sp, 
-                            fontWeight = FontWeight.Black, 
-                            color = Color.White.copy(alpha = 0.25f)
-                        )
-                    )
                 }
             }
         }
