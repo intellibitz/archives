@@ -343,19 +343,14 @@ private fun VibingVibesTicker(
     val listState = rememberLazyListState()
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
-    LaunchedEffect(vibes.size) {
-        if (vibes.isNotEmpty()) {
-            listState.animateScrollToItem(vibes.size - 1)
-        }
-    }
-
     Box(modifier = modifier) {
         LazyColumn(
             state = listState,
+            reverseLayout = true,
             modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 40.dp)
-             ) {
-            items(vibes, key = { if (isGrouped) it.senderId else it.messageId }) { msg ->
+            contentPadding = PaddingValues(top = 40.dp, bottom = 8.dp)
+        ) {
+            items(vibes.asReversed(), key = { if (isGrouped) it.senderId else it.messageId }) { msg ->
                 val isMe = msg.senderId == localDeviceId
                 val senderDevice = remember(msg.senderId, state.crowd.scannedDevices) {
                     state.crowd.scannedDevices.find { it.id == msg.senderId || it.persistentId == msg.senderId }

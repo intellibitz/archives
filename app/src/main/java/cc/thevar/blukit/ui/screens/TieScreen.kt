@@ -101,12 +101,6 @@ fun TieScreen(
 
     val (chatVibes, vibeCounts, isDetailView) = vibesData
 
-    LaunchedEffect(chatVibes.size) {
-        if (chatVibes.isNotEmpty()) {
-            listState.animateScrollToItem(chatVibes.size - 1)
-        }
-    }
-
     if (userToBlock != null) {
         AlertDialog(
             onDismissRequest = { userToBlock = null },
@@ -227,11 +221,12 @@ fun TieScreen(
 
         LazyColumn(
             state = listState,
+            reverseLayout = true,
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(chatVibes, key = { if (!isDetailView) it.senderId else it.messageId }) { payload ->
+            items(chatVibes.asReversed(), key = { if (!isDetailView) it.senderId else it.messageId }) { payload ->
                 val sender = state.crowd.scannedDevices.find { it.id == payload.senderId || it.persistentId == payload.senderId }
                 ChatMessage(
                     payload = payload,
