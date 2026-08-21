@@ -13,10 +13,15 @@ The **ALL** field is where you see everyone around you.
 - **Drill-Down History**: Tap any entry to expand and explore the full chronological history of vibes from that specific user.
 - **Vibe Energy**: Inline counters (`+5 ⇅`) show you exactly how many resonances each user has shared, with clear visual signals for expansion.
 - **Noise Filter**: Integrated filtering allows you to cut out the crowd and listen only to those you've blossomed (vibed) without leaving the ALL view.
+- **Persistent Sidebar (UPH)**: A permanent vertical control center.
+    - **ALL (Top Anchor)**: Your gateway to the global crowd.
+    - **VIBES**: Toggle navigation to your secure personal resonances. Long-press to **Reset Vibes** (clear history).
+    - **FOCUS**: Direct toggle for your curated Focus Circle (Noise Filter).
+    - **RESET (Bottom Anchor)**: Grounded identity management.
 - **Unified Interactions**: 
-    - **Tap**: Blossom/Focus a persona in the **Vertical Persona Hub**. 
+    - **Tap**: Blossom/Focus a persona. 
     - **Long-Tap**: Open the **Options Menu** for focus management, blocking, or secure WHISPER requests.
-- **Persistent Sidebar**: All nearby personas are always visible in the vertical sidebar on the right, allowing you to "click/unclick" to curate your filtered field without the cloud collapsing.
+    - **Search/Identify**: Trigger a visual pulse in the field to locate specific personas in a crowd.
 - **Active vs. Idle**: Active users who speak move to the forefront, while others stay in the **IDLE** row with their names visible for quick identification.
 
 ## ✨ VIBES (Personal Vibes)
@@ -31,7 +36,7 @@ Your private space for mutual resonances and intimate whispers.
 
 ## 📱 UNIVERSAL ECOSYSTEM
 Everything you need, everywhere you are:
-- **Harmony Top Bar**: A unified 2-row dashboard. Row 1 hosts Environment Toggles (Dark/Eco), `V I (B) E S` branding with centered Privacy access, and Radios. Row 2 hosts Status Alerts and core actions (Filter/Reset/Clear) alongside Navigation.
+- **Harmony Top Bar**: A unified 2-row dashboard. Row 1 hosts Environment Toggles (Dark/Eco), `V I (B) E S` branding, and high-fidelity Radios with vertically aligned system actions (Settings/Permissions) anchored below them.
 - **Wear OS Support**: Native Wear OS app to see nearby vibes directly on your wrist with high-efficiency scaling lists.
 - **Grounded Hub**: Minimalist bottom anchor for high-priority vibe input, providing a clean surface for spreading vibes.
 - **Vertical Persona Sidebar**: A scrollable sidebar on the right where nearby personas are anchored by your own identity at the bottom.
