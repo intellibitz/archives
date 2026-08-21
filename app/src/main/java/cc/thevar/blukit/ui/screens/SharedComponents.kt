@@ -209,24 +209,20 @@ fun BlukitHarmonyTopBar(
                 }
             }
 
-            // RIGHT: Back + Radios
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
-                if (onBack != null) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
+            // RIGHT: Radios + Alerts Below
+            Column(horizontalAlignment = Alignment.End, modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
+                        }
                     }
+                    StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
+                    StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
+                    StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
                 }
-                StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
-                StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
-                StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
-            }
-        }
-
-        // ROW 2: Alerts + Context (Right)
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            // LEFT ACTIONS: Alerts
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                // Alerts integrated into Row 2 Actions
+                
+                // Alerts moved below radio signals
                 if (isPermissionMissing) {
                     Surface(
                         onClick = { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() },
@@ -248,29 +244,29 @@ fun BlukitHarmonyTopBar(
                     )
                 }
             }
+        }
 
-            // RIGHT: Screen Title
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                        modifier = Modifier.size(16.dp)
+        // ROW 2: Screen Title
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 0.5.sp,
+                        color = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                        fontSize = 10.sp
                     )
-                    Text(
-                        text = title.uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 0.5.sp,
-                            color = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                            fontSize = 10.sp
-                        )
-                    )
-                    if (onManage != null) {
-                        IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
-                            Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
-                        }
+                )
+                if (onManage != null) {
+                    IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
+                        Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
                     }
                 }
             }
@@ -538,7 +534,30 @@ fun UnifiedPersonaCloud(
                     .fillMaxHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Others (Scrollable, anchored just above the user)
+                // ANCHOR 4: ALL Toggle (Top)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    val isAllSelected = currentRoute is Route.Blukit
+                    IconButton(
+                        onClick = { onNavigate(Route.Blukit) },
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isAllSelected) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                            .border(1.dp, if (isAllSelected) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Groups,
+                            contentDescription = "All",
+                            tint = if (isAllSelected) StealthPrimary else Color.White.copy(alpha = 0.4f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(text = "ALL", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isAllSelected) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Others (Scrollable)
                 androidx.compose.foundation.lazy.LazyColumn(
                     modifier = Modifier
                         .weight(1f)
@@ -572,58 +591,56 @@ fun UnifiedPersonaCloud(
                     }
                 }
 
-                if (showFilter) {
-                    // ANCHOR 3: VIBES Toggle (Navigation)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val isVibesSelected = currentRoute is Route.Vibes
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        IconButton(
-                            onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                                .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) },
-                                    onLongClick = { showClearHistoryDialog = true }
-                                )
-                        ) {
+                // ANCHOR 3: VIBES Toggle
+                Spacer(modifier = Modifier.height(8.dp))
+                val isVibesSelected = currentRoute is Route.Vibes
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(
+                        onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                            .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
+                            .combinedClickable(
+                                onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) },
+                                onLongClick = { showClearHistoryDialog = true }
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Flare, 
+                            contentDescription = "Vibes", 
+                            tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(text = "VIBES", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                }
+
+                // ANCHOR 2: FOCUS Toggle
+                Spacer(modifier = Modifier.height(8.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(
+                        onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                            .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (vibedPeersCount > 0) {
+                                Text(text = vibedPeersCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                            }
                             Icon(
-                                imageVector = Icons.Rounded.Flare, 
-                                contentDescription = "Vibes", 
-                                tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
+                                imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
+                                contentDescription = "Filter", 
+                                tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
                                 modifier = Modifier.size(16.dp)
                             )
                         }
-                        Text(text = "VIBES", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                     }
-
-                    // ANCHOR 2: FOCUS Toggle (Noise Filter)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        IconButton(
-                            onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                                .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                if (vibedPeersCount > 0) {
-                                    Text(text = vibedPeersCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                                }
-                                Icon(
-                                    imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
-                                    contentDescription = "Filter", 
-                                    tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                        Text(text = "FOCUS", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
-                    }
+                    Text(text = "FOCUS", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
