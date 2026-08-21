@@ -537,27 +537,32 @@ fun UnifiedPersonaCloud(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // ANCHOR 4: ALL Toggle (Top)
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    val isAllSelected = currentRoute is Route.Blukit
-                    val isFocusAll = isNoiseFilterActive && vibedPeersCount == 0
-                    val isGlowing = isAllSelected || isFocusAll
-                    
-                    IconButton(
-                        onClick = { onNavigate(Route.Blukit) },
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isGlowing) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                            .border(1.dp, if (isGlowing) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Groups,
-                            contentDescription = "All",
-                            tint = if (isGlowing) StealthPrimary else Color.White.copy(alpha = 0.4f),
-                            modifier = Modifier.size(16.dp)
-                        )
+                val isAllSelected = currentRoute is Route.Blukit
+                val isFocusAll = isNoiseFilterActive && vibedPeersCount == 0
+                val isGlowingAll = isAllSelected || isFocusAll
+                
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    if (isFocusAll) {
+                        Text(text = "ALL VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary, modifier = Modifier.padding(end = 4.dp))
                     }
-                    Text(text = "ALL", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isGlowing) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { onNavigate(Route.Blukit) },
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isGlowingAll) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                                .border(1.dp, if (isGlowingAll) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Groups,
+                                contentDescription = "All",
+                                tint = if (isGlowingAll) StealthPrimary else Color.White.copy(alpha = 0.4f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Text(text = "ALL", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isGlowingAll) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -599,82 +604,95 @@ fun UnifiedPersonaCloud(
 
                 // ANCHOR 3: VIBES Toggle
                 Spacer(modifier = Modifier.height(8.dp))
-                val isVibesSelected = currentRoute is Route.Vibes
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(
-                        onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                            .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
-                            .combinedClickable(
-                                onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) },
-                                onLongClick = { showClearHistoryDialog = true }
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Flare, 
-                            contentDescription = "Vibes", 
-                            tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
-                            modifier = Modifier.size(16.dp)
-                        )
+                val isVibesSelected = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    if (isVibesSelected) {
+                        Text(text = if (currentRoute is Route.VibeDetail) "SECURE VIBE" else "VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthRose, modifier = Modifier.padding(end = 4.dp))
                     }
-                    Text(text = "VIBES", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                                .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
+                                .combinedClickable(
+                                    onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) },
+                                    onLongClick = { showClearHistoryDialog = true }
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Flare, 
+                                contentDescription = "Vibes", 
+                                tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Text(text = "VIBES", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    }
                 }
 
                 // ANCHOR 2: FOCUS Toggle
                 Spacer(modifier = Modifier.height(8.dp))
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(
-                        onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                            .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            if (vibedPeersCount > 0) {
-                                Text(text = vibedPeersCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                            }
-                            Icon(
-                                imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
-                                contentDescription = "Filter", 
-                                tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                val isSelectiveFocus = isNoiseFilterActive && vibedPeersCount > 0
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    if (isSelectiveFocus) {
+                        Text(text = "FOCUS VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary, modifier = Modifier.padding(end = 4.dp))
                     }
-                    Text(text = "FOCUS", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                                .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                if (vibedPeersCount > 0) {
+                                    Text(text = vibedPeersCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                                }
+                                Icon(
+                                    imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
+                                    contentDescription = "Filter", 
+                                    tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                        Text(text = "FOCUS", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // ANCHOR 1: RESET (User Persona)
                 if (userFocusRequester != null) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .size(52.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.04f))
-                                .clickable { userFocusRequester.requestFocus() }
-                                .onGloballyPositioned { 
-                                    val current = coordinates["YOU"] ?: PersonaConnectionPoints()
-                                    coordinates["YOU"] = current.copy(uph = it.positionInRoot())
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            UserPersona(
-                                nickname = userNickname,
-                                emoji = userEmoji,
-                                airIsStill = airIsStill,
-                                onNicknameChange = onUserNicknameChange,
-                                focusRequester = userFocusRequester
-                            )
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.04f))
+                                    .clickable { userFocusRequester.requestFocus() }
+                                    .onGloballyPositioned { 
+                                        val current = coordinates["YOU"] ?: PersonaConnectionPoints()
+                                        coordinates["YOU"] = current.copy(uph = it.positionInRoot())
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                UserPersona(
+                                    nickname = userNickname,
+                                    emoji = userEmoji,
+                                    airIsStill = airIsStill,
+                                    onNicknameChange = onUserNicknameChange,
+                                    focusRequester = userFocusRequester
+                                )
+                            }
+                            Text(text = "RESET", fontSize = 5.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                         }
-                        Text(text = "RESET", fontSize = 5.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                     }
                 }
             }
@@ -828,7 +846,7 @@ fun BlukitInput(
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
                     Text(
-                        text = if (isReadOnly) "FILTER MODE: READ ONLY" else if (isFilterActive) "ROAR TO ALL..." else "SPREAD A VIBE...",
+                        text = if (isReadOnly) "FOCUS VIBES: READ ONLY" else if (isFilterActive) "VIBE TO ALL..." else "SPREAD A VIBE...",
                         color = Color.White.copy(alpha = 0.3f),
                         style = MaterialTheme.typography.bodyMedium
                     )

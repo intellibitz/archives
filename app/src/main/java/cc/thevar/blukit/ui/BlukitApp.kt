@@ -168,8 +168,8 @@ fun BlukitApp(
 
     var messageText by remember { mutableStateOf("") }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
-    val roarsCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { it.receiverId.isNullOrBlank() } }
-    val vibesCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { !it.receiverId.isNullOrBlank() } }
+    val allVibesCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { it.receiverId.isNullOrBlank() } }
+    val secureVibesCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { !it.receiverId.isNullOrBlank() } }
 
     val config = LocalConfiguration.current
     val isLandscape = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -308,7 +308,7 @@ fun BlukitApp(
                                         }
                                     }, 
                                     onDeviceLongClick = { selectedPersonaForMenu = it }, 
-                                    onBroadcastMessage = bluetoothViewModel::roar, 
+                                    onBroadcastMessage = bluetoothViewModel::spreadVibe, 
                                     onDeleteVibe = viewModel::deleteVibe, 
                                     onBlockUser = viewModel::blockUser, 
                                     onUnblockUser = viewModel::unblockUser,
@@ -412,17 +412,16 @@ fun BlukitApp(
                     onMessageChange = { messageText = it },
                     onSend = { 
                         if (messageText.isNotBlank()) { 
-                            bluetoothViewModel.roar(messageText, currentRoute is Route.Vibes)
+                            bluetoothViewModel.spreadVibe(messageText, currentRoute is Route.Vibes)
                             messageText = ""
                             focusManager.clearFocus() 
                         } 
                     },
-                    vibeCount = roarsCount + vibesCount,
+                    vibeCount = allVibesCount + secureVibesCount,
                     airIsStill = airIsStill,
                     incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
                     selectedDevices = bluetoothState.crowd.selectedDevices,
                     isNoiseFilterActive = isNoiseFilterActive,
-                    vibedPeers = bluetoothState.crowd.vibedPeers,
                     onClearHistory = viewModel::clearChatHistory,
                     onAcceptLink = bluetoothViewModel::acceptLink, 
                     onDenyLink = bluetoothViewModel::denyLink,
@@ -480,7 +479,6 @@ fun BlukitHub(
     incomingLinkRequests: Set<P2PDevice>, 
     selectedDevices: Set<String>, 
     isNoiseFilterActive: Boolean,
-    vibedPeers: Set<String> = emptySet(),
     onClearHistory: () -> Unit,
     onAcceptLink: (P2PDevice) -> Unit, 
     onDenyLink: (P2PDevice) -> Unit, 
@@ -516,22 +514,6 @@ fun BlukitHub(
                     }
                 }
                 
-                if (isNoiseFilterActive && currentRoute is Route.Blukit) {
-                    val focusText = if (vibedPeers.isEmpty()) {
-                        "FOCUS MODE: ALL PERSONAS DISPLAYED (DEFAULT)"
-                    } else {
-                        "FOCUS MODE: FILTERING BY PERSONA SELECTION"
-                    }
-                    Text(
-                        text = focusText,
-                        fontSize = 7.sp,
-                        fontWeight = FontWeight.Black,
-                        color = StealthPrimary.copy(alpha = 0.5f),
-                        letterSpacing = 1.sp,
-                        modifier = Modifier.padding(top = 4.dp, start = 8.dp)
-                    )
-                }
-
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 // VIBE REQUEST Row

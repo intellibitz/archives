@@ -124,9 +124,9 @@ class SupremePowerManager(
             users == 0 -> "MAKE PEOPLE VIBE"
             users > 15 -> "CROWD ROAR: MESH DENSE"
             harmony < 0.3f -> "BLUKIT NEARBY: SPREAD VIBES"
-            users > 10 && harmony > 0.8f -> "CROWD ROAR"
+            users > 10 && harmony > 0.8f -> "VIBE RESONANCE"
             links == 0 && users > 0 -> "CROWD ENERGY"
-            msgs > 100 -> "BLUKIT ROAR"
+            msgs > 100 -> "VIBE FLOW"
             else -> "MAKE PEOPLE VIBE"
         }
     }

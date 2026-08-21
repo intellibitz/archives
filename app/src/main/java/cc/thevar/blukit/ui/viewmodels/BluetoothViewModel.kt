@@ -219,15 +219,15 @@ class BluetoothViewModel(
         }
     }
 
-    fun roar(message: String, isPrivate: Boolean) {
+    fun spreadVibe(message: String, isPrivate: Boolean) {
         viewModelScope.launch {
             if (isPrivate) {
-                // Send to all connected links (Private Group Vibe)
+                // Send to all connected links (Private Group Vibes)
                 state.value.session.connectedLinks.forEach { vibeId ->
                     p2pController.sendMessage(message, vibeId)
                 }
             } else {
-                // Public Roar
+                // All Vibes (Public)
                 p2pController.broadcastMessage(message)
             }
         }
