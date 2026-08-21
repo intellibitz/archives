@@ -177,6 +177,7 @@ fun BlukitApp(
 
     val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
     var highlightedUserId by remember { mutableStateOf<String?>(null) }
+    var showAirIsStillDialog by remember { mutableStateOf(false) }
     
     LaunchedEffect(highlightedUserId) {
         if (highlightedUserId != null) {
@@ -412,9 +413,13 @@ fun BlukitApp(
                     onMessageChange = { messageText = it },
                     onSend = { 
                         if (messageText.isNotBlank()) { 
-                            bluetoothViewModel.spreadVibe(messageText, currentRoute is Route.Vibes)
-                            messageText = ""
-                            focusManager.clearFocus() 
+                            if (airIsStill) {
+                                showAirIsStillDialog = true
+                            } else {
+                                bluetoothViewModel.spreadVibe(messageText, currentRoute is Route.Vibes)
+                                messageText = ""
+                                focusManager.clearFocus() 
+                            }
                         } 
                     },
                     vibeCount = allVibesCount + secureVibesCount,
@@ -462,6 +467,18 @@ fun BlukitApp(
                     onBlock = { viewModel.blockUser(menuId) },
                     onUnblock = { viewModel.unblockUser(menuId) },
                     onDismiss = { selectedPersonaForMenu = null }
+                )
+            }
+
+            if (showAirIsStillDialog) {
+                ConfirmationDialog(
+                    title = "AIR IS STILL",
+                    text = "BLUKIT RADIOS ARE SILENT. AWAKEN BLUETOOTH OR GRANT PERMISSIONS TO SPREAD VIBES.",
+                    onConfirm = { 
+                        showAirIsStillDialog = false
+                        permissionState.launchMultiplePermissionRequest()
+                    },
+                    onDismiss = { showAirIsStillDialog = false }
                 )
             }
         }

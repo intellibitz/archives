@@ -863,7 +863,7 @@ fun BlukitInput(
         }
         IconButton(
             onClick = onSend,
-            enabled = value.isNotBlank() && !airIsStill && !isReadOnly,
+            enabled = value.isNotBlank() && !isReadOnly,
             modifier = Modifier.size(32.dp)
         ) {
             Icon(
