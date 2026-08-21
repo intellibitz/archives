@@ -385,8 +385,9 @@ private fun VibeNodes(
             val xOffset = (radiusValue * cos(angle)).toFloat().dp
             val yOffset = (radiusValue * sin(angle)).toFloat().dp
 
-            val isImportant = isVibed || isTied || isSelected
-            val noiseDimAlpha = if (isFilterMode && !isImportant) 0.05f else 1f
+            val isFocused = isVibed || isTied || isSelected
+            val isBroadFocus = isFilterMode && vibedPeers.isEmpty()
+            val noiseDimAlpha = if (isFilterMode && !isFocused && !isBroadFocus) 0.05f else 1f
 
             Box(modifier = Modifier.graphicsLayer { alpha = noiseDimAlpha }) {
                 // Better Filter Visuals: Glimmers (Dots) vs Blossoms (Nodes)

@@ -422,6 +422,7 @@ fun BlukitApp(
                     incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
                     selectedDevices = bluetoothState.crowd.selectedDevices,
                     isNoiseFilterActive = isNoiseFilterActive,
+                    vibedPeers = bluetoothState.crowd.vibedPeers,
                     onClearHistory = viewModel::clearChatHistory,
                     onAcceptLink = bluetoothViewModel::acceptLink, 
                     onDenyLink = bluetoothViewModel::denyLink,
@@ -479,6 +480,7 @@ fun BlukitHub(
     incomingLinkRequests: Set<P2PDevice>, 
     selectedDevices: Set<String>, 
     isNoiseFilterActive: Boolean,
+    vibedPeers: Set<String> = emptySet(),
     onClearHistory: () -> Unit,
     onAcceptLink: (P2PDevice) -> Unit, 
     onDenyLink: (P2PDevice) -> Unit, 
@@ -515,8 +517,13 @@ fun BlukitHub(
                 }
                 
                 if (isNoiseFilterActive && currentRoute is Route.Blukit) {
+                    val focusText = if (vibedPeers.isEmpty()) {
+                        "FOCUS MODE: ALL PERSONAS DISPLAYED (DEFAULT)"
+                    } else {
+                        "FOCUS MODE: FILTERING BY PERSONA SELECTION"
+                    }
                     Text(
-                        text = "LISTENING TO FOCUS • ROARING TO ALL",
+                        text = focusText,
                         fontSize = 7.sp,
                         fontWeight = FontWeight.Black,
                         color = StealthPrimary.copy(alpha = 0.5f),

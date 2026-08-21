@@ -539,22 +539,25 @@ fun UnifiedPersonaCloud(
                 // ANCHOR 4: ALL Toggle (Top)
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     val isAllSelected = currentRoute is Route.Blukit
+                    val isFocusAll = isNoiseFilterActive && vibedPeersCount == 0
+                    val isGlowing = isAllSelected || isFocusAll
+                    
                     IconButton(
                         onClick = { onNavigate(Route.Blukit) },
                         modifier = Modifier
                             .size(42.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isAllSelected) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                            .border(1.dp, if (isAllSelected) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
+                            .background(if (isGlowing) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                            .border(1.dp, if (isGlowing) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Groups,
                             contentDescription = "All",
-                            tint = if (isAllSelected) StealthPrimary else Color.White.copy(alpha = 0.4f),
+                            tint = if (isGlowing) StealthPrimary else Color.White.copy(alpha = 0.4f),
                             modifier = Modifier.size(16.dp)
                         )
                     }
-                    Text(text = "ALL", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isAllSelected) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    Text(text = "ALL", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isGlowing) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -572,7 +575,8 @@ fun UnifiedPersonaCloud(
                         val device = sortedDevices[index]
                         val isSelected = device.id in selectedDevices
                         val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
-                        val dimAlpha = if (isNoiseFilterActive && !isFocused) 0.1f else 1f
+                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty()
+                        val dimAlpha = if (isNoiseFilterActive && !isFocused && !isBroadFocus) 0.1f else 1f
                         
                         PersonaCloudItem(
                             device = device,
@@ -696,7 +700,8 @@ fun UnifiedPersonaCloud(
                     sortedDevices.forEach { device ->
                         val isSelected = device.id in selectedDevices
                         val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
-                        val dimAlpha = if (isNoiseFilterActive && !isFocused) 0.1f else 1f
+                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty()
+                        val dimAlpha = if (isNoiseFilterActive && !isFocused && !isBroadFocus) 0.1f else 1f
                         
                         PersonaCloudItem(
                             device = device,
