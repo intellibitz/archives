@@ -40,10 +40,11 @@ Everything you need, everywhere you are:
 ---
 
 ## 🛠️ LEAN ARCHITECTURE
-1. **Zero-Bulk**: Custom-drawn `Canvas` widgets replace bulky Material components. Powered by **Koin** for lightweight, reflection-free Dependency Injection.
-2. **Offline-First**: 100% phone-to-phone radios. No internet. No data collection.
-3. **Everything Vanishes**: Vibes and ephemeral groups clear out every 12 hours.
-4. **Sentient Radios**: Radio activity is strictly gated by harmony and power states.
+1. **Bluetooth-First**: blukit works on Bluetooth. If WiFi is granted, blukit uses it. If Location is granted, blukit uses it. Range and discovery scale dynamically with available radios.
+2. **Zero-Bulk**: Custom-drawn `Canvas` widgets replace bulky Material components. Powered by **Koin** for lightweight Dependency Injection.
+3. **Offline-First**: 100% phone-to-phone radios. No internet. No data collection.
+4. **Everything Vanishes**: Vibes and ephemeral groups clear out every 12 hours.
+5. **Sentient Radios**: Radio activity is strictly gated by harmony and power states.
 
 ---
 

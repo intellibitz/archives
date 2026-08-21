@@ -16,61 +16,64 @@ import kotlinx.coroutines.flow.asStateFlow
 class SpreadPermissionManager(private val context: Context) {
 
     /**
-     * The essential list of permissions required for the sentient field to function.
-     * Adapts automatically based on the device's SDK level.
+     * The Essential list: blukit works on Bluetooth.
      */
-    val requiredPermissions: List<String> = buildList {
-        // Bluetooth permissions (Android 12+)
+    val essentialPermissions: List<String> = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
             add(Manifest.permission.BLUETOOTH_ADVERTISE)
             add(Manifest.permission.BLUETOOTH_CONNECT)
         }
-        
-        // Location is mandatory for Nearby Connections / BLE Scanning on all versions
-        // but the usage differs. Fine Location is the "Gold Standard".
+    }
+
+    /**
+     * The Optional list: blukit uses WiFi and Location if granted.
+     */
+    val optionalPermissions: List<String> = buildList {
         add(Manifest.permission.ACCESS_FINE_LOCATION)
         add(Manifest.permission.ACCESS_COARSE_LOCATION)
 
-        // WiFi Proximity (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             add(Manifest.permission.NEARBY_WIFI_DEVICES)
         }
 
-        // Local Network (Android 15+) - Handle as optional/resilient
         if (Build.VERSION.SDK_INT >= 35) {
             add("android.permission.ACCESS_LOCAL_NETWORK")
         }
     }
 
-    private val _permissionsGranted = MutableStateFlow(checkAllGranted())
+    /**
+     * All permissions that the app can request.
+     */
+    val requiredPermissions: List<String> = essentialPermissions + optionalPermissions
+
+    private val _permissionsGranted = MutableStateFlow(checkEssentialGranted())
     val permissionsGranted: StateFlow<Boolean> = _permissionsGranted.asStateFlow()
 
     /**
-     * Checks if all required permissions are currently healthy.
+     * Checks if all required permissions (essential + optional) are healthy.
      */
-    fun checkAllGranted(): Boolean {
-        val allOk = requiredPermissions.all { permission ->
+    fun checkAllGranted(): Boolean = checkListGranted(requiredPermissions)
+
+    /**
+     * Checks if essential permissions (Bluetooth) are healthy.
+     */
+    fun checkEssentialGranted(): Boolean = checkListGranted(essentialPermissions)
+
+    private fun checkListGranted(permissions: List<String>): Boolean {
+        return permissions.all { permission ->
             val isGranted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
             val isRuntime = isRuntimePermission(permission)
-            
-            android.util.Log.d("BlukitPermissions", "Check $permission: granted=$isGranted, runtime=$isRuntime")
-            
-            if (!isGranted && !isRuntime) {
-                return@all true 
-            }
-            
+            if (!isGranted && !isRuntime) return@all true 
             isGranted
         }
-        android.util.Log.i("BlukitPermissions", "Final health check: $allOk")
-        return allOk
     }
 
     /**
      * Updates the internal flow state. Call this after a permission request result.
      */
     fun refresh() {
-        _permissionsGranted.value = checkAllGranted()
+        _permissionsGranted.value = checkEssentialGranted()
     }
 
     private fun isRuntimePermission(permission: String): Boolean {

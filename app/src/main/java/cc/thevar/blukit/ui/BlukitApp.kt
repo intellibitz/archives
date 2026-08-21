@@ -35,7 +35,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.rotate
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.foundation.BorderStroke
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -77,23 +80,30 @@ fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissions
     val context = LocalContext.current
     val manager: cc.thevar.blukit.data.system.SpreadPermissionManager = koinInject()
     var allGranted by remember { mutableStateOf(manager.checkAllGranted()) }
+    var essentialGranted by remember { mutableStateOf(manager.checkEssentialGranted()) }
     var shouldShowRationale by remember { mutableStateOf(permissions.any { (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true }) }
+    
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         allGranted = manager.checkAllGranted()
+        essentialGranted = manager.checkEssentialGranted()
         shouldShowRationale = permissions.any { (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true }
         manager.refresh()
     }
+    
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             allGranted = manager.checkAllGranted()
+            essentialGranted = manager.checkEssentialGranted()
             shouldShowRationale = permissions.any { (context as? Activity)?.shouldShowRequestPermissionRationale(it) == true }
             manager.refresh()
         }
     }
-    return remember(allGranted, shouldShowRationale) {
+    
+    return remember(allGranted, essentialGranted, shouldShowRationale) {
         object : SpreadPermissionsState {
             override val allPermissionsGranted: Boolean = allGranted
+            override val essentialPermissionsGranted: Boolean = essentialGranted
             override val shouldShowRationale: Boolean = shouldShowRationale
             override fun launchMultiplePermissionRequest() { launcher.launch(permissions.toTypedArray()) }
         }
@@ -102,6 +112,7 @@ fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissions
 
 interface SpreadPermissionsState {
     val allPermissionsGranted: Boolean
+    val essentialPermissionsGranted: Boolean
     val shouldShowRationale: Boolean
     fun launchMultiplePermissionRequest()
 }
@@ -144,6 +155,16 @@ fun BlukitApp(
     val listDetailSceneStrategy = rememberListDetailSceneStrategy<NavKey>()
     val personaFocusRequester = remember { FocusRequester() }
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+    val locationPermissionGranted = remember(permissionState.allPermissionsGranted) {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+    
+    // blukit works on bluetooth. if wifi is granted, blukit uses it. if location is granted, blukit uses it.
+    // THE AIR IS STILL only if the mission cannot proceed (BT hardware off, Essential Perms missing, or mandatory Location missing)
+    val airIsStill = !bluetoothState.harmony.isBluetoothEnabled || 
+                     !permissionState.essentialPermissionsGranted ||
+                     (isLocationMandatory && (!bluetoothState.harmony.isLocationEnabled || !locationPermissionGranted))
+
     var messageText by remember { mutableStateOf("") }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     val roarsCount = remember(bluetoothState.session.messages) { bluetoothState.session.messages.count { it.receiverId.isNullOrBlank() } }
@@ -324,7 +345,7 @@ fun BlukitApp(
                             userEmoji = emoji,
                             onUserNicknameChange = viewModel::saveNickname,
                             userFocusRequester = personaFocusRequester,
-                            airIsStill = !bluetoothState.harmony.isBluetoothEnabled || (isLocationMandatory && !bluetoothState.harmony.isLocationEnabled) || !permissionState.allPermissionsGranted
+                            airIsStill = airIsStill
                         )
                     }
                 }
@@ -342,7 +363,7 @@ fun BlukitApp(
                     } 
                 },
                 vibeCount = roarsCount + mineCount,
-                airIsStill = !bluetoothState.harmony.isBluetoothEnabled || (isLocationMandatory && !bluetoothState.harmony.isLocationEnabled) || !permissionState.allPermissionsGranted,
+                airIsStill = airIsStill,
                 incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
                 selectedDevices = bluetoothState.crowd.selectedDevices,
                 isNoiseFilterActive = isNoiseFilterActive,
