@@ -522,7 +522,6 @@ fun UnifiedPersonaCloud(
     airIsStill: Boolean = false,
     isNoiseFilterActive: Boolean = false,
     vibedPeersCount: Int = 0,
-    onToggleNoiseFilter: (Boolean) -> Unit = {},
     onClearHistory: () -> Unit = {},
     showFilter: Boolean = false,
     currentRoute: Route = Route.Blukit,
@@ -558,11 +557,11 @@ fun UnifiedPersonaCloud(
             ) {
                 // ANCHOR 1: ALL Toggle (Top)
                 val isAllSelected = currentRoute is Route.Blukit
-                val isFocusAll = isNoiseFilterActive && vibedPeersCount == 0 && subjectId == null
-                val isGlowingAll = (isAllSelected && subjectId == null) || isFocusAll
+                val isFocusAll = vibedPeersCount == 0 && subjectId == null
+                val isGlowingAll = isAllSelected && isFocusAll
                 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    if (isFocusAll) {
+                    if (isAllSelected && isFocusAll) {
                         Text(text = "ALL VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary, modifier = Modifier.padding(end = 4.dp))
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -585,45 +584,13 @@ fun UnifiedPersonaCloud(
                     }
                 }
 
-                // ANCHOR 2: FOCUS Toggle
-                Spacer(modifier = Modifier.height(8.dp))
-                val isSelectiveFocus = (isNoiseFilterActive && vibedPeersCount > 0) || subjectId != null
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    if (isSelectiveFocus && subjectId == null) {
-                        Text(text = "FOCUS VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary, modifier = Modifier.padding(end = 4.dp))
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        val isFocusGlowing = isNoiseFilterActive || subjectId != null
-                        IconButton(
-                            onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isFocusGlowing) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                                .border(1.dp, if (isFocusGlowing) StealthPrimary else Color.Transparent, RoundedCornerShape(12.dp))
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                if (vibedPeersCount > 0) {
-                                    Text(text = vibedPeersCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                                }
-                                Icon(
-                                    imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
-                                    contentDescription = "Filter", 
-                                    tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                        Text(text = "FOCUS", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
-                    }
-                }
-
-                // ANCHOR 3: VIBES Toggle
+                // ANCHOR 2: VIBES Toggle
                 Spacer(modifier = Modifier.height(8.dp))
                 val isVibesSelected = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     if (isVibesSelected) {
-                        Text(text = if (currentRoute is Route.VibeDetail) "SECURE VIBE" else "VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthRose, modifier = Modifier.padding(end = 4.dp))
+                        val vibesStatus = if (currentRoute is Route.VibeDetail) "SECURE VIBE" else "VIBES"
+                        Text(text = vibesStatus, fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthRose, modifier = Modifier.padding(end = 4.dp))
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(
@@ -649,7 +616,7 @@ fun UnifiedPersonaCloud(
                     }
                 }
 
-                // ANCHOR 4: RESET (User Persona)
+                // ANCHOR 3: RESET (User Persona)
                 if (userFocusRequester != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -693,8 +660,8 @@ fun UnifiedPersonaCloud(
                         val device = sortedDevices[index]
                         val isSelected = device.id in selectedDevices
                         val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks || device.id == subjectId || device.persistentId == subjectId
-                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty() && subjectId == null
-                        val dimAlpha = if (isNoiseFilterActive && !isFocused && !isBroadFocus) 0.1f else 1f
+                        val isSelectiveFocus = vibedPeers.isNotEmpty() || subjectId != null
+                        val dimAlpha = if (isSelectiveFocus && !isFocused) 0.1f else 1f
                         
                         PersonaCloudItem(
                             device = device,

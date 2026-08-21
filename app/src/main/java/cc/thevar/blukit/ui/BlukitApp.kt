@@ -389,15 +389,12 @@ fun BlukitApp(
                                 onUserNicknameChange = viewModel::saveNickname,
                                     userFocusRequester = personaFocusRequester,
                                 airIsStill = airIsStill,
-                                isNoiseFilterActive = isNoiseFilterActive,
                                 vibedPeersCount = bluetoothState.crowd.vibedPeers.size,
-                                onToggleNoiseFilter = { isNoiseFilterActive = it },
                                 onClearHistory = viewModel::clearChatHistory,
                                 showFilter = currentRoute is Route.Blukit,
                                 currentRoute = (currentRoute as? Route) ?: initialRoute,
                                 subjectId = focusedSenderId,
                                 onNavigate = { route -> 
-                                    if (route == Route.Blukit) isNoiseFilterActive = false
                                     if (currentRoute != route) { 
                                         focusManager.clearFocus() 
                                         backStack.add(route) 
@@ -427,7 +424,7 @@ fun BlukitApp(
                     airIsStill = airIsStill,
                     incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
                     selectedDevices = bluetoothState.crowd.selectedDevices,
-                    isNoiseFilterActive = isNoiseFilterActive,
+                    vibedPeers = bluetoothState.crowd.vibedPeers,
                     onClearHistory = viewModel::clearChatHistory,
                     onAcceptLink = bluetoothViewModel::acceptLink, 
                     onDenyLink = bluetoothViewModel::denyLink,
@@ -496,7 +493,7 @@ fun BlukitHub(
     airIsStill: Boolean,
     incomingLinkRequests: Set<P2PDevice>, 
     selectedDevices: Set<String>, 
-    isNoiseFilterActive: Boolean,
+    vibedPeers: Set<String>,
     onClearHistory: () -> Unit,
     onAcceptLink: (P2PDevice) -> Unit, 
     onDenyLink: (P2PDevice) -> Unit, 
@@ -522,7 +519,7 @@ fun BlukitHub(
                         BlukitInput(
                             airIsStill = airIsStill, 
                             isReadOnly = false, 
-                            isFilterActive = isNoiseFilterActive,
+                            isFilterActive = vibedPeers.isNotEmpty(),
                             value = messageText, 
                             onValueChange = onMessageChange, 
                             onSend = onSend, 
