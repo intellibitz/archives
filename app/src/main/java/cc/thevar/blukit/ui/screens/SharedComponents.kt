@@ -712,18 +712,19 @@ fun UnifiedPersonaCloud(
                 modifier = Modifier
                     .padding(vertical = 4.dp, horizontal = 4.dp)
                     .fillMaxHeight(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                FlowColumn(
+                // Others (Scrollable, anchored just above the user)
+                androidx.compose.foundation.lazy.LazyColumn(
                     modifier = Modifier
-                        .weight(1f, fill = false)
+                        .weight(1f)
                         .testTag("PersonaCloudColumn"),
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom),
-                    maxItemsInEachColumn = 10
+                    reverseLayout = true
                 ) {
-                    sortedDevices.forEach { device ->
+                    items(sortedDevices.size) { index ->
+                        val device = sortedDevices[index]
                         PersonaCloudItem(
                             device = device,
                             activeSenders = activeSenders,
@@ -735,6 +736,8 @@ fun UnifiedPersonaCloud(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // ANCHOR: User Persona - Fixed at the bottom
                 if (userFocusRequester != null) {
