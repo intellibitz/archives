@@ -102,7 +102,7 @@ class SupremePowerManager(
                 if (msgs.isNotEmpty()) {
                     val last = msgs.last()
                     if (System.currentTimeMillis() - last.timestamp < 1000) {
-                        emitBreeze("VIBE ROAR")
+                        emitBreeze("VIBE SPREAD")
                     }
                 }
             }.launchIn(scope)
@@ -122,7 +122,7 @@ class SupremePowerManager(
         
         return when {
             users == 0 -> "MAKE PEOPLE VIBE"
-            users > 15 -> "CROWD ROAR: MESH DENSE"
+            users > 15 -> "VIBE RESONANCE: MESH DENSE"
             harmony < 0.3f -> "BLUKIT NEARBY: SPREAD VIBES"
             users > 10 && harmony > 0.8f -> "VIBE RESONANCE"
             links == 0 && users > 0 -> "CROWD ENERGY"

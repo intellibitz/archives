@@ -536,7 +536,7 @@ fun UnifiedPersonaCloud(
                     .fillMaxHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ANCHOR 4: ALL Toggle (Top)
+                // ANCHOR 1: ALL Toggle (Top)
                 val isAllSelected = currentRoute is Route.Blukit
                 val isFocusAll = isNoiseFilterActive && vibedPeersCount == 0
                 val isGlowingAll = isAllSelected || isFocusAll
@@ -562,74 +562,6 @@ fun UnifiedPersonaCloud(
                             )
                         }
                         Text(text = "ALL", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isGlowingAll) StealthPrimary else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Others (Scrollable)
-                androidx.compose.foundation.lazy.LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("PersonaCloudColumn"),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom),
-                    reverseLayout = true
-                ) {
-                    items(sortedDevices.size) { index ->
-                        val device = sortedDevices[index]
-                        val isSelected = device.id in selectedDevices
-                        val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
-                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty()
-                        val dimAlpha = if (isNoiseFilterActive && !isFocused && !isBroadFocus) 0.1f else 1f
-                        
-                        PersonaCloudItem(
-                            device = device,
-                            activeSenders = activeSenders,
-                            connectedLinks = connectedLinks,
-                            vibedPeers = vibedPeers,
-                            isSelected = isSelected,
-                            onDeviceClick = onDeviceClick,
-                            onDeviceLongClick = onDeviceLongClick,
-                            isVertical = true,
-                            modifier = Modifier
-                                .graphicsLayer { alpha = dimAlpha }
-                                .onGloballyPositioned { 
-                                    val current = coordinates[device.id] ?: PersonaConnectionPoints()
-                                    coordinates[device.id] = current.copy(uph = it.positionInRoot())
-                                }
-                        )
-                    }
-                }
-
-                // ANCHOR 3: VIBES Toggle
-                Spacer(modifier = Modifier.height(8.dp))
-                val isVibesSelected = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    if (isVibesSelected) {
-                        Text(text = if (currentRoute is Route.VibeDetail) "SECURE VIBE" else "VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthRose, modifier = Modifier.padding(end = 4.dp))
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        IconButton(
-                            onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
-                                .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) },
-                                    onLongClick = { showClearHistoryDialog = true }
-                                )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Flare, 
-                                contentDescription = "Vibes", 
-                                tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        Text(text = "VIBES", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                     }
                 }
 
@@ -665,10 +597,40 @@ fun UnifiedPersonaCloud(
                     }
                 }
 
+                // ANCHOR 3: VIBES Toggle
                 Spacer(modifier = Modifier.height(8.dp))
+                val isVibesSelected = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    if (isVibesSelected) {
+                        Text(text = if (currentRoute is Route.VibeDetail) "SECURE VIBE" else "VIBES", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthRose, modifier = Modifier.padding(end = 4.dp))
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) }, 
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isVibesSelected) StealthRose.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f))
+                                .border(1.dp, if (isVibesSelected) StealthRose else Color.Transparent, RoundedCornerShape(12.dp))
+                                .combinedClickable(
+                                    onClick = { onNavigate(if (isVibesSelected) Route.Blukit else Route.Vibes) },
+                                    onLongClick = { showClearHistoryDialog = true }
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Flare, 
+                                contentDescription = "Vibes", 
+                                tint = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.4f), 
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Text(text = "VIBES", fontSize = 5.sp, fontWeight = FontWeight.Black, color = if (isVibesSelected) StealthRose else Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
+                    }
+                }
 
-                // ANCHOR 1: RESET (User Persona)
+                // ANCHOR 4: RESET (User Persona)
                 if (userFocusRequester != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Box(
@@ -693,6 +655,42 @@ fun UnifiedPersonaCloud(
                             }
                             Text(text = "RESET", fontSize = 5.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.2f), letterSpacing = 0.5.sp)
                         }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Others (Scrollable)
+                androidx.compose.foundation.lazy.LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("PersonaCloudColumn"),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top)
+                ) {
+                    items(sortedDevices.size) { index ->
+                        val device = sortedDevices[index]
+                        val isSelected = device.id in selectedDevices
+                        val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
+                        val isBroadFocus = isNoiseFilterActive && vibedPeers.isEmpty()
+                        val dimAlpha = if (isNoiseFilterActive && !isFocused && !isBroadFocus) 0.1f else 1f
+                        
+                        PersonaCloudItem(
+                            device = device,
+                            activeSenders = activeSenders,
+                            connectedLinks = connectedLinks,
+                            vibedPeers = vibedPeers,
+                            isSelected = isSelected,
+                            onDeviceClick = onDeviceClick,
+                            onDeviceLongClick = onDeviceLongClick,
+                            isVertical = true,
+                            modifier = Modifier
+                                .graphicsLayer { alpha = dimAlpha }
+                                .onGloballyPositioned { 
+                                    val current = coordinates[device.id] ?: PersonaConnectionPoints()
+                                    coordinates[device.id] = current.copy(uph = it.positionInRoot())
+                                }
+                        )
                     }
                 }
             }
