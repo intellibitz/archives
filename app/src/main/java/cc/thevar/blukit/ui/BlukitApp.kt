@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.compose.foundation.BorderStroke
@@ -159,8 +161,6 @@ fun BlukitApp(
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
     
-    // blukit works on bluetooth. if wifi is granted, blukit uses it. if location is granted, blukit uses it.
-    // THE AIR IS STILL only if the mission cannot proceed (BT hardware off, Essential Perms missing, or mandatory Location missing)
     val airIsStill = !bluetoothState.harmony.isBluetoothEnabled || 
                      !permissionState.essentialPermissionsGranted ||
                      (isLocationMandatory && (!bluetoothState.harmony.isLocationEnabled || !locationPermissionGranted))
@@ -174,231 +174,263 @@ fun BlukitApp(
     val isLandscape = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     var showManageDialog by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
+    val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            var focusedSenderId by remember { mutableStateOf<String?>(null) }
+    CompositionLocalProvider(LocalPersonaCoordinates provides personaCoordinates) {
+        Box(modifier = modifier.fillMaxSize()) {
+            FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
             
-            val topTitle = when {
-                focusedSenderId != null -> {
-                    val device = bluetoothState.crowd.scannedDevices.find { it.id == focusedSenderId || it.persistentId == focusedSenderId }
-                    device?.name?.uppercase() ?: "USER"
-                }
-                currentRoute is Route.Blukit -> "ALL"
-                currentRoute is Route.Mine -> "MINE"
-                currentRoute is Route.VibeDetail -> {
-                    val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
-                    group?.name ?: "VIBE"
-                }
-                else -> "BLUKIT"
-            }
-            
-            val topIcon = when {
-                focusedSenderId != null -> Icons.Rounded.Person
-                currentRoute is Route.Blukit -> Icons.Rounded.Groups
-                currentRoute is Route.Mine -> Icons.Rounded.Flare
-                currentRoute is Route.VibeDetail -> {
-                    val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
-                    if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing
-                }
-                else -> Icons.Rounded.Hub
-            }
-
-            BlukitHarmonyTopBar(
-                currentRoute = (currentRoute as? Route) ?: initialRoute,
-                onNavigate = { route -> 
-                    if (route == Route.Blukit) isNoiseFilterActive = false
-                    if (currentRoute != route) { 
-                        focusManager.clearFocus() 
-                        backStack.add(route) 
-                    } 
-                },
-                title = topTitle, 
-                icon = topIcon,
-                isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
-                isLocationOff = !bluetoothState.harmony.isLocationEnabled,
-                isWifiOff = !bluetoothState.harmony.isWifiEnabled,
-                isPermissionMissing = !permissionState.allPermissionsGranted,
-                isPermanentlyDenied = isPermanentlyDenied,
-                userCount = report.userCount,
-                isNoiseFilterActive = isNoiseFilterActive,
-                onToggleNoiseFilter = { isNoiseFilterActive = it },
-                isStealthMode = isStealthMode,
-                lowPowerMode = lowPowerMode,
-                vibeCount = roarsCount + mineCount,
-                onToggleStealth = viewModel::toggleStealth,
-                onToggleLowPower = viewModel::toggleLowPowerMode,
-                onClearHistory = viewModel::clearChatHistory,
-                onResetProfile = viewModel::logout,
-                onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
-                onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
-                onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
-                onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
-                onOpenSettings = { 
-                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { 
-                        data = Uri.fromParts("package", context.packageName, null)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }) 
-                },
-                onBack = if (focusedSenderId != null || currentRoute is Route.VibeDetail) { 
-                    { 
-                        if (focusedSenderId != null) focusedSenderId = null 
-                        else backStack.removeLastOrNull() 
-                    } 
-                } else null,
-                onManage = if (currentRoute is Route.VibeDetail) { { showManageDialog = true } } else null
-            )
-
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                val cloudDevices = bluetoothState.crowd.scannedDevices
-                val showUPH = (currentRoute is Route.Blukit || currentRoute is Route.Mine)
-
-                NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.fillMaxSize()) { key ->
-                    when (key) {
-                        Route.Blukit -> NavEntry(key) { 
-                            RipplesScreen(
-                                state = bluetoothState, 
-                                localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
-                                localNickname = nickname ?: "?", 
-                                localEmoji = emoji, 
-                                energySurge = energySurge, 
-                                lowPowerMode = lowPowerMode, 
-                                vibedPeers = bluetoothState.crowd.vibedPeers, 
-                                noiseFilterEnabled = isNoiseFilterActive,
-                                onStartScan = bluetoothViewModel::startScan, 
-                                onStopScan = bluetoothViewModel::stopScan, 
-                                onDeviceClick = { device -> 
-                                    val id = device.persistentId ?: device.id
-                                    viewModel.toggleVibePeer(id)
-                                    isNoiseFilterActive = true
-                                }, 
-                                onDeviceLongClick = { selectedPersonaForMenu = it }, 
-                                onBroadcastMessage = bluetoothViewModel::roar, 
-                                onDeleteVibe = viewModel::deleteVibe, 
-                                onBlockUser = viewModel::blockUser, 
-                                onUnblockUser = viewModel::unblockUser,
-                                onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) },
-                                hasSidebar = showUPH,
-                                externalFocusedId = focusedSenderId,
-                                onFocusChange = { focusedSenderId = it }
-                            ) 
-                        }
-                        Route.Mine -> NavEntry(key) { 
-                            ConversationsScreen(
-                                state = bluetoothState, 
-                                onVibeClick = { backStack.add(Route.VibeDetail(it.id)) }, 
-                                onDeleteGroup = bluetoothViewModel::deleteGroup,
-                                onAcceptLink = bluetoothViewModel::acceptLink,
-                                onDenyLink = bluetoothViewModel::denyLink
-                            ) 
-                        }
-                        is Route.VibeDetail -> NavEntry(key) { 
-                            TieScreen(
-                                state = bluetoothState, 
-                                localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
-                                localEmoji = emoji, 
-                                groupId = key.groupId, 
-                                onDisconnect = bluetoothViewModel::disconnect, 
-                                onSendMessage = bluetoothViewModel::sendMessage, 
-                                onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, 
-                                onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, 
-                                onBlockUser = viewModel::blockUser, 
-                                onAddMember = bluetoothViewModel::addMemberToGroup,
-                                onRemoveMember = bluetoothViewModel::removeMemberFromGroup,
-                                showMemberManagement = showManageDialog,
-                                onDismissManagement = { showManageDialog = false },
-                                onEnterPip = onEnterPip,
-                                externalFocusedId = focusedSenderId,
-                                onFocusChange = { focusedSenderId = it }
-                            ) 
-                        }
-                        else -> NavEntry(key) { Text("Unknown") }
+            // Visual Connections Layer
+            Canvas(modifier = Modifier.fillMaxSize().zIndex(5f)) {
+                personaCoordinates.forEach { (id, points) ->
+                    val color = if (id == "YOU") StealthPrimary else if (id in bluetoothState.session.connectedLinks) StealthRose else StealthPrimary.copy(alpha = 0.4f)
+                    
+                    // UPH -> Field
+                    if (points.uph != null && points.field != null) {
+                        drawLine(
+                            color = color.copy(alpha = 0.15f),
+                            start = points.uph + Offset(26.dp.toPx(), 26.dp.toPx()),
+                            end = points.field + Offset(32.dp.toPx(), 32.dp.toPx()),
+                            strokeWidth = 1.dp.toPx(),
+                            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                        )
                     }
-                }
-
-                Box(modifier = Modifier.align(Alignment.BottomEnd).padding(end = 4.dp, bottom = 4.dp)) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = showUPH,
-                        enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                        exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
-                    ) {
-                        UnifiedPersonaCloud(
-                            devices = cloudDevices, 
-                            vibedPeers = bluetoothState.crowd.vibedPeers, 
-                            connectedLinks = bluetoothState.session.connectedLinks, 
-                            activeBubbles = bluetoothState.session.messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
-                            onDeviceClick = { device -> 
-                                if (bluetoothState.crowd.selectedDevices.isEmpty()) { 
-                                    val id = device.persistentId ?: device.id
-                                    viewModel.toggleVibePeer(id)
-                                    if (currentRoute is Route.Blukit) {
-                                        isNoiseFilterActive = true
-                                    }
-                                } else { 
-                                    bluetoothViewModel.toggleDeviceSelection(device.id) 
-                                } 
-                            }, 
-                            onDeviceLongClick = { selectedPersonaForMenu = it },
-                            isVertical = true,
-                            userNickname = nickname ?: "?",
-                            userEmoji = emoji,
-                            onUserNicknameChange = viewModel::saveNickname,
-                            userFocusRequester = personaFocusRequester,
-                            airIsStill = airIsStill
+                    
+                    // Field -> Ticker
+                    if (points.field != null && points.ticker != null) {
+                        drawLine(
+                            color = color.copy(alpha = 0.1f),
+                            start = points.field + Offset(32.dp.toPx(), 32.dp.toPx()),
+                            end = points.ticker + Offset(20.dp.toPx(), 20.dp.toPx()),
+                            strokeWidth = 0.5.dp.toPx()
                         )
                     }
                 }
             }
 
-            BlukitHub(
-                currentRoute = (currentRoute as? Route) ?: initialRoute,
-                messageText = messageText,
-                onMessageChange = { messageText = it },
-                onSend = { 
-                    if (messageText.isNotBlank()) { 
-                        bluetoothViewModel.roar(messageText, currentRoute is Route.Mine)
-                        messageText = ""
-                        focusManager.clearFocus() 
-                    } 
-                },
-                vibeCount = roarsCount + mineCount,
-                airIsStill = airIsStill,
-                incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
-                selectedDevices = bluetoothState.crowd.selectedDevices,
-                isNoiseFilterActive = isNoiseFilterActive,
-                onClearHistory = viewModel::clearChatHistory,
-                onResetProfile = viewModel::logout,
-                onAcceptLink = bluetoothViewModel::acceptLink, 
-                onDenyLink = bluetoothViewModel::denyLink,
-                onStartSideVibe = { 
-                    val members = bluetoothState.crowd.selectedDevices
-                    if (members.all { it in bluetoothState.session.connectedLinks }) { 
-                        val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false)
-                        backStack.add(Route.VibeDetail(gid)) 
-                    } 
-                },
-                onStartTie = { 
-                    val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.crowd.selectedDevices, isTie = true)
-                    backStack.add(Route.VibeDetail(gid)) 
-                },
-                onClearSelection = bluetoothViewModel::clearSelection
-            )
-        }
+            Column(modifier = Modifier.fillMaxSize()) {
+                var focusedSenderId by remember { mutableStateOf<String?>(null) }
+                
+                val topTitle = when {
+                    focusedSenderId != null -> {
+                        val device = bluetoothState.crowd.scannedDevices.find { it.id == focusedSenderId || it.persistentId == focusedSenderId }
+                        device?.name?.uppercase() ?: "USER"
+                    }
+                    currentRoute is Route.Blukit -> "ALL"
+                    currentRoute is Route.Mine -> "MINE"
+                    currentRoute is Route.VibeDetail -> {
+                        val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
+                        group?.name ?: "VIBE"
+                    }
+                    else -> "BLUKIT"
+                }
+                
+                val topIcon = when {
+                    focusedSenderId != null -> Icons.Rounded.Person
+                    currentRoute is Route.Blukit -> Icons.Rounded.Groups
+                    currentRoute is Route.Mine -> Icons.Rounded.Flare
+                    currentRoute is Route.VibeDetail -> {
+                        val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
+                        if (group?.type == VibeGroup.TYPE_TIE) Icons.Rounded.Flare else Icons.Rounded.Hearing
+                    }
+                    else -> Icons.Rounded.Hub
+                }
 
-        if (selectedPersonaForMenu != null) {
-            PersonaOptionsMenu(
-                device = selectedPersonaForMenu!!,
-                isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.vibedPeers,
-                isTied = selectedPersonaForMenu!!.id in bluetoothState.session.connectedLinks,
-                isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.blockedUsers,
-                onFocus = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.toggleVibePeer(id); selectedPersonaForMenu = null },
-                onVibe = { if (selectedPersonaForMenu!!.id !in bluetoothState.session.connectedLinks) bluetoothViewModel.connectToDevice(selectedPersonaForMenu!!); selectedPersonaForMenu = null },
-                onWhisper = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)); selectedPersonaForMenu = null },
-                onBlock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.blockUser(id); selectedPersonaForMenu = null },
-                onUnblock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.unblockUser(id); selectedPersonaForMenu = null },
-                onDismiss = { selectedPersonaForMenu = null }
-            )
+                BlukitHarmonyTopBar(
+                    currentRoute = (currentRoute as? Route) ?: initialRoute,
+                    onNavigate = { route -> 
+                        if (route == Route.Blukit) isNoiseFilterActive = false
+                        if (currentRoute != route) { 
+                            focusManager.clearFocus() 
+                            backStack.add(route) 
+                        } 
+                    },
+                    title = topTitle, 
+                    icon = topIcon,
+                    isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
+                    isLocationOff = !bluetoothState.harmony.isLocationEnabled,
+                    isWifiOff = !bluetoothState.harmony.isWifiEnabled,
+                    isPermissionMissing = !permissionState.allPermissionsGranted,
+                    isPermanentlyDenied = isPermanentlyDenied,
+                    userCount = report.userCount,
+                    isNoiseFilterActive = isNoiseFilterActive,
+                    onToggleNoiseFilter = { isNoiseFilterActive = it },
+                    isStealthMode = isStealthMode,
+                    lowPowerMode = lowPowerMode,
+                    vibeCount = roarsCount + mineCount,
+                    onToggleStealth = viewModel::toggleStealth,
+                    onToggleLowPower = viewModel::toggleLowPowerMode,
+                    onClearHistory = viewModel::clearChatHistory,
+                    onResetProfile = viewModel::logout,
+                    onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
+                    onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
+                    onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
+                    onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
+                    onOpenSettings = { 
+                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { 
+                            data = Uri.fromParts("package", context.packageName, null)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }) 
+                    },
+                    onBack = if (focusedSenderId != null || currentRoute is Route.VibeDetail) { 
+                        { 
+                            if (focusedSenderId != null) focusedSenderId = null 
+                            else backStack.removeLastOrNull() 
+                        } 
+                    } else null,
+                    onManage = if (currentRoute is Route.VibeDetail) { { showManageDialog = true } } else null
+                )
+
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    val cloudDevices = bluetoothState.crowd.scannedDevices
+                    val showUPH = (currentRoute is Route.Blukit || currentRoute is Route.Mine)
+
+                    NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.fillMaxSize()) { key ->
+                        when (key) {
+                            Route.Blukit -> NavEntry(key) { 
+                                RipplesScreen(
+                                    state = bluetoothState, 
+                                    localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
+                                    localNickname = nickname ?: "?", 
+                                    localEmoji = emoji, 
+                                    energySurge = energySurge, 
+                                    lowPowerMode = lowPowerMode, 
+                                    vibedPeers = bluetoothState.crowd.vibedPeers, 
+                                    noiseFilterEnabled = isNoiseFilterActive,
+                                    onStartScan = bluetoothViewModel::startScan, 
+                                    onStopScan = bluetoothViewModel::stopScan, 
+                                    onDeviceClick = { device -> 
+                                        val id = device.persistentId ?: device.id
+                                        viewModel.toggleVibePeer(id)
+                                        isNoiseFilterActive = true
+                                    }, 
+                                    onDeviceLongClick = { selectedPersonaForMenu = it }, 
+                                    onBroadcastMessage = bluetoothViewModel::roar, 
+                                    onDeleteVibe = viewModel::deleteVibe, 
+                                    onBlockUser = viewModel::blockUser, 
+                                    onUnblockUser = viewModel::unblockUser,
+                                    onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) },
+                                    hasSidebar = showUPH,
+                                    externalFocusedId = focusedSenderId,
+                                    onFocusChange = { focusedSenderId = it }
+                                ) 
+                            }
+                            Route.Mine -> NavEntry(key) { 
+                                ConversationsScreen(
+                                    state = bluetoothState, 
+                                    onVibeClick = { backStack.add(Route.VibeDetail(it.id)) }, 
+                                    onDeleteGroup = bluetoothViewModel::deleteGroup,
+                                    onAcceptLink = bluetoothViewModel::acceptLink,
+                                    onDenyLink = bluetoothViewModel::denyLink
+                                ) 
+                            }
+                            is Route.VibeDetail -> NavEntry(key) { 
+                                TieScreen(
+                                    state = bluetoothState, 
+                                    localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
+                                    localEmoji = emoji, 
+                                    groupId = key.groupId, 
+                                    onDisconnect = bluetoothViewModel::disconnect, 
+                                    onSendMessage = bluetoothViewModel::sendMessage, 
+                                    onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, 
+                                    onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, 
+                                    onBlockUser = viewModel::blockUser, 
+                                    onAddMember = bluetoothViewModel::addMemberToGroup,
+                                    onRemoveMember = bluetoothViewModel::removeMemberFromGroup,
+                                    showMemberManagement = showManageDialog,
+                                    onDismissManagement = { showManageDialog = false },
+                                    onEnterPip = onEnterPip,
+                                    externalFocusedId = focusedSenderId,
+                                    onFocusChange = { focusedSenderId = it }
+                                ) 
+                            }
+                            else -> NavEntry(key) { Text("Unknown") }
+                        }
+                    }
+
+                    Box(modifier = Modifier.align(Alignment.BottomEnd).padding(end = 4.dp, bottom = 4.dp)) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = showUPH,
+                            enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                            exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+                        ) {
+                            UnifiedPersonaCloud(
+                                devices = cloudDevices, 
+                                vibedPeers = bluetoothState.crowd.vibedPeers, 
+                                connectedLinks = bluetoothState.session.connectedLinks, 
+                                activeBubbles = bluetoothState.session.messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
+                                onDeviceClick = { device -> 
+                                    if (bluetoothState.crowd.selectedDevices.isEmpty()) { 
+                                        val id = device.persistentId ?: device.id
+                                        viewModel.toggleVibePeer(id)
+                                        if (currentRoute is Route.Blukit) {
+                                            isNoiseFilterActive = true
+                                        }
+                                    } else { 
+                                        bluetoothViewModel.toggleDeviceSelection(device.id) 
+                                    } 
+                                }, 
+                                onDeviceLongClick = { selectedPersonaForMenu = it },
+                                isVertical = true,
+                                userNickname = nickname ?: "?",
+                                userEmoji = emoji,
+                                onUserNicknameChange = viewModel::saveNickname,
+                                userFocusRequester = personaFocusRequester,
+                                airIsStill = airIsStill
+                            )
+                        }
+                    }
+                }
+
+                BlukitHub(
+                    currentRoute = (currentRoute as? Route) ?: initialRoute,
+                    messageText = messageText,
+                    onMessageChange = { messageText = it },
+                    onSend = { 
+                        if (messageText.isNotBlank()) { 
+                            bluetoothViewModel.roar(messageText, currentRoute is Route.Mine)
+                            messageText = ""
+                            focusManager.clearFocus() 
+                        } 
+                    },
+                    vibeCount = roarsCount + mineCount,
+                    airIsStill = airIsStill,
+                    incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
+                    selectedDevices = bluetoothState.crowd.selectedDevices,
+                    isNoiseFilterActive = isNoiseFilterActive,
+                    onClearHistory = viewModel::clearChatHistory,
+                    onResetProfile = viewModel::logout,
+                    onAcceptLink = bluetoothViewModel::acceptLink, 
+                    onDenyLink = bluetoothViewModel::denyLink,
+                    onStartSideVibe = { 
+                        val members = bluetoothState.crowd.selectedDevices
+                        if (members.all { it in bluetoothState.session.connectedLinks }) { 
+                            val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false)
+                            backStack.add(Route.VibeDetail(gid)) 
+                        } 
+                    },
+                    onStartTie = { 
+                        val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.crowd.selectedDevices, isTie = true)
+                        backStack.add(Route.VibeDetail(gid)) 
+                    },
+                    onClearSelection = bluetoothViewModel::clearSelection
+                )
+            }
+
+            if (selectedPersonaForMenu != null) {
+                PersonaOptionsMenu(
+                    device = selectedPersonaForMenu!!,
+                    isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.vibedPeers,
+                    isTied = selectedPersonaForMenu!!.id in bluetoothState.session.connectedLinks,
+                    isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.blockedUsers,
+                    onFocus = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.toggleVibePeer(id); selectedPersonaForMenu = null },
+                    onVibe = { if (selectedPersonaForMenu!!.id !in bluetoothState.session.connectedLinks) bluetoothViewModel.connectToDevice(selectedPersonaForMenu!!); selectedPersonaForMenu = null },
+                    onWhisper = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)); selectedPersonaForMenu = null },
+                    onBlock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.blockUser(id); selectedPersonaForMenu = null },
+                    onUnblock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.unblockUser(id); selectedPersonaForMenu = null },
+                    onDismiss = { selectedPersonaForMenu = null }
+                )
+            }
         }
     }
 }

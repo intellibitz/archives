@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -145,7 +147,21 @@ fun RipplesField(
 
         val finalEnergy = (collectiveEnergy + externalEnergy).coerceAtMost(1.0f)
 
-    Box(modifier = modifier.fillMaxSize().background(Color.Transparent), contentAlignment = Alignment.BottomCenter) {
+    val coordinates = LocalPersonaCoordinates.current
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Transparent)
+            .onGloballyPositioned { 
+                val centerPos = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f)
+                val current = coordinates["YOU"] ?: PersonaConnectionPoints()
+                // Adjust so that +32dp offset in BlukitApp Canvas reaches exact center
+                val fieldAnchor = centerPos - Offset(with(density) { 32.dp.toPx() }, with(density) { 32.dp.toPx() })
+                coordinates["YOU"] = current.copy(field = fieldAnchor)
+            }, 
+        contentAlignment = Alignment.BottomCenter
+    ) {
         if (drawBackground) {
             StadiumBackground(energy = finalEnergy, lowPowerMode = lowPowerMode)
         }
@@ -400,6 +416,7 @@ private fun VibeDot(
     yOffset: Dp,
     onClick: () -> Unit
 ) {
+    val coordinates = LocalPersonaCoordinates.current
     val infiniteTransition = rememberInfiniteTransition(label = "DotAnim")
     val dotAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -411,6 +428,10 @@ private fun VibeDot(
     Box(
         modifier = Modifier
             .offset(xOffset, yOffset)
+            .onGloballyPositioned { 
+                val current = coordinates[device.id] ?: PersonaConnectionPoints()
+                coordinates[device.id] = current.copy(field = it.positionInRoot())
+            }
             .size(32.dp) // Large touch area
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -447,6 +468,7 @@ private fun VibeNode(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val coordinates = LocalPersonaCoordinates.current
     val infiniteTransition = rememberInfiniteTransition(label = "NodeAnim")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
@@ -458,7 +480,16 @@ private fun VibeNode(
     val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
     val proximityGlow = (device.proximityFactor * 0.4f).coerceAtLeast(0f)
 
-    Box(modifier = Modifier.offset(xOffset, yOffset).size(nodeSize * 2f), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .offset(xOffset, yOffset)
+            .onGloballyPositioned { 
+                val current = coordinates[device.id] ?: PersonaConnectionPoints()
+                coordinates[device.id] = current.copy(field = it.positionInRoot())
+            }
+            .size(nodeSize * 2f), 
+        contentAlignment = Alignment.Center
+    ) {
         // High-Fidelity Halo
         Surface(
             shape = CircleShape,

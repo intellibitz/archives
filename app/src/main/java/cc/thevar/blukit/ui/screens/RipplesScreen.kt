@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -327,39 +329,53 @@ private fun AnimatedVibeItem(
     onLongClick: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val coordinates = LocalPersonaCoordinates.current
+    val rowId = if (isMe) "YOU" else msg.senderId
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp)
+            .onGloballyPositioned { 
+                val current = coordinates[rowId] ?: PersonaConnectionPoints()
+                coordinates[rowId] = current.copy(ticker = it.positionInRoot())
+            }
             .animateContentSize()
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = if (isMe) onDelete else onLongClick
             )
             .background(
-                if (isMutual) StealthRose.copy(alpha = 0.05f) 
+                if (isMe) StealthPrimary.copy(alpha = 0.12f)
+                else if (isMutual) StealthRose.copy(alpha = 0.05f) 
                 else if (isVibed) StealthPrimary.copy(alpha = 0.03f) 
                 else Color.Transparent,
-                RoundedCornerShape(4.dp)
+                RoundedCornerShape(8.dp)
             )
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .border(
+                if (isMe) 1.5.dp else 0.dp,
+                if (isMe) StealthPrimary.copy(alpha = 0.3f) else Color.Transparent,
+                RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
         // PREFIX: (YOU) or PERSONA
         if (isMe) {
-            Text(
-                text = "(YOU)",
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Black,
-                color = StealthPrimary.copy(alpha = 0.6f),
-                letterSpacing = 0.5.sp
-            )
-            Text(
-                text = " : ",
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White.copy(alpha = 0.1f)
-            )
+            Surface(
+                color = StealthPrimary,
+                shape = CircleShape,
+                modifier = Modifier.padding(end = 6.dp)
+            ) {
+                Text(
+                    text = "YOU",
+                    fontSize = 7.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    letterSpacing = 0.5.sp
+                )
+            }
         }
 
         // PERSONA: Emoji + Name
