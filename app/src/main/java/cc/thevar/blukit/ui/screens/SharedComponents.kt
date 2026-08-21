@@ -246,27 +246,29 @@ fun BlukitHarmonyTopBar(
             }
         }
 
-        // ROW 2: Screen Title
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = title.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 0.5.sp,
-                        color = (if (title == "VIBES") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                        fontSize = 10.sp
+        // ROW 2: Screen Title (Only if not main UPH anchors)
+        if (title != "ALL" && title != "VIBES") {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = StealthPrimary.copy(alpha = 0.8f),
+                        modifier = Modifier.size(16.dp)
                     )
-                )
-                if (onManage != null) {
-                    IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
-                        Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                    Text(
+                        text = title.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.5.sp,
+                            color = StealthPrimary.copy(alpha = 0.8f),
+                            fontSize = 10.sp
+                        )
+                    )
+                    if (onManage != null) {
+                        IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
+                            Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                        }
                     }
                 }
             }
