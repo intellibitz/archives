@@ -31,7 +31,7 @@ Your private space for mutual resonances and intimate whispers.
 
 ## 📱 UNIVERSAL ECOSYSTEM
 Everything you need, everywhere you are:
-- **Harmony Top Bar**: A unified 2-row dashboard. Row 1 hosts Alerts, `V I (B) E S` branding with centered Privacy access, and Radios. Row 2 hosts core actions (Dark/Eco/Filter/Reset) and Navigation.
+- **Harmony Top Bar**: A unified 2-row dashboard. Row 1 hosts Environment Toggles (Dark/Eco), `V I (B) E S` branding with centered Privacy access, and Radios. Row 2 hosts Status Alerts and core actions (Filter/Reset/Clear) alongside Navigation.
 - **Wear OS Support**: Native Wear OS app to see nearby vibes directly on your wrist with high-efficiency scaling lists.
 - **Grounded Hub**: Minimalist bottom anchor for high-priority vibe input, providing a clean surface for spreading vibes.
 - **Vertical Persona Sidebar**: A scrollable sidebar on the right where nearby personas are anchored by your own identity at the bottom.

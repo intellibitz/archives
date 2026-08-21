@@ -238,30 +238,12 @@ fun BlukitHarmonyTopBar(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // ROW 1: Alerts (Left) | Branding (Center) | Radios (Right)
+        // ROW 1: Environment (Left) | Branding (Center) | Radios (Right)
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            // LEFT: Alerts
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                if (isPermissionMissing) {
-                    Surface(
-                        onClick = { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() },
-                        color = Color.White,
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
-                    ) {
-                        Text(
-                            text = if (isPermanentlyDenied) "SETTINGS" else "ALLOW",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.Red),
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
-                } else if (isStill || isWeak) {
-                    Text(
-                        text = if (isStill) "AIR IS STILL" else "SEARCHING",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
-                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
-                    )
-                }
+            // LEFT: DARK, ECO
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.Start) {
+                EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
+                EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
             }
 
             // CENTER: Branding + Privacy
@@ -308,13 +290,32 @@ fun BlukitHarmonyTopBar(
             }
         }
 
-        // ROW 2: Actions (Left) | Tabs/Title + Privacy (Right)
+        // ROW 2: Alerts + Actions (Left) | Tabs/Title (Right)
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            // LEFT ACTIONS: Dark, Eco, Filter, Delete, Reset
+            // LEFT ACTIONS: Alerts + Filter, Delete, Reset
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth)
-                EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
-                
+                // Alerts integrated into Row 2 Actions
+                if (isPermissionMissing) {
+                    Surface(
+                        onClick = { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() },
+                        color = Color.White,
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                    ) {
+                        Text(
+                            text = if (isPermanentlyDenied) "SETTINGS" else "ALLOW",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, fontWeight = FontWeight.Black, color = Color.Red),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                        )
+                    }
+                } else if (isStill || isWeak) {
+                    Text(
+                        text = if (isStill) "AIR IS STILL" else "SEARCHING",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill) Color.Red else Color.Yellow),
+                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                    )
+                }
+
                 if (currentRoute is Route.Blukit) {
                     IconButton(
                         onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
