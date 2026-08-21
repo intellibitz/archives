@@ -185,6 +185,16 @@ fun BlukitApp(
             }
 
             BlukitHarmonyTopBar(
+                currentRoute = (currentRoute as? Route) ?: initialRoute,
+                onNavigate = { route -> 
+                    if (route == Route.Blukit) isNoiseFilterActive = false
+                    if (currentRoute != route) { 
+                        focusManager.clearFocus()
+                        backStack.add(route) 
+                    } 
+                },
+                isNoiseFilterActive = isNoiseFilterActive,
+                onToggleNoiseFilter = { isNoiseFilterActive = it },
                 title = topTitle, 
                 icon = topIcon,
                 isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
@@ -336,14 +346,6 @@ fun BlukitApp(
                 incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
                 selectedDevices = bluetoothState.crowd.selectedDevices,
                 isNoiseFilterActive = isNoiseFilterActive,
-                onToggleNoiseFilter = { isNoiseFilterActive = it },
-                onNavigate = { route -> 
-                    if (route == Route.Blukit) isNoiseFilterActive = false
-                    if (currentRoute != route) { 
-                        focusManager.clearFocus()
-                        backStack.add(route) 
-                    } 
-                },
                 onAcceptLink = bluetoothViewModel::acceptLink, 
                 onDenyLink = bluetoothViewModel::denyLink,
                 onStartSideVibe = { 
@@ -388,9 +390,7 @@ fun BlukitHub(
     airIsStill: Boolean,
     incomingLinkRequests: Set<P2PDevice>, 
     selectedDevices: Set<String>, 
-    isNoiseFilterActive: Boolean, 
-    onToggleNoiseFilter: (Boolean) -> Unit, 
-    onNavigate: (Route) -> Unit, 
+    isNoiseFilterActive: Boolean,
     onAcceptLink: (P2PDevice) -> Unit, 
     onDenyLink: (P2PDevice) -> Unit, 
     onStartSideVibe: () -> Unit, 
@@ -417,14 +417,8 @@ fun BlukitHub(
                             onValueChange = onMessageChange, 
                             onSend = onSend, 
                             vibeCount = vibeCount, 
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        if (currentRoute is Route.Blukit) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            IconButton(onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, modifier = Modifier.size(48.dp).background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape).border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)) {
-                                Icon(imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, contentDescription = "Filter", tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
-                            }
-                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -454,11 +448,7 @@ fun BlukitHub(
                     }
                 }
 
-                VisualEnergyPicker(
-                    currentRoute = currentRoute, 
-                    onNavigate = onNavigate
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                // Hub logo and privacy
                 val localContext = LocalContext.current
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     Icon(painter = painterResource(id = R.drawable.ic_blukit_logo), contentDescription = null, tint = StealthPrimary.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
@@ -473,28 +463,6 @@ fun BlukitHub(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun VisualEnergyPicker(
-    currentRoute: Route, 
-    onNavigate: (Route) -> Unit
-) {
-    Row(modifier = Modifier.fillMaxWidth().background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(14.dp)).padding(2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        HubTab(label = "ALL", icon = Icons.Rounded.Groups, isSelected = currentRoute is Route.Blukit, weight = 1.2f, testTag = "HubTab_ALL", onClick = { onNavigate(Route.Blukit) })
-        Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.08f)))
-        HubTab(label = "MINE", icon = Icons.Rounded.Flare, isSelected = currentRoute is Route.Mine, weight = 1.2f, testTag = "HubTab_MINE", onClick = { onNavigate(Route.Mine) })
-    }
-}
-
-@Composable
-private fun RowScope.HubTab(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, isSelected: Boolean, weight: Float, testTag: String, onClick: () -> Unit) {
-    Box(modifier = Modifier.height(52.dp).weight(weight).clip(RoundedCornerShape(12.dp)).background(if (isSelected) Color.White.copy(alpha = 0.08f) else Color.Transparent).clickable { onClick() }.testTag(testTag), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Icon(imageVector = icon, contentDescription = null, tint = if (isSelected) (if (label == "MINE") StealthRose else StealthPrimary) else Color.White.copy(alpha = 0.25f), modifier = Modifier.size(if (weight > 1.2f) 20.dp else 16.dp))
-            Text(text = label, fontSize = if (weight > 1.2f) 10.sp else 7.sp, fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold, color = if (isSelected) (if (label == "MINE") StealthRose else StealthPrimary) else Color.White.copy(alpha = 0.25f), letterSpacing = if (weight > 1.2f) 1.sp else 0.sp)
         }
     }
 }

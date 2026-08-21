@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -105,7 +106,72 @@ fun RadioB(
 }
 
 @Composable
+fun TopHubTabs(
+    currentRoute: Route,
+    onNavigate: (Route) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(12.dp))
+            .padding(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        TopHubTab(
+            label = "ALL",
+            icon = Icons.Rounded.Groups,
+            isSelected = currentRoute is Route.Blukit,
+            onClick = { onNavigate(Route.Blukit) }
+        )
+        Box(modifier = Modifier.width(1.dp).height(12.dp).background(Color.White.copy(alpha = 0.08f)))
+        TopHubTab(
+            label = "MINE",
+            icon = Icons.Rounded.Flare,
+            isSelected = currentRoute is Route.Mine,
+            onClick = { onNavigate(Route.Mine) }
+        )
+    }
+}
+
+@Composable
+private fun TopHubTab(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (isSelected) Color.White.copy(alpha = 0.1f) else Color.Transparent)
+            .clickable { onClick() }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (isSelected) (if (label == "MINE") StealthRose else StealthPrimary) else Color.White.copy(alpha = 0.3f),
+            modifier = Modifier.size(10.dp)
+        )
+        Text(
+            text = label,
+            fontSize = 7.sp,
+            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
+            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.3f),
+            letterSpacing = 0.5.sp
+        )
+    }
+}
+
+@Composable
 fun BlukitHarmonyTopBar(
+    currentRoute: Route,
+    onNavigate: (Route) -> Unit,
+    isNoiseFilterActive: Boolean,
+    onToggleNoiseFilter: (Boolean) -> Unit,
     title: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isBluetoothOff: Boolean,
@@ -158,38 +224,9 @@ fun BlukitHarmonyTopBar(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // ROW 1: Radios | Delete/Reset
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            // LEFT: Back + Radios
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (onBack != null) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                    }
-                }
-                StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
-                StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
-                StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
-            }
-
-            // RIGHT: DELETE, RESET
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                IconButton(onClick = { showClearHistoryDialog = true }, modifier = Modifier.size(28.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f))) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = vibeCount.toString(), fontSize = 5.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                        Icon(Icons.Rounded.DeleteSweep, contentDescription = "Delete", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
-                    }
-                }
-
-                IconButton(onClick = { showLogoutDialog = true }, modifier = Modifier.size(28.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f))) {
-                    Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                }
-            }
-        }
-
-        // ROW 2: Alerts (Left) | Branding (Center)
-        Box(modifier = Modifier.fillMaxWidth().heightIn(min = 24.dp), contentAlignment = Alignment.Center) {
-            // LEFT: Status Text / Permission required (Moved to Row 2)
+        // ROW 1: Alerts (Left) | Branding (Center)
+        Box(modifier = Modifier.fillMaxWidth().heightIn(min = 20.dp), contentAlignment = Alignment.Center) {
+            // LEFT: Status Text / Permission required
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
                 if (isPermissionMissing) {
                     Surface(
@@ -215,11 +252,56 @@ fun BlukitHarmonyTopBar(
             
             // CENTER: Branding
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "SPREAD", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
-                Spacer(modifier = Modifier.width(8.dp))
-                RadioB(modifier = Modifier.size(28.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "VIBES", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp))
+                Text(text = "V I", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
+                Spacer(modifier = Modifier.width(6.dp))
+                RadioB(modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(text = "E S", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp))
+            }
+        }
+
+        // ROW 2: Radios | Delete/Reset
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            // LEFT: Back + Radios
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (onBack != null) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
+                    }
+                }
+                StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
+                StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenWifi)
+                StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
+            }
+
+            // RIGHT: DELETE, RESET
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IconButton(
+                    onClick = { showClearHistoryDialog = true }, 
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.12f))
+                        .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (vibeCount > 0) {
+                            Text(text = vibeCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                        }
+                        Icon(Icons.Rounded.DeleteSweep, contentDescription = "Delete", tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
+                    }
+                }
+
+                IconButton(
+                    onClick = { showLogoutDialog = true }, 
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.12f))
+                        .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape)
+                ) {
+                    Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset", tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(20.dp))
+                }
             }
         }
 
@@ -231,26 +313,49 @@ fun BlukitHarmonyTopBar(
                 EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower)
             }
 
-            // RIGHT: Screen Title (ALL, MINE, etc.)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                    modifier = Modifier.size(12.dp)
-                )
-                Text(
-                    text = title.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 0.5.sp,
-                        color = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
-                        fontSize = 8.sp
-                    )
-                )
-                if (onManage != null) {
-                    IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
-                        Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+            // RIGHT: Screen Title (ALL, MINE, etc.) OR Tabs
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (currentRoute is Route.Blukit) {
+                    IconButton(
+                        onClick = { onToggleNoiseFilter(!isNoiseFilterActive) }, 
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(if (isNoiseFilterActive) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f), CircleShape)
+                            .border(1.dp, if (isNoiseFilterActive) StealthPrimary else Color.Transparent, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = if (isNoiseFilterActive) Icons.Rounded.FilterCenterFocus else Icons.Rounded.Tune, 
+                            contentDescription = "Filter", 
+                            tint = if (isNoiseFilterActive) StealthPrimary else Color.White.copy(alpha = 0.4f), 
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                if (currentRoute is Route.Blukit || currentRoute is Route.Mine) {
+                    TopHubTabs(currentRoute = currentRoute, onNavigate = onNavigate)
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = title.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.5.sp,
+                                color = (if (title == "MINE") StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                                fontSize = 10.sp
+                            )
+                        )
+                        if (onManage != null) {
+                            IconButton(onClick = onManage, modifier = Modifier.size(20.dp)) {
+                                Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                            }
+                        }
                     }
                 }
             }
@@ -263,12 +368,12 @@ fun BlukitHarmonyTopBar(
 
 @Composable
 fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) { 
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 2.dp)) { 
-        Text(text = label, fontSize = 5.sp, fontWeight = FontWeight.Black, color = if(checked) StealthPrimary else Color.White.copy(alpha = 0.3f), letterSpacing = 0.5.sp)
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 4.dp)) { 
+        Text(text = label, fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(checked) StealthPrimary else Color.White.copy(alpha = 0.4f), letterSpacing = 0.5.sp)
         Switch(
             checked = checked, 
             onCheckedChange = onCheckedChange, 
-            modifier = Modifier.scale(0.45f).height(16.dp), 
+            modifier = Modifier.scale(0.6f).height(24.dp), 
             colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary, checkedTrackColor = StealthPrimary.copy(alpha = 0.5f))
         ) 
     } 
@@ -296,12 +401,20 @@ private fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, is
         isWeak -> Color.Yellow
         else -> Color.Green 
     }
-    Icon(
-        imageVector = icon, 
-        contentDescription = null, 
-        tint = tint.copy(alpha = 0.7f), 
-        modifier = Modifier.size(14.dp).clickable { onClick() }
-    ) 
+    Box(
+        modifier = Modifier
+            .size(28.dp)
+            .clip(CircleShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon, 
+            contentDescription = null, 
+            tint = tint.copy(alpha = 0.8f), 
+            modifier = Modifier.size(18.dp)
+        ) 
+    }
 }
 
 @Composable

@@ -30,9 +30,9 @@ Your private space for mutual resonances and intimate whispers.
 
 ## 📱 UNIVERSAL ECOSYSTEM
 Everything you need, everywhere you are:
-- **Harmony Top Bar**: A unified system dashboard managing hardware radios (Bluetooth, Wi-Fi, Location) and environment settings (Dark/Eco modes) in a clean 3-row architecture.
+- **Harmony Top Bar**: A unified system dashboard managing navigation (ALL/MINE), noise filtering, hardware radios, and environment settings in a sleek 3-row architecture. Branding is anchored at the top as `V I (B) E S`.
 - **Wear OS Support**: Native Wear OS app to see nearby vibes directly on your wrist with high-efficiency scaling lists.
-- **Grounded Hub**: Full-width Hub at the absolute bottom provides a solid foundation for navigation and high-priority vibe input.
+- **Grounded Hub**: Minimalist bottom anchor for high-priority vibe input, providing a clean surface for spreading vibes.
 - **Vertical Persona Sidebar**: A scrollable sidebar on the right where nearby personas are anchored by your own identity at the top.
 - **Home Screen Widget**: Modern Glance-based widget showing live "Vibe Counts" around you with one-tap access to the field.
 - **Keyboard-Aware**: The Hub surface floats elegantly above the keyboard using `imePadding()`.
