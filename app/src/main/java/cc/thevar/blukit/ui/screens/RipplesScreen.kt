@@ -66,6 +66,7 @@ fun RipplesScreen(
     onBlockUser: (String) -> Unit,
     onUnblockUser: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
+    onToggleSelection: (String) -> Unit,
     onClearFocus: () -> Unit,
     hasSidebar: Boolean = false,
     externalFocusedId: String? = null,
@@ -182,12 +183,17 @@ fun RipplesScreen(
                 isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in vibedPeers,
                 isTied = selectedPersonaForMenu!!.id in state.session.connectedLinks,
                 isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in state.crowd.blockedUsers,
+                isSelected = selectedPersonaForMenu!!.id in state.crowd.selectedDevices,
                 onFocus = {
                     onDeviceClick(selectedPersonaForMenu!!)
                     selectedPersonaForMenu = null
                 },
                 onVibe = {
                     onDeviceLongClick(selectedPersonaForMenu!!)
+                    selectedPersonaForMenu = null
+                },
+                onSelect = {
+                    onToggleSelection(selectedPersonaForMenu!!.id)
                     selectedPersonaForMenu = null
                 },
                 onWhisper = {
@@ -330,6 +336,7 @@ private fun VibingVibesTicker(
                 val senderDevice = remember(msg.senderId, state.crowd.scannedDevices) {
                     state.crowd.scannedDevices.find { it.id == msg.senderId || it.persistentId == msg.senderId }
                 }
+                val isSelected = senderDevice?.id in state.crowd.selectedDevices
                 
                     AnimatedVibeItem(
                         msg = msg,
@@ -338,6 +345,7 @@ private fun VibingVibesTicker(
                         vibeCount = vibeCounts[msg.senderId] ?: 1,
                         isVibed = msg.senderId in vibedPeers,
                         isMutual = msg.senderId in state.session.connectedLinks,
+                        isSelected = isSelected,
                         isGrouped = isGrouped,
                         timestamp = timeFormatter.format(Date(msg.timestamp)),
                         onClick = { onVibeClick(msg.senderId) },
@@ -358,6 +366,7 @@ private fun AnimatedVibeItem(
     vibeCount: Int,
     isVibed: Boolean,
     isMutual: Boolean,
+    isSelected: Boolean = false,
     isGrouped: Boolean,
     timestamp: String,
     onClick: () -> Unit,
@@ -383,14 +392,15 @@ private fun AnimatedVibeItem(
             )
             .background(
                 if (isMe) StealthPrimary.copy(alpha = 0.12f)
+                else if (isSelected) Color.White.copy(alpha = 0.1f)
                 else if (isMutual) StealthRose.copy(alpha = 0.05f) 
                 else if (isVibed) StealthPrimary.copy(alpha = 0.03f) 
                 else Color.Transparent,
                 RoundedCornerShape(8.dp)
             )
             .border(
-                if (isMe) 1.5.dp else 0.dp,
-                if (isMe) StealthPrimary.copy(alpha = 0.3f) else Color.Transparent,
+                if (isMe) 1.5.dp else if (isSelected) 1.dp else 0.dp,
+                if (isMe) StealthPrimary.copy(alpha = 0.3f) else if (isSelected) Color.White else Color.Transparent,
                 RoundedCornerShape(8.dp)
             )
             .padding(horizontal = 8.dp, vertical = 6.dp)
@@ -513,6 +523,13 @@ private fun AnimatedVibeItem(
                 contentDescription = null,
                 tint = StealthRose.copy(alpha = 0.4f),
                 modifier = Modifier.size(10.dp)
+            )
+        } else if (isSelected) {
+            Icon(
+                imageVector = Icons.Rounded.CheckCircle,
+                contentDescription = "Selected",
+                tint = Color.White,
+                modifier = Modifier.size(12.dp)
             )
         }
     }

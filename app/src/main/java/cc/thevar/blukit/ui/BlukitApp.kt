@@ -302,15 +302,26 @@ fun BlukitApp(
                                     onStartScan = bluetoothViewModel::startScan, 
                                     onStopScan = bluetoothViewModel::stopScan, 
                                     onDeviceClick = { device -> 
-                                        val id = device.persistentId ?: device.id
-                                        viewModel.toggleVibePeer(id)
+                                        if (bluetoothState.crowd.selectedDevices.isNotEmpty()) {
+                                            bluetoothViewModel.toggleDeviceSelection(device.id)
+                                        } else {
+                                            val id = device.persistentId ?: device.id
+                                            viewModel.toggleVibePeer(id)
+                                        }
                                     }, 
-                                    onDeviceLongClick = { selectedPersonaForMenu = it }, 
+                                    onDeviceLongClick = { device -> 
+                                        if (bluetoothState.crowd.selectedDevices.isEmpty()) {
+                                            selectedPersonaForMenu = device
+                                        } else {
+                                            bluetoothViewModel.toggleDeviceSelection(device.id)
+                                        }
+                                    }, 
                                     onBroadcastMessage = bluetoothViewModel::roar, 
                                     onDeleteVibe = viewModel::deleteVibe, 
                                     onBlockUser = viewModel::blockUser, 
                                     onUnblockUser = viewModel::unblockUser,
                                     onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) },
+                                    onToggleSelection = bluetoothViewModel::toggleDeviceSelection,
                                     onClearFocus = { 
                                         viewModel.clearVibedPeers()
                                         isNoiseFilterActive = false
@@ -363,6 +374,7 @@ fun BlukitApp(
                                 devices = cloudDevices, 
                                 vibedPeers = bluetoothState.crowd.vibedPeers, 
                                 connectedLinks = bluetoothState.session.connectedLinks, 
+                                selectedDevices = bluetoothState.crowd.selectedDevices,
                                 activeBubbles = bluetoothState.session.messages.map { BubbleData(it.senderId, it.content, it.timestamp, it.messageId, !it.receiverId.isNullOrBlank()) }, 
                                 onDeviceClick = { device -> 
                                     if (bluetoothState.crowd.selectedDevices.isEmpty()) { 
@@ -372,7 +384,13 @@ fun BlukitApp(
                                         bluetoothViewModel.toggleDeviceSelection(device.id) 
                                     } 
                                 }, 
-                                onDeviceLongClick = { selectedPersonaForMenu = it },
+                                onDeviceLongClick = { device -> 
+                                    if (bluetoothState.crowd.selectedDevices.isEmpty()) {
+                                        selectedPersonaForMenu = device
+                                    } else {
+                                        bluetoothViewModel.toggleDeviceSelection(device.id)
+                                    }
+                                },
                                 isVertical = true,
                                 userNickname = nickname ?: "?",
                                 userEmoji = emoji,
@@ -429,8 +447,10 @@ fun BlukitApp(
                     isVibed = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.vibedPeers,
                     isTied = selectedPersonaForMenu!!.id in bluetoothState.session.connectedLinks,
                     isBlocked = (selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id) in bluetoothState.crowd.blockedUsers,
+                    isSelected = selectedPersonaForMenu!!.id in bluetoothState.crowd.selectedDevices,
                     onFocus = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.toggleVibePeer(id); selectedPersonaForMenu = null },
                     onVibe = { if (selectedPersonaForMenu!!.id !in bluetoothState.session.connectedLinks) bluetoothViewModel.connectToDevice(selectedPersonaForMenu!!); selectedPersonaForMenu = null },
+                    onSelect = { bluetoothViewModel.toggleDeviceSelection(selectedPersonaForMenu!!.id); selectedPersonaForMenu = null },
                     onWhisper = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)); selectedPersonaForMenu = null },
                     onBlock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.blockUser(id); selectedPersonaForMenu = null },
                     onUnblock = { val id = selectedPersonaForMenu!!.persistentId ?: selectedPersonaForMenu!!.id; viewModel.unblockUser(id); selectedPersonaForMenu = null },
@@ -468,7 +488,7 @@ fun BlukitHub(
         AnimatedVisibility(visible = selectedDevices.isNotEmpty(), enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             Row(modifier = Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onStartSideVibe, colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black), shape = RoundedCornerShape(12.dp)) { Text("WHISPER", fontWeight = FontWeight.Black, fontSize = 10.sp) }
-                Button(onClick = onStartTie, colors = ButtonDefaults.buttonColors(containerColor = StealthRose, contentColor = Color.White), shape = RoundedCornerShape(12.dp)) { Text("START VIBE", fontWeight = FontWeight.Black, fontSize = 10.sp) }
+                Button(onClick = onStartTie, colors = ButtonDefaults.buttonColors(containerColor = StealthRose, contentColor = Color.White), shape = RoundedCornerShape(12.dp)) { Text("VIBE REQUEST", fontWeight = FontWeight.Black, fontSize = 10.sp) }
                 IconButton(onClick = onClearSelection, modifier = Modifier.background(Color.White.copy(alpha = 0.1f), CircleShape)) { Icon(Icons.Rounded.Close, tint = Color.White, contentDescription = "Cancel") }
             }
         }

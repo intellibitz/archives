@@ -8,7 +8,7 @@ blukit is for any crowd. Sports venues, movie halls, universities, subways—any
 
 ## 👥 ALL (Public Vibes)
 The **ALL** field is where you see everyone around you.
-- **Condensed Ticker**: Experience a clutter-free field with **One-User-One-Entry** grouping. See the latest resonance from every nearby person at a glance. Your own vibes are clearly differentiated with a distinct "YOU" pill and background.
+- **Condensed Ticker**: Experience a clutter-free field with **One-User-One-Entry** grouping. See the latest resonance from every nearby person at a glance. Your own vibes are clearly differentiated with a distinct "YOU" pill and background. Long-press any vibe to start a selection for group resonance.
 - **Visual Resonance**: Subtle connection lines bridge the Persona Sidebar, the Atmospheric Field, and the Message Ticker, mapping vibes to their originators in real-time.
 - **Drill-Down History**: Tap any entry to expand and explore the full chronological history of vibes from that specific user.
 - **Vibe Energy**: Inline counters (`+5 ⇅`) show you exactly how many resonances each user has shared, with clear visual signals for expansion.

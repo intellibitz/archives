@@ -427,9 +427,11 @@ fun PersonaOptionsMenu(
     isVibed: Boolean,
     isTied: Boolean,
     isBlocked: Boolean,
+    isSelected: Boolean,
     onFocus: () -> Unit,
     onVibe: () -> Unit,
     onWhisper: () -> Unit,
+    onSelect: () -> Unit,
     onBlock: () -> Unit,
     onUnblock: () -> Unit,
     onDismiss: () -> Unit
@@ -451,8 +453,9 @@ fun PersonaOptionsMenu(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 MenuActionItem(icon = Icons.Rounded.FilterCenterFocus, label = if (isVibed) "UNFOCUS PERSONA" else "FOCUS PERSONA", color = StealthPrimary, onClick = onFocus)
                 if (!isTied) {
-                    MenuActionItem(icon = Icons.Rounded.Flare, label = "ESTABLISH VIBE", color = StealthRose, onClick = onVibe)
+                    MenuActionItem(icon = Icons.Rounded.Flare, label = "DIRECT VIBE REQUEST", color = StealthRose, onClick = onVibe)
                 }
+                MenuActionItem(icon = if (isSelected) Icons.Rounded.RemoveCircleOutline else Icons.Rounded.AddCircleOutline, label = if (isSelected) "REMOVE FROM SELECTION" else "ADD TO VIBE SELECTION", color = if (isSelected) Color.White.copy(alpha = 0.6f) else StealthPrimary, onClick = onSelect)
                 MenuActionItem(icon = Icons.Rounded.ChatBubbleOutline, label = "SECURE WHISPER", color = StealthPrimary, onClick = onWhisper)
                 if (isBlocked) {
                     MenuActionItem(icon = Icons.Rounded.Block, label = "UNBLOCK USER", color = Color.Gray, onClick = onUnblock)
@@ -568,6 +571,7 @@ fun UnifiedPersonaCloud(
     devices: List<P2PDevice>,
     vibedPeers: Set<String>,
     connectedLinks: Set<String>,
+    selectedDevices: Set<String> = emptySet(),
     activeBubbles: List<BubbleData>,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
@@ -617,6 +621,7 @@ fun UnifiedPersonaCloud(
                 ) {
                     items(sortedDevices.size) { index ->
                         val device = sortedDevices[index]
+                        val isSelected = device.id in selectedDevices
                         val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
                         val dimAlpha = if (isNoiseFilterActive && !isFocused) 0.1f else 1f
                         
@@ -625,6 +630,7 @@ fun UnifiedPersonaCloud(
                             activeSenders = activeSenders,
                             connectedLinks = connectedLinks,
                             vibedPeers = vibedPeers,
+                            isSelected = isSelected,
                             onDeviceClick = onDeviceClick,
                             onDeviceLongClick = onDeviceLongClick,
                             isVertical = true,
@@ -708,6 +714,7 @@ fun UnifiedPersonaCloud(
                     maxItemsInEachRow = 8
                 ) {
                     sortedDevices.forEach { device ->
+                        val isSelected = device.id in selectedDevices
                         val isFocused = device.persistentId in vibedPeers || device.id in vibedPeers || device.id in connectedLinks
                         val dimAlpha = if (isNoiseFilterActive && !isFocused) 0.1f else 1f
                         
@@ -716,6 +723,7 @@ fun UnifiedPersonaCloud(
                             activeSenders = activeSenders,
                             connectedLinks = connectedLinks,
                             vibedPeers = vibedPeers,
+                            isSelected = isSelected,
                             onDeviceClick = { onDeviceClick(device) },
                             onDeviceLongClick = { onDeviceLongClick(device) },
                             isVertical = false,
@@ -739,6 +747,7 @@ private fun PersonaCloudItem(
     activeSenders: Set<String>,
     connectedLinks: Set<String>,
     vibedPeers: Set<String>,
+    isSelected: Boolean = false,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit,
     isVertical: Boolean,
@@ -769,13 +778,15 @@ private fun PersonaCloudItem(
                 modifier = Modifier.size(if (isVertical) 28.dp else 20.dp),
                 shape = CircleShape,
                 color = when {
+                    isSelected -> Color.White.copy(alpha = 0.2f)
                     isTied -> StealthRose.copy(alpha = 0.2f)
                     isVibed -> StealthPrimary.copy(alpha = 0.2f)
                     else -> Color.White.copy(alpha = 0.05f)
                 },
                 border = BorderStroke(
-                    if (isTied || isVibed) 1.dp else 0.5.dp,
+                    if (isSelected || isTied || isVibed) 1.dp else 0.5.dp,
                     when {
+                        isSelected -> Color.White
                         isTied -> StealthRose
                         isVibed -> StealthPrimary
                         else -> Color.White.copy(alpha = 0.1f)
