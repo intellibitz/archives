@@ -216,6 +216,7 @@ fun TieScreen(
                     )
                 },
                 onDeviceClick = onToggleFocus,
+                onDeviceLongClick = onDeviceLongClick,
                 userNickname = "?", // Placeholder for Tie screen context if needed
                 userEmoji = "👤",
                 onUserNicknameChange = {},

@@ -136,7 +136,6 @@ fun BlukitHarmonyTopBar(
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
-    onResetProfile: () -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
@@ -153,7 +152,6 @@ fun BlukitHarmonyTopBar(
     )
 
     var showClearHistoryDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
     val localContext = LocalContext.current
 
     val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
@@ -264,13 +262,6 @@ fun BlukitHarmonyTopBar(
                         Icon(Icons.Rounded.DeleteSweep, contentDescription = "Delete", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
                     }
                 }
-
-                IconButton(
-                    onClick = { showLogoutDialog = true }, 
-                    modifier = Modifier.size(24.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.05f))
-                ) {
-                    Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
-                }
             }
 
             // RIGHT: Screen Title
@@ -301,7 +292,6 @@ fun BlukitHarmonyTopBar(
         }
 
         if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-        if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onResetProfile(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
     }
 }
 

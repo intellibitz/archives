@@ -264,7 +264,6 @@ fun BlukitApp(
                     onToggleStealth = viewModel::toggleStealth,
                     onToggleLowPower = viewModel::toggleLowPowerMode,
                     onClearHistory = viewModel::clearChatHistory,
-                    onResetProfile = viewModel::logout,
                     onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
                     onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                     onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
@@ -310,9 +309,7 @@ fun BlukitApp(
                                             viewModel.toggleVibePeer(id)
                                         }
                                     }, 
-                                    onDeviceLongClick = { device -> 
-                                        bluetoothViewModel.toggleDeviceSelection(device.id)
-                                    }, 
+                                    onDeviceLongClick = { selectedPersonaForMenu = it }, 
                                     onBroadcastMessage = bluetoothViewModel::roar, 
                                     onDeleteVibe = viewModel::deleteVibe, 
                                     onBlockUser = viewModel::blockUser, 
@@ -386,9 +383,7 @@ fun BlukitApp(
                                         viewModel.toggleVibePeer(id)
                                     }
                                 }, 
-                                onDeviceLongClick = { device -> 
-                                    bluetoothViewModel.toggleDeviceSelection(device.id)
-                                },
+                                onDeviceLongClick = { selectedPersonaForMenu = it },
                                 isVertical = true,
                                 userNickname = nickname ?: "?",
                                 userEmoji = emoji,
@@ -429,7 +424,6 @@ fun BlukitApp(
                     selectedDevices = bluetoothState.crowd.selectedDevices,
                     isNoiseFilterActive = isNoiseFilterActive,
                     onClearHistory = viewModel::clearChatHistory,
-                    onResetProfile = viewModel::logout,
                     onAcceptLink = bluetoothViewModel::acceptLink, 
                     onDenyLink = bluetoothViewModel::denyLink,
                     onStartSideVibe = { 
@@ -487,7 +481,6 @@ fun BlukitHub(
     selectedDevices: Set<String>, 
     isNoiseFilterActive: Boolean,
     onClearHistory: () -> Unit,
-    onResetProfile: () -> Unit,
     onAcceptLink: (P2PDevice) -> Unit, 
     onDenyLink: (P2PDevice) -> Unit, 
     onStartSideVibe: () -> Unit, 
@@ -496,7 +489,6 @@ fun BlukitHub(
     modifier: Modifier = Modifier
 ) {
     var showClearHistoryDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth().zIndex(1f), horizontalAlignment = Alignment.CenterHorizontally) {
         AnimatedVisibility(visible = selectedDevices.isNotEmpty(), enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
@@ -566,7 +558,6 @@ fun BlukitHub(
         }
         
         if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-        if (showLogoutDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.", onConfirm = { onResetProfile(); showLogoutDialog = false }, onDismiss = { showLogoutDialog = false }) }
     }
 }
 
