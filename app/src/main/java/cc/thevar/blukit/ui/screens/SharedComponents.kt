@@ -230,14 +230,14 @@ fun BlukitHarmonyTopBar(
 
                 // MANAGE Group Management (Center)
                 if (onManage != null) {
-                    val isManageActive = groupCount > 0
+                    val isManageActive = groupCount > 0 || currentRoute is Route.VibeDetail
                     IconButton(
                         onClick = onManage, 
                         enabled = isManageActive,
                         modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.04f)).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
                     ) { 
                         Icon(
-                            Icons.Rounded.People, 
+                            if (currentRoute is Route.VibeDetail) Icons.Rounded.GroupAdd else Icons.Rounded.People, 
                             contentDescription = "Manage", 
                             tint = if (isManageActive) themeColor else Color.White.copy(alpha = 0.1f), 
                             modifier = Modifier.size(18.dp)
@@ -660,8 +660,62 @@ fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Bool
 }
 
 @Composable
-fun PersonaOptionsMenu(device: P2PDevice, isTied: Boolean, isBlocked: Boolean, isSelected: Boolean, isRequesting: Boolean, onVibe: () -> Unit, onAccept: () -> Unit, onDeny: () -> Unit, onDisconnect: () -> Unit, onSelect: () -> Unit, onIdentify: () -> Unit, onBlock: () -> Unit, onUnblock: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Color(0xFF0A0C14), shape = RoundedCornerShape(28.dp), title = { Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) { Text(text = device.emoji, fontSize = 40.sp); Spacer(modifier = Modifier.height(8.dp)); Text(text = (device.name ?: "USER").uppercase(), fontWeight = FontWeight.Black, color = Color.White, letterSpacing = 2.sp) } }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { if (isRequesting) { MenuActionItem(Icons.Rounded.Handshake, "ACCEPT REQUEST", StealthPrimary, onAccept); MenuActionItem(Icons.Rounded.Close, "DENY REQUEST", Color.Red, onDeny) } else if (isTied) { MenuActionItem(Icons.Rounded.LinkOff, "DISCONNECT", StealthRose, onDisconnect) } else { MenuActionItem(Icons.Rounded.Hearing, "WHISPER", StealthPrimary, onVibe); MenuActionItem(Icons.Rounded.Link, "SECURE LINK", StealthRose, onSelect) }; MenuActionItem(Icons.Rounded.Radar, "IDENTIFY", Color.White, onIdentify); if (isBlocked) MenuActionItem(Icons.Rounded.LockOpen, "UNBLOCK USER", StealthPrimary, onUnblock) else MenuActionItem(Icons.Rounded.Block, "BLOCK USER", Color.Red, onBlock) } }, confirmButton = {})
+fun PersonaOptionsMenu(
+    device: P2PDevice,
+    isTied: Boolean,
+    isBlocked: Boolean,
+    isSelected: Boolean,
+    isRequesting: Boolean,
+    activeGroupId: String? = null,
+    isAlreadyInActiveGroup: Boolean = false,
+    onVibe: () -> Unit,
+    onAccept: () -> Unit,
+    onDeny: () -> Unit,
+    onDisconnect: () -> Unit,
+    onSelect: () -> Unit,
+    onIdentify: () -> Unit,
+    onBlock: () -> Unit,
+    onUnblock: () -> Unit,
+    onAddToGroup: (String) -> Unit = {},
+    onRemoveFromGroup: (String) -> Unit = {},
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF0A0C14),
+        shape = RoundedCornerShape(28.dp),
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Text(text = device.emoji, fontSize = 40.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = (device.name ?: "USER").uppercase(), fontWeight = FontWeight.Black, color = Color.White, letterSpacing = 2.sp)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (isRequesting) {
+                    MenuActionItem(Icons.Rounded.Handshake, "ACCEPT REQUEST", StealthPrimary, onAccept)
+                    MenuActionItem(Icons.Rounded.Close, "DENY REQUEST", Color.Red, onDeny)
+                } else if (activeGroupId != null) {
+                    if (isAlreadyInActiveGroup) {
+                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM TIE", StealthRose, { onRemoveFromGroup(activeGroupId) })
+                    } else {
+                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS TIE", StealthPrimary, { onAddToGroup(activeGroupId) })
+                    }
+                } else if (isTied) {
+                    MenuActionItem(Icons.Rounded.LinkOff, "DISCONNECT", StealthRose, onDisconnect)
+                } else {
+                    MenuActionItem(Icons.Rounded.Hearing, "WHISPER", StealthPrimary, onVibe)
+                    MenuActionItem(Icons.Rounded.Link, "SECURE LINK", StealthRose, onSelect)
+                }
+                
+                MenuActionItem(Icons.Rounded.Radar, "IDENTIFY", Color.White, onIdentify)
+                if (isBlocked) MenuActionItem(Icons.Rounded.LockOpen, "UNBLOCK USER", StealthPrimary, onUnblock) 
+                else MenuActionItem(Icons.Rounded.Block, "BLOCK USER", Color.Red, onBlock)
+            }
+        },
+        confirmButton = {}
+    )
 }
 
 @Composable
@@ -731,26 +785,41 @@ fun BlukitInput(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     onAttachFile: () -> Unit = {},
+    onManage: (() -> Unit)? = null,
     vibeCount: Int = 0,
     isReadOnly: Boolean = false,
     isFilterActive: Boolean = false,
     isPrivate: Boolean = false,
     targetName: String? = null,
-    decoratorText: String? = null,
     placeholder: String? = null,
     modifier: Modifier = Modifier
 ) {
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
     val borderColor = if (airIsStill) Color.Red.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)
-    val actualDecoratorText = when { decoratorText != null -> decoratorText; isReadOnly -> "FOCUS VIBES: READ ONLY"; isPrivate && targetName != null -> "PRIVATE VIBE TO $targetName"; else -> "SPREAD A VIBE TO THE STADIUM" }
-    val actualPlaceholder = when { placeholder != null -> placeholder; isReadOnly -> "FILTERED"; isPrivate -> "TYPE A SECURE VIBE..."; else -> "TYPE A VIBE..." }
+    val actualPlaceholder = when { 
+        placeholder != null -> placeholder 
+        isReadOnly -> "FILTERED" 
+        isPrivate && targetName != null -> "PRIVATE VIBE TO $targetName..."
+        isPrivate -> "TYPE A SECURE VIBE..."
+        else -> "SPREAD A VIBE TO THE STADIUM..." 
+    }
+    
     Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
         Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp).background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp)).border(1.dp, borderColor, RoundedCornerShape(24.dp)).padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onAttachFile, enabled = !isReadOnly, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.Rounded.Add, contentDescription = "Attach", tint = themeColor.copy(alpha = 0.6f)) }
-            BasicTextField(value = value, onValueChange = onValueChange, enabled = !isReadOnly, modifier = Modifier.weight(1f), textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White), cursorBrush = SolidColor(themeColor), decorationBox = { innerTextField -> if (value.isEmpty()) { Text(text = actualPlaceholder, color = Color.White.copy(alpha = 0.3f), style = MaterialTheme.typography.bodyMedium) }; innerTextField() })
+            IconButton(onClick = onAttachFile, enabled = !isReadOnly, modifier = Modifier.size(32.dp)) { 
+                Icon(imageVector = Icons.Rounded.Add, contentDescription = "Attach", tint = themeColor.copy(alpha = 0.6f)) 
+            }
+            BasicTextField(value = value, onValueChange = onValueChange, enabled = !isReadOnly, modifier = Modifier.weight(1f), textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White), cursorBrush = SolidColor(themeColor), decorationBox = { innerTextField -> if (value.isEmpty()) { Text(text = actualPlaceholder, color = Color.White.copy(alpha = 0.3f), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold)) }; innerTextField() })
             if (vibeCount > 0) { Text(text = vibeCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = themeColor, modifier = Modifier.padding(horizontal = 8.dp)) }
+            
+            // TACTICAL EXPANSION: Quick manage for private ties
+            if (isPrivate && !isReadOnly && onManage != null) {
+                IconButton(onClick = onManage, modifier = Modifier.size(32.dp)) {
+                    Icon(imageVector = Icons.Rounded.PersonAdd, contentDescription = "Manage", tint = themeColor.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
+                }
+            }
+            
             IconButton(onClick = onSend, enabled = value.isNotBlank() && !isReadOnly, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.AutoMirrored.Rounded.Send, contentDescription = "Send", tint = if (value.isNotBlank()) themeColor else Color.White.copy(alpha = 0.2f)) }
         }
-        Surface(color = Color.Black, modifier = Modifier.offset(y = (-1).dp)) { Text(text = actualDecoratorText, fontSize = 6.sp, fontWeight = FontWeight.Black, color = (if (airIsStill) Color.Red else themeColor).copy(alpha = 0.6f), letterSpacing = 1.sp, modifier = Modifier.padding(horizontal = 6.dp)) }
     }
 }

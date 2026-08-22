@@ -25,8 +25,8 @@ android {
         applicationId = "cc.thevar.blukit"
         minSdk = 26
         targetSdk = 37
-        versionCode = 21
-        versionName = "1.1.3"
+        versionCode = 22
+        versionName = "1.1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

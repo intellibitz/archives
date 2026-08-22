@@ -13,7 +13,10 @@ Experience the **Unified Vibe Frequency**.
     - **Energy Bars**: Automatically groups multiple vibes from a single persona to keep the ticker clean.
     - **Recursive Expansion**: Tap a group to expand the persona's vibe stack; tap an individual vibe for tactical actions.
     - **Horizontal Metadata**: Persona status and vibe counts are aligned horizontally to maximize content clarity.
-- **Rose Resonance**: Private ties now feature a dedicated Rose-themed field atmosphere, mirroring the Public Stadium's intensity.
+- **Rose Resonance (Dynamic Ties)**: 
+    - **Secure Groups**: Private ties can now expand from 1-1 to group vibes.
+    - **Tactical Management**: Add or remove personas directly from the **Resonance Menu** or the **Compose Hub**.
+    - **Unified Field Mapping**: Visual connection lines map the entire private group mesh in real-time.
 - **Media Mesh**: Attach images and files to your vibes. Large assets spread through the mesh using high-speed offline radios.
 - **Vibe Promotion**: 
     1.  **Compose**: Spread a local vibe from the hub.

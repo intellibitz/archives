@@ -1,5 +1,6 @@
 package cc.thevar.blukit.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,6 +47,7 @@ fun TieScreen(
     onAddMember: (String, String) -> Unit = { _, _ -> },
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
     showMemberManagement: Boolean = false,
+    onShowManagement: () -> Unit = {},
     onDismissManagement: () -> Unit = {},
     onEnterPip: () -> Unit,
     onAttachFile: () -> Unit = {},
@@ -173,15 +175,18 @@ fun TieScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        val memberSet = remember(group, localDeviceId) { 
+            (group?.memberIds ?: emptySet()) - localDeviceId
+        }
         RipplesField(
             state = state,
             localDeviceId = localDeviceId,
             localEmoji = localEmoji,
-            activeBubbles = emptyList(), // Bubbles handled by field resonance if needed
+            activeBubbles = emptyList(), 
             selectedDevices = emptySet(),
-            vibedPeers = if (externalFocusedId != null) setOf(externalFocusedId) else emptySet(),
+            vibedPeers = if (externalFocusedId != null) setOf(externalFocusedId) else memberSet,
             onlyTies = true,
-            isFilterMode = isVibeFocused,
+            isFilterMode = isVibeFocused || externalFocusedId != null,
             subjectId = externalFocusedId,
             onDeviceClick = { onToggleFocus(it) },
             onDeviceLongClick = { onDeviceLongClick(it) },
@@ -193,13 +198,28 @@ fun TieScreen(
             Box(modifier = Modifier.fillMaxSize()) {
                 if (chatVibes.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "AWAITING RESONANCE IN THIS TIE...",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = StealthRose.copy(alpha = 0.4f),
-                            letterSpacing = 1.sp
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "AWAITING RESONANCE IN THIS TIE...",
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black,
+                                color = StealthRose.copy(alpha = 0.4f),
+                                letterSpacing = 1.sp
+                            )
+                            if (group?.memberIds?.size == 1) { // Only YOU
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = onShowManagement,
+                                    colors = ButtonDefaults.buttonColors(containerColor = StealthRose.copy(alpha = 0.1f)),
+                                    border = BorderStroke(1.dp, StealthRose.copy(alpha = 0.4f)),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(Icons.Rounded.PersonAdd, contentDescription = null, tint = StealthRose, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("EXPAND TIE", color = StealthRose, fontSize = 9.sp, fontWeight = FontWeight.Black)
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -233,7 +253,8 @@ fun TieScreen(
                     focusManager.clearFocus()
                 }
             },
-            onAttachFile = onAttachFile
+            onAttachFile = onAttachFile,
+            onManage = onShowManagement
         )
         Spacer(modifier = Modifier.height(4.dp))
         Row(
