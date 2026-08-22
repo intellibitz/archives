@@ -46,7 +46,7 @@ google-services.json
 *.swp
 
 # Agent files
-#.agent/
+.agent/
 
 
 # Signing files
