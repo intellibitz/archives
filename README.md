@@ -11,8 +11,9 @@ The **Stadium Ticker** is the single source of truth for all nearby energy.
 - **Unified Ticker**: Experience a streamlined field where **Public**, **Private**, and **Local** vibes flow in a single vertical stream. No more switching between fields to see who is resonating.
 - **Vibe Promotion**: 
     1.  **Compose**: Spread a vibe from the bottom hub; it enters the ticker as a **LOCAL** vibe.
-    2.  **Interact**: Tap your vibe to open the **Resonance Menu**.
-    3.  **Promote**: Choose to **BROADCAST PUBLICLY** to the entire stadium mesh or **INVITE TO PRIVATE** to establish a secure tie with selected personas.
+    2.  **Attach**: Use the **ATTACH** portal to spread images or files through the mesh.
+    3.  **Interact**: Tap your vibe to open the **Resonance Menu**.
+    4.  **Promote**: Choose to **BROADCAST PUBLICLY** to the entire stadium mesh or **INVITE TO PRIVATE** to establish a secure tie with selected personas.
 - **Visual Resonance**: Subtle connection lines bridge your identity, the Atmospheric Field, and the Message Ticker, mapping vibes to their originators in real-time.
 - **Vibe Tags**: Each entry is visually tagged (**LOCAL**, **PUBLIC**, **SECURE**) to identify its resonance level at a glance.
 - **Noise Filter**: Integrated "Focus Mode" allows you to cut out the crowd and listen only to specific personas without leaving the main field.
@@ -46,7 +47,7 @@ A high-density, 3-row architecture designed for maximum ergonomic control:
 1. **Bluetooth-First**: blukit works on Bluetooth. WiFi and Location act as boosters for discovery scaling.
 2. **Zero-Bulk**: Custom-drawn `Canvas` widgets replace bulky Material components. Powered by **Koin** DI.
 3. **Offline-First**: 100% phone-to-phone radios. No internet. No data collection.
-4. **Everything Vanishes**: Vibes and ephemeral groups clear out every 12 hours.
+4. **User Control**: Vibes and groups persist locally. You decide when to clear your history.
 5. **Sentient Radios**: Radio activity is strictly gated by harmony and power states.
 
 ---

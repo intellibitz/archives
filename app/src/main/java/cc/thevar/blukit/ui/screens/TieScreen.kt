@@ -43,6 +43,7 @@ import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthRose
 import androidx.compose.foundation.BorderStroke
+import coil.compose.AsyncImage
 import androidx.compose.material.icons.rounded.Flare
 import androidx.compose.material.icons.rounded.AutoAwesome
 import java.text.SimpleDateFormat
@@ -69,6 +70,7 @@ fun TieScreen(
     showMemberManagement: Boolean = false,
     onDismissManagement: () -> Unit = {},
     onEnterPip: () -> Unit,
+    onAttachFile: () -> Unit = {},
     externalFocusedId: String? = null,
     onFocusChange: (String?) -> Unit = {},
 ) {
@@ -236,7 +238,8 @@ fun TieScreen(
                     vibeText = ""
                     focusManager.clearFocus()
                 }
-            }
+            },
+            onAttachFile = onAttachFile
         )
     }
 }
@@ -325,13 +328,25 @@ fun ChatMessage(
             ) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = payload.content,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = if (isGrouped) 1 else Int.MAX_VALUE,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
+                        if (payload.type == MessagePayload.TYPE_IMAGE) {
+                            AsyncImage(
+                                model = payload.content,
+                                contentDescription = "Image",
+                                modifier = Modifier
+                                    .padding(vertical = 4.dp)
+                                    .size(160.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color.White.copy(alpha = 0.05f))
+                            )
+                        } else {
+                            Text(
+                                text = payload.content,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = if (isGrouped) 1 else Int.MAX_VALUE,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                        }
                         
                         if (isGrouped && vibeCount > 1) {
                             Spacer(modifier = Modifier.width(6.dp))

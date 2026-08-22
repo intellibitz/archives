@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import coil.compose.AsyncImage
 import cc.thevar.blukit.BlukitApplication
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -340,7 +341,19 @@ private fun AnimatedVibeItem(msg: cc.thevar.blukit.domain.model.MessagePayload?,
                 if (timestamp.isNotEmpty()) { Spacer(modifier = Modifier.width(6.dp)); Text(text = timestamp, fontSize = 8.sp, color = Color.White.copy(alpha = 0.2f), fontWeight = FontWeight.Bold) }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = msg?.content ?: "Awaiting resonance...", fontSize = 11.sp, color = Color.White.copy(alpha = if (msg != null) 0.7f else 0.2f), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                if (msg?.type == cc.thevar.blukit.domain.model.MessagePayload.TYPE_IMAGE) {
+                    AsyncImage(
+                        model = msg.content,
+                        contentDescription = "Image",
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .size(120.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                    )
+                } else {
+                    Text(text = msg?.content ?: "Awaiting resonance...", fontSize = 11.sp, color = Color.White.copy(alpha = if (msg != null) 0.7f else 0.2f), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                }
                 
                 if (msg != null) {
                     Spacer(modifier = Modifier.width(6.dp))

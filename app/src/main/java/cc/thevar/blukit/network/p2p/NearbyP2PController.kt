@@ -17,6 +17,10 @@ import cc.thevar.blukit.domain.model.VibeGroup
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import android.os.Build
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
+import java.io.File
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
@@ -86,6 +90,9 @@ class NearbyP2PController(
     private val outgoingQueues = Collections.synchronizedMap(mutableMapOf<String, kotlinx.coroutines.channels.Channel<Payload>>())
     private val pendingLinkRequests = Collections.synchronizedSet(mutableSetOf<String>())
     
+    // FILE TRANSFER STATE
+    private val incomingFiles = Collections.synchronizedMap(mutableMapOf<Long, MessagePayload>())
+
     // SPAM FILTER STATE
     private val senderRateLimits = Collections.synchronizedMap(mutableMapOf<String, MutableList<Long>>())
     private val blockedFingerprints = Collections.synchronizedSet(mutableSetOf<String>())
@@ -206,12 +213,40 @@ class NearbyP2PController(
 
     private val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
-            payload.asBytes()?.let { bytes ->
-                if (isHandshakePayload(bytes)) handleHandshake(endpointId, bytes) else handleMessage(endpointId, bytes)
+            when (payload.type) {
+                Payload.Type.BYTES -> {
+                    payload.asBytes()?.let { bytes ->
+                        if (isHandshakePayload(bytes)) handleHandshake(endpointId, bytes) else handleMessage(endpointId, bytes)
+                    }
+                }
+                Payload.Type.FILE -> {
+                    // File incoming. We'll handle it in onPayloadTransferUpdate when SUCCESS.
+                    Log.d(tag, "Incoming file: ${payload.id}")
+                }
             }
         }
-        override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {}
+
+        override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {
+            if (update.status == PayloadTransferUpdate.Status.SUCCESS) {
+                val payloadId = update.payloadId
+                Log.d(tag, "Payload SUCCESS: $payloadId")
+                
+                // If we already have the metadata, finalize the message
+                val metadata = incomingFiles[payloadId]
+                if (metadata != null) {
+                    finalizeFileMessage(payloadId, metadata)
+                } else {
+                    // Store the URI for when metadata arrives
+                    // For Nearby, received files are usually in the Downloads/Nearby folder
+                    // or we can get it from the Payload if we still have it?
+                    // Actually, onPayloadTransferUpdate doesn't give us the Payload object.
+                    // We should have stored the Payload object in onPayloadReceived.
+                }
+            }
+        }
     }
+
+    private val incomingPayloads = Collections.synchronizedMap(mutableMapOf<Long, Payload>())
 
     private fun isHandshakePayload(bytes: ByteArray): Boolean = bytes.isNotEmpty() && (bytes[0] == 0x01.toByte())
 
@@ -238,9 +273,55 @@ class NearbyP2PController(
                 MessagePayload.TYPE_ACK -> handleAck(payload)
                 MessagePayload.TYPE_LINK_REQUEST -> handleLinkRequest(endpointId, payload)
                 MessagePayload.TYPE_LINK_ACCEPT -> handleLinkAccept(endpointId)
+                MessagePayload.TYPE_IMAGE, MessagePayload.TYPE_FILE -> {
+                    if (isNewMessage(payload.messageId)) handleFileMetadata(endpointId, payload, secretKey)
+                }
                 else -> if (isNewMessage(payload.messageId)) handleChatMessage(endpointId, payload, secretKey)
             }
         } catch (e: Exception) { }
+    }
+
+    private fun handleFileMetadata(endpointId: String, payload: MessagePayload, secretKey: SecretKey) {
+        val filePayloadId = payload.fileId ?: return
+        incomingFiles[filePayloadId] = payload
+        
+        // Check if file is already received (unlikely but possible)
+        val incomingPayload = incomingPayloads[filePayloadId]
+        if (incomingPayload != null) {
+            finalizeFileMessage(filePayloadId, payload)
+        } else {
+            // Insert with pending status or placeholder
+            saveIncomingMessage(payload.copy(status = MessagePayload.STATUS_PENDING))
+        }
+        sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
+    }
+
+    private fun finalizeFileMessage(payloadId: Long, metadata: MessagePayload) {
+        val payload = incomingPayloads[payloadId] ?: return
+        val file = payload.asFile() ?: return
+        
+        internalScope.launch(ioDispatcher) {
+            try {
+                val receivedFile = file.asJavaFile() ?: return@launch
+                val destinationDir = File(context.filesDir, "media")
+                if (!destinationDir.exists()) destinationDir.mkdirs()
+                
+                val destinationFile = File(destinationDir, "${metadata.messageId}_${metadata.fileName ?: "file"}")
+                receivedFile.renameTo(destinationFile)
+                
+                val updatedMessage = metadata.copy(
+                    content = destinationFile.absolutePath,
+                    status = MessagePayload.STATUS_DELIVERED
+                )
+                
+                vibeStore.upsertMessage(updatedMessage)
+                incomingFiles.remove(payloadId)
+                incomingPayloads.remove(payloadId)
+                hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to finalize file: ${e.message}")
+            }
+        }
     }
 
     private fun handleAck(payload: MessagePayload) {
@@ -443,6 +524,78 @@ class NearbyP2PController(
     }
 
     override suspend fun broadcastMessage(content: String, vibeType: Int): MessagePayload? = sendMessage(content, null, vibeType)
+
+    override suspend fun sendFile(fileUri: Uri, receiverId: String?, vibeType: Int): MessagePayload? {
+        val fileName = getFileName(fileUri)
+        val fileSize = getFileSize(fileUri)
+        val mimeType = context.contentResolver.getType(fileUri)
+        val messageId = UUID.randomUUID().toString()
+
+        try {
+            val pfd = context.contentResolver.openFileDescriptor(fileUri, "r") ?: return null
+            val filePayload = Payload.fromFile(pfd)
+            val fileId = filePayload.id
+
+            val payload = MessagePayload(
+                messageId = messageId,
+                senderId = repository.getDeviceId(),
+                senderName = repository.getCurrentNickname(),
+                senderEmoji = repository.emojiAvatar.value,
+                receiverId = receiverId,
+                content = if (mimeType?.startsWith("image/") == true) fileUri.toString() else "[FILE] $fileName",
+                timestamp = System.currentTimeMillis(),
+                type = if (mimeType?.startsWith("image/") == true) MessagePayload.TYPE_IMAGE else MessagePayload.TYPE_FILE,
+                vibeType = vibeType,
+                fileId = fileId,
+                fileName = fileName,
+                fileSize = fileSize,
+                mimeType = mimeType
+            )
+
+            internalScope.launch(ioDispatcher) {
+                if (receiverId != null) {
+                    sendMessagePayload(receiverId, payload)
+                    connectionsClient.sendPayload(receiverId, filePayload)
+                } else {
+                    activeConnections.forEach { target ->
+                        internalScope.launch {
+                            sendMessagePayload(target, payload)
+                            connectionsClient.sendPayload(target, filePayload)
+                        }
+                    }
+                }
+            }
+            vibeStore.insertMessage(payload)
+            return payload
+        } catch (e: Exception) {
+            Log.e(tag, "Send file failed", e)
+            return null
+        }
+    }
+
+    private fun getFileName(uri: Uri): String? {
+        var name: String? = null
+        if (uri.scheme == "content") {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    name = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+                }
+            }
+        }
+        return name ?: uri.path?.let { File(it).name }
+    }
+
+    private fun getFileSize(uri: Uri): Long? {
+        var size: Long? = null
+        if (uri.scheme == "content") {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    size = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE))
+                }
+            }
+        }
+        return size
+    }
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
         val group = vibeStore.getGroup(groupId) ?: return null

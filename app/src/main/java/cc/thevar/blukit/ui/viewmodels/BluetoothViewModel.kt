@@ -254,6 +254,29 @@ class BluetoothViewModel(
         }
     }
 
+    fun spreadFile(uri: android.net.Uri, vibeType: Int = MessagePayload.VIBE_LOCAL) {
+        viewModelScope.launch {
+            when (vibeType) {
+                MessagePayload.VIBE_LOCAL -> {
+                    p2pController.sendFile(uri, null, MessagePayload.VIBE_LOCAL)
+                }
+                MessagePayload.VIBE_PUBLIC -> {
+                    p2pController.sendFile(uri, null, MessagePayload.VIBE_PUBLIC)
+                }
+                MessagePayload.VIBE_TIE -> {
+                    val targets = state.value.crowd.selectedDevices.ifEmpty { state.value.session.connectedLinks }
+                    if (targets.isNotEmpty()) {
+                        targets.forEach { targetId ->
+                            p2pController.sendFile(uri, targetId, MessagePayload.VIBE_TIE)
+                        }
+                    } else {
+                        p2pController.sendFile(uri, null, MessagePayload.VIBE_TIE)
+                    }
+                }
+            }
+        }
+    }
+
     fun disconnect() {
         connectivityUseCase.disconnect()
     }

@@ -56,6 +56,8 @@ interface P2PController {
 
     suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload?
 
+    suspend fun sendFile(fileUri: android.net.Uri, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_PUBLIC): MessagePayload?
+
     fun startGroupVibe(name: String, members: Set<String>, type: Int): String
 
     fun updateGroupMembers(groupId: String, memberIds: Set<String>)

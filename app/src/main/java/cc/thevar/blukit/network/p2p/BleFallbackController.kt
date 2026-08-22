@@ -557,6 +557,11 @@ class BleFallbackController(
         return sendMessage(content, null)?.copy(groupId = groupId)
     }
 
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int): MessagePayload? {
+        Log.w(tag, "File sharing not supported on BLE Fallback")
+        return null
+    }
+
     override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
         val groupId = UUID.randomUUID().toString()
         internalScope.launch(ioDispatcher) {

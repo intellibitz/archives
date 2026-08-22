@@ -125,6 +125,13 @@ fun BlukitApp(
     var isSearchMode by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
 
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            uri?.let { bluetoothViewModel.spreadFile(it) }
+        }
+    )
+
     val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
     
     LaunchedEffect(currentRoute) {
@@ -224,7 +231,7 @@ fun BlukitApp(
                     NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.fillMaxSize()) { key ->
                         when (key) {
                             Route.Blukit -> NavEntry(key) { RipplesScreen(state = bluetoothState, localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, localNickname = nickname ?: "?", localEmoji = emoji, energySurge = energySurge, lowPowerMode = lowPowerMode, vibedPeers = bluetoothState.crowd.vibedPeers, noiseFilterEnabled = isNoiseFilterActive, onStartScan = bluetoothViewModel::startScan, onStopScan = bluetoothViewModel::stopScan, onDeviceClick = { device -> if (bluetoothState.crowd.selectedDevices.isNotEmpty()) { bluetoothViewModel.toggleDeviceSelection(device.id) } else { val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id); isNoiseFilterActive = true } }, onDeviceLongClick = { selectedPersonaForMenu = it }, onBroadcastMessage = bluetoothViewModel::spreadVibe, onDeleteVibe = viewModel::deleteVibe, onBlockUser = viewModel::blockUser, onUnblockUser = viewModel::unblockUser, onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) }, onToggleSelection = bluetoothViewModel::toggleDeviceSelection, onAcceptLink = bluetoothViewModel::acceptLink, onDenyLink = bluetoothViewModel::denyLink, onDisconnect = bluetoothViewModel::disconnect, onIdentifyUser = { highlightedUserId = it }, onClearFocus = { viewModel.clearVibedPeers(); isNoiseFilterActive = false }, hasSidebar = false, searchText = searchText) }
-                            is Route.VibeDetail -> NavEntry(key) { TieScreen(state = bluetoothState, localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, localEmoji = emoji, groupId = key.groupId, onDisconnect = bluetoothViewModel::disconnect, onSendMessage = bluetoothViewModel::sendMessage, onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, onDeviceLongClick = { selectedPersonaForMenu = it }, onBlockUser = viewModel::blockUser, onAddMember = bluetoothViewModel::addMemberToGroup, onRemoveMember = bluetoothViewModel::removeMemberFromGroup, showMemberManagement = showManageDialog, onDismissManagement = { showManageDialog = false }, onEnterPip = onEnterPip) }
+                            is Route.VibeDetail -> NavEntry(key) { TieScreen(state = bluetoothState, localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, localEmoji = emoji, groupId = key.groupId, onDisconnect = bluetoothViewModel::disconnect, onSendMessage = bluetoothViewModel::sendMessage, onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, onDeviceLongClick = { selectedPersonaForMenu = it }, onBlockUser = viewModel::blockUser, onAddMember = bluetoothViewModel::addMemberToGroup, onRemoveMember = bluetoothViewModel::removeMemberFromGroup, showMemberManagement = showManageDialog, onDismissManagement = { showManageDialog = false }, onEnterPip = onEnterPip, onAttachFile = { filePickerLauncher.launch("*/*") }) }
                             else -> NavEntry(key) { Text("Unknown") }
                         }
                     }
@@ -245,7 +252,8 @@ fun BlukitApp(
                     onDenyLink = bluetoothViewModel::denyLink,
                     onStartSideVibe = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedLinks }) { val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false); backStack.add(Route.VibeDetail(gid)) } },
                     onStartTie = { val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.crowd.selectedDevices, isTie = true); backStack.add(Route.VibeDetail(gid)) },
-                    onClearSelection = bluetoothViewModel::clearSelection
+                    onClearSelection = bluetoothViewModel::clearSelection,
+                    onAttachFile = { filePickerLauncher.launch("*/*") }
                 )
             }
 

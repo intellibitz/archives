@@ -285,6 +285,7 @@ fun BlukitVibeHub(
     onStartSideVibe: () -> Unit,
     onStartTie: () -> Unit,
     onClearSelection: () -> Unit,
+    onAttachFile: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isPrivate = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
@@ -300,7 +301,7 @@ fun BlukitVibeHub(
         }
         Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.96f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)), contentAlignment = Alignment.BottomCenter) {
             Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp).navigationBarsPadding().imePadding()) {
-                BlukitInput(airIsStill = airIsStill, isReadOnly = false, isFilterActive = vibedPeers.isNotEmpty(), isPrivate = isPrivate, targetName = targetName, value = messageText, onValueChange = onMessageChange, onSend = onSend, vibeCount = vibeCount, modifier = Modifier.fillMaxWidth())
+                BlukitInput(airIsStill = airIsStill, isReadOnly = false, isFilterActive = vibedPeers.isNotEmpty(), isPrivate = isPrivate, targetName = targetName, value = messageText, onValueChange = onMessageChange, onSend = onSend, onAttachFile = onAttachFile, vibeCount = vibeCount, modifier = Modifier.fillMaxWidth())
                 if (incomingLinkRequests.isNotEmpty()) {
                     val request = incomingLinkRequests.first()
                     Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp).background(StealthPrimary.copy(alpha = 0.1f), RoundedCornerShape(12.dp)).border(0.5.dp, StealthPrimary.copy(alpha = 0.2f), RoundedCornerShape(12.dp)).padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -473,6 +474,7 @@ fun BlukitInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
+    onAttachFile: () -> Unit = {},
     vibeCount: Int = 0,
     isReadOnly: Boolean = false,
     isFilterActive: Boolean = false,
@@ -487,7 +489,8 @@ fun BlukitInput(
     val actualDecoratorText = when { decoratorText != null -> decoratorText; isReadOnly -> "FOCUS VIBES: READ ONLY"; isPrivate && targetName != null -> "PRIVATE VIBE TO $targetName"; else -> "SPREAD A VIBE TO THE STADIUM" }
     val actualPlaceholder = when { placeholder != null -> placeholder; isReadOnly -> "FILTERED"; isPrivate -> "TYPE A SECURE VIBE..."; else -> "TYPE A VIBE..." }
     Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
-        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp).background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp)).border(1.dp, borderColor, RoundedCornerShape(24.dp)).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp).background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp)).border(1.dp, borderColor, RoundedCornerShape(24.dp)).padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onAttachFile, enabled = !isReadOnly, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.Rounded.Add, contentDescription = "Attach", tint = themeColor.copy(alpha = 0.6f)) }
             BasicTextField(value = value, onValueChange = onValueChange, enabled = !isReadOnly, modifier = Modifier.weight(1f), textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White), cursorBrush = SolidColor(themeColor), decorationBox = { innerTextField -> if (value.isEmpty()) { Text(text = actualPlaceholder, color = Color.White.copy(alpha = 0.3f), style = MaterialTheme.typography.bodyMedium) }; innerTextField() })
             if (vibeCount > 0) { Text(text = vibeCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = themeColor, modifier = Modifier.padding(horizontal = 8.dp)) }
             IconButton(onClick = onSend, enabled = value.isNotBlank() && !isReadOnly, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.AutoMirrored.Rounded.Send, contentDescription = "Send", tint = if (value.isNotBlank()) themeColor else Color.White.copy(alpha = 0.2f)) }

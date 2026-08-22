@@ -8,7 +8,7 @@ blukit **never** collects data of any kind.
 | What we use | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
 | **Nickname** | Only on your phone | Nearby people only | For nearby identification. |
-| **Vibes** | Only on your phone | Only with your sync partners | To maintain local history. |
+| **Vibes & Media** | Only on your phone | Only with your sync partners | To maintain local history. |
 | **Location** | No | No | We never track or send your location. |
 | **Telemetry** | No | No | We never track usage or app performance. |
 
@@ -16,7 +16,7 @@ blukit **never** collects data of any kind.
 - **No Tracking**: We never track users or their movements.
 - **No Secrets Revealed**: Your identity and private vibes stay strictly between you and your trusted circles.
 - **No Cloud**: Vibes never go to the internet. They stay within the local radio range.
-- **Auto-Delete**: Everything vanishes from your phone automatically after 12 hours.
+- **Manual Clear**: You are in control. Vibes stay on your phone until you explicitly clear them in Settings.
 
 ## 3. Security
 **Everything you send is end-to-end encrypted.**

@@ -130,20 +130,7 @@ class VibeStore(
     }
 
     suspend fun compactMessages() {
-        val now = System.currentTimeMillis()
-        val twelveHoursAgo = now - 12 * 3600 * 1000
-        
-        _messages.update { it.filter { m -> m.timestamp >= twelveHoursAgo } }
         val currentMessages = _messages.value
-
-        // Also purge ephemeral groups (Side Vibes) that haven't been active for 12 hours
-        _groups.update { current ->
-            current.filter { (_, group) ->
-                group.isPersistent || group.lastVibeTimestamp >= twelveHoursAgo
-            }
-        }
-
-        saveData() // Persist updated groups
 
         val tempFile = File(context.filesDir, "vibes_log.tmp")
         try {
@@ -198,6 +185,18 @@ class VibeStore(
         }
     }
 
+    suspend fun upsertMessage(message: MessagePayload) {
+        _messages.update { current ->
+            val exists = current.any { it.messageId == message.messageId }
+            appendMessageToLog(message)
+            if (exists) {
+                current.map { if (it.messageId == message.messageId) message else it }
+            } else {
+                current + message
+            }
+        }
+    }
+
     suspend fun updateMessageStatus(messageId: String, status: Int) {
         var updated: MessagePayload? = null
         _messages.update { list ->
@@ -212,16 +211,23 @@ class VibeStore(
         updated?.let { appendMessageToLog(it) }
     }
 
-    suspend fun deleteOldMessages(threshold: Long) {
-        compactMessages()
-    }
-
     suspend fun clearAllMessages() {
         _messages.value = emptyList()
         if (messagesLogFile.exists()) messagesLogFile.delete()
     }
 
     suspend fun deleteMessage(messageId: String) {
+        val message = _messages.value.find { it.messageId == messageId }
+        if (message?.type == MessagePayload.TYPE_IMAGE || message?.type == MessagePayload.TYPE_FILE) {
+            message.content.let { path ->
+                try {
+                    val file = File(path)
+                    if (file.exists() && file.absolutePath.contains(context.filesDir.absolutePath)) {
+                        file.delete()
+                    }
+                } catch (ignored: Exception) {}
+            }
+        }
         _messages.update { it.filter { m -> m.messageId != messageId } }
         compactMessages() // Rewrite log without this message
     }

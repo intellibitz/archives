@@ -113,6 +113,10 @@ class CompositeP2PController(
         return nearbyController.sendGroupMessage(content, groupId) ?: bleController.sendGroupMessage(content, groupId)
     }
 
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int): MessagePayload? {
+        return nearbyController.sendFile(fileUri, receiverId, vibeType)
+    }
+
     override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
         return nearbyController.startGroupVibe(name, members, type)
     }

@@ -22,8 +22,8 @@ blukit works entirely through peer-to-peer radios. Your communication never touc
 ## 4. End-to-End Security
 Private vibes (VIBES and 1-1) are secured using **AES-256** encryption. Keys are generated locally and are never shared with anyone outside your sync.
 
-## 5. Ephemeral Nature
-Vibes are temporary. All history is automatically cleared from your device every 12 hours.
+## 5. User-Controlled Persistence
+Vibes are stored locally on your device. You have full control over your history and can clear it at any time within the app.
 
 ## 6. Changes
 Any changes to this policy will be focused on increasing your privacy.

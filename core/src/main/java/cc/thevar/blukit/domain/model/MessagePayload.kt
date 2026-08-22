@@ -15,7 +15,11 @@ data class MessagePayload(
     val type: Int = TYPE_TEXT,
     val vibeType: Int = VIBE_PUBLIC,
     val status: Int = STATUS_SENT,
-    val hopCount: Int = 0
+    val hopCount: Int = 0,
+    val fileId: Long? = null,
+    val fileName: String? = null,
+    val fileSize: Long? = null,
+    val mimeType: String? = null
 ) {
     companion object {
         const val TYPE_TEXT = 1
@@ -24,6 +28,7 @@ data class MessagePayload(
         const val TYPE_LINK_REQUEST = 4
         const val TYPE_LINK_ACCEPT = 5
         const val TYPE_LINK_DENY = 6
+        const val TYPE_FILE = 7
 
         const val VIBE_PUBLIC = 0
         const val VIBE_SIDE = 1
