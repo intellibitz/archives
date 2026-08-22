@@ -1,28 +1,31 @@
-# blukit: Data Safety
+# blukit: Data Safety Protocol
 
-**blukit is anonymous, safe, secure, and private.**
+**blukit is 100% offline, anonymous, and secured by proximity.**
 
-## 1. Zero Data Collection
-blukit **never** collects data of any kind. 
+## 1. Zero Cloud Dependency
+blukit **never** connects to the internet. All "Vibes" spread directly from phone to phone.
 
-| What we use | Stored? | Shared? | Why? |
+| Energy Type | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
-| **Nickname** | Only on your phone | Nearby people only | For nearby identification. |
-| **Vibes & Media** | Only on your phone | Only with your sync partners | To maintain local history. |
-| **Location** | No | No | We never track or send your location. |
-| **Telemetry** | No | No | We never track usage or app performance. |
+| **Nickname** | Only on your phone | Nearby people only | Local identification in the Field. |
+| **Vibes & Media** | Only on your phone | Only with sync partners | To maintain local history. |
+| **Location** | No | No | We never track or record your location. |
+| **Telemetry** | No | No | We never track performance or usage. |
 
-## 2. Absolute Privacy
-- **No Tracking**: We never track users or their movements.
-- **No Secrets Revealed**: Your identity and private vibes stay strictly between you and your trusted circles.
-- **No Cloud**: Vibes never go to the internet. They stay within the local radio range.
-- **Manual Clear**: You are in control. Vibes stay on your phone until you explicitly clear them in Settings.
+## 2. Absolute Proximity Privacy
+- **No Web Presence**: Your data never leaves the physical radio range of your device.
+- **No Secrets Revealed**: Secure Ties (Private Vibes) stay encrypted between you and your trusted circles.
+- **Physical Lockdown**: If someone isn't in your immediate "Stadium Field," they cannot see your vibes.
 
-## 3. Security
+## 3. User-Controlled Persistence
+- **Manual Clear**: Vibes and history stay on your phone until you explicitly clear them.
+- **Secure Storage**: All local data is encrypted at rest using device-specific hardware keys.
+
+## 4. Hardware Encryption
 **Everything you send is end-to-end encrypted.**
 
-- **AES-256**: All vibes are scrambled so only intended recipients can read them.
-- **Local Keys**: Secure keys are generated and stored only on your device.
+- **AES-256-GCM**: All vibes are scrambled so only the intended crowd members can resonate with them.
+- **ECDH Handshakes**: Secure keys are negotiated locally over the air.
 
 ---
-**Updated**: August 21, 2026
+**Vision Updated**: August 22, 2026

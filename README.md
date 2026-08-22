@@ -1,54 +1,49 @@
-# blukit: spread vibes
+# blukit: the crowd mesh
 
-**SPREAD (B) VIBES. CONNECT ANYWHERE.**
+**SPREAD (B) VIBES. RESONATE ANYWHERE.**
 
-blukit is for any crowd. Sports venues, movie halls, universities, subways—anywhere a crowd forms, blukit lets you connect and spread vibes without the internet. It is anonymous, safe, secure, and private. Now universal across **Phones**, **Watches**, and **Home Screens**.
+blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-to-peer mesh that lets you spread vibes, share media, and establish secure ties in any physical environment—stadiums, festivals, subways, or protests—without a single byte touching the internet.
 
 ---
 
-## ⚡ UNIFIED VIBE FREQUENCY
-The **Stadium Ticker** is the single source of truth for all nearby energy.
-- **Unified Ticker**: Experience a streamlined field where **Public**, **Private**, and **Local** vibes flow in a single vertical stream. No more switching between fields to see who is resonating.
+## ⚡ THE STADIUM FIELD
+Experience the **Unified Vibe Frequency**.
+- **Unified Ticker**: A single stream of truth where **Public**, **Private**, and **Local** energy flows vertically.
+- **Media Mesh**: Attach images and files to your vibes. Large assets spread through the mesh using high-speed offline radios.
 - **Vibe Promotion**: 
-    1.  **Compose**: Spread a vibe from the bottom hub; it enters the ticker as a **LOCAL** vibe.
-    2.  **Attach**: Use the **ATTACH** portal to spread images or files through the mesh.
-    3.  **Interact**: Tap your vibe to open the **Resonance Menu**.
-    4.  **Promote**: Choose to **BROADCAST PUBLICLY** to the entire stadium mesh or **INVITE TO PRIVATE** to establish a secure tie with selected personas.
-- **Visual Resonance**: Subtle connection lines bridge your identity, the Atmospheric Field, and the Message Ticker, mapping vibes to their originators in real-time.
-- **Vibe Tags**: Each entry is visually tagged (**LOCAL**, **PUBLIC**, **SECURE**) to identify its resonance level at a glance.
-- **Noise Filter**: Integrated "Focus Mode" allows you to cut out the crowd and listen only to specific personas without leaving the main field.
+    1.  **Compose**: Spread a local vibe from the hub.
+    2.  **Attach**: Inject media energy into the mesh.
+    3.  **Promote**: Use the **Resonance Menu** to **BROADCAST** to the stadium or **INVITE** personas to a **SECURE TIE**.
+- **Visual Resonance**: Dynamic connection lines map your identity through the atmospheric field into the ticker history in real-time.
+- **Noise Filter**: Activate "Focus Mode" to tune out the noise and resonate only with selected personas.
 
 ---
 
 ## 📱 HARMONY HUB
-A high-density, 3-row architecture designed for maximum ergonomic control:
+A high-density, 3-row architecture for tactical crowd control:
 
-### **Row 0: Global System Bar**
-*The command pill at the absolute top.*
-- **Atmosphere**: Quick-access horizontal toggles for **DARK** (Stealth) and **ECO** (Power) modes.
-- **Identity**: Symbolic branding **[WIFI] V I [BT] E S [GPS]** where real-time hardware status powers the app's name.
-- **System Correction**: Actionable pulsing alerts (**AWAKEN / ALLOW / SEARCHING**) docked next to radio signals for immediate harmony remediation.
+### **Row 0: System Atmosphere**
+- **DARK/ECO**: Tactical toggles for Stealth and Power modes.
+- **Hardware Branding**: **[WIFI] V I [BT] E S [GPS]** name powered by real-time radio status.
+- **Harmony Alerts**: Pulsing status labels (**AWAKEN / ALLOW**) for immediate radio remediation.
 
 ### **Row 1: Humanity Stage**
-*The primary interaction stage.*
-- **Protocols**: Direct access to the **PRIVACY** protocol and anonymity rules.
-- **Navigation**: Centrally anchored **BACK** portal for tactical sub-screen exit.
-- **Identity**: Your **PROFILE** anchor—emoji and nickname—anchored for right-handed ergonomic reach.
+- **Privacy Protocol**: Instant access to the offline-first anonymity rules.
+- **Tactical Navigation**: Centrally anchored portals for swift sub-screen movement.
+- **Identity Anchor**: Ergonomic reach for your local emoji and nickname.
 
 ### **Row 2: Tactical Operations**
-*The discovery line above the ripples.*
-- **Discovery**: **SEARCH** radar to filter the stadium-wide vibe and locate specific energy.
-- **Context**: Dynamic labels that display specific **Sub-Screen Titles** only when needed.
-- **Management**: **MANAGE** portal for Secure Tie controls and Group administration.
+- **SEARCH Radar**: Filter the stadium vibe for specific personas or keywords.
+- **MANAGE Portal**: Control Secure Ties and administer group vibes.
 
 ---
 
-## 🛠️ LEAN ARCHITECTURE
-1. **Bluetooth-First**: blukit works on Bluetooth. WiFi and Location act as boosters for discovery scaling.
-2. **Zero-Bulk**: Custom-drawn `Canvas` widgets replace bulky Material components. Powered by **Koin** DI.
-3. **Offline-First**: 100% phone-to-phone radios. No internet. No data collection.
-4. **User Control**: Vibes and groups persist locally. You decide when to clear your history.
-5. **Sentient Radios**: Radio activity is strictly gated by harmony and power states.
+## 🛠️ ARCHITECTURAL SUPREMACY
+1. **100% Offline**: Zero cloud. No servers. No internet. Data stays in the air.
+2. **Bluetooth-First**: BLE and Bluetooth-classic mesh with WiFi boosters for high-speed media.
+3. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy.
+4. **User-Controlled History**: Vibes persist locally until you choose to clear the history.
+5. **Custom UI**: Primitive `Canvas` drawing replaces heavy Material components for low-latency resonance.
 
 ---
 
@@ -59,5 +54,5 @@ A high-density, 3-row architecture designed for maximum ergonomic control:
 
 ---
 
-*Built with ❤️ by [Intellibitz](https://github.com/intellibitz)*  
-*SPREAD (B) VIBES. CONNECT ANYWHERE.*
+*Built with ❤️ for the Crowd by [Intellibitz](https://github.com/intellibitz)*  
+*SPREAD (B) VIBES. JOIN THE CROWD.*

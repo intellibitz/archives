@@ -1,32 +1,33 @@
-# Privacy Policy for blukit
+# Privacy Policy for blukit: The Crowd Mesh
 
-**Effective Date: August 21, 2026**
+**Effective Date: August 22, 2026**
 
-**blukit** is built on a vision of total anonymity and local resonance. We value your privacy above all else.
+**blukit** is built for the **Crowd**, not the **Web**. Our vision is a world of total anonymity and local resonance, where communication is a physical phenomenon, not a digital trail.
 
-## 1. No Data Collection or Telemetry
-We do **not** collect, store, or transmit any data to any servers. 
-- **No Analytics**: We don't track how you use the app.
-- **No Crashes Shared**: We don't collect crash reports or performance metrics.
-- **No User Profiles**: We don't build profiles or track who you are.
+## 1. 100% Offline & Zero Cloud
+Blukit operates entirely through peer-to-peer radios (Bluetooth, BLE, and Local WiFi). We have **no servers**, **no cloud databases**, and **no internet relays**. Your communication never touches the global web. If it's not in the air around you, it doesn't exist for Blukit.
 
-## 2. No Location Tracking
-While blukit requires hardware permissions to use Bluetooth and WiFi radios (as mandated by Android), **we never track, store, or share your location.** Your physical position is never revealed to anyone.
+## 2. No Data Collection or Telemetry
+We do **not** collect, store, or transmit any data to any outside entity. 
+- **Zero Analytics**: We don't track how you navigate the app.
+- **Zero Performance Logging**: We don't collect crash reports or metrics.
+- **Zero Identity Tracking**: We don't build profiles or track who you are.
 
-## 3. Offline & Anonymous
-blukit works entirely through peer-to-peer radios. Your communication never touches the internet. 
+## 3. Physical Proximity is Privacy
+By design, you can only communicate with people physically near you. This "Stadium Field" approach ensures that your vibes stay local and cannot be intercepted by international surveillance or logged by remote ISPs.
+
+## 4. Anonymous-First Identity
 - You start as anonymous (**YOU**).
-- blukit will gently nudge you to **SET NAME** until you choose a local nickname.
-- You can change your nickname anytime—it stays only on your device.
+- You are encouraged to set a local nickname, which stays **only on your device**.
+- You can change your nickname at any time to break your local trail.
 
-## 4. End-to-End Security
-Private vibes (VIBES and 1-1) are secured using **AES-256** encryption. Keys are generated locally and are never shared with anyone outside your sync.
+## 5. End-to-End Security (Manual TTL)
+Private vibes and Secure Ties are protected using **ECDH + AES-256-GCM** encryption. 
+- **Local Keys**: Secure keys are generated and stored only on your device.
+- **User-Controlled History**: Vibes stay on your device until you explicitly clear them. You own your local energy history.
 
-## 5. User-Controlled Persistence
-Vibes are stored locally on your device. You have full control over your history and can clear it at any time within the app.
-
-## 6. Changes
-Any changes to this policy will be focused on increasing your privacy.
+## 6. Location & Hardware Permissions
+Android mandates "Location" permissions to use Bluetooth and WiFi scanning. **Blukit never tracks, stores, or shares your physical coordinates.** We only use the radios to discover nearby personas in the "Stadium Field."
 
 ## 7. Contact
 muthu.ramadoss@gmail.com

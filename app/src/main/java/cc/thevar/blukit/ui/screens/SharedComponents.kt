@@ -265,7 +265,7 @@ fun BlukitHarmonyTopBar(
         }
     }
     if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-    if (showPrivacyDialog) { AlertDialog(onDismissRequest = { showPrivacyDialog = false }, containerColor = Color.Black, titleContentColor = StealthPrimary, textContentColor = Color.White.copy(alpha = 0.7f), title = { Text("PRIVACY PROTOCOL", fontWeight = FontWeight.Black, fontSize = 14.sp) }, text = { Text("BLUKIT IS ANONYMOUS-FIRST. ALL VIBES ARE EPHEMERAL AND STORED LOCALLY FOR 12 HOURS.", fontSize = 11.sp) }, confirmButton = { TextButton(onClick = { showPrivacyDialog = false }) { Text("UNDERSTOOD", color = StealthPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp) } }) }
+    if (showPrivacyDialog) { AlertDialog(onDismissRequest = { showPrivacyDialog = false }, containerColor = Color.Black, titleContentColor = StealthPrimary, textContentColor = Color.White.copy(alpha = 0.7f), title = { Text("PRIVACY PROTOCOL", fontWeight = FontWeight.Black, fontSize = 14.sp) }, text = { Text("BLUKIT IS ANONYMOUS-FIRST. 100% OFFLINE P2P. ALL VIBES STAY ON YOUR DEVICE UNTIL YOU CHOOSE TO CLEAR THEM.", fontSize = 11.sp) }, confirmButton = { TextButton(onClick = { showPrivacyDialog = false }) { Text("UNDERSTOOD", color = StealthPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp) } }) }
 }
 
 @Composable
