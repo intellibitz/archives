@@ -9,6 +9,11 @@ blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-t
 ## ⚡ THE STADIUM FIELD
 Experience the **Unified Vibe Frequency**.
 - **Unified Ticker**: A single stream of truth where **Public**, **Private**, and **Local** energy flows vertically.
+- **Vibes Ticker Intelligence**: 
+    - **Energy Bars**: Automatically groups multiple vibes from a single persona to keep the ticker clean.
+    - **Recursive Expansion**: Tap a group to expand the persona's vibe stack; tap an individual vibe for tactical actions.
+    - **Horizontal Metadata**: Persona status and vibe counts are aligned horizontally to maximize content clarity.
+- **Rose Resonance**: Private ties now feature a dedicated Rose-themed field atmosphere, mirroring the Public Stadium's intensity.
 - **Media Mesh**: Attach images and files to your vibes. Large assets spread through the mesh using high-speed offline radios.
 - **Vibe Promotion**: 
     1.  **Compose**: Spread a local vibe from the hub.

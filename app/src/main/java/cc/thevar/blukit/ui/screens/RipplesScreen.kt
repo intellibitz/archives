@@ -35,6 +35,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import cc.thevar.blukit.BlukitApplication
 import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -134,14 +135,14 @@ fun RipplesScreen(
             val filtered = if (externalFocusedId != null) {
                 searchFiltered.filter { it.senderId == externalFocusedId }
             } else {
-                searchFiltered
+                searchFiltered.groupBy { it.senderId }.map { it.value.maxBy { msg -> msg.timestamp } }
             }
             
             val sorted = filtered.sortedBy { it.timestamp }
             Triple(sorted, counts, externalFocusedId != null)
         }
 
-        val (vibes, vibeCounts, isDetailView) = vibesData
+        val (vibes, vibeCounts, isVibeFocused) = vibesData
 
         val energyList = remember(state.crowd.scannedDevices, vibes, localDeviceId) {
             val devices = state.crowd.scannedDevices
@@ -173,7 +174,7 @@ fun RipplesScreen(
                 vibedPeers = vibedPeers,
                 externalEnergy = energySurge,
                 onlyTies = false,
-                isFilterMode = noiseFilterEnabled || isDetailView,
+                isFilterMode = noiseFilterEnabled || isVibeFocused,
                 lowPowerMode = lowPowerMode,
                 subjectId = externalFocusedId,
                 onDeviceClick = onDeviceClick,
@@ -190,7 +191,7 @@ fun RipplesScreen(
                     vibeCounts = vibeCounts,
                     localDeviceId = localDeviceId,
                     vibedPeers = vibedPeers,
-                    isGrouped = !isDetailView,
+                    isGrouped = !isVibeFocused,
                     onVibeClick = { messageId -> 
                         val msg = state.session.messages.find { it.messageId == messageId }
                         if (msg != null) {
@@ -202,6 +203,7 @@ fun RipplesScreen(
                     onDeleteVibe = { messageToDelete = it },
                     onAcceptLink = onAcceptLink,
                     onDenyLink = onDenyLink,
+                    onFocusChange = onFocusChange,
                     modifier = Modifier.fillMaxSize().zIndex(10f)
                 )
             }
@@ -251,125 +253,5 @@ fun RipplesScreen(
         }
 
         SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 120.dp))
-    }
-}
-
-@Composable
-private fun VibingVibesTicker(
-    state: BluetoothUiState,
-    energyList: List<Pair<P2PDevice, cc.thevar.blukit.domain.model.MessagePayload?>>,
-    vibeCounts: Map<String, Int>,
-    localDeviceId: String,
-    vibedPeers: Set<String>,
-    isGrouped: Boolean,
-    onVibeClick: (String) -> Unit,
-    onDeviceLongClick: (P2PDevice) -> Unit,
-    onToggleSelection: (String) -> Unit,
-    onDeleteVibe: (String) -> Unit,
-    onAcceptLink: (P2PDevice) -> Unit = {},
-    onDenyLink: (P2PDevice) -> Unit = {},
-    modifier: Modifier = Modifier
-) {
-    val listState = rememberLazyListState()
-    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-
-    Box(modifier = modifier) {
-        if (energyList.isEmpty() && state.crowd.incomingLinkRequests.isEmpty() && state.crowd.outgoingLinkRequests.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "NO VIBES IN THE STADIUM", color = Color.White.copy(alpha = 0.2f), fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-            }
-        }
-        LazyColumn(state = listState, reverseLayout = true, modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp), contentPadding = PaddingValues(top = 40.dp, bottom = 8.dp)) {
-            items(energyList.asReversed(), key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
-                val id = device.persistentId ?: device.id
-                AnimatedVibeItem(msg = msg, senderDevice = device, isMe = (msg?.senderId ?: id) == localDeviceId, vibeCount = vibeCounts[id] ?: 1, isVibed = id in vibedPeers, isMutual = id in state.session.connectedLinks, isSelected = device.id in state.crowd.selectedDevices, isGrouped = isGrouped, timestamp = if (msg != null) timeFormatter.format(Date(msg.timestamp)) else "", onClick = { if (state.crowd.selectedDevices.isNotEmpty()) onToggleSelection(device.id) else if (msg != null) onVibeClick(msg.messageId) }, onLongClick = { onDeviceLongClick(device) }, onDelete = { msg?.let { onDeleteVibe(it.messageId) } })
-            }
-            if (state.crowd.incomingLinkRequests.isNotEmpty() || state.crowd.outgoingLinkRequests.isNotEmpty()) {
-                item { Spacer(modifier = Modifier.height(12.dp)) }
-            }
-            items(state.crowd.incomingLinkRequests.toList(), key = { "in_${it.id}" }) { VibeRequestTickerItem(it, onAcceptLink, onDenyLink) }
-            items(state.crowd.outgoingLinkRequests.toList(), key = { "out_${it.id}" }) { OutgoingVibeRequestTickerItem(it, onDenyLink) }
-        }
-    }
-}
-
-@Composable
-private fun VibeRequestTickerItem(device: P2PDevice, onAccept: (P2PDevice) -> Unit, onDeny: (P2PDevice) -> Unit) {
-    val coordinates = LocalPersonaCoordinates.current
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).onGloballyPositioned { val center = Offset(it.size.width - with(density) { 4.dp.toPx() }, it.size.height / 2f); val current = coordinates[device.persistentId ?: device.id] ?: PersonaConnectionPoints(); coordinates[device.persistentId ?: device.id] = current.copy(ticker = it.positionInRoot() + center) }.background(StealthPrimary.copy(alpha = 0.1f), RoundedCornerShape(8.dp)).border(0.5.dp, StealthPrimary.copy(alpha = 0.2f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 6.dp)) {
-        Text(text = device.emoji, fontSize = 14.sp)
-        Spacer(modifier = Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 9.sp)
-            Text(text = "REQUESTING RESONANCE", fontSize = 6.sp, color = StealthPrimary, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(text = "DENY", modifier = Modifier.clickable { onDeny(device) }, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Bold, fontSize = 8.sp)
-            Text(text = "JOIN", modifier = Modifier.clickable { onAccept(device) }, color = StealthPrimary, fontWeight = FontWeight.Black, fontSize = 8.sp)
-        }
-    }
-}
-
-@Composable
-private fun OutgoingVibeRequestTickerItem(device: P2PDevice, onCancel: (P2PDevice) -> Unit) {
-    val coordinates = LocalPersonaCoordinates.current
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).onGloballyPositioned { val center = Offset(it.size.width - with(density) { 4.dp.toPx() }, it.size.height / 2f); val current = coordinates[device.persistentId ?: device.id] ?: PersonaConnectionPoints(); coordinates[device.persistentId ?: device.id] = current.copy(ticker = it.positionInRoot() + center) }.background(StealthRose.copy(alpha = 0.05f), RoundedCornerShape(8.dp)).border(0.5.dp, StealthRose.copy(alpha = 0.15f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 6.dp)) {
-        Text(text = device.emoji, fontSize = 14.sp)
-        Spacer(modifier = Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 9.sp)
-            Text(text = "AWAITING RESONANCE...", fontSize = 6.sp, color = StealthRose, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-        }
-        Text(text = "CANCEL", modifier = Modifier.clickable { onCancel(device) }, color = StealthRose.copy(alpha = 0.6f), fontWeight = FontWeight.Bold, fontSize = 8.sp)
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun AnimatedVibeItem(msg: cc.thevar.blukit.domain.model.MessagePayload?, isMe: Boolean, senderDevice: P2PDevice?, vibeCount: Int, isVibed: Boolean, isMutual: Boolean, isSelected: Boolean = false, isGrouped: Boolean, timestamp: String, onClick: () -> Unit, onLongClick: () -> Unit, onDelete: () -> Unit) {
-    val coordinates = LocalPersonaCoordinates.current
-    val rowId = if (isMe) "YOU" else (senderDevice?.persistentId ?: senderDevice?.id ?: msg?.senderId ?: "UNKNOWN")
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp).onGloballyPositioned { val center = Offset(with(density) { 32.dp.toPx() }, it.size.height / 2f); val current = coordinates[rowId] ?: PersonaConnectionPoints(); coordinates[rowId] = current.copy(ticker = it.positionInRoot() + center) }.animateContentSize().background(if (isMe) StealthPrimary.copy(alpha = 0.12f) else if (isSelected) Color.White.copy(alpha = 0.1f) else if (isMutual) StealthRose.copy(alpha = 0.05f) else if (isVibed) StealthPrimary.copy(alpha = 0.03f) else Color.Transparent, RoundedCornerShape(8.dp)).border(if (isMe) 1.5.dp else if (isSelected) 1.dp else 0.dp, if (isMe) StealthPrimary.copy(alpha = 0.3f) else if (isSelected) Color.White else Color.Transparent, RoundedCornerShape(8.dp)).combinedClickable(onClick = onClick, onLongClick = if (isMe) onDelete else onLongClick).padding(horizontal = 4.dp, vertical = 4.dp)) {
-        val signatureDevice = senderDevice ?: cc.thevar.blukit.domain.model.P2PDevice(id = "YOU", name = "YOU", emoji = "👤", medium = cc.thevar.blukit.domain.model.P2PDevice.ConnectionMedium.BLUETOOTH)
-        VibePersonaSignature(device = signatureDevice, isVibed = isMutual, isSelected = isSelected, isPeerVibed = isVibed, onlyTies = false, size = 22.dp, isStatic = true, modifier = Modifier.padding(end = 4.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = (if (isMe) "YOU" else (senderDevice?.name ?: msg?.senderName ?: "?")).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (isMe) StealthPrimary else Color.White, letterSpacing = 1.sp)
-                if (timestamp.isNotEmpty()) { Spacer(modifier = Modifier.width(6.dp)); Text(text = timestamp, fontSize = 8.sp, color = Color.White.copy(alpha = 0.2f), fontWeight = FontWeight.Bold) }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (msg?.type == cc.thevar.blukit.domain.model.MessagePayload.TYPE_IMAGE) {
-                    AsyncImage(
-                        model = msg.content,
-                        contentDescription = "Image",
-                        modifier = Modifier
-                            .padding(vertical = 4.dp)
-                            .size(120.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
-                    )
-                } else {
-                    Text(text = msg?.content ?: "Awaiting resonance...", fontSize = 11.sp, color = Color.White.copy(alpha = if (msg != null) 0.7f else 0.2f), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                }
-                
-                if (msg != null) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    val (typeLabel, typeColor) = when (msg.vibeType) {
-                        cc.thevar.blukit.domain.model.MessagePayload.VIBE_PUBLIC -> "PUBLIC" to StealthPrimary
-                        cc.thevar.blukit.domain.model.MessagePayload.VIBE_LOCAL -> "LOCAL" to Color.White.copy(alpha = 0.4f)
-                        else -> "SECURE" to StealthRose
-                    }
-                    Text(text = typeLabel, fontSize = 6.sp, fontWeight = FontWeight.Black, color = typeColor, modifier = Modifier.background(typeColor.copy(alpha = 0.1f), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp, vertical = 1.dp))
-                }
-            }
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        if (isMutual) { Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = StealthRose.copy(alpha = 0.4f), modifier = Modifier.size(10.dp)) } else if (isSelected) { Icon(imageVector = Icons.Rounded.CheckCircle, contentDescription = "Selected", tint = Color.White, modifier = Modifier.size(12.dp)) }
-        Spacer(modifier = Modifier.width(8.dp))
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.onGloballyPositioned { val center = Offset(it.size.width / 2f, it.size.height / 2f); val current = coordinates[rowId] ?: PersonaConnectionPoints(); coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) }.width(48.dp)) { Surface(modifier = Modifier.size(24.dp), shape = CircleShape, color = when { isSelected -> Color.White.copy(alpha = 0.2f); isMutual -> StealthRose.copy(alpha = 0.2f); isVibed -> StealthPrimary.copy(alpha = 0.2f); else -> Color.White.copy(alpha = 0.05f) }, border = BorderStroke(if (isSelected || isMutual || isVibed) 1.dp else 0.5.dp, when { isSelected -> Color.White; isMutual -> StealthRose; isVibed -> StealthPrimary; else -> Color.White.copy(alpha = 0.1f) })) { Box(contentAlignment = Alignment.Center) { Text(text = signatureDevice.emoji, fontSize = 12.sp) } }
-        Text(text = (signatureDevice.name ?: "?").take(5).uppercase(), fontSize = 6.sp, fontWeight = FontWeight.Black, color = if (isMutual) StealthRose else if (isVibed) StealthPrimary else Color.White.copy(alpha = 0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
 }

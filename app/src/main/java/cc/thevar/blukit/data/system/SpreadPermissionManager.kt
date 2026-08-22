@@ -23,14 +23,18 @@ class SpreadPermissionManager(private val context: Context) {
             add(Manifest.permission.BLUETOOTH_SCAN)
             add(Manifest.permission.BLUETOOTH_ADVERTISE)
             add(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
     /**
-     * The Optional list: blukit uses WiFi and Location if granted.
+     * The Optional list: blukit uses WiFi and additional Location if granted.
      */
     val optionalPermissions: List<String> = buildList {
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
         add(Manifest.permission.ACCESS_COARSE_LOCATION)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

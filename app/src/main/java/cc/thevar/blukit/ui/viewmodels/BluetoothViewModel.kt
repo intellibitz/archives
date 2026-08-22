@@ -159,6 +159,7 @@ class BluetoothViewModel(
 
     fun refreshRadios() {
         radioStateManager.triggerRefresh()
+        permissionManager.refresh()
     }
 
     fun stopScan() {

@@ -68,6 +68,9 @@ import cc.thevar.blukit.ui.viewmodels.SupremePowerViewModel
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import cc.thevar.blukit.R
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalFoundationApi::class)
@@ -94,7 +97,23 @@ fun BlukitApp(
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(bluetoothState.activity.uiError) { bluetoothState.activity.uiError?.let { snackbarHostState.showSnackbar(it.message.uppercase()) } }
 
-    val permissionState = rememberSpreadPermissionsState(permissions = permissionManager.requiredPermissions)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                bluetoothViewModel.refreshRadios()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    val permissionState = rememberSpreadPermissionsState(
+        allPermissions = permissionManager.requiredPermissions,
+        essentialPermissions = permissionManager.essentialPermissions
+    )
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
 
     val initialRoute = Route.Blukit
@@ -124,6 +143,7 @@ fun BlukitApp(
     var showManageDialog by remember { mutableStateOf(false) }
     var isSearchMode by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
+    var showPrivacyProtocol by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -202,12 +222,13 @@ fun BlukitApp(
                     isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
                     isLocationOff = !bluetoothState.harmony.isLocationEnabled,
                     isWifiOff = !bluetoothState.harmony.isWifiEnabled,
-                    isPermissionMissing = !permissionState.allPermissionsGranted,
+                    isPermissionMissing = !permissionState.essentialPermissionsGranted,
                     isPermanentlyDenied = isPermanentlyDenied,
                     userCount = report.userCount,
                     isStealthMode = isStealthMode,
                     lowPowerMode = lowPowerMode,
                     airIsStill = airIsStill,
+                    isLocationMandatory = isLocationMandatory,
                     onToggleStealth = viewModel::toggleStealth,
                     onToggleLowPower = viewModel::toggleLowPowerMode,
                     onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
@@ -218,7 +239,9 @@ fun BlukitApp(
                     onClearHistory = viewModel::clearChatHistory,
                     onBack = if (currentRoute is Route.VibeDetail || isSearchMode) { { if (isSearchMode) { isSearchMode = false; searchText = "" } else backStack.removeLastOrNull() } } else null,
                     onManage = { showManageDialog = true },
-                    onSearch = if (currentRoute is Route.Blukit) { { isSearchMode = !isSearchMode } } else null
+                    onSearch = if (currentRoute is Route.Blukit) { { isSearchMode = !isSearchMode } } else null,
+                    vibeCount = bluetoothState.session.messages.size,
+                    groupCount = bluetoothState.session.groups.size
                 )
 
                 if (isSearchMode) {
@@ -231,30 +254,52 @@ fun BlukitApp(
                     NavDisplay(backStack = backStack, onBack = { backStack.removeLastOrNull() }, sceneStrategy = listDetailSceneStrategy, modifier = Modifier.fillMaxSize()) { key ->
                         when (key) {
                             Route.Blukit -> NavEntry(key) { RipplesScreen(state = bluetoothState, localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, localNickname = nickname ?: "?", localEmoji = emoji, energySurge = energySurge, lowPowerMode = lowPowerMode, vibedPeers = bluetoothState.crowd.vibedPeers, noiseFilterEnabled = isNoiseFilterActive, onStartScan = bluetoothViewModel::startScan, onStopScan = bluetoothViewModel::stopScan, onDeviceClick = { device -> if (bluetoothState.crowd.selectedDevices.isNotEmpty()) { bluetoothViewModel.toggleDeviceSelection(device.id) } else { val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id); isNoiseFilterActive = true } }, onDeviceLongClick = { selectedPersonaForMenu = it }, onBroadcastMessage = bluetoothViewModel::spreadVibe, onDeleteVibe = viewModel::deleteVibe, onBlockUser = viewModel::blockUser, onUnblockUser = viewModel::unblockUser, onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupVibe("WHISPER", setOf(id), isTie = false); backStack.add(Route.VibeDetail(gid)) }, onToggleSelection = bluetoothViewModel::toggleDeviceSelection, onAcceptLink = bluetoothViewModel::acceptLink, onDenyLink = bluetoothViewModel::denyLink, onDisconnect = bluetoothViewModel::disconnect, onIdentifyUser = { highlightedUserId = it }, onClearFocus = { viewModel.clearVibedPeers(); isNoiseFilterActive = false }, hasSidebar = false, searchText = searchText) }
-                            is Route.VibeDetail -> NavEntry(key) { TieScreen(state = bluetoothState, localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, localEmoji = emoji, groupId = key.groupId, onDisconnect = bluetoothViewModel::disconnect, onSendMessage = bluetoothViewModel::sendMessage, onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, onDeviceLongClick = { selectedPersonaForMenu = it }, onBlockUser = viewModel::blockUser, onAddMember = bluetoothViewModel::addMemberToGroup, onRemoveMember = bluetoothViewModel::removeMemberFromGroup, showMemberManagement = showManageDialog, onDismissManagement = { showManageDialog = false }, onEnterPip = onEnterPip, onAttachFile = { filePickerLauncher.launch("*/*") }) }
+                            is Route.VibeDetail -> NavEntry(key) { TieScreen(state = bluetoothState, localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, localEmoji = emoji, groupId = key.groupId, onDisconnect = bluetoothViewModel::disconnect, onSendMessage = bluetoothViewModel::sendMessage, onStartSideVibe = { peerId -> val gid = bluetoothViewModel.startGroupVibe("SIDE VIBE", setOf(peerId), isTie = false); backStack.add(Route.VibeDetail(gid)) }, onToggleFocus = { device -> val id = device.persistentId ?: device.id; viewModel.toggleVibePeer(id) }, onDeviceLongClick = { selectedPersonaForMenu = it }, onBlockUser = viewModel::blockUser, onAddMember = bluetoothViewModel::addMemberToGroup, onRemoveMember = bluetoothViewModel::removeMemberFromGroup, showMemberManagement = showManageDialog, onDismissManagement = { showManageDialog = false }, onEnterPip = onEnterPip, onAttachFile = { filePickerLauncher.launch("*/*") }, onShowPrivacy = { showPrivacyProtocol = true }) }
                             else -> NavEntry(key) { Text("Unknown") }
                         }
                     }
                 }
 
-                BlukitVibeHub(
-                    currentRoute = (currentRoute as? Route) ?: initialRoute,
-                    messageText = messageText,
-                    onMessageChange = { messageText = it },
-                    onSend = { if (messageText.isNotBlank()) { if (airIsStill) { showAirIsStillDialog = true } else { bluetoothViewModel.spreadVibe(messageText, MessagePayload.VIBE_LOCAL); messageText = ""; focusManager.clearFocus() } } },
-                    vibeCount = allVibesCount + secureVibesCount,
-                    airIsStill = airIsStill,
-                    incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
-                    selectedDevices = bluetoothState.crowd.selectedDevices,
-                    vibedPeers = bluetoothState.crowd.vibedPeers,
-                    groups = bluetoothState.session.groups,
-                    onAcceptLink = bluetoothViewModel::acceptLink, 
-                    onDenyLink = bluetoothViewModel::denyLink,
-                    onStartSideVibe = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedLinks }) { val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false); backStack.add(Route.VibeDetail(gid)) } },
-                    onStartTie = { val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.crowd.selectedDevices, isTie = true); backStack.add(Route.VibeDetail(gid)) },
-                    onClearSelection = bluetoothViewModel::clearSelection,
-                    onAttachFile = { filePickerLauncher.launch("*/*") }
-                )
+                if (currentRoute !is Route.VibeDetail) {
+                    BlukitVibeHub(
+                        currentRoute = (currentRoute as? Route) ?: initialRoute,
+                        messageText = messageText,
+                        onMessageChange = { messageText = it },
+                        onSend = { 
+                            if (messageText.isNotBlank()) { 
+                                val isAirActive = !airIsStill || bluetoothState.session.connectedLinks.isNotEmpty()
+                                val vibeType = if (!isAirActive) {
+                                    MessagePayload.VIBE_LOCAL
+                                } else if (currentRoute is Route.Blukit || currentRoute == null) {
+                                    MessagePayload.VIBE_PUBLIC
+                                } else {
+                                    MessagePayload.VIBE_LOCAL
+                                }
+                                bluetoothViewModel.spreadVibe(messageText, vibeType)
+                                
+                                if (!isAirActive) {
+                                    showAirIsStillDialog = true
+                                }
+                                
+                                messageText = ""
+                                focusManager.clearFocus() 
+                            } 
+                        },
+                        vibeCount = allVibesCount + secureVibesCount,
+                        airIsStill = airIsStill,
+                        incomingLinkRequests = bluetoothState.crowd.incomingLinkRequests, 
+                        selectedDevices = bluetoothState.crowd.selectedDevices,
+                        vibedPeers = bluetoothState.crowd.vibedPeers,
+                        groups = bluetoothState.session.groups,
+                        onAcceptLink = bluetoothViewModel::acceptLink, 
+                        onDenyLink = bluetoothViewModel::denyLink,
+                        onStartSideVibe = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedLinks }) { val gid = bluetoothViewModel.startGroupVibe("WHISPER", members, isTie = false); backStack.add(Route.VibeDetail(gid)) } },
+                        onStartTie = { val gid = bluetoothViewModel.startGroupVibe("VIBE", bluetoothState.crowd.selectedDevices, isTie = true); backStack.add(Route.VibeDetail(gid)) },
+                        onClearSelection = bluetoothViewModel::clearSelection,
+                        onAttachFile = { filePickerLauncher.launch("*/*") },
+                        onShowPrivacy = { showPrivacyProtocol = true }
+                    )
+                }
             }
 
             if (selectedPersonaForMenu != null) {
@@ -264,7 +309,34 @@ fun BlukitApp(
             }
 
             if (showAirIsStillDialog) {
-                ConfirmationDialog(title = "AIR IS STILL", text = "BLUKIT RADIOS ARE SILENT. AWAKEN BLUETOOTH OR GRANT PERMISSIONS TO SPREAD VIBES.", onConfirm = { showAirIsStillDialog = false; permissionState.launchMultiplePermissionRequest() }, onDismiss = { showAirIsStillDialog = false })
+                ConfirmationDialog(
+                    title = "AIR IS STILL", 
+                    text = "BLUKIT RADIOS ARE SILENT. AWAKEN BLUETOOTH OR GRANT PERMISSIONS TO SPREAD VIBES.", 
+                    onConfirm = { 
+                        showAirIsStillDialog = false
+                        if (!permissionState.essentialPermissionsGranted) {
+                            permissionState.launchMultiplePermissionRequest()
+                        } else if (!bluetoothState.harmony.isBluetoothEnabled) {
+                            context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                        } else if (isLocationMandatory && (!bluetoothState.harmony.isLocationEnabled || !locationPermissionGranted)) {
+                            context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                        }
+                    }, 
+                    onDismiss = { showAirIsStillDialog = false }
+                )
+            }
+
+            if (showPrivacyProtocol) {
+                val themeColor = if (currentRoute is Route.Vibes || currentRoute is Route.VibeDetail) StealthRose else StealthPrimary
+                AlertDialog(
+                    onDismissRequest = { showPrivacyProtocol = false },
+                    containerColor = Color.Black,
+                    titleContentColor = themeColor,
+                    textContentColor = Color.White.copy(alpha = 0.7f),
+                    title = { Text("PRIVACY PROTOCOL", fontWeight = FontWeight.Black, fontSize = 14.sp) },
+                    text = { Text("BLUKIT IS ANONYMOUS-FIRST. 100% OFFLINE P2P. ALL VIBES STAY ON YOUR DEVICE UNTIL YOU CHOOSE TO CLEAR THEM.", fontSize = 11.sp) },
+                    confirmButton = { TextButton(onClick = { showPrivacyProtocol = false }) { Text("UNDERSTOOD", color = themeColor, fontWeight = FontWeight.Bold, fontSize = 12.sp) } }
+                )
             }
         }
     }
@@ -290,15 +362,40 @@ interface SpreadPermissionsState {
 }
 
 @Composable
-fun rememberSpreadPermissionsState(permissions: List<String>): SpreadPermissionsState {
+fun rememberSpreadPermissionsState(
+    allPermissions: List<String>,
+    essentialPermissions: List<String>
+): SpreadPermissionsState {
     val context = LocalContext.current
-    var allGranted by remember { mutableStateOf(permissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) }
-    var essentialGranted by remember { mutableStateOf(permissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results -> allGranted = results.values.all { it }; essentialGranted = results.filter { it.key != Manifest.permission.BLUETOOTH_ADVERTISE && it.key != Manifest.permission.BLUETOOTH_SCAN && it.key != Manifest.permission.BLUETOOTH_CONNECT }.values.all { it } }
+    var allGranted by remember { mutableStateOf(allPermissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) }
+    var essentialGranted by remember { mutableStateOf(essentialPermissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) }
+    
+    val checkPermissions = {
+        allGranted = allPermissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+        essentialGranted = essentialPermissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+    }
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ -> 
+        checkPermissions()
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                checkPermissions()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     return object : SpreadPermissionsState {
         override val allPermissionsGranted: Boolean get() = allGranted
         override val essentialPermissionsGranted: Boolean get() = essentialGranted
-        override val shouldShowRationale: Boolean get() = (context as? Activity)?.let { act -> permissions.any { p -> androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(act, p) } } ?: false
-        override fun launchMultiplePermissionRequest() { launcher.launch(permissions.toTypedArray()) }
+        override val shouldShowRationale: Boolean get() = (context as? Activity)?.let { act -> allPermissions.any { p -> androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(act, p) } } ?: false
+        override fun launchMultiplePermissionRequest() { launcher.launch(allPermissions.toTypedArray()) }
     }
 }

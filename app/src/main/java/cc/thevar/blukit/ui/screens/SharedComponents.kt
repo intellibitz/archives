@@ -4,6 +4,9 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -16,19 +19,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,10 +38,17 @@ import androidx.compose.ui.zIndex
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.ui.navigation.Route
+import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
+import coil.compose.AsyncImage
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import androidx.compose.ui.res.painterResource
 
 data class PersonaConnectionPoints(
     val uph: Offset? = null,
@@ -52,7 +58,6 @@ data class PersonaConnectionPoints(
 
 val LocalPersonaCoordinates = staticCompositionLocalOf { mutableStateMapOf<String, PersonaConnectionPoints>() }
 
-
 @Composable
 fun MixedStatusBranding(
     isBluetoothOff: Boolean,
@@ -60,15 +65,16 @@ fun MixedStatusBranding(
     isLocationOff: Boolean,
     isWeak: Boolean,
     isPermissionMissing: Boolean,
+    isLocationMandatory: Boolean = false,
     onAwakenBluetooth: () -> Unit,
     onAwakenWifi: () -> Unit,
     onAwakenLocation: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, size = 18.dp, onClick = onAwakenWifi)
+        StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = isWeak, isPermissionMissing = false, size = 18.dp, onClick = onAwakenWifi)
         StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, size = 18.dp, onClick = onAwakenBluetooth)
-        StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak, isPermissionMissing = isPermissionMissing, size = 18.dp, onClick = onAwakenLocation)
+        StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = isWeak && !isLocationOff, isPermissionMissing = isLocationMandatory && isLocationOff, size = 18.dp, onClick = onAwakenLocation, forceWarning = !isLocationMandatory && isLocationOff)
     }
 }
 
@@ -108,6 +114,7 @@ fun BlukitHarmonyTopBar(
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
     airIsStill: Boolean,
+    isLocationMandatory: Boolean = false,
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
     onAwakenBluetooth: () -> Unit,
@@ -119,11 +126,12 @@ fun BlukitHarmonyTopBar(
     onBack: (() -> Unit)? = null,
     onManage: (() -> Unit)? = null,
     onSearch: (() -> Unit)? = null,
+    vibeCount: Int = 0,
+    groupCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(initialValue = 0.6f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
     var showClearHistoryDialog by remember { mutableStateOf(false) }
-    var showPrivacyDialog by remember { mutableStateOf(false) }
     val isPrivate = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
     val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
@@ -157,7 +165,7 @@ fun BlukitHarmonyTopBar(
                 // CENTER: [STADIUM VIBES]
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center, modifier = Modifier.weight(1f)) {
                     if (title == "PUBLIC VIBES" || title == "PRIVATE VIBES" || title == "BLUKIT") {
-                        Text(text = "STADIUM VIBES", fontSize = 7.sp, fontWeight = FontWeight.Black, color = themeColor.copy(alpha = 0.8f), letterSpacing = 1.sp)
+                        Text(text = "STADIUM VIBES", fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.2f), letterSpacing = 1.sp)
                     }
                 }
                 
@@ -189,6 +197,7 @@ fun BlukitHarmonyTopBar(
                         isLocationOff = isLocationOff,
                         isWeak = isWeak,
                         isPermissionMissing = isPermissionMissing,
+                        isLocationMandatory = isLocationMandatory,
                         onAwakenBluetooth = onAwakenBluetooth,
                         onAwakenWifi = onAwakenWifi,
                         onAwakenLocation = onAwakenLocation
@@ -202,8 +211,18 @@ fun BlukitHarmonyTopBar(
             Row(modifier = Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 // SEARCH Discovery (Left)
                 if (onSearch != null) {
-                    IconButton(onClick = onSearch, modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.04f)).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))) { 
-                        Icon(Icons.Rounded.Radar, contentDescription = "Search", tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp)) 
+                    val isSearchActive = vibeCount > 0
+                    IconButton(
+                        onClick = onSearch, 
+                        enabled = isSearchActive,
+                        modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.04f)).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
+                    ) { 
+                        Icon(
+                            Icons.Rounded.Radar, 
+                            contentDescription = "Search", 
+                            tint = if (isSearchActive) themeColor else Color.White.copy(alpha = 0.1f), 
+                            modifier = Modifier.size(18.dp)
+                        ) 
                     }
                 } else {
                     Spacer(modifier = Modifier.width(36.dp))
@@ -211,8 +230,18 @@ fun BlukitHarmonyTopBar(
 
                 // MANAGE Group Management (Center)
                 if (onManage != null) {
-                    IconButton(onClick = onManage, modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.04f)).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))) { 
-                        Icon(Icons.Rounded.People, contentDescription = "Manage", tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp)) 
+                    val isManageActive = groupCount > 0
+                    IconButton(
+                        onClick = onManage, 
+                        enabled = isManageActive,
+                        modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.04f)).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
+                    ) { 
+                        Icon(
+                            Icons.Rounded.People, 
+                            contentDescription = "Manage", 
+                            tint = if (isManageActive) themeColor else Color.White.copy(alpha = 0.1f), 
+                            modifier = Modifier.size(18.dp)
+                        ) 
                     }
                 } else {
                     Spacer(modifier = Modifier.width(36.dp))
@@ -232,24 +261,16 @@ fun BlukitHarmonyTopBar(
 
             Spacer(modifier = Modifier.height(2.dp))
 
-            // ROW 2: PROTOCOLS & NAVIGATION (Privacy, Context, Exit)
+            // ROW 2: PROTOCOLS & NAVIGATION (Context, Exit)
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                // PRIVACY Portal (Left)
-                Text(
-                    text = "PRIVACY", 
-                    fontSize = 7.sp, 
-                    fontWeight = FontWeight.Black, 
-                    color = StealthPrimary.copy(alpha = 0.6f), 
-                    letterSpacing = 0.5.sp, 
-                    modifier = Modifier.clickable { showPrivacyDialog = true }
-                )
+                Spacer(modifier = Modifier.width(7.dp)) // Aligned with where PRIVACY was
 
                 // Context Title (Center)
                 if (title != "PUBLIC VIBES" && title != "PRIVATE VIBES" && title != "BLUKIT") {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = icon, contentDescription = null, tint = themeColor.copy(alpha = 0.8f), modifier = Modifier.size(10.dp))
+                        Icon(imageVector = icon, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(10.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = title.uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 0.5.sp, color = themeColor.copy(alpha = 0.8f), fontSize = 7.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(text = title.uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 0.5.sp, color = Color.White.copy(alpha = 0.2f), fontSize = 7.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 } else {
                     Spacer(modifier = Modifier.width(1.dp))
@@ -257,7 +278,7 @@ fun BlukitHarmonyTopBar(
 
                 // BACK Navigation Exit (Right)
                 if (onBack != null) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(24.dp)) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp)) }
+                    IconButton(onClick = onBack, modifier = Modifier.size(24.dp)) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = themeColor, modifier = Modifier.size(14.dp)) }
                 } else {
                     Spacer(modifier = Modifier.width(24.dp))
                 }
@@ -265,7 +286,6 @@ fun BlukitHarmonyTopBar(
         }
     }
     if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-    if (showPrivacyDialog) { AlertDialog(onDismissRequest = { showPrivacyDialog = false }, containerColor = Color.Black, titleContentColor = StealthPrimary, textContentColor = Color.White.copy(alpha = 0.7f), title = { Text("PRIVACY PROTOCOL", fontWeight = FontWeight.Black, fontSize = 14.sp) }, text = { Text("BLUKIT IS ANONYMOUS-FIRST. 100% OFFLINE P2P. ALL VIBES STAY ON YOUR DEVICE UNTIL YOU CHOOSE TO CLEAR THEM.", fontSize = 11.sp) }, confirmButton = { TextButton(onClick = { showPrivacyDialog = false }) { Text("UNDERSTOOD", color = StealthPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp) } }) }
 }
 
 @Composable
@@ -286,10 +306,12 @@ fun BlukitVibeHub(
     onStartTie: () -> Unit,
     onClearSelection: () -> Unit,
     onAttachFile: () -> Unit = {},
+    onShowPrivacy: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isPrivate = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
     val targetName = if (currentRoute is Route.VibeDetail) groups.find { it.id == currentRoute.groupId }?.name?.uppercase() else null
+    val themeColor = if (isPrivate) StealthRose else StealthPrimary
 
     Column(modifier = modifier.fillMaxWidth().zIndex(1f), horizontalAlignment = Alignment.CenterHorizontally) {
         AnimatedVisibility(visible = selectedDevices.isNotEmpty(), enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
@@ -312,6 +334,240 @@ fun BlukitVibeHub(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Text(
+                        text = "PRIVACY",
+                        fontSize = 5.sp,
+                        fontWeight = FontWeight.Black,
+                        color = themeColor,
+                        letterSpacing = 0.5.sp,
+                        modifier = Modifier.clickable { onShowPrivacy() }
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    androidx.compose.material3.Text(
+                        text = "BLUKIT:VIBES",
+                        fontSize = 5.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White.copy(alpha = 0.15f),
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VibingVibesTicker(
+    state: BluetoothUiState,
+    energyList: List<Pair<P2PDevice, cc.thevar.blukit.domain.model.MessagePayload?>>,
+    vibeCounts: Map<String, Int>,
+    localDeviceId: String,
+    vibedPeers: Set<String>,
+    isGrouped: Boolean,
+    onVibeClick: (String) -> Unit,
+    onDeviceLongClick: (P2PDevice) -> Unit,
+    onToggleSelection: (String) -> Unit,
+    onDeleteVibe: (String) -> Unit,
+    onFocusChange: (String?) -> Unit = {},
+    onAcceptLink: (P2PDevice) -> Unit = {},
+    onDenyLink: (P2PDevice) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val listState = rememberLazyListState()
+    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    Box(modifier = modifier) {
+        if (energyList.isEmpty() && state.crowd.incomingLinkRequests.isEmpty() && state.crowd.outgoingLinkRequests.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = "NO VIBES IN THE STADIUM", color = Color.White.copy(alpha = 0.2f), fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+            }
+        }
+        LazyColumn(state = listState, reverseLayout = true, modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp), contentPadding = PaddingValues(top = 40.dp, bottom = 8.dp)) {
+            items(energyList.asReversed(), key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
+                val id = device.persistentId ?: device.id
+                val count = vibeCounts[id] ?: 1
+                AnimatedVibeItem(
+                    msg = msg, 
+                    senderDevice = device, 
+                    isMe = (msg?.senderId ?: id) == localDeviceId, 
+                    vibeCount = count, 
+                    isVibed = id in vibedPeers, 
+                    isMutual = id in state.session.connectedLinks, 
+                    isSelected = device.id in state.crowd.selectedDevices, 
+                    isGrouped = isGrouped, 
+                    timestamp = if (msg != null) timeFormatter.format(Date(msg.timestamp)) else "", 
+                    onClick = { 
+                        if (state.crowd.selectedDevices.isNotEmpty()) {
+                            onToggleSelection(device.id) 
+                        } else if (isGrouped && count > 1) {
+                            onFocusChange(id)
+                        } else if (msg != null) {
+                            onVibeClick(msg.messageId)
+                        }
+                    }, 
+                    onLongClick = { onDeviceLongClick(device) }, 
+                    onDelete = { msg?.let { onDeleteVibe(it.messageId) } }
+                )
+            }
+            if (state.crowd.incomingLinkRequests.isNotEmpty() || state.crowd.outgoingLinkRequests.isNotEmpty()) {
+                item { Spacer(modifier = Modifier.height(12.dp)) }
+            }
+            items(state.crowd.incomingLinkRequests.toList(), key = { "in_${it.id}" }) { VibeRequestTickerItem(it, onAcceptLink, onDenyLink) }
+            items(state.crowd.outgoingLinkRequests.toList(), key = { "out_${it.id}" }) { OutgoingVibeRequestTickerItem(it, onDenyLink) }
+        }
+    }
+}
+
+@Composable
+fun VibeRequestTickerItem(device: P2PDevice, onAccept: (P2PDevice) -> Unit, onDeny: (P2PDevice) -> Unit) {
+    val coordinates = LocalPersonaCoordinates.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).onGloballyPositioned { val center = Offset(it.size.width - with(density) { 4.dp.toPx() }, it.size.height / 2f); val current = coordinates[device.persistentId ?: device.id] ?: PersonaConnectionPoints(); coordinates[device.persistentId ?: device.id] = current.copy(ticker = it.positionInRoot() + center) }.background(StealthPrimary.copy(alpha = 0.1f), RoundedCornerShape(8.dp)).border(0.5.dp, StealthPrimary.copy(alpha = 0.2f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 6.dp)) {
+        Text(text = device.emoji, fontSize = 14.sp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 9.sp)
+            Text(text = "REQUESTING RESONANCE", fontSize = 6.sp, color = StealthPrimary, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(text = "DENY", modifier = Modifier.clickable { onDeny(device) }, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Bold, fontSize = 8.sp)
+            Text(text = "JOIN", modifier = Modifier.clickable { onAccept(device) }, color = StealthPrimary, fontWeight = FontWeight.Black, fontSize = 8.sp)
+        }
+    }
+}
+
+@Composable
+fun OutgoingVibeRequestTickerItem(device: P2PDevice, onCancel: (P2PDevice) -> Unit) {
+    val coordinates = LocalPersonaCoordinates.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).onGloballyPositioned { val center = Offset(it.size.width - with(density) { 4.dp.toPx() }, it.size.height / 2f); val current = coordinates[device.persistentId ?: device.id] ?: PersonaConnectionPoints(); coordinates[device.persistentId ?: device.id] = current.copy(ticker = it.positionInRoot() + center) }.background(StealthRose.copy(alpha = 0.05f), RoundedCornerShape(8.dp)).border(0.5.dp, StealthRose.copy(alpha = 0.15f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 6.dp)) {
+        Text(text = device.emoji, fontSize = 14.sp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 9.sp)
+            Text(text = "AWAITING RESONANCE...", fontSize = 6.sp, color = StealthRose, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+        }
+        Text(text = "CANCEL", modifier = Modifier.clickable { onCancel(device) }, color = StealthRose.copy(alpha = 0.6f), fontWeight = FontWeight.Bold, fontSize = 8.sp)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun AnimatedVibeItem(msg: cc.thevar.blukit.domain.model.MessagePayload?, isMe: Boolean, senderDevice: P2PDevice?, vibeCount: Int, isVibed: Boolean, isMutual: Boolean, isSelected: Boolean = false, isGrouped: Boolean, timestamp: String, onClick: () -> Unit, onLongClick: () -> Unit, onDelete: () -> Unit) {
+    val coordinates = LocalPersonaCoordinates.current
+    val rowId = if (isMe) "YOU" else (senderDevice?.persistentId ?: senderDevice?.id ?: msg?.senderId ?: "UNKNOWN")
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    
+    val signatureDevice = senderDevice ?: cc.thevar.blukit.domain.model.P2PDevice(id = "YOU", name = "YOU", emoji = "👤", medium = cc.thevar.blukit.domain.model.P2PDevice.ConnectionMedium.BLUETOOTH)
+    
+    Row(
+        verticalAlignment = Alignment.CenterVertically, 
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+            .onGloballyPositioned { 
+                val center = Offset(with(density) { 24.dp.toPx() }, it.size.height / 2f)
+                val current = coordinates[rowId] ?: PersonaConnectionPoints()
+                coordinates[rowId] = current.copy(ticker = it.positionInRoot() + center) 
+            }
+            .animateContentSize()
+            .background(
+                if (isMe) StealthPrimary.copy(alpha = 0.08f) 
+                else if (isSelected) Color.White.copy(alpha = 0.1f) 
+                else if (isMutual) StealthRose.copy(alpha = 0.04f) 
+                else if (isVibed) StealthPrimary.copy(alpha = 0.02f) 
+                else Color.White.copy(alpha = 0.01f), 
+                RoundedCornerShape(4.dp)
+            )
+            .border(
+                if (isMe) 1.dp else if (isSelected) 1.dp else 0.dp, 
+                if (isMe) StealthPrimary.copy(alpha = 0.2f) else if (isSelected) Color.White else Color.Transparent, 
+                RoundedCornerShape(4.dp)
+            )
+            .combinedClickable(onClick = onClick, onLongClick = if (isMe) onDelete else onLongClick)
+            .padding(horizontal = 6.dp, vertical = 6.dp)
+    ) {
+        VibePersonaSignature(device = signatureDevice, isVibed = isMutual, isSelected = isSelected, isPeerVibed = isVibed, onlyTies = false, size = 18.dp, isStatic = true, modifier = Modifier.padding(end = 8.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = (if (isMe) "YOU" else (senderDevice?.name ?: msg?.senderName ?: "?")).uppercase(), 
+                    fontSize = 8.sp, 
+                    fontWeight = FontWeight.Black, 
+                    color = if (isMe) StealthPrimary else Color.White.copy(alpha = 0.9f), 
+                    letterSpacing = 0.5.sp
+                )
+                if (msg != null) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    val (typeLabel, typeColor) = when (msg.vibeType) {
+                        cc.thevar.blukit.domain.model.MessagePayload.VIBE_PUBLIC -> "PUBLIC" to StealthPrimary
+                        cc.thevar.blukit.domain.model.MessagePayload.VIBE_LOCAL -> "LOCAL" to Color.White.copy(alpha = 0.4f)
+                        else -> "SECURE" to StealthRose
+                    }
+                    Text(text = typeLabel, fontSize = 5.sp, fontWeight = FontWeight.Black, color = typeColor.copy(alpha = 0.6f))
+                }
+
+                if (isGrouped && vibeCount > 1) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "+${vibeCount - 1} MORE", 
+                        fontSize = 5.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = (if (isMe) StealthPrimary else Color.White).copy(alpha = 0.4f),
+                        modifier = Modifier.background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp, vertical = 1.dp)
+                    )
+                }
+            }
+            if (msg?.type == cc.thevar.blukit.domain.model.MessagePayload.TYPE_IMAGE) {
+                AsyncImage(
+                    model = msg.content,
+                    contentDescription = "Image",
+                    modifier = Modifier.padding(vertical = 2.dp).size(80.dp).clip(RoundedCornerShape(4.dp)).background(Color.White.copy(alpha = 0.05f))
+                )
+            } else {
+                Text(
+                    text = msg?.content ?: "Awaiting resonance...", 
+                    fontSize = 10.sp, 
+                    color = Color.White.copy(alpha = if (msg != null) 0.7f else 0.2f), 
+                    maxLines = 1, 
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        if (timestamp.isNotEmpty()) {
+            Text(text = timestamp, fontSize = 7.sp, color = Color.White.copy(alpha = 0.15f), fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
+        }
+
+        if (isMutual) { Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = StealthRose.copy(alpha = 0.3f), modifier = Modifier.size(8.dp)) }
+        
+        Spacer(modifier = Modifier.width(8.dp))
+        
+        // Right side Persona for Connection Points
+        Box(
+            modifier = Modifier
+                .onGloballyPositioned { 
+                    val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                    val current = coordinates[rowId] ?: PersonaConnectionPoints()
+                    coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) 
+                }
+                .size(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                modifier = Modifier.size(16.dp), 
+                shape = CircleShape, 
+                color = when { isSelected -> Color.White.copy(alpha = 0.2f); isMutual -> StealthRose.copy(alpha = 0.2f); isVibed -> StealthPrimary.copy(alpha = 0.2f); else -> Color.White.copy(alpha = 0.05f) }, 
+                border = BorderStroke(0.5.dp, when { isSelected -> Color.White; isMutual -> StealthRose; isVibed -> StealthPrimary; else -> Color.White.copy(alpha = 0.1f) })
+            ) { 
+                Box(contentAlignment = Alignment.Center) { Text(text = signatureDevice.emoji, fontSize = 8.sp) } 
             }
         }
     }
@@ -395,11 +651,11 @@ fun VibeActionMenu(
 }
 
 @Composable
-fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isWeak: Boolean, isPermissionMissing: Boolean, size: Dp = 24.dp, onClick: () -> Unit) {
+fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isWeak: Boolean, isPermissionMissing: Boolean, size: Dp = 24.dp, forceWarning: Boolean = false, onClick: () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition(label = "StatusAnim")
     val alpha by infiniteTransition.animateFloat(initialValue = 0.4f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
     IconButton(onClick = onClick, modifier = Modifier.size(size)) {
-        Icon(imageVector = icon, contentDescription = null, tint = when { isPermissionMissing || !isOn -> Color.Red; isWeak -> Color.Yellow; else -> StealthPrimary }.copy(alpha = if (!isOn || isWeak) alpha else 1f), modifier = Modifier.size(size * 0.65f))
+        Icon(imageVector = icon, contentDescription = null, tint = when { isPermissionMissing || !isOn && !forceWarning -> Color.Red; forceWarning || isWeak -> Color.Yellow; else -> StealthPrimary }.copy(alpha = if (!isOn || isWeak || forceWarning) alpha else 1f), modifier = Modifier.size(size * 0.65f))
     }
 }
 

@@ -65,6 +65,30 @@ class BlukitWidget : GlanceAppWidget() {
                         onClick = actionStartActivity<MainActivity>(),
                         modifier = GlanceModifier.fillMaxWidth()
                     )
+                    Spacer(modifier = GlanceModifier.height(8.dp))
+                    Row(
+                        modifier = GlanceModifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "PRIVACY",
+                            style = TextStyle(
+                                color = ColorProvider(Color.Gray.copy(alpha = 0.4f)),
+                                fontSize = 6.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                        Spacer(modifier = GlanceModifier.width(8.dp))
+                        Text(
+                            text = "BLUKIT:VIBES",
+                            style = TextStyle(
+                                color = ColorProvider(Color.Cyan.copy(alpha = 0.2f)),
+                                fontSize = 6.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
                 }
             }
         }

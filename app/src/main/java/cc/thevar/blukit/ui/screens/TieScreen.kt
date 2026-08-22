@@ -9,46 +9,24 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.VibeGroup
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.AirConnectionState
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.foundation.background
-import cc.thevar.blukit.ui.navigation.Route
+import androidx.compose.ui.zIndex
 import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthRose
-import androidx.compose.foundation.BorderStroke
-import coil.compose.AsyncImage
-import androidx.compose.material.icons.rounded.Flare
-import androidx.compose.material.icons.rounded.AutoAwesome
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * Ties: Secure private vibes.
@@ -71,6 +49,7 @@ fun TieScreen(
     onDismissManagement: () -> Unit = {},
     onEnterPip: () -> Unit,
     onAttachFile: () -> Unit = {},
+    onShowPrivacy: () -> Unit = {},
     externalFocusedId: String? = null,
     onFocusChange: (String?) -> Unit = {},
 ) {
@@ -95,14 +74,28 @@ fun TieScreen(
                 baseVibes.filter { it.senderId == externalFocusedId }
             } else {
                 baseVibes.groupBy { it.senderId }
-                    .map { entry -> entry.value.maxBy { it.timestamp } }
+                    .map { entry -> entry.value.maxBy { msg -> msg.timestamp } }
             }
             val sorted = filtered.sortedBy { it.timestamp }
             Triple(sorted, counts, externalFocusedId != null)
         }
     }
 
-    val (chatVibes, vibeCounts, isDetailView) = vibesData
+    val (chatVibes, vibeCounts, isVibeFocused) = vibesData
+
+    val energyList = remember(state.crowd.scannedDevices, chatVibes, localDeviceId) {
+        val devices = state.crowd.scannedDevices
+        val deviceMap = devices.associateBy { it.persistentId ?: it.id }
+        
+        chatVibes.map { msg: MessagePayload ->
+            val device = if (msg.senderId == localDeviceId) {
+                P2PDevice(id = localDeviceId, name = "YOU", emoji = localEmoji, medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+            } else {
+                deviceMap[msg.senderId] ?: P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+            }
+            device to msg
+        }.sortedByDescending { it.second.timestamp }
+    }
 
     if (userToBlock != null) {
         AlertDialog(
@@ -180,48 +173,49 @@ fun TieScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Contextual tips
-        if (chatVibes.isEmpty()) {
-            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "TIP: TAP THE PEOPLE ICON TO MANAGE THIS TIE.",
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Black,
-                    color = StealthPrimary.copy(alpha = 0.4f),
-                    letterSpacing = 1.sp
-                )
-            }
-        }
-
-        // Contextual personas are now integrated directly into the chat history rows
-
-        LazyColumn(
-            state = listState,
-            reverseLayout = true,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        RipplesField(
+            state = state,
+            localDeviceId = localDeviceId,
+            localEmoji = localEmoji,
+            activeBubbles = emptyList(), // Bubbles handled by field resonance if needed
+            selectedDevices = emptySet(),
+            vibedPeers = if (externalFocusedId != null) setOf(externalFocusedId) else emptySet(),
+            onlyTies = true,
+            isFilterMode = isVibeFocused,
+            subjectId = externalFocusedId,
+            onDeviceClick = { onToggleFocus(it) },
+            onDeviceLongClick = { onDeviceLongClick(it) },
+            onStartScan = { /* Already scanning in app level */ },
+            drawBackground = true,
+            drawNodes = true,
+            modifier = Modifier.weight(1f)
         ) {
-            items(chatVibes.asReversed(), key = { if (!isDetailView) it.senderId else it.messageId }) { payload ->
-                val sender = state.crowd.scannedDevices.find { it.id == payload.senderId || it.persistentId == payload.senderId }
-                ChatMessage(
-                    payload = payload,
-                    isFromLocalUser = payload.senderId == localDeviceId,
-                    localEmoji = localEmoji,
-                    vibeCount = vibeCounts[payload.senderId] ?: 1,
-                    isGrouped = !isDetailView,
-                    onClick = {
-                        if (externalFocusedId == null) {
-                            onFocusChange(payload.senderId)
-                        } else {
-                            onFocusChange(null)
-                        }
-                    },
-                    onLongClick = { 
-                        if (payload.senderId != localDeviceId) {
-                            sender?.let { onDeviceLongClick(it) } ?: run { userToBlock = payload }
-                        }
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (chatVibes.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "AWAITING RESONANCE IN THIS TIE...",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = StealthRose.copy(alpha = 0.4f),
+                            letterSpacing = 1.sp
+                        )
                     }
+                }
+
+                VibingVibesTicker(
+                    state = state,
+                    energyList = energyList,
+                    vibeCounts = vibeCounts,
+                    localDeviceId = localDeviceId,
+                    vibedPeers = if (externalFocusedId != null) setOf(externalFocusedId) else emptySet(),
+                    isGrouped = !isVibeFocused,
+                    onVibeClick = { /* Handled via recurrence/focus */ },
+                    onDeviceLongClick = onDeviceLongClick,
+                    onToggleSelection = { /* Not applicable in Tie */ },
+                    onDeleteVibe = { /* Add delete logic if needed */ },
+                    onFocusChange = onFocusChange,
+                    modifier = Modifier.fillMaxSize().zIndex(10f)
                 )
             }
         }
@@ -241,174 +235,28 @@ fun TieScreen(
             },
             onAttachFile = onAttachFile
         )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun ChatMessage(
-    payload: MessagePayload,
-    isFromLocalUser: Boolean,
-    localEmoji: String,
-    vibeCount: Int = 1,
-    isGrouped: Boolean = false,
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-    val timeString = remember(payload.timestamp) { timeFormatter.format(Date(payload.timestamp)) }
-
-    Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp),
-        horizontalArrangement = if (isFromLocalUser) Arrangement.End else Arrangement.Start,
-        verticalAlignment = Alignment.Bottom
-    ) {
-        if (!isFromLocalUser) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .padding(bottom = 2.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // Glow Halo
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.radialGradient(
-                                listOf(StealthAmber.copy(alpha = 0.2f), Color.Transparent)
-                            ),
-                            CircleShape
-                        )
-                )
-                
-                Surface(
-                    shape = CircleShape,
-                    color = Color(0xFF0A0C14),
-                    modifier = Modifier.size(28.dp),
-                    border = BorderStroke(1.dp, Brush.linearGradient(listOf(StealthAmber, StealthRose)))
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Rounded.AccountCircle,
-                            contentDescription = null,
-                            tint = StealthAmber,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-
-        Column(horizontalAlignment = if (isFromLocalUser) Alignment.End else Alignment.Start) {
-            if (!isFromLocalUser) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = payload.senderName.uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                        fontWeight = FontWeight.Black,
-                        color = StealthPrimary,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                    )
-                }
-            }
-            
-            Surface(
-                color = if (isFromLocalUser) StealthPrimary else Color(0xFF151921).copy(alpha = 0.8f),
-                contentColor = if (isFromLocalUser) Color.Black else Color.White,
-                shape = MaterialTheme.shapes.medium.copy(
-                    bottomEnd = if (isFromLocalUser) CornerSize(2.dp) else CornerSize(12.dp),
-                    bottomStart = if (isFromLocalUser) CornerSize(12.dp) else CornerSize(2.dp)
-                ),
-                modifier = Modifier
-                    .widthIn(max = 280.dp)
-                    .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (payload.type == MessagePayload.TYPE_IMAGE) {
-                            AsyncImage(
-                                model = payload.content,
-                                contentDescription = "Image",
-                                modifier = Modifier
-                                    .padding(vertical = 4.dp)
-                                    .size(160.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.White.copy(alpha = 0.05f))
-                            )
-                        } else {
-                            Text(
-                                text = payload.content,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = if (isGrouped) 1 else Int.MAX_VALUE,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                        }
-                        
-                        if (isGrouped && vibeCount > 1) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        (if (isFromLocalUser) Color.Black else StealthPrimary).copy(alpha = 0.15f),
-                                        RoundedCornerShape(4.dp)
-                                    )
-                                    .border(
-                                        0.5.dp,
-                                        (if (isFromLocalUser) Color.Black else StealthPrimary).copy(alpha = 0.3f),
-                                        RoundedCornerShape(4.dp)
-                                    )
-                                    .padding(horizontal = 4.dp, vertical = 1.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "+$vibeCount",
-                                        fontSize = 7.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (isFromLocalUser) Color.Black else StealthPrimary
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Rounded.UnfoldMore,
-                                        contentDescription = null,
-                                        tint = (if (isFromLocalUser) Color.Black else StealthPrimary).copy(alpha = 0.6f),
-                                        modifier = Modifier.size(8.dp)
-                                    )
-                                }
-                            }
-                        } else if (!isGrouped && !isFromLocalUser) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.Rounded.History,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.1f),
-                                modifier = Modifier.size(8.dp)
-                            )
-                        }
-                    }
-                    Row(modifier = Modifier.align(Alignment.End).padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = timeString,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = (if (isFromLocalUser) Color.Black else Color.White).copy(alpha = 0.5f)
-                        )
-                        if (isFromLocalUser) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = when (payload.status) {
-                                    MessagePayload.STATUS_SENT -> "✓"
-                                    MessagePayload.STATUS_DELIVERED -> "✓✓"
-                                    else -> "⏳"
-                                },
-                                fontSize = 9.sp,
-                                color = Color.Black.copy(alpha = 0.5f)
-                            )
-                        }
-                    }
-                }
-            }
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "PRIVACY",
+                fontSize = 5.sp,
+                fontWeight = FontWeight.Black,
+                color = StealthRose,
+                letterSpacing = 0.5.sp,
+                modifier = Modifier.clickable { onShowPrivacy() }
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "BLUKIT:VIBES",
+                fontSize = 5.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White.copy(alpha = 0.15f),
+                letterSpacing = 1.sp
+            )
         }
     }
 }
