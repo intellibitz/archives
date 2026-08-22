@@ -59,6 +59,9 @@ class NearbyP2PController(
     private val _incomingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
     override val incomingLinkRequests = _incomingLinkRequests.asStateFlow()
 
+    private val _outgoingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val outgoingLinkRequests = _outgoingLinkRequests.asStateFlow()
+
     private val _isDiscovering = MutableStateFlow(value = false)
     override val isDiscovering = _isDiscovering.asStateFlow()
 
@@ -193,6 +196,7 @@ class NearbyP2PController(
         override fun onDisconnected(endpointId: String) {
             activeConnections.remove(endpointId)
             pendingLinkRequests.remove(endpointId)
+            _outgoingLinkRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
             _connectedLinks.update { it - endpointId }
             vibeKeys.remove(endpointId)
             if (activeConnections.isEmpty()) _isConnected.value = false
@@ -251,6 +255,7 @@ class NearbyP2PController(
 
     private fun handleLinkAccept(endpointId: String) {
         pendingLinkRequests.remove(endpointId)
+        _outgoingLinkRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
         _connectedLinks.update { it + endpointId }
         _isConnected.value = true
         updateScannedDevices()
@@ -377,6 +382,7 @@ class NearbyP2PController(
 
     override fun requestLink(device: P2PDevice) {
         pendingLinkRequests.add(device.id)
+        _outgoingLinkRequests.update { it + device }
         updateScannedDevices()
         internalScope.launch(ioDispatcher) {
             sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "LINK_REQUEST", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_LINK_REQUEST))
@@ -384,13 +390,20 @@ class NearbyP2PController(
     }
 
     override fun acceptLink(device: P2PDevice) {
-        _incomingLinkRequests.update { it - device }; pendingLinkRequests.remove(device.id); _connectedLinks.update { it + device.id }; _isConnected.value = true; updateScannedDevices()
+        _incomingLinkRequests.update { it - device }; pendingLinkRequests.remove(device.id); _connectedLinks.update { it + device.id }; _isConnected.value = true
+        _outgoingLinkRequests.update { current -> current.filter { it.id != device.id }.toSet() }
+        updateScannedDevices()
         internalScope.launch(ioDispatcher) {
             sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "LINK_ACCEPT", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_LINK_ACCEPT))
         }
     }
 
-    override fun denyLink(device: P2PDevice) { pendingLinkRequests.remove(device.id); _incomingLinkRequests.update { it - device }; updateScannedDevices() }
+    override fun denyLink(device: P2PDevice) { 
+        pendingLinkRequests.remove(device.id)
+        _incomingLinkRequests.update { it - device }
+        _outgoingLinkRequests.update { current -> current.filter { it.id != device.id }.toSet() }
+        updateScannedDevices() 
+    }
 
     private suspend fun sendMessagePayload(endpointId: String, payload: MessagePayload) {
         vibeKeys[endpointId]?.let { key -> queueVibe(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), payload).toByteArray(), key))) }
@@ -409,8 +422,17 @@ class NearbyP2PController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload? {
-        val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, receiverId = receiverId, content = content, timestamp = System.currentTimeMillis())
+    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int): MessagePayload? {
+        val payload = MessagePayload(
+            messageId = UUID.randomUUID().toString(),
+            senderId = repository.getDeviceId(),
+            senderName = repository.getCurrentNickname(),
+            senderEmoji = repository.emojiAvatar.value,
+            receiverId = receiverId,
+            content = content,
+            timestamp = System.currentTimeMillis(),
+            vibeType = vibeType
+        )
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         try {
             if (receiverId != null) { getVibeKeyWithRetry(receiverId)?.let { key -> queueVibe(receiverId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } }
@@ -420,7 +442,7 @@ class NearbyP2PController(
         } catch (e: Exception) { return null }
     }
 
-    override suspend fun broadcastMessage(content: String): MessagePayload? = sendMessage(content, null)
+    override suspend fun broadcastMessage(content: String, vibeType: Int): MessagePayload? = sendMessage(content, null, vibeType)
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
         val group = vibeStore.getGroup(groupId) ?: return null

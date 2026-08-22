@@ -3,6 +3,7 @@ package cc.thevar.blukit.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cc.thevar.blukit.network.p2p.P2PController
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.VibeGroup
 import cc.thevar.blukit.domain.model.ConnectionStatus
@@ -75,14 +76,23 @@ class BluetoothViewModel(
         _selectedDevices,
         repository.vibedPeers,
         repository.blockedUsers,
-        p2pController.incomingLinkRequests
-    ) { scanned, selected, vibed, blocked, requests ->
+        p2pController.incomingLinkRequests,
+        p2pController.outgoingLinkRequests
+    ) { Array ->
+        val scanned = Array[0] as List<P2PDevice>
+        val selected = Array[1] as Set<String>
+        val vibed = Array[2] as Set<String>
+        val blocked = Array[3] as Set<String>
+        val incoming = Array[4] as Set<P2PDevice>
+        val outgoing = Array[5] as Set<P2PDevice>
+        
         MeshCrowd(
             scannedDevices = scanned,
             selectedDevices = selected,
             vibedPeers = vibed,
             blockedUsers = blocked,
-            incomingLinkRequests = requests
+            incomingLinkRequests = incoming,
+            outgoingLinkRequests = outgoing
         )
     }
 
@@ -219,16 +229,27 @@ class BluetoothViewModel(
         }
     }
 
-    fun spreadVibe(message: String, isPrivate: Boolean) {
+    fun spreadVibe(message: String, vibeType: Int = MessagePayload.VIBE_LOCAL) {
         viewModelScope.launch {
-            if (isPrivate) {
-                // Send to all connected links (Private Group Vibes)
-                state.value.session.connectedLinks.forEach { vibeId ->
-                    p2pController.sendMessage(message, vibeId)
+            when (vibeType) {
+                MessagePayload.VIBE_LOCAL -> {
+                    // Just store locally in the message list via p2pController or repo
+                    // If p2pController manages messages, we might need a 'storeLocal' method
+                    p2pController.sendMessage(message, null, MessagePayload.VIBE_LOCAL)
                 }
-            } else {
-                // All Vibes (Public)
-                p2pController.broadcastMessage(message)
+                MessagePayload.VIBE_PUBLIC -> {
+                    p2pController.broadcastMessage(message, MessagePayload.VIBE_PUBLIC)
+                }
+                MessagePayload.VIBE_TIE -> {
+                    val targets = state.value.crowd.selectedDevices.ifEmpty { state.value.session.connectedLinks }
+                    if (targets.isNotEmpty()) {
+                        targets.forEach { targetId ->
+                            p2pController.sendMessage(message, targetId, MessagePayload.VIBE_TIE)
+                        }
+                    } else {
+                        p2pController.sendMessage(message, null, MessagePayload.VIBE_TIE)
+                    }
+                }
             }
         }
     }

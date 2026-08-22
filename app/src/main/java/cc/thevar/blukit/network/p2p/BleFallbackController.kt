@@ -57,6 +57,9 @@ class BleFallbackController(
     private val _incomingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
     override val incomingLinkRequests = _incomingLinkRequests.asStateFlow()
 
+    private val _outgoingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val outgoingLinkRequests = _outgoingLinkRequests.asStateFlow()
+
     private val _isDiscovering = MutableStateFlow(false)
     override val isDiscovering = _isDiscovering.asStateFlow()
 
@@ -490,7 +493,7 @@ class BleFallbackController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload? {
+    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int): MessagePayload? {
         val payload = MessagePayload(
             messageId = UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
@@ -498,7 +501,8 @@ class BleFallbackController(
             senderEmoji = repository.emojiAvatar.value,
             receiverId = receiverId,
             content = content,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
+            vibeType = vibeType
         )
         val json = Json.encodeToString(MessagePayload.serializer(), payload)
         val bytes = json.toByteArray()
@@ -543,8 +547,8 @@ class BleFallbackController(
         internalScope.launch { _errors.emit(error) }
     }
 
-    override suspend fun broadcastMessage(content: String): MessagePayload? {
-        return sendMessage(content, null)
+    override suspend fun broadcastMessage(content: String, vibeType: Int): MessagePayload? {
+        return sendMessage(content, null, vibeType)
     }
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {

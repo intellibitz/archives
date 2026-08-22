@@ -26,6 +26,7 @@ interface P2PController {
     val isConnected: StateFlow<Boolean>
     val connectedLinks: StateFlow<Set<String>>
     val incomingLinkRequests: StateFlow<Set<P2PDevice>>
+    val outgoingLinkRequests: StateFlow<Set<P2PDevice>>
     val isDiscovering: StateFlow<Boolean>
     val isAdvertising: StateFlow<Boolean>
     val errors: StateFlow<P2PError?>
@@ -49,9 +50,9 @@ interface P2PController {
     fun acceptLink(device: P2PDevice)
     fun denyLink(device: P2PDevice)
 
-    suspend fun sendMessage(content: String, receiverId: String? = null): MessagePayload?
+    suspend fun sendMessage(content: String, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_PUBLIC): MessagePayload?
 
-    suspend fun broadcastMessage(content: String): MessagePayload?
+    suspend fun broadcastMessage(content: String, vibeType: Int = MessagePayload.VIBE_PUBLIC): MessagePayload?
 
     suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload?
 

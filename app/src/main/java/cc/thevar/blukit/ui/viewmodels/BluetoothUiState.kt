@@ -43,7 +43,8 @@ data class MeshCrowd(
     val selectedDevices: Set<String> = emptySet(),
     val vibedPeers: Set<String> = emptySet(),
     val blockedUsers: Set<String> = emptySet(),
-    val incomingLinkRequests: Set<P2PDevice> = emptySet()
+    val incomingLinkRequests: Set<P2PDevice> = emptySet(),
+    val outgoingLinkRequests: Set<P2PDevice> = emptySet()
 )
 
 /**

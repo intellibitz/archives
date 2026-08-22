@@ -53,7 +53,7 @@ fun ConversationsScreen(
             if (state.crowd.incomingLinkRequests.isNotEmpty()) {
                 item {
                     Text(
-                        text = "VIBE REQUESTS",
+                        text = "INCOMING VIBE REQUESTS",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Black,
                         color = StealthPrimary,
@@ -66,14 +66,20 @@ fun ConversationsScreen(
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
 
-            item {
-                Text(
-                    text = "ACTIVE RESONANCES",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Black,
-                    color = Color.White.copy(alpha = 0.4f),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+            if (state.crowd.outgoingLinkRequests.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "OUTGOING VIBE REQUESTS",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Black,
+                        color = StealthRose,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                items(state.crowd.outgoingLinkRequests.toList(), key = { it.id }) { request ->
+                    OutgoingVibeRequestItem(request, onDenyLink)
+                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
 
             val conversations = state.session.groups
@@ -81,7 +87,7 @@ fun ConversationsScreen(
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "NO VIBES YET", 
+                            text = "NO PRIVATE VIBES YET", 
                             color = Color.White.copy(alpha = 0.2f), 
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp
@@ -122,6 +128,32 @@ fun ConversationsScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun OutgoingVibeRequestItem(
+    device: P2PDevice,
+    onCancel: (P2PDevice) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(StealthRose.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
+            .border(1.dp, StealthRose.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = device.emoji, fontSize = 24.sp)
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 12.sp)
+                Text(text = "Awaiting resonance...", fontSize = 8.sp, color = Color.White.copy(alpha = 0.4f))
+            }
+            TextButton(onClick = { onCancel(device) }) {
+                Text("CANCEL", color = StealthRose, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+            }
+        }
     }
 }
 

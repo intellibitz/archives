@@ -28,6 +28,7 @@ data class MessagePayload(
         const val VIBE_PUBLIC = 0
         const val VIBE_SIDE = 1
         const val VIBE_TIE = 2
+        const val VIBE_LOCAL = 3
 
         const val STATUS_PENDING = 0
         const val STATUS_SENT = 1

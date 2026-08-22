@@ -38,6 +38,7 @@ import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.viewmodels.AirConnectionState
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
+import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -190,34 +191,7 @@ fun TieScreen(
             }
         }
 
-        // Contextual Persona Cloud: Users in this Tie
-        if (group != null) {
-            val groupMembers = remember(group.memberIds, state.crowd.scannedDevices) {
-                state.crowd.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
-            }
-            
-            UnifiedPersonaCloud(
-                devices = groupMembers,
-                vibedPeers = state.crowd.vibedPeers,
-                connectedLinks = state.session.connectedLinks,
-                activeBubbles = state.session.messages.map { msg ->
-                    BubbleData(
-                        msg.senderId,
-                        msg.content,
-                        msg.timestamp,
-                        msg.messageId,
-                        !msg.receiverId.isNullOrBlank()
-                    )
-                },
-                onDeviceClick = onToggleFocus,
-                onDeviceLongClick = onDeviceLongClick,
-                userNickname = "?", // Placeholder for Tie screen context if needed
-                userEmoji = "👤",
-                onUserNicknameChange = {},
-                userFocusRequester = null, // Disable user persona in Tie screen cloud for now
-                airIsStill = !state.harmony.isBluetoothEnabled || !state.harmony.permissionsGranted
-            )
-        }
+        // Contextual personas are now integrated directly into the chat history rows
 
         LazyColumn(
             state = listState,
@@ -252,6 +226,8 @@ fun TieScreen(
         
         BlukitInput(
             airIsStill = !state.harmony.isBluetoothEnabled || !state.harmony.permissionsGranted,
+            isPrivate = true,
+            targetName = group?.name?.uppercase(),
             value = vibeText,
             onValueChange = { vibeText = it },
             onSend = {

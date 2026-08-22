@@ -45,6 +45,13 @@ class CompositeP2PController(
         (nearby + ble).distinctBy { it.id }.toSet()
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
+    override val outgoingLinkRequests: StateFlow<Set<P2PDevice>> = combine(
+        nearbyController.outgoingLinkRequests,
+        bleController.outgoingLinkRequests
+    ) { nearby, ble ->
+        (nearby + ble).distinctBy { it.id }.toSet()
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
+
     override val isDiscovering: StateFlow<Boolean> = combine(
         nearbyController.isDiscovering,
         bleController.isDiscovering
@@ -92,13 +99,13 @@ class CompositeP2PController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?): MessagePayload? {
-        return nearbyController.sendMessage(content, receiverId) ?: bleController.sendMessage(content, receiverId)
+    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int): MessagePayload? {
+        return nearbyController.sendMessage(content, receiverId, vibeType) ?: bleController.sendMessage(content, receiverId, vibeType)
     }
 
-    override suspend fun broadcastMessage(content: String): MessagePayload? {
-        val nearby = nearbyController.broadcastMessage(content)
-        val ble = bleController.broadcastMessage(content)
+    override suspend fun broadcastMessage(content: String, vibeType: Int): MessagePayload? {
+        val nearby = nearbyController.broadcastMessage(content, vibeType)
+        val ble = bleController.broadcastMessage(content, vibeType)
         return nearby ?: ble
     }
 

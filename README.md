@@ -6,48 +6,45 @@ blukit is for any crowd. Sports venues, movie halls, universities, subways—any
 
 ---
 
-## 👥 ALL (Public Vibes)
-The **ALL** field is where you see everyone around you.
-- **Condensed Ticker**: Experience a clutter-free field with **One-User-One-Entry** grouping. See the latest resonance from every nearby person at a glance. Your own vibes are clearly differentiated with a distinct "YOU" pill and background. Long-press any vibe to start a selection for group resonance.
-- **Visual Resonance**: Subtle connection lines bridge the Persona Sidebar, the Atmospheric Field, and the Message Ticker, mapping vibes to their originators in real-time.
-- **Drill-Down History**: Tap any entry to expand and explore the full chronological history of vibes from that specific user.
-- **Vibe Energy**: Inline counters (`+5 ⇅`) show you exactly how many resonances each user has shared, with clear visual signals for expansion.
-- **Noise Filter**: Integrated filtering allows you to cut out the crowd and listen only to those you've blossomed (vibed) without leaving the ALL view.
-- **Persistent Sidebar (UPH)**: A permanent vertical control center.
-    - **ALL (Top Anchor)**: Your gateway to the global crowd.
-    - **VIBES**: Toggle navigation to your secure personal resonances. Long-press to **Reset Vibes** (clear history).
-    - **FOCUS**: Direct toggle for your curated Focus Circle (Noise Filter).
-    - **RESET (Bottom Anchor)**: Grounded identity management.
-- **Unified Interactions**: 
-    - **Tap**: Blossom/Focus a persona. 
-    - **Long-Tap**: Open the **Options Menu** for focus management, blocking, or secure WHISPER requests.
-    - **Search/Identify**: Trigger a visual pulse in the field to locate specific personas in a crowd.
-- **Active vs. Idle**: Active users who speak move to the forefront, while others stay in the **IDLE** row with their names visible for quick identification.
-
-## ✨ VIBES (Personal Vibes)
-Your private space for mutual resonances and intimate whispers.
-- **Mutual Permission**: Establishing a **VIBE** requires agreement (**JOIN**) from both sides, creating a secure, private group.
-- **Manage Ties**: Expand your circle by adding more nearby users or shorten it by removing members directly from the vibe view.
-- **Side Conversations**: Start a **WHISPER** for contextual one-on-one interactions within a group or directly from the field.
-- **Merged View**: All your private interactions—whether group-wide or person-to-person—are managed in this single, unified field.
-- **Secure Communication**: Every interaction in VIBES is hardware-encrypted and strictly local.
+## ⚡ UNIFIED VIBE FREQUENCY
+The **Stadium Ticker** is the single source of truth for all nearby energy.
+- **Unified Ticker**: Experience a streamlined field where **Public**, **Private**, and **Local** vibes flow in a single vertical stream. No more switching between fields to see who is resonating.
+- **Vibe Promotion**: 
+    1.  **Compose**: Spread a vibe from the bottom hub; it enters the ticker as a **LOCAL** vibe.
+    2.  **Interact**: Tap your vibe to open the **Resonance Menu**.
+    3.  **Promote**: Choose to **BROADCAST PUBLICLY** to the entire stadium mesh or **INVITE TO PRIVATE** to establish a secure tie with selected personas.
+- **Visual Resonance**: Subtle connection lines bridge your identity, the Atmospheric Field, and the Message Ticker, mapping vibes to their originators in real-time.
+- **Vibe Tags**: Each entry is visually tagged (**LOCAL**, **PUBLIC**, **SECURE**) to identify its resonance level at a glance.
+- **Noise Filter**: Integrated "Focus Mode" allows you to cut out the crowd and listen only to specific personas without leaving the main field.
 
 ---
 
-## 📱 UNIVERSAL ECOSYSTEM
-Everything you need, everywhere you are:
-- **Harmony Top Bar**: A unified 2-row dashboard. Row 1 hosts Environment Toggles (Dark/Eco), `V I (B) E S` branding, and high-fidelity Radios with vertically aligned system actions (Settings/Permissions) anchored below them.
-- **Wear OS Support**: Native Wear OS app to see nearby vibes directly on your wrist with high-efficiency scaling lists.
-- **Grounded Hub**: Minimalist bottom anchor for high-priority vibe input, providing a clean surface for spreading vibes.
-- **Vertical Persona Sidebar**: A scrollable sidebar on the right where nearby personas are anchored by your own identity at the bottom.
-- **Home Screen Widget**: Modern Glance-based widget showing live "Vibe Counts" around you with one-tap access to the field.
-- **Keyboard-Aware**: The Hub surface floats elegantly above the keyboard using `imePadding()`.
+## 📱 HARMONY HUB
+A high-density, 3-row architecture designed for maximum ergonomic control:
+
+### **Row 0: Global System Bar**
+*The command pill at the absolute top.*
+- **Atmosphere**: Quick-access horizontal toggles for **DARK** (Stealth) and **ECO** (Power) modes.
+- **Identity**: Symbolic branding **[WIFI] V I [BT] E S [GPS]** where real-time hardware status powers the app's name.
+- **System Correction**: Actionable pulsing alerts (**AWAKEN / ALLOW / SEARCHING**) docked next to radio signals for immediate harmony remediation.
+
+### **Row 1: Humanity Stage**
+*The primary interaction stage.*
+- **Protocols**: Direct access to the **PRIVACY** protocol and anonymity rules.
+- **Navigation**: Centrally anchored **BACK** portal for tactical sub-screen exit.
+- **Identity**: Your **PROFILE** anchor—emoji and nickname—anchored for right-handed ergonomic reach.
+
+### **Row 2: Tactical Operations**
+*The discovery line above the ripples.*
+- **Discovery**: **SEARCH** radar to filter the stadium-wide vibe and locate specific energy.
+- **Context**: Dynamic labels that display specific **Sub-Screen Titles** only when needed.
+- **Management**: **MANAGE** portal for Secure Tie controls and Group administration.
 
 ---
 
 ## 🛠️ LEAN ARCHITECTURE
-1. **Bluetooth-First**: blukit works on Bluetooth. If WiFi is granted, blukit uses it. If Location is granted, blukit uses it. Range and discovery scale dynamically with available radios.
-2. **Zero-Bulk**: Custom-drawn `Canvas` widgets replace bulky Material components. Powered by **Koin** for lightweight Dependency Injection.
+1. **Bluetooth-First**: blukit works on Bluetooth. WiFi and Location act as boosters for discovery scaling.
+2. **Zero-Bulk**: Custom-drawn `Canvas` widgets replace bulky Material components. Powered by **Koin** DI.
 3. **Offline-First**: 100% phone-to-phone radios. No internet. No data collection.
 4. **Everything Vanishes**: Vibes and ephemeral groups clear out every 12 hours.
 5. **Sentient Radios**: Radio activity is strictly gated by harmony and power states.
