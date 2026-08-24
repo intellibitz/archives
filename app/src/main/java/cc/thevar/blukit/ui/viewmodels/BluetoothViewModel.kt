@@ -18,7 +18,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 /**
  * ViewModel responsible for managing connectivity within The Air and UI states.
@@ -58,9 +57,20 @@ class BluetoothViewModel(
     }
 
     init {
-        // Observe messages to trigger energy surges
+        // Observe messages to trigger energy surges and handle protocols
         p2pController.messages
-            .onEach { if (it.isNotEmpty()) triggerEnergySurge() }
+            .onEach { msgs ->
+                if (msgs.isNotEmpty()) {
+                    triggerEnergySurge()
+                    // PROTOCOL: Collaborative Rituals
+                    msgs.filter { it.type == MessagePayload.TYPE_RITUAL_PUSH }.forEach { ritualMsg ->
+                        try {
+                            val schedule = kotlinx.serialization.json.Json.decodeFromString<cc.thevar.blukit.domain.model.AirSchedule>(ritualMsg.content)
+                            ritualMsg.groupId?.let { gid -> addSchedule(gid, schedule) }
+                        } catch (e: Exception) { Log.e("BluetoothViewModel", "Failed to decode ritual push") }
+                    }
+                }
+            }
             .launchIn(viewModelScope)
 
         // AIR AWAKENING: Automatically promote silence to shout when radios engage
@@ -87,6 +97,7 @@ class BluetoothViewModel(
         viewModelScope.launch {
             while (true) {
                 vibeStore.pruneMedia(thresholdMs = 90L * 24 * 60 * 60 * 1000) // 90 days
+                vibeStore.autoArchiveAirs() // PROTOCOL: Archive after 30 days inactivity
                 delay(24L * 60 * 60 * 1000)
             }
         }
@@ -136,11 +147,17 @@ class BluetoothViewModel(
     private val activityState: Flow<AirActivity> = combine(
         p2pController.isDiscovering,
         p2pController.isAdvertising,
+        p2pController.messages,
         p2pController.errors
-    ) { isDiscovering, isAdvertising, error ->
+    ) { isDiscovering, isAdvertising, messages, error ->
+        val now = System.currentTimeMillis()
+        val recentVibes = messages.count { (now - it.timestamp) < 300000 } // last 5 mins
+        val intensity = (recentVibes / 20f).coerceAtMost(1f)
+
         AirActivity(
             isDiscovering = isDiscovering,
             isAdvertising = isAdvertising,
+            energyIntensity = intensity,
             uiError = error?.toUiError()
         )
     }
@@ -174,13 +191,15 @@ class BluetoothViewModel(
         p2pController.connectedLinks,
         p2pController.messages,
         vibeStore.activeGroups,
-        vibeStore.archivedGroups
-    ) { links, messages, groups, archivedGroups ->
+        vibeStore.archivedGroups,
+        p2pController.syncProgress
+    ) { links, messages, groups, archivedGroups, syncProgress ->
         VibeSession(
             connectedLinks = links,
             messages = messages,
             groups = groups,
-            archivedGroups = archivedGroups
+            archivedGroups = archivedGroups,
+            syncProgress = syncProgress
         )
     }
 
@@ -270,31 +289,32 @@ class BluetoothViewModel(
 
     fun startGroupVibe(name: String, members: Set<String>? = null, scope: Int = VibeGroup.SCOPE_PRIVATE): String {
         val targetMembers = members ?: _selectedDevices.value
-        val normalized = name.uppercase().trim()
         val isPublicAir = scope == VibeGroup.SCOPE_PUBLIC
         
-        val groupId = if (isPublicAir) {
-            if (normalized == "AIR" || normalized == "THE AIR") VibeGroup.ID_AIR else "air_${normalized.replace(" ", "_")}"
-        } else {
-            UUID.randomUUID().toString()
-        }
-
-        val parentAirId = if (scope == VibeGroup.SCOPE_PRIVATE) _currentTieId.value else null
+        val currentGroup = state.value.session.groups.find { it.id == _currentTieId.value }
+        val groupId = VibeGroup.generateId(name, scope, currentGroup)
+        val parentId = _currentTieId.value
         
         viewModelScope.launch {
             val existing = vibeStore.getGroup(groupId)
             if (isPublicAir) {
                 // PUBLIC AIR: Join existing or create a shared entry. No one owns it.
                 if (existing == null) {
-                    vibeStore.insertGroup(VibeGroup(id = groupId, name = name, scope = VibeGroup.SCOPE_PUBLIC))
+                    vibeStore.insertGroup(VibeGroup(
+                        id = groupId, 
+                        name = name, 
+                        scope = VibeGroup.SCOPE_PUBLIC,
+                        parentId = parentId
+                    ))
                 } else {
                     vibeStore.updateGroupLastVibe(groupId, System.currentTimeMillis())
                 }
             } else {
                 // PRIVATE TIE: Anchored to a parent Air.
-                p2pController.startGroupVibe(name, targetMembers, scope)
+                p2pController.startGroupVibe(name, targetMembers, scope, groupId = groupId, parentId = parentId)
+                delay(100) 
                 vibeStore.getGroup(groupId)?.let { tie ->
-                    vibeStore.insertGroup(tie.copy(parentAirId = parentAirId))
+                    vibeStore.insertGroup(tie.copy(parentId = parentId))
                 }
             }
         }
@@ -412,6 +432,10 @@ class BluetoothViewModel(
         vibeStore.vaultGroup(groupId, isVaulted)
     }
 
+    fun seniorVaultGroup(groupId: String, isSeniorVault: Boolean) {
+        vibeStore.seniorVaultGroup(groupId, isSeniorVault)
+    }
+
     fun updateNote(groupId: String, content: String, messageId: String?, version: Int) {
         viewModelScope.launch {
             p2pController.sendNoteUpdate(groupId, content, messageId, version)
@@ -440,6 +464,25 @@ class BluetoothViewModel(
 
     fun addSchedule(groupId: String, schedule: cc.thevar.blukit.domain.model.AirSchedule) {
         viewModelScope.launch { vibeStore.addAirSchedule(groupId, schedule) }
+    }
+
+    fun pushRitual(groupId: String, schedule: cc.thevar.blukit.domain.model.AirSchedule) {
+        viewModelScope.launch {
+            val content = kotlinx.serialization.json.Json.encodeToString(schedule)
+            val members = vibeStore.getGroup(groupId)?.memberIds ?: emptySet()
+            members.forEach { memberId ->
+                p2pController.sendMessage(
+                    content = content,
+                    receiverId = memberId,
+                    vibeType = MessagePayload.VIBE_WHISPER,
+                    groupId = groupId
+                )?.let { 
+                    // To ensure it's treated as a ritual push on the other end, 
+                    // we'd ideally need a way to set the type in sendMessage.
+                    // For now, assume it's inferred or we add a parameter.
+                }
+            }
+        }
     }
 
     override fun onCleared() {

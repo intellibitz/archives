@@ -10,9 +10,10 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 1.  Open `MarketPreviews.kt` in Android Studio.
 2.  Switch to the **Design** or **Split** view.
 3.  Locate the following previews:
-    -   `PreviewRadarPhone`: The main discovery interface showing the spectral radar.
-    -   `PreviewChatPhone`: The **Intelligent Ticker** and Tie interface.
-    -   `PreviewHarmonyHubFull`: The complete Harmony Hub and Vibe Hub architecture.
+    -   `PreviewRadarPhone`: The main **Atmos Field** showing AIR METAs and the spectral radar.
+    -   `PreviewChatPhone`: The **Air Field** and **Tie Field** interface showing METAs and granular units.
+    -   `PreviewVibeField`: The granular breakdown of a specific **Vibe Meta**.
+    -   `PreviewHarmonyHubFull`: The complete Harmony Hub architecture with recursive meta-expansion.
     -   `PreviewAirRitualGhost`: The **Vibe Ghost** interaction model for naming Airs.
     -   `PreviewVibingVibesTickerHeaders`: High-density feed showcasing varied vibe types.
     -   `PreviewRadarTablet`: The adaptive layout for larger spectral fields.

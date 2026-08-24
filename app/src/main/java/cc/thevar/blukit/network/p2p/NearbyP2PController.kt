@@ -78,6 +78,8 @@ class NearbyP2PController(
     override val discoveredAirs = _discoveredAirs.asSharedFlow()
 
     private val _connectionUpdates = MutableSharedFlow<Pair<String, ConnectionStatus>>(extraBufferCapacity = 10)
+    private val _syncProgress = MutableStateFlow<Float?>(null)
+    override val syncProgress = _syncProgress.asStateFlow()
 
     override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
 
@@ -273,7 +275,11 @@ class NearbyP2PController(
                 }
                 MessagePayload.TYPE_RESYNC_REQUEST -> handleResyncRequest(endpointId, secretKey)
                 MessagePayload.TYPE_RESYNC_CHUNK -> handleResyncChunk(payload)
-                MessagePayload.TYPE_RESYNC_COMPLETE -> Log.d(tag, "RESYNC COMPLETE from $endpointId")
+                MessagePayload.TYPE_RESYNC_COMPLETE -> {
+                    Log.d(tag, "RESYNC COMPLETE from $endpointId")
+                    _syncProgress.value = 1.0f
+                    internalScope.launch { delay(1000); _syncProgress.value = null }
+                }
                 else -> if (isNewMessage(payload.messageId)) handleChatMessage(endpointId, payload, secretKey)
             }
         } catch (e: Exception) { }
@@ -281,17 +287,37 @@ class NearbyP2PController(
 
     private fun handleResyncRequest(endpointId: String, secretKey: javax.crypto.SecretKey) {
         internalScope.launch(ioDispatcher) {
-            val history = vibeStore.messages.value
-            history.chunked(10).forEach { chunk ->
+            _syncProgress.value = 0.05f
+            // 1. Sync Groups first
+            val groups = vibeStore.groups.value
+            groups.chunked(5).forEachIndexed { index, chunk ->
                 val chunkPayload = MessagePayload(
                     messageId = UUID.randomUUID().toString(),
                     senderId = repository.getDeviceId(),
                     senderName = "SYNC",
                     content = Json.encodeToString(chunk),
                     timestamp = System.currentTimeMillis(),
-                    type = MessagePayload.TYPE_RESYNC_CHUNK
+                    type = MessagePayload.TYPE_RESYNC_CHUNK,
+                    status = 1 // Tag for groups
                 )
                 sendMessageInternal(endpointId, chunkPayload, secretKey)
+                _syncProgress.value = 0.05f + (index.toFloat() / (groups.size / 5 + 1) * 0.2f)
+            }
+
+            // 2. Sync Messages
+            val history = vibeStore.messages.value
+            history.chunked(10).forEachIndexed { index, chunk ->
+                val chunkPayload = MessagePayload(
+                    messageId = UUID.randomUUID().toString(),
+                    senderId = repository.getDeviceId(),
+                    senderName = "SYNC",
+                    content = Json.encodeToString(chunk),
+                    timestamp = System.currentTimeMillis(),
+                    type = MessagePayload.TYPE_RESYNC_CHUNK,
+                    status = 0 // Tag for messages
+                )
+                sendMessageInternal(endpointId, chunkPayload, secretKey)
+                _syncProgress.value = 0.25f + (index.toFloat() / (history.size / 10 + 1) * 0.7f)
             }
             val complete = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
@@ -302,14 +328,25 @@ class NearbyP2PController(
                 type = MessagePayload.TYPE_RESYNC_COMPLETE
             )
             sendMessageInternal(endpointId, complete, secretKey)
+            _syncProgress.value = 1.0f
+            delay(1000)
+            _syncProgress.value = null
         }
     }
 
     private fun handleResyncChunk(payload: MessagePayload) {
         try {
-            val chunk = Json.decodeFromString<List<MessagePayload>>(payload.content)
-            internalScope.launch(ioDispatcher) {
-                chunk.forEach { vibeStore.upsertMessage(it) }
+            _syncProgress.value = 0.5f // Indeterminate for receiver for now
+            if (payload.status == 1) {
+                val groups = Json.decodeFromString<List<VibeGroup>>(payload.content)
+                internalScope.launch(ioDispatcher) {
+                    groups.forEach { vibeStore.insertGroup(it) }
+                }
+            } else {
+                val chunk = Json.decodeFromString<List<MessagePayload>>(payload.content)
+                internalScope.launch(ioDispatcher) {
+                    chunk.forEach { vibeStore.upsertMessage(it) }
+                }
             }
         } catch (e: Exception) { }
     }
@@ -396,7 +433,12 @@ class NearbyP2PController(
                             MessagePayload.VIBE_SILENCE -> VibeGroup.SCOPE_LOCAL
                             else -> VibeGroup.SCOPE_PRIVATE
                         }
-                        val newGroup = VibeGroup(id = gid, name = gName, scope = scope)
+                        val newGroup = VibeGroup(
+                            id = gid, 
+                            name = gName, 
+                            scope = scope,
+                            parentId = VibeGroup.ID_AIR // Anchor to root Air if parent is unknown
+                        )
                         vibeStore.insertGroup(newGroup)
                         _discoveredAirs.tryEmit(newGroup)
                     }
@@ -517,18 +559,43 @@ class NearbyP2PController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
-        val payload = MessagePayload(messageId = messageId ?: UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, receiverId = receiverId, groupId = groupId, groupName = groupName, content = content, timestamp = System.currentTimeMillis(), vibeType = vibeType)
+    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        val payload = MessagePayload(
+            messageId = messageId ?: UUID.randomUUID().toString(), 
+            senderId = repository.getDeviceId(), 
+            senderName = repository.getCurrentNickname(), 
+            senderEmoji = repository.emojiAvatar.value, 
+            receiverId = receiverId, 
+            groupId = groupId, 
+            groupName = groupName, 
+            content = content, 
+            timestamp = System.currentTimeMillis(), 
+            vibeType = vibeType,
+            type = type,
+            hopCount = 0
+        )
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         try {
-            if (receiverId != null) { getVibeKeyWithRetry(receiverId)?.let { key -> queueVibe(receiverId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } }
-            else { activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } } }
+            if (receiverId != null) { 
+                getVibeKeyWithRetry(receiverId)?.let { key -> 
+                    queueVibe(receiverId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
+                } 
+            } else { 
+                activeConnections.forEach { target -> 
+                    internalScope.launch(ioDispatcher) { 
+                        vibeKeys[target]?.let { key -> 
+                            try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} 
+                        } 
+                    } 
+                } 
+            }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
             vibeStore.upsertMessage(payload); return payload
         } catch (e: Exception) { return null }
     }
 
-    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? = sendMessage(content, null, vibeType, messageId, groupId, groupName)
+    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? = 
+        sendMessage(content, null, vibeType, messageId, groupId, groupName, type)
 
     override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? {
         val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_IDENTITY_UPDATE, vibeType = MessagePayload.VIBE_SHOUT)
@@ -601,17 +668,18 @@ class NearbyP2PController(
         } catch (e: Exception) { return null }
     }
 
-    override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
-        val normalized = name.uppercase().trim()
-        val groupId = if (type == VibeGroup.SCOPE_PUBLIC) {
-            if (normalized == "AIR" || normalized == "THE AIR") VibeGroup.ID_AIR else "air_${normalized.replace(" ", "_")}"
-        } else {
-            UUID.randomUUID().toString()
-        }
+    override fun startGroupVibe(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+        val gid = groupId ?: VibeGroup.generateId(name, type)
         internalScope.launch(ioDispatcher) { 
-            vibeStore.insertGroup(VibeGroup(id = groupId, name = name, memberIds = members + repository.getDeviceId(), scope = type)) 
+            vibeStore.insertGroup(VibeGroup(
+                id = gid, 
+                name = name, 
+                memberIds = members + repository.getDeviceId(), 
+                scope = type,
+                parentId = parentId
+            )) 
         }
-        return groupId
+        return gid
     }
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {

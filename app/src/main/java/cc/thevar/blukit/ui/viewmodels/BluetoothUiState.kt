@@ -32,6 +32,7 @@ data class HardwareHarmony(
 data class AirActivity(
     val isDiscovering: Boolean = false,
     val isAdvertising: Boolean = false,
+    val energyIntensity: Float = 0f,
     val uiError: cc.thevar.blukit.ui.UiError? = null
 )
 
@@ -55,7 +56,8 @@ data class VibeSession(
     val connectedLinks: Set<String> = emptySet(),
     val messages: List<MessagePayload> = emptyList(),
     val groups: List<VibeGroup> = emptyList(),
-    val archivedGroups: List<VibeGroup> = emptyList()
+    val archivedGroups: List<VibeGroup> = emptyList(),
+    val syncProgress: Float? = null
 )
 
 data class BluetoothUiState(

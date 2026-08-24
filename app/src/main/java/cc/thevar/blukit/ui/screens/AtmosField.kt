@@ -1,5 +1,6 @@
 package cc.thevar.blukit.ui.screens
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -62,66 +63,49 @@ fun AtmosField(
     noiseFilterEnabled: Boolean = false,
     onStartScan: () -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
-    onBroadcastMessage: (String, Int) -> Unit,
     onDeleteVibe: (String) -> Unit,
-    onManageTie: (String) -> Unit = {},
-    onBlockUser: (String) -> Unit,
-    onUnblockUser: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
-    onToggleSelection: (String) -> Unit,
     onIdentifyUser: (String) -> Unit = {},
     onNicknameChange: (String) -> Unit = {},
-    onResetProfile: () -> Unit = {},
-    onRestoreAir: (String) -> Unit = {},
-    onClearFocus: () -> Unit,
-    searchText: String = "",
-    isSearchActive: Boolean = false,
-    airIsStill: Boolean = false,
-    showOnboarding: Boolean = false,
     onOnboardingDone: () -> Unit = {},
-    showAirGhost: Boolean = false,
-    onAirNameChange: (String) -> Unit = {},
-    onCreateAir: () -> Unit = {},
-    onDismissAirGhost: () -> Unit = {},
-    // Global State for Scaffold
-    userCount: Int = 0,
-    isStealthMode: Boolean = false,
-    lowPowerMode: Boolean = false,
-    isBluetoothOff: Boolean = false,
-    isLocationOff: Boolean = false,
-    isWifiOff: Boolean = false,
-    isPermissionMissing: Boolean = false,
-    isPermanentlyDenied: Boolean = false,
-    onToggleStealth: (Boolean) -> Unit = {},
-    onToggleLowPower: (Boolean) -> Unit = {},
-    onAwakenBluetooth: () -> Unit = {},
-    onAwakenLocation: () -> Unit = {},
-    onAwakenWifi: () -> Unit = {},
-    onGrantPermissions: () -> Unit = {},
-    onOpenSettings: () -> Unit = {},
-    onClearHistory: () -> Unit = {},
+    showOnboarding: Boolean = false,
+    airIsStill: Boolean = false,
+    // Hub Callbacks
+    messageText: String = "",
+    onMessageChange: (String) -> Unit = {},
+    onSend: () -> Unit = {},
+    onSearchToggle: (() -> Unit)? = null,
+    onCreatePublicTie: ((String) -> Unit)? = null,
+    onAcceptLink: (P2PDevice) -> Unit = {},
+    onDenyLink: (P2PDevice) -> Unit = {},
+    onStartSideVibe: () -> Unit = {},
+    onStartTie: () -> Unit = {},
+    onClearSelection: () -> Unit = {},
+    onAttachFile: () -> Unit = {},
     onShowPrivacy: () -> Unit = {},
-    onBack: (() -> Unit)? = null,
-    onTitleClick: (() -> Unit)? = null,
-    onProfileClick: (() -> Unit)? = null,
-    breadcrumbTrail: List<String> = emptyList(),
-    onCrumbClick: (Int) -> Unit = {}
+    onNavigateToGroup: (String) -> Unit = {},
+    isSearchActive: Boolean = false,
+    onRestoreAir: (String) -> Unit = {}
 ) {
-    val activeBubbles = remember { mutableStateListOf<BubbleData>() }
+    var showTip by remember { mutableStateOf(true) }
     val activeVibeId = LocalActiveVibeId.current
     var vibeGhostData by remember { mutableStateOf<GhostVibeData?>(null) }
     var showVault by remember { mutableStateOf(false) }
 
-    val vibesData = remember(state.session.messages, state.session.groups, vibedPeers, noiseFilterEnabled, searchText) {
+    val airMetas = remember(state.session.groups) {
+        state.session.groups.filter { it.scope == VibeGroup.SCOPE_PUBLIC && it.parentId == null }
+    }
+
+    val vibesData = remember(state.session.messages, state.session.groups, vibedPeers, noiseFilterEnabled, isSearchActive, messageText) {
         val baseVibes = if (noiseFilterEnabled && vibedPeers.isNotEmpty()) {
             state.session.messages.filter { it.senderId in vibedPeers || it.senderId == localDeviceId }
         } else {
             state.session.messages
         }
         
-        val searchFiltered = if (searchText.isBlank()) baseVibes else {
+        val searchFiltered = if (!isSearchActive || messageText.isBlank()) baseVibes else {
             baseVibes.filter { msg ->
-                msg.content.contains(searchText, ignoreCase = true) || msg.senderName.contains(searchText, ignoreCase = true)
+                msg.content.contains(messageText, ignoreCase = true) || msg.senderName.contains(messageText, ignoreCase = true)
             }
         }
         
@@ -140,85 +124,61 @@ fun AtmosField(
     }
 
     val (vibes, vibeCounts, _) = vibesData
-
-    val energyList = remember(state.session.groups, vibes) {
-        val groups = state.session.groups.associateBy { it.id }
-        val messagePairs = vibes.map { msg ->
-            val gid = msg.groupId ?: VibeGroup.ID_AIR
-            val group = groups[gid]
-            val tieIdentity = if (group != null) {
-                val emoji = when (group.scope) {
-                    VibeGroup.SCOPE_LOCAL -> "📱"
-                    VibeGroup.SCOPE_PRIVATE -> "🔒"
-                    else -> "🌬️"
-                }
-                P2PDevice(id = gid, name = group.name, emoji = emoji, medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-            } else {
-                P2PDevice(id = VibeGroup.ID_AIR, name = "THE AIR", emoji = "🌬️", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-            }
-            Pair(tieIdentity, msg)
-        }
-        messagePairs.sortedByDescending { it.second?.timestamp ?: Long.MAX_VALUE }
-    }
-
-    var showTip by remember { mutableStateOf(true) }
+    val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
-        state = state,
-        currentRoute = cc.thevar.blukit.ui.navigation.Route.Atmos,
-        title = "ATMOS",
-        icon = Icons.Rounded.Groups,
-        breadcrumbTrail = breadcrumbTrail,
-        onCrumbClick = onCrumbClick,
-        userNickname = localNickname,
-        userEmoji = localEmoji,
-        onUserNicknameChange = onNicknameChange,
-        onResetProfile = onResetProfile,
-        userFocusRequester = null,
-        isBluetoothOff = isBluetoothOff,
-        isLocationOff = isLocationOff,
-        isWifiOff = isWifiOff,
-        isPermissionMissing = isPermissionMissing,
-        isPermanentlyDenied = isPermanentlyDenied,
-        userCount = userCount,
-        isStealthMode = isStealthMode,
-        lowPowerMode = lowPowerMode,
-        airIsStill = airIsStill,
-        activeAirs = state.session.groups,
-        onToggleStealth = onToggleStealth,
-        onToggleLowPower = onToggleLowPower,
-        onAwakenBluetooth = onAwakenBluetooth,
-        onAwakenLocation = onAwakenLocation,
-        onAwakenWifi = onAwakenWifi,
-        onGrantPermissions = onGrantPermissions,
-        onOpenSettings = onOpenSettings,
-        onClearHistory = onClearHistory,
-        onShowPrivacy = onShowPrivacy,
-        onBack = onBack,
-        onTitleClick = onTitleClick,
-        onProfileClick = onProfileClick,
+        themeColor = StealthPrimary,
+        glowIntensityTarget = 0.4f,
         floatingContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                if (showTip && state.crowd.scannedDevices.isEmpty()) {
+            AnimatedContent(
+                targetState = when {
+                    airMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
+                    else -> null
+                },
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "AtmosTips"
+            ) { tipState ->
+                if (tipState == "empty_mesh" && showTip) {
                     BlukitTip(
-                        text = "THE AIR IS EMPTY. TAP THE RADAR TO SCAN FOR PERSONAS.",
-                        onDismiss = { showTip = false }
-                    )
-                } else if (showTip && vibes.isEmpty()) {
-                    BlukitTip(
-                        text = "NO VIBES YET. TRY SHOUTING SOMETHING TO THE AIR.",
+                        text = "THE MESH IS SILENT. AWAKEN AN AIR OR WAIT FOR NEARBY PERSONAS.",
                         onDismiss = { showTip = false }
                     )
                 }
             }
         },
         fieldContent = {
+            Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
+                Text(
+                    text = "AIR METAS", 
+                    style = MaterialTheme.typography.labelSmall, 
+                    color = StealthPrimary, 
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.sp
+                )
+                
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(airMetas) { air ->
+                        MetaVibeItem(
+                            title = air.name,
+                            subtitle = "PUBLIC FREQUENCY",
+                            icon = Icons.Rounded.Grain,
+                            themeColor = StealthPrimary,
+                            count = air.memberIds.size,
+                            lastUpdate = sdf.format(Date(air.lastVibeTimestamp)),
+                            onClick = { onNavigateToGroup(air.id) }
+                        )
+                    }
+                }
+            }
+
+            // Radar remains for persona discovery
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
                 localNickname = localNickname,
                 localEmoji = localEmoji,
-                activeBubbles = activeBubbles,
+                activeBubbles = emptyList(),
                 selectedDevices = state.crowd.selectedDevices,
                 vibedPeers = vibedPeers,
                 isFilterMode = noiseFilterEnabled,
@@ -240,116 +200,54 @@ fun AtmosField(
                         actions = mutableListOf<GhostAction>().apply {
                             add(GhostAction(Icons.Rounded.Hearing, "WHISPER", StealthPrimary) { onWhisper(targetDevice) })
                             add(GhostAction(Icons.Rounded.Radar, "IDENTIFY", Color.White) { onIdentifyUser(menuId) })
-                            if (menuId in state.crowd.blockedUsers) add(GhostAction(Icons.Rounded.LockOpen, "UNBLOCK", StealthPrimary) { onUnblockUser(menuId) })
-                            else add(GhostAction(Icons.Rounded.Block, "BLOCK", Color.Red) { onBlockUser(menuId) })
                         }
                     )
                 },
                 onStartScan = onStartScan,
-                drawBackground = true,
-                airList = energyList.map { it.first to (vibeCounts[it.first.id] ?: 0) },
-                showAirGhost = showAirGhost,
-                airRitualGhost = {
-                    if (showAirGhost) {
-                        AirRitualGhost(
-                            onNameChange = onAirNameChange,
-                            onDone = onCreateAir,
-                            onDismiss = onDismissAirGhost,
-                            nearbyAirs = state.session.groups,
-                            onJoinAir = onManageTie
-                        )
-                    }
-                }
+                drawBackground = false, // Background handled by Scaffold
+                drawNodes = true
             )
-            
-            if (state.session.archivedGroups.isNotEmpty()) {
-                Box(modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) {
-                    Surface(
-                        onClick = { showVault = true },
-                        color = StealthRose.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(1.dp, StealthRose.copy(alpha = 0.2f))
-                    ) {
-                        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Archive, contentDescription = null, tint = StealthRose, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = "VAULT", color = StealthRose, fontSize = 10.sp, fontWeight = FontWeight.Black)
-                        }
-                    }
-                }
-            }
         },
         tickerContent = {
+            // Atmos ticker shows the latest global energy
             VibingVibesTicker(
                 state = state,
-                energyList = energyList,
+                energyList = vibes.map { msg -> 
+                    val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                    dev to msg 
+                },
                 vibeCounts = vibeCounts,
                 localDeviceId = localDeviceId,
                 vibedPeers = vibedPeers,
                 isGrouped = true,
-                onManageTie = onManageTie,
-                onStartWhisper = onWhisper,
-                reverseLayout = false,
-                onVibeClick = { messageId -> 
-                    val msg = state.session.messages.find { it.messageId == messageId }
-                    if (msg != null) {
-                        val isMyVibe = msg.senderId == localDeviceId
-                        activeVibeId.value = messageId
-                        vibeGhostData = GhostVibeData(
-                            emoji = msg.senderEmoji ?: "💬",
-                            title = msg.senderName.uppercase(),
-                            subtitle = msg.content,
-                            themeColor = if (msg.vibeType == MessagePayload.VIBE_SHOUT) StealthPrimary else StealthRose,
-                            sourceId = messageId,
-                            actions = mutableListOf<GhostAction>().apply {
-                                if (isMyVibe) {
-                                    if (msg.vibeType == MessagePayload.VIBE_SILENCE) {
-                                        add(GhostAction(Icons.Rounded.Grain, "SHOUT", StealthPrimary) { onBroadcastMessage(msg.content, MessagePayload.VIBE_SHOUT) })
-                                    }
-                                } else {
-                                    if (msg.vibeType == MessagePayload.VIBE_SHOUT) {
-                                        add(GhostAction(Icons.Rounded.Grain, "BOOST SHOUT", StealthPrimary) { onBroadcastMessage(msg.content, MessagePayload.VIBE_SHOUT) })
-                                    }
-                                }
-                                
-                                add(GhostAction(Icons.Rounded.Hearing, "WHISPER", StealthRose) {
-                                    onWhisper(P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤"))
-                                })
-                                
-                                add(GhostAction(Icons.Rounded.Delete, "DELETE VIBE", Color.Red) { onDeleteVibe(msg.messageId) })
-                            }
-                        )
-                    }
-                },
-                onDeviceLongClick = { targetTie -> 
-                    val gid = targetTie.id
-                    val group = state.session.groups.find { it.id == gid }
-                    activeVibeId.value = gid
-                    vibeGhostData = GhostVibeData(
-                        emoji = targetTie.emoji,
-                        title = targetTie.name ?: "AIR",
-                        subtitle = if (gid == VibeGroup.ID_AIR) "AIR" else "TIE",
-                        themeColor = if (group?.scope == VibeGroup.SCOPE_PRIVATE) StealthRose else StealthPrimary,
-                        sourceId = gid,
-                        actions = mutableListOf<GhostAction>().apply {
-                            add(GhostAction(Icons.Rounded.Settings, "MANAGE", StealthPrimary) { onManageTie(gid) })
-                        }
-                    )
-                },
-                onToggleSelection = onToggleSelection,
+                onVibeClick = { onNavigateToGroup(it) }, // Simplified for now
+                onDeviceLongClick = { },
                 onDeleteVibe = onDeleteVibe,
                 modifier = Modifier.fillMaxSize()
             )
         },
         inputContent = {
-            BlukitInput(
-                airIsStill = airIsStill,
-                value = if (isSearchActive) searchText else "",
-                onValueChange = { /* Handled in BlukitApp */ },
-                onSend = { onBroadcastMessage("", MessagePayload.VIBE_SHOUT) }, 
+            BlukitVibeHub(
+                currentRoute = cc.thevar.blukit.ui.navigation.Route.Atmos,
+                messageText = messageText,
+                onMessageChange = onMessageChange,
+                onSend = onSend,
                 vibeCount = vibes.size,
-                isSearchActive = isSearchActive,
-                onSearchToggle = { /* Handled in BlukitApp */ },
+                airIsStill = airIsStill,
+                incomingLinkRequests = state.crowd.incomingLinkRequests,
+                selectedDevices = state.crowd.selectedDevices,
+                vibedPeers = vibedPeers,
+                groups = state.session.groups,
+                onAcceptLink = onAcceptLink,
+                onDenyLink = onDenyLink,
+                onStartSideVibe = onStartSideVibe,
+                onStartTie = onStartTie,
+                onClearSelection = onClearSelection,
+                onAttachFile = onAttachFile,
+                onSearchToggle = onSearchToggle,
+                onCreatePublicTie = onCreatePublicTie,
+                isSearchMode = isSearchActive,
+                onShowPrivacy = onShowPrivacy,
                 modifier = Modifier.fillMaxWidth()
             )
         }

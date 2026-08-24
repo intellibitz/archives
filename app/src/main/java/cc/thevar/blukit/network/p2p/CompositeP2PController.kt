@@ -69,6 +69,7 @@ class CompositeP2PController(
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
     override val messages: StateFlow<List<MessagePayload>> = nearbyController.messages
+    override val syncProgress: StateFlow<Float?> = nearbyController.syncProgress
 
     override val discoveredAirs: SharedFlow<cc.thevar.blukit.domain.model.VibeGroup> = merge(
         nearbyController.discoveredAirs,
@@ -103,13 +104,13 @@ class CompositeP2PController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
-        return nearbyController.sendMessage(content, receiverId, vibeType, messageId, groupId, groupName) ?: bleController.sendMessage(content, receiverId, vibeType, messageId, groupId, groupName)
+    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        return nearbyController.sendMessage(content, receiverId, vibeType, messageId, groupId, groupName, type) ?: bleController.sendMessage(content, receiverId, vibeType, messageId, groupId, groupName, type)
     }
 
-    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
-        val nearby = nearbyController.broadcastMessage(content, vibeType, messageId, groupId, groupName)
-        val ble = bleController.broadcastMessage(content, vibeType, messageId, groupId, groupName)
+    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        val nearby = nearbyController.broadcastMessage(content, vibeType, messageId, groupId, groupName, type)
+        val ble = bleController.broadcastMessage(content, vibeType, messageId, groupId, groupName, type)
         return nearby ?: ble
     }
 
@@ -131,8 +132,8 @@ class CompositeP2PController(
         return nearbyController.sendFile(fileUri, receiverId, vibeType, groupId, groupName)
     }
 
-    override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
-        return nearbyController.startGroupVibe(name, members, type)
+    override fun startGroupVibe(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+        return nearbyController.startGroupVibe(name, members, type, groupId, parentId)
     }
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {

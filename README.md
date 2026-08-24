@@ -8,24 +8,25 @@ blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-t
 
 ## ⚡ THE AIR FIELD
 Experience the **Unified Vibe Frequency**.
-- **Atmospheric Hierarchy**:
-    - **AIR (Public)**: Shared physical containers where name *is* identity. No one owns an Air; anyone can join or "Awaken" an existing frequency by naming it.
-    - **DYNAMIC SECURE TIE (Private)**: Secure, end-to-end encrypted interaction layers nested within an Air. These are ephemeral, high-intensity channels for trusted groups.
-    - **VIBE (Unit)**: The fundamental pulse of energy. Grouped by Tie (multiple users) or Persona (single user history).
-- **Intelligent Ticker (The Life Stream)**: A high-density, real-time feed of the Air's energy. It dynamically surfaces incoming link requests, active ties, and shared vibes without cluttering the Field.
+- **Atmospheric Hierarchy (The Meta Drill-Down)**:
+    - **ATMOS FIELD (Landing)**: The global spectrum view. Surfaces all **AIR METAs**—high-level summaries of public frequencies nearby.
+    - **AIR FIELD (Public)**: Shared physical containers where name *is* identity. All Airs are **Discoverable**. Lists **Air Metas**, **Tie Metas**, **Vibe Metas**, and granular **Vibe Units**. Recursive by design; an Air can contain other Airs.
+    - **TIE FIELD (Private)**: Secure, encrypted interaction layers. **All Ties are Private**. A Tie must be anchored to a parent Air for discoverability. Lists **Tie Metas**, **Vibe Metas**, and **Vibe Units**.
+    - **VIBE FIELD (Granular)**: The deepest level of the mesh. Breaks down a **Vibe Meta** into its constituent units and nested sub-vibes. The **Vibe Unit** is the final, atomic pulse of energy.
+- **Meta Summaries**: A "Summary-First" visual paradigm. Users see **METAs** (collapsed high-level pulse) and drill down to expand into granular details, ensuring high density without information overload.
+- **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. It dynamically surfaces units from the current context and its children, pulsing with spectral resonance.
 - **Rose Resonance**: A visual interaction paradigm. Private Ties and Mutual Vibes resonate in **Stealth Rose**, distinguishing them from the Amber public Field. When two personas vibe, their connection pulses with Rose energy.
 - **Media Mesh**: High-speed, localized media sharing. Blukit uses a composite radio strategy—BLE for discovery and high-speed WiFi links for rapid media transfer—ensuring photos and files move across the crowd instantly.
-- **Ritual Sentience (Air Schedules)**: Blukit anticipates your life. Recurring rituals (like weekly lectures) can be scheduled, allowing the mesh to automatically "Awaken" an Air from the Vault when the time is right.
+- **Atmospheric Heatmaps**: Real-time energy visualization. The Field background glows with spectral intensity based on local vibe frequency, allowing the crowd to find the most active hubs effortlessly.
+- **Ritual Sentience (Air Schedules)**: Blukit anticipates your life. Recurring rituals (like weekly lectures) can be scheduled, or even pushed collaboratively to peers, allowing the mesh to automatically "Awaken" an Air from the Vault.
 - **Air Canvas (Pinned Energy)**: Collaborative persistence. Users can "Pin" vibes to the Air Canvas header, ensuring critical information—like a project syllabus or a meeting spot—is never lost in the ticker history.
 
-- **Vibe Decay (Storage Pruning)**: A self-cleaning mesh. To sustain a 4-year journey, blukit automatically prunes large media older than 90 days. **Pinned vibes are exempt**, preserving your most precious memories forever.
+- **Vibe Decay (Storage Pruning)**: A self-cleaning mesh. To sustain a 4-year journey, blukit automatically prunes large media older than 90 days. **Pinned vibes and Senior Vaults are exempt**, preserving your most precious memories forever.
+- **Mesh Relay (Ephemeral Hops)**: Spreading beyond the horizon. Blukit supports up to 3-hop ephemeral mesh relaying, allowing vibes to reach distant friends by hopping through nearby devices as silent carriers.
 - **Tie Projection**: Collective identities. A Tie can project a shared emoji identity, appearing as a larger, high-intensity pulse on the Discovery Radar to others in the Air.
+- **Senior Vault (Permanent Resonance)**: Secure the legacy. Specific Ties can be marked as "Senior Vaults," exempting them from all decay protocols to preserve your entire university journey at full resolution.
 - **Air Vault (Auto-Archiving)**: Over a 4-year journey, the ticker stays clean. A protocol automatically moves airs that haven't vibrated in 30 days into a **"Sunk Vibe"** vault.
-- **Vibe Ghost**: A field-projected interaction paradigm. Traditional dialogs and menus are replaced by a glowing persona ghost that appears at the center of the field for tactical actions.
-- **Spectral Messaging (The Harmony Nudge)**: A custom alerting and onboarding system. Alerts, messages, and tips are projected into the field with atmospheric glows, replacing generic system components with branded resonance.
-- **Glowing Input Nudge**: The Vibe Input breathes with a spectral aura when the air is still or empty, intuitively guiding users to contribute to the mesh with a responsive focus aura.
-- **Enjoyable UX**: A complete revamp of the interaction model to make vibing effortless and enjoyable, featuring spectral transitions, haptic-ready visuals, and a zero-friction "Ritual" workflow.
-- **Shared Life Log (Vibe Sync)**: Preserving your history. High-speed WiFi sync allows two devices to transfer their entire VibeStore history—every Air and Tie—during a hardware upgrade.
+- **Vibe Sync (Hardware Migration)**: Preserving your history. High-speed WiFi sync allows two devices to transfer their entire VibeStore history—every Air, Tie, and Ritual—during a hardware upgrade.
 
 ---
 
@@ -49,7 +50,8 @@ A high-density, ergonomic architecture for tactical crowd control:
 2. **Media Mesh**: Composite radio orchestration (BLE + WiFi) for high-bandwidth P2P throughput.
 3. **Vibe Protocol**: Primitive `Canvas` drawing and spatial coordinate tracking map the air's energy in real-time.
 4. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy within **Dynamic Secure Ties**.
-5. **Atmospheric Sentience**: Automated ritual checks and self-cleaning storage logic.
+5. **Deterministic Scoped Naming**: Public Air IDs are generated as paths (e.g., `air_MALL_FOOD_COURT`), ensuring global uniqueness through local context.
+6. **Atmospheric Sentience**: Automated ritual checks and self-cleaning storage logic.
 
 
 ---

@@ -16,6 +16,8 @@ data class MessagePayload(
     val type: Int = TYPE_TEXT,
     val vibeType: Int = VIBE_PUBLIC,
     val status: Int = STATUS_SENT,
+    val parentMessageId: String? = null,
+    val isMeta: Boolean = false,
     val hopCount: Int = 0,
     val noteVersion: Int = 0,
     val fileId: Long? = null,
@@ -36,6 +38,7 @@ data class MessagePayload(
         const val TYPE_RESYNC_CHUNK = 10
         const val TYPE_RESYNC_COMPLETE = 11
         const val TYPE_NOTE_UPDATE = 12
+        const val TYPE_RITUAL_PUSH = 13
 
         const val VIBE_SHOUT = 0
         const val VIBE_WHISPER = 1

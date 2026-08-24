@@ -33,6 +33,7 @@ interface P2PController {
     val errors: StateFlow<P2PError?>
     val messages: StateFlow<List<MessagePayload>>
     val discoveredAirs: SharedFlow<VibeGroup>
+    val syncProgress: StateFlow<Float?>
 
     fun startDiscovery()
     fun stopDiscovery()
@@ -52,9 +53,9 @@ interface P2PController {
     fun acceptLink(device: P2PDevice)
     fun denyLink(device: P2PDevice)
 
-    suspend fun sendMessage(content: String, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null): MessagePayload?
+    suspend fun sendMessage(content: String, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
 
-    suspend fun broadcastMessage(content: String, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null): MessagePayload?
+    suspend fun broadcastMessage(content: String, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
 
     suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload?
 
@@ -64,7 +65,7 @@ interface P2PController {
 
     suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload?
 
-    fun startGroupVibe(name: String, members: Set<String>, type: Int = VibeGroup.SCOPE_PUBLIC): String
+    fun startGroupVibe(name: String, members: Set<String>, type: Int = VibeGroup.SCOPE_PUBLIC, groupId: String? = null, parentId: String? = null): String
 
     fun updateGroupMembers(groupId: String, memberIds: Set<String>)
 

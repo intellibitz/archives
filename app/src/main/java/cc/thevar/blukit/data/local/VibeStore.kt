@@ -311,6 +311,15 @@ class VibeStore(
         saveData()
     }
 
+    fun seniorVaultGroup(groupId: String, isSeniorVault: Boolean) {
+        _groups.update { current ->
+            current[groupId]?.let { 
+                current + (groupId to it.copy(isSeniorVault = isSeniorVault))
+            } ?: current
+        }
+        saveData()
+    }
+
     fun restoreFromVault(groupId: String) {
         _groups.update { current ->
             current[groupId]?.let { 
@@ -325,10 +334,13 @@ class VibeStore(
         val allGroups = _groups.value.values
         val allPinnedVibes = allGroups.flatMap { it.pinnedVibeIds }.toSet()
         val vaultedGroupIds = allGroups.filter { it.isVaulted }.map { it.id }.toSet()
+        val seniorVaultIds = allGroups.filter { it.isSeniorVault }.map { it.id }.toSet()
 
         _messages.value.forEach { message ->
             val isFromVaultedGroup = message.groupId in vaultedGroupIds
-            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedVibes && !isFromVaultedGroup) {
+            val isFromSeniorVault = message.groupId in seniorVaultIds
+            
+            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedVibes && !isFromVaultedGroup && !isFromSeniorVault) {
                 if (message.type == MessagePayload.TYPE_IMAGE || message.type == MessagePayload.TYPE_FILE) {
                     message.content.let { path ->
                         try {
@@ -345,8 +357,6 @@ class VibeStore(
     }
 
     // Group Operations
-    fun getAllGroups() = groups
-
     suspend fun insertGroup(group: VibeGroup) {
         _groups.update { it + (group.id to group) }
         saveData()

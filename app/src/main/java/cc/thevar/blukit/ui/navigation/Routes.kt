@@ -20,5 +20,8 @@ sealed interface Route : NavKey {
     data object Focus : Route
 
     @Serializable
-    data class VibeDetail(val groupId: String) : Route
+    data class GroupField(val groupId: String) : Route
+
+    @Serializable
+    data class VibeField(val messageId: String) : Route
 }

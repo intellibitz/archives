@@ -73,6 +73,7 @@ class BleFallbackController(
     override val discoveredAirs = _discoveredAirs.asSharedFlow()
 
     override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
+    override val syncProgress: StateFlow<Float?> = MutableStateFlow(null)
 
     private val vibeKeys = ConcurrentHashMap<String, SecretKey>()
     private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
@@ -280,7 +281,12 @@ class BleFallbackController(
                         MessagePayload.VIBE_SILENCE -> VibeGroup.SCOPE_LOCAL
                         else -> VibeGroup.SCOPE_PRIVATE
                     }
-                    vibeStore.insertGroup(VibeGroup(id = gid, name = gName, scope = scope))
+                    vibeStore.insertGroup(VibeGroup(
+                        id = gid, 
+                        name = gName, 
+                        scope = scope,
+                        parentId = VibeGroup.ID_AIR
+                    ))
                 }
             }
 
@@ -507,7 +513,7 @@ class BleFallbackController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
+    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
         val payload = MessagePayload(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
@@ -518,7 +524,8 @@ class BleFallbackController(
             groupName = groupName,
             content = content,
             timestamp = System.currentTimeMillis(),
-            vibeType = vibeType
+            vibeType = vibeType,
+            type = type
         )
         val json = Json.encodeToString(MessagePayload.serializer(), payload)
         val bytes = json.toByteArray()
@@ -563,8 +570,8 @@ class BleFallbackController(
         internalScope.launch { _errors.emit(error) }
     }
 
-    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
-        return sendMessage(content, null, vibeType, messageId, groupId, groupName)
+    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        return sendMessage(content, null, vibeType, messageId, groupId, groupName, type)
     }
 
     override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? = null
@@ -585,17 +592,18 @@ class BleFallbackController(
         return null
     }
 
-    override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
-        val normalized = name.uppercase().trim()
-        val groupId = if (type == VibeGroup.SCOPE_PUBLIC) {
-            if (normalized == "AIR" || normalized == "THE AIR") VibeGroup.ID_AIR else "air_${normalized.replace(" ", "_")}"
-        } else {
-            UUID.randomUUID().toString()
-        }
+    override fun startGroupVibe(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+        val gid = groupId ?: VibeGroup.generateId(name, type)
         internalScope.launch(ioDispatcher) {
-            vibeStore.insertGroup(VibeGroup(id = groupId, name = name, memberIds = members + repository.getDeviceId(), scope = type))
+            vibeStore.insertGroup(VibeGroup(
+                id = gid, 
+                name = name, 
+                memberIds = members + repository.getDeviceId(), 
+                scope = type,
+                parentId = parentId
+            ))
         }
-        return groupId
+        return gid
     }
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {

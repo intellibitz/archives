@@ -89,9 +89,7 @@ fun PreviewChatPhone() {
             localEmoji = "👤",
             groupId = "group1",
             onDisconnect = {},
-            onSendMessage = { _, _ -> },
-            onBlockUser = {},
-            onEnterPip = {}
+            onSendMessage = { _, _ -> }
         )
     }
 }
@@ -278,7 +276,6 @@ fun PreviewVibingVibesTickerHeaders() {
                 isGrouped = true,
                 onVibeClick = {},
                 onDeviceLongClick = {},
-                onToggleSelection = {},
                 onDeleteVibe = {},
                 reverseLayout = false
             )

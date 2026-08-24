@@ -1,5 +1,6 @@
 package cc.thevar.blukit.ui.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,269 +48,197 @@ fun AirField(
     airId: String?,
     onDisconnect: () -> Unit,
     onSendMessage: (String, String) -> Unit,
-    onEnterTie: (String) -> Unit,
-    onToggleFocus: (P2PDevice) -> Unit = {},
-    onDeviceLongClick: (P2PDevice) -> Unit = {},
-    onBlockUser: (String) -> Unit,
-    onAddMember: (String, String) -> Unit = { _, _ -> },
-    onRemoveMember: (String, String) -> Unit = { _, _ -> },
-    onUpdateScope: (String, Int) -> Unit = { _, _ -> },
-    onVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
-    showMemberManagement: Boolean = false,
-    onShowManagement: () -> Unit = {},
-    onDismissManagement: () -> Unit = {},
-    onEnterPip: () -> Unit,
-    onAttachFile: () -> Unit = {},
+    // Hub Callbacks
+    messageText: String = "",
+    onMessageChange: (String) -> Unit = {},
+    onSend: () -> Unit = {},
+    onSearchToggle: (() -> Unit)? = null,
+    onAcceptLink: (P2PDevice) -> Unit = {},
+    onDenyLink: (P2PDevice) -> Unit = {},
+    onStartSideVibe: () -> Unit = {},
+    onStartTie: () -> Unit = {},
+    onClearSelection: () -> Unit = {},
     onShowPrivacy: () -> Unit = {},
-    externalFocusedId: String? = null,
-    onFocusChange: (String?) -> Unit = {},
-    // Global State for Scaffold
-    userCount: Int = 0,
-    isStealthMode: Boolean = false,
-    lowPowerMode: Boolean = false,
-    isBluetoothOff: Boolean = false,
-    isLocationOff: Boolean = false,
-    isWifiOff: Boolean = false,
-    isPermissionMissing: Boolean = false,
-    isPermanentlyDenied: Boolean = false,
-    onToggleStealth: (Boolean) -> Unit = {},
-    onToggleLowPower: (Boolean) -> Unit = {},
-    onAwakenBluetooth: () -> Unit = {},
-    onAwakenLocation: () -> Unit = {},
-    onAwakenWifi: () -> Unit = {},
-    onGrantPermissions: () -> Unit = {},
-    onOpenSettings: () -> Unit = {},
-    onClearHistory: () -> Unit = {},
-    onBack: (() -> Unit)? = null,
-    onTitleClick: (() -> Unit)? = null,
-    onProfileClick: (() -> Unit)? = null,
-    breadcrumbTrail: List<String> = emptyList(),
-    onCrumbClick: (Int) -> Unit = {}
+    onNavigateToGroup: (String) -> Unit = {},
+    onNavigateToVibe: (String) -> Unit = {},
+    externalFocusedId: String? = null
 ) {
-    var vibeText by remember { mutableStateOf("") }
-    val focusManager = LocalFocusManager.current
-    
+    var showTip by remember { mutableStateOf(true) }
     var localFocusedId by remember(externalFocusedId) { mutableStateOf(externalFocusedId) }
 
     val air = remember(airId, state.session.groups) {
         state.session.groups.find { it.id == airId }
     }
 
-    val childTies = remember(state.session.groups, airId) {
-        state.session.groups.filter { it.parentAirId == airId }
+    val childGroups = remember(state.session.groups, airId) {
+        state.session.groups.filter { it.parentId == airId }
     }
+
+    val childAirs = childGroups.filter { it.scope == VibeGroup.SCOPE_PUBLIC }
+    val childTies = childGroups.filter { it.scope != VibeGroup.SCOPE_PUBLIC }
 
     val vibesData = remember(state.session.messages, airId, localDeviceId, localFocusedId) {
         if (airId == null) {
             Triple(emptyList<MessagePayload>(), emptyMap<String, Int>(), false)
         } else {
-            val baseVibes = state.session.messages.filter { it.groupId == airId }.distinctBy { it.messageId }
+            val baseVibes = state.session.messages.filter { it.groupId == airId && it.parentMessageId == null }
             val counts = baseVibes.groupBy { it.senderId }.mapValues { it.value.size }
-            val filtered = if (localFocusedId != null) {
-                baseVibes.filter { it.senderId == localFocusedId }
-            } else {
-                baseVibes.groupBy { it.senderId }.map { entry -> entry.value.maxBy { msg -> msg.timestamp } }
-            }
-            val sorted = filtered.sortedBy { it.timestamp }
+            val sorted = baseVibes.sortedBy { it.timestamp }
             Triple(sorted, counts, localFocusedId != null)
         }
     }
 
     val (chatVibes, vibeCounts, isVibeFocused) = vibesData
-
-    val energyList = remember(state.crowd.scannedDevices, chatVibes, childTies, localDeviceId) {
-        val devices = state.crowd.scannedDevices
-        val deviceMap = devices.associateBy { it.persistentId ?: it.id }
-        
-        val vibePairs = chatVibes.map { msg ->
-            val device = if (msg.senderId == localDeviceId) {
-                P2PDevice(id = localDeviceId, name = "YOU", emoji = localEmoji, medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-            } else {
-                deviceMap[msg.senderId] ?: P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-            }
-            device to msg
-        }
-
-        val tiePairs = childTies.map { tie ->
-            val tieDevice = P2PDevice(id = tie.id, name = tie.name, emoji = "🔒", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-            tieDevice to null as MessagePayload?
-        }
-
-        (vibePairs + tiePairs).sortedByDescending { it.second?.timestamp ?: 0L }
-    }
-
-    var vibeGhostData by remember { mutableStateOf<GhostVibeData?>(null) }
-    val activeVibeId = LocalActiveVibeId.current
-
-    var showTip by remember { mutableStateOf(true) }
+    val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
-        state = state,
-        currentRoute = cc.thevar.blukit.ui.navigation.Route.VibeDetail(airId ?: ""),
-        title = air?.name ?: "AIR",
-        icon = Icons.Rounded.Grain,
-        breadcrumbTrail = breadcrumbTrail,
-        onCrumbClick = onCrumbClick,
-        userNickname = localNickname,
-        userEmoji = localEmoji,
-        onUserNicknameChange = { },
-        onResetProfile = { },
-        userFocusRequester = null,
-        isBluetoothOff = isBluetoothOff,
-        isLocationOff = isLocationOff,
-        isWifiOff = isWifiOff,
-        isPermissionMissing = isPermissionMissing,
-        isPermanentlyDenied = isPermanentlyDenied,
-        userCount = userCount,
-        isStealthMode = isStealthMode,
-        lowPowerMode = lowPowerMode,
-        airIsStill = false,
-        activeAirs = state.session.groups,
-        onToggleStealth = onToggleStealth,
-        onToggleLowPower = onToggleLowPower,
-        onAwakenBluetooth = onAwakenBluetooth,
-        onAwakenLocation = onAwakenLocation,
-        onAwakenWifi = onAwakenWifi,
-        onGrantPermissions = onGrantPermissions,
-        onOpenSettings = onOpenSettings,
-        onClearHistory = onClearHistory,
-        onShowPrivacy = onShowPrivacy,
-        onBack = onBack,
-        onTitleClick = onTitleClick,
-        onProfileClick = onProfileClick,
+        themeColor = StealthPrimary,
+        glowIntensityTarget = 0.6f,
         floatingContent = {
-            if (showTip && chatVibes.isEmpty()) {
+            AnimatedVisibility(
+                visible = showTip && chatVibes.isEmpty() && childGroups.isEmpty(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
                 BlukitTip(
-                    text = "YOU ARE IN ${air?.name?.uppercase() ?: "AN AIR"}. SPREAD A VIBE HERE.",
+                    text = "THE AIR IS EMPTY. CREATE A TIE OR SPREAD A VIBE TO START.",
                     onDismiss = { showTip = false }
                 )
             }
         },
         fieldContent = {
+            Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
+                // Meta Sections
+                if (childAirs.isNotEmpty() || childTies.isNotEmpty()) {
+                    Text(
+                        text = "FREQUENCIES & TIES", 
+                        style = MaterialTheme.typography.labelSmall, 
+                        color = StealthPrimary, 
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    LazyColumn(modifier = Modifier.weight(0.4f)) {
+                        items(childAirs) { nestedAir ->
+                            MetaVibeItem(
+                                title = nestedAir.name,
+                                subtitle = "NESTED AIR",
+                                icon = Icons.Rounded.Grain,
+                                themeColor = StealthPrimary,
+                                count = nestedAir.memberIds.size,
+                                lastUpdate = sdf.format(Date(nestedAir.lastVibeTimestamp)),
+                                onClick = { onNavigateToGroup(nestedAir.id) }
+                            )
+                        }
+                        items(childTies) { tie ->
+                            MetaVibeItem(
+                                title = tie.name,
+                                subtitle = if (tie.scope == VibeGroup.SCOPE_PRIVATE) "PRIVATE TIE" else "LOCAL TIE",
+                                icon = if (tie.scope == VibeGroup.SCOPE_PRIVATE) Icons.Rounded.Hearing else Icons.Rounded.CellTower,
+                                themeColor = if (tie.scope == VibeGroup.SCOPE_PRIVATE) StealthRose else StealthPrimary,
+                                count = tie.memberIds.size,
+                                lastUpdate = sdf.format(Date(tie.lastVibeTimestamp)),
+                                onClick = { onNavigateToGroup(tie.id) }
+                            )
+                        }
+                    }
+                }
+
+                // Vibe Units / Metas
+                Text(
+                    text = "VIBES", 
+                    style = MaterialTheme.typography.labelSmall, 
+                    color = StealthPrimary, 
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                )
+
+                LazyColumn(modifier = Modifier.weight(0.6f)) {
+                    items(chatVibes) { vibe ->
+                        if (vibe.isMeta) {
+                            MetaVibeItem(
+                                title = vibe.content.take(20),
+                                subtitle = "VIBE META",
+                                icon = Icons.Rounded.BubbleChart,
+                                themeColor = StealthPrimary,
+                                count = state.session.messages.count { it.parentMessageId == vibe.messageId },
+                                lastUpdate = sdf.format(Date(vibe.timestamp)),
+                                onClick = { onNavigateToVibe(vibe.messageId) }
+                            )
+                        } else {
+                            AnimatedVibeItem(
+                                msg = vibe,
+                                isSelected = false,
+                                senderDevice = null,
+                                vibeCount = 0,
+                                isVibed = false,
+                                isMe = vibe.senderId == localDeviceId,
+                                isGrouped = false,
+                                isMutual = false,
+                                vibeGroup = air,
+                                rowId = vibe.messageId,
+                                onVibeClick = { /* Handle Unit Click */ },
+                                onDeviceLongClick = { },
+                                onDelete = { }
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Background Canvas for Atmosphere
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
                 localNickname = localNickname,
                 localEmoji = localEmoji,
-                activeBubbles = emptyList(), 
-                selectedDevices = emptySet(),
-                vibedPeers = if (localFocusedId != null) setOf(localFocusedId!!) else emptySet(),
-                onlyTies = false,
-                isFilterMode = isVibeFocused || localFocusedId != null,
-                subjectId = localFocusedId,
-                vibeGhostData = vibeGhostData,
-                onDismissGhost = { vibeGhostData = null; activeVibeId.value = null },
-                onDeviceClick = { 
-                    val id = it.persistentId ?: it.id
-                    localFocusedId = if (localFocusedId == id) null else id
-                    onFocusChange(localFocusedId)
-                    onToggleFocus(it) 
-                },
-                onDeviceLongClick = { device -> 
-                    val menuId = device.persistentId ?: device.id
-                    activeVibeId.value = menuId
-                    vibeGhostData = GhostVibeData(
-                        emoji = device.emoji,
-                        title = device.name ?: "USER",
-                        subtitle = "AIR PERSONA",
-                        themeColor = StealthPrimary,
-                        sourceId = menuId,
-                        actions = mutableListOf<GhostAction>().apply {
-                            add(GhostAction(Icons.Rounded.Hearing, "WHISPER", StealthRose) { /* TODO */ })
-                            add(GhostAction(Icons.Rounded.Radar, "IDENTIFY", Color.White) { 
-                                localFocusedId = menuId
-                                onFocusChange(menuId)
-                            })
-                        }
-                    )
-                },
-                onStartScan = { },
-                drawBackground = true
+                activeBubbles = emptyList(),
+                vibedPeers = emptySet(),
+                drawBackground = false,
+                drawNodes = false, // Simplified for Meta view
+                onDeviceClick = { },
+                onStartScan = { }
             )
-
-            // AIR CANVAS (PINNED VIBES)
-            val pinnedVibes = remember(air?.pinnedVibeIds, state.session.messages) {
-                state.session.messages.filter { it.messageId in (air?.pinnedVibeIds ?: emptySet()) }
-            }
-
-            if (pinnedVibes.isNotEmpty()) {
-                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 80.dp)) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.Black.copy(alpha = 0.5f))
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text(text = "AIR CANVAS", fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.6f), letterSpacing = 1.sp)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(pinnedVibes) { vibe ->
-                                Surface(
-                                    color = StealthPrimary.copy(alpha = 0.1f),
-                                    shape = RoundedCornerShape(8.dp),
-                                    border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)),
-                                    modifier = Modifier.widthIn(max = 140.dp)
-                                ) {
-                                    Column(modifier = Modifier.padding(8.dp)) {
-                                        Text(text = vibe.senderName.uppercase(), fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
-                                        Text(text = vibe.content.uppercase(), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         },
         tickerContent = {
             VibingVibesTicker(
                 state = state,
-                energyList = energyList,
+                energyList = chatVibes.map { msg -> 
+                    val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                    dev to msg 
+                },
                 vibeCounts = vibeCounts,
                 localDeviceId = localDeviceId,
                 vibedPeers = emptySet(),
-                isGrouped = !isVibeFocused,
-                onVibeClick = { messageId ->
-                    if (!isVibeFocused) {
-                        val msg = state.session.messages.find { it.messageId == messageId }
-                        if (msg != null) {
-                            localFocusedId = msg.senderId
-                            onFocusChange(localFocusedId)
-                        }
-                    }
-                },
+                isGrouped = false,
+                onVibeClick = { onNavigateToVibe(it) },
                 onDeviceLongClick = { },
-                onToggleSelection = { },
                 onDeleteVibe = { },
-                onManageTie = { gid ->
-                    val isTie = state.session.groups.find { it.id == gid }?.scope == VibeGroup.SCOPE_PRIVATE
-                    if (isTie) onEnterTie(gid) else {
-                        localFocusedId = gid
-                        onFocusChange(gid)
-                    }
-                },
-                onFocusChange = { 
-                    localFocusedId = it
-                    onFocusChange(it)
-                },
                 modifier = Modifier.fillMaxSize()
             )
         },
         inputContent = {
-            BlukitInput(
+            BlukitVibeHub(
+                currentRoute = cc.thevar.blukit.ui.navigation.Route.GroupField(airId ?: ""),
+                messageText = messageText,
+                onMessageChange = onMessageChange,
+                onSend = onSend,
+                vibeCount = state.session.messages.size,
                 airIsStill = false,
-                isPrivate = false,
-                targetName = air?.name,
-                value = vibeText,
-                onValueChange = { vibeText = it },
-                onSend = {
-                    if (vibeText.isNotBlank() && airId != null) {
-                        onSendMessage(vibeText, airId)
-                        vibeText = ""
-                        focusManager.clearFocus()
-                    }
-                },
-                onAttachFile = onAttachFile,
+                incomingLinkRequests = state.crowd.incomingLinkRequests,
+                selectedDevices = state.crowd.selectedDevices,
+                vibedPeers = emptySet(),
+                groups = state.session.groups,
+                onAcceptLink = onAcceptLink,
+                onDenyLink = onDenyLink,
+                onStartSideVibe = onStartSideVibe,
+                onStartTie = onStartTie,
+                onClearSelection = onClearSelection,
+                onAttachFile = { }, // Handle via parent if needed
+                onSearchToggle = onSearchToggle,
+                onShowPrivacy = onShowPrivacy,
                 modifier = Modifier.fillMaxWidth()
             )
         }
