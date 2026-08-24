@@ -12,6 +12,9 @@ import cc.thevar.blukit.domain.power.SupremePowerReport
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import cc.thevar.blukit.data.system.RadioStates
+import cc.thevar.blukit.data.system.SpreadPermissionManager
+import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
+import cc.thevar.blukit.data.system.HapticManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -19,12 +22,17 @@ import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.koin.core.context.loadKoinModules
+import org.koin.core.context.unloadKoinModules
+import org.koin.dsl.module
+import org.koin.test.KoinTest
 
 @OptIn(ExperimentalTestApi::class)
-class FlowsTest {
+class FlowsTest : KoinTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
@@ -35,6 +43,21 @@ class FlowsTest {
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
     private val p2pController: P2PController = mockk(relaxed = true)
     private val supremePowerManager: cc.thevar.blukit.data.power.SupremePowerManager = mockk(relaxed = true)
+    private val permissionManager: SpreadPermissionManager = mockk(relaxed = true)
+    private val connectivityUseCase: ConnectivityUseCase = mockk(relaxed = true)
+    private val hapticManager: HapticManager = mockk(relaxed = true)
+
+    private val testModule = module {
+        single { repository }
+        single { contactRepository }
+        single { vibeStore }
+        single { radioStateManager }
+        single { p2pController }
+        single { supremePowerManager }
+        single { permissionManager }
+        single { connectivityUseCase }
+        single { hapticManager }
+    }
 
     private val radioStatesFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = true, isLocationEnabled = true, isWifiEnabled = true))
     private val scannedDevicesFlow = MutableStateFlow<List<P2PDevice>>(emptyList())
@@ -48,24 +71,29 @@ class FlowsTest {
 
     @Before
     fun setUp() {
+        loadKoinModules(testModule)
+        
         every { repository.nicknameFlow } returns MutableStateFlow("vibe")
         every { repository.emojiAvatar } returns MutableStateFlow("👤")
         every { repository.stealthMode } returns MutableStateFlow(false)
         every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
+        every { repository.vibedPeers } returns MutableStateFlow(emptySet())
         every { repository.getDeviceId() } returns "test-id"
         every { repository.getCurrentNickname() } returns "vibe"
 
         every { p2pController.scannedDevices } returns scannedDevicesFlow
         every { p2pController.connectedLinks } returns connectedLinksFlow
         every { p2pController.incomingLinkRequests } returns incomingRequestsFlow
+        every { p2pController.outgoingLinkRequests } returns MutableStateFlow(emptySet())
         every { p2pController.isDiscovering } returns MutableStateFlow(false)
         every { p2pController.errors } returns errorsFlow
         every { p2pController.isConnected } returns isConnectedFlow
         every { p2pController.messages } returns messagesFlow
         every { p2pController.isAdvertising } returns isAdvertisingFlow
+        every { p2pController.discoveredAirs } returns MutableStateFlow(cc.thevar.blukit.domain.model.VibeGroup(id="air", name="Air"))
         
-        coEvery { p2pController.sendMessage(any(), any()) } answers {
+        coEvery { p2pController.sendMessage(any(), any(), any(), any(), any(), any()) } answers {
             val content = firstArg<String>()
             val receiver = secondArg<String?>()
             val newMsg = cc.thevar.blukit.domain.model.MessagePayload(
@@ -83,6 +111,19 @@ class FlowsTest {
         every { radioStateManager.radioStates } returns radioStatesFlow
         every { supremePowerManager.report } returns reportFlow
         every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
+        every { vibeStore.groups } returns MutableStateFlow(emptyList())
+        every { vibeStore.activeGroups } returns MutableStateFlow(emptyList())
+        every { vibeStore.archivedGroups } returns MutableStateFlow(emptyList())
+        every { vibeStore.vaultedGroups } returns MutableStateFlow(emptyList())
+        every { vibeStore.messages } returns MutableStateFlow(emptyList())
+
+        every { permissionManager.requiredPermissions } returns emptyList()
+        every { permissionManager.essentialPermissions } returns emptyList()
+    }
+
+    @After
+    fun tearDown() {
+        unloadKoinModules(testModule)
     }
 
     @Test
@@ -108,10 +149,11 @@ class FlowsTest {
         startApp()
         
         // Persona field is now always visible in the omnipotent hub
-        composeTestRule.onNodeWithTag("IdentityVibeInput").performTextReplacement("QuantumVibe")
+        // Nickname must be <= 8 characters
+        composeTestRule.onNodeWithTag("IdentityVibeInput").performTextReplacement("Quantum")
         
         // Verify repository update
-        verify { repository.saveNickname("QuantumVibe") }
+        verify { repository.saveNickname("Quantum") }
     }
 
     @Test
@@ -122,7 +164,7 @@ class FlowsTest {
         startApp()
         
         // Wait for the Magic Bar to reflect the stillness of the vibes
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("EnergyRequiredLabel"), 20000)
+        composeTestRule.waitUntilAtLeastOneExists(hasText("AWAKEN", ignoreCase = true, substring = true), 20000)
         // Use onFirst() because multiple might be found if UI overlaps during animation
         composeTestRule.onAllNodesWithText("AWAKEN", ignoreCase = true, substring = true, useUnmergedTree = true).onFirst().performClick()
     }
@@ -160,11 +202,6 @@ class FlowsTest {
         composeTestRule.setContent {
             BlukitTheme {
                 BlukitApp(
-                    repository = repository,
-                    vibeStore = vibeStore,
-                    radioStateManager = radioStateManager,
-                    p2pController = p2pController,
-                    supremePowerManager = supremePowerManager,
                     onEnterPip = {}
                 )
             }

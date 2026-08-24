@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.jetbrains.kotlin.plugin.serialization) apply false
     alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.dependency.analysis)
 }
 
 allprojects {

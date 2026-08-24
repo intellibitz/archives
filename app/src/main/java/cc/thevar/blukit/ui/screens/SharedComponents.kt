@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -1202,7 +1203,7 @@ fun UserPersona(nickname: String, emoji: String, onNicknameChange: (String) -> U
                 BasicTextField(
                     value = localNickname, 
                     onValueChange = { if (it.length <= 8) { localNickname = it; onNicknameChange(it) } }, 
-                    modifier = Modifier.widthIn(min = 40.dp).width(IntrinsicSize.Min).focusRequester(focusRequester), 
+                    modifier = Modifier.widthIn(min = 40.dp).width(IntrinsicSize.Min).focusRequester(focusRequester).testTag("IdentityVibeInput"), 
                     textStyle = MaterialTheme.typography.labelSmall.copy(color = if(isUnknown) StealthAmber else Color.White, fontWeight = FontWeight.Black, fontSize = 7.sp, textAlign = TextAlign.Center), 
                     cursorBrush = SolidColor(StealthPrimary), 
                     singleLine = true
@@ -1718,7 +1719,8 @@ fun VibePersonaSignature(
     val proximityGlow = if (isStatic) 0f else (device.proximityFactor * 0.2f).coerceAtLeast(0f)
     val bloomBoost = if (isStatic) 0f else if (isHighlighted) 0.3f else if ((isVibed || isPeerVibed || isProjected)) 0.12f else 0f
     
-    Box(modifier = modifier.size(size * 2.2f), contentAlignment = Alignment.Center) {
+    val id = device.persistentId ?: device.id
+    Box(modifier = modifier.size(size * 2.2f).testTag("PersonaNode_$id"), contentAlignment = Alignment.Center) {
         val haloAlpha = (if (isHighlighted) 0.25f else 0.08f + proximityGlow + bloomBoost) * pulseScale
         Surface(
             shape = CircleShape, 
@@ -2098,6 +2100,7 @@ fun BlukitInput(
                         enabled = !isReadOnly, 
                         modifier = Modifier
                             .fillMaxWidth()
+                            .testTag("SendVibeInput")
                             .focusRequester(focusRequester)
                             .onGloballyPositioned { /* Track focus */ }, 
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White, fontWeight = FontWeight.Bold), 
@@ -2128,7 +2131,7 @@ fun BlukitInput(
                     IconButton(
                         onClick = onSend, 
                         enabled = value.isNotBlank() && !isReadOnly, 
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(36.dp).testTag("SendVibeButton")
                     ) { 
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Send, 
