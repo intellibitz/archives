@@ -11,20 +11,21 @@ plugins {
 allprojects {
     configurations.all {
         resolutionStrategy {
-            // Address 48 security vulnerabilities by forcing known safe versions of transitive dependencies
-            force("com.google.guava:guava:33.7.1-jre")
-            force("com.google.protobuf:protobuf-java:4.36.0")
-            force("com.squareup.okhttp3:okhttp:5.5.0")
-            force("com.squareup.okhttp3:logging-interceptor:5.5.0")
-            force("com.fasterxml.jackson.core:jackson-databind:2.22.2")
-            force("com.fasterxml.jackson.core:jackson-core:2.22.2")
-            force("com.fasterxml.jackson.core:jackson-annotations:2.22.2")
-            force("org.apache.commons:commons-collections4:4.6.0")
-            force("commons-io:commons-io:2.22.0")
-            force("commons-codec:commons-codec:1.22.1")
-            force("org.json:json:20260814")
-            force("io.netty:netty-all:5.0.0.Alpha2")
-            force("io.grpc:grpc-netty-shaded:1.83.1")
+            eachDependency {
+                when {
+                    requested.group == "com.google.guava" && requested.name == "guava" -> useVersion("33.7.1-jre")
+                    requested.group == "com.google.protobuf" && requested.name == "protobuf-java" -> useVersion("4.36.0")
+                    requested.group == "com.squareup.okhttp3" -> useVersion("5.5.0")
+                    requested.group == "com.fasterxml.jackson.core" -> useVersion("2.22.2")
+                    requested.group == "org.apache.commons" && requested.name == "commons-collections4" -> useVersion("4.6.0")
+                    requested.group == "commons-io" && requested.name == "commons-io" -> useVersion("2.22.0")
+                    requested.group == "commons-codec" && requested.name == "commons-codec" -> useVersion("1.22.1")
+                    requested.group == "org.json" && requested.name == "json" -> useVersion("20260814")
+                    requested.group == "io.netty" -> useVersion("5.0.0.Alpha2")
+                    requested.group == "io.grpc" -> useVersion("1.83.1")
+                    requested.group == "org.yaml" && requested.name == "snakeyaml" -> useVersion("2.14")
+                }
+            }
         }
     }
 }
