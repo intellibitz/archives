@@ -16,8 +16,8 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -37,14 +37,14 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Performance and reliability test simulating a high-density "Air Surge" environment.
+ * Performance and reliability test simulating a high-density "Stadium Surge" environment.
  * Validates the mesh network's capability to handle multiple concurrent users
  * and ensure reliable relaying of vibes through The Air in large-scale venues.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = TestBlukitApplication::class)
-class AirSurgeTest {
+class StadiumSurgeTest {
 
     private lateinit var context: Context
     private lateinit var repository: IdentityRepository
@@ -56,7 +56,7 @@ class AirSurgeTest {
     private val connectionsClient: ConnectionsClient = mockk(relaxed = true)
 
     private lateinit var controller: NearbyP2PController
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setUp() {
@@ -72,49 +72,36 @@ class AirSurgeTest {
         every { connectionsClient.startDiscovery(any<String>(), any(), any()) } returns Tasks.forResult<Void>(null)
         every { connectionsClient.startAdvertising(any<String>(), any<String>(), any(), any()) } returns Tasks.forResult<Void>(null)
         every { connectionsClient.acceptConnection(any<String>(), any()) } returns Tasks.forResult<Void>(null)
-        
-        val mockTask = mockk<com.google.android.gms.tasks.Task<Void>>(relaxed = true)
-        every { mockTask.isComplete } returns true
-        every { mockTask.isSuccessful } returns true
-        every { mockTask.addOnCompleteListener(any()) } answers {
-            val listener = it.invocation.args[0] as com.google.android.gms.tasks.OnCompleteListener<Void>
-            listener.onComplete(mockTask)
-            mockTask
-        }
-        every { connectionsClient.sendPayload(any<String>(), any()) } returns mockTask
+        every { connectionsClient.sendPayload(any<String>(), any()) } returns Tasks.forResult<Void>(null)
         
         every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
-        every { vibeStore.groups } returns MutableStateFlow(emptyList())
-        every { repository.getCurrentNickname() } returns "AirUser"
-        every { repository.getDeviceId() } returns "air-id"
-        every { repository.nicknameFlow } returns MutableStateFlow("AirUser")
-        every { repository.emojiAvatar } returns MutableStateFlow("🌬️")
+        every { repository.getCurrentNickname() } returns "StadiumUser"
+        every { repository.getDeviceId() } returns "stadium-id"
+        every { repository.nicknameFlow } returns MutableStateFlow("StadiumUser")
+        every { repository.emojiAvatar } returns MutableStateFlow("⚽")
         every { repository.stealthMode } returns MutableStateFlow(false)
         every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
         every { radioStateManager.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(true, true, true))
 
         controller = NearbyP2PController(
-            context, repository, contactRepository, vibeStore, hapticManager, radioStateManager, cryptoManager, testDispatcher, testDispatcher
+            context, repository, contactRepository, vibeStore, hapticManager, radioStateManager, cryptoManager, testDispatcher
         )
     }
 
     @After
     fun tearDown() {
-        controller.release()
         Dispatchers.resetMain()
         unmockkStatic(Nearby::class)
-        clearAllMocks()
     }
 
     @Test
-    fun `cinema hall scenario - moto focus and vibes with redmi and oneplus`() = runTest(testDispatcher) {
+    fun `cinema hall scenario - moto focus and vibes with redmi and oneplus`() = runTest {
         val moto = "moto-id"
         val redmi = "redmi-id"
         val oneplus = "oneplus-id"
         
         val controllerMoto = mockk<P2PController>(relaxed = true)
-        every { controllerMoto.messages } returns MutableStateFlow(emptyList())
         val radioMoto = mockk<cc.thevar.blukit.data.system.RadioStateManager>(relaxed = true)
         val permissionsMoto = mockk<cc.thevar.blukit.data.system.SpreadPermissionManager>(relaxed = true)
         every { radioMoto.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(true, true, true))
@@ -125,29 +112,24 @@ class AirSurgeTest {
         )
         
         val viewModelMoto = BluetoothViewModel(
-            controllerMoto, radioMoto, mockk(relaxed = true), permissionsMoto, vibeStore, useCaseMoto
+            controllerMoto, radioMoto, mockk(relaxed = true), permissionsMoto, mockk(relaxed = true), useCaseMoto
         )
         
-        runCurrent()
-
         // 1. Moto starts high-level Vibe (Tie) with Redmi
         viewModelMoto.connectToDevice(P2PDevice(redmi, "Redmi", "📱"))
-        runCurrent()
         verify { controllerMoto.connectToDevice(any()) }
         
         // 2. Start a Group Vibe (Tie)
-        val gid = viewModelMoto.startGroupVibe("MOVIE", setOf(redmi, oneplus), scope = cc.thevar.blukit.domain.model.VibeGroup.SCOPE_PUBLIC)
-        runCurrent()
+        val gid = viewModelMoto.startGroupVibe("MOVIE", setOf(redmi, oneplus), isTie = true)
         assertNotNull(gid)
         
         // 3. Start a Side Vibe (1-1)
-        val sideGid = viewModelMoto.startGroupVibe("WHISPER", setOf(redmi), scope = cc.thevar.blukit.domain.model.VibeGroup.SCOPE_PRIVATE)
-        runCurrent()
+        val sideGid = viewModelMoto.startGroupVibe("WHISPER", setOf(redmi), isTie = false)
         assertNotNull(sideGid)
     }
 
     @Test
-    fun `air surge simulation - multiple users blukitting in the air`() = runTest(testDispatcher) {
+    fun `stadium surge simulation - multiple users blukitting in the air`() = runTest {
         // 1. Capture the payload callback to simulate incoming messages
         val payloadCallbackSlot = slot<PayloadCallback>()
         every { 
@@ -161,41 +143,41 @@ class AirSurgeTest {
         } returns Tasks.forResult<Void>(null)
         
         controller.startAdvertising()
-        runCurrent()
+        testDispatcher.scheduler.advanceUntilIdle()
         val lifecycleCallback = lifecycleCallbackSlot.captured
 
         // 2. Setup mock encryption/decryption
         val dummyKey: SecretKey = SecretKeySpec(ByteArray(32), "AES")
         every { cryptoManager.deriveSharedSecret(any()) } returns dummyKey
         
-        // 3. Define our "Air Stars" - reduced count for stability
-        val airScenarios = listOf(
-            Pair("User1", "The vibe is high!"),
-            Pair("User2", "Catching vibes in the air!")
+        // 3. Define our "Stadium Stars" and their messages
+        val stadiumScenarios = listOf(
+            Pair("User1", "Team A wins!"),
+            Pair("User2", "Team B wins!"),
+            Pair("User3", "Player 1 scores!! 🔥")
         )
 
         // 4. Simulate the mesh activity
-        airScenarios.forEachIndexed { index, (user, content) ->
+        stadiumScenarios.forEachIndexed { index, (user, content) ->
             val peerId = "peer-$index"
             
             // Connection Initiated
             lifecycleCallback.onConnectionInitiated(peerId, mockk(relaxed = true))
-            runCurrent()
+            testDispatcher.scheduler.advanceUntilIdle()
 
             // Handshake logic to enable session for this peer
             val handshakePayload = mockk<Payload>()
-            every { handshakePayload.type } returns Payload.Type.BYTES
             val keyGen = KeyPairGenerator.getInstance("EC")
             keyGen.initialize(256)
             val publicKey = keyGen.generateKeyPair().public
             every { handshakePayload.asBytes() } returns byteArrayOf(0x01) + publicKey.encoded
             
             payloadCallbackSlot.captured.onPayloadReceived(peerId, handshakePayload)
-            runCurrent()
+            testDispatcher.scheduler.advanceUntilIdle()
 
             // Simulate the peer having a successful connection result (linked)
             lifecycleCallback.onConnectionResult(peerId, mockk<ConnectionResolution>().apply { every { status.isSuccess } returns true })
-            runCurrent()
+            testDispatcher.scheduler.advanceUntilIdle()
 
             // Simulate the peer "Blukitting" their message
             val messagePayload = MessagePayload(
@@ -208,7 +190,6 @@ class AirSurgeTest {
             )
             val encryptedBytes = "encrypted-$content".toByteArray() 
             val messageMsgPayload = mockk<Payload>()
-            every { messageMsgPayload.type } returns Payload.Type.BYTES
             every { messageMsgPayload.asBytes() } returns encryptedBytes
             
             // Tell CryptoManager how to decrypt this specific message
@@ -216,19 +197,18 @@ class AirSurgeTest {
 
             // Peer sends the message into the mesh
             payloadCallbackSlot.captured.onPayloadReceived(peerId, messageMsgPayload)
-            runCurrent()
         }
 
-        // 5. Verify local node processed and PERSISTED every air message
-        runCurrent()
+        // 5. Verify local node processed and PERSISTED every stadium message
+        testDispatcher.scheduler.advanceUntilIdle()
         
-        airScenarios.forEach { (_, content) ->
+        stadiumScenarios.forEach { (_, content) ->
             coVerify(atLeast = 1) { 
-                vibeStore.upsertMessage(match { it.content == content }) 
+                vibeStore.insertMessage(match { it.content == content }) 
             }
         }
 
-        // 6. Verify Haptic Vibes triggered for every air shoutout
-        verify(exactly = airScenarios.size) { hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE) }
+        // 6. Verify Haptic Vibes triggered for every stadium shoutout
+        verify(exactly = stadiumScenarios.size) { hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE) }
     }
 }

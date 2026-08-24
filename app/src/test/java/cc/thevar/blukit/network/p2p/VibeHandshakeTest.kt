@@ -7,18 +7,15 @@ import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import com.google.android.gms.nearby.connection.*
 import com.google.android.gms.tasks.Task
-import com.google.android.gms.tasks.Tasks
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.Before
 import org.junit.Test
 import java.security.KeyPair
@@ -35,7 +32,7 @@ class VibeHandshakeTest {
     private val hapticManager: HapticManager = mockk(relaxed = true)
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var controller: NearbyP2PController
     private val connectionsClient: ConnectionsClient = mockk(relaxed = true)
@@ -49,23 +46,10 @@ class VibeHandshakeTest {
         every { repository.getCurrentNickname() } returns "Me"
         every { repository.emojiAvatar } returns MutableStateFlow("👤")
         every { repository.lowPowerMode } returns MutableStateFlow(false)
-        every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
         every { radioStateManager.radioStates } returns MutableStateFlow(cc.thevar.blukit.data.system.RadioStates(true, true, true))
 
         val keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair()
         every { cryptoManager.getLocalKeyPair() } returns keyPair
-
-        every { connectionsClient.acceptConnection(any<String>(), any()) } returns Tasks.forResult<Void>(null)
-        
-        every { connectionsClient.sendPayload(any<String>(), any()) } answers {
-            val mockTask = mockk<com.google.android.gms.tasks.Task<Void>>(relaxed = true)
-            every { mockTask.addOnCompleteListener(any()) } answers {
-                val listener = it.invocation.args[0] as com.google.android.gms.tasks.OnCompleteListener<Void>
-                listener.onComplete(mockTask)
-                mockTask
-            }
-            mockTask
-        }
 
         controller = NearbyP2PController(
             context, repository, contactRepository, vibeStore, hapticManager, radioStateManager, cryptoManager, testDispatcher, testDispatcher
@@ -73,7 +57,7 @@ class VibeHandshakeTest {
     }
 
     @Test
-    fun `handshake derived shared secret on connection`() = runTest(testDispatcher) {
+    fun `handshake derived shared secret on connection`() = runTest {
         val endpointId = "remote-peer-1"
         val peerKeyPair = KeyPairGenerator.getInstance("EC").generateKeyPair()
         val handshakePayload = byteArrayOf(0x01.toByte()) + peerKeyPair.public.encoded
@@ -84,17 +68,14 @@ class VibeHandshakeTest {
         every { connectionsClient.requestConnection(any<String>(), any<String>(), capture(callbackSlot)) } returns mockTask
 
         controller.connectToDevice(P2PDevice(endpointId, "Friend", "🤝"))
-        runCurrent()
         
         // Simulate Connection Initiated
         callbackSlot.captured.onConnectionInitiated(endpointId, mockk(relaxed = true))
-        runCurrent()
         
         // Simulate Connection Success
         callbackSlot.captured.onConnectionResult(endpointId, mockk {
             every { status } returns com.google.android.gms.common.api.Status.RESULT_SUCCESS
         })
-        runCurrent()
 
         // Capture the PayloadCallback
         val payloadCallbackSlot = slot<PayloadCallback>()
@@ -102,14 +83,13 @@ class VibeHandshakeTest {
 
         // Simulate receiving Handshake from peer
         payloadCallbackSlot.captured.onPayloadReceived(endpointId, Payload.fromBytes(handshakePayload))
-        runCurrent()
 
         // Verify shared secret derivation
         verify { cryptoManager.deriveSharedSecret(any()) }
     }
 
     @Test
-    fun `link request is sent if connected`() = runTest(testDispatcher) {
+    fun `link request is sent if connected`() = runTest {
         val endpointId = "peer-1"
         
         // We need to simulate that Nearby is already connected for the ID
@@ -120,16 +100,11 @@ class VibeHandshakeTest {
         every { connectionsClient.requestConnection(any<String>(), any<String>(), capture(callbackSlot)) } returns mockTask
 
         controller.connectToDevice(P2PDevice(endpointId, "Friend", "🤝"))
-        runCurrent()
-
         callbackSlot.captured.onConnectionResult(endpointId, mockk {
             every { status } returns com.google.android.gms.common.api.Status.RESULT_SUCCESS
         })
-        runCurrent()
 
         controller.requestLink(P2PDevice(endpointId, "Friend", "🤝"))
-        runCurrent()
-
         coVerify(atLeast = 1) { connectionsClient.sendPayload(endpointId, any()) }
     }
 }

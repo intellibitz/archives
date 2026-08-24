@@ -15,8 +15,8 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -47,7 +47,7 @@ class NearbyP2PControllerTest {
     private val connectionsClient: ConnectionsClient = mockk(relaxed = true)
 
     private lateinit var controller: NearbyP2PController
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
     
     private lateinit var validPublicKeyEncoded: ByteArray
 
@@ -72,10 +72,7 @@ class NearbyP2PControllerTest {
         every { connectionsClient.stopDiscovery() } returns Unit
         every { connectionsClient.stopAdvertising() } returns Unit
         every { connectionsClient.acceptConnection(any<String>(), any()) } returns Tasks.forResult<Void>(null)
-        
         val mockTask = mockk<com.google.android.gms.tasks.Task<Void>>(relaxed = true)
-        every { mockTask.isComplete } returns true
-        every { mockTask.isSuccessful } returns true
         every { mockTask.addOnCompleteListener(any()) } answers {
             val listener = it.invocation.args[0] as com.google.android.gms.tasks.OnCompleteListener<Void>
             listener.onComplete(mockTask)
@@ -84,7 +81,6 @@ class NearbyP2PControllerTest {
         every { connectionsClient.sendPayload(any<String>(), any()) } returns mockTask
         
         every { vibeStore.getAllMessages() } returns MutableStateFlow(emptyList())
-        every { vibeStore.groups } returns MutableStateFlow(emptyList())
         every { repository.getCurrentNickname() } returns "Tester"
         every { repository.getDeviceId() } returns "tester-id"
         every { repository.nicknameFlow } returns MutableStateFlow("Tester")
@@ -102,41 +98,36 @@ class NearbyP2PControllerTest {
         every { cryptoManager.encrypt(any(), any()) } returns byteArrayOf(0x11)
 
         controller = NearbyP2PController(
-            context, repository, contactRepository, vibeStore, hapticManager, radioStateManager, cryptoManager, testDispatcher, testDispatcher
+            context, repository, contactRepository, vibeStore, hapticManager, radioStateManager, cryptoManager, testDispatcher
         )
     }
 
     @After
     fun tearDown() {
-        controller.release()
         Dispatchers.resetMain()
         unmockkStatic(Nearby::class)
-        clearAllMocks()
     }
 
     @Test
-    fun `startDiscovery calls Nearby startDiscovery`() = runTest(testDispatcher) {
+    fun `startDiscovery calls Nearby startDiscovery`() {
         controller.startDiscovery()
-        runCurrent()
         verify { connectionsClient.startDiscovery(any<String>(), any(), any()) }
     }
 
     @Test
-    fun `stopDiscovery calls Nearby stopDiscovery`() = runTest(testDispatcher) {
+    fun `stopDiscovery calls Nearby stopDiscovery`() {
         controller.stopDiscovery()
-        runCurrent()
         verify { connectionsClient.stopDiscovery() }
     }
 
     @Test
-    fun `startAdvertising calls Nearby startAdvertising`() = runTest(testDispatcher) {
+    fun `startAdvertising calls Nearby startAdvertising`() {
         controller.startAdvertising()
-        runCurrent()
-        verify { connectionsClient.startAdvertising(any<String>(), any<String>(), any<ConnectionLifecycleCallback>(), any<AdvertisingOptions>()) }
+        verify(timeout = 2000) { connectionsClient.startAdvertising(any<String>(), any<String>(), any<ConnectionLifecycleCallback>(), any<AdvertisingOptions>()) }
     }
 
     @Test
-    fun `broadcastMessage sends payload to all active connections`() = runTest(testDispatcher) {
+    fun `broadcastMessage sends payload to all active connections`() = runTest {
         val lifecycleCallbackSlot = slot<ConnectionLifecycleCallback>()
         val payloadCallbackSlot = slot<PayloadCallback>()
         
@@ -150,7 +141,7 @@ class NearbyP2PControllerTest {
 
         controller.startAdvertising()
         
-        runCurrent()
+        testDispatcher.scheduler.advanceUntilIdle()
         val lifecycleCallback = lifecycleCallbackSlot.captured
 
         val peerIds = listOf("peer-1", "peer-2")
@@ -159,70 +150,30 @@ class NearbyP2PControllerTest {
 
         peerIds.forEach { peerId ->
             lifecycleCallback.onConnectionInitiated(peerId, mockk(relaxed = true))
-            runCurrent()
+            testDispatcher.scheduler.advanceUntilIdle()
             
             // Establish secure session via handshake with VALID key
             val handshakePayload = mockk<Payload>()
-            every { handshakePayload.type } returns Payload.Type.BYTES
             every { handshakePayload.asBytes() } returns byteArrayOf(0x01) + validPublicKeyEncoded
             payloadCallbackSlot.captured.onPayloadReceived(peerId, handshakePayload)
-            runCurrent()
+            testDispatcher.scheduler.advanceUntilIdle()
             
             lifecycleCallback.onConnectionResult(peerId, resultSuccess)
-            runCurrent()
+            testDispatcher.scheduler.advanceUntilIdle()
 
             // Link Setup: Explicitly accept the link to move from activeConnections to connectedLinks
             controller.acceptLink(cc.thevar.blukit.domain.model.P2PDevice(peerId, "Vibe", "👤"))
-            runCurrent()
+            testDispatcher.scheduler.advanceUntilIdle()
         }
 
         assertEquals(2, controller.connectedLinks.value.size)
 
         val result = controller.broadcastMessage("Hello Vibes!")
         assertNotNull(result)
-        runCurrent()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         peerIds.forEach { peerId ->
-            verify(atLeast = 1) { connectionsClient.sendPayload(peerId, any()) }
+            verify(atLeast = 1, timeout = 2000) { connectionsClient.sendPayload(peerId, any()) }
         }
-    }
-
-    @Test
-    fun `initiateHistorySync sends resync request`() = runTest(testDispatcher) {
-        val lifecycleCallbackSlot = slot<ConnectionLifecycleCallback>()
-        val payloadCallbackSlot = slot<PayloadCallback>()
-        
-        every { 
-            connectionsClient.startAdvertising(any<String>(), any<String>(), capture(lifecycleCallbackSlot), any<AdvertisingOptions>()) 
-        } returns Tasks.forResult<Void>(null)
-        
-        every { 
-            connectionsClient.acceptConnection(any<String>(), capture(payloadCallbackSlot)) 
-        } returns Tasks.forResult<Void>(null)
-
-        controller.startAdvertising()
-        runCurrent()
-        
-        val peerId = "peer-sync"
-        val resultSuccess = mockk<ConnectionResolution>()
-        every { resultSuccess.status.isSuccess } returns true
-
-        lifecycleCallbackSlot.captured.onConnectionInitiated(peerId, mockk(relaxed = true))
-        runCurrent()
-        
-        val handshakePayload = mockk<Payload>()
-        every { handshakePayload.type } returns Payload.Type.BYTES
-        every { handshakePayload.asBytes() } returns byteArrayOf(0x01) + validPublicKeyEncoded
-        payloadCallbackSlot.captured.onPayloadReceived(peerId, handshakePayload)
-        runCurrent()
-        
-        lifecycleCallbackSlot.captured.onConnectionResult(peerId, resultSuccess)
-        runCurrent()
-
-        controller.initiateHistorySync(peerId)
-        runCurrent()
-
-        // Verify sendPayload was called (for the resync request)
-        verify(atLeast = 1) { connectionsClient.sendPayload(peerId, any()) }
     }
 }

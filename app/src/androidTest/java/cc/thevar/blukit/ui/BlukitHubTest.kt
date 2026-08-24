@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import io.mockk.mockk
