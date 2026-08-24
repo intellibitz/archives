@@ -118,7 +118,8 @@ class NearbyP2PController(
             else -> "L"
         }
         val powerChar = if (lowPower) "P" else "H"
-        return "$radioChar|$vibeCount|$powerChar"
+        val meshSize = activeConnections.size
+        return "$radioChar|$vibeCount|$powerChar|$meshSize"
     }
 
     private fun observeIdentityChanges() {
@@ -414,7 +415,9 @@ class NearbyP2PController(
             connectionsClient.startDiscovery(serviceId, createDiscoveryCallback(), options)
                 .addOnFailureListener { _isDiscovering.value = false }
             while (_isDiscovering.value) {
-                delay(30000)
+                val isBoosted = _scannedDevices.value.count { it.isConnected } >= 3
+                val scanDelay = if (isBoosted) 10000L else 30000L
+                delay(scanDelay)
                 if (_isDiscovering.value && _scannedDevices.value.isEmpty()) {
                     connectionsClient.stopDiscovery()
                     connectionsClient.startDiscovery(serviceId, createDiscoveryCallback(), options)
@@ -566,6 +569,29 @@ class NearbyP2PController(
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
         val group = vibeStore.getGroup(groupId) ?: return null
         val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), vibeType = MessagePayload.VIBE_WHISPER)
+        val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
+        try {
+            group.memberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { vibeKeys[memberId]?.let { key -> try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            activeConnections.filter { it !in group.memberIds }.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
+            vibeStore.upsertMessage(payload); vibeStore.updateGroupLastVibe(groupId, payload.timestamp); return payload
+        } catch (e: Exception) { return null }
+    }
+
+    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MessagePayload? {
+        val group = vibeStore.getGroup(groupId) ?: return null
+        val payload = MessagePayload(
+            messageId = messageId ?: UUID.randomUUID().toString(),
+            senderId = repository.getDeviceId(),
+            senderName = repository.getCurrentNickname(),
+            senderEmoji = repository.emojiAvatar.value,
+            groupId = groupId,
+            content = content,
+            timestamp = System.currentTimeMillis(),
+            type = MessagePayload.TYPE_NOTE_UPDATE,
+            noteVersion = version,
+            vibeType = MessagePayload.VIBE_WHISPER
+        )
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         try {
             group.memberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { vibeKeys[memberId]?.let { key -> try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }

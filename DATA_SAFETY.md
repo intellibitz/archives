@@ -11,12 +11,13 @@ blukit **never** connects to the internet. All "Vibes" spread directly from phon
 | **Ties (Shout/Whisper/Silence)** | Only on your phone | Mesh/Tie partners | To maintain local and shared history. |
 | **Vibe Sync** | Only on your phone | Trusted devices only | High-speed history sync for hardware upgrades. |
 | **Air Schedules** | Only on your phone | No | To automate the "Awakening" of recurring rituals. |
+| **Spectral Tips** | No | No | Onboarding tips and nudges are generated locally and never stored. |
 | **Location** | No | No | Used locally for Geofencing suggestions. Never tracked or shared. |
 
 ## 2. Absolute Proximity Privacy
 - **No Web Presence**: Your data never leaves the physical radio range of your device.
 - **Atmospheric Boundaries**: If someone isn't in your immediate "Air Field," they cannot see your **Shouts**.
-- **Dynamic Secure Ties**: **Whispers** and **Private Ties** resonate in **Stealth Rose** and stay encrypted between you and your trusted circles, nested safely inside a public Air.
+- **Branded Resonance**: **Whispers** and **Private Ties** resonate in **Stealth Rose** and stay encrypted between you and your trusted circles, nested safely inside a public Air.
 - **Media Mesh Isolation**: High-speed media transfers happen over direct encrypted WiFi links, isolated from the public discovery radios.
 
 ## 3. Self-Cleaning Persistence

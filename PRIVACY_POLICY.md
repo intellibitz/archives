@@ -21,15 +21,16 @@ By design, you can only communicate with people physically near you. This "Air F
 - Identity is a projected property; you can change your nickname at any time to break your local trail.
 
 ## 5. End-to-End Security (**Dynamic Secure Ties**)
-**Whispers** within a **Private Tie** are protected using **ECDH + AES-256-GCM** encryption and visually resonate in **Stealth Rose** to ensure you know you are vibing securely.
+**Whispers** within a **Private Tie** are protected using **ECDH + AES-256-GCM** encryption and visually resonate in **Stealth Rose** to ensure you know you are vibing securely within the spectral field.
 - **Local Keys**: Secure keys are generated and stored only on your device using hardware-backed security.
 - **Nested Context**: Ties exist only within the context of a public Air, keeping private interactions anchored to physical locations.
 
 ## 6. Public & Shared Airs
-Blukit follows a **Non-Monopolistic Air** principle. Public Airs have no owners. Anyone can join an existing Air or "Awaken" a frequency by naming it. This ensures the atmospheric mesh remains an open, community-driven resource.
+Blukit follows a **Non-Monopolistic Air** principle. Public Airs have no owners. Anyone can join an existing Air or "Awaken" a frequency by naming it. This ensures the atmospheric mesh remains an open, communal resource.
 
-## 7. Ritual Sentience & Storage Pruning
+## 7. Ritual Sentience & Spectral Nudges
 - **Air Schedules**: You can schedule recurring rituals locally. This data is never shared and is used only to nudge your device to "Awaken" specific Airs at specific times.
+- **Spectral Tips**: Onboarding nudges and tips are generated entirely locally to help you navigate the mesh without any tracking.
 - **Vibe Decay**: To manage local storage, blukit automatically prunes large media older than 90 days. **Pinned vibes** on the **Air Canvas** are exempt from this process to preserve essential memories.
 - **Intelligent Ticker**: The ticker dynamically manages your history, ensuring the "Air Vault" remains clean and only relevant vibes are surfaced in the field.
 

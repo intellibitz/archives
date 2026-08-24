@@ -46,7 +46,15 @@ class VibeStore(
         )
 
     val archivedGroups: StateFlow<List<VibeGroup>> = _groups
-        .map { it.values.filter { it.isArchived }.toList() }
+        .map { it.values.filter { it.isArchived && !it.isVaulted }.toList() }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    val vaultedGroups: StateFlow<List<VibeGroup>> = _groups
+        .map { it.values.filter { it.isVaulted }.toList() }
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
@@ -202,11 +210,25 @@ class VibeStore(
 
     suspend fun upsertMessage(message: MessagePayload) {
         _messages.update { current ->
-            val exists = current.any { it.messageId == message.messageId }
-            appendMessageToLog(message)
-            if (exists) {
-                current.map { if (it.messageId == message.messageId) message else it }
+            val existingIndex = current.indexOfFirst { it.messageId == message.messageId }
+            
+            if (existingIndex != -1) {
+                val existing = current[existingIndex]
+                // LWW CRDT for Note Mutation
+                if (message.type == MessagePayload.TYPE_NOTE_UPDATE) {
+                    if (message.noteVersion > existing.noteVersion || 
+                        (message.noteVersion == existing.noteVersion && message.timestamp > existing.timestamp)) {
+                        appendMessageToLog(message)
+                        current.toMutableList().apply { set(existingIndex, message) }
+                    } else {
+                        current
+                    }
+                } else {
+                    appendMessageToLog(message)
+                    current.toMutableList().apply { set(existingIndex, message) }
+                }
             } else {
+                appendMessageToLog(message)
                 current + message
             }
         }
@@ -270,7 +292,7 @@ class VibeStore(
         _groups.update { current ->
             current.mapValues { (id, group) ->
                 val isDefault = id == VibeGroup.ID_AIR || id == VibeGroup.ID_SILENCE
-                if (!isDefault && !group.isArchived && (now - group.lastVibeTimestamp) > VibeGroup.ARCHIVE_THRESHOLD_MS) {
+                if (!isDefault && !group.isArchived && !group.isVaulted && (now - group.lastVibeTimestamp) > VibeGroup.ARCHIVE_THRESHOLD_MS) {
                     group.copy(isArchived = true)
                 } else {
                     group
@@ -280,10 +302,19 @@ class VibeStore(
         saveData()
     }
 
+    fun vaultGroup(groupId: String, isVaulted: Boolean) {
+        _groups.update { current ->
+            current[groupId]?.let { 
+                current + (groupId to it.copy(isVaulted = isVaulted, vaultTimestamp = if (isVaulted) System.currentTimeMillis() else null))
+            } ?: current
+        }
+        saveData()
+    }
+
     fun restoreFromVault(groupId: String) {
         _groups.update { current ->
             current[groupId]?.let { 
-                current + (groupId to it.copy(isArchived = false, lastVibeTimestamp = System.currentTimeMillis()))
+                current + (groupId to it.copy(isArchived = false, isVaulted = false, lastVibeTimestamp = System.currentTimeMillis()))
             } ?: current
         }
         saveData()
@@ -293,9 +324,11 @@ class VibeStore(
         val now = System.currentTimeMillis()
         val allGroups = _groups.value.values
         val allPinnedVibes = allGroups.flatMap { it.pinnedVibeIds }.toSet()
+        val vaultedGroupIds = allGroups.filter { it.isVaulted }.map { it.id }.toSet()
 
         _messages.value.forEach { message ->
-            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedVibes) {
+            val isFromVaultedGroup = message.groupId in vaultedGroupIds
+            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedVibes && !isFromVaultedGroup) {
                 if (message.type == MessagePayload.TYPE_IMAGE || message.type == MessagePayload.TYPE_FILE) {
                     message.content.let { path ->
                         try {

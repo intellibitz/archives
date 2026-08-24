@@ -22,6 +22,9 @@ Experience the **Unified Vibe Frequency**.
 - **Tie Projection**: Collective identities. A Tie can project a shared emoji identity, appearing as a larger, high-intensity pulse on the Discovery Radar to others in the Air.
 - **Air Vault (Auto-Archiving)**: Over a 4-year journey, the ticker stays clean. A protocol automatically moves airs that haven't vibrated in 30 days into a **"Sunk Vibe"** vault.
 - **Vibe Ghost**: A field-projected interaction paradigm. Traditional dialogs and menus are replaced by a glowing persona ghost that appears at the center of the field for tactical actions.
+- **Spectral Messaging (The Harmony Nudge)**: A custom alerting and onboarding system. Alerts, messages, and tips are projected into the field with atmospheric glows, replacing generic system components with branded resonance.
+- **Glowing Input Nudge**: The Vibe Input breathes with a spectral aura when the air is still or empty, intuitively guiding users to contribute to the mesh with a responsive focus aura.
+- **Enjoyable UX**: A complete revamp of the interaction model to make vibing effortless and enjoyable, featuring spectral transitions, haptic-ready visuals, and a zero-friction "Ritual" workflow.
 - **Shared Life Log (Vibe Sync)**: Preserving your history. High-speed WiFi sync allows two devices to transfer their entire VibeStore history—every Air and Tie—during a hardware upgrade.
 
 ---

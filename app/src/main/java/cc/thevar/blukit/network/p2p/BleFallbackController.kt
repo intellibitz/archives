@@ -575,6 +575,11 @@ class BleFallbackController(
         return sendMessage(content, null)?.copy(groupId = groupId)
     }
 
+    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MessagePayload? {
+        // BLE fallback: send as a standard group message but with note type
+        return sendMessage(content, null, MessagePayload.VIBE_WHISPER, messageId, groupId, null)?.copy(type = MessagePayload.TYPE_NOTE_UPDATE, noteVersion = version)
+    }
+
     override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int, groupId: String?, groupName: String?): MessagePayload? {
         Log.w(tag, "File sharing not supported on BLE Fallback")
         return null

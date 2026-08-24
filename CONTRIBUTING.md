@@ -8,6 +8,13 @@ We love your input! Blukit is built for the **Crowd**, not the **Web**. We are b
 - Proposing new features
 - Becoming a maintainer
 
+## Design Philosophy: The Spectral Field
+Blukit follows a **Spectral Design System**. All UI components should:
+- Use **Stealth Primary** (#00E5FF) and **Stealth Rose** (#FF4081) as the core energies.
+- Favor atmospheric glows and pulsing animations over static borders.
+- Replace standard system dialogs with **Vibe Ghosts** or **Blukit Alerts**.
+- Maintain an anonymous-first, haptic-ready, and high-density UX.
+
 ## We Use [Github Flow](https://guides.github.com/introduction/flow/), So All Code Changes Happen Through Pull Requests
 
 Pull requests are the best way to propose changes to the codebase. We actively welcome your pull requests:

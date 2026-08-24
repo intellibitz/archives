@@ -14,6 +14,8 @@ data class VibeGroup(
     val parentAirId: String? = null,
     val pinnedVibeIds: Set<String> = emptySet(),
     val projectionEmoji: String? = null,
+    val isVaulted: Boolean = false,
+    val vaultTimestamp: Long? = null,
     val schedules: List<AirSchedule> = emptyList()
 ) {
     companion object {

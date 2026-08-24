@@ -408,6 +408,16 @@ class BluetoothViewModel(
         }
     }
 
+    fun vaultGroup(groupId: String, isVaulted: Boolean) {
+        vibeStore.vaultGroup(groupId, isVaulted)
+    }
+
+    fun updateNote(groupId: String, content: String, messageId: String?, version: Int) {
+        viewModelScope.launch {
+            p2pController.sendNoteUpdate(groupId, content, messageId, version)
+        }
+    }
+
     fun initiateHistorySync(deviceId: String) {
         p2pController.initiateHistorySync(deviceId)
     }

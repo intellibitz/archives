@@ -18,7 +18,6 @@ import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.VibeGroup
-import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.viewmodels.*
 import cc.thevar.blukit.ui.screens.*
 import cc.thevar.blukit.ui.navigation.Route
@@ -59,7 +58,7 @@ fun PreviewRadarPhone() {
 @Composable
 fun PreviewChatPhone() {
     BlukitTheme {
-        TieScreen(
+        TieField(
             state = BluetoothUiState(
                 session = VibeSession(
                     messages = listOf(
@@ -181,7 +180,7 @@ fun PreviewHarmonyHubFull() {
                 BlukitHarmonyTopBar(
                     title = "THE AIR",
                     icon = Icons.Rounded.Groups,
-                    currentRoute = Route.Blukit,
+                    currentRoute = Route.Atmos,
                     onNavigate = {},
                     userNickname = "BLUKIT",
                     userEmoji = "👤",
@@ -213,7 +212,7 @@ fun PreviewHarmonyHubFull() {
                 Spacer(modifier = Modifier.weight(1f))
                 
                 BlukitVibeHub(
-                    currentRoute = Route.Blukit,
+                    currentRoute = Route.Atmos,
                     messageText = "Hello Crowd",
                     onMessageChange = {},
                     onSend = {},

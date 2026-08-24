@@ -154,12 +154,48 @@ fun AirTicker(
     }
 }
 
+@Composable
+fun BreadcrumbHub(
+    trail: List<String>,
+    onCrumbClick: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        trail.forEachIndexed { index, crumb ->
+            Text(
+                text = crumb.uppercase(),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = if (index == trail.size - 1) FontWeight.Black else FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    color = if (index == trail.size - 1) Color.White else Color.White.copy(alpha = 0.4f),
+                    fontSize = 9.sp
+                ),
+                modifier = Modifier.clickable { onCrumbClick(index) }
+            )
+            if (index < trail.size - 1) {
+                Icon(
+                    imageVector = Icons.Rounded.ChevronRight,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.2f),
+                    modifier = Modifier.size(10.dp).padding(horizontal = 2.dp)
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BlukitHarmonyTopBar(
     title: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     currentRoute: Route,
+    breadcrumbTrail: List<String> = emptyList(),
+    onCrumbClick: (Int) -> Unit = {},
     onNavigate: (Route) -> Unit,
     userNickname: String,
     userEmoji: String,
@@ -299,15 +335,19 @@ fun BlukitHarmonyTopBar(
                 }
 
                 // CENTER: Air Vibe
-                val isLanding = title == "THE AIR" || title == "PUBLIC VIBES" || title == "BLUKIT"
+                val isLanding = title == "THE AIR" || title == "PUBLIC VIBES" || title == "BLUKIT" || title == "ATMOS"
                 Row(
                     verticalAlignment = Alignment.CenterVertically, 
                     modifier = Modifier.weight(1f).then(if (onTitleClick != null) Modifier.clickable { onTitleClick() } else Modifier),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(imageVector = icon, contentDescription = null, tint = themeColor.copy(alpha = 0.6f), modifier = Modifier.size(12.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    AirTicker(title = title, groups = activeAirs)
+                    if (breadcrumbTrail.isNotEmpty()) {
+                        BreadcrumbHub(trail = breadcrumbTrail, onCrumbClick = onCrumbClick)
+                    } else {
+                        Icon(imageVector = icon, contentDescription = null, tint = themeColor.copy(alpha = 0.6f), modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        AirTicker(title = title, groups = activeAirs)
+                    }
                     if (isLanding && onTitleClick != null) {
                         Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
                     }
@@ -334,8 +374,8 @@ fun BlukitHarmonyTopBar(
             }
         }
     }
-    if (showClearHistoryDialog) { ConfirmationDialog(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-    if (showResetProfileDialog) { ConfirmationDialog(title = "RESET PROFILE?", text = "THIS WILL CLEAR YOUR NAME BUT KEEP YOUR VIBES.", onConfirm = { onResetProfile(); showResetProfileDialog = false }, onDismiss = { showResetProfileDialog = false }) }
+    if (showClearHistoryDialog) { BlukitAlert(title = "CLEAR VIBES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", confirmLabel = "CLEAR", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
+    if (showResetProfileDialog) { BlukitAlert(title = "RESET PROFILE?", text = "THIS WILL CLEAR YOUR NAME BUT KEEP YOUR VIBES.", confirmLabel = "RESET", onConfirm = { onResetProfile(); showResetProfileDialog = false }, onDismiss = { showResetProfileDialog = false }) }
 }
 
 @Composable
@@ -446,7 +486,11 @@ fun VibingVibesTicker(
     Box(modifier = modifier) {
         if (energyList.isEmpty() && state.crowd.incomingLinkRequests.isEmpty() && state.crowd.outgoingLinkRequests.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "NO VIBES IN THE AIR", color = Color.White.copy(alpha = 0.2f), fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Rounded.Grain, contentDescription = null, tint = Color.White.copy(alpha = 0.1f), modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(text = "THE AIR IS STILL", color = Color.White.copy(alpha = 0.2f), fontWeight = FontWeight.Black, letterSpacing = 2.sp, fontSize = 10.sp)
+                }
             }
         }
         LazyColumn(state = listState, reverseLayout = reverseLayout, modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp), contentPadding = PaddingValues(top = 40.dp, bottom = 8.dp)) {
@@ -490,6 +534,10 @@ fun VibingVibesTicker(
             items(state.crowd.incomingLinkRequests.toList(), key = { "in_${it.id}" }) { VibeRequestTickerItem(it, onAcceptLink, onDenyLink) }
             items(state.crowd.outgoingLinkRequests.toList(), key = { "out_${it.id}" }) { OutgoingVibeRequestTickerItem(it, onDenyLink) }
         }
+        
+        // Fading edges for the ticker
+        Box(modifier = Modifier.fillMaxWidth().height(40.dp).align(Alignment.TopCenter).background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Black, Color.Transparent))))
+        Box(modifier = Modifier.fillMaxWidth().height(40.dp).align(Alignment.BottomCenter).background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Transparent, Color.Black))))
     }
 }
 
@@ -870,7 +918,90 @@ fun AirNudge(
 
 @Composable
 fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Color.Black, titleContentColor = StealthPrimary, textContentColor = Color.White, title = { Text(title, fontWeight = FontWeight.Black) }, text = { Text(text) }, confirmButton = { TextButton(onClick = onConfirm) { Text("CONFIRM", color = Color.Red, fontWeight = FontWeight.Bold) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("CANCEL") } })
+    BlukitAlert(title = title, text = text, confirmLabel = "CONFIRM", onConfirm = onConfirm, onDismiss = onDismiss)
+}
+
+/**
+ * A branded alert dialog for critical mesh events.
+ * Replaces standard AlertDialog with a spectral, anonymous-first design.
+ */
+@Composable
+fun BlukitAlert(
+    title: String,
+    text: String,
+    confirmLabel: String = "OK",
+    dismissLabel: String = "CANCEL",
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF0A0C14),
+        shape = RoundedCornerShape(28.dp),
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Rounded.NotificationsActive, contentDescription = null, tint = StealthPrimary, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = title.uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 16.sp, letterSpacing = 1.sp)
+            }
+        },
+        text = {
+            Text(
+                text = text.uppercase(),
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                modifier = Modifier.background(StealthPrimary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+            ) {
+                Text(confirmLabel, color = StealthPrimary, fontWeight = FontWeight.Black, fontSize = 12.sp)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(dismissLabel, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
+        }
+    )
+}
+
+/**
+ * Atmospheric tips to guide users through the mesh experience.
+ * Displays a glowing spectral card with a tip text and a lightbulb icon.
+ */
+@Composable
+fun BlukitTip(
+    text: String,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.padding(16.dp).fillMaxWidth(),
+        color = Color.Black.copy(alpha = 0.9f),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, StealthAmber.copy(alpha = 0.3f))
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.Lightbulb, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = text.uppercase(),
+                color = Color.White,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
+                Icon(Icons.Rounded.Close, contentDescription = "Dismiss", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(14.dp))
+            }
+        }
+    }
 }
 
 @Composable
@@ -1181,10 +1312,8 @@ fun VibeGhost(
                     val center = Offset(it.size.width / 2f, it.size.height / 2f)
                     val current = coordinates["GHOST_VIBE"] ?: PersonaConnectionPoints()
                     coordinates["GHOST_VIBE"] = current.copy(field = it.positionInRoot() + center)
-                    // Passing sourceId via a dummy coordinate entry with ID in ticker.x (just a hack for now)
                     if (data.sourceId != null) {
-                        coordinates["GHOST_SOURCE_ID"] = PersonaConnectionPoints(ticker = Offset(1f, 1f)) // Just to mark it exists
-                        // In a real app, I'd pass this as a parameter to the canvas, but we're constrained by the existing architecture.
+                        coordinates["GHOST_SOURCE_ID"] = PersonaConnectionPoints(ticker = Offset(1f, 1f)) 
                     }
                 }
                 .graphicsLayer {
@@ -1193,7 +1322,6 @@ fun VibeGhost(
                 }
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(120.dp)) {
-                // Glowing Air Halo
                 Surface(
                     shape = CircleShape,
                     color = data.themeColor.copy(alpha = 0.15f * glowAlpha),
@@ -1201,7 +1329,6 @@ fun VibeGhost(
                     modifier = Modifier.fillMaxSize()
                 ) {}
                 
-                // Core Air Persona
                 Surface(
                     modifier = Modifier.size(72.dp),
                     shape = CircleShape,
@@ -1211,7 +1338,6 @@ fun VibeGhost(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(text = data.emoji, fontSize = 32.sp)
-                        // If it's a promotion vibe, show a subtle "Spread" icon overlay?
                         if (data.sourceId != null) {
                             Icon(
                                 imageVector = Icons.Rounded.Grain,
@@ -1705,6 +1831,162 @@ fun VibeAirSignature(
     }
 }
 
+data class FieldScene(
+    val title: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val fieldContent: @Composable BoxScope.() -> Unit,
+    val tickerContent: @Composable BoxScope.() -> Unit,
+    val inputContent: @Composable BoxScope.() -> Unit,
+    val floatingContent: @Composable BoxScope.() -> Unit = {}
+)
+
+/**
+ * The master layout for all Blukit fields (Atmos, Air, Tie).
+ * Orchestrates the spectral background, top bar, field content, ticker, and input.
+ * Features a dynamic wandering background glow that shifts based on depth.
+ */
+@Composable
+fun BlukitFieldScaffold(
+    state: BluetoothUiState,
+    currentRoute: Route,
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    breadcrumbTrail: List<String> = emptyList(),
+    onCrumbClick: (Int) -> Unit = {},
+    userNickname: String,
+    userEmoji: String,
+    onUserNicknameChange: (String) -> Unit,
+    onResetProfile: () -> Unit,
+    userFocusRequester: FocusRequester?,
+    isBluetoothOff: Boolean,
+    isLocationOff: Boolean,
+    isWifiOff: Boolean,
+    isPermissionMissing: Boolean,
+    isPermanentlyDenied: Boolean,
+    userCount: Int,
+    isStealthMode: Boolean,
+    lowPowerMode: Boolean,
+    airIsStill: Boolean,
+    activeAirs: List<VibeGroup> = emptyList(),
+    onToggleStealth: (Boolean) -> Unit,
+    onToggleLowPower: (Boolean) -> Unit,
+    onAwakenBluetooth: () -> Unit,
+    onAwakenLocation: () -> Unit,
+    onAwakenWifi: () -> Unit,
+    onGrantPermissions: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onClearHistory: () -> Unit,
+    onShowPrivacy: () -> Unit = {},
+    onBack: (() -> Unit)? = null,
+    onTitleClick: (() -> Unit)? = null,
+    onProfileClick: (() -> Unit)? = null,
+    // Field Specifics
+    fieldContent: @Composable BoxScope.() -> Unit,
+    tickerContent: @Composable BoxScope.() -> Unit,
+    inputContent: @Composable BoxScope.() -> Unit,
+    floatingContent: @Composable BoxScope.() -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val isPrivate = currentRoute is Route.Vibes || currentRoute is Route.VibeDetail
+    val themeColor = if (isPrivate) StealthRose else StealthPrimary
+    
+    val infiniteTransition = rememberInfiniteTransition(label = "SpectralGlow")
+    val wanderX by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 1000f, animationSpec = infiniteRepeatable(tween(10000, easing = LinearEasing), RepeatMode.Reverse), label = "WanderX")
+    val wanderY by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 1000f, animationSpec = infiniteRepeatable(tween(15000, easing = LinearEasing), RepeatMode.Reverse), label = "WanderY")
+
+    // Background glow that shifts based on depth
+    val glowIntensity by animateFloatAsState(
+        targetValue = if (currentRoute is Route.VibeDetail) 0.8f else 0.4f,
+        animationSpec = tween(1000),
+        label = "GlowIntensity"
+    )
+
+    Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
+        // Deep Background Glow (Spectral)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = glowIntensity * 0.2f }
+                .background(
+                    androidx.compose.ui.graphics.Brush.radialGradient(
+                        0.0f to themeColor.copy(alpha = 0.5f),
+                        0.5f to themeColor.copy(alpha = 0.1f),
+                        1.0f to Color.Transparent,
+                        center = Offset(wanderX, wanderY)
+                    )
+                )
+        )
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            BlukitHarmonyTopBar(
+                title = title,
+                icon = icon,
+                currentRoute = currentRoute,
+                breadcrumbTrail = breadcrumbTrail,
+                onCrumbClick = onCrumbClick,
+                onNavigate = { }, 
+                userNickname = userNickname,
+                userEmoji = userEmoji,
+                onUserNicknameChange = onUserNicknameChange,
+                onResetProfile = onResetProfile,
+                userFocusRequester = userFocusRequester,
+                isBluetoothOff = isBluetoothOff,
+                isLocationOff = isLocationOff,
+                isWifiOff = isWifiOff,
+                isPermissionMissing = isPermissionMissing,
+                isPermanentlyDenied = isPermanentlyDenied,
+                userCount = userCount,
+                isStealthMode = isStealthMode,
+                lowPowerMode = lowPowerMode,
+                airIsStill = airIsStill,
+                activeAirs = activeAirs,
+                onToggleStealth = onToggleStealth,
+                onToggleLowPower = onToggleLowPower,
+                onAwakenBluetooth = onAwakenBluetooth,
+                onAwakenLocation = onAwakenLocation,
+                onAwakenWifi = onAwakenWifi,
+                onGrantPermissions = onGrantPermissions,
+                onOpenSettings = onOpenSettings,
+                onClearHistory = onClearHistory,
+                onShowPrivacy = onShowPrivacy,
+                onBack = onBack,
+                onTitleClick = onTitleClick,
+                onProfileClick = onProfileClick
+            )
+
+            Box(modifier = Modifier.weight(1f)) {
+                fieldContent()
+                
+                // Overlay for Alerts/Nudges/Tips
+                Box(modifier = Modifier.fillMaxSize().padding(bottom = 140.dp), contentAlignment = Alignment.BottomCenter) {
+                    floatingContent()
+                }
+
+                // Ticker - Floating with spectral fade
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp)
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 88.dp)
+                        .graphicsLayer { alpha = 0.98f }
+                ) {
+                    tickerContent()
+                }
+            }
+
+            Box(modifier = Modifier.fillMaxWidth()) {
+                inputContent()
+            }
+        }
+    }
+}
+
+/**
+ * The primary interaction point for spreading vibes.
+ * Features a "breathing" nudge animation when empty and an "aura" glow when focused.
+ * The separator line features a moving spectral gradient.
+ */
 @Composable
 fun BlukitInput(
     airIsStill: Boolean,
@@ -1713,6 +1995,7 @@ fun BlukitInput(
     onSend: () -> Unit,
     onAttachFile: () -> Unit = {},
     onManage: (() -> Unit)? = null,
+    onNote: (() -> Unit)? = null,
     vibeCount: Int = 0,
     isReadOnly: Boolean = false,
     isFilterActive: Boolean = false,
@@ -1724,7 +2007,24 @@ fun BlukitInput(
     modifier: Modifier = Modifier
 ) {
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
-    val borderColor = if (airIsStill) Color.Red.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)
+    val focusRequester = remember { FocusRequester() }
+    
+    var isFocused by remember { mutableStateOf(false) }
+    
+    val infiniteTransition = rememberInfiniteTransition(label = "InputNudge")
+    val nudgeGlow by infiniteTransition.animateFloat(
+        initialValue = 0.1f, 
+        targetValue = 0.4f, 
+        animationSpec = infiniteRepeatable(tween(1500, easing = LinearOutSlowInEasing), RepeatMode.Reverse),
+        label = "NudgeGlow"
+    )
+
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isFocused) 0.9f else if (value.isEmpty()) nudgeGlow else 0.2f,
+        animationSpec = tween(500),
+        label = "InputGlow"
+    )
+
     val actualPlaceholder = when { 
         isSearchActive -> "SEARCH VIBES: TYPE NICKNAME OR VIBE..."
         placeholder != null -> placeholder 
@@ -1734,54 +2034,113 @@ fun BlukitInput(
         else -> "SPREAD A VIBE TO ${targetName ?: "THE AIR"}..." 
     }
     
-    Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
-        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp).background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp)).border(1.dp, borderColor, RoundedCornerShape(24.dp)).padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onAttachFile, enabled = !isReadOnly, modifier = Modifier.size(32.dp)) { 
-                    Icon(imageVector = Icons.Rounded.Add, contentDescription = "Attach", tint = themeColor.copy(alpha = 0.6f)) 
+    Column(modifier = modifier) {
+        // Glowing Dynamic Separator
+        val animOffset by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing)), label = "SeparatorAnim")
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(
+                    androidx.compose.ui.graphics.Brush.horizontalGradient(
+                        0.0f to Color.Transparent,
+                        animOffset to themeColor.copy(alpha = glowAlpha),
+                        1.0f to Color.Transparent
+                    )
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Black.copy(alpha = 0.98f))
+                .padding(bottom = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                    .background(Color.White.copy(alpha = 0.04f + (if(isFocused) 0.04f else 0f)), RoundedCornerShape(24.dp))
+                    .border(1.dp, themeColor.copy(alpha = glowAlpha * 0.7f), RoundedCornerShape(24.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onAttachFile, enabled = !isReadOnly, modifier = Modifier.size(36.dp)) { 
+                        Icon(imageVector = Icons.Rounded.Add, contentDescription = "Attach", tint = themeColor.copy(alpha = 0.6f)) 
+                    }
+                    if (onSearchToggle != null) {
+                        IconButton(onClick = onSearchToggle, modifier = Modifier.size(36.dp)) {
+                            Icon(
+                                imageVector = Icons.Rounded.Radar, 
+                                contentDescription = "Search", 
+                                tint = if (isSearchActive) themeColor else Color.White.copy(alpha = 0.2f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                    if (onNote != null) {
+                        IconButton(onClick = onNote, modifier = Modifier.size(36.dp)) {
+                            Icon(
+                                imageVector = Icons.Rounded.EditNote, 
+                                contentDescription = "Note", 
+                                tint = StealthRose.copy(alpha = 0.6f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
                 }
-                if (onSearchToggle != null) {
-                    IconButton(onClick = onSearchToggle, modifier = Modifier.size(32.dp)) {
+                
+                Box(modifier = Modifier.weight(1f).padding(horizontal = 8.dp), contentAlignment = Alignment.CenterStart) {
+                    BasicTextField(
+                        value = value, 
+                        onValueChange = onValueChange, 
+                        enabled = !isReadOnly, 
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .onGloballyPositioned { /* Track focus */ }, 
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White, fontWeight = FontWeight.Bold), 
+                        cursorBrush = SolidColor(if (isSearchActive) Color.White else themeColor), 
+                        decorationBox = { innerTextField -> 
+                            if (value.isEmpty()) { 
+                                Text(text = actualPlaceholder, color = Color.White.copy(alpha = 0.3f), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold)) 
+                            }; 
+                            innerTextField() 
+                        }
+                    )
+                    SideEffect { isFocused = value.isNotEmpty() }
+                }
+                
+                if (!isSearchActive) {
+                    if (vibeCount > 0) { 
+                        Surface(color = themeColor.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp)) {
+                            Text(text = vibeCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = themeColor, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)) 
+                        }
+                    }
+                    
+                    if (isPrivate && !isReadOnly && onManage != null) {
+                        IconButton(onClick = onManage, modifier = Modifier.size(36.dp)) {
+                            Icon(imageVector = Icons.Rounded.PersonAdd, contentDescription = "Manage", tint = themeColor.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
+                        }
+                    }
+                    
+                    IconButton(
+                        onClick = onSend, 
+                        enabled = value.isNotBlank() && !isReadOnly, 
+                        modifier = Modifier.size(36.dp)
+                    ) { 
                         Icon(
-                            imageVector = Icons.Rounded.Radar, 
-                            contentDescription = "Search", 
-                            tint = if (isSearchActive) themeColor else Color.White.copy(alpha = 0.2f),
-                            modifier = Modifier.size(18.dp)
-                        )
+                            imageVector = Icons.AutoMirrored.Rounded.Send, 
+                            contentDescription = "Send", 
+                            tint = if (value.isNotBlank()) themeColor else Color.White.copy(alpha = 0.2f)
+                        ) 
                     }
-                }
-            }
-            
-            BasicTextField(
-                value = value, 
-                onValueChange = onValueChange, 
-                enabled = !isReadOnly, 
-                modifier = Modifier.weight(1f), 
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White), 
-                cursorBrush = SolidColor(if (isSearchActive) Color.White else themeColor), 
-                decorationBox = { innerTextField -> 
-                    if (value.isEmpty()) { 
-                        Text(text = actualPlaceholder, color = Color.White.copy(alpha = 0.3f), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold)) 
-                    }; 
-                    innerTextField() 
-                }
-            )
-            
-            if (!isSearchActive) {
-                if (vibeCount > 0) { Text(text = vibeCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = themeColor, modifier = Modifier.padding(horizontal = 8.dp)) }
-                
-                // TACTICAL EXPANSION: Quick manage for private ties
-                if (isPrivate && !isReadOnly && onManage != null) {
-                    IconButton(onClick = onManage, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Rounded.PersonAdd, contentDescription = "Manage", tint = themeColor.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
-                    }
-                }
-                
-                IconButton(onClick = onSend, enabled = value.isNotBlank() && !isReadOnly, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.AutoMirrored.Rounded.Send, contentDescription = "Send", tint = if (value.isNotBlank()) themeColor else Color.White.copy(alpha = 0.2f)) }
-            } else {
-                if (value.isNotBlank()) {
-                    IconButton(onClick = { onValueChange("") }, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Rounded.Close, contentDescription = "Clear", tint = Color.White.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
+                } else {
+                    if (value.isNotBlank()) {
+                        IconButton(onClick = { onValueChange("") }, modifier = Modifier.size(36.dp)) {
+                            Icon(imageVector = Icons.Rounded.Close, contentDescription = "Clear", tint = Color.White.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
+                        }
                     }
                 }
             }

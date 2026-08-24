@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 sealed interface Route : NavKey {
     @Serializable
-    data object Blukit : Route
+    data object Atmos : Route
     
     @Serializable
     data object Energy : Route
