@@ -51,14 +51,14 @@ class BleFallbackController(
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedLinks = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedLinks = _connectedLinks.asStateFlow()
+    private val _connectedRadios = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedRadios = _connectedRadios.asStateFlow()
 
-    private val _incomingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
-    override val incomingLinkRequests = _incomingLinkRequests.asStateFlow()
+    private val _incomingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
 
-    private val _outgoingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
-    override val outgoingLinkRequests = _outgoingLinkRequests.asStateFlow()
+    private val _outgoingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val outgoingRadioRequests = _outgoingRadioRequests.asStateFlow()
 
     private val _isDiscovering = MutableStateFlow(false)
     override val isDiscovering = _isDiscovering.asStateFlow()
@@ -69,8 +69,8 @@ class BleFallbackController(
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
-    private val _discoveredAirs = MutableSharedFlow<VibeGroup>(extraBufferCapacity = 5)
-    override val discoveredAirs = _discoveredAirs.asSharedFlow()
+    private val _discoveredCrowds = MutableSharedFlow<VibeGroup>(extraBufferCapacity = 5)
+    override val discoveredCrowds = _discoveredCrowds.asSharedFlow()
 
     override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
     override val syncProgress: StateFlow<Float?> = MutableStateFlow(null)
@@ -79,7 +79,7 @@ class BleFallbackController(
     private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
     private var gattServer: BluetoothGattServer? = null
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
-    private val pendingLinkRequests = Collections.synchronizedSet(mutableSetOf<String>())
+    private val pendingRadioRequests = Collections.synchronizedSet(mutableSetOf<String>())
 
     companion object {
         private val SERVICE_UUID = UUID.fromString("0000fb01-0000-1000-8000-00805f9b34fb")
@@ -165,8 +165,8 @@ class BleFallbackController(
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
             Log.i(tag, "GATT: Disconnected from $address")
             activeGatts.remove(address)
-            pendingLinkRequests.remove(address)
-            _connectedLinks.update { it - address }
+            pendingRadioRequests.remove(address)
+            _connectedRadios.update { it - address }
             if (activeGatts.isEmpty()) _isConnected.value = false
             updateScannedDevices()
         }
@@ -176,7 +176,7 @@ class BleFallbackController(
         val address = gatt.device.address
         if (status == BluetoothGatt.GATT_SUCCESS) {
             activeGatts[address] = gatt
-            _connectedLinks.update { it + address }
+            _connectedRadios.update { it + address }
             _isConnected.value = true
             sendHandshake(address)
         } else {
@@ -226,7 +226,7 @@ class BleFallbackController(
             val vibePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
             val sharedSecret = cryptoManager.deriveSharedSecret(vibePublicKey)
             vibeKeys[address] = sharedSecret
-            Log.i(tag, "SECURE: Channel ready for $address (BLE)")
+            Log.i(tag, "SECURE: Radio ready for $address (BLE)")
             updateScannedDevices()
         } catch (e: Exception) {
             Log.e(tag, "Handshake error: ${e.message}")
@@ -270,7 +270,7 @@ class BleFallbackController(
 
         // 3. Save and Haptic
         internalScope.launch(ioDispatcher) {
-            // AUTO-DISCOVER TIES
+            // AUTO-DISCOVER CHAINS
             val gid = payload.groupId
             val gName = payload.groupName
             if (gid != null && gName != null) {
@@ -285,7 +285,7 @@ class BleFallbackController(
                         id = gid, 
                         name = gName, 
                         scope = scope,
-                        parentId = VibeGroup.ID_AIR
+                        parentId = VibeGroup.ID_CROWD
                     ))
                 }
             }
@@ -463,25 +463,25 @@ class BleFallbackController(
         } catch (e: SecurityException) {}
     }
 
-    override fun requestLink(device: P2PDevice) {
-        // BLE implementation of Link Request
-        pendingLinkRequests.add(device.id)
+    override fun requestRadio(device: P2PDevice) {
+        // BLE implementation of Radio Request
+        pendingRadioRequests.add(device.id)
         updateScannedDevices()
         sendHandshake(device.id)
     }
 
     override fun isNearbyConnected(endpointId: String): Boolean = false
-    override fun acceptLink(device: P2PDevice) {
-        pendingLinkRequests.remove(device.id)
-        _incomingLinkRequests.update { it - device }
-        _connectedLinks.update { it + device.id }
+    override fun acceptRadio(device: P2PDevice) {
+        pendingRadioRequests.remove(device.id)
+        _incomingRadioRequests.update { it - device }
+        _connectedRadios.update { it + device.id }
         _isConnected.value = true
         updateScannedDevices()
     }
 
-    override fun denyLink(device: P2PDevice) {
-        pendingLinkRequests.remove(device.id)
-        _incomingLinkRequests.update { it - device }
+    override fun denyRadio(device: P2PDevice) {
+        pendingRadioRequests.remove(device.id)
+        _incomingRadioRequests.update { it - device }
         updateScannedDevices()
     }
 
@@ -559,8 +559,8 @@ class BleFallbackController(
         _scannedDevices.update { current ->
             current.map { device ->
                 device.copy(
-                    isConnected = device.id in _connectedLinks.value,
-                    isLinkPending = device.id in pendingLinkRequests
+                    isConnected = device.id in _connectedRadios.value,
+                    isLinkPending = device.id in pendingRadioRequests
                 )
             }
         }
@@ -618,7 +618,7 @@ class BleFallbackController(
         }
     }
 
-    override fun initiateHistorySync(endpointId: String) {
+    override fun initiateHistorySync(endpointId: String, sinceTimestamp: Long?) {
         Log.w(tag, "History sync not supported on BLE Fallback")
     }
 
@@ -634,7 +634,7 @@ class BleFallbackController(
         activeGatts.clear()
         vibeKeys.clear()
         _isConnected.value = false
-        _connectedLinks.value = emptySet()
+        _connectedRadios.value = emptySet()
     }
 
     override fun release() {

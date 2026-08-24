@@ -37,8 +37,8 @@ fun ConversationsScreen(
     state: BluetoothUiState,
     onVibeClick: (VibeGroup) -> Unit,
     onDeleteGroup: (String) -> Unit,
-    onAcceptLink: (P2PDevice) -> Unit,
-    onDenyLink: (P2PDevice) -> Unit,
+    onAcceptRadio: (P2PDevice) -> Unit,
+    onDenyRadio: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var groupToDelete by remember { mutableStateOf<VibeGroup?>(null) }
@@ -49,34 +49,34 @@ fun ConversationsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (state.crowd.incomingLinkRequests.isNotEmpty()) {
+            if (state.crowd.incomingRadioRequests.isNotEmpty()) {
                 item {
                     Text(
-                        text = "INCOMING VIBE REQUESTS",
+                        text = "INCOMING RADIO REQUESTS",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Black,
                         color = StealthPrimary,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-                items(state.crowd.incomingLinkRequests.toList(), key = { it.id }) { request ->
-                    VibeRequestItem(request, onAcceptLink, onDenyLink)
+                items(state.crowd.incomingRadioRequests.toList(), key = { it.id }) { request ->
+                    VibeRequestItem(request, onAcceptRadio, onDenyRadio)
                 }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
 
-            if (state.crowd.outgoingLinkRequests.isNotEmpty()) {
+            if (state.crowd.outgoingRadioRequests.isNotEmpty()) {
                 item {
                     Text(
-                        text = "OUTGOING VIBE REQUESTS",
+                        text = "OUTGOING RADIO REQUESTS",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Black,
                         color = StealthRose,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-                items(state.crowd.outgoingLinkRequests.toList(), key = { it.id }) { request ->
-                    OutgoingVibeRequestItem(request, onDenyLink)
+                items(state.crowd.outgoingRadioRequests.toList(), key = { it.id }) { request ->
+                    OutgoingVibeRequestItem(request, onDenyRadio)
                 }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
@@ -111,7 +111,7 @@ fun ConversationsScreen(
             containerColor = Color.Black,
             titleContentColor = StealthRose,
             textContentColor = Color.White,
-            title = { Text("DELETE AIR?", fontWeight = FontWeight.Black) },
+            title = { Text("DELETE CROWD?", fontWeight = FontWeight.Black) },
             text = { Text("THIS WILL PERMANENTLY REMOVE THIS CONVERSATION.") },
             confirmButton = {
                 TextButton(onClick = {

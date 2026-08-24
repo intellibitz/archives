@@ -32,21 +32,21 @@ class CompositeP2PController(
         bleController.isConnected
     ) { nearby, ble -> nearby || ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
 
-    override val connectedLinks: StateFlow<Set<String>> = combine(
-        nearbyController.connectedLinks,
-        bleController.connectedLinks
+    override val connectedRadios: StateFlow<Set<String>> = combine(
+        nearbyController.connectedRadios,
+        bleController.connectedRadios
     ) { nearby, ble -> nearby + ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
-    override val incomingLinkRequests: StateFlow<Set<P2PDevice>> = combine(
-        nearbyController.incomingLinkRequests,
-        bleController.incomingLinkRequests
+    override val incomingRadioRequests: StateFlow<Set<P2PDevice>> = combine(
+        nearbyController.incomingRadioRequests,
+        bleController.incomingRadioRequests
     ) { nearby, ble ->
         (nearby + ble).distinctBy { it.id }.toSet()
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
-    override val outgoingLinkRequests: StateFlow<Set<P2PDevice>> = combine(
-        nearbyController.outgoingLinkRequests,
-        bleController.outgoingLinkRequests
+    override val outgoingRadioRequests: StateFlow<Set<P2PDevice>> = combine(
+        nearbyController.outgoingRadioRequests,
+        bleController.outgoingRadioRequests
     ) { nearby, ble ->
         (nearby + ble).distinctBy { it.id }.toSet()
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
@@ -71,9 +71,9 @@ class CompositeP2PController(
     override val messages: StateFlow<List<MessagePayload>> = nearbyController.messages
     override val syncProgress: StateFlow<Float?> = nearbyController.syncProgress
 
-    override val discoveredAirs: SharedFlow<cc.thevar.blukit.domain.model.VibeGroup> = merge(
-        nearbyController.discoveredAirs,
-        bleController.discoveredAirs
+    override val discoveredCrowds: SharedFlow<cc.thevar.blukit.domain.model.VibeGroup> = merge(
+        nearbyController.discoveredCrowds,
+        bleController.discoveredCrowds
     ).shareIn(scope, SharingStarted.WhileSubscribed(5000))
 
     override fun startDiscovery() {
@@ -146,33 +146,33 @@ class CompositeP2PController(
         bleController.updateGroupScope(groupId, scope)
     }
 
-    override fun initiateHistorySync(endpointId: String) {
-        nearbyController.initiateHistorySync(endpointId)
+    override fun initiateHistorySync(endpointId: String, sinceTimestamp: Long?) {
+        nearbyController.initiateHistorySync(endpointId, sinceTimestamp)
     }
 
-    override fun requestLink(device: P2PDevice) {
+    override fun requestRadio(device: P2PDevice) {
         if (device.id.startsWith("nearby:")) {
-            nearbyController.requestLink(device)
+            nearbyController.requestRadio(device)
         } else {
-            bleController.requestLink(device)
+            bleController.requestRadio(device)
         }
     }
 
     override fun isNearbyConnected(endpointId: String): Boolean = 
         nearbyController.isNearbyConnected(endpointId) || bleController.isNearbyConnected(endpointId)
-    override fun acceptLink(device: P2PDevice) {
+    override fun acceptRadio(device: P2PDevice) {
         if (device.id.startsWith("nearby:")) {
-            nearbyController.acceptLink(device)
+            nearbyController.acceptRadio(device)
         } else {
-            bleController.acceptLink(device)
+            bleController.acceptRadio(device)
         }
     }
 
-    override fun denyLink(device: P2PDevice) {
+    override fun denyRadio(device: P2PDevice) {
         if (device.id.startsWith("nearby:")) {
-            nearbyController.denyLink(device)
+            nearbyController.denyRadio(device)
         } else {
-            bleController.denyLink(device)
+            bleController.denyRadio(device)
         }
     }
 

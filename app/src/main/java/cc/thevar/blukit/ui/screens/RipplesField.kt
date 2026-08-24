@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -63,14 +64,12 @@ data class VibeRipple(
 )
 
 /**
- * BLUKIT: THE AIR FIELD.
+ * BLUKIT: THE CROWDS FIELD.
  */
 @Composable
 fun RipplesField(
     state: BluetoothUiState,
     localDeviceId: String,
-    localNickname: String,
-    localEmoji: String,
     activeBubbles: List<BubbleData>,
     selectedDevices: Set<String> = emptySet(),
     vibedPeers: Set<String> = emptySet(),
@@ -80,10 +79,7 @@ fun RipplesField(
     lowPowerMode: Boolean = false,
     highlightedUserId: String? = null,
     subjectId: String? = null,
-    showGhostOnboarding: Boolean = false,
     vibeGhostData: GhostVibeData? = null,
-    onNicknameChange: (String) -> Unit = {},
-    onOnboardingDone: () -> Unit = {},
     onDismissGhost: () -> Unit = {},
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
@@ -91,8 +87,8 @@ fun RipplesField(
     onVibeSurge: (Float) -> Unit = {},
     drawBackground: Boolean = true,
     drawNodes: Boolean = true,
-    airList: List<Pair<P2PDevice, Int>> = emptyList(),
-    showAirGhost: Boolean = false,
+    crowdList: List<Pair<P2PDevice, Int>> = emptyList(),
+    showCrowdGhost: Boolean = false,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit = {},
     airRitualGhost: @Composable () -> Unit = {}
@@ -167,11 +163,11 @@ fun RipplesField(
         val bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
         val displayDevices = if (onlyTies) {
             state.crowd.scannedDevices.filter { 
-                it.id in state.session.connectedLinks || 
+                it.id in state.session.connectedRadios || 
                 it.id in bubbleSenders || 
                 it.persistentId in bubbleSenders ||
-                state.crowd.incomingLinkRequests.any { req -> req.id == it.id } ||
-                state.crowd.outgoingLinkRequests.any { req -> req.id == it.id }
+                state.crowd.incomingRadioRequests.any { req -> req.id == it.id } ||
+                state.crowd.outgoingRadioRequests.any { req -> req.id == it.id }
             }
         } else {
             state.crowd.scannedDevices
@@ -179,19 +175,19 @@ fun RipplesField(
 
         if (drawNodes) {
             Box(modifier = Modifier.fillMaxSize().zIndex(2f)) {
-                if (airList.isNotEmpty()) {
-                    AirNodes(
-                        airList = airList,
+                if (crowdList.isNotEmpty()) {
+                    CrowdNodes(
+                        crowdList = crowdList,
                         vibedPeers = vibedPeers,
-                        onAirClick = onDeviceClick,
-                        onAirLongClick = onDeviceLongClick
+                        onCrowdClick = onDeviceClick,
+                        onCrowdLongClick = onDeviceLongClick
                     )
                 }
 
                 VibeNodes(
                     state = state,
                     devices = displayDevices,
-                    connectedLinks = state.session.connectedLinks,
+                    connectedLinks = state.session.connectedRadios,
                     selectedDevices = selectedDevices,
                     vibedPeers = vibedPeers,
                     activeBubbles = activeBubbles,
@@ -207,14 +203,6 @@ fun RipplesField(
 
         VibeRippleLayer(vibeRipples)
 
-        if (showGhostOnboarding) {
-            OnboardingGhost(
-                nickname = localNickname, 
-                emoji = localEmoji, 
-                onNicknameChange = onNicknameChange, 
-                onDone = onOnboardingDone
-            )
-        }
 
         if (vibeGhostData != null) {
             VibeGhost(data = vibeGhostData, onDismiss = onDismissGhost)
@@ -411,31 +399,32 @@ private fun VibeNodes(
 }
 
 @Composable
-private fun AirNodes(
-    airList: List<Pair<P2PDevice, Int>>, 
+private fun CrowdNodes(
+    crowdList: List<Pair<P2PDevice, Int>>, 
     vibedPeers: Set<String>,
-    onAirClick: (P2PDevice) -> Unit,
-    onAirLongClick: (P2PDevice) -> Unit
+    onCrowdClick: (P2PDevice) -> Unit,
+    onCrowdLongClick: (P2PDevice) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        airList.forEachIndexed { index, (device, count) ->
-            val radiusValue = if (airList.size == 1) 0f else 90f
-            val angle = (index.toDouble() / airList.size) * 2 * PI
+        crowdList.forEachIndexed { index, (device, count) ->
+            val radiusValue = if (crowdList.size == 1) 0f else 90f
+            val angle = (index.toDouble() / crowdList.size) * 2 * PI
             
             val xOffset = (radiusValue * cos(angle)).toFloat().dp
             val yOffset = (radiusValue * sin(angle)).toFloat().dp
             
-            VibeAirSignature(
+            VibeCrowdSignature(
                 device = device,
                 vibeCount = count,
                 isVibed = device.id in vibedPeers,
                 modifier = Modifier
                     .offset(xOffset, yOffset)
-                    .clickable { onAirClick(device) }
+                    .clickable { onCrowdClick(device) }
             )
         }
     }
 }
+
 
 @Composable
 private fun VibeNode(
@@ -460,18 +449,7 @@ private fun VibeNode(
     val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
 
     Box(
-        modifier = Modifier
-            .offset(xOffset, yOffset)
-            .onGloballyPositioned { 
-                val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                val current = coordinates[key] ?: PersonaConnectionPoints()
-                coordinates[key] = current.copy(
-                    field = it.positionInRoot() + center,
-                    vibe = if (isVibing) it.positionInRoot() + center else null
-                )
-            }
-            .size(nodeSize * 2.2f) // Expanded hit area
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        modifier = Modifier.offset(xOffset, yOffset),
         contentAlignment = Alignment.Center
     ) {
         VibePersonaSignature(
@@ -482,7 +460,19 @@ private fun VibeNode(
             onlyTies = onlyTies,
             size = nodeSize,
             isHighlighted = isHighlighted,
-            projectionEmoji = projectionEmoji
+            projectionEmoji = projectionEmoji,
+            modifier = Modifier
+                .testTag("PersonaNode_$key")
+                .onGloballyPositioned { 
+                    val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                    val current = coordinates[key] ?: PersonaConnectionPoints()
+                    coordinates[key] = current.copy(
+                        field = it.positionInRoot() + center,
+                        vibe = if (isVibing) it.positionInRoot() + center else null
+                    )
+                },
+            onClick = onClick,
+            onLongClick = onLongClick
         )
 
         // Active Bubble Overlay

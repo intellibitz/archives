@@ -10,12 +10,13 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 1.  Open `MarketPreviews.kt` in Android Studio.
 2.  Switch to the **Design** or **Split** view.
 3.  Locate the following previews:
-    -   `PreviewRadarPhone`: The main **Atmos Field** showing AIR METAs and the spectral radar.
-    -   `PreviewChatPhone`: The **Air Field** and **Tie Field** interface showing METAs and granular units.
-    -   `PreviewVibeField`: The granular breakdown of a specific **Vibe Meta**.
-    -   `PreviewHarmonyHubFull`: The complete Harmony Hub architecture with recursive meta-expansion.
-    -   `PreviewAirRitualGhost`: The **Vibe Ghost** interaction model for naming Airs.
-    -   `PreviewVibingVibesTickerHeaders`: High-density feed showcasing varied vibe types.
+    -   `PreviewRadarPhone`: The main **Host Field** showing high-level **Event** pulses and the spectral radar.
+    -   `PreviewChatPhone`: The **Crowd Field** and **Chain Field** interface showing **Links** and the **Plural Pulse** summaries.
+    -   `PreviewTimelineField`: The visual student journey showing shared **Memories**.
+    -   `PreviewVibeField`: The granular breakdown of a specific **Vibe** into its constituent units.
+    -   `PreviewHarmonyHubFull`: The complete Harmony Hub architecture with recursive plural-expansion.
+    -   `PreviewCrowdRitualGhost`: The **Vibe Ghost** interaction model for naming Crowds and selecting **Templates**.
+    -   `PreviewVibingVibesTickerHeaders`: High-density feed showcasing varied vibe types and unit counts.
     -   `PreviewRadarTablet`: The adaptive layout for larger spectral fields.
 4.  Use the **"Copy Image"** or **"Screenshot"** icon in the preview header to save the high-resolution render.
 

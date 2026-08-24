@@ -21,9 +21,9 @@ allprojects {
                     requested.group == "commons-io" && requested.name == "commons-io" -> useVersion("2.22.0")
                     requested.group == "commons-codec" && requested.name == "commons-codec" -> useVersion("1.22.1")
                     requested.group == "org.json" && requested.name == "json" -> useVersion("20260814")
-                    requested.group == "io.netty" -> useVersion("5.0.0.Alpha2")
+                    requested.group.startsWith("io.netty") -> useVersion("4.1.112.Final")
                     requested.group == "io.grpc" -> useVersion("1.83.1")
-                    requested.group == "org.yaml" && requested.name == "snakeyaml" -> useVersion("2.14")
+                    requested.group == "org.yaml" && requested.name == "snakeyaml" -> useVersion("2.6")
                 }
             }
         }

@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,16 +50,14 @@ import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
 
 /**
- * THE ATMOS FIELD: The top-level spectrum view of the mesh.
- * Displays all nearby vibes and airs on a discovery radar.
+ * THE HOST FIELD: The top-level spectrum view of the mesh.
+ * Displays all nearby vibes and event on a discovery radar.
  * Integrates spectral tips for onboarding and radar discovery.
  */
 @Composable
-fun AtmosField(
+fun HostField(
     state: BluetoothUiState,
     localDeviceId: String,
-    localNickname: String,
-    localEmoji: String,
     vibedPeers: Set<String> = emptySet(),
     noiseFilterEnabled: Boolean = false,
     onStartScan: () -> Unit,
@@ -66,33 +65,33 @@ fun AtmosField(
     onDeleteVibe: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
     onIdentifyUser: (String) -> Unit = {},
-    onNicknameChange: (String) -> Unit = {},
-    onOnboardingDone: () -> Unit = {},
-    showOnboarding: Boolean = false,
-    airIsStill: Boolean = false,
+    crowdIsStill: Boolean = false,
     // Hub Callbacks
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
-    onCreatePublicTie: ((String) -> Unit)? = null,
-    onAcceptLink: (P2PDevice) -> Unit = {},
-    onDenyLink: (P2PDevice) -> Unit = {},
+    onCreatePublicChain: ((String, String?) -> Unit)? = null,
+    onAcceptRadio: (P2PDevice) -> Unit = {},
+    onDenyRadio: (P2PDevice) -> Unit = {},
     onStartSideVibe: () -> Unit = {},
-    onStartTie: () -> Unit = {},
+    onStartChain: () -> Unit = {},
     onClearSelection: () -> Unit = {},
     onAttachFile: () -> Unit = {},
     onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     isSearchActive: Boolean = false,
-    onRestoreAir: (String) -> Unit = {}
+    onRestoreCrowd: (String) -> Unit = {},
+    showAirGhost: Boolean = false,
+    onDismissAirGhost: () -> Unit = {}
 ) {
     var showTip by remember { mutableStateOf(true) }
+    var airProposalName by remember { mutableStateOf("") }
     val activeVibeId = LocalActiveVibeId.current
     var vibeGhostData by remember { mutableStateOf<GhostVibeData?>(null) }
     var showVault by remember { mutableStateOf(false) }
 
-    val airMetas = remember(state.session.groups) {
+    val eventMetas = remember(state.session.groups) {
         state.session.groups.filter { it.scope == VibeGroup.SCOPE_PUBLIC && it.parentId == null }
     }
 
@@ -113,7 +112,7 @@ fun AtmosField(
             when {
                 msg.vibeType == MessagePayload.VIBE_SILENCE -> VibeGroup.ID_SILENCE
                 msg.groupId != null -> msg.groupId!!
-                else -> VibeGroup.ID_AIR
+                else -> VibeGroup.ID_CROWD
             }
         }
         
@@ -132,15 +131,15 @@ fun AtmosField(
         floatingContent = {
             AnimatedContent(
                 targetState = when {
-                    airMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
+                    eventMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
                     else -> null
                 },
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "AtmosTips"
+                label = "HostTips"
             ) { tipState ->
                 if (tipState == "empty_mesh" && showTip) {
                     BlukitTip(
-                        text = "THE MESH IS SILENT. AWAKEN AN AIR OR WAIT FOR NEARBY PERSONAS.",
+                        text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
                         onDismiss = { showTip = false }
                     )
                 }
@@ -149,7 +148,7 @@ fun AtmosField(
         fieldContent = {
             Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
                 Text(
-                    text = "AIR METAS", 
+                    text = "EVENT", 
                     style = MaterialTheme.typography.labelSmall, 
                     color = StealthPrimary, 
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -158,15 +157,16 @@ fun AtmosField(
                 )
                 
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(airMetas) { air ->
-                        MetaVibeItem(
-                            title = air.name,
-                            subtitle = "PUBLIC FREQUENCY",
+                    items(eventMetas) { crowd ->
+                        PluralPulseSummary(
+                            title = crowd.name,
+                            subtitle = "PUBLIC CROWD",
                             icon = Icons.Rounded.Grain,
                             themeColor = StealthPrimary,
-                            count = air.memberIds.size,
-                            lastUpdate = sdf.format(Date(air.lastVibeTimestamp)),
-                            onClick = { onNavigateToGroup(air.id) }
+                            count = crowd.memberIds.size,
+                            lastUpdate = sdf.format(Date(crowd.lastVibeTimestamp)),
+                            onClick = { onNavigateToGroup(crowd.id) },
+                            modifier = Modifier.testTag("CrowdNode_${crowd.id}")
                         )
                     }
                 }
@@ -176,15 +176,10 @@ fun AtmosField(
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
-                localNickname = localNickname,
-                localEmoji = localEmoji,
                 activeBubbles = emptyList(),
                 selectedDevices = state.crowd.selectedDevices,
                 vibedPeers = vibedPeers,
                 isFilterMode = noiseFilterEnabled,
-                showGhostOnboarding = showOnboarding,
-                onOnboardingDone = onOnboardingDone,
-                onNicknameChange = onNicknameChange,
                 vibeGhostData = vibeGhostData,
                 onDismissGhost = { vibeGhostData = null; activeVibeId.value = null },
                 onDeviceClick = onDeviceClick,
@@ -194,7 +189,7 @@ fun AtmosField(
                     vibeGhostData = GhostVibeData(
                         emoji = targetDevice.emoji,
                         title = targetDevice.name ?: "PERSONA",
-                        subtitle = "ATMOS NODE",
+                        subtitle = "CROWD NODE",
                         themeColor = StealthPrimary,
                         sourceId = menuId,
                         actions = mutableListOf<GhostAction>().apply {
@@ -205,11 +200,22 @@ fun AtmosField(
                 },
                 onStartScan = onStartScan,
                 drawBackground = false, // Background handled by Scaffold
-                drawNodes = true
+                drawNodes = true,
+                airRitualGhost = {
+                    if (showAirGhost) {
+                        CrowdRitualGhost(
+                            onNameChange = { airProposalName = it },
+                            onDone = { templateId -> onCreatePublicChain?.invoke(airProposalName, templateId) },
+                            onDismiss = onDismissAirGhost,
+                            nearbyAirs = state.session.groups,
+                            onJoinAir = onNavigateToGroup
+                        )
+                    }
+                }
             )
         },
         tickerContent = {
-            // Atmos ticker shows the latest global energy
+            // Event ticker shows the latest global energy
             VibingVibesTicker(
                 state = state,
                 energyList = vibes.map { msg -> 
@@ -228,24 +234,24 @@ fun AtmosField(
         },
         inputContent = {
             BlukitVibeHub(
-                currentRoute = cc.thevar.blukit.ui.navigation.Route.Atmos,
+                currentRoute = cc.thevar.blukit.ui.navigation.Route.Host,
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
                 vibeCount = vibes.size,
-                airIsStill = airIsStill,
-                incomingLinkRequests = state.crowd.incomingLinkRequests,
+                crowdIsStill = crowdIsStill,
+                incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
                 vibedPeers = vibedPeers,
                 groups = state.session.groups,
-                onAcceptLink = onAcceptLink,
-                onDenyLink = onDenyLink,
+                onAcceptRadio = onAcceptRadio,
+                onDenyRadio = onDenyRadio,
                 onStartSideVibe = onStartSideVibe,
-                onStartTie = onStartTie,
+                onStartChain = onStartChain,
                 onClearSelection = onClearSelection,
                 onAttachFile = onAttachFile,
                 onSearchToggle = onSearchToggle,
-                onCreatePublicTie = onCreatePublicTie,
+                onCreatePublicChain = onCreatePublicChain,
                 isSearchMode = isSearchActive,
                 onShowPrivacy = onShowPrivacy,
                 modifier = Modifier.fillMaxWidth()
@@ -256,7 +262,7 @@ fun AtmosField(
     if (showVault) {
         VaultOverlay(
             archivedGroups = state.session.archivedGroups,
-            onRestore = { onRestoreAir(it); showVault = false },
+            onRestore = { onRestoreCrowd(it); showVault = false },
             onDismiss = { showVault = false }
         )
     }

@@ -35,28 +35,27 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * AIR FIELD: Public frequency view. 
- * Lists Ties and Shouts within a specific Air container.
- * Features collaborative Air Canvas for pinned vibes and spectral tips.
+ * CROWD FIELD: Public frequency view. 
+ * Lists Ties and Shouts within a specific Crowd container.
+ * Features collaborative Crowd Canvas for pinned vibes and spectral tips.
  */
 @Composable
-fun AirField(
+fun CrowdField(
     state: BluetoothUiState,
     localDeviceId: String,
-    localNickname: String,
-    localEmoji: String,
-    airId: String?,
+    crowdId: String?,
     onDisconnect: () -> Unit,
     onSendMessage: (String, String) -> Unit,
+    crowdIsStill: Boolean = false,
     // Hub Callbacks
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
-    onAcceptLink: (P2PDevice) -> Unit = {},
-    onDenyLink: (P2PDevice) -> Unit = {},
+    onAcceptRadio: (P2PDevice) -> Unit = {},
+    onDenyRadio: (P2PDevice) -> Unit = {},
     onStartSideVibe: () -> Unit = {},
-    onStartTie: () -> Unit = {},
+    onStartChain: () -> Unit = {},
     onClearSelection: () -> Unit = {},
     onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
@@ -66,22 +65,22 @@ fun AirField(
     var showTip by remember { mutableStateOf(true) }
     var localFocusedId by remember(externalFocusedId) { mutableStateOf(externalFocusedId) }
 
-    val air = remember(airId, state.session.groups) {
-        state.session.groups.find { it.id == airId }
+    val crowd = remember(crowdId, state.session.groups) {
+        state.session.groups.find { it.id == crowdId }
     }
 
-    val childGroups = remember(state.session.groups, airId) {
-        state.session.groups.filter { it.parentId == airId }
+    val childGroups = remember(state.session.groups, crowdId) {
+        state.session.groups.filter { it.parentId == crowdId }
     }
 
-    val childAirs = childGroups.filter { it.scope == VibeGroup.SCOPE_PUBLIC }
+    val childCrowds = childGroups.filter { it.scope == VibeGroup.SCOPE_PUBLIC }
     val childTies = childGroups.filter { it.scope != VibeGroup.SCOPE_PUBLIC }
 
-    val vibesData = remember(state.session.messages, airId, localDeviceId, localFocusedId) {
-        if (airId == null) {
+    val vibesData = remember(state.session.messages, crowdId, localDeviceId, localFocusedId) {
+        if (crowdId == null) {
             Triple(emptyList<MessagePayload>(), emptyMap<String, Int>(), false)
         } else {
-            val baseVibes = state.session.messages.filter { it.groupId == airId && it.parentMessageId == null }
+            val baseVibes = state.session.messages.filter { it.groupId == crowdId && it.parentMessageId == null }
             val counts = baseVibes.groupBy { it.senderId }.mapValues { it.value.size }
             val sorted = baseVibes.sortedBy { it.timestamp }
             Triple(sorted, counts, localFocusedId != null)
@@ -101,7 +100,7 @@ fun AirField(
                 exit = fadeOut() + shrinkVertically()
             ) {
                 BlukitTip(
-                    text = "THE AIR IS EMPTY. CREATE A TIE OR SPREAD A VIBE TO START.",
+                    text = "THE CROWD IS SILENT. CREATE A TIE OR SPREAD A VIBE TO START.",
                     onDismiss = { showTip = false }
                 )
             }
@@ -109,9 +108,9 @@ fun AirField(
         fieldContent = {
             Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
                 // Meta Sections
-                if (childAirs.isNotEmpty() || childTies.isNotEmpty()) {
+                if (childCrowds.isNotEmpty() || childTies.isNotEmpty()) {
                     Text(
-                        text = "FREQUENCIES & TIES", 
+                        text = "EVENT & LINKS", 
                         style = MaterialTheme.typography.labelSmall, 
                         color = StealthPrimary, 
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -120,21 +119,21 @@ fun AirField(
                     )
                     
                     LazyColumn(modifier = Modifier.weight(0.4f)) {
-                        items(childAirs) { nestedAir ->
-                            MetaVibeItem(
-                                title = nestedAir.name,
-                                subtitle = "NESTED AIR",
+                        items(childCrowds) { nestedCrowd ->
+                            PluralPulseSummary(
+                                title = nestedCrowd.name,
+                                subtitle = "NESTED CROWD",
                                 icon = Icons.Rounded.Grain,
                                 themeColor = StealthPrimary,
-                                count = nestedAir.memberIds.size,
-                                lastUpdate = sdf.format(Date(nestedAir.lastVibeTimestamp)),
-                                onClick = { onNavigateToGroup(nestedAir.id) }
+                                count = nestedCrowd.memberIds.size,
+                                lastUpdate = sdf.format(Date(nestedCrowd.lastVibeTimestamp)),
+                                onClick = { onNavigateToGroup(nestedCrowd.id) }
                             )
                         }
                         items(childTies) { tie ->
-                            MetaVibeItem(
+                            PluralPulseSummary(
                                 title = tie.name,
-                                subtitle = if (tie.scope == VibeGroup.SCOPE_PRIVATE) "PRIVATE TIE" else "LOCAL TIE",
+                                subtitle = if (tie.scope == VibeGroup.SCOPE_PRIVATE) "CHAIN" else "LOCAL CHAIN",
                                 icon = if (tie.scope == VibeGroup.SCOPE_PRIVATE) Icons.Rounded.Hearing else Icons.Rounded.CellTower,
                                 themeColor = if (tie.scope == VibeGroup.SCOPE_PRIVATE) StealthRose else StealthPrimary,
                                 count = tie.memberIds.size,
@@ -145,7 +144,7 @@ fun AirField(
                     }
                 }
 
-                // Vibe Units / Metas
+                // Vibes
                 Text(
                     text = "VIBES", 
                     style = MaterialTheme.typography.labelSmall, 
@@ -158,9 +157,9 @@ fun AirField(
                 LazyColumn(modifier = Modifier.weight(0.6f)) {
                     items(chatVibes) { vibe ->
                         if (vibe.isMeta) {
-                            MetaVibeItem(
+                            PluralPulseSummary(
                                 title = vibe.content.take(20),
-                                subtitle = "VIBE META",
+                                subtitle = "PLURAL VIBE",
                                 icon = Icons.Rounded.BubbleChart,
                                 themeColor = StealthPrimary,
                                 count = state.session.messages.count { it.parentMessageId == vibe.messageId },
@@ -177,7 +176,7 @@ fun AirField(
                                 isMe = vibe.senderId == localDeviceId,
                                 isGrouped = false,
                                 isMutual = false,
-                                vibeGroup = air,
+                                vibeGroup = crowd,
                                 rowId = vibe.messageId,
                                 onVibeClick = { /* Handle Unit Click */ },
                                 onDeviceLongClick = { },
@@ -188,12 +187,10 @@ fun AirField(
                 }
             }
             
-            // Background Canvas for Atmosphere
+            // Background Canvas for Field
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
-                localNickname = localNickname,
-                localEmoji = localEmoji,
                 activeBubbles = emptyList(),
                 vibedPeers = emptySet(),
                 drawBackground = false,
@@ -221,20 +218,20 @@ fun AirField(
         },
         inputContent = {
             BlukitVibeHub(
-                currentRoute = cc.thevar.blukit.ui.navigation.Route.GroupField(airId ?: ""),
+                currentRoute = cc.thevar.blukit.ui.navigation.Route.GroupField(crowdId ?: ""),
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
                 vibeCount = state.session.messages.size,
-                airIsStill = false,
-                incomingLinkRequests = state.crowd.incomingLinkRequests,
+                crowdIsStill = crowdIsStill,
+                incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
                 vibedPeers = emptySet(),
                 groups = state.session.groups,
-                onAcceptLink = onAcceptLink,
-                onDenyLink = onDenyLink,
+                onAcceptRadio = onAcceptRadio,
+                onDenyRadio = onDenyRadio,
                 onStartSideVibe = onStartSideVibe,
-                onStartTie = onStartTie,
+                onStartChain = onStartChain,
                 onClearSelection = onClearSelection,
                 onAttachFile = { }, // Handle via parent if needed
                 onSearchToggle = onSearchToggle,

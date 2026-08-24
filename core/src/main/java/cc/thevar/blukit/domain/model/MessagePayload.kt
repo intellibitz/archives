@@ -23,7 +23,11 @@ data class MessagePayload(
     val fileId: Long? = null,
     val fileName: String? = null,
     val fileSize: Long? = null,
-    val mimeType: String? = null
+    val mimeType: String? = null,
+    val isPriority: Boolean = false,
+    val dueDate: Long? = null,
+    val assigneeId: String? = null,
+    val taskStatus: Int = 0
 ) {
     companion object {
         const val TYPE_TEXT = 1
@@ -39,6 +43,13 @@ data class MessagePayload(
         const val TYPE_RESYNC_COMPLETE = 11
         const val TYPE_NOTE_UPDATE = 12
         const val TYPE_RITUAL_PUSH = 13
+        const val TYPE_ASSIGNMENT_TASK = 14
+        const val TYPE_CALENDAR_EVENT = 15
+        const val TYPE_MEMORY = 16
+
+        const val TASK_PENDING = 0
+        const val TASK_IN_PROGRESS = 1
+        const val TASK_COMPLETED = 2
 
         const val VIBE_SHOUT = 0
         const val VIBE_WHISPER = 1

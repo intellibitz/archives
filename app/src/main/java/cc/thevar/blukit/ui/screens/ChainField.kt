@@ -59,22 +59,21 @@ private fun ScopeButton(
 }
 
 /**
- * TIE FIELD: The deepest level of resonance. Focus on whispers and notes.
+ * CHAIN FIELD: The deepest level of resonance. Focus on whispers and notes.
  */
 @Composable
-fun TieField(
+fun ChainField(
     state: BluetoothUiState,
     localDeviceId: String,
-    localNickname: String,
-    localEmoji: String,
     groupId: String?,
     onDisconnect: () -> Unit,
     onSendMessage: (String, String) -> Unit,
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
     onVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
     onSeniorVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
+    onAssignRole: (String, String, String) -> Unit = { _, _, _ -> },
     onUpdateNote: (String, String, String?, Int) -> Unit = { _, _, _, _ -> },
-    onPushRitual: (String, cc.thevar.blukit.domain.model.AirSchedule) -> Unit = { _, _ -> },
+    onPushRitual: (String, cc.thevar.blukit.domain.model.CrowdSchedule) -> Unit = { _, _ -> },
     showMemberManagement: Boolean = false,
     onShowManagement: () -> Unit = {},
     onDismissManagement: () -> Unit = {},
@@ -84,10 +83,11 @@ fun TieField(
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
-    onAcceptLink: (P2PDevice) -> Unit = {},
-    onDenyLink: (P2PDevice) -> Unit = {},
+    onAcceptRadio: (P2PDevice) -> Unit = {},
+    onDenyRadio: (P2PDevice) -> Unit = {},
     onStartSideVibe: () -> Unit = {},
     onClearSelection: () -> Unit = {},
+    crowdIsStill: Boolean = false,
     onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToVibe: (String) -> Unit = {}
@@ -99,7 +99,7 @@ fun TieField(
         state.session.groups.find { it.id == groupId }
     }
 
-    val childTies = remember(state.session.groups, groupId) {
+    val childLinks = remember(state.session.groups, groupId) {
         state.session.groups.filter { it.parentId == groupId && it.scope != VibeGroup.SCOPE_PUBLIC }
     }
 
@@ -128,12 +128,12 @@ fun TieField(
         glowIntensityTarget = 0.8f,
         floatingContent = {
             AnimatedVisibility(
-                visible = showTip && chatVibes.isEmpty() && childTies.isEmpty(),
+                visible = showTip && chatVibes.isEmpty() && childLinks.isEmpty(),
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
                 BlukitTip(
-                    text = "THIS TIE IS SILENT. WHISPER OR PIN A VIBE TO THE CANVAS.",
+                    text = "THIS CHAIN IS SILENT. WHISPER OR PIN A VIBE TO THE CANVAS.",
                     themeColor = if(isPrivate) StealthRose else StealthPrimary,
                     onDismiss = { showTip = false }
                 )
@@ -141,10 +141,10 @@ fun TieField(
         },
         fieldContent = {
             Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
-                // Meta Sections
-                if (childTies.isNotEmpty()) {
+                // Links Section (formerly Nested Ties)
+                if (childLinks.isNotEmpty()) {
                     Text(
-                        text = "NESTED TIES", 
+                        text = "LINKS", 
                         style = MaterialTheme.typography.labelSmall, 
                         color = if(isPrivate) StealthRose else StealthPrimary, 
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -153,21 +153,21 @@ fun TieField(
                     )
                     
                     LazyColumn(modifier = Modifier.weight(0.3f)) {
-                        items(childTies) { tie ->
-                            MetaVibeItem(
-                                title = tie.name,
-                                subtitle = "SECURE SUB-TIE",
+                        items(childLinks) { link ->
+                            PluralPulseSummary(
+                                title = link.name,
+                                subtitle = "SECURE SUB-CHAIN",
                                 icon = Icons.Rounded.Hearing,
                                 themeColor = if(isPrivate) StealthRose else StealthPrimary,
-                                count = tie.memberIds.size,
-                                lastUpdate = sdf.format(Date(tie.lastVibeTimestamp)),
-                                onClick = { onNavigateToGroup(tie.id) }
+                                count = link.memberIds.size,
+                                lastUpdate = sdf.format(Date(link.lastVibeTimestamp)),
+                                onClick = { onNavigateToGroup(link.id) }
                             )
                         }
                     }
                 }
 
-                // Vibe Units / Metas
+                // Vibes Section
                 Text(
                     text = "WHISPERS", 
                     style = MaterialTheme.typography.labelSmall, 
@@ -180,9 +180,9 @@ fun TieField(
                 LazyColumn(modifier = Modifier.weight(0.7f)) {
                     items(chatVibes) { vibe ->
                         if (vibe.isMeta) {
-                            MetaVibeItem(
+                            PluralPulseSummary(
                                 title = vibe.content.take(20),
-                                subtitle = "VIBE META",
+                                subtitle = "PLURAL VIBE",
                                 icon = Icons.Rounded.BubbleChart,
                                 themeColor = if(isPrivate) StealthRose else StealthPrimary,
                                 count = state.session.messages.count { it.parentMessageId == vibe.messageId },
@@ -214,8 +214,6 @@ fun TieField(
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
-                localNickname = localNickname,
-                localEmoji = localEmoji,
                 activeBubbles = emptyList(),
                 vibedPeers = emptySet(),
                 drawBackground = false,
@@ -248,15 +246,15 @@ fun TieField(
                 onMessageChange = onMessageChange,
                 onSend = onSend,
                 vibeCount = state.session.messages.filter { it.groupId == groupId }.size,
-                airIsStill = false,
-                incomingLinkRequests = state.crowd.incomingLinkRequests,
+                crowdIsStill = crowdIsStill,
+                incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
                 vibedPeers = memberSet,
                 groups = state.session.groups,
-                onAcceptLink = onAcceptLink,
-                onDenyLink = onDenyLink,
+                onAcceptRadio = onAcceptRadio,
+                onDenyRadio = onDenyRadio,
                 onStartSideVibe = onStartSideVibe,
-                onStartTie = { }, // Inside a Tie, this is nested Tie creation if we wanted
+                onStartChain = { }, // Inside a Chain, this is nested Chain creation
                 onClearSelection = onClearSelection,
                 onAttachFile = { },
                 onSearchToggle = onSearchToggle,
@@ -286,26 +284,48 @@ fun TieField(
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White,
-            title = { Text("MANAGE TIE", fontWeight = FontWeight.Black) },
+            title = { Text("MANAGE CHAIN", fontWeight = FontWeight.Black) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("MEMBERS", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
                     group.memberIds.forEach { memberId ->
                         val member = state.crowd.scannedDevices.find { it.id == memberId || it.persistentId == memberId }
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Text(text = member?.emoji ?: "👤", fontSize = 16.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = (member?.name ?: if(memberId == localDeviceId) "YOU" else "UNKNOWN").uppercase(), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            if (memberId != localDeviceId) {
-                                IconButton(onClick = { onRemoveMember(group.id, memberId) }) {
-                                    Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Remove", tint = Color.Red.copy(alpha = 0.6f))
+                        val currentRole = group.userRoles[memberId]
+                        
+                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                Text(text = member?.emoji ?: "👤", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = (member?.name ?: if(memberId == localDeviceId) "YOU" else "UNKNOWN").uppercase(), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                if (memberId != localDeviceId) {
+                                    IconButton(onClick = { onRemoveMember(group.id, memberId) }) {
+                                        Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Remove", tint = Color.Red.copy(alpha = 0.6f))
+                                    }
+                                }
+                            }
+                            
+                            // Role Assignment
+                            val template = cc.thevar.blukit.domain.model.CrowdTemplates.ALL.find { it.id == group.templateId }
+                            if (template != null && template.roles.isNotEmpty()) {
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(start = 24.dp)) {
+                                    items(template.roles) { role ->
+                                        val isAssigned = currentRole == role
+                                        Surface(
+                                            onClick = { onAssignRole(group.id, memberId, role) }, 
+                                            color = if (isAssigned) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f),
+                                            shape = RoundedCornerShape(4.dp),
+                                            border = BorderStroke(0.5.dp, if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.1f))
+                                        ) {
+                                            Text(text = role.uppercase(), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 6.sp, fontWeight = FontWeight.Black, color = if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.4f))
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                     HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("ATMOSPHERIC VAULT", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f), modifier = Modifier.weight(1f))
+                        Text("CROWD VAULT", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f), modifier = Modifier.weight(1f))
                         Switch(
                             checked = group.isVaulted,
                             onCheckedChange = { onVaultGroup(group.id, it) },

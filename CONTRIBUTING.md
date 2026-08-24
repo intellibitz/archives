@@ -11,7 +11,7 @@ We love your input! Blukit is built for the **Crowd**, not the **Web**. We are b
 ## Design Philosophy: The Spectral Field
 Blukit follows a **Spectral Design System**. All UI components should:
 - Use **Stealth Primary** (#00E5FF) and **Stealth Rose** (#FF4081) as the core energies.
-- Favor atmospheric glows and pulsing animations over static borders.
+- Favor crowd glows and pulsing animations over static borders.
 - Replace standard system dialogs with **Vibe Ghosts** or **Blukit Alerts**.
 - Maintain an anonymous-first, haptic-ready, and high-density UX.
 
@@ -22,9 +22,9 @@ Pull requests are the best way to propose changes to the codebase. We actively w
 1. Fork the repo and create your branch from `main`.
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation.
-4. **Verification**: Always verify changes against a physical device fleet (e.g., Pixel, OnePlus, Redmi, Moto) to ensure mesh stability.
-5. **Hierarchy Compliance**: Ensure all new interaction layers (Ties) are anchored to a parent Air context.
-6. Ensure the test suite passes.
+4. **Verification**: Always verify changes against a physical device fleet (e.g., Pixel, OnePlus, Redmi, Moto) to ensure mesh stability and radio handshake performance.
+5. **Hierarchy & Templates**: Ensure all new interaction layers (Chains) are anchored to a parent Crowd context. When adding new **Crowd Templates**, verify they correctly spawn their default child chains.
+6. Ensure the test suite passes (including security unit tests and instrumented flows).
 7. Make sure your code lints.
 8. Issue that pull request!
 

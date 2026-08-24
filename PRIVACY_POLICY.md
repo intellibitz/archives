@@ -1,4 +1,4 @@
-# Privacy Policy for blukit: The Atmospheric Mesh
+# Privacy Policy for blukit: crowd vibes
 
 **Effective Date: August 24, 2026**
 
@@ -13,36 +13,41 @@ We do **not** collect, store, or transmit any data to any outside entity.
 - **Zero Identity Tracking**: We don't build profiles or track who you are.
 
 ## 3. Physical Proximity is Privacy
-By design, you can only communicate with people physically near you. This "Air Field" approach ensures that your vibes stay local and cannot be intercepted by international surveillance or logged by remote ISPs.
+By design, you can only communicate with people physically near you. This "Crowd Field" approach ensures that your vibes stay local and cannot be intercepted by international surveillance or logged by remote ISPs.
 
 ## 4. Anonymous-First Identity
 - You start as anonymous (**YOU**).
 - You are encouraged to set a local nickname, which stays **only on your device**.
 - Identity is a projected property; you can change your nickname at any time to break your local trail.
 
-## 5. End-to-End Security (**Dynamic Secure Ties**)
-**Whispers** within a **Private Tie** are protected using **ECDH + AES-256-GCM** encryption and visually resonate in **Stealth Rose** to ensure you know you are vibing securely within the spectral field.
-- **Local Keys**: Secure keys are generated and stored only on your device using hardware-backed security.
-- **Nested Context**: Ties and Vibes exist within recursive containers (Airs, Sub-Airs, or Parent Vibes), keeping interactions anchored to physical and logical locations.
-- **Meta Hierarchy**: High-level summaries (METAs) allow you to browse the mesh density without immediately exposing every granular unit.
-- **Atmospheric Containment**: The hierarchy enforces that **all Airs are discoverable** and **all Ties are private**. A Tie must be anchored to a parent Air to exist within the atmospheric spectrum.
+## 5. End-to-End Security (**Dynamic Secure Chains**)
+**Whispers** within a **Private Chain** are protected using **SecP256r1 ECDH + AES-256-GCM** encryption and visually resonate in **Stealth Rose** to ensure you know you are vibing securely within the spectral field.
+- **Key Agreement (ECDH)**: We establish shared secrets using NIST P-256 elliptic curves without ever transmitting your private keys.
+- **Authenticated Encryption**: We use AES-256 in Galois/Counter Mode (GCM) to ensure both data confidentiality and authenticity.
+- **Local Keys**: Secure keys are generated and stored only on your device using hardware-backed security (TEE/StrongBox).
+- **Academic Chains**: Collaborative tasks and assignments are encrypted and shared only within specific Chains.
+- **Nested Context**: Chains and Vibes exist within recursive containers (Crowds, Sub-Crowds, or Parent Vibes), keeping interactions anchored to physical and logical locations.
+- **Crowd Hierarchy**: High-level summaries (**Event, Links, Vibes**) allow you to browse mesh density with intelligent partitioning for large gatherings.
+- **Crowd Templates & Roles**: Predefined structures (e.g., University) allow for specialized user roles (e.g., Faculty) to manage mesh permissions and visibility without tracking.
+- **Crowd Containment**: The hierarchy enforces that **all Crowds are discoverable** and **all Chains are private**. A Chain must be anchored to a parent Crowd to exist within the crowd spectrum.
 
-## 6. Public & Shared Airs
-Blukit follows a **Non-Monopolistic Air** principle. Public Airs have no owners. Anyone can join an existing Air or "Awaken" a frequency by naming it. Air identities are **Deterministic and Scoped** by their parent context, ensuring the atmospheric mesh remains an open, communal, and logically organized resource.
+## 6. Public & Shared Crowds
+Blukit follows a **Non-Monopolistic Crowd** principle. Public Crowds have no owners. Anyone can join an existing Crowd or "Awaken" a frequency by naming it. Crowd identities are **Deterministic and Scoped** by their parent context, ensuring the crowd mesh remains an open, communal, and logically organized resource.
 
-## 7. Ritual Sentience & Spectral Nudges
-- **Air Schedules**: You can schedule recurring rituals locally. This data is never shared and is used only to nudge your device to "Awaken" specific Airs at specific times.
+## 7. Academic Sentience & Memory TIMELINE
+- **Crowd Schedules**: You can schedule recurring academic rituals. This data is used for smart reminders and automatic frequency awakening.
+- **Memory Timeline**: Shared vibes marked as memories are permanently preserved in your local timeline, exempt from the standard decay protocol.
 - **Spectral Tips**: Onboarding nudges and tips are generated entirely locally to help you navigate the mesh without any tracking.
 - **Vibe Decay**: To manage local storage, blukit automatically prunes large media older than 90 days. **Pinned vibes** and **Senior Vaults** are exempt from this process to preserve essential memories forever.
-- **Intelligent Ticker**: The ticker dynamically manages your history, ensuring the "Air Vault" remains clean and only relevant vibes are surfaced in the field.
+- **Intelligent Ticker**: The ticker dynamically manages your history, ensuring the "Crowd Vault" remains clean and only relevant vibes are surfaced in the field.
 - **Mesh Relay**: Blukit supports ephemeral 3-hop relaying. Your device may act as a silent carrier for encrypted vibes destined for others nearby. These "hops" are never stored or decrypted by transit devices.
 
 ## 8. Ritual Sentience & Collaborative Schedules
-- **Air Schedules**: You can schedule recurring rituals locally. This data is never shared unless you explicitly "Push" it to a Tie.
-- **Collaborative Rituals**: You can share your schedules with friends in a Tie to ensure all devices "Awaken" the same frequency at the same time.
+- **Crowd Schedules**: You can schedule recurring rituals locally. This data is never shared unless you explicitly "Push" it to a Chain.
+- **Collaborative Rituals**: You can share your schedules with friends in a Chain to ensure all devices "Awaken" the same frequency at the same time.
 
-## 9. Vibe Sync (History Sync)
-To preserve your "Shared Life Log" across device upgrades, you can initiate a manual "Vibe Sync." This allows a high-speed WiFi tie between two of your own devices to sync your entire history entirely peer-to-peer.
+## 9. Differential Vibe Sync
+To preserve your "Shared Life Log" across device upgrades, you can initiate a manual "Vibe Sync." This allows a high-speed WiFi radio link to bridge missing history entirely peer-to-peer.
 
 ## 10. Contact
 muthu.ramadoss@gmail.com

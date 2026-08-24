@@ -84,20 +84,8 @@ fun MixedStatusBranding(
 }
 
 @Composable
-fun CondensedVibeBar(peers: List<P2PDevice>, onClear: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(color = Color.Black.copy(alpha = 0.8f), shape = RoundedCornerShape(20.dp), border = BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.2f)), modifier = modifier) {
-        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            peers.take(3).forEach { Text(text = it.emoji, modifier = Modifier.padding(end = 4.dp)) }
-            if (peers.size > 3) { Text(text = "+${peers.size - 3}", fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary) }
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(onClick = onClear, modifier = Modifier.size(24.dp)) { Icon(Icons.Rounded.Close, contentDescription = null, tint = Color.White.copy(alpha = 0.4f), modifier = Modifier.size(14.dp)) }
-        }
-    }
-}
-
-@Composable
-fun AirTicker(title: String, groups: List<VibeGroup> = emptyList(), modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "AirTicker")
+fun CrowdTicker(title: String, groups: List<VibeGroup> = emptyList(), modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "CrowdTicker")
     val alpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 0.7f, animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
     
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
@@ -106,7 +94,7 @@ fun AirTicker(title: String, groups: List<VibeGroup> = emptyList(), modifier: Mo
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(4.dp).background(StealthPrimary.copy(alpha = alpha), CircleShape))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = if (groups.isEmpty()) "UNIVERSAL FREQUENCY" else "${groups.size} ACTIVE TIES", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.6f), letterSpacing = 1.sp))
+                Text(text = if (groups.isEmpty()) "UNIVERSAL FREQUENCY" else "${groups.size} ACTIVE LINKS", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.6f), letterSpacing = 1.sp))
             }
         }
     }
@@ -167,9 +155,9 @@ fun BlukitHarmonyTopBar(
     userCount: Int,
     isStealthMode: Boolean,
     lowPowerMode: Boolean,
-    airIsStill: Boolean,
+    crowdIsStill: Boolean,
     isLocationMandatory: Boolean = false,
-    activeAirs: List<VibeGroup> = emptyList(),
+    activeCrowds: List<VibeGroup> = emptyList(),
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
     onAwakenBluetooth: () -> Unit,
@@ -179,6 +167,7 @@ fun BlukitHarmonyTopBar(
     onOpenSettings: () -> Unit,
     onClearHistory: () -> Unit,
     onShowPrivacy: () -> Unit = {},
+    onShowTimeline: () -> Unit = {},
     onBack: (() -> Unit)? = null,
     onTitleClick: (() -> Unit)? = null,
     onProfileClick: (() -> Unit)? = null,
@@ -203,7 +192,7 @@ fun BlukitHarmonyTopBar(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ROW 0: GLOBAL COMMAND BAR (Air & Branding)
+            // ROW 0: GLOBAL COMMAND BAR (Host & Branding)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -218,21 +207,35 @@ fun BlukitHarmonyTopBar(
                 }
 
                 // CENTER: [BLUKIT PRIVACY]
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center, modifier = Modifier.weight(1f)) {
-                    if (title == "PUBLIC VIBES" || title == "PRIVATE VIBES" || title == "BLUKIT") {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "BLUKIT", fontSize = 7.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.2f), letterSpacing = 1.sp)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "PRIVACY", 
-                                fontSize = 7.sp, 
-                                fontWeight = FontWeight.Black, 
-                                color = themeColor.copy(alpha = 0.4f), 
-                                letterSpacing = 1.sp,
-                                modifier = Modifier.clickable { onShowPrivacy() }
-                            )
-                        }
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically, 
+                    horizontalArrangement = Arrangement.Center, 
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onShowPrivacy() }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_blukit_logo), 
+                        contentDescription = null, 
+                        tint = themeColor.copy(alpha = 0.8f),
+                        modifier = Modifier.size(10.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "BLUKIT", 
+                        fontSize = 7.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = Color.White.copy(alpha = 0.7f), 
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "PRIVACY", 
+                        fontSize = 7.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = themeColor.copy(alpha = 0.8f), 
+                        letterSpacing = 1.sp
+                    )
                 }
                 
                 // RIGHT: [STATUS LABEL] [RADIOS]
@@ -272,7 +275,7 @@ fun BlukitHarmonyTopBar(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ROW 1: HUMANITY Stage (Back, Air, Identity)
+            // ROW 1: HUMANITY Stage (Back, Crowd, Identity)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -290,8 +293,8 @@ fun BlukitHarmonyTopBar(
                     }
                 }
 
-                // CENTER: Air Vibe
-                val isLanding = title == "THE AIR" || title == "PUBLIC VIBES" || title == "BLUKIT" || title == "ATMOS"
+                // CENTER: Crowd Vibe
+                val isLanding = title == "THE CROWD" || title == "PUBLIC VIBES" || title == "BLUKIT" || title == "HOST"
                 Row(
                     verticalAlignment = Alignment.CenterVertically, 
                     modifier = Modifier.weight(1f).then(if (onTitleClick != null) Modifier.clickable { onTitleClick() } else Modifier),
@@ -302,7 +305,7 @@ fun BlukitHarmonyTopBar(
                     } else {
                         Icon(imageVector = icon, contentDescription = null, tint = themeColor.copy(alpha = 0.6f), modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        AirTicker(title = title, groups = activeAirs)
+                        CrowdTicker(title = title, groups = activeCrowds)
                     }
                     if (isLanding && onTitleClick != null) {
                         Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
@@ -310,20 +313,26 @@ fun BlukitHarmonyTopBar(
                 }
 
                 // RIGHT: PROFILE Persona
-                Box(modifier = Modifier.width(48.dp), contentAlignment = Alignment.CenterEnd) {
-                    if (userFocusRequester != null) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color.White.copy(alpha = 0.04f))
-                                .combinedClickable(
-                                    onClick = { if (userNickname == "?" || userNickname == "SET NAME" || userNickname.isEmpty()) onProfileClick?.invoke() ?: userFocusRequester.requestFocus() else userFocusRequester.requestFocus() },
-                                    onLongClick = { showResetProfileDialog = true }
-                                ), 
-                            contentAlignment = Alignment.Center
-                        ) {
-                            UserPersona(nickname = userNickname, emoji = userEmoji, onNicknameChange = onUserNicknameChange, focusRequester = userFocusRequester)
+                Box(modifier = Modifier.width(96.dp), contentAlignment = Alignment.CenterEnd) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onShowTimeline, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(16.dp))
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        if (userFocusRequester != null) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.White.copy(alpha = 0.04f))
+                                    .combinedClickable(
+                                        onClick = { if (userNickname == "?" || userNickname == "SET NAME" || userNickname.isEmpty()) onProfileClick?.invoke() ?: userFocusRequester.requestFocus() else userFocusRequester.requestFocus() },
+                                        onLongClick = { showResetProfileDialog = true }
+                                    ), 
+                                contentAlignment = Alignment.Center
+                            ) {
+                                UserPersona(nickname = userNickname, emoji = userEmoji, onNicknameChange = onUserNicknameChange, focusRequester = userFocusRequester)
+                            }
                         }
                     }
                 }
@@ -341,21 +350,21 @@ fun BlukitVibeHub(
     onMessageChange: (String) -> Unit,
     onSend: () -> Unit,
     vibeCount: Int,
-    airIsStill: Boolean,
-    incomingLinkRequests: Set<P2PDevice>,
+    crowdIsStill: Boolean,
+    incomingRadioRequests: Set<P2PDevice>,
     selectedDevices: Set<String>,
     vibedPeers: Set<String>,
     groups: List<VibeGroup> = emptyList(),
-    onAcceptLink: (P2PDevice) -> Unit,
-    onDenyLink: (P2PDevice) -> Unit,
+    onAcceptRadio: (P2PDevice) -> Unit,
+    onDenyRadio: (P2PDevice) -> Unit,
     onStartSideVibe: () -> Unit,
-    onStartTie: () -> Unit,
+    onStartChain: () -> Unit,
     onClearSelection: () -> Unit,
     onAttachFile: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
     onManage: (() -> Unit)? = null,
     onNote: (() -> Unit)? = null,
-    onCreatePublicTie: ((String) -> Unit)? = null,
+    onCreatePublicChain: ((String, String?) -> Unit)? = null,
     isSearchMode: Boolean = false,
     onShowPrivacy: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -394,12 +403,12 @@ fun BlukitVibeHub(
                     Text("WHISPER", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
                 }
                 Button(
-                    onClick = onStartTie, 
+                    onClick = onStartChain, 
                     colors = ButtonDefaults.buttonColors(containerColor = StealthRose, contentColor = Color.White), 
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                 ) { 
-                    Text("START TIE", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
+                    Text("START CHAIN", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
                 }
                 IconButton(
                     onClick = onClearSelection, 
@@ -411,14 +420,14 @@ fun BlukitVibeHub(
         }
         
         // Contextual Creation Banner
-        val showAirBanner = isSearchMode && messageText.isNotBlank() && onCreatePublicTie != null
+        val showAirBanner = isSearchMode && messageText.isNotBlank() && onCreatePublicChain != null
         AnimatedVisibility(
             visible = showAirBanner, 
             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }), 
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
         ) {
             Button(
-                onClick = { onCreatePublicTie?.invoke(messageText) },
+                onClick = { onCreatePublicChain?.invoke(messageText, null) },
                 colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.padding(bottom = 12.dp),
@@ -426,7 +435,7 @@ fun BlukitVibeHub(
             ) {
                 Icon(Icons.Rounded.Grain, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(10.dp))
-                Text("CREATE PUBLIC TIE: ${messageText.uppercase()}", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.5.sp)
+                Text("CREATE PUBLIC CHAIN: ${messageText.uppercase()}", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.5.sp)
             }
         }
 
@@ -452,7 +461,7 @@ fun BlukitVibeHub(
                     .imePadding()
             ) {
                 BlukitInput(
-                    airIsStill = airIsStill, 
+                    crowdIsStill = crowdIsStill, 
                     isReadOnly = false, 
                     isFilterActive = vibedPeers.isNotEmpty(), 
                     isPrivate = isPrivate, 
@@ -470,21 +479,22 @@ fun BlukitVibeHub(
                 )
                 
                 // Incoming Requests Row
-                if (incomingLinkRequests.isNotEmpty()) {
-                    val request = incomingLinkRequests.first()
+                if (incomingRadioRequests.isNotEmpty()) {
+                    val request = incomingRadioRequests.first()
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                             .background(StealthPrimary.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-                            .padding(12.dp),
+                            .padding(12.dp)
+                            .testTag("IncomingRequestRow"),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(text = request.emoji, fontSize = 20.sp)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "INCOMING LINK REQUEST", 
+                                text = "INCOMING RADIO REQUEST", 
                                 style = MaterialTheme.typography.labelSmall, 
                                 color = StealthPrimary,
                                 fontWeight = FontWeight.Black
@@ -497,10 +507,16 @@ fun BlukitVibeHub(
                             )
                         }
                         Row {
-                            IconButton(onClick = { onDenyLink(request) }) { 
+                            IconButton(
+                                onClick = { onDenyRadio(request) },
+                                modifier = Modifier.testTag("DenyRequestButton")
+                            ) { 
                                 Icon(Icons.Rounded.Close, contentDescription = "Deny", tint = Color.Red.copy(alpha = 0.6f)) 
                             }
-                            IconButton(onClick = { onAcceptLink(request) }) { 
+                            IconButton(
+                                onClick = { onAcceptRadio(request) },
+                                modifier = Modifier.testTag("AcceptRequestButton")
+                            ) { 
                                 Icon(Icons.Rounded.Check, contentDescription = "Accept", tint = StealthPrimary) 
                             }
                         }
@@ -535,17 +551,20 @@ fun VibingVibesTicker(
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         items(energyList, key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
+            val id = device.persistentId ?: device.id
+            val count = if (isGrouped) vibeCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == msg?.messageId }
+
             AnimatedVibeItem(
                 msg = msg,
                 isSelected = device.id in state.crowd.selectedDevices,
                 senderDevice = device,
-                vibeCount = vibeCounts[device.id] ?: 0,
-                isVibed = device.persistentId in vibedPeers || device.id in vibedPeers,
+                vibeCount = count,
+                isVibed = id in vibedPeers,
                 isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
                 isGrouped = isGrouped,
-                isMutual = device.id in state.session.connectedLinks,
-                vibeGroup = state.session.groups.find { it.id == msg?.groupId },
-                rowId = device.persistentId ?: device.id,
+                isMutual = device.id in state.session.connectedRadios,
+                vibeGroup = state.session.groups.find { it.id == (msg?.groupId ?: device.id) },
+                rowId = id,
                 onVibeClick = { msg?.messageId?.let { onVibeClick(it) } ?: onDeviceLongClick(device) },
                 onDeviceLongClick = { onDeviceLongClick(device) },
                 onDelete = { msg?.messageId?.let { onDeleteVibe(it) } },
@@ -556,13 +575,13 @@ fun VibingVibesTicker(
 }
 
 @Composable
-fun VibeRequestTickerItem(device: P2PDevice, onAccept: (P2PDevice) -> Unit, onDeny: (P2PDevice) -> Unit) {
-    Surface(color = StealthPrimary.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "LINK REQUEST", style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black); Text(text = (device.name ?: "USER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; Row { IconButton(onClick = { onDeny(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Deny", tint = Color.Red.copy(alpha = 0.6f)) }; IconButton(onClick = { onAccept(device) }) { Icon(Icons.Rounded.Check, contentDescription = "Accept", tint = StealthPrimary) } } } }
+fun RadioRequestTickerItem(device: P2PDevice, onAccept: (P2PDevice) -> Unit, onDeny: (P2PDevice) -> Unit) {
+    Surface(color = StealthPrimary.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "RADIO REQUEST", style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black); Text(text = (device.name ?: "USER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; Row { IconButton(onClick = { onDeny(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Deny", tint = Color.Red.copy(alpha = 0.6f)) }; IconButton(onClick = { onAccept(device) }) { Icon(Icons.Rounded.Check, contentDescription = "Accept", tint = StealthPrimary) } } } }
 }
 
 @Composable
-fun OutgoingVibeRequestTickerItem(device: P2PDevice, onCancel: (P2PDevice) -> Unit) {
-    Surface(color = Color.White.copy(alpha = 0.05f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.1f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "REQUESTING LINK", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Black); Text(text = (device.name ?: "USER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; IconButton(onClick = { onCancel(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Cancel", tint = Color.White.copy(alpha = 0.2f)) } } }
+fun OutgoingRadioRequestTickerItem(device: P2PDevice, onCancel: (P2PDevice) -> Unit) {
+    Surface(color = Color.White.copy(alpha = 0.05f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.1f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "REQUESTING RADIO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Black); Text(text = (device.name ?: "USER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; IconButton(onClick = { onCancel(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Cancel", tint = Color.White.copy(alpha = 0.2f)) } } }
 }
 
 @Composable
@@ -587,6 +606,7 @@ fun AnimatedVibeItem(
     val themeColor = if (isMutual) StealthRose else if (isVibed) StealthPrimary else Color.White
     
     val signatureDevice = senderDevice ?: P2PDevice(id = msg?.senderId ?: "", name = msg?.senderName ?: "USER", emoji = msg?.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+    val isPlural = msg?.isMeta == true
 
     Row(
         modifier = Modifier
@@ -623,7 +643,7 @@ fun AnimatedVibeItem(
                     Text(text = tieEmoji, fontSize = 14.sp)
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
-                        val groupLabel = (vibeGroup?.name ?: "THE AIR").uppercase()
+                        val groupLabel = (vibeGroup?.name ?: "THE CROWD").uppercase()
                         Text(
                             text = groupLabel, 
                             fontSize = 10.sp, 
@@ -633,7 +653,7 @@ fun AnimatedVibeItem(
                         )
                         if (msg != null) {
                             Text(
-                                text = msg.content.uppercase(), 
+                                text = if (isPlural) "PLURAL PULSE: ${msg.content.uppercase()}" else msg.content.uppercase(), 
                                 fontSize = 8.sp, 
                                 color = Color.White.copy(alpha = 0.7f),
                                 maxLines = 1,
@@ -646,24 +666,43 @@ fun AnimatedVibeItem(
             } else {
                 if (msg != null) {
                     Column {
-                        Text(
-                            text = msg.content.uppercase(), 
-                            fontSize = 11.sp, 
-                            color = Color.White, 
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isPlural) {
+                                Icon(Icons.Rounded.BubbleChart, contentDescription = null, tint = themeColor, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+                            Text(
+                                text = msg.content.uppercase(), 
+                                fontSize = 11.sp, 
+                                color = Color.White, 
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
 
                         val realSender = if (isMe) "YOU" else (msg.senderName.uppercase())
-                        Text(
-                            text = realSender,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White.copy(alpha = 0.3f),
-                            letterSpacing = 0.5.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = realSender,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White.copy(alpha = 0.3f),
+                                letterSpacing = 0.5.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (vibeCount > 0) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "• $vibeCount UNITS",
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColor.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
                     }
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -740,11 +779,11 @@ fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean
 }
 
 /**
- * A proactive nudge that surfaces when a new Air frequency is discovered.
+ * A proactive nudge that surfaces when a new Crowd frequency is discovered.
  * Features a high-intensity pulse and spectral entry.
  */
 @Composable
-fun AirNudge(
+fun CrowdNudge(
     group: VibeGroup,
     onJoin: () -> Unit,
     onDismiss: () -> Unit,
@@ -792,7 +831,7 @@ fun AirNudge(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "AIR DISCOVERED", 
+                    text = "CROWD DISCOVERED", 
                     style = MaterialTheme.typography.labelSmall, 
                     color = StealthPrimary,
                     fontWeight = FontWeight.Black,
@@ -933,7 +972,7 @@ fun BlukitAlert(
 }
 
 /**
- * Atmospheric tips to guide users through the mesh experience.
+ * Spectral tips to guide users through the mesh experience.
  * Displays a glowing spectral card with a tip text and a lightbulb icon.
  * Features a subtle "breathing" border glow.
  */
@@ -1016,7 +1055,7 @@ fun VibeActionMenu(vibe: MessagePayload, isMe: Boolean, onInvite: () -> Unit, on
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (isMe && vibe.vibeType == MessagePayload.VIBE_SILENCE) {
-                    MenuActionItem(Icons.Rounded.Grain, "BROADCAST TO AIR", StealthPrimary, onBroadcast)
+                    MenuActionItem(Icons.Rounded.Grain, "BROADCAST TO CROWD", StealthPrimary, onBroadcast)
                 } else if (vibe.vibeType == MessagePayload.VIBE_SHOUT) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -1051,7 +1090,11 @@ fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Bool
 }
 
 @Composable
-fun MetaVibeItem(
+/**
+ * PLURAL PULSE SUMMARY: A Summary-First visual paradigm component.
+ * Represents high-level containers (Crowds, Chains, or Meta-Vibes).
+ */
+fun PluralPulseSummary(
     title: String,
     subtitle: String?,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -1061,66 +1104,85 @@ fun MetaVibeItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.05f, 
+        targetValue = 0.15f, 
+        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
+        label = "Glow"
+    )
+
     Surface(
         onClick = onClick,
-        color = Color.White.copy(alpha = 0.04f),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.2f)),
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+        color = Color.Black,
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        tonalElevation = 4.dp
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(themeColor.copy(alpha = 0.1f), CircleShape),
-                contentAlignment = Alignment.Center
+        Box(modifier = Modifier.background(themeColor.copy(alpha = glowAlpha))) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(20.dp))
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title.uppercase(),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color.White,
-                    letterSpacing = 1.sp
-                )
-                if (subtitle != null) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(themeColor.copy(alpha = 0.1f), CircleShape)
+                        .border(1.dp, themeColor.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = subtitle.uppercase(),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.5f),
+                        text = title.uppercase(),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White,
+                        letterSpacing = 1.5.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                if (count > 0) {
-                    Surface(
-                        color = themeColor.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
+                    if (subtitle != null) {
                         Text(
-                            text = count.toString(),
+                            text = subtitle.uppercase(),
                             fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = themeColor,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            fontWeight = FontWeight.Bold,
+                            color = themeColor.copy(alpha = 0.6f),
+                            letterSpacing = 1.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-                Text(
-                    text = lastUpdate,
-                    fontSize = 7.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White.copy(alpha = 0.2f)
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    if (count > 0) {
+                        Surface(
+                            color = themeColor.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = count.toString(),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = themeColor,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = lastUpdate,
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.2f)
+                    )
+                }
             }
         }
     }
@@ -1162,20 +1224,20 @@ fun PersonaOptionsMenu(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (isRequesting) {
-                    MenuActionItem(Icons.Rounded.Handshake, "ACCEPT REQUEST", StealthPrimary, onAccept)
-                    MenuActionItem(Icons.Rounded.Close, "DENY REQUEST", Color.Red, onDeny)
+                    MenuActionItem(Icons.Rounded.Handshake, "ACCEPT RADIO", StealthPrimary, onAccept)
+                    MenuActionItem(Icons.Rounded.Close, "DENY RADIO", Color.Red, onDeny)
                 } else if (activeGroupId != null) {
                     if (isAlreadyInActiveGroup) {
-                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM TIE", StealthRose, { onRemoveFromGroup(activeGroupId) })
+                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM CHAIN", StealthRose, { onRemoveFromGroup(activeGroupId) })
                     } else {
-                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS TIE", StealthPrimary, { onAddToGroup(activeGroupId) })
+                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS CHAIN", StealthPrimary, { onAddToGroup(activeGroupId) })
                     }
                 } else if (isTied) {
                     MenuActionItem(Icons.Rounded.Sync, "VIBE SYNC", StealthAmber, onSync)
-                    MenuActionItem(Icons.Rounded.LinkOff, "DISCONNECT", StealthRose, onDisconnect)
+                    MenuActionItem(Icons.Rounded.SettingsInputAntenna, "DISCONNECT", StealthRose, onDisconnect)
                 } else {
                     MenuActionItem(Icons.Rounded.Hearing, "WHISPER", StealthPrimary, onVibe)
-                    MenuActionItem(Icons.Rounded.Link, "SECURE LINK", StealthRose, onSelect)
+                    MenuActionItem(Icons.Rounded.SettingsInputAntenna, "SECURE RADIO", StealthRose, onSelect)
                 }
                 
                 MenuActionItem(Icons.Rounded.Radar, "IDENTIFY", Color.White, onIdentify)
@@ -1250,6 +1312,22 @@ fun UserPersona(nickname: String, emoji: String, onNicknameChange: (String) -> U
                     .background(Color.Black, CircleShape)
                     .padding(1.dp)
             )
+        }
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(contentAlignment = Alignment.Center) {
+                if (localNickname.isEmpty()) { 
+                    Text(text = "SET NAME", fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthAmber.copy(alpha = 0.6f), letterSpacing = 0.5.sp) 
+                }
+                BasicTextField(
+                    value = localNickname, 
+                    onValueChange = { if (it.length <= 8) { localNickname = it; onNicknameChange(it) } }, 
+                    modifier = Modifier.widthIn(min = 40.dp).width(IntrinsicSize.Min).focusRequester(focusRequester).testTag("IdentityVibeInput"), 
+                    textStyle = MaterialTheme.typography.labelSmall.copy(color = if(isUnknown) StealthAmber else Color.White, fontWeight = FontWeight.Black, fontSize = 7.sp, textAlign = TextAlign.Center), 
+                    cursorBrush = SolidColor(StealthPrimary), 
+                    singleLine = true
+                )
+            }
         }
     }
 }
@@ -1421,6 +1499,7 @@ fun OnboardingGhost(
     emoji: String,
     onNicknameChange: (String) -> Unit,
     onDone: () -> Unit = {},
+    onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -1447,9 +1526,17 @@ fun OnboardingGhost(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.85f)),
+            .background(Color.Black.copy(alpha = 0.95f))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() },
         contentAlignment = Alignment.Center
     ) {
+        // Close button at top right
+        Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.TopEnd) {
+            IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
+                Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White.copy(alpha = 0.4f))
+            }
+        }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -1490,7 +1577,7 @@ fun OnboardingGhost(
                 color = Color.Black,
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, StealthAmber.copy(alpha = 0.4f)),
-                modifier = Modifier.padding(horizontal = 40.dp)
+                modifier = Modifier.padding(horizontal = 40.dp).clickable(enabled = false) {}
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -1517,14 +1604,23 @@ fun OnboardingGhost(
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    Button(
-                        onClick = onDone,
-                        enabled = nickname.isNotBlank() && nickname != "SET NAME",
-                        colors = ButtonDefaults.buttonColors(containerColor = StealthAmber, contentColor = Color.Black),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("AWAKEN PERSONA", fontWeight = FontWeight.Black)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TextButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f).height(48.dp)
+                        ) {
+                            Text("BACK", color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Black)
+                        }
+                        
+                        Button(
+                            onClick = onDone,
+                            enabled = nickname.isNotBlank() && nickname != "SET NAME",
+                            colors = ButtonDefaults.buttonColors(containerColor = StealthAmber, contentColor = Color.Black),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1.5f).height(48.dp)
+                        ) {
+                            Text("AWAKEN", fontWeight = FontWeight.Black)
+                        }
                     }
                 }
             }
@@ -1533,15 +1629,16 @@ fun OnboardingGhost(
 }
 
 @Composable
-fun AirRitualGhost(
+fun CrowdRitualGhost(
     onNameChange: (String) -> Unit,
-    onDone: () -> Unit,
+    onDone: (String?) -> Unit, // Returns templateId if selected
     onDismiss: () -> Unit,
     nearbyAirs: List<VibeGroup> = emptyList(),
     onJoinAir: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var airName by remember { mutableStateOf("") }
+    var selectedTemplateId by remember { mutableStateOf<String?>(null) }
     val focusRequester = remember { FocusRequester() }
     val infiniteTransition = rememberInfiniteTransition(label = "RitualAnim")
     val glowAlphaState = infiniteTransition.animateFloat(
@@ -1565,7 +1662,7 @@ fun AirRitualGhost(
     
     DisposableEffect(Unit) {
         onDispose {
-            coordinates.remove("AIR_RITUAL")
+            coordinates.remove("CROWD_RITUAL")
         }
     }
 
@@ -1581,8 +1678,8 @@ fun AirRitualGhost(
             modifier = Modifier
                 .onGloballyPositioned { 
                     val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                    val current = coordinates["AIR_RITUAL"] ?: PersonaConnectionPoints()
-                    coordinates["AIR_RITUAL"] = current.copy(field = it.positionInRoot() + center)
+                    val current = coordinates["CROWD_RITUAL"] ?: PersonaConnectionPoints()
+                    coordinates["CROWD_RITUAL"] = current.copy(field = it.positionInRoot() + center)
                 }
                 .graphicsLayer {
                     scaleX = pulseScale
@@ -1605,7 +1702,12 @@ fun AirRitualGhost(
                     tonalElevation = 8.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Rounded.Grain, contentDescription = null, tint = StealthPrimary, modifier = Modifier.size(40.dp))
+                        val iconEmoji = cc.thevar.blukit.domain.model.CrowdTemplates.ALL.find { it.id == selectedTemplateId }?.iconEmoji ?: "🌬️"
+                        if (selectedTemplateId != null) {
+                            Text(text = iconEmoji, fontSize = 32.sp)
+                        } else {
+                            Icon(Icons.Rounded.Grain, contentDescription = null, tint = StealthPrimary, modifier = Modifier.size(40.dp))
+                        }
                     }
                 }
             }
@@ -1622,7 +1724,7 @@ fun AirRitualGhost(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(24.dp)
                 ) {
-                    Text(text = "AIR RITUAL", style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+                    Text(text = "CROWD RITUAL", style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     BasicTextField(
@@ -1635,12 +1737,33 @@ fun AirRitualGhost(
                         cursorBrush = SolidColor(StealthPrimary),
                         decorationBox = { innerTextField ->
                             if (airName.isEmpty()) {
-                                Text("NAME THE AIR", style = MaterialTheme.typography.headlineSmall.copy(color = Color.White.copy(alpha = 0.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Black))
+                                Text("NAME THE CROWD", style = MaterialTheme.typography.headlineSmall.copy(color = Color.White.copy(alpha = 0.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Black))
                             }
                             innerTextField()
                         }
                     )
                     
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(text = "SELECT TEMPLATE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.3f), fontWeight = FontWeight.Black)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        cc.thevar.blukit.domain.model.CrowdTemplates.ALL.forEach { template ->
+                            val isSelected = selectedTemplateId == template.id
+                            Surface(
+                                onClick = { selectedTemplateId = if (isSelected) null else template.id },
+                                color = if (isSelected) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, if (isSelected) StealthPrimary else Color.White.copy(alpha = 0.1f))
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(text = template.iconEmoji, fontSize = 16.sp)
+                                    Text(text = template.name.uppercase(), fontSize = 6.sp, fontWeight = FontWeight.Black, color = if (isSelected) StealthPrimary else Color.White)
+                                }
+                            }
+                        }
+                    }
+
                     if (nearbyAirs.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(text = "NEARBY FREQUENCIES", fontSize = 7.sp, color = Color.White.copy(alpha = 0.3f), fontWeight = FontWeight.Black)
@@ -1662,13 +1785,13 @@ fun AirRitualGhost(
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     Button(
-                        onClick = onDone,
+                        onClick = { onDone(selectedTemplateId) },
                         enabled = airName.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("AWAKEN AIR", fontWeight = FontWeight.Black)
+                        Text("AWAKEN", fontWeight = FontWeight.Black)
                     }
                 }
             }
@@ -1700,14 +1823,16 @@ fun VibeNode(
         isPeerVibed = isPeerVibed,
         onlyTies = onlyTies,
         projectionEmoji = projectionEmoji,
-        modifier = modifier.onGloballyPositioned {
-            val center = Offset(it.size.width / 2f, it.size.height / 2f)
-            val current = coordinates[key] ?: PersonaConnectionPoints()
-            coordinates[key] = current.copy(
-                field = it.positionInRoot() + center,
-                vibe = if (isVibing) it.positionInRoot() + center else null
-            )
-        },
+        modifier = modifier
+            .testTag("PersonaNode_$key")
+            .onGloballyPositioned {
+                val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                val current = coordinates[key] ?: PersonaConnectionPoints()
+                coordinates[key] = current.copy(
+                    field = it.positionInRoot() + center,
+                    vibe = if (isVibing) it.positionInRoot() + center else null
+                )
+            },
         onClick = onClick,
         onLongClick = onLongClick
     )
@@ -1762,7 +1887,7 @@ fun VibePersonaSignature(
     val bloomBoost = if (isStatic) 0f else if (isHighlighted) 0.3f else if ((isVibed || isPeerVibed || isProjected)) 0.12f else 0f
     
     val id = device.persistentId ?: device.id
-    Box(modifier = modifier.size(size * 2.2f).testTag("PersonaNode_$id").combinedClickable(onClick = onClick, onLongClick = onLongClick), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.size(size * 2.2f).combinedClickable(onClick = onClick, onLongClick = onLongClick), contentAlignment = Alignment.Center) {
         val haloAlpha = (if (isHighlighted) 0.25f else 0.08f + proximityGlow + bloomBoost) * pulseScale
         Surface(
             shape = CircleShape, 
@@ -1794,9 +1919,9 @@ fun VibePersonaSignature(
 }
 
 @Composable
-fun VibeAirSignature(device: P2PDevice, vibeCount: Int, isVibed: Boolean, size: Dp = 64.dp, modifier: Modifier = Modifier) {
+fun VibeCrowdSignature(device: P2PDevice, vibeCount: Int, isVibed: Boolean, size: Dp = 64.dp, modifier: Modifier = Modifier) {
     val themeColor = if (isVibed) StealthRose else StealthPrimary
-    val infiniteTransition = rememberInfiniteTransition(label = "AirPulse")
+    val infiniteTransition = rememberInfiniteTransition(label = "CrowdPulse")
     val pulse by infiniteTransition.animateFloat(initialValue = 1.0f, targetValue = 1.2f, animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "Pulse")
     
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(size * 1.5f)) {
@@ -1910,7 +2035,7 @@ fun BlukitFieldScaffold(
  */
 @Composable
 fun BlukitInput(
-    airIsStill: Boolean,
+    crowdIsStill: Boolean,
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
@@ -1962,7 +2087,7 @@ fun BlukitInput(
         isReadOnly -> "FILTERED" 
         isPrivate && targetName != null -> "PRIVATE VIBE TO $targetName..."
         isPrivate -> "TYPE A SECURE VIBE..."
-        else -> "SPREAD A VIBE TO ${targetName ?: "THE AIR"}..." 
+        else -> "SPREAD A VIBE TO ${targetName ?: "THE CROWD"}..." 
     }
     
     Column(modifier = modifier.graphicsLayer { scaleX = nudgeScale; scaleY = nudgeScale }) {

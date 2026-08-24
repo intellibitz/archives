@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 
 /**
- * ORCHESTRATOR OF THE AIR.
+ * ORCHESTRATOR OF THE RADIOS.
  * Encapsulates the complex logic of sentient radios, permission-gated discovery,
  * and multi-stage connection handshakes.
  */
@@ -38,11 +38,11 @@ class ConnectivityUseCase(
             .distinctUntilChanged()
             .onEach { isHealthy ->
                 if (isHealthy) {
-                    Log.d("BlukitP2P", "USECASE: Harmony achieved. Awakening the air.")
+                    Log.d("BlukitP2P", "USECASE: Harmony achieved. Awakening the radios.")
                     p2pController.startDiscovery()
                     p2pController.startAdvertising()
                 } else {
-                    Log.w("BlukitP2P", "USECASE: Harmony lost. Air is still.")
+                    Log.w("BlukitP2P", "USECASE: Harmony lost. Radios are still.")
                     p2pController.stopDiscovery()
                     p2pController.stopAdvertising()
                 }
@@ -52,16 +52,16 @@ class ConnectivityUseCase(
 
     /**
      * Executes the multi-stage connection flow:
-     * 1. Check if already linked.
-     * 2. Check if Nearby connected (if so, request Link/Tie).
-     * 3. If not connected, initiate Nearby connection, then request Link/Tie.
+     * 1. Check if already connected.
+     * 2. Check if Nearby connected (if so, request Radio).
+     * 3. If not connected, initiate Nearby connection, then request Radio.
      */
-    fun connectToDevice(device: P2PDevice, currentlyConnectedLinks: Set<String>) {
-        if (currentlyConnectedLinks.contains(device.id)) return
+    fun connectToDevice(device: P2PDevice, currentlyConnectedRadios: Set<String>) {
+        if (currentlyConnectedRadios.contains(device.id)) return
         
         if (p2pController.isNearbyConnected(device.id)) {
-             Log.d("BlukitP2P", "USECASE: Nearby connected but not linked. Requesting Link.")
-             p2pController.requestLink(device)
+             Log.d("BlukitP2P", "USECASE: Nearby connected but no radio. Requesting Radio.")
+             p2pController.requestRadio(device)
              return
         }
 
@@ -70,9 +70,9 @@ class ConnectivityUseCase(
             .onEach { status ->
                 when (status) {
                     is ConnectionStatus.Connected -> {
-                        Log.d("BlukitP2P", "USECASE: Connected level Nearby. Requesting Link.")
+                        Log.d("BlukitP2P", "USECASE: Connected level Nearby. Requesting Radio.")
                         _manualConnectionStatus.value = null
-                        p2pController.requestLink(device)
+                        p2pController.requestRadio(device)
                     }
                     is ConnectionStatus.Error -> {
                         Log.e("BlukitP2P", "USECASE: Connection error: ${status.message}")

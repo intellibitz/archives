@@ -142,6 +142,7 @@ dependencies {
     androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(libs.androidx.rules)
     androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.mockk.agent.android)
     androidTestImplementation(libs.koin.test)
     androidTestImplementation(libs.turbine)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

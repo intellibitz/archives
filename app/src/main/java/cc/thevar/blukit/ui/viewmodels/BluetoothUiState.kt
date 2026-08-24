@@ -5,15 +5,15 @@ import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.VibeGroup
 
 /**
- * Represents the UI state for connectivity within The Air.
- * Uses a sealed interface to model a robust state machine for the Vibing Air lifecycle.
+ * Represents the UI state for connectivity within The mesh.
+ * Uses a sealed interface to model a robust state machine for the Radio lifecycle.
  */
-sealed interface AirConnectionState {
-    data object Disconnected : AirConnectionState
-    data object Scanning : AirConnectionState
-    data object Connecting : AirConnectionState
-    data class Connected(val device: P2PDevice) : AirConnectionState
-    data class Error(val message: String) : AirConnectionState
+sealed interface RadioConnectionState {
+    data object Disconnected : RadioConnectionState
+    data object Scanning : RadioConnectionState
+    data object Connecting : RadioConnectionState
+    data class Connected(val device: P2PDevice) : RadioConnectionState
+    data class Error(val message: String) : RadioConnectionState
 }
 
 /**
@@ -27,9 +27,9 @@ data class HardwareHarmony(
 )
 
 /**
- * Air Activity: Current network actions and errors.
+ * Host Activity: Current network actions and errors.
  */
-data class AirActivity(
+data class HostActivity(
     val isDiscovering: Boolean = false,
     val isAdvertising: Boolean = false,
     val energyIntensity: Float = 0f,
@@ -44,16 +44,16 @@ data class MeshCrowd(
     val selectedDevices: Set<String> = emptySet(),
     val vibedPeers: Set<String> = emptySet(),
     val blockedUsers: Set<String> = emptySet(),
-    val incomingLinkRequests: Set<P2PDevice> = emptySet(),
-    val outgoingLinkRequests: Set<P2PDevice> = emptySet()
+    val incomingRadioRequests: Set<P2PDevice> = emptySet(),
+    val outgoingRadioRequests: Set<P2PDevice> = emptySet()
 )
 
 /**
  * Vibe Session: Active connections, groups, and message history.
  */
 data class VibeSession(
-    val connectionState: AirConnectionState = AirConnectionState.Disconnected,
-    val connectedLinks: Set<String> = emptySet(),
+    val connectionState: RadioConnectionState = RadioConnectionState.Disconnected,
+    val connectedRadios: Set<String> = emptySet(),
     val messages: List<MessagePayload> = emptyList(),
     val groups: List<VibeGroup> = emptyList(),
     val archivedGroups: List<VibeGroup> = emptyList(),
@@ -62,12 +62,12 @@ data class VibeSession(
 
 data class BluetoothUiState(
     val harmony: HardwareHarmony = HardwareHarmony(),
-    val activity: AirActivity = AirActivity(),
+    val activity: HostActivity = HostActivity(),
     val crowd: MeshCrowd = MeshCrowd(),
     val session: VibeSession = VibeSession()
 ) {
     // Helper properties for backward compatibility or convenience in UI logic
-    val isConnected: Boolean get() = session.connectionState is AirConnectionState.Connected
-    val isConnecting: Boolean get() = session.connectionState is AirConnectionState.Connecting
-    val connectedVibe: P2PDevice? get() = (session.connectionState as? AirConnectionState.Connected)?.device
+    val isConnected: Boolean get() = session.connectionState is RadioConnectionState.Connected
+    val isConnecting: Boolean get() = session.connectionState is RadioConnectionState.Connecting
+    val connectedVibe: P2PDevice? get() = (session.connectionState as? RadioConnectionState.Connected)?.device
 }

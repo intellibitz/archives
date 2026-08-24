@@ -40,6 +40,7 @@ fun VibeField(
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
+    crowdIsStill: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
     onAttachFile: () -> Unit = {},
     onShowPrivacy: () -> Unit = {}
@@ -108,9 +109,9 @@ fun VibeField(
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(childVibes) { vibe ->
                         if (vibe.isMeta) {
-                            MetaVibeItem(
+                            PluralPulseSummary(
                                 title = vibe.content.take(20),
-                                subtitle = "NESTED META",
+                                subtitle = "PLURAL VIBE",
                                 icon = Icons.Rounded.BubbleChart,
                                 themeColor = themeColor,
                                 count = state.session.messages.count { it.parentMessageId == vibe.messageId },
@@ -163,15 +164,15 @@ fun VibeField(
                 onMessageChange = onMessageChange,
                 onSend = onSend,
                 vibeCount = childVibes.size,
-                airIsStill = false,
-                incomingLinkRequests = emptySet(),
+                crowdIsStill = crowdIsStill,
+                incomingRadioRequests = emptySet(),
                 selectedDevices = emptySet(),
                 vibedPeers = emptySet(),
                 groups = emptyList(),
-                onAcceptLink = { },
-                onDenyLink = { },
+                onAcceptRadio = { },
+                onDenyRadio = { },
                 onStartSideVibe = { },
-                onStartTie = { },
+                onStartChain = { },
                 onClearSelection = { },
                 onAttachFile = onAttachFile,
                 onSearchToggle = onSearchToggle,

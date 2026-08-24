@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * The Supreme Power: Intelligence Service.
- * Monitors vibes, ties, and provides human-centric insights.
+ * Monitors vibes, chains, and provides human-centric insights.
  */
 class SupremePowerManager(
     private val p2pController: P2PController,
@@ -46,7 +46,7 @@ class SupremePowerManager(
         scope.launch {
             combine(
                 p2pController.scannedDevices,
-                p2pController.connectedLinks,
+                p2pController.connectedRadios,
                 vibeStore.getAllMessages(),
                 identityRepository.lowPowerMode,
                 _breezeFlow.onStart { emit("") },
@@ -58,16 +58,16 @@ class SupremePowerManager(
                 val lowPower = args[3] as Boolean
                 
                 val userCount = scanned.size
-                val linksCount = connected.size
+                val radioCount = connected.size
                 val msgCount = messages.size
                 
                 // Logic for Vibe Harmony
                 val vibeHarmony = if (userCount > 0) {
-                    min(1.0f, (linksCount.toFloat() / userCount.toFloat()) + 0.2f)
+                    min(1.0f, (radioCount.toFloat() / userCount.toFloat()) + 0.2f)
                 } else 0f
 
                 // AI Insight Generation (Heuristic-based)
-                val insight = generateAiInsight(userCount, linksCount, msgCount, vibeHarmony, lowPower)
+                val insight = generateAiInsight(userCount, radioCount, msgCount, vibeHarmony, lowPower)
                 val breeze = args.getOrNull(4) as? String
                 val location = args.getOrNull(5) as? android.location.Location
 
@@ -83,7 +83,7 @@ class SupremePowerManager(
 
                 SupremePowerReport(
                     userCount = userCount,
-                    connectedLinksCount = linksCount,
+                    connectedLinksCount = radioCount,
                     totalMessages = msgCount,
                     harmony = vibeHarmony,
                     aiInsight = insight,
@@ -110,8 +110,8 @@ class SupremePowerManager(
                 if (new > old) emitBreeze("VIBE PROXIMITY")
             }.launchIn(scope)
 
-        // Link Formed
-        p2pController.connectedLinks
+        // Radio Formed
+        p2pController.connectedRadios
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
@@ -140,7 +140,7 @@ class SupremePowerManager(
         }
     }
 
-    private fun generateAiInsight(users: Int, links: Int, msgs: Int, harmony: Float, lowPower: Boolean): String {
+    private fun generateAiInsight(users: Int, radios: Int, msgs: Int, harmony: Float, lowPower: Boolean): String {
         if (lowPower) return "ENERGY SAVER ACTIVE"
         
         return when {
@@ -148,7 +148,7 @@ class SupremePowerManager(
             users > 15 -> "VIBE PULSE: MESH DENSE"
             harmony < 0.3f -> "BLUKIT NEARBY: SPREAD VIBES"
             users > 10 && harmony > 0.8f -> "VIBE PULSE"
-            links == 0 && users > 0 -> "CROWD ENERGY"
+            radios == 0 && users > 0 -> "CROWD ENERGY"
             msgs > 100 -> "VIBE FLOW"
             else -> "MAKE PEOPLE VIBE"
         }

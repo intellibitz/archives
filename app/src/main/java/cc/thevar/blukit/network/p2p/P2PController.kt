@@ -25,14 +25,14 @@ sealed class P2PError(val message: String, val isTransient: Boolean) {
 interface P2PController {
     val scannedDevices: StateFlow<List<P2PDevice>>
     val isConnected: StateFlow<Boolean>
-    val connectedLinks: StateFlow<Set<String>>
-    val incomingLinkRequests: StateFlow<Set<P2PDevice>>
-    val outgoingLinkRequests: StateFlow<Set<P2PDevice>>
+    val connectedRadios: StateFlow<Set<String>>
+    val incomingRadioRequests: StateFlow<Set<P2PDevice>>
+    val outgoingRadioRequests: StateFlow<Set<P2PDevice>>
     val isDiscovering: StateFlow<Boolean>
     val isAdvertising: StateFlow<Boolean>
     val errors: StateFlow<P2PError?>
     val messages: StateFlow<List<MessagePayload>>
-    val discoveredAirs: SharedFlow<VibeGroup>
+    val discoveredCrowds: SharedFlow<VibeGroup>
     val syncProgress: StateFlow<Float?>
 
     fun startDiscovery()
@@ -48,10 +48,10 @@ interface P2PController {
      */
     fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus>
     
-    fun requestLink(device: P2PDevice)
+    fun requestRadio(device: P2PDevice)
     fun isNearbyConnected(endpointId: String): Boolean
-    fun acceptLink(device: P2PDevice)
-    fun denyLink(device: P2PDevice)
+    fun acceptRadio(device: P2PDevice)
+    fun denyRadio(device: P2PDevice)
 
     suspend fun sendMessage(content: String, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
 
@@ -71,7 +71,7 @@ interface P2PController {
 
     fun updateGroupScope(groupId: String, scope: Int)
 
-    fun initiateHistorySync(endpointId: String)
+    fun initiateHistorySync(endpointId: String, sinceTimestamp: Long? = null)
 
     fun closeConnection()
     fun release()

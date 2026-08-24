@@ -56,14 +56,14 @@ class NearbyP2PController(
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedLinks = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedLinks = _connectedLinks.asStateFlow()
+    private val _connectedRadios = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedRadios = _connectedRadios.asStateFlow()
 
-    private val _incomingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
-    override val incomingLinkRequests = _incomingLinkRequests.asStateFlow()
+    private val _incomingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
 
-    private val _outgoingLinkRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
-    override val outgoingLinkRequests = _outgoingLinkRequests.asStateFlow()
+    private val _outgoingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    override val outgoingRadioRequests = _outgoingRadioRequests.asStateFlow()
 
     private val _isDiscovering = MutableStateFlow(value = false)
     override val isDiscovering = _isDiscovering.asStateFlow()
@@ -74,8 +74,8 @@ class NearbyP2PController(
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
-    private val _discoveredAirs = MutableSharedFlow<VibeGroup>(extraBufferCapacity = 5)
-    override val discoveredAirs = _discoveredAirs.asSharedFlow()
+    private val _discoveredCrowds = MutableSharedFlow<VibeGroup>(extraBufferCapacity = 5)
+    override val discoveredCrowds = _discoveredCrowds.asSharedFlow()
 
     private val _connectionUpdates = MutableSharedFlow<Pair<String, ConnectionStatus>>(extraBufferCapacity = 10)
     private val _syncProgress = MutableStateFlow<Float?>(null)
@@ -87,11 +87,20 @@ class NearbyP2PController(
     private val vibeKeys = ConcurrentHashMap<String, SecretKey>()
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
     private val outgoingQueues = ConcurrentHashMap<String, kotlinx.coroutines.channels.Channel<Payload>>()
-    private val pendingLinkRequests = Collections.synchronizedSet(mutableSetOf<String>())
+    private val pendingRadioRequests = Collections.synchronizedSet(mutableSetOf<String>())
     
     private val incomingFiles = Collections.synchronizedMap(mutableMapOf<Long, MessagePayload>())
     private val senderRateLimits = Collections.synchronizedMap(mutableMapOf<String, MutableList<Long>>())
     private val blockedFingerprints = Collections.synchronizedSet(mutableSetOf<String>())
+
+    // PERFORMANCE: Vibe Aggregator
+    private val aggregateBuffer = ConcurrentHashMap<String, MutableList<MessagePayload>>()
+    private val aggregateJob = internalScope.launch {
+        while (isActive) {
+            delay(200)
+            flushAggregateBuffer()
+        }
+    }
 
     init {
         observeIdentityChanges()
@@ -119,7 +128,7 @@ class NearbyP2PController(
             states.isBluetoothEnabled -> "B"
             else -> "L"
         }
-        val powerChar = if (lowPower) "P" else "H"
+        val powerChar = if (lowPower) { "P" } else "H"
         val meshSize = activeConnections.size
         return "$radioChar|$vibeCount|$powerChar|$meshSize"
     }
@@ -203,15 +212,18 @@ class NearbyP2PController(
                 sendHandshake(endpointId)
                 syncAirHistory(endpointId)
             } else {
-                _connectionUpdates.tryEmit(endpointId to ConnectionStatus.Error(result.status.statusMessage ?: "Link Failed"))
+                val errorMsg = result.status.statusMessage ?: "Radio Failed"
+                Log.e(tag, "Connection failed for $endpointId: $errorMsg (Status Code: ${result.status.statusCode})")
+                _errors.value = P2PError.ConnectionError(errorMsg)
+                _connectionUpdates.tryEmit(endpointId to ConnectionStatus.Error(errorMsg))
             }
         }
 
         override fun onDisconnected(endpointId: String) {
             activeConnections.remove(endpointId)
-            pendingLinkRequests.remove(endpointId)
-            _outgoingLinkRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
-            _connectedLinks.update { it - endpointId }
+            pendingRadioRequests.remove(endpointId)
+            _outgoingRadioRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
+            _connectedRadios.update { it - endpointId }
             vibeKeys.remove(endpointId)
             if (activeConnections.isEmpty()) _isConnected.value = false
             updateScannedDevices()
@@ -265,31 +277,46 @@ class NearbyP2PController(
             val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
             when (payload.type) {
                 MessagePayload.TYPE_ACK -> handleAck(payload)
-                MessagePayload.TYPE_LINK_REQUEST -> handleLinkRequest(endpointId, payload)
-                MessagePayload.TYPE_LINK_ACCEPT -> handleLinkAccept(endpointId)
+                MessagePayload.TYPE_LINK_REQUEST -> handleRadioRequest(endpointId, payload)
+                MessagePayload.TYPE_LINK_ACCEPT -> handleRadioAccept(endpointId)
                 MessagePayload.TYPE_IDENTITY_UPDATE -> {
                     if (isNewMessage(payload.messageId)) handleIdentityUpdate(endpointId, payload, secretKey)
                 }
                 MessagePayload.TYPE_IMAGE, MessagePayload.TYPE_FILE -> {
                     if (isNewMessage(payload.messageId)) handleFileMetadata(endpointId, payload, secretKey)
                 }
-                MessagePayload.TYPE_RESYNC_REQUEST -> handleResyncRequest(endpointId, secretKey)
+                MessagePayload.TYPE_RESYNC_REQUEST -> {
+                    val since = payload.content.toLongOrNull()
+                    handleResyncRequest(endpointId, secretKey, since)
+                }
                 MessagePayload.TYPE_RESYNC_CHUNK -> handleResyncChunk(payload)
                 MessagePayload.TYPE_RESYNC_COMPLETE -> {
                     Log.d(tag, "RESYNC COMPLETE from $endpointId")
                     _syncProgress.value = 1.0f
                     internalScope.launch { delay(1000); _syncProgress.value = null }
                 }
-                else -> if (isNewMessage(payload.messageId)) handleChatMessage(endpointId, payload, secretKey)
+                else -> {
+                    // PERFORMANCE: Handle aggregated vibes
+                    if (payload.messageId.startsWith("aggregate_")) {
+                        try {
+                            val batch = Json.decodeFromString<List<MessagePayload>>(payload.content)
+                            batch.forEach { v -> if (isNewMessage(v.messageId)) handleChatMessage(endpointId, v, secretKey) }
+                        } catch (e: Exception) { Log.e(tag, "Failed to decode aggregate") }
+                    } else {
+                        if (isNewMessage(payload.messageId)) handleChatMessage(endpointId, payload, secretKey)
+                    }
+                }
             }
         } catch (e: Exception) { }
     }
 
-    private fun handleResyncRequest(endpointId: String, secretKey: javax.crypto.SecretKey) {
+    private fun handleResyncRequest(endpointId: String, secretKey: javax.crypto.SecretKey, sinceTimestamp: Long? = null) {
         internalScope.launch(ioDispatcher) {
             _syncProgress.value = 0.05f
             // 1. Sync Groups first
-            val groups = vibeStore.groups.value
+            val allGroups = vibeStore.groups.value
+            val groups = if (sinceTimestamp != null) allGroups.filter { it.lastVibeTimestamp > sinceTimestamp } else allGroups
+            
             groups.chunked(5).forEachIndexed { index, chunk ->
                 val chunkPayload = MessagePayload(
                     messageId = UUID.randomUUID().toString(),
@@ -305,7 +332,9 @@ class NearbyP2PController(
             }
 
             // 2. Sync Messages
-            val history = vibeStore.messages.value
+            val allHistory = vibeStore.messages.value
+            val history = if (sinceTimestamp != null) allHistory.filter { it.timestamp > sinceTimestamp } else allHistory
+            
             history.chunked(10).forEachIndexed { index, chunk ->
                 val chunkPayload = MessagePayload(
                     messageId = UUID.randomUUID().toString(),
@@ -371,16 +400,16 @@ class NearbyP2PController(
         internalScope.launch(ioDispatcher) { vibeStore.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED) }
     }
 
-    private fun handleLinkRequest(endpointId: String, payload: MessagePayload) {
+    private fun handleRadioRequest(endpointId: String, payload: MessagePayload) {
         val device = _scannedDevices.value.find { it.id == endpointId }
             ?: P2PDevice(endpointId, payload.senderName.ifBlank { "?" }, payload.senderEmoji ?: "👤", persistentId = payload.senderId)
-        _incomingLinkRequests.update { it + device }
+        _incomingRadioRequests.update { it + device }
     }
 
-    private fun handleLinkAccept(endpointId: String) {
-        pendingLinkRequests.remove(endpointId)
-        _outgoingLinkRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
-        _connectedLinks.update { it + endpointId }
+    private fun handleRadioAccept(endpointId: String) {
+        pendingRadioRequests.remove(endpointId)
+        _outgoingRadioRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
+        _connectedRadios.update { it + endpointId }
         _isConnected.value = true
         updateScannedDevices()
     }
@@ -422,7 +451,7 @@ class NearbyP2PController(
     private fun saveIncomingMessage(payload: MessagePayload) {
         internalScope.launch(ioDispatcher) {
             if (payload.senderId !in repository.blockedUsers.value) {
-                // AUTO-DISCOVER TIES
+                // AUTO-DISCOVER CHAINS
                 val gid = payload.groupId
                 val gName = payload.groupName
                 if (gid != null && gName != null) {
@@ -437,10 +466,10 @@ class NearbyP2PController(
                             id = gid, 
                             name = gName, 
                             scope = scope,
-                            parentId = VibeGroup.ID_AIR // Anchor to root Air if parent is unknown
+                            parentId = VibeGroup.ID_CROWD // Anchor to root Crowd if parent is unknown
                         )
                         vibeStore.insertGroup(newGroup)
-                        _discoveredAirs.tryEmit(newGroup)
+                        _discoveredCrowds.tryEmit(newGroup)
                     }
                 }
                 vibeStore.upsertMessage(payload)
@@ -455,7 +484,11 @@ class NearbyP2PController(
         internalScope.launch(ioDispatcher) {
             val options = DiscoveryOptions.Builder().setStrategy(getStrategy()).build()
             connectionsClient.startDiscovery(serviceId, createDiscoveryCallback(), options)
-                .addOnFailureListener { _isDiscovering.value = false }
+                .addOnFailureListener { e -> 
+                    Log.e(tag, "Discovery failed to start: ${e.message}")
+                    _errors.value = P2PError.DiscoveryError(e.message ?: "Failed to start discovery")
+                    _isDiscovering.value = false 
+                }
             while (_isDiscovering.value) {
                 val isBoosted = _scannedDevices.value.count { it.isConnected } >= 3
                 val scanDelay = if (isBoosted) 10000L else 30000L
@@ -494,9 +527,21 @@ class NearbyP2PController(
         _isAdvertising.value = true
         internalScope.launch(ioDispatcher) {
             val options = AdvertisingOptions.Builder().setStrategy(getStrategy()).build()
-            val name = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}|${getRadioFlag()}"
-            connectionsClient.startAdvertising(name, serviceId, connectionLifecycleCallback, options)
-                .addOnFailureListener { _isAdvertising.value = false }
+            
+            while (_isAdvertising.value) {
+                val name = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}|${getRadioFlag()}"
+                
+                connectionsClient.startAdvertising(name, serviceId, connectionLifecycleCallback, options)
+                    .addOnFailureListener { e -> 
+                        Log.e(tag, "Advertising failure: ${e.message}. Retrying in 5s...")
+                        _errors.value = P2PError.AdvertisingError(e.message ?: "Failed to start advertising")
+                    }
+                
+                // Keep-alive/Heal: Restart advertising if name or radios change (handled by listeners)
+                // or just wait here until stopped.
+                delay(60000) // Periodic restart for name updates/stability
+                if (_isAdvertising.value) connectionsClient.stopAdvertising()
+            }
         }
     }
 
@@ -516,28 +561,28 @@ class NearbyP2PController(
 
     override fun isNearbyConnected(endpointId: String): Boolean = activeConnections.contains(endpointId)
 
-    override fun requestLink(device: P2PDevice) {
-        pendingLinkRequests.add(device.id)
-        _outgoingLinkRequests.update { it + device }
+    override fun requestRadio(device: P2PDevice) {
+        pendingRadioRequests.add(device.id)
+        _outgoingRadioRequests.update { it + device }
         updateScannedDevices()
         internalScope.launch(ioDispatcher) {
-            sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "LINK_REQUEST", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_LINK_REQUEST))
+            sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_REQUEST", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_LINK_REQUEST))
         }
     }
 
-    override fun acceptLink(device: P2PDevice) {
-        _incomingLinkRequests.update { it - device }; pendingLinkRequests.remove(device.id); _connectedLinks.update { it + device.id }; _isConnected.value = true
-        _outgoingLinkRequests.update { current -> current.filter { it.id != device.id }.toSet() }
+    override fun acceptRadio(device: P2PDevice) {
+        _incomingRadioRequests.update { it - device }; pendingRadioRequests.remove(device.id); _connectedRadios.update { it + device.id }; _isConnected.value = true
+        _outgoingRadioRequests.update { current -> current.filter { it.id != device.id }.toSet() }
         updateScannedDevices()
         internalScope.launch(ioDispatcher) {
-            sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "LINK_ACCEPT", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_LINK_ACCEPT))
+            sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_ACCEPT", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_LINK_ACCEPT))
         }
     }
 
-    override fun denyLink(device: P2PDevice) { 
-        pendingLinkRequests.remove(device.id)
-        _incomingLinkRequests.update { it - device }
-        _outgoingLinkRequests.update { current -> current.filter { it.id != device.id }.toSet() }
+    override fun denyRadio(device: P2PDevice) { 
+        pendingRadioRequests.remove(device.id)
+        _incomingRadioRequests.update { it - device }
+        _outgoingRadioRequests.update { current -> current.filter { it.id != device.id }.toSet() }
         updateScannedDevices() 
     }
 
@@ -574,14 +619,35 @@ class NearbyP2PController(
             type = type,
             hopCount = 0
         )
+
+        // PERFORMANCE: Batch processing with aggregation
+        if (!payload.isPriority && receiverId == null && activeConnections.size > 5) {
+            groupId?.let { gid ->
+                aggregateBuffer.getOrPut(gid) { mutableListOf() }.add(payload)
+                return payload
+            }
+        }
+
+        return dispatchVibe(payload)
+    }
+
+    private suspend fun dispatchVibe(payload: MessagePayload): MessagePayload? {
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
+        val targetRid = payload.receiverId
         try {
-            if (receiverId != null) { 
-                getVibeKeyWithRetry(receiverId)?.let { key -> 
-                    queueVibe(receiverId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
+            if (targetRid != null) { 
+                getVibeKeyWithRetry(targetRid)?.let { key -> 
+                    queueVibe(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
                 } 
             } else { 
-                activeConnections.forEach { target -> 
+                // SELECTIVE BROADCASTING: Prioritize anchor nodes in large crowds
+                val targets = if (activeConnections.size > 20) {
+                    activeConnections.shuffled().take(10) // Simplified anchor logic
+                } else {
+                    activeConnections
+                }
+                
+                targets.forEach { target -> 
                     internalScope.launch(ioDispatcher) { 
                         vibeKeys[target]?.let { key -> 
                             try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} 
@@ -592,6 +658,29 @@ class NearbyP2PController(
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
             vibeStore.upsertMessage(payload); return payload
         } catch (e: Exception) { return null }
+    }
+
+    private fun flushAggregateBuffer() {
+        val groupsToFlush = aggregateBuffer.keys().toList()
+        groupsToFlush.forEach { gid ->
+            val vibes = aggregateBuffer.remove(gid) ?: return@forEach
+            if (vibes.isEmpty()) return@forEach
+            
+            internalScope.launch(ioDispatcher) {
+                // Bundle vibes into a single high-density payload
+                val bundle = MessagePayload(
+                    messageId = "aggregate_${System.currentTimeMillis()}",
+                    senderId = "CROWD_SYSTEM",
+                    senderName = "AGGREGATOR",
+                    content = Json.encodeToString(vibes),
+                    timestamp = System.currentTimeMillis(),
+                    groupId = gid,
+                    type = MessagePayload.TYPE_TEXT, // Could add TYPE_BATCH
+                    isPriority = false
+                )
+                dispatchVibe(bundle)
+            }
+        }
     }
 
     override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? = 
@@ -638,8 +727,8 @@ class NearbyP2PController(
         val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), vibeType = MessagePayload.VIBE_WHISPER)
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         try {
-            group.memberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { vibeKeys[memberId]?.let { key -> try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
-            activeConnections.filter { it !in group.memberIds }.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { vibeKeys[memberId]?.let { key -> try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
             vibeStore.upsertMessage(payload); vibeStore.updateGroupLastVibe(groupId, payload.timestamp); return payload
         } catch (e: Exception) { return null }
@@ -661,8 +750,8 @@ class NearbyP2PController(
         )
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         try {
-            group.memberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { vibeKeys[memberId]?.let { key -> try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
-            activeConnections.filter { it !in group.memberIds }.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { vibeKeys[memberId]?.let { key -> try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
             vibeStore.upsertMessage(payload); vibeStore.updateGroupLastVibe(groupId, payload.timestamp); return payload
         } catch (e: Exception) { return null }
@@ -690,14 +779,14 @@ class NearbyP2PController(
         internalScope.launch(ioDispatcher) { vibeStore.updateGroupScope(groupId, scope) }
     }
 
-    override fun initiateHistorySync(endpointId: String) {
+    override fun initiateHistorySync(endpointId: String, sinceTimestamp: Long?) {
         internalScope.launch(ioDispatcher) {
             val key = getVibeKeyWithRetry(endpointId) ?: return@launch
             val request = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = "SYNC",
-                content = "RESYNC_REQUEST",
+                content = sinceTimestamp?.toString() ?: "RESYNC_REQUEST",
                 timestamp = System.currentTimeMillis(),
                 type = MessagePayload.TYPE_RESYNC_REQUEST
             )
@@ -717,7 +806,7 @@ class NearbyP2PController(
 
     private fun isNewMessage(id: String): Boolean = synchronized(messageIdHistory) { if (messageIdHistory.contains(id)) false else { messageIdHistory.add(id); if (messageIdHistory.size > 100) messageIdHistory.removeAt(0); true } }
 
-    private fun updateScannedDevices() { _scannedDevices.update { current -> current.map { device -> val tied = device.id in _connectedLinks.value; val connecting = device.id in pendingLinkRequests; device.copy(isConnected = tied, isLinkPending = connecting, medium = if (tied) P2PDevice.ConnectionMedium.WIFI else if (connecting || activeConnections.contains(device.id)) P2PDevice.ConnectionMedium.BLUETOOTH else P2PDevice.ConnectionMedium.LOCATION) } } }
+    private fun updateScannedDevices() { _scannedDevices.update { current -> current.map { device -> val tied = device.id in _connectedRadios.value; val connecting = device.id in pendingRadioRequests; device.copy(isConnected = tied, isLinkPending = connecting, medium = if (tied) P2PDevice.ConnectionMedium.WIFI else if (connecting || activeConnections.contains(device.id)) P2PDevice.ConnectionMedium.BLUETOOTH else P2PDevice.ConnectionMedium.LOCATION) } } }
 
     override fun closeConnection() { connectionsClient.stopAllEndpoints(); activeConnections.clear(); vibeKeys.clear(); _isConnected.value = false }
 

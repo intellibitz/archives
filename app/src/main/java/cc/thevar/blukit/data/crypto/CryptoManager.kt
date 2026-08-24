@@ -16,9 +16,16 @@ import javax.crypto.spec.SecretKeySpec
 
 /**
  * Manages End-to-End Encryption (E2EE) for vibes in The Air.
- * Implements Elliptic Curve Diffie-Hellman (ECDH) on SecP256r1 for secure key exchange
- * and AES-256-GCM for authenticated payload confidentiality.
- * Key derivation follows HKDF (RFC 5869) to ensure high entropy for session keys.
+ * 
+ * ### Security Implementation:
+ * 1. **Key Agreement (ECDH)**: Uses Elliptic Curve Diffie-Hellman with the SecP256r1 curve 
+ *    (NIST P-256) to establish a shared secret without ever transmitting private keys.
+ * 2. **Key Derivation (HKDF)**: Implements RFC 5869 (HMAC-based Extract-and-Expand KDF) 
+ *    to transform the raw ECDH shared secret into a high-entropy 256-bit AES key.
+ * 3. **Authenticated Encryption (AES-GCM)**: Uses AES-256 in Galois/Counter Mode (GCM)
+ *    to provide both confidentiality and integrity (authentication tag).
+ * 4. **Hardware Backed**: Keys are stored in the Android KeyStore, utilizing hardware-backed
+ *    security (TEE/StrongBox) whenever supported by the device.
  */
 class CryptoManager(
     keyStoreProvider: String = "AndroidKeyStore"

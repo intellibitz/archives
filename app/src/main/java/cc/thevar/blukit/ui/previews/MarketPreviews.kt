@@ -41,11 +41,9 @@ fun PreviewRadarPhone() {
                 )
             ),
             localDeviceId = "me",
-            localNickname = "Me",
-            localEmoji = "👤",
             activeBubbles = emptyList(),
-            airList = listOf(
-                P2PDevice("air_hub", "THE AIR", "🌬️") to 12,
+            crowdList = listOf(
+                P2PDevice("air_hub", "THE CROWD", "🌬️") to 12,
                 P2PDevice("concert", "CONCERT", "🎸") to 45
             ),
             onDeviceClick = {},
@@ -58,7 +56,7 @@ fun PreviewRadarPhone() {
 @Composable
 fun PreviewChatPhone() {
     BlukitTheme {
-        TieField(
+        ChainField(
             state = BluetoothUiState(
                 session = VibeSession(
                     messages = listOf(
@@ -81,12 +79,10 @@ fun PreviewChatPhone() {
                             status = MessagePayload.STATUS_SENT
                         )
                     ),
-                    connectionState = AirConnectionState.Connected(P2PDevice("user1", "?"))
+                    connectionState = RadioConnectionState.Connected(P2PDevice("user1", "?"))
                 )
             ),
             localDeviceId = "me",
-            localNickname = "Me",
-            localEmoji = "👤",
             groupId = "group1",
             onDisconnect = {},
             onSendMessage = { _, _ -> }
@@ -110,8 +106,6 @@ fun PreviewRadarTablet() {
                 )
             ),
             localDeviceId = "me",
-            localNickname = "Me",
-            localEmoji = "👤",
             activeBubbles = emptyList(),
             onDeviceClick = {},
             onStartScan = {}
@@ -176,9 +170,9 @@ fun PreviewHarmonyHubFull() {
         Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
             Column(modifier = Modifier.fillMaxSize()) {
                 BlukitHarmonyTopBar(
-                    title = "THE AIR",
+                    title = "THE CROWD",
                     icon = Icons.Rounded.Groups,
-                    currentRoute = Route.Atmos,
+                    currentRoute = Route.Host,
                     onNavigate = {},
                     userNickname = "BLUKIT",
                     userEmoji = "👤",
@@ -193,7 +187,7 @@ fun PreviewHarmonyHubFull() {
                     userCount = 12,
                     isStealthMode = false,
                     lowPowerMode = false,
-                    airIsStill = false,
+                    crowdIsStill = false,
                     onToggleStealth = {},
                     onToggleLowPower = {},
                     onAwakenBluetooth = {},
@@ -210,22 +204,22 @@ fun PreviewHarmonyHubFull() {
                 Spacer(modifier = Modifier.weight(1f))
                 
                 BlukitVibeHub(
-                    currentRoute = Route.Atmos,
+                    currentRoute = Route.Host,
                     messageText = "Hello Crowd",
                     onMessageChange = {},
                     onSend = {},
                     vibeCount = 5,
-                    airIsStill = false,
+                    crowdIsStill = false,
                     isSearchMode = true,
                     onSearchToggle = {},
-                    onCreatePublicTie = {},
-                    incomingLinkRequests = emptySet(),
+                    onCreatePublicChain = { _, _ -> },
+                    incomingRadioRequests = emptySet(),
                     selectedDevices = emptySet(),
                     vibedPeers = emptySet(),
-                    onAcceptLink = {},
-                    onDenyLink = {},
+                    onAcceptRadio = {},
+                    onDenyRadio = {},
                     onStartSideVibe = {},
-                    onStartTie = {},
+                    onStartChain = {},
                     onClearSelection = {},
                     onAttachFile = {},
                     onShowPrivacy = {}
@@ -243,13 +237,13 @@ fun PreviewVibingVibesTickerHeaders() {
     val user2 = "user2"
     
     val messages = listOf(
-        MessagePayload("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "THE AIR", content = "Public vibe!", timestamp = System.currentTimeMillis(), vibeType = MessagePayload.VIBE_SHOUT),
+        MessagePayload("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "THE CROWD", content = "Public vibe!", timestamp = System.currentTimeMillis(), vibeType = MessagePayload.VIBE_SHOUT),
         MessagePayload("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, vibeType = MessagePayload.VIBE_SILENCE),
         MessagePayload("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private group", timestamp = System.currentTimeMillis() - 2000, vibeType = MessagePayload.VIBE_WHISPER)
     )
     
     val groups = listOf(
-        VibeGroup("air_hub", "THE AIR", setOf(user1, me), VibeGroup.SCOPE_PUBLIC),
+        VibeGroup("air_hub", "THE CROWD", setOf(user1, me), VibeGroup.SCOPE_PUBLIC),
         VibeGroup("silence", "SILENCE", setOf(me), VibeGroup.SCOPE_LOCAL),
         VibeGroup("tie1", "PARTY", setOf(user2, me, "user3"), VibeGroup.SCOPE_PRIVATE)
     )
@@ -283,14 +277,14 @@ fun PreviewVibingVibesTickerHeaders() {
     }
 }
 
-@Preview(name = "Air Ritual Ghost", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Crowd Ritual Ghost", device = Devices.PHONE, showBackground = true)
 @Composable
-fun PreviewAirRitualGhost() {
+fun PreviewCrowdRitualGhost() {
     BlukitTheme {
         Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-            AirRitualGhost(
+            CrowdRitualGhost(
                 onNameChange = {},
-                onDone = {},
+                onDone = { _ -> },
                 onDismiss = {},
                 nearbyAirs = listOf(
                     VibeGroup("1", "GATE 7", emptySet(), VibeGroup.SCOPE_PUBLIC),
