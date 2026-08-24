@@ -1,6 +1,6 @@
 # Contributing to Blukit
 
-We love your input! We want to make contributing to Blukit as easy and transparent as possible, whether it's:
+We love your input! Blukit is built for the **Crowd**, not the **Web**. We are building a future where communication is physical, local, and anonymous. We want to make contributing as easy and transparent as possible, whether it's:
 
 - Reporting a bug
 - Discussing the current state of the code

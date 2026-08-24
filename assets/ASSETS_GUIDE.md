@@ -11,7 +11,8 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 2.  Switch to the **Design** or **Split** view.
 3.  Locate the following previews:
     -   `PreviewRadarPhone`: The main discovery interface.
-    -   `PreviewChatPhone`: The Air Ticker messaging interface.
+    -   `PreviewChatPhone`: The **Intelligent Ticker** messaging interface.
+    -   `PreviewRoseResonance`: Highlighting the **Stealth Rose** energy of private Ties.
     -   `PreviewProfileStealth`: The OLED-optimized identity setup.
     -   `PreviewRadarTablet`: Highlighting the adaptive layout on larger screens.
 4.  Use the **"Copy Image"** or **"Screenshot"** icon in the preview header to save the high-resolution render.
@@ -26,4 +27,4 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 | **Tablet Screenshots** | 2048 x 1536+ px | Capture from `PreviewRadarTablet`. |
 
 ## 🚀 Pro Tip
-For the **Feature Graphic**, use a dark background (#000000) with Amber (#FFB300) typography to match the **Stealth Theater Mode** aesthetic.
+For the **Feature Graphic**, use a dark background (#000000) with **Stealth Rose** (#FF4081) and **Amber** (#FFB300) typography to reflect the **Rose Resonance** and **Unified Vibe Frequency**.

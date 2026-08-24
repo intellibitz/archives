@@ -20,8 +20,8 @@ By design, you can only communicate with people physically near you. This "Air F
 - You are encouraged to set a local nickname, which stays **only on your device**.
 - Identity is a projected property; you can change your nickname at any time to break your local trail.
 
-## 5. End-to-End Security (**Ties**)
-**Whispers** within a **Private Tie** are protected using **ECDH + AES-256-GCM** encryption. 
+## 5. End-to-End Security (**Dynamic Secure Ties**)
+**Whispers** within a **Private Tie** are protected using **ECDH + AES-256-GCM** encryption and visually resonate in **Stealth Rose** to ensure you know you are vibing securely.
 - **Local Keys**: Secure keys are generated and stored only on your device using hardware-backed security.
 - **Nested Context**: Ties exist only within the context of a public Air, keeping private interactions anchored to physical locations.
 
@@ -30,7 +30,8 @@ Blukit follows a **Non-Monopolistic Air** principle. Public Airs have no owners.
 
 ## 7. Ritual Sentience & Storage Pruning
 - **Air Schedules**: You can schedule recurring rituals locally. This data is never shared and is used only to nudge your device to "Awaken" specific Airs at specific times.
-- **Vibe Decay**: To manage local storage, blukit automatically prunes large media older than 90 days. **Pinned vibes** are exempt from this process to preserve essential memories.
+- **Vibe Decay**: To manage local storage, blukit automatically prunes large media older than 90 days. **Pinned vibes** on the **Air Canvas** are exempt from this process to preserve essential memories.
+- **Intelligent Ticker**: The ticker dynamically manages your history, ensuring the "Air Vault" remains clean and only relevant vibes are surfaced in the field.
 
 ## 8. Localized Geofencing (Zero-Tracking)
 Blukit uses your device's "Last Known Location" to proactively suggest relevant airs locally. This data is processed **locally on your device**, is never stored, and is never transmitted to any external entity.
