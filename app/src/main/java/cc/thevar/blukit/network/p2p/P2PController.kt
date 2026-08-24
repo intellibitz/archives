@@ -3,6 +3,7 @@ package cc.thevar.blukit.network.p2p
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.ConnectionStatus
+import cc.thevar.blukit.domain.model.VibeGroup
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -31,6 +32,7 @@ interface P2PController {
     val isAdvertising: StateFlow<Boolean>
     val errors: StateFlow<P2PError?>
     val messages: StateFlow<List<MessagePayload>>
+    val discoveredAirs: SharedFlow<VibeGroup>
 
     fun startDiscovery()
     fun stopDiscovery()
@@ -50,17 +52,23 @@ interface P2PController {
     fun acceptLink(device: P2PDevice)
     fun denyLink(device: P2PDevice)
 
-    suspend fun sendMessage(content: String, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_PUBLIC): MessagePayload?
+    suspend fun sendMessage(content: String, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null): MessagePayload?
 
-    suspend fun broadcastMessage(content: String, vibeType: Int = MessagePayload.VIBE_PUBLIC): MessagePayload?
+    suspend fun broadcastMessage(content: String, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null): MessagePayload?
 
     suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload?
 
-    suspend fun sendFile(fileUri: android.net.Uri, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_PUBLIC): MessagePayload?
+    suspend fun sendFile(fileUri: android.net.Uri, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_SHOUT, groupId: String? = null, groupName: String? = null): MessagePayload?
 
-    fun startGroupVibe(name: String, members: Set<String>, type: Int): String
+    suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload?
+
+    fun startGroupVibe(name: String, members: Set<String>, type: Int = VibeGroup.SCOPE_PUBLIC): String
 
     fun updateGroupMembers(groupId: String, memberIds: Set<String>)
+
+    fun updateGroupScope(groupId: String, scope: Int)
+
+    fun initiateHistorySync(endpointId: String)
 
     fun closeConnection()
     fun release()

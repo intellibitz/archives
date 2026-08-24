@@ -83,7 +83,7 @@ fun BlukitTheme(
         content = {
             if (stealthMode) {
                 Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
-                    BlukitAtmosphere()
+                    BlukitAir()
                     content()
                 }
             } else {
@@ -94,11 +94,11 @@ fun BlukitTheme(
 }
 
 /**
- * Global "Blukit Atmosphere": Suble shimmering grain to make every pixel feel the vibe.
+ * Global "Blukit Air": Suble shimmering grain to make every pixel feel the vibe.
  */
 @Composable
-fun BlukitAtmosphere() {
-    val infiniteTransition = rememberInfiniteTransition(label = "Atmosphere")
+fun BlukitAir() {
+    val infiniteTransition = rememberInfiniteTransition(label = "Air")
     val shimmer by infiniteTransition.animateFloat(
         initialValue = 0.1f,
         targetValue = 0.3f,

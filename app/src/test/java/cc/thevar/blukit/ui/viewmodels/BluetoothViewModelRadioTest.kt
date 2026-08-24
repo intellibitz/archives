@@ -10,7 +10,11 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -26,7 +30,7 @@ class BluetoothViewModelRadioTest {
 
     private val radioStates = MutableStateFlow(RadioStates(true, true, true))
     private val permissionsGranted = MutableStateFlow(true)
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
@@ -55,10 +59,11 @@ class BluetoothViewModelRadioTest {
     fun tearDown() {
         Dispatchers.resetMain()
         unmockkStatic(android.util.Log::class)
+        clearAllMocks()
     }
 
     @Test
-    fun `scan starts when radios are on and permissions granted`() = runTest {
+    fun `scan starts when radios are on and permissions granted`() = runTest(testDispatcher) {
         val useCase = cc.thevar.blukit.domain.usecase.ConnectivityUseCase(
             p2pController, radioStateManager, permissionManager, backgroundScope
         )
@@ -70,13 +75,14 @@ class BluetoothViewModelRadioTest {
         runCurrent()
         
         viewModel.startScan()
+        runCurrent()
         
         verify(atLeast = 1) { p2pController.startDiscovery() }
         verify(atLeast = 1) { p2pController.startAdvertising() }
     }
 
     @Test
-    fun `scan does not start if bluetooth is off`() = runTest {
+    fun `scan does not start if bluetooth is off`() = runTest(testDispatcher) {
         val useCase = cc.thevar.blukit.domain.usecase.ConnectivityUseCase(
             p2pController, radioStateManager, permissionManager, backgroundScope
         )
@@ -91,6 +97,7 @@ class BluetoothViewModelRadioTest {
         clearMocks(p2pController, recordedCalls = true, answers = false)
         
         viewModel.startScan()
+        runCurrent()
         
         verify(exactly = 0) { p2pController.startDiscovery() }
     }

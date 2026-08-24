@@ -48,20 +48,21 @@ data class MeshCrowd(
 )
 
 /**
- * Resonance Session: Active connections, groups, and message history.
+ * Vibe Session: Active connections, groups, and message history.
  */
-data class ResonanceSession(
+data class VibeSession(
     val connectionState: AirConnectionState = AirConnectionState.Disconnected,
     val connectedLinks: Set<String> = emptySet(),
     val messages: List<MessagePayload> = emptyList(),
-    val groups: List<VibeGroup> = emptyList()
+    val groups: List<VibeGroup> = emptyList(),
+    val archivedGroups: List<VibeGroup> = emptyList()
 )
 
 data class BluetoothUiState(
     val harmony: HardwareHarmony = HardwareHarmony(),
     val activity: AirActivity = AirActivity(),
     val crowd: MeshCrowd = MeshCrowd(),
-    val session: ResonanceSession = ResonanceSession()
+    val session: VibeSession = VibeSession()
 ) {
     // Helper properties for backward compatibility or convenience in UI logic
     val isConnected: Boolean get() = session.connectionState is AirConnectionState.Connected

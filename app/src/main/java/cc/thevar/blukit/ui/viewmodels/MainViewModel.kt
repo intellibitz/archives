@@ -80,6 +80,12 @@ class MainViewModel(
         }
     }
 
+    fun resetProfile() {
+        viewModelScope.launch {
+            repository.resetProfile()
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             repository.logout()

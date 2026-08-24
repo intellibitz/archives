@@ -8,4 +8,6 @@ data class SupremePowerReport(
     val aiInsight: String = "SEARCHING THE AIR...",
     val currentBreeze: String? = null,
     val lowPowerMode: Boolean = false,
+    val suggestedAirs: List<String> = emptyList(),
+    val lastLocation: String? = null
 )

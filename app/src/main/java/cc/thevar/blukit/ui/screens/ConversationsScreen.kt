@@ -1,6 +1,5 @@
 package cc.thevar.blukit.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -112,7 +111,7 @@ fun ConversationsScreen(
             containerColor = Color.Black,
             titleContentColor = StealthRose,
             textContentColor = Color.White,
-            title = { Text("DELETE RESONANCE?", fontWeight = FontWeight.Black) },
+            title = { Text("DELETE AIR?", fontWeight = FontWeight.Black) },
             text = { Text("THIS WILL PERMANENTLY REMOVE THIS CONVERSATION.") },
             confirmButton = {
                 TextButton(onClick = {
@@ -148,7 +147,7 @@ private fun OutgoingVibeRequestItem(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 12.sp)
-                Text(text = "Awaiting resonance...", fontSize = 8.sp, color = Color.White.copy(alpha = 0.4f))
+                Text(text = "Connecting...", fontSize = 8.sp, color = Color.White.copy(alpha = 0.4f))
             }
             TextButton(onClick = { onCancel(device) }) {
                 Text("CANCEL", color = StealthRose, fontWeight = FontWeight.Bold, fontSize = 10.sp)
@@ -211,6 +210,12 @@ private fun VibeTickerTitleEntry(
         state.crowd.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
     }
 
+    val themeColor = when(group.scope) {
+        VibeGroup.SCOPE_PRIVATE -> StealthRose
+        VibeGroup.SCOPE_LOCAL -> Color.White.copy(alpha = 0.4f)
+        else -> StealthPrimary
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -228,7 +233,7 @@ private fun VibeTickerTitleEntry(
             // Participant Emojis Ticker
             Row(horizontalArrangement = Arrangement.spacedBy((-4).dp)) {
                 if (members.isEmpty()) {
-                    Text(text = "👤", fontSize = 16.sp, modifier = Modifier.alpha(0.5f))
+                    Text(text = if(group.scope == VibeGroup.SCOPE_LOCAL) "📱" else "👤", fontSize = 16.sp, modifier = Modifier.alpha(0.5f))
                 } else {
                     members.take(3).forEach { member ->
                         Text(text = member.emoji, fontSize = 16.sp)
@@ -250,14 +255,19 @@ private fun VibeTickerTitleEntry(
             
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    val scopeLabel = when(group.scope) {
+                        VibeGroup.SCOPE_PUBLIC -> "SHOUT"
+                        VibeGroup.SCOPE_PRIVATE -> "WHISPER"
+                        else -> "SILENCE"
+                    }
                     Text(
-                        text = if (group.type == VibeGroup.TYPE_TIE) "TIE" else "SIDE",
+                        text = scopeLabel,
                         fontSize = 7.sp,
                         fontWeight = FontWeight.Black,
-                        color = (if (group.type == VibeGroup.TYPE_TIE) StealthRose else StealthPrimary).copy(alpha = 0.8f),
+                        color = themeColor.copy(alpha = 0.8f),
                         letterSpacing = 1.sp,
                         modifier = Modifier
-                            .border(0.5.dp, (if (group.type == VibeGroup.TYPE_TIE) StealthRose else StealthPrimary).copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                            .border(0.5.dp, themeColor.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
                             .padding(horizontal = 4.dp, vertical = 1.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -274,7 +284,7 @@ private fun VibeTickerTitleEntry(
                 Spacer(modifier = Modifier.height(2.dp))
                 
                 Text(
-                    text = lastMessage?.content ?: "Awaiting resonance...",
+                    text = lastMessage?.content ?: "Connecting...",
                     fontSize = 10.sp,
                     color = Color.White.copy(alpha = 0.5f),
                     maxLines = 1,

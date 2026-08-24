@@ -2,7 +2,6 @@ package cc.thevar.blukit
 
 import android.app.Application
 import cc.thevar.blukit.di.appModule
-import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin

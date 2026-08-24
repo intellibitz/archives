@@ -36,7 +36,7 @@ class BleFallbackController(
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    mainDispatcher: CoroutineDispatcher = Dispatchers.Main
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : P2PController {
 
     private val tag = "BlukitBLE"
@@ -48,7 +48,7 @@ class BleFallbackController(
     private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
     override val scannedDevices = _scannedDevices.asStateFlow()
 
-    private val _isConnected = MutableStateFlow(false)
+    private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
     private val _connectedLinks = MutableStateFlow<Set<String>>(emptySet())
@@ -68,6 +68,9 @@ class BleFallbackController(
 
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
+
+    private val _discoveredAirs = MutableSharedFlow<VibeGroup>(extraBufferCapacity = 5)
+    override val discoveredAirs = _discoveredAirs.asSharedFlow()
 
     override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
 
@@ -201,14 +204,14 @@ class BleFallbackController(
             if (responseNeeded) {
                 try {
                     gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
-                } catch (e: SecurityException) {}
+                } catch (_: SecurityException) {}
             }
             handleReceivedData(device.address, value)
         }
     }
 
     private fun handleReceivedData(address: String, data: ByteArray) {
-        if (data.isNotEmpty() && data[0] == HANDSHAKE_PREFIX) {
+        if (data.isNotEmpty() && (data[0] == HANDSHAKE_PREFIX)) {
             handleHandshake(address, data)
         } else {
             handleMessage(address, data)
@@ -266,7 +269,22 @@ class BleFallbackController(
 
         // 3. Save and Haptic
         internalScope.launch(ioDispatcher) {
-            vibeStore.insertMessage(payload)
+            // AUTO-DISCOVER TIES
+            val gid = payload.groupId
+            val gName = payload.groupName
+            if (gid != null && gName != null) {
+                val existing = vibeStore.getGroup(gid)
+                if (existing == null) {
+                    val scope = when (payload.vibeType) {
+                        MessagePayload.VIBE_SHOUT -> VibeGroup.SCOPE_PUBLIC
+                        MessagePayload.VIBE_SILENCE -> VibeGroup.SCOPE_LOCAL
+                        else -> VibeGroup.SCOPE_PRIVATE
+                    }
+                    vibeStore.insertGroup(VibeGroup(id = gid, name = gName, scope = scope))
+                }
+            }
+
+            vibeStore.upsertMessage(payload)
             hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
         }
     }
@@ -472,11 +490,7 @@ class BleFallbackController(
         }
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                bluetoothDevice.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
-            } else {
-                bluetoothDevice.connectGatt(context, false, gattCallback)
-            }
+            bluetoothDevice.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
         } catch (e: SecurityException) {
             flow.tryEmit(ConnectionStatus.Error("Permission Denied"))
             reportError(P2PError.ConnectionError("Permission Denied"))
@@ -493,13 +507,15 @@ class BleFallbackController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int): MessagePayload? {
+    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
         val payload = MessagePayload(
-            messageId = UUID.randomUUID().toString(),
+            messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
             senderName = repository.getCurrentNickname(),
             senderEmoji = repository.emojiAvatar.value,
             receiverId = receiverId,
+            groupId = groupId,
+            groupName = groupName,
             content = content,
             timestamp = System.currentTimeMillis(),
             vibeType = vibeType
@@ -521,7 +537,7 @@ class BleFallbackController(
                     }
                 }
             }
-            vibeStore.insertMessage(payload)
+            vibeStore.upsertMessage(payload)
             synchronized(messageIdHistory) {
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
@@ -547,9 +563,11 @@ class BleFallbackController(
         internalScope.launch { _errors.emit(error) }
     }
 
-    override suspend fun broadcastMessage(content: String, vibeType: Int): MessagePayload? {
-        return sendMessage(content, null, vibeType)
+    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
+        return sendMessage(content, null, vibeType, messageId, groupId, groupName)
     }
+
+    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? = null
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
         // BLE implementation: Send to all connected links
@@ -557,15 +575,20 @@ class BleFallbackController(
         return sendMessage(content, null)?.copy(groupId = groupId)
     }
 
-    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int): MessagePayload? {
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int, groupId: String?, groupName: String?): MessagePayload? {
         Log.w(tag, "File sharing not supported on BLE Fallback")
         return null
     }
 
     override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
-        val groupId = UUID.randomUUID().toString()
+        val normalized = name.uppercase().trim()
+        val groupId = if (type == VibeGroup.SCOPE_PUBLIC) {
+            if (normalized == "AIR" || normalized == "THE AIR") VibeGroup.ID_AIR else "air_${normalized.replace(" ", "_")}"
+        } else {
+            UUID.randomUUID().toString()
+        }
         internalScope.launch(ioDispatcher) {
-            vibeStore.insertGroup(VibeGroup(id = groupId, name = name, memberIds = members + repository.getDeviceId(), type = type, isPersistent = type == VibeGroup.TYPE_TIE))
+            vibeStore.insertGroup(VibeGroup(id = groupId, name = name, memberIds = members + repository.getDeviceId(), scope = type))
         }
         return groupId
     }
@@ -576,9 +599,24 @@ class BleFallbackController(
         }
     }
 
+    override fun updateGroupScope(groupId: String, scope: Int) {
+        internalScope.launch(ioDispatcher) {
+            vibeStore.updateGroupScope(groupId, scope)
+        }
+    }
+
+    override fun initiateHistorySync(endpointId: String) {
+        Log.w(tag, "History sync not supported on BLE Fallback")
+    }
+
     override fun closeConnection() {
         activeGatts.values.forEach { 
-            try { it.disconnect(); it.close() } catch (e: Exception) {}
+            try { 
+                it.disconnect()
+                it.close() 
+            } catch (_: SecurityException) {
+                Log.w(tag, "SecurityException during disconnect")
+            } catch (_: Exception) {}
         }
         activeGatts.clear()
         vibeKeys.clear()

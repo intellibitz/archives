@@ -37,7 +37,7 @@
     <string name="error_unknown">अज्ञात त्रुटि</string>
 
     <!-- Chat Screen Additions -->
-    <string name="chat_stadium_lobby">स्टेडियम लॉबी</string>
+    <string name="chat_stadium_lobby">एयर लॉबी</string>
     <string name="chat_broadcast_desc">%1$d साथी जुड़े हुए हैं</string>
 
     <!-- Contacts Screen -->

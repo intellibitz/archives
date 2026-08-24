@@ -8,7 +8,8 @@ import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -24,7 +25,7 @@ class CompositeP2PControllerTest {
     private val bleController: BleFallbackController = mockk(relaxed = true)
     private lateinit var compositeController: CompositeP2PController
     
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
@@ -50,7 +51,7 @@ class CompositeP2PControllerTest {
     }
 
     @Test
-    fun `scanned devices are combined from both controllers`() = runTest {
+    fun `scanned devices are combined from both controllers`() = runTest(testDispatcher) {
         val device1 = P2PDevice("id1", "Nearby", "📱")
         val device2 = P2PDevice("id2", "BLE", "📶")
         
@@ -69,8 +70,9 @@ class CompositeP2PControllerTest {
     }
 
     @Test
-    fun `startDiscovery triggers both controllers`() {
+    fun `startDiscovery triggers both controllers`() = runTest(testDispatcher) {
         compositeController.startDiscovery()
+        runCurrent()
         verify { nearbyController.startDiscovery() }
         verify { bleController.startDiscovery() }
     }

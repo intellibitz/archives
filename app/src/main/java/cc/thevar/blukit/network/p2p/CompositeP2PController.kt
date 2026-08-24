@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 /**
  * Composite P2P Controller:
@@ -71,6 +70,11 @@ class CompositeP2PController(
 
     override val messages: StateFlow<List<MessagePayload>> = nearbyController.messages
 
+    override val discoveredAirs: SharedFlow<cc.thevar.blukit.domain.model.VibeGroup> = merge(
+        nearbyController.discoveredAirs,
+        bleController.discoveredAirs
+    ).shareIn(scope, SharingStarted.WhileSubscribed(5000))
+
     override fun startDiscovery() {
         nearbyController.startDiscovery()
         bleController.startDiscovery()
@@ -99,13 +103,19 @@ class CompositeP2PController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int): MessagePayload? {
-        return nearbyController.sendMessage(content, receiverId, vibeType) ?: bleController.sendMessage(content, receiverId, vibeType)
+    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
+        return nearbyController.sendMessage(content, receiverId, vibeType, messageId, groupId, groupName) ?: bleController.sendMessage(content, receiverId, vibeType, messageId, groupId, groupName)
     }
 
-    override suspend fun broadcastMessage(content: String, vibeType: Int): MessagePayload? {
-        val nearby = nearbyController.broadcastMessage(content, vibeType)
-        val ble = bleController.broadcastMessage(content, vibeType)
+    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?): MessagePayload? {
+        val nearby = nearbyController.broadcastMessage(content, vibeType, messageId, groupId, groupName)
+        val ble = bleController.broadcastMessage(content, vibeType, messageId, groupId, groupName)
+        return nearby ?: ble
+    }
+
+    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? {
+        val nearby = nearbyController.broadcastIdentityUpdate(oldName)
+        val ble = bleController.broadcastIdentityUpdate(oldName)
         return nearby ?: ble
     }
 
@@ -113,8 +123,8 @@ class CompositeP2PController(
         return nearbyController.sendGroupMessage(content, groupId) ?: bleController.sendGroupMessage(content, groupId)
     }
 
-    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int): MessagePayload? {
-        return nearbyController.sendFile(fileUri, receiverId, vibeType)
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int, groupId: String?, groupName: String?): MessagePayload? {
+        return nearbyController.sendFile(fileUri, receiverId, vibeType, groupId, groupName)
     }
 
     override fun startGroupVibe(name: String, members: Set<String>, type: Int): String {
@@ -124,6 +134,15 @@ class CompositeP2PController(
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
         nearbyController.updateGroupMembers(groupId, memberIds)
         bleController.updateGroupMembers(groupId, memberIds)
+    }
+
+    override fun updateGroupScope(groupId: String, scope: Int) {
+        nearbyController.updateGroupScope(groupId, scope)
+        bleController.updateGroupScope(groupId, scope)
+    }
+
+    override fun initiateHistorySync(endpointId: String) {
+        nearbyController.initiateHistorySync(endpointId)
     }
 
     override fun requestLink(device: P2PDevice) {

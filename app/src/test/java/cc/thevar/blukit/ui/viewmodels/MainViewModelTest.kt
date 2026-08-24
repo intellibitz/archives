@@ -6,7 +6,10 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -19,7 +22,7 @@ class MainViewModelTest {
     private lateinit var viewModel: MainViewModel
     
     private val nicknameFlow = MutableStateFlow<String?>("vibe")
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
@@ -38,22 +41,23 @@ class MainViewModelTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        clearAllMocks()
     }
 
     @Test
-    fun `test saveNickname calls repository`() = runTest {
+    fun `test saveNickname calls repository`() = runTest(testDispatcher) {
         viewModel.saveNickname("NewName")
         verify { repository.saveNickname("NewName") }
     }
 
     @Test
-    fun `test clearChatHistory calls vibeStore`() = runTest {
+    fun `test clearChatHistory calls vibeStore`() = runTest(testDispatcher) {
         viewModel.clearChatHistory()
         coVerify { vibeStore.clearAllMessages() }
     }
 
     @Test
-    fun `test logout calls repository logout`() = runTest {
+    fun `test logout calls repository logout`() = runTest(testDispatcher) {
         viewModel.logout()
         verify { repository.logout() }
     }

@@ -13,8 +13,10 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -39,7 +41,7 @@ class BleFallbackControllerTest {
     private val bleAdvertiser: BluetoothLeAdvertiser = mockk(relaxed = true)
 
     private lateinit var controller: BleFallbackController
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
@@ -67,28 +69,34 @@ class BleFallbackControllerTest {
     }
 
     @Test
-    fun `startDiscovery calls BLE scanner`() {
+    fun `startDiscovery calls BLE scanner`() = runTest(testDispatcher) {
         controller.startDiscovery()
+        runCurrent()
         verify { bleScanner.startScan(any<List<android.bluetooth.le.ScanFilter>>(), any<android.bluetooth.le.ScanSettings>(), any<android.bluetooth.le.ScanCallback>()) }
     }
 
     @Test
-    fun `stopDiscovery calls BLE scanner stop`() {
+    fun `stopDiscovery calls BLE scanner stop`() = runTest(testDispatcher) {
         controller.startDiscovery()
+        runCurrent()
         controller.stopDiscovery()
+        runCurrent()
         verify { bleScanner.stopScan(any<android.bluetooth.le.ScanCallback>()) }
     }
 
     @Test
-    fun `startAdvertising calls BLE advertiser`() {
+    fun `startAdvertising calls BLE advertiser`() = runTest(testDispatcher) {
         controller.startAdvertising()
+        runCurrent()
         verify { bleAdvertiser.startAdvertising(any(), any(), any()) }
     }
 
     @Test
-    fun `stopAdvertising calls BLE advertiser stop`() {
+    fun `stopAdvertising calls BLE advertiser stop`() = runTest(testDispatcher) {
         controller.startAdvertising()
+        runCurrent()
         controller.stopAdvertising()
+        runCurrent()
         verify { bleAdvertiser.stopAdvertising(any<android.bluetooth.le.AdvertiseCallback>()) }
     }
 }

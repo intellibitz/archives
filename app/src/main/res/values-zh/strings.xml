@@ -37,7 +37,7 @@
     <string name="error_unknown">未知错误</string>
 
     <!-- Chat Screen Additions -->
-    <string name="chat_stadium_lobby">体育场大厅</string>
+    <string name="chat_stadium_lobby">空气大厅</string>
     <string name="chat_broadcast_desc">已连接 %1$d 个节点</string>
 
     <!-- Contacts Screen -->

@@ -14,13 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.VibeGroup
 import cc.thevar.blukit.ui.screens.TieScreen
 import cc.thevar.blukit.ui.viewmodels.*
-import cc.thevar.blukit.ui.screens.RipplesField
+import cc.thevar.blukit.ui.screens.*
+import cc.thevar.blukit.ui.navigation.Route
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Groups
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import cc.thevar.blukit.ui.theme.StealthPrimary
 
@@ -39,8 +42,13 @@ fun PreviewRadarPhone() {
                 )
             ),
             localDeviceId = "me",
+            localNickname = "Me",
             localEmoji = "👤",
             activeBubbles = emptyList(),
+            airList = listOf(
+                P2PDevice("air_hub", "THE AIR", "🌬️") to 12,
+                P2PDevice("concert", "CONCERT", "🎸") to 45
+            ),
             onDeviceClick = {},
             onStartScan = {}
         )
@@ -53,7 +61,7 @@ fun PreviewChatPhone() {
     BlukitTheme {
         TieScreen(
             state = BluetoothUiState(
-                session = ResonanceSession(
+                session = VibeSession(
                     messages = listOf(
                         MessagePayload(
                             messageId = "1",
@@ -78,6 +86,7 @@ fun PreviewChatPhone() {
                 )
             ),
             localDeviceId = "me",
+            localNickname = "Me",
             localEmoji = "👤",
             groupId = "group1",
             onDisconnect = {},
@@ -104,6 +113,7 @@ fun PreviewRadarTablet() {
                 )
             ),
             localDeviceId = "me",
+            localNickname = "Me",
             localEmoji = "👤",
             activeBubbles = emptyList(),
             onDeviceClick = {},
@@ -158,6 +168,139 @@ fun PreviewFeatureGraphic() {
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
+    }
+}
+
+@Preview(name = "Harmony Hub - Full Phone", device = Devices.PHONE, showBackground = true)
+@Composable
+fun PreviewHarmonyHubFull() {
+    BlukitTheme {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                BlukitHarmonyTopBar(
+                    title = "THE AIR",
+                    icon = Icons.Rounded.Groups,
+                    currentRoute = Route.Blukit,
+                    onNavigate = {},
+                    userNickname = "BLUKIT",
+                    userEmoji = "👤",
+                    onUserNicknameChange = {},
+                    onResetProfile = {},
+                    userFocusRequester = null,
+                    isBluetoothOff = false,
+                    isLocationOff = false,
+                    isWifiOff = false,
+                    isPermissionMissing = false,
+                    isPermanentlyDenied = false,
+                    userCount = 12,
+                    isStealthMode = false,
+                    lowPowerMode = false,
+                    airIsStill = false,
+                    onToggleStealth = {},
+                    onToggleLowPower = {},
+                    onAwakenBluetooth = {},
+                    onAwakenLocation = {},
+                    onAwakenWifi = {},
+                    onGrantPermissions = {},
+                    onOpenSettings = {},
+                    onClearHistory = {},
+                    onShowPrivacy = {},
+                    onBack = {},
+                    onTitleClick = {}
+                )
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                BlukitVibeHub(
+                    currentRoute = Route.Blukit,
+                    messageText = "Hello Crowd",
+                    onMessageChange = {},
+                    onSend = {},
+                    vibeCount = 5,
+                    airIsStill = false,
+                    isSearchMode = true,
+                    onSearchToggle = {},
+                    onCreatePublicTie = {},
+                    incomingLinkRequests = emptySet(),
+                    selectedDevices = emptySet(),
+                    vibedPeers = emptySet(),
+                    onAcceptLink = {},
+                    onDenyLink = {},
+                    onStartSideVibe = {},
+                    onStartTie = {},
+                    onClearSelection = {},
+                    onAttachFile = {},
+                    onShowPrivacy = {}
+                )
+            }
+        }
+    }
+}
+
+@Preview(name = "VibingVibesTicker - Headers", device = Devices.PHONE, showBackground = true)
+@Composable
+fun PreviewVibingVibesTickerHeaders() {
+    val me = "me"
+    val user1 = "user1"
+    val user2 = "user2"
+    
+    val messages = listOf(
+        MessagePayload("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "THE AIR", content = "Public vibe!", timestamp = System.currentTimeMillis(), vibeType = MessagePayload.VIBE_SHOUT),
+        MessagePayload("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, vibeType = MessagePayload.VIBE_SILENCE),
+        MessagePayload("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private group", timestamp = System.currentTimeMillis() - 2000, vibeType = MessagePayload.VIBE_WHISPER)
+    )
+    
+    val groups = listOf(
+        VibeGroup("air_hub", "THE AIR", setOf(user1, me), VibeGroup.SCOPE_PUBLIC),
+        VibeGroup("silence", "SILENCE", setOf(me), VibeGroup.SCOPE_LOCAL),
+        VibeGroup("tie1", "PARTY", setOf(user2, me, "user3"), VibeGroup.SCOPE_PRIVATE)
+    )
+    
+    val energyList = listOf(
+        Pair(P2PDevice(user1, "Alice", "👩"), messages[0]),
+        Pair(P2PDevice(me, "ME", "👤"), messages[1]),
+        Pair(P2PDevice(user2, "Bob", "👨"), messages[2])
+    )
+
+    BlukitTheme(stealthMode = true) {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black).padding(16.dp)) {
+            VibingVibesTicker(
+                state = BluetoothUiState(
+                    session = VibeSession(
+                        messages = messages,
+                        groups = groups
+                    )
+                ),
+                energyList = energyList,
+                vibeCounts = mapOf(user1 to 1, me to 1, user2 to 5),
+                localDeviceId = me,
+                vibedPeers = emptySet(),
+                isGrouped = true,
+                onVibeClick = {},
+                onDeviceLongClick = {},
+                onToggleSelection = {},
+                onDeleteVibe = {},
+                reverseLayout = false
+            )
+        }
+    }
+}
+
+@Preview(name = "Air Ritual Ghost", device = Devices.PHONE, showBackground = true)
+@Composable
+fun PreviewAirRitualGhost() {
+    BlukitTheme {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+            AirRitualGhost(
+                onNameChange = {},
+                onDone = {},
+                onDismiss = {},
+                nearbyAirs = listOf(
+                    VibeGroup("1", "GATE 7", emptySet(), VibeGroup.SCOPE_PUBLIC),
+                    VibeGroup("2", "CONCERT", emptySet(), VibeGroup.SCOPE_PUBLIC)
+                )
+            )
         }
     }
 }

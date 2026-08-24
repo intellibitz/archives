@@ -11,7 +11,7 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 2.  Switch to the **Design** or **Split** view.
 3.  Locate the following previews:
     -   `PreviewRadarPhone`: The main discovery interface.
-    -   `PreviewChatPhone`: The Stadium Lobby messaging interface.
+    -   `PreviewChatPhone`: The Air Ticker messaging interface.
     -   `PreviewProfileStealth`: The OLED-optimized identity setup.
     -   `PreviewRadarTablet`: Highlighting the adaptive layout on larger screens.
 4.  Use the **"Copy Image"** or **"Screenshot"** icon in the preview header to save the high-resolution render.

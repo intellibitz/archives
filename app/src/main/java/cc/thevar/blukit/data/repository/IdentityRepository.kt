@@ -31,6 +31,7 @@ interface IdentityRepository {
     fun clearVibedPeers()
     fun blockUser(deviceId: String)
     fun unblockUser(deviceId: String)
+    fun resetProfile()
     fun logout()
 }
 
@@ -151,6 +152,15 @@ class IdentityRepositoryImpl(
         current.remove(deviceId)
         securePrefs.edit { putStringSet(KEY_BLOCKED_USERS, current.filterNotNull().toSet()) }
         _blockedUsers.value = current
+    }
+
+    override fun resetProfile() {
+        securePrefs.edit {
+            remove(KEY_NICKNAME)
+            remove(KEY_EMOJI)
+        }
+        _nickname.value = null
+        _emojiAvatar.value = "👤"
     }
 
     override fun toggleVibePeer(deviceId: String) {

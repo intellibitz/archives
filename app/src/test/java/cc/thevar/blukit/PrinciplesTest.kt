@@ -7,13 +7,24 @@ import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.network.p2p.NearbyP2PController
 import cc.thevar.blukit.domain.model.MessagePayload
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,7 +46,7 @@ class PrinciplesTest {
     private val hapticManager: HapticManager = mockk(relaxed = true)
     private val radioStateManager: cc.thevar.blukit.data.system.RadioStateManager = mockk(relaxed = true)
     private val cryptoManager: CryptoManager = mockk(relaxed = true)
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var controller: NearbyP2PController
 
@@ -65,20 +76,29 @@ class PrinciplesTest {
         )
     }
 
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+        unmockkStatic(android.util.Log::class)
+        clearAllMocks()
+    }
+
     // --- POWER TESTS ---
 
     @Test
-    fun `Power 1 & 4 - Vibes are decentralized and broadcast to everyone in The Vibes`() = runTest {
+    fun `Power 1 & 4 - Vibes are decentralized and broadcast to everyone in The Vibes`() = runTest(testDispatcher) {
         controller.broadcastMessage("Public Info")
-        coVerify { vibeStore.insertMessage(match { it.content == "Public Info" && it.receiverId == null }) }
+        runCurrent()
+        coVerify { vibeStore.upsertMessage(match { it.content == "Public Info" && it.receiverId == null }) }
     }
 
     @Test
-    fun `Power 2 - User can feel the vibes in The Vibes without any ties connected`() = runTest {
+    fun `Power 2 - User can feel the vibes in The Vibes without any ties connected`() = runTest(testDispatcher) {
         val result = controller.broadcastMessage("Lone Shoutout")
+        runCurrent()
         assertNotNull(result)
         assertEquals("Lone Shoutout", result?.content)
-        coVerify { vibeStore.insertMessage(any()) }
+        coVerify { vibeStore.upsertMessage(any()) }
     }
 
     // --- COMMANDMENT TESTS ---

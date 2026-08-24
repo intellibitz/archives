@@ -1,6 +1,7 @@
 package cc.thevar.blukit.data.local
 
 import android.content.Context
+import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.VibeGroup
@@ -9,19 +10,13 @@ import cc.thevar.blukit.data.local.entities.PeerEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File
+import java.io.FileOutputStream
 
 /**
  * BLUKIT ENERGY STORE.
@@ -42,6 +37,22 @@ class VibeStore(
     val messages: StateFlow<List<MessagePayload>> = _messages.asStateFlow()
 
     private val _groups = MutableStateFlow<Map<String, VibeGroup>>(emptyMap())
+    val activeGroups: StateFlow<List<VibeGroup>> = _groups
+        .map { it.values.filter { !it.isArchived }.toList() }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    val archivedGroups: StateFlow<List<VibeGroup>> = _groups
+        .map { it.values.filter { it.isArchived }.toList() }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
     val groups: StateFlow<List<VibeGroup>> = _groups
         .map { it.values.toList() }
         .stateIn(
@@ -55,8 +66,19 @@ class VibeStore(
 
     init {
         loadData()
+        // Ensure default ties exist immediately
+        if (!_groups.value.containsKey(VibeGroup.ID_AIR)) {
+            _groups.update { it + (VibeGroup.ID_AIR to VibeGroup(id = VibeGroup.ID_AIR, name = "THE AIR", scope = VibeGroup.SCOPE_PUBLIC)) }
+        }
+        if (!_groups.value.containsKey(VibeGroup.ID_SILENCE)) {
+            _groups.update { it + (VibeGroup.ID_SILENCE to VibeGroup(id = VibeGroup.ID_SILENCE, name = "SILENCE", scope = VibeGroup.SCOPE_LOCAL)) }
+        }
+        saveData()
         scope.launch {
             compactMessages()
+        }
+        scope.launch {
+            autoArchiveAirs()
         }
     }
 
@@ -118,7 +140,7 @@ class VibeStore(
             try {
                 val json = Json.encodeToString(message)
                 val encrypted = cryptoManager.encryptLocal(json.encodeToByteArray())
-                java.io.FileOutputStream(messagesLogFile, true).use { fos ->
+                FileOutputStream(messagesLogFile, true).use { fos ->
                     val dos = DataOutputStream(fos)
                     dos.writeInt(encrypted.size)
                     dos.write(encrypted)
@@ -175,14 +197,7 @@ class VibeStore(
     fun getAllMessages() = messages
 
     suspend fun insertMessage(message: MessagePayload) {
-        _messages.update { current ->
-            if (current.any { it.messageId == message.messageId }) {
-                current
-            } else {
-                appendMessageToLog(message)
-                current + message
-            }
-        }
+        upsertMessage(message)
     }
 
     suspend fun upsertMessage(message: MessagePayload) {
@@ -211,6 +226,23 @@ class VibeStore(
         updated?.let { appendMessageToLog(it) }
     }
 
+    suspend fun updateVibeScope(messageId: String, vibeType: Int) {
+        var updated: MessagePayload? = null
+        _messages.update { list ->
+            list.map {
+                if (it.messageId == messageId) {
+                    val m = it.copy(vibeType = vibeType)
+                    updated = m
+                    m
+                } else it
+            }
+        }
+        updated?.let { 
+            appendMessageToLog(it)
+            compactMessages()
+        }
+    }
+
     suspend fun clearAllMessages() {
         _messages.value = emptyList()
         if (messagesLogFile.exists()) messagesLogFile.delete()
@@ -229,7 +261,54 @@ class VibeStore(
             }
         }
         _messages.update { it.filter { m -> m.messageId != messageId } }
-        compactMessages() // Rewrite log without this message
+        compactMessages()
+    }
+
+    // Vault & Archiving
+    fun autoArchiveAirs() {
+        val now = System.currentTimeMillis()
+        _groups.update { current ->
+            current.mapValues { (id, group) ->
+                val isDefault = id == VibeGroup.ID_AIR || id == VibeGroup.ID_SILENCE
+                if (!isDefault && !group.isArchived && (now - group.lastVibeTimestamp) > VibeGroup.ARCHIVE_THRESHOLD_MS) {
+                    group.copy(isArchived = true)
+                } else {
+                    group
+                }
+            }
+        }
+        saveData()
+    }
+
+    fun restoreFromVault(groupId: String) {
+        _groups.update { current ->
+            current[groupId]?.let { 
+                current + (groupId to it.copy(isArchived = false, lastVibeTimestamp = System.currentTimeMillis()))
+            } ?: current
+        }
+        saveData()
+    }
+
+    suspend fun pruneMedia(thresholdMs: Long) {
+        val now = System.currentTimeMillis()
+        val allGroups = _groups.value.values
+        val allPinnedVibes = allGroups.flatMap { it.pinnedVibeIds }.toSet()
+
+        _messages.value.forEach { message ->
+            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedVibes) {
+                if (message.type == MessagePayload.TYPE_IMAGE || message.type == MessagePayload.TYPE_FILE) {
+                    message.content.let { path ->
+                        try {
+                            val file = File(path)
+                            if (file.exists() && file.absolutePath.contains(context.filesDir.absolutePath)) {
+                                file.delete()
+                                Log.i("VibeStore", "Pruned media: ${message.messageId}")
+                            }
+                        } catch (ignored: Exception) {}
+                    }
+                }
+            }
+        }
     }
 
     // Group Operations
@@ -251,6 +330,15 @@ class VibeStore(
         saveData()
     }
 
+    suspend fun updateGroupScope(groupId: String, scope: Int) {
+        _groups.update { current ->
+            current[groupId]?.let { 
+                current + (groupId to it.copy(scope = scope))
+            } ?: current
+        }
+        saveData()
+    }
+
     suspend fun updateGroupLastVibe(groupId: String, timestamp: Long) {
         _groups.update { current ->
             current[groupId]?.let { 
@@ -262,6 +350,42 @@ class VibeStore(
 
     suspend fun deleteGroup(id: String) {
         _groups.update { it - id }
+        saveData()
+    }
+
+    suspend fun pinVibe(groupId: String, messageId: String) {
+        _groups.update { current ->
+            current[groupId]?.let { group ->
+                current + (groupId to group.copy(pinnedVibeIds = group.pinnedVibeIds + messageId))
+            } ?: current
+        }
+        saveData()
+    }
+
+    suspend fun unpinVibe(groupId: String, messageId: String) {
+        _groups.update { current ->
+            current[groupId]?.let { group ->
+                current + (groupId to group.copy(pinnedVibeIds = group.pinnedVibeIds - messageId))
+            } ?: current
+        }
+        saveData()
+    }
+
+    suspend fun updateGroupProjection(groupId: String, emoji: String?) {
+        _groups.update { current ->
+            current[groupId]?.let { group ->
+                current + (groupId to group.copy(projectionEmoji = emoji))
+            } ?: current
+        }
+        saveData()
+    }
+
+    suspend fun addAirSchedule(groupId: String, schedule: cc.thevar.blukit.domain.model.AirSchedule) {
+        _groups.update { current ->
+            current[groupId]?.let { group ->
+                current + (groupId to group.copy(schedules = group.schedules + schedule))
+            } ?: current
+        }
         saveData()
     }
 

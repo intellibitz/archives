@@ -37,7 +37,7 @@
     <string name="error_unknown">Error desconocido</string>
 
     <!-- Chat Screen Additions -->
-    <string name="chat_stadium_lobby">Vestíbulo del Estadio</string>
+    <string name="chat_stadium_lobby">Vestíbulo del Aire</string>
     <string name="chat_broadcast_desc">%1$d pares conectados</string>
 
     <!-- Contacts Screen -->

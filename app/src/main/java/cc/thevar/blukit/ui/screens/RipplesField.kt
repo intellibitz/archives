@@ -1,6 +1,5 @@
 package cc.thevar.blukit.ui.screens
 
-import android.Manifest
 import android.os.Build
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -77,12 +76,13 @@ data class VibeRipple(
 )
 
 /**
- * BLUKIT: THE ATMOSPHERIC FIELD.
+ * BLUKIT: THE AIR FIELD.
  */
 @Composable
 fun RipplesField(
     state: BluetoothUiState,
     localDeviceId: String,
+    localNickname: String,
     localEmoji: String,
     activeBubbles: List<BubbleData>,
     selectedDevices: Set<String> = emptySet(),
@@ -93,14 +93,22 @@ fun RipplesField(
     lowPowerMode: Boolean = false,
     highlightedUserId: String? = null,
     subjectId: String? = null,
+    showGhostOnboarding: Boolean = false,
+    vibeGhostData: GhostVibeData? = null,
+    onNicknameChange: (String) -> Unit = {},
+    onOnboardingDone: () -> Unit = {},
+    onDismissGhost: () -> Unit = {},
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
     onStartScan: () -> Unit,
     onVibeSurge: (Float) -> Unit = {},
     drawBackground: Boolean = true,
     drawNodes: Boolean = true,
+    airList: List<Pair<P2PDevice, Int>> = emptyList(),
+    showAirGhost: Boolean = false,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit = {}
+    content: @Composable () -> Unit = {},
+    airRitualGhost: @Composable () -> Unit = {}
 ) {
     val density = LocalDensity.current
 
@@ -163,7 +171,7 @@ fun RipplesField(
         contentAlignment = Alignment.BottomCenter
     ) {
         if (drawBackground) {
-            StadiumBackground(energy = finalEnergy, lowPowerMode = lowPowerMode, onlyTies = onlyTies)
+            AirBackground(energy = finalEnergy, lowPowerMode = lowPowerMode, onlyTies = onlyTies)
         }
         
         RelayLayer(relayEvents, onlyTies = onlyTies)
@@ -183,19 +191,64 @@ fun RipplesField(
 
         if (drawNodes) {
             Box(modifier = Modifier.fillMaxSize().zIndex(2f)) {
-                ResonanceArcs(devices = displayDevices, energy = finalEnergy, onlyTies = onlyTies)
-                VibeNodes(
-                    devices = displayDevices,
-                    connectedLinks = state.session.connectedLinks,
-                    selectedDevices = selectedDevices,
-                    vibedPeers = vibedPeers,
-                    activeBubbles = activeBubbles,
-                    onlyTies = onlyTies,
-                    isFilterMode = isFilterMode,
-                    highlightedUserId = highlightedUserId,
-                    subjectId = subjectId,
-                    onDeviceClick = onDeviceClick,
-                    onDeviceLongClick = onDeviceLongClick
+                if (airList.isNotEmpty()) {
+                    AirNodes(
+                        airList = airList,
+                        vibedPeers = vibedPeers,
+                        onAirClick = onDeviceClick,
+                        onAirLongClick = onDeviceLongClick
+                    )
+                } else {
+                    VibeArcs(devices = displayDevices, energy = finalEnergy, onlyTies = onlyTies)
+                    VibeNodes(
+                        state = state,
+                        devices = displayDevices,
+                        connectedLinks = state.session.connectedLinks,
+                        selectedDevices = selectedDevices,
+                        vibedPeers = vibedPeers,
+                        activeBubbles = activeBubbles,
+                        onlyTies = onlyTies,
+                        isFilterMode = isFilterMode,
+                        highlightedUserId = highlightedUserId,
+                        subjectId = subjectId,
+                        onDeviceClick = onDeviceClick,
+                        onDeviceLongClick = onDeviceLongClick
+                    )
+                }
+            }
+        }
+
+        // DIM OVERLAY
+        val isGhostVisible = showGhostOnboarding || vibeGhostData != null || showAirGhost
+        AnimatedVisibility(
+            visible = isGhostVisible,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.fillMaxSize().zIndex(15f)
+        ) {
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)).clickable(enabled = false) {})
+        }
+
+        if (showGhostOnboarding) {
+            Box(modifier = Modifier.fillMaxSize().zIndex(20f), contentAlignment = Alignment.Center) {
+                OnboardingGhost(
+                    nickname = localNickname,
+                    emoji = localEmoji,
+                    onNicknameChange = onNicknameChange,
+                    onDone = onOnboardingDone
+                )
+            }
+        }
+        
+        Box(modifier = Modifier.fillMaxSize().zIndex(25f), contentAlignment = Alignment.Center) {
+            airRitualGhost()
+        }
+
+        if (vibeGhostData != null) {
+            Box(modifier = Modifier.fillMaxSize().zIndex(30f)) {
+                VibeGhost(
+                    data = vibeGhostData,
+                    onDismiss = onDismissGhost
                 )
             }
         }
@@ -212,10 +265,10 @@ fun RipplesField(
 }
 
 @Composable
-private fun ResonanceArcs(devices: List<P2PDevice>, energy: Float, onlyTies: Boolean = false) {
+private fun VibeArcs(devices: List<P2PDevice>, energy: Float, onlyTies: Boolean = false) {
     if (devices.size < 2 || energy < 0.2f) return
     
-    val infiniteTransition = rememberInfiniteTransition(label = "Resonance")
+    val infiniteTransition = rememberInfiniteTransition(label = "Vibration")
     val flow by infiniteTransition.animateFloat(
         initialValue = 0f, targetValue = 1f,
         animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
@@ -237,7 +290,7 @@ private fun ResonanceArcs(devices: List<P2PDevice>, energy: Float, onlyTies: Boo
                 val d2 = devices[j]
                 val dist = (nodeOffsets[i] - nodeOffsets[j]).getDistance()
                 
-                // Only resonate if they are "close" in the field and energy is high
+                // Only vibe if they are "close" in the field and energy is high
                 if (dist < 300.dp.toPx()) {
                     val alpha = ((1f - dist / 300.dp.toPx()) * energy * 0.3f).coerceIn(0f, 0.2f)
                     val color = if (d1.isConnected && d2.isConnected) StealthRose else arcColor
@@ -259,7 +312,7 @@ private fun ResonanceArcs(devices: List<P2PDevice>, energy: Float, onlyTies: Boo
 }
 
 @Composable
-private fun StadiumBackground(energy: Float, lowPowerMode: Boolean, onlyTies: Boolean = false) {
+private fun AirBackground(energy: Float, lowPowerMode: Boolean, onlyTies: Boolean = false) {
     val dotsCount = if (lowPowerMode) 200 else 800
     val points = remember {
         List(dotsCount) { 
@@ -267,14 +320,14 @@ private fun StadiumBackground(energy: Float, lowPowerMode: Boolean, onlyTies: Bo
         }
     }
     
-    val infiniteTransition = rememberInfiniteTransition(label = "Atmosphere")
+    val infiniteTransition = rememberInfiniteTransition(label = "Air")
     val time by infiniteTransition.animateFloat(
         initialValue = 0f, targetValue = 1f, 
         animationSpec = infiniteRepeatable(tween(30000, easing = LinearEasing)), 
         label = "Time"
     )
 
-    val atmosphereColor = if (onlyTies) StealthRose else StealthPrimary
+    val airColor = if (onlyTies) StealthRose else StealthPrimary
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         // High-Fidelity Energy Bloom
@@ -282,7 +335,7 @@ private fun StadiumBackground(energy: Float, lowPowerMode: Boolean, onlyTies: Bo
             val bloomAlpha = ((energy - 0.4f) * 0.12f).coerceIn(0f, 0.1f)
             drawCircle(
                 brush = Brush.radialGradient(
-                    0.0f to atmosphereColor.copy(alpha = bloomAlpha),
+                    0.0f to airColor.copy(alpha = bloomAlpha),
                     1.0f to Color.Transparent,
                     center = center
                 ),
@@ -300,7 +353,7 @@ private fun StadiumBackground(energy: Float, lowPowerMode: Boolean, onlyTies: Bo
             val alpha = (0.05f + 0.15f * abs(sin(movementProgress * PI.toFloat() * 4)) + energy * 0.3f).coerceIn(0.02f, 0.5f)
             val currentPos = Offset(offset.x * size.width + driftX, offset.y * size.height + driftY)
             
-            val color = if (seed > 0.8f) StealthRose else atmosphereColor
+            val color = if (seed > 0.8f) StealthRose else airColor
             drawCircle(color = color.copy(alpha = alpha), radius = dotSize.dp.toPx() * (1f + energy * 0.8f), center = currentPos)
         }
     }
@@ -380,6 +433,7 @@ private fun VibesConnectivity(devices: List<P2PDevice>, onlyTies: Boolean = fals
 
 @Composable
 private fun VibeNodes(
+    state: BluetoothUiState,
     devices: List<P2PDevice>, 
     connectedLinks: Set<String>,
     selectedDevices: Set<String>,
@@ -421,7 +475,41 @@ private fun VibeNodes(
                     onClick = { onDeviceClick(device) },
                     onLongClick = { onDeviceLongClick(device) },
                     isFilterActive = isFilterMode,
-                    isHighlighted = device.id == highlightedUserId
+                    isHighlighted = device.id == highlightedUserId,
+                    projectionEmoji = state.session.groups.find { it.id == device.persistentId || it.id == device.id }?.projectionEmoji
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AirNodes(
+    airList: List<Pair<P2PDevice, Int>>, 
+    vibedPeers: Set<String>,
+    onAirClick: (P2PDevice) -> Unit,
+    onAirLongClick: (P2PDevice) -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        airList.forEachIndexed { index, (device, count) ->
+            val radiusValue = if (airList.size == 1) 0f else 90f
+            val angle = (index.toDouble() / airList.size) * 2 * PI
+            
+            val xOffset = (radiusValue * cos(angle)).toFloat().dp
+            val yOffset = (radiusValue * sin(angle)).toFloat().dp
+            
+            val isVibed = device.id in vibedPeers
+
+            Box(modifier = Modifier.offset(xOffset, yOffset)) {
+                VibeAirSignature(
+                    device = device,
+                    memberCount = count,
+                    isVibed = isVibed,
+                    size = if (airList.size == 1) 84.dp else 60.dp,
+                    modifier = Modifier.combinedClickable(
+                        onClick = { onAirClick(device) },
+                        onLongClick = { onAirLongClick(device) }
+                    )
                 )
             }
         }
@@ -437,6 +525,9 @@ private fun VibeDot(
     isHighlighted: Boolean = false
 ) {
     val coordinates = LocalPersonaCoordinates.current
+    val activeVibeId = LocalActiveVibeId.current.value
+    val key = device.persistentId ?: device.id
+    val isVibing = activeVibeId == key
     val infiniteTransition = rememberInfiniteTransition(label = "DotAnim")
     val dotAlpha by infiniteTransition.animateFloat(
         initialValue = if (isHighlighted) 0.8f else 0.3f,
@@ -450,9 +541,11 @@ private fun VibeDot(
             .offset(xOffset, yOffset)
             .onGloballyPositioned { 
                 val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                val key = device.persistentId ?: device.id
                 val current = coordinates[key] ?: PersonaConnectionPoints()
-                coordinates[key] = current.copy(field = it.positionInRoot() + center)
+                coordinates[key] = current.copy(
+                    field = it.positionInRoot() + center,
+                    vibe = if (isVibing) it.positionInRoot() + center else null
+                )
             }
             .size(32.dp) // Large touch area
             .clickable(onClick = onClick),
@@ -490,9 +583,13 @@ private fun VibeNode(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     isFilterActive: Boolean = false,
-    isHighlighted: Boolean = false
+    isHighlighted: Boolean = false,
+    projectionEmoji: String? = null
 ) {
     val coordinates = LocalPersonaCoordinates.current
+    val activeVibeId = LocalActiveVibeId.current.value
+    val key = device.persistentId ?: device.id
+    val isVibing = activeVibeId == key
     val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
 
     Box(
@@ -500,9 +597,11 @@ private fun VibeNode(
             .offset(xOffset, yOffset)
             .onGloballyPositioned { 
                 val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                val key = device.persistentId ?: device.id
                 val current = coordinates[key] ?: PersonaConnectionPoints()
-                coordinates[key] = current.copy(field = it.positionInRoot() + center)
+                coordinates[key] = current.copy(
+                    field = it.positionInRoot() + center,
+                    vibe = if (isVibing) it.positionInRoot() + center else null
+                )
             }
             .size(nodeSize * 2.2f) // Expanded hit area
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
@@ -515,7 +614,8 @@ private fun VibeNode(
             isPeerVibed = isPeerVibed,
             onlyTies = onlyTies,
             size = nodeSize,
-            isHighlighted = isHighlighted
+            isHighlighted = isHighlighted,
+            projectionEmoji = projectionEmoji
         )
 
         // Active Bubble Overlay

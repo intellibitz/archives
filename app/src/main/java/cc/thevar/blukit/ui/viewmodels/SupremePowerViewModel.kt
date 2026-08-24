@@ -9,4 +9,8 @@ class SupremePowerViewModel(
     private val supremePowerManager: SupremePowerManager
 ) : ViewModel() {
     val report: StateFlow<SupremePowerReport> = supremePowerManager.report
+
+    fun updateLocation(location: android.location.Location) {
+        supremePowerManager.updateLocation(location)
+    }
 }

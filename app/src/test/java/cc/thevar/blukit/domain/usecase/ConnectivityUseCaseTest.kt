@@ -7,7 +7,10 @@ import cc.thevar.blukit.network.p2p.P2PController
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
@@ -22,6 +25,8 @@ class ConnectivityUseCaseTest {
     private val permissionFlow = MutableStateFlow(false)
     
 
+    private val testDispatcher = StandardTestDispatcher()
+
     @Before
     fun setUp() {
         mockkStatic(android.util.Log::class)
@@ -33,8 +38,14 @@ class ConnectivityUseCaseTest {
         every { permissionManager.permissionsGranted } returns permissionFlow
     }
 
+    @After
+    fun tearDown() {
+        unmockkStatic(android.util.Log::class)
+        clearAllMocks()
+    }
+
     @Test
-    fun `test Harmony achieved triggers discovery and advertising`() = runTest {
+    fun `test Harmony achieved triggers discovery and advertising`() = runTest(testDispatcher) {
         val useCase = ConnectivityUseCase(p2pController, radioStateManager, permissionManager, backgroundScope)
         
         harmonyFlow.value = RadioStates(isBluetoothEnabled = true, isLocationEnabled = true, isWifiEnabled = true)
@@ -47,7 +58,7 @@ class ConnectivityUseCaseTest {
     }
 
     @Test
-    fun `test Harmony lost stops discovery and advertising`() = runTest {
+    fun `test Harmony lost stops discovery and advertising`() = runTest(testDispatcher) {
         val useCase = ConnectivityUseCase(p2pController, radioStateManager, permissionManager, backgroundScope)
         
         // First achieve harmony
