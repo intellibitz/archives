@@ -198,8 +198,13 @@ fun BlukitApp(
     var showAirGhost by remember { mutableStateOf(false) }
     var airProposalName by remember { mutableStateOf("") }
     var showPrivacyProtocol by remember { mutableStateOf(false) }
-    var showOnboarding by remember(nickname, crowdIsStill) { 
-        mutableStateOf((nickname == null || nickname == "?" || nickname == "" || nickname == "SET NAME") && !crowdIsStill) 
+    var showOnboarding by remember { mutableStateOf(false) }
+    
+    // IDENTITY RITUAL: Trigger onboarding if identity is unformed and mesh is awake
+    LaunchedEffect(nickname, crowdIsStill) {
+        if ((nickname == null || nickname == "?" || nickname == "" || nickname == "SET NAME") && !crowdIsStill) {
+            showOnboarding = true
+        }
     }
 
     val filePickerLauncher = rememberLauncherForActivityResult(

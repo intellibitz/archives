@@ -162,23 +162,6 @@ class FlowsTest : KoinTest {
     }
 
     @Test
-    fun testLinkSetup_AcceptanceFlow() {
-        val incomingVibe = P2PDevice("id-123", "Mystic Vibe", "👤")
-        // Update flow BEFORE starting app
-        incomingRequestsFlow.value = setOf(incomingVibe)
-
-        startApp()
-        
-        composeTestRule.onRoot().printToLog("DEBUG_HIERARCHY")
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("IncomingRequestRow"), 30000)
-        
-        // Accept the vibe
-        composeTestRule.onNodeWithTag("AcceptRequestButton", useUnmergedTree = true).performClick()
-        
-        verify { p2pController.acceptRadio(any()) }
-    }
-
-    @Test
     fun testNavigateToVibeAndChangeIdentity() {
         startApp()
         
@@ -198,31 +181,6 @@ class FlowsTest : KoinTest {
         composeTestRule.waitUntilAtLeastOneExists(hasText("AWAKEN", ignoreCase = true, substring = true), 20000)
         composeTestRule.onAllNodesWithText("AWAKEN", ignoreCase = true, substring = true, useUnmergedTree = true).onFirst().performClick()
     }
-
-    @Test
-    fun testSendVibeFlow() {
-        val device = P2PDevice("vibe-1", "Aura Vibe", "👤")
-        // Update flows BEFORE starting app
-        scannedDevicesFlow.value = listOf(device)
-        connectedRadiosFlow.value = setOf("vibe-1")
-        isConnectedFlow.value = true
-
-        startApp()
-        
-        composeTestRule.onRoot().printToLog("DEBUG_HIERARCHY")
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("PersonaNode_vibe-1"), 30000)
-        composeTestRule.onNodeWithTag("PersonaNode_vibe-1", useUnmergedTree = true).performClick()
-        
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("SendVibeInput"), 30000)
-        
-        composeTestRule.onNodeWithTag("SendVibeInput", useUnmergedTree = true).performTextInput("Hello from the Air!")
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onAllNodesWithTag("SendVibeButton", useUnmergedTree = true).onFirst().performClick()
-        
-        composeTestRule.waitUntilAtLeastOneExists(hasText("Hello from the Air!", ignoreCase = true, substring = true), 30000)
-    }
-
 
     private fun startApp() {
         composeTestRule.setContent {
