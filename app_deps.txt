@@ -1,4 +1,0 @@
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build 
-Calculating task graph as configuration cache cannot be reused because init script '../../../../../tmp/ijMapper1.gradle' and 4 more have been removed.
-Configuration cache entry stored.

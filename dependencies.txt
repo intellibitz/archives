@@ -1,2 +1,0 @@
-Calculating task graph as no cached configuration is available for tasks: :app:dependencies
-Configuration cache entry stored.
