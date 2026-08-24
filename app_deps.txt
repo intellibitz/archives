@@ -1,0 +1,5 @@
+Calculating task graph as configuration cache cannot be reused because init script '../../../../../tmp/ijMapper1.gradle' and 4 more have been removed.
+
+> Configure project :
+The Dependency Analysis plugin is only known to work with versions of AGP between 8.10.0 and 9.2.1. You are using 9.3.1. Proceed at your own risk.
+Configuration cache entry stored.
