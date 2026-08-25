@@ -14,7 +14,7 @@ data class MessagePayload(
     val content: String,
     val timestamp: Long,
     val type: Int = TYPE_TEXT,
-    val vibeType: Int = VIBE_PUBLIC,
+    val pulseType: Int = PULSE_PUBLIC,
     val status: Int = STATUS_SENT,
     val parentMessageId: String? = null,
     val isMeta: Boolean = false,
@@ -51,13 +51,13 @@ data class MessagePayload(
         const val TASK_IN_PROGRESS = 1
         const val TASK_COMPLETED = 2
 
-        const val VIBE_SHOUT = 0
-        const val VIBE_WHISPER = 1
-        const val VIBE_SILENCE = 3
+        const val PULSE_SHOUT = 0
+        const val PULSE_WHISPER = 1
+        const val PULSE_SILENCE = 3
 
-        const val VIBE_PUBLIC = VIBE_SHOUT
-        const val VIBE_LOCAL = VIBE_SILENCE
-        const val VIBE_PRIVATE = VIBE_WHISPER
+        const val PULSE_PUBLIC = PULSE_SHOUT
+        const val PULSE_LOCAL = PULSE_SILENCE
+        const val PULSE_PRIVATE = PULSE_WHISPER
 
         const val STATUS_PENDING = 0
         const val STATUS_SENT = 1

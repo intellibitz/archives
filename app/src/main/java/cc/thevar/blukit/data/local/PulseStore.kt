@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.data.local.entities.ContactEntity
 import cc.thevar.blukit.data.local.entities.PeerEntity
 import kotlinx.coroutines.CoroutineScope
@@ -19,15 +19,15 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * BLUKIT ENERGY STORE.
+ * BLUKIT PULSE STORE.
  */
-class VibeStore(
+class PulseStore(
     private val context: Context,
     private val cryptoManager: CryptoManager,
     private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
     private val historyRetentionLimit: Int = 1000
 ) {
-    private val messagesLogFile = File(context.filesDir, "vibes_log.bin")
+    private val pulsesLogFile = File(context.filesDir, "pulses_log.bin")
     private val groupsFile = File(context.filesDir, "groups.bin")
     private val peersFile = File(context.filesDir, "peers.bin")
     private val contactsFile = File(context.filesDir, "contacts.bin")
@@ -37,8 +37,8 @@ class VibeStore(
     private val _messages = MutableStateFlow<List<MessagePayload>>(emptyList())
     val messages: StateFlow<List<MessagePayload>> = _messages.asStateFlow()
 
-    private val _groups = MutableStateFlow<Map<String, VibeGroup>>(emptyMap())
-    val activeGroups: StateFlow<List<VibeGroup>> = _groups
+    private val _groups = MutableStateFlow<Map<String, Resonance>>(emptyMap())
+    val activeGroups: StateFlow<List<Resonance>> = _groups
         .map { it.values.filter { !it.isArchived }.toList() }
         .stateIn(
             scope = scope,
@@ -46,7 +46,7 @@ class VibeStore(
             initialValue = emptyList()
         )
 
-    val archivedGroups: StateFlow<List<VibeGroup>> = _groups
+    val archivedGroups: StateFlow<List<Resonance>> = _groups
         .map { it.values.filter { it.isArchived && !it.isVaulted }.toList() }
         .stateIn(
             scope = scope,
@@ -54,7 +54,7 @@ class VibeStore(
             initialValue = emptyList()
         )
 
-    val vaultedGroups: StateFlow<List<VibeGroup>> = _groups
+    val vaultedGroups: StateFlow<List<Resonance>> = _groups
         .map { it.values.filter { it.isVaulted }.toList() }
         .stateIn(
             scope = scope,
@@ -62,7 +62,7 @@ class VibeStore(
             initialValue = emptyList()
         )
 
-    val groups: StateFlow<List<VibeGroup>> = _groups
+    val groups: StateFlow<List<Resonance>> = _groups
         .map { it.values.toList() }
         .stateIn(
             scope = scope,
@@ -76,11 +76,11 @@ class VibeStore(
     init {
         loadData()
         // Ensure default ties exist immediately
-        if (!_groups.value.containsKey(VibeGroup.ID_CROWD)) {
-            _groups.update { it + (VibeGroup.ID_CROWD to VibeGroup(id = VibeGroup.ID_CROWD, name = "THE CROWD", scope = VibeGroup.SCOPE_PUBLIC)) }
+        if (!_groups.value.containsKey(Resonance.ID_CROWD)) {
+            _groups.update { it + (Resonance.ID_CROWD to Resonance(id = Resonance.ID_CROWD, name = "THE CROWD", scope = Resonance.SCOPE_PUBLIC)) }
         }
-        if (!_groups.value.containsKey(VibeGroup.ID_SILENCE)) {
-            _groups.update { it + (VibeGroup.ID_SILENCE to VibeGroup(id = VibeGroup.ID_SILENCE, name = "SILENCE", scope = VibeGroup.SCOPE_LOCAL)) }
+        if (!_groups.value.containsKey(Resonance.ID_SILENCE)) {
+            _groups.update { it + (Resonance.ID_SILENCE to Resonance(id = Resonance.ID_SILENCE, name = "SILENCE", scope = Resonance.SCOPE_LOCAL)) }
         }
         saveData()
         scope.launch {
@@ -92,10 +92,10 @@ class VibeStore(
     }
 
     private fun loadData() {
-        if (messagesLogFile.exists()) {
+        if (pulsesLogFile.exists()) {
             try {
                 val messageMap = mutableMapOf<String, MessagePayload>()
-                messagesLogFile.inputStream().use { fis ->
+                pulsesLogFile.inputStream().use { fis ->
                     val dis = DataInputStream(fis)
                     while (fis.available() > 0) {
                         val length = dis.readInt()
@@ -149,7 +149,7 @@ class VibeStore(
             try {
                 val json = Json.encodeToString(message)
                 val encrypted = cryptoManager.encryptLocal(json.encodeToByteArray())
-                FileOutputStream(messagesLogFile, true).use { fos ->
+                FileOutputStream(pulsesLogFile, true).use { fos ->
                     val dos = DataOutputStream(fos)
                     dos.writeInt(encrypted.size)
                     dos.write(encrypted)
@@ -163,7 +163,7 @@ class VibeStore(
     suspend fun compactMessages() {
         val currentMessages = _messages.value
 
-        val tempFile = File(context.filesDir, "vibes_log.tmp")
+        val tempFile = File(context.filesDir, "pulses_log.tmp")
         try {
             tempFile.outputStream().use { fos ->
                 val dos = DataOutputStream(fos)
@@ -175,7 +175,7 @@ class VibeStore(
                 }
             }
             if (tempFile.exists()) {
-                tempFile.renameTo(messagesLogFile)
+                tempFile.renameTo(pulsesLogFile)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -210,7 +210,7 @@ class VibeStore(
     }
 
     suspend fun upsertMessage(message: MessagePayload) {
-        if (message.content.isBlank()) return // Validation: Ignore empty vibes
+        if (message.content.isBlank()) return // Validation: Ignore empty pulses
 
         _messages.update { current ->
             val existingIndex = current.indexOfFirst { it.messageId == message.messageId }
@@ -249,25 +249,25 @@ class VibeStore(
         val group = getGroup(groupId) ?: return
         val currentMessages = _messages.value.filter { it.groupId == groupId }
         
-        // DYNAMIC LIMITS: Pinned and meta-vibes are kept longer
-        val maxLimit = if (group.scope == VibeGroup.SCOPE_PRIVATE) 2000 else historyRetentionLimit
+        // DYNAMIC LIMITS: Pinned and meta-pulses are kept longer
+        val maxLimit = if (group.scope == Resonance.SCOPE_PRIVATE) 2000 else historyRetentionLimit
         
         if (currentMessages.size > maxLimit) {
             val toRemoveCount = currentMessages.size - maxLimit
             
             // PRIORITY-AWARE EVICTION:
-            // 1. Keep Pinned vibes
+            // 1. Keep Pinned pulses
             // 2. Keep Task updates (Assignments)
             // 3. Keep meta-headers for threads
             val messagesToDelete = currentMessages
-                .filter { it.messageId !in group.pinnedVibeIds }
+                .filter { it.messageId !in group.pinnedPulseIds }
                 .filter { it.type != MessagePayload.TYPE_ASSIGNMENT_TASK }
                 .filter { !it.isMeta }
                 .sortedBy { it.timestamp }
                 .take(toRemoveCount)
 
             messagesToDelete.forEach { deleteMessage(it.messageId) }
-            Log.i("VibeStore", "Smarter Eviction for $groupId. Removed ${messagesToDelete.size} low-priority vibes.")
+            Log.i("PulseStore", "Smarter Eviction for $groupId. Removed ${messagesToDelete.size} low-priority pulses.")
         }
     }
 
@@ -285,12 +285,12 @@ class VibeStore(
         updated?.let { appendMessageToLog(it) }
     }
 
-    suspend fun updateVibeScope(messageId: String, vibeType: Int) {
+    suspend fun updatePulseScope(messageId: String, pulseType: Int) {
         var updated: MessagePayload? = null
         _messages.update { list ->
             list.map {
                 if (it.messageId == messageId) {
-                    val m = it.copy(vibeType = vibeType)
+                    val m = it.copy(pulseType = pulseType)
                     updated = m
                     m
                 } else it
@@ -304,7 +304,7 @@ class VibeStore(
 
     suspend fun clearAllMessages() {
         _messages.value = emptyList()
-        if (messagesLogFile.exists()) messagesLogFile.delete()
+        if (pulsesLogFile.exists()) pulsesLogFile.delete()
     }
 
     suspend fun deleteMessage(messageId: String) {
@@ -328,8 +328,8 @@ class VibeStore(
         val now = System.currentTimeMillis()
         _groups.update { current ->
             current.mapValues { (id, group) ->
-                val isDefault = id == VibeGroup.ID_CROWD || id == VibeGroup.ID_SILENCE
-                if (!isDefault && !group.isArchived && !group.isVaulted && (now - group.lastVibeTimestamp) > VibeGroup.ARCHIVE_THRESHOLD_MS) {
+                val isDefault = id == Resonance.ID_CROWD || id == Resonance.ID_SILENCE
+                if (!isDefault && !group.isArchived && !group.isVaulted && (now - group.lastPulseTimestamp) > Resonance.ARCHIVE_THRESHOLD_MS) {
                     group.copy(isArchived = true)
                 } else {
                     group
@@ -360,7 +360,7 @@ class VibeStore(
     fun restoreFromVault(groupId: String) {
         _groups.update { current ->
             current[groupId]?.let { 
-                current + (groupId to it.copy(isArchived = false, isVaulted = false, lastVibeTimestamp = System.currentTimeMillis()))
+                current + (groupId to it.copy(isArchived = false, isVaulted = false, lastPulseTimestamp = System.currentTimeMillis()))
             } ?: current
         }
         saveData()
@@ -369,7 +369,7 @@ class VibeStore(
     suspend fun pruneMedia(thresholdMs: Long) {
         val now = System.currentTimeMillis()
         val allGroups = _groups.value.values
-        val allPinnedVibes = allGroups.flatMap { it.pinnedVibeIds }.toSet()
+        val allPinnedPulses = allGroups.flatMap { it.pinnedPulseIds }.toSet()
         val vaultedGroupIds = allGroups.filter { it.isVaulted }.map { it.id }.toSet()
         val seniorVaultIds = allGroups.filter { it.isSeniorVault }.map { it.id }.toSet()
 
@@ -378,14 +378,14 @@ class VibeStore(
             val isFromSeniorVault = message.groupId in seniorVaultIds
             val isPermanentMemory = message.type == MessagePayload.TYPE_MEMORY
             
-            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedVibes && !isFromVaultedGroup && !isFromSeniorVault && !isPermanentMemory) {
+            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedPulses && !isFromVaultedGroup && !isFromSeniorVault && !isPermanentMemory) {
                 if (message.type == MessagePayload.TYPE_IMAGE || message.type == MessagePayload.TYPE_FILE) {
                     message.content.let { path ->
                         try {
                             val file = File(path)
                             if (file.exists() && file.absolutePath.contains(context.filesDir.absolutePath)) {
                                 file.delete()
-                                Log.i("VibeStore", "Pruned media: ${message.messageId}")
+                                Log.i("PulseStore", "Pruned media: ${message.messageId}")
                             }
                         } catch (ignored: Exception) {}
                     }
@@ -395,7 +395,7 @@ class VibeStore(
     }
 
     // Group Operations
-    suspend fun insertGroup(group: VibeGroup) {
+    suspend fun insertGroup(group: Resonance) {
         _groups.update { it + (group.id to group) }
         saveData()
     }
@@ -406,7 +406,7 @@ class VibeStore(
         _groups.update { current ->
             current[groupId]?.let { group ->
                 // LIMIT ENFORCEMENT: Absolute cap on section size
-                val cappedMembers = memberIds.take(VibeGroup.MAX_MEMBERS_PER_SECTION).toSet()
+                val cappedMembers = memberIds.take(Resonance.MAX_MEMBERS_PER_SECTION).toSet()
                 
                 val updatedGroup = if (cappedMembers.size > group.partitionThreshold) {
                     // PARTITIONING: Split members into sections for scalability
@@ -432,10 +432,10 @@ class VibeStore(
         saveData()
     }
 
-    suspend fun updateGroupLastVibe(groupId: String, timestamp: Long) {
+    suspend fun updateGroupLastPulse(groupId: String, timestamp: Long) {
         _groups.update { current ->
             current[groupId]?.let { 
-                current + (groupId to it.copy(lastVibeTimestamp = timestamp))
+                current + (groupId to it.copy(lastPulseTimestamp = timestamp))
             } ?: current
         }
         saveData()
@@ -446,19 +446,19 @@ class VibeStore(
         saveData()
     }
 
-    suspend fun pinVibe(groupId: String, messageId: String) {
+    suspend fun pinPulse(groupId: String, messageId: String) {
         _groups.update { current ->
             current[groupId]?.let { group ->
-                current + (groupId to group.copy(pinnedVibeIds = group.pinnedVibeIds + messageId))
+                current + (groupId to group.copy(pinnedPulseIds = group.pinnedPulseIds + messageId))
             } ?: current
         }
         saveData()
     }
 
-    suspend fun unpinVibe(groupId: String, messageId: String) {
+    suspend fun unpinPulse(groupId: String, messageId: String) {
         _groups.update { current ->
             current[groupId]?.let { group ->
-                current + (groupId to group.copy(pinnedVibeIds = group.pinnedVibeIds - messageId))
+                current + (groupId to group.copy(pinnedPulseIds = group.pinnedPulseIds - messageId))
             } ?: current
         }
         saveData()

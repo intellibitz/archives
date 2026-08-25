@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import androidx.compose.ui.zIndex
 import cc.thevar.blukit.ui.theme.StealthPrimary
@@ -85,12 +85,12 @@ fun ChainField(
     onSearchToggle: (() -> Unit)? = null,
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
-    onStartSideVibe: () -> Unit = {},
+    onStartSidePulse: () -> Unit = {},
     onClearSelection: () -> Unit = {},
     crowdIsStill: Boolean = false,
     onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
-    onNavigateToVibe: (String) -> Unit = {}
+    onNavigateToPulse: (String) -> Unit = {}
 ) {
     var showTip by remember { mutableStateOf(true) }
     var localFocusedId by remember(externalFocusedId) { mutableStateOf(externalFocusedId) }
@@ -100,40 +100,40 @@ fun ChainField(
     }
 
     val childLinks = remember(state.session.groups, groupId) {
-        state.session.groups.filter { it.parentId == groupId && it.scope != VibeGroup.SCOPE_PUBLIC }
+        state.session.groups.filter { it.parentId == groupId && it.scope != Resonance.SCOPE_PUBLIC }
     }
 
-    val vibesData = remember(state.session.messages, groupId, localDeviceId, localFocusedId) {
+    val pulsesData = remember(state.session.messages, groupId, localDeviceId, localFocusedId) {
         if (groupId == null) {
             Triple(emptyList<MessagePayload>(), emptyMap<String, Int>(), false)
         } else {
-            val baseVibes = state.session.messages.filter { it.groupId == groupId && it.parentMessageId == null }
-            val counts = baseVibes.groupBy { it.senderId }.mapValues { it.value.size }
-            val sorted = baseVibes.sortedBy { it.timestamp }
+            val basePulses = state.session.messages.filter { it.groupId == groupId && it.parentMessageId == null }
+            val counts = basePulses.groupBy { it.senderId }.mapValues { it.value.size }
+            val sorted = basePulses.sortedBy { it.timestamp }
             Triple(sorted, counts, localFocusedId != null)
         }
     }
 
-    val (chatVibes, vibeCounts, _) = vibesData
+    val (chatPulses, pulseCounts, _) = pulsesData
     val memberSet = remember(group, localDeviceId) { (group?.memberIds ?: emptySet()) - localDeviceId }
-    val isPrivate = group?.scope == VibeGroup.SCOPE_PRIVATE
+    val isPrivate = group?.scope == Resonance.SCOPE_PRIVATE
     val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     var showNoteEditor by remember { mutableStateOf(false) }
     var activeNote by remember { mutableStateOf<MessagePayload?>(null) }
-    val activeVibeId = LocalActiveVibeId.current
+    val activePulseId = LocalActivePulseId.current
 
     BlukitFieldScaffold(
         themeColor = if(isPrivate) StealthRose else StealthPrimary,
         glowIntensityTarget = 0.8f,
         floatingContent = {
             AnimatedVisibility(
-                visible = showTip && chatVibes.isEmpty() && childLinks.isEmpty(),
+                visible = showTip && chatPulses.isEmpty() && childLinks.isEmpty(),
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
                 BlukitTip(
-                    text = "THIS CHAIN IS SILENT. WHISPER OR PIN A VIBE TO THE CANVAS.",
+                    text = "THIS CHAIN IS SILENT. WHISPER OR PIN A PULSE TO THE CANVAS.",
                     themeColor = if(isPrivate) StealthRose else StealthPrimary,
                     onDismiss = { showTip = false }
                 )
@@ -154,20 +154,20 @@ fun ChainField(
                     
                     LazyColumn(modifier = Modifier.weight(0.3f)) {
                         items(childLinks) { link ->
-                            PluralPulseSummary(
+                            ResonanceSummary(
                                 title = link.name,
                                 subtitle = "SECURE SUB-CHAIN",
                                 icon = Icons.Rounded.Hearing,
                                 themeColor = if(isPrivate) StealthRose else StealthPrimary,
                                 count = link.memberIds.size,
-                                lastUpdate = sdf.format(Date(link.lastVibeTimestamp)),
+                                lastUpdate = sdf.format(Date(link.lastPulseTimestamp)),
                                 onClick = { onNavigateToGroup(link.id) }
                             )
                         }
                     }
                 }
 
-                // Vibes Section
+                // Pulses Section
                 Text(
                     text = "WHISPERS", 
                     style = MaterialTheme.typography.labelSmall, 
@@ -178,30 +178,30 @@ fun ChainField(
                 )
 
                 LazyColumn(modifier = Modifier.weight(0.7f)) {
-                    items(chatVibes) { vibe ->
-                        if (vibe.isMeta) {
-                            PluralPulseSummary(
-                                title = vibe.content.take(20),
-                                subtitle = "PLURAL VIBE",
+                    items(chatPulses) { pulse ->
+                        if (pulse.isMeta) {
+                            ResonanceSummary(
+                                title = pulse.content.take(20),
+                                subtitle = "RESONANCE",
                                 icon = Icons.Rounded.BubbleChart,
                                 themeColor = if(isPrivate) StealthRose else StealthPrimary,
-                                count = state.session.messages.count { it.parentMessageId == vibe.messageId },
-                                lastUpdate = sdf.format(Date(vibe.timestamp)),
-                                onClick = { onNavigateToVibe(vibe.messageId) }
+                                count = state.session.messages.count { it.parentMessageId == pulse.messageId },
+                                lastUpdate = sdf.format(Date(pulse.timestamp)),
+                                onClick = { onNavigateToPulse(pulse.messageId) }
                             )
                         } else {
-                            AnimatedVibeItem(
-                                msg = vibe,
+                            AnimatedPulseItem(
+                                msg = pulse,
                                 isSelected = false,
                                 senderDevice = null,
-                                vibeCount = 0,
-                                isVibed = false,
-                                isMe = vibe.senderId == localDeviceId,
+                                pulseCount = 0,
+                                isPulsed = false,
+                                isMe = pulse.senderId == localDeviceId,
                                 isGrouped = false,
                                 isMutual = false,
-                                vibeGroup = group,
-                                rowId = vibe.messageId,
-                                onVibeClick = { /* Handle Unit Click */ },
+                                resonance = group,
+                                rowId = pulse.messageId,
+                                onPulseClick = { /* Handle Unit Click */ },
                                 onDeviceLongClick = { },
                                 onDelete = { }
                             )
@@ -215,7 +215,7 @@ fun ChainField(
                 state = state,
                 localDeviceId = localDeviceId,
                 activeBubbles = emptyList(),
-                vibedPeers = emptySet(),
+                pulsedPeers = emptySet(),
                 drawBackground = false,
                 drawNodes = false,
                 onDeviceClick = { },
@@ -223,37 +223,37 @@ fun ChainField(
             )
         },
         tickerContent = {
-            VibingVibesTicker(
+            PulsingResonanceTicker(
                 state = state,
-                energyList = chatVibes.map { msg -> 
+                energyList = chatPulses.map { msg -> 
                     val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
                     dev to msg 
                 },
-                vibeCounts = vibeCounts,
+                pulseCounts = pulseCounts,
                 localDeviceId = localDeviceId,
-                vibedPeers = memberSet,
+                pulsedPeers = memberSet,
                 isGrouped = false,
-                onVibeClick = { onNavigateToVibe(it) },
+                onPulseClick = { onNavigateToPulse(it) },
                 onDeviceLongClick = { },
-                onDeleteVibe = { },
+                onDeletePulse = { },
                 modifier = Modifier.fillMaxSize()
             )
         },
         inputContent = {
-            BlukitVibeHub(
+            BlukitPulseHub(
                 currentRoute = cc.thevar.blukit.ui.navigation.Route.GroupField(groupId ?: ""),
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
-                vibeCount = state.session.messages.filter { it.groupId == groupId }.size,
+                pulseCount = state.session.messages.filter { it.groupId == groupId }.size,
                 crowdIsStill = crowdIsStill,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
-                vibedPeers = memberSet,
-                groups = state.session.groups,
+                pulsedPeers = memberSet,
+                resonances = state.session.groups,
                 onAcceptRadio = onAcceptRadio,
                 onDenyRadio = onDenyRadio,
-                onStartSideVibe = onStartSideVibe,
+                onStartSidePulse = onStartSidePulse,
                 onStartChain = { }, // Inside a Chain, this is nested Chain creation
                 onClearSelection = onClearSelection,
                 onAttachFile = { },

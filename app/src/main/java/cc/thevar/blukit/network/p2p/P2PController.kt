@@ -3,7 +3,7 @@ package cc.thevar.blukit.network.p2p
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -32,7 +32,7 @@ interface P2PController {
     val isAdvertising: StateFlow<Boolean>
     val errors: StateFlow<P2PError?>
     val messages: StateFlow<List<MessagePayload>>
-    val discoveredCrowds: SharedFlow<VibeGroup>
+    val discoveredCrowds: SharedFlow<Resonance>
     val syncProgress: StateFlow<Float?>
 
     fun startDiscovery()
@@ -53,19 +53,19 @@ interface P2PController {
     fun acceptRadio(device: P2PDevice)
     fun denyRadio(device: P2PDevice)
 
-    suspend fun sendMessage(content: String, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
+    suspend fun sendMessage(content: String, receiverId: String? = null, pulseType: Int = MessagePayload.PULSE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
 
-    suspend fun broadcastMessage(content: String, vibeType: Int = MessagePayload.VIBE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
+    suspend fun broadcastMessage(content: String, pulseType: Int = MessagePayload.PULSE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
 
     suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload?
 
     suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MessagePayload?
 
-    suspend fun sendFile(fileUri: android.net.Uri, receiverId: String? = null, vibeType: Int = MessagePayload.VIBE_SHOUT, groupId: String? = null, groupName: String? = null): MessagePayload?
+    suspend fun sendFile(fileUri: android.net.Uri, receiverId: String? = null, pulseType: Int = MessagePayload.PULSE_SHOUT, groupId: String? = null, groupName: String? = null): MessagePayload?
 
     suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload?
 
-    fun startGroupVibe(name: String, members: Set<String>, type: Int = VibeGroup.SCOPE_PUBLIC, groupId: String? = null, parentId: String? = null): String
+    fun startGroupPulse(name: String, members: Set<String>, type: Int = Resonance.SCOPE_PUBLIC, groupId: String? = null, parentId: String? = null): String
 
     fun updateGroupMembers(groupId: String, memberIds: Set<String>)
 

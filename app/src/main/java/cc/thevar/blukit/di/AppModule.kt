@@ -1,7 +1,7 @@
 package cc.thevar.blukit.di
 
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.data.power.SupremePowerManager
 import cc.thevar.blukit.data.repository.*
 import cc.thevar.blukit.data.system.HapticManager
@@ -24,7 +24,7 @@ import org.koin.dsl.module
 val appModule = module {
     // Infrastructure
     single { CryptoManager() }
-    single { VibeStore(androidContext(), get()) }
+    single { PulseStore(androidContext(), get()) }
     single { RadioStateManager(androidContext()) }
     single { SpreadPermissionManager(androidContext()) }
     single { HapticManager(androidContext()) }
@@ -42,7 +42,7 @@ val appModule = module {
             context = androidContext(),
             repository = get(),
             contactRepository = get(),
-            vibeStore = get(),
+            pulseStore = get(),
             hapticManager = get(),
             radioStateManager = get(),
             cryptoManager = get(),

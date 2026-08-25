@@ -30,11 +30,11 @@ fun BlukitWearApp() {
             ) {
                 item {
                     ListHeader {
-                        Text("SPREAD VIBES")
+                        Text("SPREAD PULSES")
                     }
                 }
                 item {
-                    Text("Nearby Vibes will appear here.")
+                    Text("Nearby Pulses will appear here.")
                 }
             }
         }

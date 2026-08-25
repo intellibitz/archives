@@ -1,7 +1,7 @@
 package cc.thevar.blukit.domain.logic
 
 import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.network.p2p.P2PController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -11,7 +11,7 @@ import java.util.UUID
  * Task Orchestrator: Manages collaborative assignment tracking.
  */
 class TaskOrchestrator(
-    private val vibeStore: VibeStore,
+    private val pulseStore: PulseStore,
     private val p2pController: P2PController,
     private val scope: CoroutineScope
 ) {
@@ -62,7 +62,7 @@ class TaskOrchestrator(
         )
         
         scope.launch {
-            vibeStore.upsertMessage(updatedTask)
+            pulseStore.upsertMessage(updatedTask)
             // Broadcast update to the chain
             p2pController.sendMessage(
                 content = updatedTask.content,

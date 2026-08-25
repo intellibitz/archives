@@ -24,18 +24,18 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * VIBE FIELD: The ultimate granular view.
- * Displays child vibes (units) and nested vibe metas.
+ * PULSE FIELD: The ultimate granular view.
+ * Displays child pulses (units) and nested pulse resonance metas.
  */
 @Composable
-fun VibeField(
+fun PulseField(
     state: BluetoothUiState,
     localDeviceId: String,
     localNickname: String,
     localEmoji: String,
     messageId: String,
     onSendMessage: (String, String?) -> Unit,
-    onNavigateToVibe: (String) -> Unit = {},
+    onNavigateToPulse: (String) -> Unit = {},
     // Hub Callbacks
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
@@ -45,25 +45,25 @@ fun VibeField(
     onAttachFile: () -> Unit = {},
     onShowPrivacy: () -> Unit = {}
 ) {
-    val rootVibe = remember(messageId, state.session.messages) {
+    val rootPulse = remember(messageId, state.session.messages) {
         state.session.messages.find { it.messageId == messageId }
     }
 
-    val childVibes = remember(state.session.messages, messageId) {
+    val childPulses = remember(state.session.messages, messageId) {
         state.session.messages.filter { it.parentMessageId == messageId }
             .sortedBy { it.timestamp }
     }
 
-    val themeColor = if (rootVibe?.vibeType == MessagePayload.VIBE_PRIVATE) StealthRose else StealthPrimary
+    val themeColor = if (rootPulse?.pulseType == MessagePayload.PULSE_PRIVATE) StealthRose else StealthPrimary
     val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
         themeColor = themeColor,
         glowIntensityTarget = 0.9f,
         floatingContent = {
-            if (childVibes.isEmpty()) {
+            if (childPulses.isEmpty()) {
                 BlukitTip(
-                    text = "NO GRANULAR VIBES YET. ADD A UNIT TO EXPAND THE PULSE.",
+                    text = "NO GRANULAR PULSES YET. ADD A UNIT TO EXPAND THE RESONANCE.",
                     themeColor = themeColor,
                     onDismiss = { }
                 )
@@ -72,7 +72,7 @@ fun VibeField(
         fieldContent = {
             Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
                 // Header (The Meta Root)
-                rootVibe?.let {
+                rootPulse?.let {
                     Surface(
                         color = themeColor.copy(alpha = 0.1f),
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -81,7 +81,7 @@ fun VibeField(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "ROOT VIBE",
+                                text = "ROOT PULSE",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = themeColor,
                                 fontWeight = FontWeight.Black
@@ -98,7 +98,7 @@ fun VibeField(
                 }
 
                 Text(
-                    text = "VIBE UNITS", 
+                    text = "PULSE UNITS", 
                     style = MaterialTheme.typography.labelSmall, 
                     color = themeColor, 
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -107,30 +107,30 @@ fun VibeField(
                 )
 
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(childVibes) { vibe ->
-                        if (vibe.isMeta) {
-                            PluralPulseSummary(
-                                title = vibe.content.take(20),
-                                subtitle = "PLURAL VIBE",
+                    items(childPulses) { pulse ->
+                        if (pulse.isMeta) {
+                            ResonanceSummary(
+                                title = pulse.content.take(20),
+                                subtitle = "RESONANCE",
                                 icon = Icons.Rounded.BubbleChart,
                                 themeColor = themeColor,
-                                count = state.session.messages.count { it.parentMessageId == vibe.messageId },
-                                lastUpdate = sdf.format(Date(vibe.timestamp)),
-                                onClick = { onNavigateToVibe(vibe.messageId) }
+                                count = state.session.messages.count { it.parentMessageId == pulse.messageId },
+                                lastUpdate = sdf.format(Date(pulse.timestamp)),
+                                onClick = { onNavigateToPulse(pulse.messageId) }
                             )
                         } else {
-                            AnimatedVibeItem(
-                                msg = vibe,
+                            AnimatedPulseItem(
+                                msg = pulse,
                                 isSelected = false,
                                 senderDevice = null,
-                                vibeCount = 0,
-                                isVibed = false,
-                                isMe = vibe.senderId == localDeviceId,
+                                pulseCount = 0,
+                                isPulsed = false,
+                                isMe = pulse.senderId == localDeviceId,
                                 isGrouped = false,
                                 isMutual = false,
-                                vibeGroup = null,
-                                rowId = vibe.messageId,
-                                onVibeClick = { },
+                                resonance = null,
+                                rowId = pulse.messageId,
+                                onPulseClick = { },
                                 onDeviceLongClick = { },
                                 onDelete = { }
                             )
@@ -140,38 +140,38 @@ fun VibeField(
             }
         },
         tickerContent = {
-            // Simplified ticker for Vibe Field
-            VibingVibesTicker(
+            // Simplified ticker for Pulse Field
+            PulsingResonanceTicker(
                 state = state,
-                energyList = childVibes.map { msg -> 
+                energyList = childPulses.map { msg -> 
                     val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
                     dev to msg 
                 },
-                vibeCounts = emptyMap(),
+                pulseCounts = emptyMap(),
                 localDeviceId = localDeviceId,
-                vibedPeers = emptySet(),
+                pulsedPeers = emptySet(),
                 isGrouped = false,
-                onVibeClick = { onNavigateToVibe(it) },
+                onPulseClick = { onNavigateToPulse(it) },
                 onDeviceLongClick = { },
-                onDeleteVibe = { },
+                onDeletePulse = { },
                 modifier = Modifier.fillMaxSize()
             )
         },
         inputContent = {
-            BlukitVibeHub(
-                currentRoute = cc.thevar.blukit.ui.navigation.Route.VibeField(messageId),
+            BlukitPulseHub(
+                currentRoute = cc.thevar.blukit.ui.navigation.Route.PulseField(messageId),
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
-                vibeCount = childVibes.size,
+                pulseCount = childPulses.size,
                 crowdIsStill = crowdIsStill,
                 incomingRadioRequests = emptySet(),
                 selectedDevices = emptySet(),
-                vibedPeers = emptySet(),
-                groups = emptyList(),
+                pulsedPeers = emptySet(),
+                resonances = emptyList(),
                 onAcceptRadio = { },
                 onDenyRadio = { },
-                onStartSideVibe = { },
+                onStartSidePulse = { },
                 onStartChain = { },
                 onClearSelection = { },
                 onAttachFile = onAttachFile,

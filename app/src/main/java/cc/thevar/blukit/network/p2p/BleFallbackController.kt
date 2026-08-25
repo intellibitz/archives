@@ -7,13 +7,13 @@ import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
@@ -32,7 +32,7 @@ import javax.crypto.SecretKey
 class BleFallbackController(
     private val context: Context,
     private val repository: IdentityRepository,
-    private val vibeStore: VibeStore,
+    private val pulseStore: PulseStore,
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -69,13 +69,13 @@ class BleFallbackController(
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
-    private val _discoveredCrowds = MutableSharedFlow<VibeGroup>(extraBufferCapacity = 5)
+    private val _discoveredCrowds = MutableSharedFlow<Resonance>(extraBufferCapacity = 5)
     override val discoveredCrowds = _discoveredCrowds.asSharedFlow()
 
-    override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
+    override val messages: StateFlow<List<MessagePayload>> = pulseStore.getAllMessages()
     override val syncProgress: StateFlow<Float?> = MutableStateFlow(null)
 
-    private val vibeKeys = ConcurrentHashMap<String, SecretKey>()
+    private val pulseKeys = ConcurrentHashMap<String, SecretKey>()
     private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
     private var gattServer: BluetoothGattServer? = null
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
@@ -83,7 +83,7 @@ class BleFallbackController(
 
     companion object {
         private val SERVICE_UUID = UUID.fromString("0000fb01-0000-1000-8000-00805f9b34fb")
-        private val VIBE_CHAR_UUID = UUID.fromString("0000fb02-0000-1000-8000-00805f9b34fb")
+        private val PULSE_CHAR_UUID = UUID.fromString("0000fb02-0000-1000-8000-00805f9b34fb")
         private const val HANDSHAKE_PREFIX = 0x01.toByte()
     }
 
@@ -190,7 +190,7 @@ class BleFallbackController(
             Log.i(tag, "GATT Server: Connected to ${device.address}")
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
             Log.i(tag, "GATT Server: Disconnected from ${device.address}")
-            vibeKeys.remove(device.address)
+            pulseKeys.remove(device.address)
         }
     }
 
@@ -201,7 +201,7 @@ class BleFallbackController(
         responseNeeded: Boolean,
         value: ByteArray
     ) {
-        if (characteristic.uuid == VIBE_CHAR_UUID) {
+        if (characteristic.uuid == PULSE_CHAR_UUID) {
             if (responseNeeded) {
                 try {
                     gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
@@ -223,9 +223,9 @@ class BleFallbackController(
         try {
             val publicKeyEncoded = data.copyOfRange(1, data.size)
             val keyFactory = KeyFactory.getInstance("EC")
-            val vibePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
-            val sharedSecret = cryptoManager.deriveSharedSecret(vibePublicKey)
-            vibeKeys[address] = sharedSecret
+            val pulsePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
+            val sharedSecret = cryptoManager.deriveSharedSecret(pulsePublicKey)
+            pulseKeys[address] = sharedSecret
             Log.i(tag, "SECURE: Radio ready for $address (BLE)")
             updateScannedDevices()
         } catch (e: Exception) {
@@ -234,7 +234,7 @@ class BleFallbackController(
     }
 
     private fun handleMessage(address: String, data: ByteArray) {
-        val secretKey = vibeKeys[address] ?: return
+        val secretKey = pulseKeys[address] ?: return
         try {
             val decryptedBytes = cryptoManager.decrypt(data, secretKey)
             val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
@@ -249,13 +249,13 @@ class BleFallbackController(
             }
         } catch (e: Exception) {
             Log.e(tag, "Message decrypt error: ${e.message}")
-            reportError(P2PError.EncryptionError("Failed to decrypt incoming vibe"))
+            reportError(P2PError.EncryptionError("Failed to decrypt incoming pulse"))
         }
     }
 
     private fun handleAck(payload: MessagePayload) {
         internalScope.launch(ioDispatcher) {
-            vibeStore.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
+            pulseStore.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
         }
     }
 
@@ -270,28 +270,28 @@ class BleFallbackController(
 
         // 3. Save and Haptic
         internalScope.launch(ioDispatcher) {
-            // AUTO-DISCOVER CHAINS
+            // AUTO-DISCOVER RESONANCES
             val gid = payload.groupId
             val gName = payload.groupName
             if (gid != null && gName != null) {
-                val existing = vibeStore.getGroup(gid)
+                val existing = pulseStore.getGroup(gid)
                 if (existing == null) {
-                    val scope = when (payload.vibeType) {
-                        MessagePayload.VIBE_SHOUT -> VibeGroup.SCOPE_PUBLIC
-                        MessagePayload.VIBE_SILENCE -> VibeGroup.SCOPE_LOCAL
-                        else -> VibeGroup.SCOPE_PRIVATE
+                    val scope = when (payload.pulseType) {
+                        MessagePayload.PULSE_SHOUT -> Resonance.SCOPE_PUBLIC
+                        MessagePayload.PULSE_SILENCE -> Resonance.SCOPE_LOCAL
+                        else -> Resonance.SCOPE_PRIVATE
                     }
-                    vibeStore.insertGroup(VibeGroup(
+                    pulseStore.insertGroup(Resonance(
                         id = gid, 
                         name = gName, 
                         scope = scope,
-                        parentId = VibeGroup.ID_CROWD
+                        parentId = Resonance.ID_CROWD
                     ))
                 }
             }
 
-            vibeStore.upsertMessage(payload)
-            hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
+            pulseStore.upsertMessage(payload)
+            hapticManager.triggerPulse(HapticManager.VibeType.MESSAGE)
         }
     }
 
@@ -308,7 +308,7 @@ class BleFallbackController(
 
             activeGatts.forEach { (address, _) ->
                 if (address != sourceAddress) {
-                    vibeKeys[address]?.let { key ->
+                    pulseKeys[address]?.let { key ->
                         try {
                             val encrypted = cryptoManager.encrypt(bytes, key)
                             sendData(address, encrypted)
@@ -353,7 +353,7 @@ class BleFallbackController(
     private fun sendData(address: String, data: ByteArray) {
         val gatt = activeGatts[address] ?: return
         val service = gatt.getService(SERVICE_UUID) ?: return
-        val characteristic = service.getCharacteristic(VIBE_CHAR_UUID) ?: return
+        val characteristic = service.getCharacteristic(PULSE_CHAR_UUID) ?: return
         
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -420,11 +420,11 @@ class BleFallbackController(
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
             .build()
 
-        val localVibe = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
+        val localPulse = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
         val data = AdvertiseData.Builder()
             .setIncludeDeviceName(false)
             .addServiceUuid(ParcelUuid(SERVICE_UUID))
-            .addServiceData(ParcelUuid(SERVICE_UUID), localVibe.toByteArray(StandardCharsets.UTF_8))
+            .addServiceData(ParcelUuid(SERVICE_UUID), localPulse.toByteArray(StandardCharsets.UTF_8))
             .build()
 
         try {
@@ -441,7 +441,7 @@ class BleFallbackController(
             gattServer = bluetoothManager?.openGattServer(context, gattServerCallback)
             val service = BluetoothGattService(SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
             val characteristic = BluetoothGattCharacteristic(
-                VIBE_CHAR_UUID,
+                PULSE_CHAR_UUID,
                 BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE,
                 BluetoothGattCharacteristic.PERMISSION_WRITE
             )
@@ -513,7 +513,7 @@ class BleFallbackController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+    override suspend fun sendMessage(content: String, receiverId: String?, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
         val payload = MessagePayload(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
@@ -524,7 +524,7 @@ class BleFallbackController(
             groupName = groupName,
             content = content,
             timestamp = System.currentTimeMillis(),
-            vibeType = vibeType,
+            pulseType = pulseType,
             type = type
         )
         val json = Json.encodeToString(MessagePayload.serializer(), payload)
@@ -532,19 +532,19 @@ class BleFallbackController(
 
         try {
             if (receiverId != null) {
-                val key = vibeKeys[receiverId] ?: return null
+                val key = pulseKeys[receiverId] ?: return null
                 val encrypted = cryptoManager.encrypt(bytes, key)
                 sendData(receiverId, encrypted)
             } else {
                 activeGatts.keys.forEach { target ->
-                    vibeKeys[target]?.let { key ->
+                    pulseKeys[target]?.let { key ->
                         try {
                             sendData(target, cryptoManager.encrypt(bytes, key))
                         } catch (e: Exception) {}
                     }
                 }
             }
-            vibeStore.upsertMessage(payload)
+            pulseStore.upsertMessage(payload)
             synchronized(messageIdHistory) {
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
@@ -570,8 +570,8 @@ class BleFallbackController(
         internalScope.launch { _errors.emit(error) }
     }
 
-    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
-        return sendMessage(content, null, vibeType, messageId, groupId, groupName, type)
+    override suspend fun broadcastMessage(content: String, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        return sendMessage(content, null, pulseType, messageId, groupId, groupName, type)
     }
 
     override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? = null
@@ -584,18 +584,18 @@ class BleFallbackController(
 
     override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MessagePayload? {
         // BLE fallback: send as a standard group message but with note type
-        return sendMessage(content, null, MessagePayload.VIBE_WHISPER, messageId, groupId, null)?.copy(type = MessagePayload.TYPE_NOTE_UPDATE, noteVersion = version)
+        return sendMessage(content, null, MessagePayload.PULSE_WHISPER, messageId, groupId, null)?.copy(type = MessagePayload.TYPE_NOTE_UPDATE, noteVersion = version)
     }
 
-    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int, groupId: String?, groupName: String?): MessagePayload? {
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, pulseType: Int, groupId: String?, groupName: String?): MessagePayload? {
         Log.w(tag, "File sharing not supported on BLE Fallback")
         return null
     }
 
-    override fun startGroupVibe(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
-        val gid = groupId ?: VibeGroup.generateId(name, type)
+    override fun startGroupPulse(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+        val gid = groupId ?: Resonance.generateId(name, type)
         internalScope.launch(ioDispatcher) {
-            vibeStore.insertGroup(VibeGroup(
+            pulseStore.insertGroup(Resonance(
                 id = gid, 
                 name = name, 
                 memberIds = members + repository.getDeviceId(), 
@@ -608,13 +608,13 @@ class BleFallbackController(
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
         internalScope.launch(ioDispatcher) {
-            vibeStore.updateGroupMembers(groupId, memberIds)
+            pulseStore.updateGroupMembers(groupId, memberIds)
         }
     }
 
     override fun updateGroupScope(groupId: String, scope: Int) {
         internalScope.launch(ioDispatcher) {
-            vibeStore.updateGroupScope(groupId, scope)
+            pulseStore.updateGroupScope(groupId, scope)
         }
     }
 
@@ -632,7 +632,7 @@ class BleFallbackController(
             } catch (_: Exception) {}
         }
         activeGatts.clear()
-        vibeKeys.clear()
+        pulseKeys.clear()
         _isConnected.value = false
         _connectedRadios.value = emptySet()
     }

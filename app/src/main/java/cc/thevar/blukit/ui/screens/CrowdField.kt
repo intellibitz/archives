@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -54,12 +54,12 @@ fun CrowdField(
     onSearchToggle: (() -> Unit)? = null,
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
-    onStartSideVibe: () -> Unit = {},
+    onStartSidePulse: () -> Unit = {},
     onStartChain: () -> Unit = {},
     onClearSelection: () -> Unit = {},
     onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
-    onNavigateToVibe: (String) -> Unit = {},
+    onNavigateToPulse: (String) -> Unit = {},
     externalFocusedId: String? = null
 ) {
     var showTip by remember { mutableStateOf(true) }
@@ -73,21 +73,21 @@ fun CrowdField(
         state.session.groups.filter { it.parentId == crowdId }
     }
 
-    val childCrowds = childGroups.filter { it.scope == VibeGroup.SCOPE_PUBLIC }
-    val childTies = childGroups.filter { it.scope != VibeGroup.SCOPE_PUBLIC }
+    val childCrowds = childGroups.filter { it.scope == Resonance.SCOPE_PUBLIC }
+    val childTies = childGroups.filter { it.scope != Resonance.SCOPE_PUBLIC }
 
-    val vibesData = remember(state.session.messages, crowdId, localDeviceId, localFocusedId) {
+    val pulsesData = remember(state.session.messages, crowdId, localDeviceId, localFocusedId) {
         if (crowdId == null) {
             Triple(emptyList<MessagePayload>(), emptyMap<String, Int>(), false)
         } else {
-            val baseVibes = state.session.messages.filter { it.groupId == crowdId && it.parentMessageId == null }
-            val counts = baseVibes.groupBy { it.senderId }.mapValues { it.value.size }
-            val sorted = baseVibes.sortedBy { it.timestamp }
+            val basePulses = state.session.messages.filter { it.groupId == crowdId && it.parentMessageId == null }
+            val counts = basePulses.groupBy { it.senderId }.mapValues { it.value.size }
+            val sorted = basePulses.sortedBy { it.timestamp }
             Triple(sorted, counts, localFocusedId != null)
         }
     }
 
-    val (chatVibes, vibeCounts, isVibeFocused) = vibesData
+    val (chatPulses, pulseCounts, isPulseFocused) = pulsesData
     val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
@@ -95,12 +95,12 @@ fun CrowdField(
         glowIntensityTarget = 0.6f,
         floatingContent = {
             AnimatedVisibility(
-                visible = showTip && chatVibes.isEmpty() && childGroups.isEmpty(),
+                visible = showTip && chatPulses.isEmpty() && childGroups.isEmpty(),
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
                 BlukitTip(
-                    text = "THE CROWD IS SILENT. CREATE A TIE OR SPREAD A VIBE TO START.",
+                    text = "THE CROWD IS SILENT. CREATE A LINK OR SPREAD A PULSE TO START.",
                     onDismiss = { showTip = false }
                 )
             }
@@ -120,33 +120,33 @@ fun CrowdField(
                     
                     LazyColumn(modifier = Modifier.weight(0.4f)) {
                         items(childCrowds) { nestedCrowd ->
-                            PluralPulseSummary(
+                            ResonanceSummary(
                                 title = nestedCrowd.name,
                                 subtitle = "NESTED CROWD",
                                 icon = Icons.Rounded.Grain,
                                 themeColor = StealthPrimary,
                                 count = nestedCrowd.memberIds.size,
-                                lastUpdate = sdf.format(Date(nestedCrowd.lastVibeTimestamp)),
+                                lastUpdate = sdf.format(Date(nestedCrowd.lastPulseTimestamp)),
                                 onClick = { onNavigateToGroup(nestedCrowd.id) }
                             )
                         }
                         items(childTies) { tie ->
-                            PluralPulseSummary(
+                            ResonanceSummary(
                                 title = tie.name,
-                                subtitle = if (tie.scope == VibeGroup.SCOPE_PRIVATE) "CHAIN" else "LOCAL CHAIN",
-                                icon = if (tie.scope == VibeGroup.SCOPE_PRIVATE) Icons.Rounded.Hearing else Icons.Rounded.CellTower,
-                                themeColor = if (tie.scope == VibeGroup.SCOPE_PRIVATE) StealthRose else StealthPrimary,
+                                subtitle = if (tie.scope == Resonance.SCOPE_PRIVATE) "CHAIN" else "LOCAL CHAIN",
+                                icon = if (tie.scope == Resonance.SCOPE_PRIVATE) Icons.Rounded.Hearing else Icons.Rounded.CellTower,
+                                themeColor = if (tie.scope == Resonance.SCOPE_PRIVATE) StealthRose else StealthPrimary,
                                 count = tie.memberIds.size,
-                                lastUpdate = sdf.format(Date(tie.lastVibeTimestamp)),
+                                lastUpdate = sdf.format(Date(tie.lastPulseTimestamp)),
                                 onClick = { onNavigateToGroup(tie.id) }
                             )
                         }
                     }
                 }
 
-                // Vibes
+                // Pulses
                 Text(
-                    text = "VIBES", 
+                    text = "PULSES", 
                     style = MaterialTheme.typography.labelSmall, 
                     color = StealthPrimary, 
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -155,30 +155,30 @@ fun CrowdField(
                 )
 
                 LazyColumn(modifier = Modifier.weight(0.6f)) {
-                    items(chatVibes) { vibe ->
-                        if (vibe.isMeta) {
-                            PluralPulseSummary(
-                                title = vibe.content.take(20),
-                                subtitle = "PLURAL VIBE",
+                    items(chatPulses) { pulse ->
+                        if (pulse.isMeta) {
+                            ResonanceSummary(
+                                title = pulse.content.take(20),
+                                subtitle = "RESONANCE",
                                 icon = Icons.Rounded.BubbleChart,
                                 themeColor = StealthPrimary,
-                                count = state.session.messages.count { it.parentMessageId == vibe.messageId },
-                                lastUpdate = sdf.format(Date(vibe.timestamp)),
-                                onClick = { onNavigateToVibe(vibe.messageId) }
+                                count = state.session.messages.count { it.parentMessageId == pulse.messageId },
+                                lastUpdate = sdf.format(Date(pulse.timestamp)),
+                                onClick = { onNavigateToPulse(pulse.messageId) }
                             )
                         } else {
-                            AnimatedVibeItem(
-                                msg = vibe,
+                            AnimatedPulseItem(
+                                msg = pulse,
                                 isSelected = false,
                                 senderDevice = null,
-                                vibeCount = 0,
-                                isVibed = false,
-                                isMe = vibe.senderId == localDeviceId,
+                                pulseCount = 0,
+                                isPulsed = false,
+                                isMe = pulse.senderId == localDeviceId,
                                 isGrouped = false,
                                 isMutual = false,
-                                vibeGroup = crowd,
-                                rowId = vibe.messageId,
-                                onVibeClick = { /* Handle Unit Click */ },
+                                resonance = crowd,
+                                rowId = pulse.messageId,
+                                onPulseClick = { /* Handle Unit Click */ },
                                 onDeviceLongClick = { },
                                 onDelete = { }
                             )
@@ -192,7 +192,7 @@ fun CrowdField(
                 state = state,
                 localDeviceId = localDeviceId,
                 activeBubbles = emptyList(),
-                vibedPeers = emptySet(),
+                pulsedPeers = emptySet(),
                 drawBackground = false,
                 drawNodes = false, // Simplified for Meta view
                 onDeviceClick = { },
@@ -200,37 +200,37 @@ fun CrowdField(
             )
         },
         tickerContent = {
-            VibingVibesTicker(
+            PulsingResonanceTicker(
                 state = state,
-                energyList = chatVibes.map { msg -> 
+                energyList = chatPulses.map { msg -> 
                     val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
                     dev to msg 
                 },
-                vibeCounts = vibeCounts,
+                pulseCounts = pulseCounts,
                 localDeviceId = localDeviceId,
-                vibedPeers = emptySet(),
+                pulsedPeers = emptySet(),
                 isGrouped = false,
-                onVibeClick = { onNavigateToVibe(it) },
+                onPulseClick = { onNavigateToPulse(it) },
                 onDeviceLongClick = { },
-                onDeleteVibe = { },
+                onDeletePulse = { },
                 modifier = Modifier.fillMaxSize()
             )
         },
         inputContent = {
-            BlukitVibeHub(
+            BlukitPulseHub(
                 currentRoute = cc.thevar.blukit.ui.navigation.Route.GroupField(crowdId ?: ""),
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
-                vibeCount = state.session.messages.size,
+                pulseCount = state.session.messages.size,
                 crowdIsStill = crowdIsStill,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
-                vibedPeers = emptySet(),
-                groups = state.session.groups,
+                pulsedPeers = emptySet(),
+                resonances = state.session.groups,
                 onAcceptRadio = onAcceptRadio,
                 onDenyRadio = onDenyRadio,
-                onStartSideVibe = onStartSideVibe,
+                onStartSidePulse = onStartSidePulse,
                 onStartChain = onStartChain,
                 onClearSelection = onClearSelection,
                 onAttachFile = { }, // Handle via parent if needed

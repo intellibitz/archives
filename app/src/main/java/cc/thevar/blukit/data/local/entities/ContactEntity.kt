@@ -8,5 +8,5 @@ data class ContactEntity(
     val nickname: String,
     val emoji: String,
     val publicKey: String, // Base64
-    val lastVibeAt: Long
+    val lastPulseAt: Long
 )

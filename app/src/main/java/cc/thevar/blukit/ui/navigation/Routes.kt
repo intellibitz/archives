@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 sealed interface Route : NavKey {
     @Serializable
-    data object Host : Route
+    data object Event : Route
     
     @Serializable
     data object Energy : Route
@@ -14,7 +14,7 @@ sealed interface Route : NavKey {
     data object Chat : Route
 
     @Serializable
-    data object Vibes : Route
+    data object Resonance : Route
 
     @Serializable
     data object Focus : Route
@@ -26,5 +26,5 @@ sealed interface Route : NavKey {
     data class GroupField(val groupId: String) : Route
 
     @Serializable
-    data class VibeField(val messageId: String) : Route
+    data class PulseField(val messageId: String) : Route
 }

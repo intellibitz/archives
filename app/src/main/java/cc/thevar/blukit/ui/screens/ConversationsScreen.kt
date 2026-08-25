@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -35,13 +35,13 @@ import java.util.Locale
 @Composable
 fun ConversationsScreen(
     state: BluetoothUiState,
-    onVibeClick: (VibeGroup) -> Unit,
+    onResonanceClick: (Resonance) -> Unit,
     onDeleteGroup: (String) -> Unit,
     onAcceptRadio: (P2PDevice) -> Unit,
     onDenyRadio: (P2PDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var groupToDelete by remember { mutableStateOf<VibeGroup?>(null) }
+    var groupToDelete by remember { mutableStateOf<Resonance?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -60,7 +60,7 @@ fun ConversationsScreen(
                     )
                 }
                 items(state.crowd.incomingRadioRequests.toList(), key = { it.id }) { request ->
-                    VibeRequestItem(request, onAcceptRadio, onDenyRadio)
+                    PulseRequestItem(request, onAcceptRadio, onDenyRadio)
                 }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
@@ -76,7 +76,7 @@ fun ConversationsScreen(
                     )
                 }
                 items(state.crowd.outgoingRadioRequests.toList(), key = { it.id }) { request ->
-                    OutgoingVibeRequestItem(request, onDenyRadio)
+                    OutgoingPulseRequestItem(request, onDenyRadio)
                 }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
@@ -86,7 +86,7 @@ fun ConversationsScreen(
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "NO PRIVATE VIBES YET", 
+                            text = "NO PRIVATE PULSES YET", 
                             color = Color.White.copy(alpha = 0.2f), 
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp
@@ -95,10 +95,10 @@ fun ConversationsScreen(
                 }
             }
             items(conversations, key = { it.id }) { group ->
-                VibeTickerTitleEntry(
+                PulseTickerTitleEntry(
                     group = group,
                     state = state,
-                    onClick = { onVibeClick(group) },
+                    onClick = { onResonanceClick(group) },
                     onLongClick = { groupToDelete = it }
                 )
             }
@@ -111,7 +111,7 @@ fun ConversationsScreen(
             containerColor = Color.Black,
             titleContentColor = StealthRose,
             textContentColor = Color.White,
-            title = { Text("DELETE CROWD?", fontWeight = FontWeight.Black) },
+            title = { Text("DELETE RESONANCE?", fontWeight = FontWeight.Black) },
             text = { Text("THIS WILL PERMANENTLY REMOVE THIS CONVERSATION.") },
             confirmButton = {
                 TextButton(onClick = {
@@ -131,7 +131,7 @@ fun ConversationsScreen(
 }
 
 @Composable
-private fun OutgoingVibeRequestItem(
+private fun OutgoingPulseRequestItem(
     device: P2PDevice,
     onCancel: (P2PDevice) -> Unit
 ) {
@@ -157,7 +157,7 @@ private fun OutgoingVibeRequestItem(
 }
 
 @Composable
-private fun VibeRequestItem(
+private fun PulseRequestItem(
     device: P2PDevice,
     onAccept: (P2PDevice) -> Unit,
     onDeny: (P2PDevice) -> Unit
@@ -174,7 +174,7 @@ private fun VibeRequestItem(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = (device.name ?: "?").uppercase(), fontWeight = FontWeight.Black, color = Color.White, fontSize = 12.sp)
-                Text(text = "Wants to vibe with you", fontSize = 8.sp, color = Color.White.copy(alpha = 0.4f))
+                Text(text = "Wants to pulse with you", fontSize = 8.sp, color = Color.White.copy(alpha = 0.4f))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { onDeny(device) }) {
@@ -195,11 +195,11 @@ private fun VibeRequestItem(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun VibeTickerTitleEntry(
-    group: VibeGroup,
+private fun PulseTickerTitleEntry(
+    group: Resonance,
     state: BluetoothUiState,
     onClick: () -> Unit,
-    onLongClick: (VibeGroup) -> Unit
+    onLongClick: (Resonance) -> Unit
 ) {
     val lastMessage = remember(group.id, state.session.messages) {
         state.session.messages.filter { it.groupId == group.id }.lastOrNull()
@@ -211,8 +211,8 @@ private fun VibeTickerTitleEntry(
     }
 
     val themeColor = when(group.scope) {
-        VibeGroup.SCOPE_PRIVATE -> StealthRose
-        VibeGroup.SCOPE_LOCAL -> Color.White.copy(alpha = 0.4f)
+        Resonance.SCOPE_PRIVATE -> StealthRose
+        Resonance.SCOPE_LOCAL -> Color.White.copy(alpha = 0.4f)
         else -> StealthPrimary
     }
 
@@ -233,7 +233,7 @@ private fun VibeTickerTitleEntry(
             // Participant Emojis Ticker
             Row(horizontalArrangement = Arrangement.spacedBy((-4).dp)) {
                 if (members.isEmpty()) {
-                    Text(text = if(group.scope == VibeGroup.SCOPE_LOCAL) "📱" else "👤", fontSize = 16.sp, modifier = Modifier.alpha(0.5f))
+                    Text(text = if(group.scope == Resonance.SCOPE_LOCAL) "📱" else "👤", fontSize = 16.sp, modifier = Modifier.alpha(0.5f))
                 } else {
                     members.take(3).forEach { member ->
                         Text(text = member.emoji, fontSize = 16.sp)
@@ -256,8 +256,8 @@ private fun VibeTickerTitleEntry(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val scopeLabel = when(group.scope) {
-                        VibeGroup.SCOPE_PUBLIC -> "SHOUT"
-                        VibeGroup.SCOPE_PRIVATE -> "WHISPER"
+                        Resonance.SCOPE_PUBLIC -> "SHOUT"
+                        Resonance.SCOPE_PRIVATE -> "WHISPER"
                         else -> "SILENCE"
                     }
                     Text(

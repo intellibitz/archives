@@ -19,7 +19,7 @@ interface IdentityRepository {
     val stealthMode: StateFlow<Boolean>
     val lowPowerMode: StateFlow<Boolean>
     val blockedUsers: StateFlow<Set<String>>
-    val vibedPeers: StateFlow<Set<String>>
+    val pulsedPeers: StateFlow<Set<String>>
 
     fun getDeviceId(): String
     fun saveNickname(name: String)
@@ -27,8 +27,8 @@ interface IdentityRepository {
     fun saveEmoji(emoji: String)
     fun toggleStealth(enabled: Boolean)
     fun toggleLowPowerMode(enabled: Boolean)
-    fun toggleVibePeer(deviceId: String)
-    fun clearVibedPeers()
+    fun togglePulsePeer(deviceId: String)
+    fun clearPulsedPeers()
     fun blockUser(deviceId: String)
     fun unblockUser(deviceId: String)
     fun resetProfile()
@@ -78,7 +78,7 @@ class IdentityRepositoryImpl(
         const val KEY_LOW_POWER = "low_power_mode"
         const val KEY_DEVICE_ID = "device_id"
         const val KEY_BLOCKED_USERS = "blocked_users"
-        const val KEY_VIBED_PEERS = "vibed_peers"
+        const val KEY_PULSED_PEERS = "pulsed_peers"
     }
 
     private val _nickname = MutableStateFlow(securePrefs.getString(KEY_NICKNAME, null))
@@ -102,10 +102,10 @@ class IdentityRepositoryImpl(
     )
     override val blockedUsers: StateFlow<Set<String>> = _blockedUsers.asStateFlow()
 
-    private val _vibedPeers = MutableStateFlow(
-        securePrefs.getStringSet(KEY_VIBED_PEERS, emptySet()) ?: emptySet()
+    private val _pulsedPeers = MutableStateFlow(
+        securePrefs.getStringSet(KEY_PULSED_PEERS, emptySet()) ?: emptySet()
     )
-    override val vibedPeers: StateFlow<Set<String>> = _vibedPeers.asStateFlow()
+    override val pulsedPeers: StateFlow<Set<String>> = _pulsedPeers.asStateFlow()
 
     override fun getDeviceId(): String {
         var id = securePrefs.getString(KEY_DEVICE_ID, null)
@@ -163,16 +163,16 @@ class IdentityRepositoryImpl(
         _emojiAvatar.value = "👤"
     }
 
-    override fun toggleVibePeer(deviceId: String) {
-        val current = _vibedPeers.value.toMutableSet()
+    override fun togglePulsePeer(deviceId: String) {
+        val current = _pulsedPeers.value.toMutableSet()
         if (current.contains(deviceId)) current.remove(deviceId) else current.add(deviceId)
-        securePrefs.edit { putStringSet(KEY_VIBED_PEERS, current) }
-        _vibedPeers.value = current
+        securePrefs.edit { putStringSet(KEY_PULSED_PEERS, current) }
+        _pulsedPeers.value = current
     }
 
-    override fun clearVibedPeers() {
-        securePrefs.edit { putStringSet(KEY_VIBED_PEERS, emptySet()) }
-        _vibedPeers.value = emptySet()
+    override fun clearPulsedPeers() {
+        securePrefs.edit { putStringSet(KEY_PULSED_PEERS, emptySet()) }
+        _pulsedPeers.value = emptySet()
     }
 
     override fun logout() {
@@ -183,6 +183,6 @@ class IdentityRepositoryImpl(
         _stealthMode.value = false
         _lowPowerMode.value = false
         _blockedUsers.value = emptySet()
-        _vibedPeers.value = emptySet()
+        _pulsedPeers.value = emptySet()
     }
 }

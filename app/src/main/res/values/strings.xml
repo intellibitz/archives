@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_slogan">SPREAD VIBES</string>
+    <string name="app_slogan">SPREAD PULSES</string>
     <string name="app_name">blukit</string>
 
     <string name="nav_watch">BLUKIT</string>
@@ -10,36 +10,36 @@
     <!-- People Screen (Landing) -->
     <string name="watch_title">BLUKIT</string>
     <string name="watch_broadcast_desc">%1$d PEOPLE NEARBY</string>
-    <string name="watch_welcome_title">SPREAD VIBES</string>
+    <string name="watch_welcome_title">SPREAD PULSES</string>
     <string name="watch_welcome_desc">CONNECT WITH ANY CROWD. ANONYMOUS, SAFE, SECURE. NO INTERNET NEEDED.</string>
-    <string name="watch_empty_hint">Start the vibe below!</string>
+    <string name="watch_empty_hint">Start the pulse below!</string>
 
     <!-- Ripples Screen (Presence) -->
-    <string name="shout_title">VIBES</string>
+    <string name="shout_title">PULSES</string>
     <string name="shout_radar_subtitle">PEOPLE ENERGY</string>
-    <string name="shout_make_visible">MAKE PEOPLE VIBE</string>
-    <string name="shout_type_placeholder">VIBE…</string>
-    <string name="shout_empty_radar">SPREAD A VIBE…</string>
+    <string name="shout_make_visible">MAKE PEOPLE PULSE</string>
+    <string name="shout_type_placeholder">PULSE…</string>
+    <string name="shout_empty_radar">SPREAD A PULSE…</string>
     <string name="shout_scan_hint">SEARCHING THE AIR…</string>
 
     <!-- Known Screen (Mutual) -->
     <string name="whispers_title">KNOWN</string>
     <string name="whispers_empty_hint">KNOWN 0</string>
     <string name="whispers_last_seen">LAST SEEN: %1$s</string>
-    <string name="whispers_label">VIBING</string>
+    <string name="whispers_label">PULSING</string>
 
-    <!-- Vibe Screen (Persona) -->
+    <!-- Pulse Screen (Persona) -->
     <string name="mask_title">MY PROFILE</string>
     <string name="mask_nickname_label">MY NAME</string>
     <string name="mask_stealth_mode">DARK MODE</string>
     <string name="mask_stealth_desc">OLED ENERGY SAVER</string>
     <string name="mask_start_exploring">JOIN THE PEOPLE</string>
-    <string name="mask_clear_whispers">CLEAR VIBES</string>
+    <string name="mask_clear_whispers">CLEAR PULSES</string>
     <string name="mask_reset_profile">RESET PROFILE</string>
     <string name="mask_privacy_policy" translatable="false">PRIVACY POLICY</string>
 
     <!-- Confirmation Dialogs -->
-    <string name="conf_delete_whispers_title">CLEAR ALL VIBES?</string>
+    <string name="conf_delete_whispers_title">CLEAR ALL PULSES?</string>
     <string name="conf_delete_whispers_desc">THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.</string>
     <string name="conf_reset_identity_title">RESET PROFILE?</string>
     <string name="conf_reset_identity_desc">THIS WILL DELETE YOUR LOCAL BLUKIT IDENTITY.</string>
@@ -48,23 +48,23 @@
 
     <!-- Technical/System -->
     <string name="permission_title">BLUKIT</string>
-    <string name="permission_desc">BLUKIT USES LOCAL RADIOS TO SPREAD VIBES WITHOUT INTERNET or DATA COLLECTION.</string>
+    <string name="permission_desc">BLUKIT USES LOCAL RADIOS TO SPREAD PULSES WITHOUT INTERNET or DATA COLLECTION.</string>
     <string name="permission_grant">JOIN THE PEOPLE</string>
     <string name="radio_warning_bluetooth">RADIOS OFF</string>
     <string name="radio_warning_required">RADIOS MUST BE ON TO HEAR THE PEOPLE.</string>
     <string name="radio_enable_btn">TURN ON</string>
     <string name="anonymous">\?</string>
-    <string name="error_connection_failed">VIBE FAIL: %1$s</string>
+    <string name="error_connection_failed">PULSE FAIL: %1$s</string>
 
     <!-- Smart Flow -->
     <string name="smart_flow_title">JOIN THE PEOPLE?</string>
-    <string name="smart_flow_desc">START SPREADING VIBES TO SEE THE CONNECTION.</string>
+    <string name="smart_flow_desc">START SPREADING PULSES TO SEE THE CONNECTION.</string>
     <string name="smart_flow_action">JOIN</string>
 
     <!-- Shared UI -->
-    <string name="btn_send">VIBE</string>
+    <string name="btn_send">PULSE</string>
     <string name="btn_cancel">CANCEL</string>
     <string name="btn_block">BLOCK</string>
     <string name="mod_block_title">Block this person?</string>
-    <string name="mod_block_desc">You won\'t see vibes from %1$s anymore.</string>
+    <string name="mod_block_desc">You won\'t see pulses from %1$s anymore.</string>
 </resources>

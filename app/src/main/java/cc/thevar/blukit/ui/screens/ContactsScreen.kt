@@ -55,7 +55,7 @@ fun ContactsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "THE AIR IS STILL. FIND SOMEONE IN THE FIELD TO FORM A TIE.",
+                    text = "THE AIR IS STILL. FIND SOMEONE IN THE FIELD TO FORM A LINK.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = StealthPrimary.copy(alpha = 0.6f),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -71,7 +71,7 @@ fun ContactsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(contacts, key = { it.id }) { contact ->
-                    TieItem(
+                    LinkItem(
                         contact = contact,
                         onStartChat = { onStartChat(contact) }
                     )
@@ -82,19 +82,19 @@ fun ContactsScreen(
 }
 
 @Composable
-fun TieItem(
+fun LinkItem(
     contact: ContactEntity,
     onStartChat: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "Vibe")
-    val vibeAlpha by infiniteTransition.animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "Pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "VibeAlpha"
+        label = "PulseAlpha"
     )
 
     Surface(
@@ -160,7 +160,7 @@ fun TieItem(
                         .align(Alignment.BottomEnd)
                 ) {
                     drawCircle(
-                        color = StealthPrimary.copy(alpha = vibeAlpha),
+                        color = StealthPrimary.copy(alpha = pulseAlpha),
                         radius = size.minDimension / 2
                     )
                 }
@@ -176,8 +176,8 @@ fun TieItem(
                     letterSpacing = 1.sp,
                     color = Color.White
                 )
-                val lastSeenDate = remember(contact.lastVibeAt) {
-                    val date = Date(contact.lastVibeAt)
+                val lastSeenDate = remember(contact.lastPulseAt) {
+                    val date = Date(contact.lastPulseAt)
                     val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
                     format.format(date)
                 }

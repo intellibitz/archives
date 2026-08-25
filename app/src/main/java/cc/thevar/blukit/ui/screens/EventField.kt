@@ -36,7 +36,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -50,19 +50,19 @@ import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
 
 /**
- * THE HOST FIELD: The top-level spectrum view of the mesh.
- * Displays all nearby vibes and event on a discovery radar.
+ * THE EVENT FIELD: The top-level spectrum view of the mesh.
+ * Displays all nearby pulses and event on a discovery radar.
  * Integrates spectral tips for onboarding and radar discovery.
  */
 @Composable
-fun HostField(
+fun EventField(
     state: BluetoothUiState,
     localDeviceId: String,
-    vibedPeers: Set<String> = emptySet(),
+    pulsedPeers: Set<String> = emptySet(),
     noiseFilterEnabled: Boolean = false,
     onStartScan: () -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
-    onDeleteVibe: (String) -> Unit,
+    onDeletePulse: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
     onIdentifyUser: (String) -> Unit = {},
     crowdIsStill: Boolean = false,
@@ -71,10 +71,10 @@ fun HostField(
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
-    onCreatePublicChain: ((String, String?) -> Unit)? = null,
+    onCreatePublicResonance: ((String, String?) -> Unit)? = null,
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
-    onStartSideVibe: () -> Unit = {},
+    onStartSidePulse: () -> Unit = {},
     onStartChain: () -> Unit = {},
     onClearSelection: () -> Unit = {},
     onAttachFile: () -> Unit = {},
@@ -83,36 +83,37 @@ fun HostField(
     isSearchActive: Boolean = false,
     onRestoreCrowd: (String) -> Unit = {},
     showAirGhost: Boolean = false,
+    onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {}
 ) {
     var showTip by remember { mutableStateOf(true) }
     var airProposalName by remember { mutableStateOf("") }
-    val activeVibeId = LocalActiveVibeId.current
-    var vibeGhostData by remember { mutableStateOf<GhostVibeData?>(null) }
+    val activePulseId = LocalActivePulseId.current
+    var pulseGhostData by remember { mutableStateOf<GhostPulseData?>(null) }
     var showVault by remember { mutableStateOf(false) }
 
     val eventMetas = remember(state.session.groups) {
-        state.session.groups.filter { it.scope == VibeGroup.SCOPE_PUBLIC && it.parentId == null }
+        state.session.groups.filter { it.scope == Resonance.SCOPE_PUBLIC && it.parentId == null }
     }
 
-    val vibesData = remember(state.session.messages, state.session.groups, vibedPeers, noiseFilterEnabled, isSearchActive, messageText) {
-        val baseVibes = if (noiseFilterEnabled && vibedPeers.isNotEmpty()) {
-            state.session.messages.filter { it.senderId in vibedPeers || it.senderId == localDeviceId }
+    val pulsesData = remember(state.session.messages, state.session.groups, pulsedPeers, noiseFilterEnabled, isSearchActive, messageText) {
+        val basePulses = if (noiseFilterEnabled && pulsedPeers.isNotEmpty()) {
+            state.session.messages.filter { it.senderId in pulsedPeers || it.senderId == localDeviceId }
         } else {
             state.session.messages
         }
         
-        val searchFiltered = if (!isSearchActive || messageText.isBlank()) baseVibes else {
-            baseVibes.filter { msg ->
+        val searchFiltered = if (!isSearchActive || messageText.isBlank()) basePulses else {
+            basePulses.filter { msg ->
                 msg.content.contains(messageText, ignoreCase = true) || msg.senderName.contains(messageText, ignoreCase = true)
             }
         }
         
         val groupedByTie = searchFiltered.groupBy { msg ->
             when {
-                msg.vibeType == MessagePayload.VIBE_SILENCE -> VibeGroup.ID_SILENCE
+                msg.pulseType == MessagePayload.PULSE_SILENCE -> Resonance.ID_SILENCE
                 msg.groupId != null -> msg.groupId!!
-                else -> VibeGroup.ID_CROWD
+                else -> Resonance.ID_CROWD
             }
         }
         
@@ -122,71 +123,61 @@ fun HostField(
         Triple(sorted, counts, false)
     }
 
-    val (vibes, vibeCounts, _) = vibesData
+    val (pulses, pulseCounts, _) = pulsesData
     val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
         themeColor = StealthPrimary,
         glowIntensityTarget = 0.4f,
         floatingContent = {
-            AnimatedContent(
-                targetState = when {
-                    eventMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
-                    else -> null
-                },
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "HostTips"
-            ) { tipState ->
-                if (tipState == "empty_mesh" && showTip) {
-                    BlukitTip(
-                        text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
-                        onDismiss = { showTip = false }
-                    )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AnimatedContent(
+                    targetState = when {
+                        eventMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
+                        else -> null
+                    },
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "EventTips"
+                ) { tipState ->
+                    if (tipState == "empty_mesh" && showTip) {
+                        BlukitTip(
+                            text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
+                            onDismiss = { showTip = false }
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Clear 'Create Event' affordance
+                Button(
+                    onClick = onShowAirGhost,
+                    colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                ) {
+                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("CREATE EVENT", fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp)
                 }
             }
         },
         fieldContent = {
-            Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
-                Text(
-                    text = "EVENT", 
-                    style = MaterialTheme.typography.labelSmall, 
-                    color = StealthPrimary, 
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 2.sp
-                )
-                
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(eventMetas) { crowd ->
-                        PluralPulseSummary(
-                            title = crowd.name,
-                            subtitle = "PUBLIC CROWD",
-                            icon = Icons.Rounded.Grain,
-                            themeColor = StealthPrimary,
-                            count = crowd.memberIds.size,
-                            lastUpdate = sdf.format(Date(crowd.lastVibeTimestamp)),
-                            onClick = { onNavigateToGroup(crowd.id) },
-                            modifier = Modifier.testTag("CrowdNode_${crowd.id}")
-                        )
-                    }
-                }
-            }
-
             // Radar remains for persona discovery
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
                 activeBubbles = emptyList(),
                 selectedDevices = state.crowd.selectedDevices,
-                vibedPeers = vibedPeers,
+                pulsedPeers = pulsedPeers,
                 isFilterMode = noiseFilterEnabled,
-                vibeGhostData = vibeGhostData,
-                onDismissGhost = { vibeGhostData = null; activeVibeId.value = null },
+                pulseGhostData = pulseGhostData,
+                onDismissGhost = { pulseGhostData = null; activePulseId.value = null },
                 onDeviceClick = onDeviceClick,
                 onDeviceLongClick = { targetDevice ->
                     val menuId = targetDevice.persistentId ?: targetDevice.id
-                    activeVibeId.value = menuId
-                    vibeGhostData = GhostVibeData(
+                    activePulseId.value = menuId
+                    pulseGhostData = GhostPulseData(
                         emoji = targetDevice.emoji,
                         title = targetDevice.name ?: "PERSONA",
                         subtitle = "CROWD NODE",
@@ -205,7 +196,7 @@ fun HostField(
                     if (showAirGhost) {
                         CrowdRitualGhost(
                             onNameChange = { airProposalName = it },
-                            onDone = { templateId -> onCreatePublicChain?.invoke(airProposalName, templateId) },
+                            onDone = { templateId -> onCreatePublicResonance?.invoke(airProposalName, templateId) },
                             onDismiss = onDismissAirGhost,
                             nearbyAirs = state.session.groups,
                             onJoinAir = onNavigateToGroup
@@ -215,43 +206,52 @@ fun HostField(
             )
         },
         tickerContent = {
-            // Event ticker shows the latest global energy
-            VibingVibesTicker(
-                state = state,
-                energyList = vibes.map { msg -> 
+            // Event ticker shows the latest global energy (Public Crowds + Global Pulses)
+            val combinedEnergy = remember(eventMetas, pulses) {
+                val crowdPairs = eventMetas.map { crowd ->
+                    val dev = P2PDevice(id = crowd.id, name = crowd.name, emoji = "🌬️", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                    dev to null // Represents a crowd container pulse
+                }
+                val pulsePairs = pulses.map { msg -> 
                     val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
                     dev to msg 
-                },
-                vibeCounts = vibeCounts,
+                }
+                (crowdPairs + pulsePairs).sortedByDescending { it.second?.timestamp ?: Long.MAX_VALUE }
+            }
+
+            PulsingResonanceTicker(
+                state = state,
+                energyList = combinedEnergy,
+                pulseCounts = pulseCounts,
                 localDeviceId = localDeviceId,
-                vibedPeers = vibedPeers,
+                pulsedPeers = pulsedPeers,
                 isGrouped = true,
-                onVibeClick = { onNavigateToGroup(it) }, // Simplified for now
+                onPulseClick = { onNavigateToGroup(it) },
                 onDeviceLongClick = { },
-                onDeleteVibe = onDeleteVibe,
+                onDeletePulse = onDeletePulse,
                 modifier = Modifier.fillMaxSize()
             )
         },
         inputContent = {
-            BlukitVibeHub(
-                currentRoute = cc.thevar.blukit.ui.navigation.Route.Host,
+            BlukitPulseHub(
+                currentRoute = cc.thevar.blukit.ui.navigation.Route.Event,
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
-                vibeCount = vibes.size,
+                pulseCount = pulses.size,
                 crowdIsStill = crowdIsStill,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
-                vibedPeers = vibedPeers,
-                groups = state.session.groups,
+                pulsedPeers = pulsedPeers,
+                resonances = state.session.groups,
                 onAcceptRadio = onAcceptRadio,
                 onDenyRadio = onDenyRadio,
-                onStartSideVibe = onStartSideVibe,
+                onStartSidePulse = onStartSidePulse,
                 onStartChain = onStartChain,
                 onClearSelection = onClearSelection,
                 onAttachFile = onAttachFile,
                 onSearchToggle = onSearchToggle,
-                onCreatePublicChain = onCreatePublicChain,
+                onCreatePublicResonance = onCreatePublicResonance,
                 isSearchMode = isSearchActive,
                 onShowPrivacy = onShowPrivacy,
                 modifier = Modifier.fillMaxWidth()
@@ -270,7 +270,7 @@ fun HostField(
 
 @Composable
 fun VaultOverlay(
-    archivedGroups: List<VibeGroup>,
+    archivedGroups: List<Resonance>,
     onRestore: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -278,7 +278,7 @@ fun VaultOverlay(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF0A0C14),
         titleContentColor = StealthRose,
-        title = { Text("SUNK VIBE VAULT", fontWeight = FontWeight.Black, fontSize = 16.sp) },
+        title = { Text("SUNK PULSE VAULT", fontWeight = FontWeight.Black, fontSize = 16.sp) },
         text = {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(archivedGroups) { group ->
@@ -291,7 +291,7 @@ fun VaultOverlay(
                             modifier = Modifier.fillMaxWidth().padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = if (group.scope == VibeGroup.SCOPE_LOCAL) "📱" else "🌬️", fontSize = 20.sp)
+                            Text(text = if (group.scope == Resonance.SCOPE_LOCAL) "📱" else "🌬️", fontSize = 20.sp)
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(text = group.name.uppercase(), fontWeight = FontWeight.Bold, color = Color.White)

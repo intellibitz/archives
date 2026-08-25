@@ -10,7 +10,7 @@ data class P2PDevice(
     val isConnecting: Boolean = false,
     val isLinkPending: Boolean = false,
     val medium: ConnectionMedium = ConnectionMedium.LOCATION,
-    val vibeCount: Int = 0,
+    val pulseCount: Int = 0,
     val isLowPower: Boolean = false,
     val distanceMm: Int = -1 // WiFi RTT distance if available
 ) {

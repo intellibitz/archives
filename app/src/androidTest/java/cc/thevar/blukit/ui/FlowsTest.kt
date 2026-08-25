@@ -3,7 +3,7 @@ package cc.thevar.blukit.ui
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
@@ -15,7 +15,7 @@ import cc.thevar.blukit.data.system.RadioStates
 import cc.thevar.blukit.data.system.SpreadPermissionManager
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
 import cc.thevar.blukit.data.system.HapticManager
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.network.p2p.P2PError
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
@@ -51,7 +51,7 @@ class FlowsTest : KoinTest {
 
     private val repository: IdentityRepository = mockk(relaxed = true)
     private val contactRepository: ContactRepository = mockk(relaxed = true)
-    private val vibeStore: VibeStore = mockk(relaxed = true)
+    private val pulseStore: PulseStore = mockk(relaxed = true)
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
     private val p2pController: P2PController = mockk(relaxed = true)
     private val supremePowerManager: cc.thevar.blukit.data.power.SupremePowerManager = mockk(relaxed = true)
@@ -68,13 +68,13 @@ class FlowsTest : KoinTest {
     private val isAdvertisingFlow = MutableStateFlow(false)
     private val errorsFlow = MutableStateFlow<P2PError?>(null)
     private val reportFlow = MutableStateFlow(SupremePowerReport())
-    private val groupsFlow = MutableStateFlow<List<VibeGroup>>(emptyList())
+    private val groupsFlow = MutableStateFlow<List<Resonance>>(emptyList())
     private val permissionsGrantedFlow = MutableStateFlow(true)
 
     private val testModule = module {
         single(createdAtStart = true) { repository }
         single(createdAtStart = true) { contactRepository }
-        single(createdAtStart = true) { vibeStore }
+        single(createdAtStart = true) { pulseStore }
         single(createdAtStart = true) { radioStateManager }
         single(createdAtStart = true) { p2pController }
         single(createdAtStart = true) { supremePowerManager }
@@ -95,14 +95,14 @@ class FlowsTest : KoinTest {
         }
 
         // Setup stubs BEFORE starting Koin to ensure ViewModels get the mocks
-        every { repository.nicknameFlow } returns MutableStateFlow("vibe")
+        every { repository.nicknameFlow } returns MutableStateFlow("pulse")
         every { repository.emojiAvatar } returns MutableStateFlow("👤")
         every { repository.stealthMode } returns MutableStateFlow(false)
         every { repository.lowPowerMode } returns MutableStateFlow(false)
         every { repository.blockedUsers } returns MutableStateFlow(emptySet())
-        every { repository.vibedPeers } returns MutableStateFlow(emptySet())
+        every { repository.pulsedPeers } returns MutableStateFlow(emptySet())
         every { repository.getDeviceId() } returns "test-id"
-        every { repository.getCurrentNickname() } returns "vibe"
+        every { repository.getCurrentNickname() } returns "pulse"
 
         every { p2pController.scannedDevices } returns scannedDevicesFlow
         every { p2pController.connectedRadios } returns connectedRadiosFlow
@@ -113,7 +113,7 @@ class FlowsTest : KoinTest {
         every { p2pController.isConnected } returns isConnectedFlow
         every { p2pController.messages } returns messagesFlow
         every { p2pController.isAdvertising } returns isAdvertisingFlow
-        every { p2pController.discoveredCrowds } returns MutableSharedFlow<cc.thevar.blukit.domain.model.VibeGroup>()
+        every { p2pController.discoveredCrowds } returns MutableSharedFlow<Resonance>()
         every { p2pController.syncProgress } returns MutableStateFlow(null)
         
         coEvery { p2pController.sendMessage(any(), any(), any(), any(), any(), any(), any()) } answers {
@@ -122,7 +122,7 @@ class FlowsTest : KoinTest {
             val newMsg = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
                 senderId = "test-id",
-                senderName = "vibe",
+                senderName = "pulse",
                 content = content,
                 timestamp = System.currentTimeMillis(),
                 receiverId = receiver
@@ -134,16 +134,16 @@ class FlowsTest : KoinTest {
         every { radioStateManager.radioStates } returns radioStatesFlow
         every { supremePowerManager.report } returns reportFlow
         
-        every { vibeStore.groups } returns groupsFlow
-        every { vibeStore.activeGroups } returns groupsFlow
-        every { vibeStore.archivedGroups } returns MutableStateFlow(emptyList())
-        every { vibeStore.vaultedGroups } returns MutableStateFlow(emptyList())
-        every { vibeStore.messages } returns messagesFlow
-        every { vibeStore.getAllMessages() } returns messagesFlow
-        coEvery { vibeStore.getGroup(any()) } returns null
-        every { vibeStore.autoArchiveCrowds() } returns Unit
-        coEvery { vibeStore.pruneMedia(any()) } returns Unit
-        coEvery { vibeStore.updateGroupLastVibe(any(), any()) } returns Unit
+        every { pulseStore.groups } returns groupsFlow
+        every { pulseStore.activeGroups } returns groupsFlow
+        every { pulseStore.archivedGroups } returns MutableStateFlow(emptyList())
+        every { pulseStore.vaultedGroups } returns MutableStateFlow(emptyList())
+        every { pulseStore.messages } returns messagesFlow
+        every { pulseStore.getAllMessages() } returns messagesFlow
+        coEvery { pulseStore.getGroup(any()) } returns null
+        every { pulseStore.autoArchiveCrowds() } returns Unit
+        coEvery { pulseStore.pruneMedia(any()) } returns Unit
+        coEvery { pulseStore.updateGroupLastPulse(any(), any()) } returns Unit
 
         every { permissionManager.requiredPermissions } returns listOf(android.Manifest.permission.BLUETOOTH_SCAN)
         every { permissionManager.essentialPermissions } returns listOf(android.Manifest.permission.BLUETOOTH_SCAN)
@@ -162,11 +162,11 @@ class FlowsTest : KoinTest {
     }
 
     @Test
-    fun testNavigateToVibeAndChangeIdentity() {
+    fun testNavigateToPulseAndChangeIdentity() {
         startApp()
         
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("IdentityVibeInput"), 30000)
-        composeTestRule.onNodeWithTag("IdentityVibeInput", useUnmergedTree = true).performTextReplacement("Quantum")
+        composeTestRule.waitUntilAtLeastOneExists(hasTestTag("IdentityPulseInput"), 30000)
+        composeTestRule.onNodeWithTag("IdentityPulseInput", useUnmergedTree = true).performTextReplacement("Quantum")
         
         verify { repository.saveNickname("Quantum") }
     }

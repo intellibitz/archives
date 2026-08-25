@@ -2,14 +2,14 @@ package cc.thevar.blukit.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class MainViewModel(
     private val repository: IdentityRepository,
-    private val vibeStore: VibeStore,
+    private val pulseStore: PulseStore,
 ) : ViewModel() {
 
     val nickname: Flow<String?> = repository.nicknameFlow
@@ -44,15 +44,15 @@ class MainViewModel(
         }
     }
 
-    fun toggleVibePeer(deviceId: String) {
+    fun togglePulsePeer(deviceId: String) {
         viewModelScope.launch {
-            repository.toggleVibePeer(deviceId)
+            repository.togglePulsePeer(deviceId)
         }
     }
 
-    fun clearVibedPeers() {
+    fun clearPulsedPeers() {
         viewModelScope.launch {
-            repository.clearVibedPeers()
+            repository.clearPulsedPeers()
         }
     }
 
@@ -68,15 +68,15 @@ class MainViewModel(
         }
     }
 
-    fun deleteVibe(messageId: String) {
+    fun deletePulse(messageId: String) {
         viewModelScope.launch {
-            vibeStore.deleteMessage(messageId)
+            pulseStore.deleteMessage(messageId)
         }
     }
 
     fun clearChatHistory() {
         viewModelScope.launch {
-            vibeStore.clearAllMessages()
+            pulseStore.clearAllMessages()
         }
     }
 

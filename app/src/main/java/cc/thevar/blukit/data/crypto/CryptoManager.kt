@@ -15,7 +15,7 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Manages End-to-End Encryption (E2EE) for vibes in The Air.
+ * Manages End-to-End Encryption (E2EE) for pulses in The Air.
  * 
  * ### Security Implementation:
  * 1. **Key Agreement (ECDH)**: Uses Elliptic Curve Diffie-Hellman with the SecP256r1 curve 
@@ -81,18 +81,18 @@ class CryptoManager(
     }
 
     /**
-     * Derives a shared AES-256 key from our private key and a vibe's public key using ECDH.
+     * Derives a shared AES-256 key from our private key and a pulse's public key using ECDH.
      * Uses HKDF (HMAC-based Extract-and-Expand Key Derivation Function) with high-fidelity salt and info.
      */
-    fun deriveSharedSecret(vibePublicKey: PublicKey): SecretKey {
+    fun deriveSharedSecret(pulsePublicKey: PublicKey): SecretKey {
         val keyAgreement = KeyAgreement.getInstance("ECDH")
         keyAgreement.init(getLocalKeyPair().private)
-        keyAgreement.doPhase(vibePublicKey, true)
+        keyAgreement.doPhase(pulsePublicKey, true)
         val sharedSecret = keyAgreement.generateSecret()
         
         // HKDF Implementation (RFC 5869)
         // Hardened: High-entropy static salt for the Extract phase
-        val salt = "blukit_vibe_bridge_salt_v1".toByteArray()
+        val salt = "blukit_pulse_bridge_salt_v1".toByteArray()
         // Context-specific info for the Expand phase
         val info = "blukit_aes_256_gcm_session_v1".toByteArray()
         

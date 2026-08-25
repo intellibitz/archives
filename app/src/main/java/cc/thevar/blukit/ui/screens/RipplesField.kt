@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -56,7 +56,7 @@ data class RelayEvent(
     val startTime: Long
 )
 
-data class VibeRipple(
+data class PulseRipple(
     val id: String,
     val center: Offset,
     val startTime: Long,
@@ -72,19 +72,19 @@ fun RipplesField(
     localDeviceId: String,
     activeBubbles: List<BubbleData>,
     selectedDevices: Set<String> = emptySet(),
-    vibedPeers: Set<String> = emptySet(),
+    pulsedPeers: Set<String> = emptySet(),
     externalEnergy: Float = 0f,
     onlyTies: Boolean = false,
     isFilterMode: Boolean = false,
     lowPowerMode: Boolean = false,
     highlightedUserId: String? = null,
     subjectId: String? = null,
-    vibeGhostData: GhostVibeData? = null,
+    pulseGhostData: GhostPulseData? = null,
     onDismissGhost: () -> Unit = {},
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
     onStartScan: () -> Unit,
-    onVibeSurge: (Float) -> Unit = {},
+    onPulseSurge: (Float) -> Unit = {},
     drawBackground: Boolean = true,
     drawNodes: Boolean = true,
     crowdList: List<Pair<P2PDevice, Int>> = emptyList(),
@@ -96,7 +96,7 @@ fun RipplesField(
     val density = LocalDensity.current
 
     val relayEvents = remember { mutableStateListOf<RelayEvent>() }
-    val vibeRipples = remember { mutableStateListOf<VibeRipple>() }
+    val pulseRipples = remember { mutableStateListOf<PulseRipple>() }
     val processedRelayIds = remember { mutableSetOf<String>() }
     var collectiveEnergy by remember { mutableStateOf(0f) }
 
@@ -109,7 +109,7 @@ fun RipplesField(
                 
                 val deviceIndex = state.crowd.scannedDevices.indexOfFirst { it.id == last.senderId }
                 val proximity = if (deviceIndex != -1) state.crowd.scannedDevices[deviceIndex].proximityFactor else 0.5f
-                onVibeSurge(proximity)
+                onPulseSurge(proximity)
 
                 val targetOffset = if (deviceIndex != -1) {
                     val device = state.crowd.scannedDevices[deviceIndex]
@@ -123,7 +123,7 @@ fun RipplesField(
                 relayEvents.add(RelayEvent(last.messageId, startOffset, targetOffset, System.currentTimeMillis()))
                 
                 val rippleColor = if (last.isPrivate) StealthRose else StealthPrimary
-                vibeRipples.add(VibeRipple(last.messageId, targetOffset, System.currentTimeMillis(), rippleColor))
+                pulseRipples.add(PulseRipple(last.messageId, targetOffset, System.currentTimeMillis(), rippleColor))
             }
         }
     }
@@ -132,7 +132,7 @@ fun RipplesField(
         while (true) {
             val now = System.currentTimeMillis()
             relayEvents.removeAll { now - it.startTime > 800 }
-            vibeRipples.removeAll { now - it.startTime > 2000 }
+            pulseRipples.removeAll { now - it.startTime > 2000 }
             if (collectiveEnergy > 0f) collectiveEnergy = (collectiveEnergy - 0.04f).coerceAtLeast(0f)
             delay(100)
         }
@@ -178,18 +178,18 @@ fun RipplesField(
                 if (crowdList.isNotEmpty()) {
                     CrowdNodes(
                         crowdList = crowdList,
-                        vibedPeers = vibedPeers,
+                        pulsedPeers = pulsedPeers,
                         onCrowdClick = onDeviceClick,
                         onCrowdLongClick = onDeviceLongClick
                     )
                 }
 
-                VibeNodes(
+                PulseNodes(
                     state = state,
                     devices = displayDevices,
                     connectedLinks = state.session.connectedRadios,
                     selectedDevices = selectedDevices,
-                    vibedPeers = vibedPeers,
+                    pulsedPeers = pulsedPeers,
                     activeBubbles = activeBubbles,
                     onlyTies = onlyTies,
                     isFilterMode = isFilterMode,
@@ -201,11 +201,11 @@ fun RipplesField(
             }
         }
 
-        VibeRippleLayer(vibeRipples)
+        PulseRippleLayer(pulseRipples)
 
 
-        if (vibeGhostData != null) {
-            VibeGhost(data = vibeGhostData, onDismiss = onDismissGhost)
+        if (pulseGhostData != null) {
+            PulseGhost(data = pulseGhostData, onDismiss = onDismissGhost)
         }
         
         airRitualGhost()
@@ -303,7 +303,7 @@ private fun AirBackground(energy: Float, lowPowerMode: Boolean, onlyTies: Boolea
 }
 
 @Composable
-private fun VibeRippleLayer(ripples: List<VibeRipple>) {
+private fun PulseRippleLayer(ripples: List<PulseRipple>) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val center = Offset(size.width / 2f, size.height / 2f)
         ripples.forEach { ripple ->
@@ -347,12 +347,12 @@ private fun VibesConnectivity(devices: List<P2PDevice>, onlyTies: Boolean) {
 }
 
 @Composable
-private fun VibeNodes(
+private fun PulseNodes(
     state: BluetoothUiState,
     devices: List<P2PDevice>,
     connectedLinks: Set<String>,
     selectedDevices: Set<String>,
-    vibedPeers: Set<String>,
+    pulsedPeers: Set<String>,
     activeBubbles: List<BubbleData>,
     onlyTies: Boolean,
     isFilterMode: Boolean,
@@ -367,22 +367,22 @@ private fun VibeNodes(
             val angle = (index.toDouble() / devices.size) * 2 * PI
             val activeBubble = activeBubbles.findLast { it.senderId == device.id }
             val isTied = device.id in connectedLinks
-            val isVibed = device.persistentId in vibedPeers || device.id in vibedPeers
+            val isPulsed = device.persistentId in pulsedPeers || device.id in pulsedPeers
             val isSelected = device.id in selectedDevices
             
             val xOffset = (radiusValue * cos(angle)).toFloat().dp
             val yOffset = (radiusValue * sin(angle)).toFloat().dp
 
-            val isFocused = isVibed || isTied || isSelected || device.id == subjectId || device.persistentId == subjectId
-            val isBroadFocus = isFilterMode && vibedPeers.isEmpty() && subjectId == null
+            val isFocused = isPulsed || isTied || isSelected || device.id == subjectId || device.persistentId == subjectId
+            val isBroadFocus = isFilterMode && pulsedPeers.isEmpty() && subjectId == null
             val noiseDimAlpha = if (isFilterMode && !isFocused && !isBroadFocus) 0.15f else 1f
 
             Box(modifier = Modifier.graphicsLayer { alpha = noiseDimAlpha }) {
-                VibeNode(
+                PulseNode(
                     device = device, 
-                    isVibed = isTied,
+                    isPulsed = isTied,
                     isSelected = isSelected,
-                    isPeerVibed = isVibed,
+                    isPeerPulsed = isPulsed,
                     onlyTies = onlyTies,
                     xOffset = xOffset, 
                     yOffset = yOffset, 
@@ -401,7 +401,7 @@ private fun VibeNodes(
 @Composable
 private fun CrowdNodes(
     crowdList: List<Pair<P2PDevice, Int>>, 
-    vibedPeers: Set<String>,
+    pulsedPeers: Set<String>,
     onCrowdClick: (P2PDevice) -> Unit,
     onCrowdLongClick: (P2PDevice) -> Unit
 ) {
@@ -413,10 +413,10 @@ private fun CrowdNodes(
             val xOffset = (radiusValue * cos(angle)).toFloat().dp
             val yOffset = (radiusValue * sin(angle)).toFloat().dp
             
-            VibeCrowdSignature(
+            PulseCrowdSignature(
                 device = device,
-                vibeCount = count,
-                isVibed = device.id in vibedPeers,
+                pulseCount = count,
+                isPulsed = device.id in pulsedPeers,
                 modifier = Modifier
                     .offset(xOffset, yOffset)
                     .clickable { onCrowdClick(device) }
@@ -427,11 +427,11 @@ private fun CrowdNodes(
 
 
 @Composable
-private fun VibeNode(
+private fun PulseNode(
     device: P2PDevice, 
-    isVibed: Boolean,
+    isPulsed: Boolean,
     isSelected: Boolean,
-    isPeerVibed: Boolean,
+    isPeerPulsed: Boolean,
     onlyTies: Boolean,
     xOffset: Dp, 
     yOffset: Dp, 
@@ -443,20 +443,20 @@ private fun VibeNode(
     projectionEmoji: String? = null
 ) {
     val coordinates = LocalPersonaCoordinates.current
-    val activeVibeId = LocalActiveVibeId.current.value
+    val activePulseId = LocalActivePulseId.current.value
     val key = device.persistentId ?: device.id
-    val isVibing = activeVibeId == key
+    val isPulsing = activePulseId == key
     val nodeSize = if (device.proximityFactor > 0.8f) 64.dp else 52.dp
 
     Box(
         modifier = Modifier.offset(xOffset, yOffset),
         contentAlignment = Alignment.Center
     ) {
-        VibePersonaSignature(
+        PulsePersonaSignature(
             device = device,
-            isVibed = isVibed,
+            isPulsed = isPulsed,
             isSelected = isSelected,
-            isPeerVibed = isPeerVibed,
+            isPeerPulsed = isPeerPulsed,
             onlyTies = onlyTies,
             size = nodeSize,
             isHighlighted = isHighlighted,
@@ -468,7 +468,7 @@ private fun VibeNode(
                     val current = coordinates[key] ?: PersonaConnectionPoints()
                     coordinates[key] = current.copy(
                         field = it.positionInRoot() + center,
-                        vibe = if (isVibing) it.positionInRoot() + center else null
+                        pulse = if (isPulsing) it.positionInRoot() + center else null
                     )
                 },
             onClick = onClick,

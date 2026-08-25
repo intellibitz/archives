@@ -1,23 +1,23 @@
 package cc.thevar.blukit.data.repository
 
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.data.local.entities.ContactEntity
 import kotlinx.coroutines.flow.Flow
 
-class ContactRepository(private val vibeStore: VibeStore) {
-    val allContacts: Flow<List<ContactEntity>> = vibeStore.getAllContacts()
+class ContactRepository(private val pulseStore: PulseStore) {
+    val allContacts: Flow<List<ContactEntity>> = pulseStore.getAllContacts()
 
-    suspend fun getContact(id: String): ContactEntity? = vibeStore.getContact(id)
+    suspend fun getContact(id: String): ContactEntity? = pulseStore.getContact(id)
 
     suspend fun saveContact(contact: ContactEntity) {
-        vibeStore.insertContact(contact)
+        pulseStore.insertContact(contact)
     }
 
     suspend fun deleteContact(contact: ContactEntity) {
-        vibeStore.deleteContact(contact.id)
+        pulseStore.deleteContact(contact.id)
     }
 
     suspend fun clearAll() {
-        vibeStore.deleteAllContacts()
+        pulseStore.deleteAllContacts()
     }
 }

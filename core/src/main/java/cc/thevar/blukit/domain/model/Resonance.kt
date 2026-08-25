@@ -3,17 +3,17 @@ package cc.thevar.blukit.domain.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class VibeGroup(
+data class Resonance(
     val id: String,
     val name: String,
     val memberIds: Set<String> = emptySet(),
     val scope: Int = SCOPE_PUBLIC,
-    val lastVibeTimestamp: Long = System.currentTimeMillis(),
+    val lastPulseTimestamp: Long = System.currentTimeMillis(),
     val isPersistent: Boolean = true,
     val isArchived: Boolean = false,
     val parentId: String? = null,
     val isMeta: Boolean = true,
-    val pinnedVibeIds: Set<String> = emptySet(),
+    val pinnedPulseIds: Set<String> = emptySet(),
     val projectionEmoji: String? = null,
     val isVaulted: Boolean = false,
     val isSeniorVault: Boolean = false,
@@ -50,7 +50,7 @@ data class VibeGroup(
          */
         const val DEFAULT_PARTITION_THRESHOLD = 100
 
-        fun generateId(name: String, scope: Int, parentGroup: VibeGroup? = null): String {
+        fun generateId(name: String, scope: Int, parentGroup: Resonance? = null): String {
             val normalized = name.uppercase().trim()
             return if (scope == SCOPE_PUBLIC) {
                 if (normalized == "CROWD" || normalized == "THE CROWD") {

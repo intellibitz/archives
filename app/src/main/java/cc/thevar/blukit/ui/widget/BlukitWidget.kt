@@ -23,14 +23,14 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import cc.thevar.blukit.MainActivity
 import org.koin.core.context.GlobalContext
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 
 class BlukitWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            val vibeStore = GlobalContext.get().get<VibeStore>()
-            val messages by vibeStore.messages.collectAsState(initial = emptyList())
+            val pulseStore = GlobalContext.get().get<PulseStore>()
+            val messages by pulseStore.messages.collectAsState(initial = emptyList())
             val count = messages.size
 
             GlanceTheme {
@@ -43,7 +43,7 @@ class BlukitWidget : GlanceAppWidget() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "SPREAD VIBES",
+                        text = "SPREAD PULSES",
                         style = TextStyle(
                             color = ColorProvider(Color.Cyan),
                             fontSize = 12.sp,
@@ -52,7 +52,7 @@ class BlukitWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.height(4.dp))
                     Text(
-                        text = "$count VIBES AROUND",
+                        text = "$count PULSES AROUND",
                         style = TextStyle(
                             color = ColorProvider(Color.White),
                             fontSize = 10.sp
@@ -80,7 +80,7 @@ class BlukitWidget : GlanceAppWidget() {
                         )
                         Spacer(modifier = GlanceModifier.width(8.dp))
                         Text(
-                            text = "BLUKIT:VIBES",
+                            text = "BLUKIT:PULSES",
                             style = TextStyle(
                                 color = ColorProvider(Color.Cyan.copy(alpha = 0.2f)),
                                 fontSize = 6.sp,

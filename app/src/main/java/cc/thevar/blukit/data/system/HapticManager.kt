@@ -20,26 +20,26 @@ class HapticManager(context: Context) {
         context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
 
-    enum class VibeType {
-        MESSAGE, // Short double vibe
-        CONNECTION, // Strong single vibe
-        ERROR, // Long intense vibe
-        SHOUT, // Rippling vibe
+    enum class PulseType {
+        MESSAGE, // Short double pulse
+        CONNECTION, // Strong single pulse
+        ERROR, // Long intense pulse
+        SHOUT, // Rippling pulse
         AIR_WAVE // Traveling wave feeling
     }
 
     /**
      * Triggers a discrete haptic alert based on system events.
      */
-    fun triggerVibe(type: VibeType) {
+    fun triggerPulse(type: PulseType) {
         if (!vibrator.hasVibrator()) return
 
         val effect = when (type) {
-            VibeType.MESSAGE -> VibrationEffect.createWaveform(longArrayOf(0, 40, 60, 40), -1)
-            VibeType.CONNECTION -> VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
-            VibeType.ERROR -> VibrationEffect.createWaveform(longArrayOf(0, 200, 100, 200), -1)
-            VibeType.SHOUT -> VibrationEffect.createWaveform(longArrayOf(0, 30, 30, 30, 30, 30), -1)
-            VibeType.AIR_WAVE -> {
+            PulseType.MESSAGE -> VibrationEffect.createWaveform(longArrayOf(0, 40, 60, 40), -1)
+            PulseType.CONNECTION -> VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
+            PulseType.ERROR -> VibrationEffect.createWaveform(longArrayOf(0, 200, 100, 200), -1)
+            PulseType.SHOUT -> VibrationEffect.createWaveform(longArrayOf(0, 30, 30, 30, 30, 30), -1)
+            PulseType.AIR_WAVE -> {
                 // Wave: Increasing duration pulses to simulate outward motion
                 VibrationEffect.createWaveform(longArrayOf(0, 20, 40, 30, 40, 50, 40, 70), -1)
             }
@@ -50,13 +50,13 @@ class HapticManager(context: Context) {
     /**
      * Legacy compatibility wrapper.
      */
-    fun triggerMessageAlert() = triggerVibe(VibeType.MESSAGE)
+    fun triggerMessageAlert() = triggerPulse(PulseType.MESSAGE)
 
     /**
-     * Triggers a proximity-based vibe for incoming surges.
-     * High Fidelity implementation: Stronger vibes for closer devices.
+     * Triggers a proximity-based pulse for incoming surges.
+     * High Fidelity implementation: Stronger pulses for closer devices.
      */
-    fun triggerProximityVibe(proximity: Float) {
+    fun triggerProximityPulse(proximity: Float) {
         if (!vibrator.hasVibrator()) return
 
         val effect = when {

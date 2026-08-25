@@ -3,7 +3,7 @@ package cc.thevar.blukit.network.p2p
 import android.content.Context
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.data.local.entities.ContactEntity
 import cc.thevar.blukit.data.local.entities.PeerEntity
 import cc.thevar.blukit.data.repository.ContactRepository
@@ -12,7 +12,7 @@ import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import android.os.Build
@@ -35,7 +35,7 @@ class NearbyP2PController(
     private val context: Context,
     private val repository: IdentityRepository,
     private val contactRepository: ContactRepository,
-    private val vibeStore: VibeStore,
+    private val pulseStore: PulseStore,
     private val hapticManager: HapticManager,
     private val radioStateManager: cc.thevar.blukit.data.system.RadioStateManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
@@ -45,7 +45,7 @@ class NearbyP2PController(
 
     private val tag = "BlukitP2P"
     private val connectionsClient = Nearby.getConnectionsClient(context)
-    private val serviceId = "BLUKIT_VIBE"
+    private val serviceId = "BLUKIT_PULSE"
 
     private fun getStrategy() = Strategy.P2P_CLUSTER
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
@@ -74,17 +74,17 @@ class NearbyP2PController(
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
-    private val _discoveredCrowds = MutableSharedFlow<VibeGroup>(extraBufferCapacity = 5)
+    private val _discoveredCrowds = MutableSharedFlow<Resonance>(extraBufferCapacity = 5)
     override val discoveredCrowds = _discoveredCrowds.asSharedFlow()
 
     private val _connectionUpdates = MutableSharedFlow<Pair<String, ConnectionStatus>>(extraBufferCapacity = 10)
     private val _syncProgress = MutableStateFlow<Float?>(null)
     override val syncProgress = _syncProgress.asStateFlow()
 
-    override val messages: StateFlow<List<MessagePayload>> = vibeStore.getAllMessages()
+    override val messages: StateFlow<List<MessagePayload>> = pulseStore.getAllMessages()
 
     private val activeConnections = Collections.synchronizedSet(mutableSetOf<String>())
-    private val vibeKeys = ConcurrentHashMap<String, SecretKey>()
+    private val pulseKeys = ConcurrentHashMap<String, SecretKey>()
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
     private val outgoingQueues = ConcurrentHashMap<String, kotlinx.coroutines.channels.Channel<Payload>>()
     private val pendingRadioRequests = Collections.synchronizedSet(mutableSetOf<String>())
@@ -93,7 +93,7 @@ class NearbyP2PController(
     private val senderRateLimits = Collections.synchronizedMap(mutableMapOf<String, MutableList<Long>>())
     private val blockedFingerprints = Collections.synchronizedSet(mutableSetOf<String>())
 
-    // PERFORMANCE: Vibe Aggregator
+    // PERFORMANCE: Pulse Aggregator
     private val aggregateBuffer = ConcurrentHashMap<String, MutableList<MessagePayload>>()
     private val aggregateJob = internalScope.launch {
         while (isActive) {
@@ -122,7 +122,7 @@ class NearbyP2PController(
     private fun getRadioFlag(): String {
         val states = radioStateManager.radioStates.value
         val lowPower = repository.lowPowerMode.value
-        val vibeCount = messages.value.size
+        val pulseCount = messages.value.size
         val radioChar = when {
             states.isWifiEnabled -> "W"
             states.isBluetoothEnabled -> "B"
@@ -130,7 +130,7 @@ class NearbyP2PController(
         }
         val powerChar = if (lowPower) { "P" } else "H"
         val meshSize = activeConnections.size
-        return "$radioChar|$vibeCount|$powerChar|$meshSize"
+        return "$radioChar|$pulseCount|$powerChar|$meshSize"
     }
 
     private fun observeIdentityChanges() {
@@ -168,7 +168,7 @@ class NearbyP2PController(
         }
     }
 
-    private fun queueVibe(endpointId: String, payload: Payload) {
+    private fun queuePulse(endpointId: String, payload: Payload) {
         val queue = outgoingQueues[endpointId] ?: run {
             val newQueue = kotlinx.coroutines.channels.Channel<Payload>(kotlinx.coroutines.channels.Channel.UNLIMITED)
             val existing = outgoingQueues.putIfAbsent(endpointId, newQueue)
@@ -191,12 +191,12 @@ class NearbyP2PController(
                     "B" -> P2PDevice.ConnectionMedium.BLUETOOTH
                     else -> P2PDevice.ConnectionMedium.LOCATION
                 }
-                val peerVibeCount = parts.getOrNull(4)?.toIntOrNull() ?: 0
+                val peerPulseCount = parts.getOrNull(4)?.toIntOrNull() ?: 0
                 val peerIsLowPower = parts.getOrNull(5) == "P"
                 
                 _scannedDevices.update { current ->
                     current.map { 
-                        if (it.id == endpointId) it.copy(medium = peerMedium, vibeCount = peerVibeCount, isLowPower = peerIsLowPower) 
+                        if (it.id == endpointId) it.copy(medium = peerMedium, pulseCount = peerPulseCount, isLowPower = peerIsLowPower) 
                         else it 
                     }
                 }
@@ -208,9 +208,9 @@ class NearbyP2PController(
             if (result.status.isSuccess) {
                 activeConnections.add(endpointId)
                 _connectionUpdates.tryEmit(endpointId to ConnectionStatus.Connected)
-                hapticManager.triggerVibe(HapticManager.VibeType.CONNECTION)
+                hapticManager.triggerPulse(HapticManager.PulseType.CONNECTION)
                 sendHandshake(endpointId)
-                syncAirHistory(endpointId)
+                syncPulseHistory(endpointId)
             } else {
                 val errorMsg = result.status.statusMessage ?: "Radio Failed"
                 Log.e(tag, "Connection failed for $endpointId: $errorMsg (Status Code: ${result.status.statusCode})")
@@ -224,7 +224,7 @@ class NearbyP2PController(
             pendingRadioRequests.remove(endpointId)
             _outgoingRadioRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
             _connectedRadios.update { it - endpointId }
-            vibeKeys.remove(endpointId)
+            pulseKeys.remove(endpointId)
             if (activeConnections.isEmpty()) _isConnected.value = false
             updateScannedDevices()
         }
@@ -259,19 +259,19 @@ class NearbyP2PController(
     private fun sendHandshake(endpointId: String) {
         val publicKeyBytes = cryptoManager.getLocalKeyPair().public.encoded
         val handshakePayload = byteArrayOf(0x01.toByte()) + publicKeyBytes
-        queueVibe(endpointId, Payload.fromBytes(handshakePayload))
+        queuePulse(endpointId, Payload.fromBytes(handshakePayload))
     }
 
     private fun handleHandshake(endpointId: String, bytes: ByteArray) {
         try {
             val publicKeyEncoded = bytes.copyOfRange(1, bytes.size)
-            val vibePublicKey = KeyFactory.getInstance("EC").generatePublic(X509EncodedKeySpec(publicKeyEncoded))
-            vibeKeys[endpointId] = cryptoManager.deriveSharedSecret(vibePublicKey)
+            val pulsePublicKey = KeyFactory.getInstance("EC").generatePublic(X509EncodedKeySpec(publicKeyEncoded))
+            pulseKeys[endpointId] = cryptoManager.deriveSharedSecret(pulsePublicKey)
         } catch (e: Exception) { }
     }
 
     private fun handleMessage(endpointId: String, bytes: ByteArray) {
-        val secretKey = vibeKeys[endpointId] ?: return
+        val secretKey = pulseKeys[endpointId] ?: return
         try {
             val decryptedBytes = cryptoManager.decrypt(bytes, secretKey)
             val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
@@ -296,11 +296,11 @@ class NearbyP2PController(
                     internalScope.launch { delay(1000); _syncProgress.value = null }
                 }
                 else -> {
-                    // PERFORMANCE: Handle aggregated vibes
+                    // PERFORMANCE: Handle aggregated pulses
                     if (payload.messageId.startsWith("aggregate_")) {
                         try {
                             val batch = Json.decodeFromString<List<MessagePayload>>(payload.content)
-                            batch.forEach { v -> if (isNewMessage(v.messageId)) handleChatMessage(endpointId, v, secretKey) }
+                            batch.forEach { p -> if (isNewMessage(p.messageId)) handleChatMessage(endpointId, p, secretKey) }
                         } catch (e: Exception) { Log.e(tag, "Failed to decode aggregate") }
                     } else {
                         if (isNewMessage(payload.messageId)) handleChatMessage(endpointId, payload, secretKey)
@@ -313,9 +313,9 @@ class NearbyP2PController(
     private fun handleResyncRequest(endpointId: String, secretKey: javax.crypto.SecretKey, sinceTimestamp: Long? = null) {
         internalScope.launch(ioDispatcher) {
             _syncProgress.value = 0.05f
-            // 1. Sync Groups first
-            val allGroups = vibeStore.groups.value
-            val groups = if (sinceTimestamp != null) allGroups.filter { it.lastVibeTimestamp > sinceTimestamp } else allGroups
+            // 1. Sync Resonances first
+            val allGroups = pulseStore.groups.value
+            val groups = if (sinceTimestamp != null) allGroups.filter { it.lastPulseTimestamp > sinceTimestamp } else allGroups
             
             groups.chunked(5).forEachIndexed { index, chunk ->
                 val chunkPayload = MessagePayload(
@@ -325,14 +325,14 @@ class NearbyP2PController(
                     content = Json.encodeToString(chunk),
                     timestamp = System.currentTimeMillis(),
                     type = MessagePayload.TYPE_RESYNC_CHUNK,
-                    status = 1 // Tag for groups
+                    status = 1 // Tag for resonances
                 )
                 sendMessageInternal(endpointId, chunkPayload, secretKey)
                 _syncProgress.value = 0.05f + (index.toFloat() / (groups.size / 5 + 1) * 0.2f)
             }
 
             // 2. Sync Messages
-            val allHistory = vibeStore.messages.value
+            val allHistory = pulseStore.messages.value
             val history = if (sinceTimestamp != null) allHistory.filter { it.timestamp > sinceTimestamp } else allHistory
             
             history.chunked(10).forEachIndexed { index, chunk ->
@@ -367,14 +367,14 @@ class NearbyP2PController(
         try {
             _syncProgress.value = 0.5f // Indeterminate for receiver for now
             if (payload.status == 1) {
-                val groups = Json.decodeFromString<List<VibeGroup>>(payload.content)
+                val groups = Json.decodeFromString<List<Resonance>>(payload.content)
                 internalScope.launch(ioDispatcher) {
-                    groups.forEach { vibeStore.insertGroup(it) }
+                    groups.forEach { pulseStore.insertGroup(it) }
                 }
             } else {
                 val chunk = Json.decodeFromString<List<MessagePayload>>(payload.content)
                 internalScope.launch(ioDispatcher) {
-                    chunk.forEach { vibeStore.upsertMessage(it) }
+                    chunk.forEach { pulseStore.upsertMessage(it) }
                 }
             }
         } catch (e: Exception) { }
@@ -382,7 +382,7 @@ class NearbyP2PController(
 
     private suspend fun sendMessageInternal(endpointId: String, payload: MessagePayload, secretKey: javax.crypto.SecretKey) {
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
-        queueVibe(endpointId, com.google.android.gms.nearby.connection.Payload.fromBytes(cryptoManager.encrypt(bytes, secretKey)))
+        queuePulse(endpointId, com.google.android.gms.nearby.connection.Payload.fromBytes(cryptoManager.encrypt(bytes, secretKey)))
     }
 
     private fun handleFileMetadata(endpointId: String, payload: MessagePayload, secretKey: SecretKey) {
@@ -397,7 +397,7 @@ class NearbyP2PController(
     }
 
     private fun handleAck(payload: MessagePayload) {
-        internalScope.launch(ioDispatcher) { vibeStore.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED) }
+        internalScope.launch(ioDispatcher) { pulseStore.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED) }
     }
 
     private fun handleRadioRequest(endpointId: String, payload: MessagePayload) {
@@ -431,7 +431,7 @@ class NearbyP2PController(
     private fun sendAck(endpointId: String, messageId: String, receiverId: String, secretKey: SecretKey) {
         internalScope.launch(ioDispatcher) {
             val ack = MessagePayload(messageId = messageId, senderId = repository.getDeviceId(), senderName = "", content = "", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_ACK, receiverId = receiverId)
-            queueVibe(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), ack).toByteArray(), secretKey)))
+            queuePulse(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), ack).toByteArray(), secretKey)))
         }
     }
 
@@ -443,7 +443,7 @@ class NearbyP2PController(
             val relayedPayload = payload.copy(hopCount = payload.hopCount + 1)
             val bytes = Json.encodeToString(MessagePayload.serializer(), relayedPayload).toByteArray()
             activeConnections.filter { it != sourceEndpointId }.forEach { target ->
-                vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) { } }
+                pulseKeys[target]?.let { key -> try { queuePulse(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) { } }
             }
         }
     }
@@ -451,29 +451,29 @@ class NearbyP2PController(
     private fun saveIncomingMessage(payload: MessagePayload) {
         internalScope.launch(ioDispatcher) {
             if (payload.senderId !in repository.blockedUsers.value) {
-                // AUTO-DISCOVER CHAINS
+                // AUTO-DISCOVER RESONANCES
                 val gid = payload.groupId
                 val gName = payload.groupName
                 if (gid != null && gName != null) {
-                    val existing = vibeStore.getGroup(gid)
+                    val existing = pulseStore.getGroup(gid)
                     if (existing == null) {
-                        val scope = when (payload.vibeType) {
-                            MessagePayload.VIBE_SHOUT -> VibeGroup.SCOPE_PUBLIC
-                            MessagePayload.VIBE_SILENCE -> VibeGroup.SCOPE_LOCAL
-                            else -> VibeGroup.SCOPE_PRIVATE
+                        val scope = when (payload.pulseType) {
+                            MessagePayload.PULSE_SHOUT -> Resonance.SCOPE_PUBLIC
+                            MessagePayload.PULSE_SILENCE -> Resonance.SCOPE_LOCAL
+                            else -> Resonance.SCOPE_PRIVATE
                         }
-                        val newGroup = VibeGroup(
+                        val newGroup = Resonance(
                             id = gid, 
                             name = gName, 
                             scope = scope,
-                            parentId = VibeGroup.ID_CROWD // Anchor to root Crowd if parent is unknown
+                            parentId = Resonance.ID_CROWD // Anchor to root Crowd if parent is unknown
                         )
-                        vibeStore.insertGroup(newGroup)
+                        pulseStore.insertGroup(newGroup)
                         _discoveredCrowds.tryEmit(newGroup)
                     }
                 }
-                vibeStore.upsertMessage(payload)
-                hapticManager.triggerVibe(HapticManager.VibeType.MESSAGE)
+                pulseStore.upsertMessage(payload)
+                hapticManager.triggerPulse(HapticManager.PulseType.MESSAGE)
             }
         }
     }
@@ -505,14 +505,14 @@ class NearbyP2PController(
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
             val parts = info.endpointName.split("|")
             if (parts.size < 3) return
-            val vibeDeviceId = parts[2]
+            val pulseDeviceId = parts[2]
             val myDeviceId = repository.getDeviceId()
             val peerMedium = if (parts.size >= 4) { when (parts[3]) { "W" -> P2PDevice.ConnectionMedium.WIFI; "B" -> P2PDevice.ConnectionMedium.BLUETOOTH; else -> P2PDevice.ConnectionMedium.LOCATION } } else P2PDevice.ConnectionMedium.LOCATION
-            val peerVibeCount = parts.getOrNull(4)?.toIntOrNull() ?: 0
+            val peerPulseCount = parts.getOrNull(4)?.toIntOrNull() ?: 0
             val peerIsLowPower = parts.getOrNull(5) == "P"
-            val newDevice = P2PDevice(id = endpointId, name = parts[1].ifBlank { "?" }, emoji = parts[0], persistentId = vibeDeviceId, medium = peerMedium, vibeCount = peerVibeCount, isLowPower = peerIsLowPower)
+            val newDevice = P2PDevice(id = endpointId, name = parts[1].ifBlank { "?" }, emoji = parts[0], persistentId = pulseDeviceId, medium = peerMedium, pulseCount = peerPulseCount, isLowPower = peerIsLowPower)
             _scannedDevices.update { current -> current.filter { d -> d.id != endpointId } + newDevice }
-            if (myDeviceId < vibeDeviceId && !activeConnections.contains(endpointId)) {
+            if (myDeviceId < pulseDeviceId && !activeConnections.contains(endpointId)) {
                 val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId|${getRadioFlag()}"
                 connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback)
             }
@@ -587,24 +587,24 @@ class NearbyP2PController(
     }
 
     private suspend fun sendMessagePayload(endpointId: String, payload: MessagePayload) {
-        vibeKeys[endpointId]?.let { key -> queueVibe(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), payload).toByteArray(), key))) }
+        pulseKeys[endpointId]?.let { key -> queuePulse(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), payload).toByteArray(), key))) }
     }
 
-    private suspend fun getVibeKeyWithRetry(id: String): SecretKey? {
-        var a = 0; while (vibeKeys[id] == null && a < 30) { delay(100); a++ }; return vibeKeys[id]
+    private suspend fun getPulseKeyWithRetry(id: String): SecretKey? {
+        var a = 0; while (pulseKeys[id] == null && a < 30) { delay(100); a++ }; return pulseKeys[id]
     }
 
-    private fun syncAirHistory(endpointId: String) {
+    private fun syncPulseHistory(endpointId: String) {
         internalScope.launch(ioDispatcher) {
-            val key = getVibeKeyWithRetry(endpointId) ?: return@launch
-            val allMessages = vibeStore.getAllMessages().value
+            val key = getPulseKeyWithRetry(endpointId) ?: return@launch
+            val allMessages = pulseStore.getAllMessages().value
             allMessages.filter { it.receiverId.isNullOrBlank() }.takeLast(10).forEach { payload ->
-                try { queueVibe(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), payload).toByteArray(), key))) } catch (e: Exception) {}
+                try { queuePulse(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), payload).toByteArray(), key))) } catch (e: Exception) {}
             }
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+    override suspend fun sendMessage(content: String, receiverId: String?, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
         val payload = MessagePayload(
             messageId = messageId ?: UUID.randomUUID().toString(), 
             senderId = repository.getDeviceId(), 
@@ -615,7 +615,7 @@ class NearbyP2PController(
             groupName = groupName, 
             content = content, 
             timestamp = System.currentTimeMillis(), 
-            vibeType = vibeType,
+            pulseType = pulseType,
             type = type,
             hopCount = 0
         )
@@ -628,16 +628,16 @@ class NearbyP2PController(
             }
         }
 
-        return dispatchVibe(payload)
+        return dispatchPulse(payload)
     }
 
-    private suspend fun dispatchVibe(payload: MessagePayload): MessagePayload? {
+    private suspend fun dispatchPulse(payload: MessagePayload): MessagePayload? {
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         val targetRid = payload.receiverId
         try {
             if (targetRid != null) { 
-                getVibeKeyWithRetry(targetRid)?.let { key -> 
-                    queueVibe(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
+                getPulseKeyWithRetry(targetRid)?.let { key -> 
+                    queuePulse(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
                 } 
             } else { 
                 // SELECTIVE BROADCASTING: Prioritize anchor nodes in large crowds
@@ -649,51 +649,51 @@ class NearbyP2PController(
                 
                 targets.forEach { target -> 
                     internalScope.launch(ioDispatcher) { 
-                        vibeKeys[target]?.let { key -> 
-                            try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} 
+                        pulseKeys[target]?.let { key -> 
+                            try { queuePulse(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} 
                         } 
                     } 
                 } 
             }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
-            vibeStore.upsertMessage(payload); return payload
+            pulseStore.upsertMessage(payload); return payload
         } catch (e: Exception) { return null }
     }
 
     private fun flushAggregateBuffer() {
         val groupsToFlush = aggregateBuffer.keys().toList()
         groupsToFlush.forEach { gid ->
-            val vibes = aggregateBuffer.remove(gid) ?: return@forEach
-            if (vibes.isEmpty()) return@forEach
+            val pulses = aggregateBuffer.remove(gid) ?: return@forEach
+            if (pulses.isEmpty()) return@forEach
             
             internalScope.launch(ioDispatcher) {
-                // Bundle vibes into a single high-density payload
+                // Bundle pulses into a single high-density payload
                 val bundle = MessagePayload(
                     messageId = "aggregate_${System.currentTimeMillis()}",
                     senderId = "CROWD_SYSTEM",
                     senderName = "AGGREGATOR",
-                    content = Json.encodeToString(vibes),
+                    content = Json.encodeToString(pulses),
                     timestamp = System.currentTimeMillis(),
                     groupId = gid,
                     type = MessagePayload.TYPE_TEXT, // Could add TYPE_BATCH
                     isPriority = false
                 )
-                dispatchVibe(bundle)
+                dispatchPulse(bundle)
             }
         }
     }
 
-    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? = 
-        sendMessage(content, null, vibeType, messageId, groupId, groupName, type)
+    override suspend fun broadcastMessage(content: String, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? = 
+        sendMessage(content, null, pulseType, messageId, groupId, groupName, type)
 
     override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? {
-        val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_IDENTITY_UPDATE, vibeType = MessagePayload.VIBE_SHOUT)
+        val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_IDENTITY_UPDATE, pulseType = MessagePayload.PULSE_SHOUT)
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
-        activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+        activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { pulseKeys[target]?.let { key -> try { queuePulse(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
         return payload
     }
 
-    override suspend fun sendFile(fileUri: Uri, receiverId: String?, vibeType: Int, groupId: String?, groupName: String?): MessagePayload? {
+    override suspend fun sendFile(fileUri: Uri, receiverId: String?, pulseType: Int, groupId: String?, groupName: String?): MessagePayload? {
         val fileName = getFileName(fileUri)
         val fileSize = getFileSize(fileUri)
         val mimeType = context.contentResolver.getType(fileUri)
@@ -701,12 +701,12 @@ class NearbyP2PController(
         try {
             val pfd = context.contentResolver.openFileDescriptor(fileUri, "r") ?: return null
             val filePayload = Payload.fromFile(pfd)
-            val payload = MessagePayload(messageId = messageId, senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, receiverId = receiverId, groupId = groupId, groupName = groupName, content = if (mimeType?.startsWith("image/") == true) fileUri.toString() else "[FILE] $fileName", timestamp = System.currentTimeMillis(), type = if (mimeType?.startsWith("image/") == true) MessagePayload.TYPE_IMAGE else MessagePayload.TYPE_FILE, vibeType = vibeType, fileId = filePayload.id, fileName = fileName, fileSize = fileSize, mimeType = mimeType)
+            val payload = MessagePayload(messageId = messageId, senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, receiverId = receiverId, groupId = groupId, groupName = groupName, content = if (mimeType?.startsWith("image/") == true) fileUri.toString() else "[FILE] $fileName", timestamp = System.currentTimeMillis(), type = if (mimeType?.startsWith("image/") == true) MessagePayload.TYPE_IMAGE else MessagePayload.TYPE_FILE, pulseType = pulseType, fileId = filePayload.id, fileName = fileName, fileSize = fileSize, mimeType = mimeType)
             internalScope.launch(ioDispatcher) {
                 if (receiverId != null) { sendMessagePayload(receiverId, payload); connectionsClient.sendPayload(receiverId, filePayload) }
                 else { activeConnections.forEach { target -> internalScope.launch { sendMessagePayload(target, payload); connectionsClient.sendPayload(target, filePayload) } } }
             }
-            vibeStore.upsertMessage(payload); return payload
+            pulseStore.upsertMessage(payload); return payload
         } catch (e: Exception) { return null }
     }
 
@@ -723,19 +723,19 @@ class NearbyP2PController(
     }
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
-        val group = vibeStore.getGroup(groupId) ?: return null
-        val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), vibeType = MessagePayload.VIBE_WHISPER)
+        val group = pulseStore.getGroup(groupId) ?: return null
+        val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), pulseType = MessagePayload.PULSE_WHISPER)
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         try {
-            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { vibeKeys[memberId]?.let { key -> try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
-            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { pulseKeys[memberId]?.let { key -> try { queuePulse(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { pulseKeys[target]?.let { key -> try { queuePulse(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
-            vibeStore.upsertMessage(payload); vibeStore.updateGroupLastVibe(groupId, payload.timestamp); return payload
+            pulseStore.upsertMessage(payload); pulseStore.updateGroupLastPulse(groupId, payload.timestamp); return payload
         } catch (e: Exception) { return null }
     }
 
     override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MessagePayload? {
-        val group = vibeStore.getGroup(groupId) ?: return null
+        val group = pulseStore.getGroup(groupId) ?: return null
         val payload = MessagePayload(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
@@ -746,21 +746,21 @@ class NearbyP2PController(
             timestamp = System.currentTimeMillis(),
             type = MessagePayload.TYPE_NOTE_UPDATE,
             noteVersion = version,
-            vibeType = MessagePayload.VIBE_WHISPER
+            pulseType = MessagePayload.PULSE_WHISPER
         )
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         try {
-            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { vibeKeys[memberId]?.let { key -> try { queueVibe(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
-            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { vibeKeys[target]?.let { key -> try { queueVibe(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { pulseKeys[memberId]?.let { key -> try { queuePulse(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
+            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { pulseKeys[target]?.let { key -> try { queuePulse(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
-            vibeStore.upsertMessage(payload); vibeStore.updateGroupLastVibe(groupId, payload.timestamp); return payload
+            pulseStore.upsertMessage(payload); pulseStore.updateGroupLastPulse(groupId, payload.timestamp); return payload
         } catch (e: Exception) { return null }
     }
 
-    override fun startGroupVibe(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
-        val gid = groupId ?: VibeGroup.generateId(name, type)
+    override fun startGroupPulse(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+        val gid = groupId ?: Resonance.generateId(name, type)
         internalScope.launch(ioDispatcher) { 
-            vibeStore.insertGroup(VibeGroup(
+            pulseStore.insertGroup(Resonance(
                 id = gid, 
                 name = name, 
                 memberIds = members + repository.getDeviceId(), 
@@ -772,16 +772,16 @@ class NearbyP2PController(
     }
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
-        internalScope.launch(ioDispatcher) { vibeStore.updateGroupMembers(groupId, memberIds) }
+        internalScope.launch(ioDispatcher) { pulseStore.updateGroupMembers(groupId, memberIds) }
     }
 
     override fun updateGroupScope(groupId: String, scope: Int) {
-        internalScope.launch(ioDispatcher) { vibeStore.updateGroupScope(groupId, scope) }
+        internalScope.launch(ioDispatcher) { pulseStore.updateGroupScope(groupId, scope) }
     }
 
     override fun initiateHistorySync(endpointId: String, sinceTimestamp: Long?) {
         internalScope.launch(ioDispatcher) {
-            val key = getVibeKeyWithRetry(endpointId) ?: return@launch
+            val key = getPulseKeyWithRetry(endpointId) ?: return@launch
             val request = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
@@ -808,7 +808,7 @@ class NearbyP2PController(
 
     private fun updateScannedDevices() { _scannedDevices.update { current -> current.map { device -> val tied = device.id in _connectedRadios.value; val connecting = device.id in pendingRadioRequests; device.copy(isConnected = tied, isLinkPending = connecting, medium = if (tied) P2PDevice.ConnectionMedium.WIFI else if (connecting || activeConnections.contains(device.id)) P2PDevice.ConnectionMedium.BLUETOOTH else P2PDevice.ConnectionMedium.LOCATION) } } }
 
-    override fun closeConnection() { connectionsClient.stopAllEndpoints(); activeConnections.clear(); vibeKeys.clear(); _isConnected.value = false }
+    override fun closeConnection() { connectionsClient.stopAllEndpoints(); activeConnections.clear(); pulseKeys.clear(); _isConnected.value = false }
 
     override fun release() { 
         stopDiscovery()

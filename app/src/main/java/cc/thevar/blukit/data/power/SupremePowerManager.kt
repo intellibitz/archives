@@ -1,6 +1,6 @@
 package cc.thevar.blukit.data.power
 
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.domain.power.SupremePowerReport
 import cc.thevar.blukit.network.p2p.P2PController
 import kotlinx.coroutines.*
@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 class SupremePowerManager(
     private val p2pController: P2PController,
-    private val vibeStore: VibeStore,
+    private val pulseStore: PulseStore,
     private val identityRepository: cc.thevar.blukit.data.repository.IdentityRepository,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -47,7 +47,7 @@ class SupremePowerManager(
             combine(
                 p2pController.scannedDevices,
                 p2pController.connectedRadios,
-                vibeStore.getAllMessages(),
+                pulseStore.getAllMessages(),
                 identityRepository.lowPowerMode,
                 _breezeFlow.onStart { emit("") },
                 _lastLocation
@@ -61,13 +61,13 @@ class SupremePowerManager(
                 val radioCount = connected.size
                 val msgCount = messages.size
                 
-                // Logic for Vibe Harmony
-                val vibeHarmony = if (userCount > 0) {
+                // Logic for Pulse Harmony
+                val pulseHarmony = if (userCount > 0) {
                     min(1.0f, (radioCount.toFloat() / userCount.toFloat()) + 0.2f)
                 } else 0f
 
                 // AI Insight Generation (Heuristic-based)
-                val insight = generateAiInsight(userCount, radioCount, msgCount, vibeHarmony, lowPower)
+                val insight = generateAiInsight(userCount, radioCount, msgCount, pulseHarmony, lowPower)
                 val breeze = args.getOrNull(4) as? String
                 val location = args.getOrNull(5) as? android.location.Location
 
@@ -85,7 +85,7 @@ class SupremePowerManager(
                     userCount = userCount,
                     connectedLinksCount = radioCount,
                     totalMessages = msgCount,
-                    harmony = vibeHarmony,
+                    harmony = pulseHarmony,
                     aiInsight = insight,
                     currentBreeze = breeze,
                     lowPowerMode = lowPower,
@@ -101,13 +101,13 @@ class SupremePowerManager(
     }
 
     private fun observeEventsForBreezes() {
-        // Vibe Detected
+        // Pulse Detected
         p2pController.scannedDevices
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("VIBE PROXIMITY")
+                if (new > old) emitBreeze("PULSE PROXIMITY")
             }.launchIn(scope)
 
         // Radio Formed
@@ -125,7 +125,7 @@ class SupremePowerManager(
                 if (msgs.isNotEmpty()) {
                     val last = msgs.last()
                     if (System.currentTimeMillis() - last.timestamp < 1000) {
-                        emitBreeze("VIBE SPREAD")
+                        emitBreeze("PULSE SPREAD")
                     }
                 }
             }.launchIn(scope)
@@ -133,7 +133,7 @@ class SupremePowerManager(
 
     private suspend fun emitBreeze(text: String) {
         _breezeFlow.emit(text)
-        hapticManager?.triggerVibe(cc.thevar.blukit.data.system.HapticManager.VibeType.CONNECTION)
+        hapticManager?.triggerPulse(cc.thevar.blukit.data.system.HapticManager.PulseType.CONNECTION)
         delay(5.seconds)
         if (_breezeFlow.replayCache.firstOrNull() == text) {
             _breezeFlow.emit("")
@@ -144,13 +144,13 @@ class SupremePowerManager(
         if (lowPower) return "ENERGY SAVER ACTIVE"
         
         return when {
-            users == 0 -> "MAKE PEOPLE VIBE"
-            users > 15 -> "VIBE PULSE: MESH DENSE"
-            harmony < 0.3f -> "BLUKIT NEARBY: SPREAD VIBES"
-            users > 10 && harmony > 0.8f -> "VIBE PULSE"
+            users == 0 -> "MAKE PEOPLE PULSE"
+            users > 15 -> "PULSE PULSE: MESH DENSE"
+            harmony < 0.3f -> "BLUKIT NEARBY: SPREAD PULSES"
+            users > 10 && harmony > 0.8f -> "PULSE PULSE"
             radios == 0 && users > 0 -> "CROWD ENERGY"
-            msgs > 100 -> "VIBE FLOW"
-            else -> "MAKE PEOPLE VIBE"
+            msgs > 100 -> "PULSE FLOW"
+            else -> "MAKE PEOPLE PULSE"
         }
     }
 }

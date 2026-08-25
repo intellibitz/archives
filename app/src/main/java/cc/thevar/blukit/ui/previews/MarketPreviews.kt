@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.viewmodels.*
 import cc.thevar.blukit.ui.screens.*
 import cc.thevar.blukit.ui.navigation.Route
@@ -58,7 +58,7 @@ fun PreviewChatPhone() {
     BlukitTheme {
         ChainField(
             state = BluetoothUiState(
-                session = VibeSession(
+                session = PulseSession(
                     messages = listOf(
                         MessagePayload(
                             messageId = "1",
@@ -98,10 +98,10 @@ fun PreviewRadarTablet() {
             state = BluetoothUiState(
                 crowd = MeshCrowd(
                     scannedDevices = listOf(
-                        P2PDevice("1", "Vibe 1"),
-                        P2PDevice("2", "Vibe 2"),
-                        P2PDevice("3", "Vibe 3"),
-                        P2PDevice("4", "Vibe 4")
+                        P2PDevice("1", "Pulse 1"),
+                        P2PDevice("2", "Pulse 2"),
+                        P2PDevice("3", "Pulse 3"),
+                        P2PDevice("4", "Pulse 4")
                     )
                 )
             ),
@@ -153,7 +153,7 @@ fun PreviewFeatureGraphic() {
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "MAKE PEOPLE VIBE",
+                    text = "MAKE PEOPLE PULSE",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Bold
@@ -172,7 +172,7 @@ fun PreviewHarmonyHubFull() {
                 BlukitHarmonyTopBar(
                     title = "THE CROWD",
                     icon = Icons.Rounded.Groups,
-                    currentRoute = Route.Host,
+                    currentRoute = Route.Event,
                     onNavigate = {},
                     userNickname = "BLUKIT",
                     userEmoji = "👤",
@@ -188,6 +188,7 @@ fun PreviewHarmonyHubFull() {
                     isStealthMode = false,
                     lowPowerMode = false,
                     crowdIsStill = false,
+                    activeCrowds = emptyList(),
                     onToggleStealth = {},
                     onToggleLowPower = {},
                     onAwakenBluetooth = {},
@@ -203,22 +204,22 @@ fun PreviewHarmonyHubFull() {
                 
                 Spacer(modifier = Modifier.weight(1f))
                 
-                BlukitVibeHub(
-                    currentRoute = Route.Host,
+                BlukitPulseHub(
+                    currentRoute = Route.Event,
                     messageText = "Hello Crowd",
                     onMessageChange = {},
                     onSend = {},
-                    vibeCount = 5,
+                    pulseCount = 5,
                     crowdIsStill = false,
                     isSearchMode = true,
                     onSearchToggle = {},
-                    onCreatePublicChain = { _, _ -> },
+                    onCreatePublicResonance = { _, _ -> },
                     incomingRadioRequests = emptySet(),
                     selectedDevices = emptySet(),
-                    vibedPeers = emptySet(),
+                    pulsedPeers = emptySet(),
                     onAcceptRadio = {},
                     onDenyRadio = {},
-                    onStartSideVibe = {},
+                    onStartSidePulse = {},
                     onStartChain = {},
                     onClearSelection = {},
                     onAttachFile = {},
@@ -229,23 +230,23 @@ fun PreviewHarmonyHubFull() {
     }
 }
 
-@Preview(name = "VibingVibesTicker - Headers", device = Devices.PHONE, showBackground = true)
+@Preview(name = "PulsingResonanceTicker - Headers", device = Devices.PHONE, showBackground = true)
 @Composable
-fun PreviewVibingVibesTickerHeaders() {
+fun PreviewPulsingResonanceTickerHeaders() {
     val me = "me"
     val user1 = "user1"
     val user2 = "user2"
     
     val messages = listOf(
-        MessagePayload("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "THE CROWD", content = "Public vibe!", timestamp = System.currentTimeMillis(), vibeType = MessagePayload.VIBE_SHOUT),
-        MessagePayload("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, vibeType = MessagePayload.VIBE_SILENCE),
-        MessagePayload("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private group", timestamp = System.currentTimeMillis() - 2000, vibeType = MessagePayload.VIBE_WHISPER)
+        MessagePayload("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "THE CROWD", content = "Public pulse!", timestamp = System.currentTimeMillis(), pulseType = MessagePayload.PULSE_SHOUT),
+        MessagePayload("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, pulseType = MessagePayload.PULSE_SILENCE),
+        MessagePayload("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private group", timestamp = System.currentTimeMillis() - 2000, pulseType = MessagePayload.PULSE_WHISPER)
     )
     
     val groups = listOf(
-        VibeGroup("air_hub", "THE CROWD", setOf(user1, me), VibeGroup.SCOPE_PUBLIC),
-        VibeGroup("silence", "SILENCE", setOf(me), VibeGroup.SCOPE_LOCAL),
-        VibeGroup("tie1", "PARTY", setOf(user2, me, "user3"), VibeGroup.SCOPE_PRIVATE)
+        Resonance("air_hub", "THE CROWD", setOf(user1, me), Resonance.SCOPE_PUBLIC),
+        Resonance("silence", "SILENCE", setOf(me), Resonance.SCOPE_LOCAL),
+        Resonance("tie1", "PARTY", setOf(user2, me, "user3"), Resonance.SCOPE_PRIVATE)
     )
     
     val energyList = listOf(
@@ -256,21 +257,21 @@ fun PreviewVibingVibesTickerHeaders() {
 
     BlukitTheme(stealthMode = true) {
         Box(modifier = Modifier.fillMaxSize().background(Color.Black).padding(16.dp)) {
-            VibingVibesTicker(
+            PulsingResonanceTicker(
                 state = BluetoothUiState(
-                    session = VibeSession(
+                    session = PulseSession(
                         messages = messages,
                         groups = groups
                     )
                 ),
                 energyList = energyList,
-                vibeCounts = mapOf(user1 to 1, me to 1, user2 to 5),
+                pulseCounts = mapOf(user1 to 1, me to 1, user2 to 5),
                 localDeviceId = me,
-                vibedPeers = emptySet(),
+                pulsedPeers = emptySet(),
                 isGrouped = true,
-                onVibeClick = {},
+                onPulseClick = {},
                 onDeviceLongClick = {},
-                onDeleteVibe = {},
+                onDeletePulse = {},
                 reverseLayout = false
             )
         }
@@ -287,8 +288,8 @@ fun PreviewCrowdRitualGhost() {
                 onDone = { _ -> },
                 onDismiss = {},
                 nearbyAirs = listOf(
-                    VibeGroup("1", "GATE 7", emptySet(), VibeGroup.SCOPE_PUBLIC),
-                    VibeGroup("2", "CONCERT", emptySet(), VibeGroup.SCOPE_PUBLIC)
+                    Resonance("1", "GATE 7", emptySet(), Resonance.SCOPE_PUBLIC),
+                    Resonance("2", "CONCERT", emptySet(), Resonance.SCOPE_PUBLIC)
                 )
             )
         }

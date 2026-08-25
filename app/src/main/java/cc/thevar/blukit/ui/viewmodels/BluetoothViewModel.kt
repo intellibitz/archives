@@ -6,12 +6,12 @@ import androidx.lifecycle.viewModelScope
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.VibeGroup
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
 import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.data.local.VibeStore
+import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
 import cc.thevar.blukit.ui.toUiError
 import kotlinx.coroutines.delay
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel responsible for managing connectivity within The Crowd and UI states.
  * Coordinates between the P2PController and RadioStateManager to provide
- * a reactive stream of Bluetooth and Vibing Crowd statuses.
+ * a reactive stream of Bluetooth and Pulsing Crowd statuses.
  */
 @OptIn(kotlinx.coroutines.FlowPreview::class)
 class BluetoothViewModel(
@@ -30,7 +30,7 @@ class BluetoothViewModel(
     private val radioStateManager: RadioStateManager,
     private val repository: IdentityRepository,
     private val permissionManager: SpreadPermissionManager,
-    private val vibeStore: VibeStore,
+    private val pulseStore: PulseStore,
     private val connectivityUseCase: ConnectivityUseCase,
 ) : ViewModel() {
 
@@ -38,7 +38,7 @@ class BluetoothViewModel(
     private val _energySurge = MutableStateFlow(0f)
     val energySurge = _energySurge.asStateFlow()
 
-    private val _currentChainId = MutableStateFlow(VibeGroup.ID_CROWD)
+    private val _currentChainId = MutableStateFlow(Resonance.ID_CROWD)
     val currentChainId = _currentChainId.asStateFlow()
 
     val discoveredCrowds = p2pController.discoveredCrowds
@@ -97,8 +97,8 @@ class BluetoothViewModel(
         // STORAGE PRUNING: Daily cleanup
         viewModelScope.launch {
             while (true) {
-                vibeStore.pruneMedia(thresholdMs = 90L * 24 * 60 * 60 * 1000) // 90 days
-                vibeStore.autoArchiveCrowds() // PROTOCOL: Archive after 30 days inactivity
+                pulseStore.pruneMedia(thresholdMs = 90L * 24 * 60 * 60 * 1000) // 90 days
+                pulseStore.autoArchiveCrowds() // PROTOCOL: Archive after 30 days inactivity
                 delay(24L * 60 * 60 * 1000)
             }
         }
@@ -110,8 +110,8 @@ class BluetoothViewModel(
         ) { connected, scanned -> connected to scanned }
             .debounce(2000)
             .onEach { (connected, scanned) ->
-                val currentChain = vibeStore.getGroup(_currentChainId.value)
-                if (currentChain?.scope == VibeGroup.SCOPE_PRIVATE) {
+                val currentChain = pulseStore.getGroup(_currentChainId.value)
+                if (currentChain?.scope == Resonance.SCOPE_PRIVATE) {
                     val missingMembers = currentChain.memberIds - connected - repository.getDeviceId()
                     missingMembers.forEach { memberId ->
                         scanned.find { it.id == memberId || it.persistentId == memberId }?.let { device ->
@@ -129,7 +129,7 @@ class BluetoothViewModel(
         val hour = now.get(java.util.Calendar.HOUR_OF_DAY)
         val minute = now.get(java.util.Calendar.MINUTE)
 
-        val scheduledCrowds = vibeStore.groups.value.filter { it.schedules.isNotEmpty() }
+        val scheduledCrowds = pulseStore.groups.value.filter { it.schedules.isNotEmpty() }
         scheduledCrowds.forEach { crowd ->
             crowd.schedules.forEach { s ->
                 val isActive = s.dayOfWeek == day && 
@@ -162,13 +162,13 @@ class BluetoothViewModel(
     private suspend fun promoteSilenceToShout() {
         val myId = repository.getDeviceId()
         val messages = p2pController.messages.value
-        val silentVibes = messages.filter { 
-            it.senderId == myId && it.vibeType == MessagePayload.VIBE_SILENCE 
+        val silentPulses = messages.filter { 
+            it.senderId == myId && it.pulseType == MessagePayload.PULSE_SILENCE 
         }
         
-        silentVibes.forEach { vibe ->
+        silentPulses.forEach { pulse ->
             // Promote to THE CROWD or last active tie? Default to THE CROWD.
-            p2pController.broadcastMessage(vibe.content, MessagePayload.VIBE_SHOUT, vibe.messageId, groupId = VibeGroup.ID_CROWD, groupName = "THE CROWD")
+            p2pController.broadcastMessage(pulse.content, MessagePayload.PULSE_SHOUT, pulse.messageId, groupId = Resonance.ID_CROWD, groupName = "THE CROWD")
         }
     }
 
@@ -180,17 +180,17 @@ class BluetoothViewModel(
         }
     }
 
-    private val activityState: Flow<HostActivity> = combine(
+    private val activityState: Flow<EventActivity> = combine(
         p2pController.isDiscovering,
         p2pController.isAdvertising,
         p2pController.messages,
         p2pController.errors
     ) { isDiscovering, isAdvertising, messages, error ->
         val now = System.currentTimeMillis()
-        val recentVibes = messages.count { (now - it.timestamp) < 300000 } // last 5 mins
-        val intensity = (recentVibes / 20f).coerceAtMost(1f)
+        val recentPulses = messages.count { (now - it.timestamp) < 300000 } // last 5 mins
+        val intensity = (recentPulses / 20f).coerceAtMost(1f)
 
-        HostActivity(
+        EventActivity(
             isDiscovering = isDiscovering,
             isAdvertising = isAdvertising,
             energyIntensity = intensity,
@@ -201,14 +201,14 @@ class BluetoothViewModel(
     private val crowdState: Flow<MeshCrowd> = combine(
         p2pController.scannedDevices,
         _selectedDevices,
-        repository.vibedPeers,
+        repository.pulsedPeers,
         repository.blockedUsers,
         p2pController.incomingRadioRequests,
         p2pController.outgoingRadioRequests
     ) { flows: Array<out Any?> ->
         val scanned = flows[0] as List<P2PDevice>
         val selected = flows[1] as Set<String>
-        val vibed = flows[2] as Set<String>
+        val pulsed = flows[2] as Set<String>
         val blocked = flows[3] as Set<String>
         val incoming = flows[4] as Set<P2PDevice>
         val outgoing = flows[5] as Set<P2PDevice>
@@ -216,21 +216,21 @@ class BluetoothViewModel(
         MeshCrowd(
             scannedDevices = scanned,
             selectedDevices = selected,
-            vibedPeers = vibed,
+            pulsedPeers = pulsed,
             blockedUsers = blocked,
             incomingRadioRequests = incoming,
             outgoingRadioRequests = outgoing
         )
     }
 
-    private val sessionDataState: Flow<VibeSession> = combine(
+    private val sessionDataState: Flow<PulseSession> = combine(
         p2pController.connectedRadios,
         p2pController.messages,
-        vibeStore.activeGroups,
-        vibeStore.archivedGroups,
+        pulseStore.activeGroups,
+        pulseStore.archivedGroups,
         p2pController.syncProgress
     ) { links, messages, groups, archivedGroups, syncProgress ->
-        VibeSession(
+        PulseSession(
             connectedRadios = links,
             messages = messages,
             groups = groups,
@@ -262,9 +262,9 @@ class BluetoothViewModel(
             manualConnectionState != null -> manualConnectionState
             activity.uiError != null -> RadioConnectionState.Error(activity.uiError.message)
             isConnected -> {
-                val vibe = crowd.scannedDevices.find { it.id in session.connectedRadios }
+                val pulse = crowd.scannedDevices.find { it.id in session.connectedRadios }
                     ?: P2PDevice(id = session.connectedRadios.firstOrNull() ?: "", name = "?", emoji = "👤")
-                RadioConnectionState.Connected(vibe)
+                RadioConnectionState.Connected(pulse)
             }
             activity.isDiscovering || activity.isAdvertising -> RadioConnectionState.Scanning
             else -> RadioConnectionState.Disconnected
@@ -345,55 +345,55 @@ class BluetoothViewModel(
         _selectedDevices.value = emptySet()
     }
 
-    fun startGroupVibe(name: String, members: Set<String>? = null, scope: Int = VibeGroup.SCOPE_PRIVATE, templateId: String? = null): String {
+    fun startGroupPulse(name: String, members: Set<String>? = null, scope: Int = Resonance.SCOPE_PRIVATE, templateId: String? = null): String {
         if (name.isBlank()) return ""
         
         val targetMembers = members ?: _selectedDevices.value
-        if (scope != VibeGroup.SCOPE_PUBLIC && targetMembers.isEmpty()) {
+        if (scope != Resonance.SCOPE_PUBLIC && targetMembers.isEmpty()) {
             Log.w("BluetoothViewModel", "Cannot start private group with empty member set")
             return ""
         }
 
-        val isPublicAir = scope == VibeGroup.SCOPE_PUBLIC
+        val isPublicAir = scope == Resonance.SCOPE_PUBLIC
         
         val currentGroup = state.value.session.groups.find { it.id == _currentChainId.value }
-        val groupId = VibeGroup.generateId(name, scope, currentGroup)
+        val groupId = Resonance.generateId(name, scope, currentGroup)
         val parentId = _currentChainId.value
         
         viewModelScope.launch {
-            val existing = vibeStore.getGroup(groupId)
+            val existing = pulseStore.getGroup(groupId)
             if (isPublicAir) {
                 // PUBLIC CROWD: Join existing or create a shared entry. No one owns it.
                 if (existing == null) {
                     val template = cc.thevar.blukit.domain.model.CrowdTemplates.ALL.find { it.id == templateId }
-                    val newGroup = VibeGroup(
+                    val newGroup = Resonance(
                         id = groupId, 
                         name = name, 
-                        scope = VibeGroup.SCOPE_PUBLIC,
+                        scope = Resonance.SCOPE_PUBLIC,
                         parentId = parentId,
                         templateId = templateId
                     )
-                    vibeStore.insertGroup(newGroup)
+                    pulseStore.insertGroup(newGroup)
                     
                     // Automatically spawn default chains if template exists
                     template?.defaultChains?.forEach { chainName ->
-                        val chainId = VibeGroup.generateId(chainName, VibeGroup.SCOPE_PRIVATE, newGroup)
-                        vibeStore.insertGroup(VibeGroup(
+                        val chainId = Resonance.generateId(chainName, Resonance.SCOPE_PRIVATE, newGroup)
+                        pulseStore.insertGroup(Resonance(
                             id = chainId,
                             name = chainName,
-                            scope = VibeGroup.SCOPE_PRIVATE,
+                            scope = Resonance.SCOPE_PRIVATE,
                             parentId = groupId
                         ))
                     }
                 } else {
-                    vibeStore.updateGroupLastVibe(groupId, System.currentTimeMillis())
+                    pulseStore.updateGroupLastPulse(groupId, System.currentTimeMillis())
                 }
             } else {
                 // PRIVATE CHAIN: Anchored to a parent Crowd.
-                p2pController.startGroupVibe(name, targetMembers, scope, groupId = groupId, parentId = parentId)
+                p2pController.startGroupPulse(name, targetMembers, scope, groupId = groupId, parentId = parentId)
                 delay(100) 
-                vibeStore.getGroup(groupId)?.let { tie ->
-                    vibeStore.insertGroup(tie.copy(parentId = parentId))
+                pulseStore.getGroup(groupId)?.let { tie ->
+                    pulseStore.insertGroup(tie.copy(parentId = parentId))
                 }
             }
         }
@@ -404,13 +404,13 @@ class BluetoothViewModel(
 
     fun connectCrowds(sourceId: String, targetId: String, bridge: cc.thevar.blukit.domain.model.ConnectionBridge = cc.thevar.blukit.domain.model.ConnectionBridge.PEER_TO_PEER) {
         viewModelScope.launch {
-            vibeStore.addCrowdConnection(cc.thevar.blukit.domain.model.CrowdConnection(sourceId, targetId, bridge))
+            pulseStore.addCrowdConnection(cc.thevar.blukit.domain.model.CrowdConnection(sourceId, targetId, bridge))
         }
     }
 
     fun assignRole(groupId: String, userId: String, role: String) {
         viewModelScope.launch {
-            vibeStore.assignUserRole(groupId, userId, role)
+            pulseStore.assignUserRole(groupId, userId, role)
         }
     }
 
@@ -452,29 +452,29 @@ class BluetoothViewModel(
         }
     }
 
-    fun spreadVibe(message: String) {
+    fun spreadPulse(message: String) {
         if (message.isBlank()) return
 
         viewModelScope.launch {
             val myId = repository.getDeviceId()
             val activeChainId = _currentChainId.value
-            val activeChain = vibeStore.getGroup(activeChainId)
+            val activeChain = pulseStore.getGroup(activeChainId)
 
-            val existingLocalVibe: MessagePayload? = state.value.session.messages.findLast { 
-                it.senderId == myId && it.content == message && it.vibeType == MessagePayload.VIBE_SILENCE 
+            val existingLocalPulse: MessagePayload? = state.value.session.messages.findLast { 
+                it.senderId == myId && it.content == message && it.pulseType == MessagePayload.PULSE_SILENCE 
             }
             
             val isRadiosActive = state.value.harmony.isBluetoothEnabled && state.value.harmony.permissionsGranted
-            val isChainContext = activeChain?.scope == VibeGroup.SCOPE_PRIVATE
+            val isChainContext = activeChain?.scope == Resonance.SCOPE_PRIVATE
             
             when {
                 !isRadiosActive -> {
                     p2pController.sendMessage(
                         message, 
                         null, 
-                        MessagePayload.VIBE_SILENCE, 
-                        existingLocalVibe?.messageId, 
-                        groupId = VibeGroup.ID_SILENCE, 
+                        MessagePayload.PULSE_SILENCE, 
+                        existingLocalPulse?.messageId, 
+                        groupId = Resonance.ID_SILENCE, 
                         groupName = "SILENCE"
                     )
                 }
@@ -484,8 +484,8 @@ class BluetoothViewModel(
                 else -> {
                     p2pController.broadcastMessage(
                         message, 
-                        MessagePayload.VIBE_SHOUT, 
-                        existingLocalVibe?.messageId, 
+                        MessagePayload.PULSE_SHOUT, 
+                        existingLocalPulse?.messageId, 
                         groupId = activeChainId, 
                         groupName = activeChain?.name
                     )
@@ -494,26 +494,26 @@ class BluetoothViewModel(
         }
     }
 
-    fun spreadFile(uri: android.net.Uri, vibeType: Int = MessagePayload.VIBE_SILENCE) {
+    fun spreadFile(uri: android.net.Uri, pulseType: Int = MessagePayload.PULSE_SILENCE) {
         viewModelScope.launch {
             val activeChainId = _currentChainId.value
-            val activeChain = vibeStore.getGroup(activeChainId)
+            val activeChain = pulseStore.getGroup(activeChainId)
 
-            when (vibeType) {
-                MessagePayload.VIBE_SILENCE -> {
-                    p2pController.sendFile(uri, null, MessagePayload.VIBE_SILENCE, groupId = VibeGroup.ID_SILENCE, groupName = "SILENCE")
+            when (pulseType) {
+                MessagePayload.PULSE_SILENCE -> {
+                    p2pController.sendFile(uri, null, MessagePayload.PULSE_SILENCE, groupId = Resonance.ID_SILENCE, groupName = "SILENCE")
                 }
-                MessagePayload.VIBE_SHOUT -> {
-                    p2pController.sendFile(uri, null, MessagePayload.VIBE_SHOUT, groupId = activeChainId, groupName = activeChain?.name)
+                MessagePayload.PULSE_SHOUT -> {
+                    p2pController.sendFile(uri, null, MessagePayload.PULSE_SHOUT, groupId = activeChainId, groupName = activeChain?.name)
                 }
-                MessagePayload.VIBE_WHISPER -> {
+                MessagePayload.PULSE_WHISPER -> {
                     val targets = state.value.crowd.selectedDevices.ifEmpty { state.value.session.connectedRadios }
                     if (targets.isNotEmpty()) {
                         targets.forEach { targetId ->
-                            p2pController.sendFile(uri, targetId, vibeType, groupId = activeChainId, groupName = activeChain?.name)
+                            p2pController.sendFile(uri, targetId, pulseType, groupId = activeChainId, groupName = activeChain?.name)
                         }
                     } else {
-                        p2pController.sendFile(uri, null, vibeType, groupId = activeChainId, groupName = activeChain?.name)
+                        p2pController.sendFile(uri, null, pulseType, groupId = activeChainId, groupName = activeChain?.name)
                     }
                 }
             }
@@ -526,16 +526,16 @@ class BluetoothViewModel(
 
     fun deleteGroup(groupId: String) {
         viewModelScope.launch {
-            vibeStore.deleteGroup(groupId)
+            pulseStore.deleteGroup(groupId)
         }
     }
 
     fun vaultGroup(groupId: String, isVaulted: Boolean) {
-        vibeStore.vaultGroup(groupId, isVaulted)
+        pulseStore.vaultGroup(groupId, isVaulted)
     }
 
     fun seniorVaultGroup(groupId: String, isSeniorVault: Boolean) {
-        vibeStore.seniorVaultGroup(groupId, isSeniorVault)
+        pulseStore.seniorVaultGroup(groupId, isSeniorVault)
     }
 
     fun updateNote(groupId: String, content: String, messageId: String?, version: Int) {
@@ -549,34 +549,34 @@ class BluetoothViewModel(
     }
 
     fun restoreFromVault(groupId: String) {
-        vibeStore.restoreFromVault(groupId)
+        pulseStore.restoreFromVault(groupId)
     }
 
-    fun pinVibe(groupId: String, messageId: String) {
-        viewModelScope.launch { vibeStore.pinVibe(groupId, messageId) }
+    fun pinPulse(groupId: String, messageId: String) {
+        viewModelScope.launch { pulseStore.pinPulse(groupId, messageId) }
     }
 
-    fun unpinVibe(groupId: String, messageId: String) {
-        viewModelScope.launch { vibeStore.unpinVibe(groupId, messageId) }
+    fun unpinPulse(groupId: String, messageId: String) {
+        viewModelScope.launch { pulseStore.unpinPulse(groupId, messageId) }
     }
 
     fun updateProjection(groupId: String, emoji: String?) {
-        viewModelScope.launch { vibeStore.updateGroupProjection(groupId, emoji) }
+        viewModelScope.launch { pulseStore.updateGroupProjection(groupId, emoji) }
     }
 
     fun addSchedule(groupId: String, schedule: cc.thevar.blukit.domain.model.CrowdSchedule) {
-        viewModelScope.launch { vibeStore.addCrowdSchedule(groupId, schedule) }
+        viewModelScope.launch { pulseStore.addCrowdSchedule(groupId, schedule) }
     }
 
     fun pushRitual(groupId: String, schedule: cc.thevar.blukit.domain.model.CrowdSchedule) {
         viewModelScope.launch {
             val content = kotlinx.serialization.json.Json.encodeToString(schedule)
-            val members = vibeStore.getGroup(groupId)?.allMemberIds ?: emptySet()
+            val members = pulseStore.getGroup(groupId)?.allMemberIds ?: emptySet()
             members.forEach { memberId ->
                 p2pController.sendMessage(
                     content = content,
                     receiverId = memberId,
-                    vibeType = MessagePayload.VIBE_WHISPER,
+                    pulseType = MessagePayload.PULSE_WHISPER,
                     groupId = groupId
                 )?.let { 
                     // Ritual push logic

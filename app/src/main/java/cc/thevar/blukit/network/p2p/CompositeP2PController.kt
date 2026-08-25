@@ -71,7 +71,7 @@ class CompositeP2PController(
     override val messages: StateFlow<List<MessagePayload>> = nearbyController.messages
     override val syncProgress: StateFlow<Float?> = nearbyController.syncProgress
 
-    override val discoveredCrowds: SharedFlow<cc.thevar.blukit.domain.model.VibeGroup> = merge(
+    override val discoveredCrowds: SharedFlow<cc.thevar.blukit.domain.model.Resonance> = merge(
         nearbyController.discoveredCrowds,
         bleController.discoveredCrowds
     ).shareIn(scope, SharingStarted.WhileSubscribed(5000))
@@ -104,13 +104,13 @@ class CompositeP2PController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
-        return nearbyController.sendMessage(content, receiverId, vibeType, messageId, groupId, groupName, type) ?: bleController.sendMessage(content, receiverId, vibeType, messageId, groupId, groupName, type)
+    override suspend fun sendMessage(content: String, receiverId: String?, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        return nearbyController.sendMessage(content, receiverId, pulseType, messageId, groupId, groupName, type) ?: bleController.sendMessage(content, receiverId, pulseType, messageId, groupId, groupName, type)
     }
 
-    override suspend fun broadcastMessage(content: String, vibeType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
-        val nearby = nearbyController.broadcastMessage(content, vibeType, messageId, groupId, groupName, type)
-        val ble = bleController.broadcastMessage(content, vibeType, messageId, groupId, groupName, type)
+    override suspend fun broadcastMessage(content: String, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        val nearby = nearbyController.broadcastMessage(content, pulseType, messageId, groupId, groupName, type)
+        val ble = bleController.broadcastMessage(content, pulseType, messageId, groupId, groupName, type)
         return nearby ?: ble
     }
 
@@ -128,12 +128,12 @@ class CompositeP2PController(
         return nearbyController.sendNoteUpdate(groupId, content, messageId, version) ?: bleController.sendNoteUpdate(groupId, content, messageId, version)
     }
 
-    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, vibeType: Int, groupId: String?, groupName: String?): MessagePayload? {
-        return nearbyController.sendFile(fileUri, receiverId, vibeType, groupId, groupName)
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, pulseType: Int, groupId: String?, groupName: String?): MessagePayload? {
+        return nearbyController.sendFile(fileUri, receiverId, pulseType, groupId, groupName)
     }
 
-    override fun startGroupVibe(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
-        return nearbyController.startGroupVibe(name, members, type, groupId, parentId)
+    override fun startGroupPulse(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+        return nearbyController.startGroupPulse(name, members, type, groupId, parentId)
     }
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {

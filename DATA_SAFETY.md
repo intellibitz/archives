@@ -3,18 +3,18 @@
 **blukit is 100% offline, anonymous, and secured by proximity.**
 
 ## 1. Zero Cloud Dependency
-blukit **never** connects to the internet. All "Vibes" spread directly from phone to phone using peer-to-peer radios.
+blukit **never** connects to the internet. All "Pulses" spread directly from phone to phone using peer-to-peer radios.
 
 | Energy Type | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
 | **Nickname & Roles** | Only on your phone | Nearby people only | Local identification and template-specific permissions. |
 | **Assignments & Tasks** | Only on your phone | Chain members only | Collaborative academic tracking (exempt from decay). |
 | **Chains (Shout/Whisper/Silence)** | Only on your phone | Mesh/Chain partners | To maintain local and shared history. |
-| **Memories & Timelines** | Only on your phone | No | Permanent preservation of shared vibes. |
-| **Event, Links, Vibes** | Only on your phone | Mesh partners | Summarized pulses (**Plural Pulses**) with intelligent partitioning for scale. |
+| **Memories & Timelines** | Only on your phone | No | Permanent preservation of shared pulses. |
+| **Event, Links, Pulses** | Only on your phone | Mesh partners | Summarized pulses (**Resonance**) with intelligent partitioning for scale. |
 | **Interoperable Crowds** | Ephemeral only | Mesh partners | Logical bridging across physical containers via **Connection Bridges**. |
-| **Mesh Relay** | Ephemeral only | Mesh partners | Silent carrier hops (max 3) for distant vibes. Never stored on transit devices. |
-| **Vibe Sync** | Only on your phone | Trusted devices only | Differential history sync (Groups, Rituals, Tasks) for faster updates. |
+| **Mesh Relay** | Ephemeral only | Mesh partners | Silent carrier hops (max 3) for distant pulses. Never stored on transit devices. |
+| **Pulse Sync** | Only on your phone | Trusted devices only | Differential history sync (Groups, Rituals, Tasks) for faster updates. |
 | **Collaborative Rituals** | Only on your phone | Chain members only | Sharing scheduled Crowd/Chain awakening logic with friends. |
 | **Crowd Templates** | Only on your phone | No | Predefined structures (University/Festival/Venue) for rapid mesh deployment. |
 | **Crowd Schedules** | Only on your phone | No | To automate the "Awakening" of recurring rituals. |
@@ -29,15 +29,15 @@ blukit **never** connects to the internet. All "Vibes" spread directly from phon
 - **Media Mesh Isolation**: High-speed media transfers happen over direct encrypted WiFi links, isolated from the public discovery radios.
 
 ## 3. Self-Cleaning Persistence
-- **Vibe Decay (Pruning)**: To keep your device light over a long journey, blukit automatically deletes large media older than 90 days.
-- **Pinned Preservation**: Any vibe you "Pin" to a **Crowd Canvas** is exempt from decay, ensuring your core data and memories are never lost.
-- **Intelligent Ticker Management**: The ticker automatically clears non-pinned ephemeral vibes after they sink into the vault, preventing local storage bloat.
+- **Pulse Decay (Pruning)**: To keep your device light over a long journey, blukit automatically deletes large media older than 90 days.
+- **Pinned Preservation**: Any pulse you "Pin" to a **Crowd Canvas** is exempt from decay, ensuring your core data and memories are never lost.
+- **Intelligent Ticker Management**: The ticker automatically clears non-pinned ephemeral pulses after they sink into the vault, preventing local storage bloat.
 
 
 ## 4. Hardware Encryption
 **Everything shared in a Private Chain is end-to-end encrypted.**
 
-- **AES-256-GCM**: Whispers are scrambled so only the intended Chain members can vibe with them.
+- **AES-256-GCM**: Whispers are scrambled so only the intended Chain members can pulse with them.
 - **ECDH Handshakes**: Secure keys are negotiated locally over the air.
 - **Non-Monopolistic Crowd**: Public Crowds have no "owner." They are shared frequencies that anyone can join or name. Identifiers are **Deterministic and Scoped** (e.g., `crowd_MALL_FOOD_COURT`) to ensure crowd access remains open and unique.
 

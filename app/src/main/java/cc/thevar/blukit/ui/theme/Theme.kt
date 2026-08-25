@@ -94,7 +94,7 @@ fun BlukitTheme(
 }
 
 /**
- * Global "Blukit Air": Suble shimmering grain to make every pixel feel the vibe.
+ * Global "Blukit Air": Suble shimmering grain to make every pixel feel the pulse.
  */
 @Composable
 fun BlukitAir() {

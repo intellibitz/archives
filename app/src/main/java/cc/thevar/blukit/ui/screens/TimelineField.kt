@@ -45,7 +45,7 @@ fun TimelineField(
     ) { padding ->
         if (memories.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("NO MEMORIES FOUND. PIN A VIBE TO PRESERVE IT.", color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp)
+                Text("NO MEMORIES FOUND. PIN A PULSE TO PRESERVE IT.", color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp)
             }
         } else {
             LazyColumn(
