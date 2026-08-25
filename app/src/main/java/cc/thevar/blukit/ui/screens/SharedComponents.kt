@@ -207,7 +207,7 @@ fun BlukitHarmonyTopBar(
                     EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
                 }
 
-                // CENTER: [BLUKIT PRIVACY]
+                // CENTER: [PRIVACY]
                 Row(
                     verticalAlignment = Alignment.CenterVertically, 
                     horizontalArrangement = Arrangement.Center, 
@@ -220,14 +220,6 @@ fun BlukitHarmonyTopBar(
                         contentDescription = null, 
                         tint = themeColor.copy(alpha = 0.8f),
                         modifier = Modifier.size(10.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "BLUKIT", 
-                        fontSize = 7.sp, 
-                        fontWeight = FontWeight.Black, 
-                        color = Color.White.copy(alpha = 0.7f), 
-                        letterSpacing = 1.sp
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -286,19 +278,29 @@ fun BlukitHarmonyTopBar(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // LEFT: Navigation Exit or Logo
-                Box(modifier = Modifier.width(56.dp), contentAlignment = Alignment.CenterStart) {
+                Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.CenterStart) {
                     if (onBack != null) {
                         IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = themeColor, modifier = Modifier.size(20.dp))
                         }
                     } else {
                         // Branding on left if no back button
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_blukit_logo), 
-                            contentDescription = null, 
-                            tint = themeColor,
-                            modifier = Modifier.padding(start = 12.dp).size(20.dp)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp)) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_blukit_logo), 
+                                contentDescription = null, 
+                                tint = themeColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "BLUKIT",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White,
+                                letterSpacing = 1.sp
+                            )
+                        }
                     }
                 }
 
