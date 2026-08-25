@@ -470,9 +470,11 @@ fun BlukitPulseHub(
                     .navigationBarsPadding()
                     .imePadding()
             ) {
+                val isPulseLocked = currentRoute is Route.Event
                 BlukitInput(
                     crowdIsStill = crowdIsStill, 
                     isReadOnly = false, 
+                    isPulseLocked = isPulseLocked,
                     isFilterActive = pulsedPeers.isNotEmpty(), 
                     isPrivate = isPrivate, 
                     targetName = targetName, 
@@ -2132,6 +2134,7 @@ fun BlukitInput(
     onNote: (() -> Unit)? = null,
     pulseCount: Int = 0,
     isReadOnly: Boolean = false,
+    isPulseLocked: Boolean = false,
     isFilterActive: Boolean = false,
     isPrivate: Boolean = false,
     targetName: String? = null,
@@ -2171,6 +2174,7 @@ fun BlukitInput(
 
     val actualPlaceholder = when { 
         isSearchActive -> "SEARCH PULSES: TYPE NICKNAME OR PULSE..."
+        isPulseLocked -> "JOIN A CROWD TO SPREAD A PULSE..."
         placeholder != null -> placeholder 
         isReadOnly -> "FILTERED" 
         isPrivate && targetName != null -> "PRIVATE PULSE TO $targetName..."
@@ -2323,12 +2327,12 @@ fun BlukitInput(
                         
                         IconButton(
                             onClick = { onSend(); focusManager.clearFocus() }, 
-                            enabled = value.isNotBlank() && !isReadOnly, 
+                            enabled = value.isNotBlank() && !isReadOnly && !isPulseLocked, 
                             modifier = Modifier
                                 .size(44.dp)
                                 .testTag("SendPulseButton")
                         ) { 
-                            val sendColor = if (value.isNotBlank()) themeColor else Color.White.copy(alpha = 0.1f)
+                            val sendColor = if (value.isNotBlank() && !isPulseLocked) themeColor else Color.White.copy(alpha = 0.1f)
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
