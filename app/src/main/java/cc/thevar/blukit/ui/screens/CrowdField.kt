@@ -127,7 +127,8 @@ fun CrowdField(
                                 themeColor = StealthPrimary,
                                 count = nestedCrowd.memberIds.size,
                                 lastUpdate = sdf.format(Date(nestedCrowd.lastPulseTimestamp)),
-                                onClick = { onNavigateToGroup(nestedCrowd.id) }
+                                onClick = { onNavigateToGroup(nestedCrowd.id) },
+                                showJoin = true
                             )
                         }
                         items(childTies) { tie ->
@@ -138,7 +139,8 @@ fun CrowdField(
                                 themeColor = if (tie.scope == Resonance.SCOPE_PRIVATE) StealthRose else StealthPrimary,
                                 count = tie.memberIds.size,
                                 lastUpdate = sdf.format(Date(tie.lastPulseTimestamp)),
-                                onClick = { onNavigateToGroup(tie.id) }
+                                onClick = { onNavigateToGroup(tie.id) },
+                                showJoin = true
                             )
                         }
                     }

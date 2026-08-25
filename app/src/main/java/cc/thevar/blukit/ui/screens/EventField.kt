@@ -208,17 +208,31 @@ fun EventField(
             )
         },
         tickerContent = {
-            // Event ticker shows the latest global energy (Public Crowds + Global Pulses)
-            val combinedEnergy = remember(eventMetas, pulses) {
-                val crowdPairs = eventMetas.map { crowd ->
-                    val dev = P2PDevice(id = crowd.id, name = crowd.name, emoji = "🌬️", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                    dev to null // Represents a crowd container pulse
+            // Event ticker shows the latest global energy (Grouped by Resonance: Header + Entries)
+            val combinedEnergy = remember(eventMetas, state.session.messages) {
+                val grouped = mutableListOf<Pair<P2PDevice, MessagePayload?>>()
+                
+                // Sort events by latest activity (ascending for reverseLayout)
+                val sortedEvents = eventMetas.sortedBy { it.lastPulseTimestamp }
+                
+                sortedEvents.forEach { resonance ->
+                    // 1. ADD LATEST ENTRIES for this resonance (up to 3)
+                    val resonancePulses = state.session.messages.filter { 
+                        it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && (it.groupId == null || it.groupId == Resonance.ID_CROWD))
+                    }.sortedBy { it.timestamp }
+                     .takeLast(3)
+                    
+                    resonancePulses.forEach { msg ->
+                        val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                        grouped.add(dev to msg)
+                    }
+
+                    // 2. ADD HEADER (above pulses in UI)
+                    val headDev = P2PDevice(id = resonance.id, name = resonance.name, emoji = "🌬️", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                    grouped.add(headDev to null)
                 }
-                val pulsePairs = pulses.map { msg -> 
-                    val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                    dev to msg 
-                }
-                (crowdPairs + pulsePairs).sortedByDescending { it.second?.timestamp ?: Long.MAX_VALUE }
+                
+                grouped
             }
 
             PulsingResonanceTicker(

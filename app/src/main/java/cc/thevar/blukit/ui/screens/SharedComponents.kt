@@ -551,7 +551,8 @@ fun PulsingResonanceTicker(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
-    
+    val sdf = remember { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
+
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxWidth(),
@@ -560,24 +561,42 @@ fun PulsingResonanceTicker(
     ) {
         items(energyList, key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
             val id = device.persistentId ?: device.id
-            val count = if (isGrouped) pulseCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == msg?.messageId }
-
-            AnimatedPulseItem(
-                msg = msg,
-                isSelected = device.id in state.crowd.selectedDevices,
-                senderDevice = device,
-                pulseCount = count,
-                isPulsed = id in pulsedPeers,
-                isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
-                isGrouped = isGrouped,
-                isMutual = device.id in state.session.connectedRadios,
-                resonance = state.session.groups.find { it.id == (msg?.groupId ?: device.id) },
-                rowId = id,
-                onPulseClick = { msg?.messageId?.let { onPulseClick(it) } ?: onDeviceLongClick(device) },
-                onDeviceLongClick = { onDeviceLongClick(device) },
-                onDelete = { msg?.messageId?.let { onDeletePulse(it) } },
-                onIdentify = { onIdentifyUser(device) }
-            )
+            val resonance = state.session.groups.find { it.id == (msg?.groupId ?: device.id) }
+            
+            if (msg == null && resonance != null) {
+                // HEADER: High-level Resonance Summary
+                ResonanceSummary(
+                    title = resonance.name,
+                    subtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "CROWD" else "PRIVATE CHAIN",
+                    icon = if (resonance.scope == Resonance.SCOPE_PUBLIC) Icons.Rounded.Grain else Icons.Rounded.Hearing,
+                    themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
+                    count = pulseCounts[id] ?: 0,
+                    lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
+                    onClick = { onPulseClick(resonance.id) },
+                    showJoin = resonance.id != Resonance.ID_CROWD,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            } else {
+                // ENTRY: Atomic Pulse Item
+                val count = if (isGrouped) pulseCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == msg?.messageId }
+                
+                AnimatedPulseItem(
+                    msg = msg,
+                    isSelected = device.id in state.crowd.selectedDevices,
+                    senderDevice = device,
+                    pulseCount = count,
+                    isPulsed = id in pulsedPeers,
+                    isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
+                    isGrouped = isGrouped,
+                    isMutual = device.id in state.session.connectedRadios,
+                    resonance = resonance,
+                    rowId = id,
+                    onPulseClick = { msg?.messageId?.let { onPulseClick(it) } ?: onDeviceLongClick(device) },
+                    onDeviceLongClick = { onDeviceLongClick(device) },
+                    onDelete = { msg?.messageId?.let { onDeletePulse(it) } },
+                    onIdentify = { onIdentifyUser(device) }
+                )
+            }
         }
     }
 }
@@ -615,33 +634,58 @@ fun AnimatedPulseItem(
     
     val signatureDevice = senderDevice ?: P2PDevice(id = msg?.senderId ?: "", name = msg?.senderName ?: "USER", emoji = msg?.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
     val isPlural = msg?.isMeta == true
+    val isEntry = isGrouped && msg != null
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .combinedClickable(onClick = onPulseClick, onLongClick = onDeviceLongClick)
-            .background(if (isSelected) Color.White.copy(alpha = 0.05f) else Color.Transparent, RoundedCornerShape(8.dp))
-            .padding(vertical = 4.dp),
+            .background(if (isSelected) Color.White.copy(alpha = 0.05f) else Color.Transparent, RoundedCornerShape(8.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Ticker Connection Point
+        // Ticker Connection Point & Entry Indicator
         Box(
             modifier = Modifier
-                .onGloballyPositioned { 
-                    val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                    val current = coordinates[rowId] ?: PersonaConnectionPoints()
-                    coordinates[rowId] = current.copy(ticker = it.positionInRoot() + center) 
-                }
-                .size(1.dp)
-        )
+                .padding(start = 8.dp)
+                .width(20.dp)
+                .fillMaxHeight(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isEntry) {
+                // Vertical connecting line for entries
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(themeColor.copy(alpha = 0.2f))
+                )
+                // Small dot for the entry
+                Box(
+                    modifier = Modifier
+                        .size(4.dp)
+                        .background(themeColor.copy(alpha = 0.4f), CircleShape)
+                )
+            }
+            
+            Box(
+                modifier = Modifier
+                    .onGloballyPositioned { 
+                        val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                        val current = coordinates[rowId] ?: PersonaConnectionPoints()
+                        coordinates[rowId] = current.copy(ticker = it.positionInRoot() + center) 
+                    }
+                    .size(1.dp)
+            )
+        }
 
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 12.dp)
+                .padding(start = if (isEntry) 4.dp else 12.dp)
         ) {
-            if (isGrouped) {
+            if (isGrouped && !isEntry) {
+                // Header-style
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     val tieEmoji = when (resonance?.scope) {
                         Resonance.SCOPE_LOCAL -> "📱"
@@ -659,34 +703,6 @@ fun AnimatedPulseItem(
                             color = themeColor,
                             letterSpacing = 1.sp
                         )
-                        if (msg != null) {
-                            Text(
-                                text = if (isPlural) "RESONANCE: ${msg.content.uppercase()}" else msg.content.uppercase(), 
-                                fontSize = 8.sp, 
-                                color = Color.White.copy(alpha = 0.7f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                    
-                    if (!isMe && resonance?.id != Resonance.ID_CROWD) {
-                        Surface(
-                            onClick = onPulseClick,
-                            color = themeColor.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.3f))
-                        ) {
-                            Text(
-                                text = "JOIN",
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Black,
-                                color = themeColor,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                letterSpacing = 1.sp
-                            )
-                        }
                     }
                 }
             } else {
@@ -700,8 +716,8 @@ fun AnimatedPulseItem(
                             Text(
                                 text = msg.content.uppercase(), 
                                 fontSize = 11.sp, 
-                                color = Color.White, 
-                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isEntry) Color.White.copy(alpha = 0.9f) else Color.White, 
+                                fontWeight = if (isEntry) FontWeight.Bold else FontWeight.ExtraBold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -764,7 +780,7 @@ fun AnimatedPulseItem(
         
         Spacer(modifier = Modifier.width(8.dp))
         
-        // Right side Persona for Connection Points
+        // Right side Persona
         Box(
             modifier = Modifier
                 .onGloballyPositioned { 
@@ -1128,6 +1144,7 @@ fun ResonanceSummary(
     count: Int,
     lastUpdate: String,
     onClick: () -> Unit,
+    showJoin: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
@@ -1185,29 +1202,51 @@ fun ResonanceSummary(
                         )
                     }
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    if (count > 0) {
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (showJoin) {
                         Surface(
-                            color = themeColor.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.4f))
+                            onClick = onClick,
+                            color = themeColor.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
+                            modifier = Modifier.padding(end = 12.dp)
                         ) {
                             Text(
-                                text = count.toString(),
+                                text = "JOIN",
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Black,
                                 color = themeColor,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                letterSpacing = 1.sp
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = lastUpdate,
-                        fontSize = 7.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.2f)
-                    )
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        if (count > 0) {
+                            Surface(
+                                color = themeColor.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = count.toString(),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = themeColor,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = lastUpdate,
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.2f)
+                        )
+                    }
                 }
             }
         }

@@ -116,7 +116,8 @@ fun PulseField(
                                 themeColor = themeColor,
                                 count = state.session.messages.count { it.parentMessageId == pulse.messageId },
                                 lastUpdate = sdf.format(Date(pulse.timestamp)),
-                                onClick = { onNavigateToPulse(pulse.messageId) }
+                                onClick = { onNavigateToPulse(pulse.messageId) },
+                                showJoin = true
                             )
                         } else {
                             AnimatedPulseItem(

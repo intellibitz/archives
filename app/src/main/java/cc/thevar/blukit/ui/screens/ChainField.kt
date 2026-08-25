@@ -161,7 +161,8 @@ fun ChainField(
                                 themeColor = if(isPrivate) StealthRose else StealthPrimary,
                                 count = link.memberIds.size,
                                 lastUpdate = sdf.format(Date(link.lastPulseTimestamp)),
-                                onClick = { onNavigateToGroup(link.id) }
+                                onClick = { onNavigateToGroup(link.id) },
+                                showJoin = true
                             )
                         }
                     }
