@@ -291,7 +291,7 @@ class BleFallbackController(
             }
 
             pulseStore.upsertMessage(payload)
-            hapticManager.triggerPulse(HapticManager.VibeType.MESSAGE)
+            hapticManager.triggerPulse(HapticManager.PulseType.MESSAGE)
         }
     }
 

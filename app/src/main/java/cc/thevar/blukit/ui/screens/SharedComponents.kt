@@ -94,7 +94,7 @@ fun CrowdTicker(title: String, resonances: List<Resonance> = emptyList(), modifi
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(4.dp).background(StealthPrimary.copy(alpha = alpha), CircleShape))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = if (groups.isEmpty()) "UNIVERSAL FREQUENCY" else "${groups.size} ACTIVE LINKS", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.6f), letterSpacing = 1.sp))
+                Text(text = if (resonances.isEmpty()) "UNIVERSAL FREQUENCY" else "${resonances.size} ACTIVE LINKS", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.6f), letterSpacing = 1.sp))
             }
         }
     }

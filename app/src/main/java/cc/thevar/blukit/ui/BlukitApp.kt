@@ -428,7 +428,7 @@ fun BlukitApp(
                 ) {
                     discoveredCrowd?.let { group ->
                         CrowdNudge(
-                            group = group,
+                            resonance = group,
                             onJoin = { 
                                 val route = Route.GroupField(group.id)
                                 backStack.add(route)

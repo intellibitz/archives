@@ -87,7 +87,7 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 *   **Security & Safety**: Prioritize secure coding practices (ECDH, AES-256) and thread-safe operations.
 *   **Performance Engineering**: Write highly performant code with a focus on low battery consumption—crucial for persistent mesh operations.
 *   **Architectural Integrity**: Android, Kotlin, and Gradle code must be modular, decoupled, and adhere to clean architecture principles.
-*   **Comprehensive Documentation**: Every file MUST include detailed header comments explaining its purpose, logic, and integration points. This ensures LLM collaborators can instantly grasp the code's intent and function.
+*   **Comprehensive Documentation**: Every file MUST include detailed header comments, MUST include detailed function comments, and detailed inline comments explaining its purpose, logic, and integration points. This ensures LLM collaborators can instantly grasp the code's intent and function.
 *   **Modern Toolstack**: Always leverage the latest stable libraries, tools, and idiomatic Kotlin/Compose patterns.
 *   **Knowledge Custodian**: Act as the project's living documentation and maintainer of the `Event > Crowd > Chain > Pulse` nested scoping.
 
