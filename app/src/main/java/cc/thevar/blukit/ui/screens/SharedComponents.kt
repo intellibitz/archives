@@ -1609,6 +1609,8 @@ fun OnboardingGhost(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.95f))
+            .navigationBarsPadding()
+            .imePadding()
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() },
         contentAlignment = Alignment.Center
     ) {
@@ -1752,6 +1754,8 @@ fun CrowdRitualGhost(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.85f))
+            .navigationBarsPadding()
+            .imePadding()
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() },
         contentAlignment = Alignment.Center
     ) {
