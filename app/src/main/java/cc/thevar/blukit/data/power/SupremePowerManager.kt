@@ -46,7 +46,7 @@ class SupremePowerManager(
         scope.launch {
             combine(
                 p2pController.scannedDevices,
-                p2pController.connectedRadios,
+                p2pController.connectedTies,
                 pulseStore.getAllMessages(),
                 identityRepository.lowPowerMode,
                 _breezeFlow.onStart { emit("") },
@@ -83,7 +83,7 @@ class SupremePowerManager(
 
                 SupremePowerReport(
                     userCount = userCount,
-                    connectedLinksCount = radioCount,
+                    connectedTiesCount = radioCount,
                     totalMessages = msgCount,
                     harmony = pulseHarmony,
                     aiInsight = insight,
@@ -111,7 +111,7 @@ class SupremePowerManager(
             }.launchIn(scope)
 
         // Radio Formed
-        p2pController.connectedRadios
+        p2pController.connectedTies
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }

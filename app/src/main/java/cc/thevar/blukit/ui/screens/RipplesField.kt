@@ -142,76 +142,113 @@ fun RipplesField(
 
     val coordinates = LocalPersonaCoordinates.current
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Transparent)
-            .onGloballyPositioned { 
-                val centerPos = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f)
-                val current = coordinates["YOU"] ?: PersonaConnectionPoints()
-                coordinates["YOU"] = current.copy(field = centerPos)
-            }, 
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        if (drawBackground) {
-            AirBackground(energy = finalEnergy, lowPowerMode = lowPowerMode, onlyTies = onlyTies)
-            AtmosphericHeatmap(intensity = state.activity.energyIntensity)
-        }
-        
-        RelayLayer(relayEvents, onlyTies = onlyTies)
-        
-        val bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
-        val displayDevices = if (onlyTies) {
-            state.crowd.scannedDevices.filter { 
-                it.id in state.session.connectedRadios || 
-                it.id in bubbleSenders || 
-                it.persistentId in bubbleSenders ||
-                state.crowd.incomingRadioRequests.any { req -> req.id == it.id } ||
-                state.crowd.outgoingRadioRequests.any { req -> req.id == it.id }
-            }
-        } else {
-            state.crowd.scannedDevices
-        }
-
-        if (drawNodes) {
-            Box(modifier = Modifier.fillMaxSize().zIndex(2f)) {
-                if (crowdList.isNotEmpty()) {
-                    CrowdNodes(
-                        crowdList = crowdList,
-                        pulsedPeers = pulsedPeers,
-                        onCrowdClick = onDeviceClick,
-                        onCrowdLongClick = onDeviceLongClick
+    BlukitWidget(
+        header = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "MESH SPECTRUM",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = StealthPrimary.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.5.sp
+                )
+                Surface(
+                    color = StealthPrimary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.2f))
+                ) {
+                    Text(
+                        text = "${state.crowd.scannedDevices.size} PERSONAS",
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = StealthPrimary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                     )
                 }
-
-                PulseNodes(
-                    state = state,
-                    devices = displayDevices,
-                    connectedLinks = state.session.connectedRadios,
-                    selectedDevices = selectedDevices,
-                    pulsedPeers = pulsedPeers,
-                    activeBubbles = activeBubbles,
-                    onlyTies = onlyTies,
-                    isFilterMode = isFilterMode,
-                    highlightedUserId = highlightedUserId,
-                    subjectId = subjectId,
-                    onDeviceClick = onDeviceClick,
-                    onDeviceLongClick = onDeviceLongClick
-                )
             }
-        }
+        },
+        entries = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(320.dp) // Fixed height for radar field
+                    .background(Color.Transparent)
+                    .onGloballyPositioned { 
+                        val centerPos = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f)
+                        val current = coordinates["YOU"] ?: PersonaConnectionPoints()
+                        coordinates["YOU"] = current.copy(field = centerPos)
+                    }, 
+                contentAlignment = Alignment.Center
+            ) {
+                if (drawBackground) {
+                    AirBackground(energy = finalEnergy, lowPowerMode = lowPowerMode, onlyTies = onlyTies)
+                    AtmosphericHeatmap(intensity = state.activity.energyIntensity)
+                }
+                
+                RelayLayer(relayEvents, onlyTies = onlyTies)
+                
+                val bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
+                val displayDevices = if (onlyTies) {
+                    state.crowd.scannedDevices.filter { 
+                        it.id in state.session.connectedTies || 
+                        it.id in bubbleSenders || 
+                        it.persistentId in bubbleSenders ||
+                        state.crowd.incomingRadioRequests.any { req -> req.id == it.id } ||
+                        state.crowd.outgoingRadioRequests.any { req -> req.id == it.id }
+                    }
+                } else {
+                    state.crowd.scannedDevices
+                }
 
-        PulseRippleLayer(pulseRipples)
+                if (drawNodes) {
+                    Box(modifier = Modifier.fillMaxSize().zIndex(2f)) {
+                        if (crowdList.isNotEmpty()) {
+                            CrowdNodes(
+                                crowdList = crowdList,
+                                pulsedPeers = pulsedPeers,
+                                onCrowdClick = onDeviceClick,
+                                onCrowdLongClick = onDeviceLongClick
+                            )
+                        }
 
+                        PulseNodes(
+                            state = state,
+                            devices = displayDevices,
+                            connectedTies = state.session.connectedTies,
+                            selectedDevices = selectedDevices,
+                            pulsedPeers = pulsedPeers,
+                            activeBubbles = activeBubbles,
+                            onlyTies = onlyTies,
+                            isFilterMode = isFilterMode,
+                            highlightedUserId = highlightedUserId,
+                            subjectId = subjectId,
+                            onDeviceClick = onDeviceClick,
+                            onDeviceLongClick = onDeviceLongClick
+                        )
+                    }
+                }
 
-        if (pulseGhostData != null) {
-            PulseGhost(data = pulseGhostData, onDismiss = onDismissGhost)
-        }
-        
-        airRitualGhost()
-        
-        content()
-    }
+                PulseRippleLayer(pulseRipples)
+
+                if (pulseGhostData != null) {
+                    PulseGhost(data = pulseGhostData, onDismiss = onDismissGhost)
+                }
+                
+                airRitualGhost()
+                
+                content()
+            }
+        },
+        themeColor = StealthPrimary,
+        showGlow = false, // Background handles glow
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -350,7 +387,7 @@ private fun VibesConnectivity(devices: List<P2PDevice>, onlyTies: Boolean) {
 private fun PulseNodes(
     state: BluetoothUiState,
     devices: List<P2PDevice>,
-    connectedLinks: Set<String>,
+    connectedTies: Set<String>,
     selectedDevices: Set<String>,
     pulsedPeers: Set<String>,
     activeBubbles: List<BubbleData>,
@@ -366,7 +403,7 @@ private fun PulseNodes(
             val radiusValue = (1f - device.proximityFactor) * 140f + 60f
             val angle = (index.toDouble() / devices.size) * 2 * PI
             val activeBubble = activeBubbles.findLast { it.senderId == device.id }
-            val isTied = device.id in connectedLinks
+            val isTied = device.id in connectedTies
             val isPulsed = device.persistentId in pulsedPeers || device.id in pulsedPeers
             val isSelected = device.id in selectedDevices
             

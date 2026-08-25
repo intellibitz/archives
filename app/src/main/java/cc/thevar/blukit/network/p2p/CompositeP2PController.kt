@@ -32,9 +32,9 @@ class CompositeP2PController(
         bleController.isConnected
     ) { nearby, ble -> nearby || ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
 
-    override val connectedRadios: StateFlow<Set<String>> = combine(
-        nearbyController.connectedRadios,
-        bleController.connectedRadios
+    override val connectedTies: StateFlow<Set<String>> = combine(
+        nearbyController.connectedTies,
+        bleController.connectedTies
     ) { nearby, ble -> nearby + ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     override val incomingRadioRequests: StateFlow<Set<P2PDevice>> = combine(

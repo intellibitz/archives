@@ -56,8 +56,8 @@ class NearbyP2PController(
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedRadios = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedRadios = _connectedRadios.asStateFlow()
+    private val _connectedTies = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedTies = _connectedTies.asStateFlow()
 
     private val _incomingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
     override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
@@ -223,7 +223,7 @@ class NearbyP2PController(
             activeConnections.remove(endpointId)
             pendingRadioRequests.remove(endpointId)
             _outgoingRadioRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
-            _connectedRadios.update { it - endpointId }
+            _connectedTies.update { it - endpointId }
             pulseKeys.remove(endpointId)
             if (activeConnections.isEmpty()) _isConnected.value = false
             updateScannedDevices()
@@ -277,8 +277,8 @@ class NearbyP2PController(
             val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
             when (payload.type) {
                 MessagePayload.TYPE_ACK -> handleAck(payload)
-                MessagePayload.TYPE_LINK_REQUEST -> handleRadioRequest(endpointId, payload)
-                MessagePayload.TYPE_LINK_ACCEPT -> handleRadioAccept(endpointId)
+                MessagePayload.TYPE_TIE_REQUEST -> handleRadioRequest(endpointId, payload)
+                MessagePayload.TYPE_TIE_ACCEPT -> handleRadioAccept(endpointId)
                 MessagePayload.TYPE_IDENTITY_UPDATE -> {
                     if (isNewMessage(payload.messageId)) handleIdentityUpdate(endpointId, payload, secretKey)
                 }
@@ -409,7 +409,7 @@ class NearbyP2PController(
     private fun handleRadioAccept(endpointId: String) {
         pendingRadioRequests.remove(endpointId)
         _outgoingRadioRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
-        _connectedRadios.update { it + endpointId }
+        _connectedTies.update { it + endpointId }
         _isConnected.value = true
         updateScannedDevices()
     }
@@ -566,16 +566,16 @@ class NearbyP2PController(
         _outgoingRadioRequests.update { it + device }
         updateScannedDevices()
         internalScope.launch(ioDispatcher) {
-            sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_REQUEST", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_LINK_REQUEST))
+            sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_REQUEST", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_TIE_REQUEST))
         }
     }
 
     override fun acceptRadio(device: P2PDevice) {
-        _incomingRadioRequests.update { it - device }; pendingRadioRequests.remove(device.id); _connectedRadios.update { it + device.id }; _isConnected.value = true
+        _incomingRadioRequests.update { it - device }; pendingRadioRequests.remove(device.id); _connectedTies.update { it + device.id }; _isConnected.value = true
         _outgoingRadioRequests.update { current -> current.filter { it.id != device.id }.toSet() }
         updateScannedDevices()
         internalScope.launch(ioDispatcher) {
-            sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_ACCEPT", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_LINK_ACCEPT))
+            sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_ACCEPT", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_TIE_ACCEPT))
         }
     }
 
@@ -806,7 +806,7 @@ class NearbyP2PController(
 
     private fun isNewMessage(id: String): Boolean = synchronized(messageIdHistory) { if (messageIdHistory.contains(id)) false else { messageIdHistory.add(id); if (messageIdHistory.size > 100) messageIdHistory.removeAt(0); true } }
 
-    private fun updateScannedDevices() { _scannedDevices.update { current -> current.map { device -> val tied = device.id in _connectedRadios.value; val connecting = device.id in pendingRadioRequests; device.copy(isConnected = tied, isLinkPending = connecting, medium = if (tied) P2PDevice.ConnectionMedium.WIFI else if (connecting || activeConnections.contains(device.id)) P2PDevice.ConnectionMedium.BLUETOOTH else P2PDevice.ConnectionMedium.LOCATION) } } }
+    private fun updateScannedDevices() { _scannedDevices.update { current -> current.map { device -> val tied = device.id in _connectedTies.value; val connecting = device.id in pendingRadioRequests; device.copy(isConnected = tied, isTiePending = connecting, medium = if (tied) P2PDevice.ConnectionMedium.WIFI else if (connecting || activeConnections.contains(device.id)) P2PDevice.ConnectionMedium.BLUETOOTH else P2PDevice.ConnectionMedium.LOCATION) } } }
 
     override fun closeConnection() { connectionsClient.stopAllEndpoints(); activeConnections.clear(); pulseKeys.clear(); _isConnected.value = false }
 

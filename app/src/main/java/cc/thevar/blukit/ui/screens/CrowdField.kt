@@ -1,3 +1,9 @@
+/**
+ * BLUKIT CROWD FIELD
+ *
+ * Public frequency view for a specific location or hub.
+ * Reorganizes the mesh experience into a focused context for public interaction.
+ */
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.animation.*
@@ -39,6 +45,13 @@ import java.util.Locale
  * Lists Ties and Shouts within a specific Crowd container.
  * Features collaborative Crowd Canvas for pinned vibes and spectral tips.
  */
+/**
+ * CROWD FIELD: The primary public interaction layer.
+ * 
+ * Architectural Pattern:
+ * - Header: Harmony Top Bar with Crowd Breadcrumbs.
+ * - Entries: Ripples Background, Resonance List, Pulse Ticker, Active Pulse Hub.
+ */
 @Composable
 fun CrowdField(
     state: BluetoothUiState,
@@ -60,7 +73,8 @@ fun CrowdField(
     onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
-    externalFocusedId: String? = null
+    externalFocusedId: String? = null,
+    header: @Composable () -> Unit
 ) {
     var showTip by remember { mutableStateOf(true) }
     var localFocusedId by remember(externalFocusedId) { mutableStateOf(externalFocusedId) }
@@ -93,115 +107,110 @@ fun CrowdField(
     BlukitFieldScaffold(
         themeColor = StealthPrimary,
         glowIntensityTarget = 0.6f,
-        floatingContent = {
-            AnimatedVisibility(
-                visible = showTip && chatPulses.isEmpty() && childGroups.isEmpty(),
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                BlukitTip(
-                    text = "THE CROWD IS SILENT. CREATE A LINK OR SPREAD A PULSE TO START.",
-                    onDismiss = { showTip = false }
+        header = header,
+        entries = {
+            // MODULE 1: BASE CONTENT (Radar + Lists)
+            Column(modifier = Modifier.fillMaxSize()) {
+                RipplesField(
+                    state = state,
+                    localDeviceId = localDeviceId,
+                    activeBubbles = emptyList(),
+                    pulsedPeers = emptySet(),
+                    drawBackground = false,
+                    drawNodes = false,
+                    onDeviceClick = { },
+                    onStartScan = { },
+                    modifier = Modifier.fillMaxWidth().height(280.dp)
                 )
-            }
-        },
-        fieldContent = {
-            Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
-                // Meta Sections
-                if (childCrowds.isNotEmpty() || childTies.isNotEmpty()) {
+
+                Column(modifier = Modifier.weight(1f)) {
+                    // Meta Sections
+                    if (childCrowds.isNotEmpty() || childTies.isNotEmpty()) {
+                        Text(
+                            text = "EVENT & TIES", 
+                            style = MaterialTheme.typography.labelSmall, 
+                            color = StealthPrimary, 
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        )
+                        
+                        LazyColumn(modifier = Modifier.weight(0.4f)) {
+                            items(childCrowds) { nestedCrowd ->
+                                ResonanceSummary(
+                                    title = nestedCrowd.name,
+                                    subtitle = "NESTED CROWD",
+                                    icon = Icons.Rounded.Grain,
+                                    themeColor = StealthPrimary,
+                                    count = nestedCrowd.memberIds.size,
+                                    lastUpdate = sdf.format(Date(nestedCrowd.lastPulseTimestamp)),
+                                    onClick = { onNavigateToGroup(nestedCrowd.id) },
+                                    showJoin = true
+                                )
+                            }
+                            items(childTies) { tie ->
+                                ResonanceSummary(
+                                    title = tie.name,
+                                    subtitle = if (tie.scope == Resonance.SCOPE_PUBLIC) "CHAIN" else "LOCAL CHAIN",
+                                    icon = if (tie.scope == Resonance.SCOPE_PRIVATE) Icons.Rounded.Hearing else Icons.Rounded.CellTower,
+                                    themeColor = if (tie.scope == Resonance.SCOPE_PRIVATE) StealthRose else StealthPrimary,
+                                    count = tie.memberIds.size,
+                                    lastUpdate = sdf.format(Date(tie.lastPulseTimestamp)),
+                                    onClick = { onNavigateToGroup(tie.id) },
+                                    showJoin = true
+                                )
+                            }
+                        }
+                    }
+
+                    // Pulses
                     Text(
-                        text = "EVENT & LINKS", 
+                        text = "PULSES", 
                         style = MaterialTheme.typography.labelSmall, 
                         color = StealthPrimary, 
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp
                     )
-                    
-                    LazyColumn(modifier = Modifier.weight(0.4f)) {
-                        items(childCrowds) { nestedCrowd ->
-                            ResonanceSummary(
-                                title = nestedCrowd.name,
-                                subtitle = "NESTED CROWD",
-                                icon = Icons.Rounded.Grain,
-                                themeColor = StealthPrimary,
-                                count = nestedCrowd.memberIds.size,
-                                lastUpdate = sdf.format(Date(nestedCrowd.lastPulseTimestamp)),
-                                onClick = { onNavigateToGroup(nestedCrowd.id) },
-                                showJoin = true
-                            )
-                        }
-                        items(childTies) { tie ->
-                            ResonanceSummary(
-                                title = tie.name,
-                                subtitle = if (tie.scope == Resonance.SCOPE_PRIVATE) "CHAIN" else "LOCAL CHAIN",
-                                icon = if (tie.scope == Resonance.SCOPE_PRIVATE) Icons.Rounded.Hearing else Icons.Rounded.CellTower,
-                                themeColor = if (tie.scope == Resonance.SCOPE_PRIVATE) StealthRose else StealthPrimary,
-                                count = tie.memberIds.size,
-                                lastUpdate = sdf.format(Date(tie.lastPulseTimestamp)),
-                                onClick = { onNavigateToGroup(tie.id) },
-                                showJoin = true
-                            )
+
+                    LazyColumn(modifier = Modifier.weight(0.6f)) {
+                        items(chatPulses) { pulse ->
+                            if (pulse.isMeta) {
+                                ResonanceSummary(
+                                    title = pulse.content.take(20),
+                                    subtitle = "RESONANCE",
+                                    icon = Icons.Rounded.BubbleChart,
+                                    themeColor = StealthPrimary,
+                                    count = state.session.messages.count { it.parentMessageId == pulse.messageId },
+                                    lastUpdate = sdf.format(Date(pulse.timestamp)),
+                                    onClick = { onNavigateToPulse(pulse.messageId) }
+                                )
+                            } else {
+                                AnimatedPulseItem(
+                                    msg = pulse,
+                                    isSelected = false,
+                                    senderDevice = null,
+                                    pulseCount = 0,
+                                    isPulsed = false,
+                                    isMe = pulse.senderId == localDeviceId,
+                                    isGrouped = false,
+                                    isMutual = false,
+                                    resonance = crowd,
+                                    rowId = pulse.messageId,
+                                    onPulseClick = { /* Handle Unit Click */ },
+                                    onDeviceLongClick = { },
+                                    onDelete = { }
+                                )
+                            }
                         }
                     }
                 }
-
-                // Pulses
-                Text(
-                    text = "PULSES", 
-                    style = MaterialTheme.typography.labelSmall, 
-                    color = StealthPrimary, 
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
-                )
-
-                LazyColumn(modifier = Modifier.weight(0.6f)) {
-                    items(chatPulses) { pulse ->
-                        if (pulse.isMeta) {
-                            ResonanceSummary(
-                                title = pulse.content.take(20),
-                                subtitle = "RESONANCE",
-                                icon = Icons.Rounded.BubbleChart,
-                                themeColor = StealthPrimary,
-                                count = state.session.messages.count { it.parentMessageId == pulse.messageId },
-                                lastUpdate = sdf.format(Date(pulse.timestamp)),
-                                onClick = { onNavigateToPulse(pulse.messageId) }
-                            )
-                        } else {
-                            AnimatedPulseItem(
-                                msg = pulse,
-                                isSelected = false,
-                                senderDevice = null,
-                                pulseCount = 0,
-                                isPulsed = false,
-                                isMe = pulse.senderId == localDeviceId,
-                                isGrouped = false,
-                                isMutual = false,
-                                resonance = crowd,
-                                rowId = pulse.messageId,
-                                onPulseClick = { /* Handle Unit Click */ },
-                                onDeviceLongClick = { },
-                                onDelete = { }
-                            )
-                        }
-                    }
-                }
+                
+                // Bottom padding to avoid occlusion by the floating ticker and hub
+                Spacer(modifier = Modifier.height(140.dp))
             }
-            
-            // Background Canvas for Field
-            RipplesField(
-                state = state,
-                localDeviceId = localDeviceId,
-                activeBubbles = emptyList(),
-                pulsedPeers = emptySet(),
-                drawBackground = false,
-                drawNodes = false, // Simplified for Meta view
-                onDeviceClick = { },
-                onStartScan = { }
-            )
-        },
-        tickerContent = {
+
+            // MODULE 2: TICKER (Floating Overlay)
             PulsingResonanceTicker(
                 state = state,
                 energyList = chatPulses.map { msg -> 
@@ -215,10 +224,14 @@ fun CrowdField(
                 onPulseClick = { onNavigateToPulse(it) },
                 onDeviceLongClick = { },
                 onDeletePulse = { },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .padding(bottom = 100.dp) // Room for Hub
             )
-        },
-        inputContent = {
+
+            // MODULE 3: PULSE HUB (Bottom Overlay)
             BlukitPulseHub(
                 currentRoute = cc.thevar.blukit.ui.navigation.Route.GroupField(crowdId ?: ""),
                 messageText = messageText,
@@ -235,11 +248,26 @@ fun CrowdField(
                 onStartSidePulse = onStartSidePulse,
                 onStartChain = onStartChain,
                 onClearSelection = onClearSelection,
-                onAttachFile = { }, // Handle via parent if needed
+                onAttachFile = { },
                 onSearchToggle = onSearchToggle,
                 onShowPrivacy = onShowPrivacy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
             )
+
+            // MODULE 4: FLOATING TIPS
+            AnimatedVisibility(
+                visible = showTip && chatPulses.isEmpty() && childGroups.isEmpty(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+                modifier = Modifier.align(Alignment.TopCenter)
+            ) {
+                BlukitTip(
+                    text = "THE CROWD IS SILENT. CREATE A TIE OR SPREAD A PULSE TO START.",
+                    onDismiss = { showTip = false }
+                )
+            }
         }
     )
 }

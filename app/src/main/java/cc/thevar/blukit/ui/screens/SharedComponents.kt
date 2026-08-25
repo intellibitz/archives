@@ -1,3 +1,15 @@
+/**
+ * BLUKIT SHARED UI COMPONENTS
+ *
+ * This file acts as the primary library for reusable UI elements across the Blukit mesh.
+ * It enforces the **Header + Entries** architectural pattern and utilizes the
+ * **Resonance + Pulse** lexicon to define tactical interaction states.
+ *
+ * Design Philosophy:
+ * - Summary-First visual paradigm.
+ * - High-density, high-fidelity spectral aesthetics.
+ * - Decoupled slots for flexible module composition.
+ */
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.animation.*
@@ -52,6 +64,10 @@ import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.Date
 
+/**
+ * Spatial coordinates for Persona connections within the field.
+ * Used by the global Canvas to draw resonance threads between hubs and nodes.
+ */
 data class PersonaConnectionPoints(
     val uph: Offset? = null,
     val field: Offset? = null,
@@ -62,6 +78,10 @@ data class PersonaConnectionPoints(
 val LocalPersonaCoordinates = staticCompositionLocalOf { mutableStateMapOf<String, PersonaConnectionPoints>() }
 val LocalActivePulseId = staticCompositionLocalOf { mutableStateOf<String?>(null) }
 
+/**
+ * Provides a composite view of system radio statuses (BT, WiFi, GPS).
+ * Features breathing animations for inactive or restricted radios.
+ */
 @Composable
 fun MixedStatusBranding(
     isBluetoothOff: Boolean,
@@ -83,6 +103,10 @@ fun MixedStatusBranding(
     }
 }
 
+/**
+ * A minimalist real-time counter of active Ties within the current mesh context.
+ * Utilizes a pulsing amber dot to signal active spectrum discovery.
+ */
 @Composable
 fun CrowdTicker(title: String, resonances: List<Resonance> = emptyList(), modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "CrowdTicker")
@@ -94,12 +118,16 @@ fun CrowdTicker(title: String, resonances: List<Resonance> = emptyList(), modifi
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(4.dp).background(StealthPrimary.copy(alpha = alpha), CircleShape))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = if (resonances.isEmpty()) "UNIVERSAL FREQUENCY" else "${resonances.size} ACTIVE LINKS", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.6f), letterSpacing = 1.sp))
+                Text(text = if (resonances.isEmpty()) "UNIVERSAL FREQUENCY" else "${resonances.size} ACTIVE TIES", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.6f), letterSpacing = 1.sp))
             }
         }
     }
 }
 
+/**
+ * Tactical navigation landmark. Displays the nested path (e.g., EVENT > CROWD > CHAIN).
+ * Supports direct crumb interactions for rapid hierarchy traversal.
+ */
 @Composable
 fun BreadcrumbHub(
     trail: List<String>,
@@ -134,6 +162,14 @@ fun BreadcrumbHub(
     }
 }
 
+/**
+ * HARMONY TOP BAR: The command center of every Field.
+ * 
+ * Architectural Pattern: HEADER
+ * 
+ * - Row 0: Global Tactical Controls (Dark, Eco, Privacy, Radios).
+ * - Row 1: Contextual Identity and Navigation Stage (Branding, Breadcrumbs, Persona).
+ */
 @Composable
 fun BlukitHarmonyTopBar(
     title: String,
@@ -183,17 +219,9 @@ fun BlukitHarmonyTopBar(
     val barColor = when { isStill -> Color.Red.copy(alpha = 0.15f); isPermissionMissing -> Color(0xFFF4511E).copy(alpha = 0.15f); else -> themeColor.copy(alpha = 0.05f) }
 
     val isUnknown = userNickname == "?" || userNickname == "SET NAME" || userNickname.isEmpty()
-    Box(modifier = modifier.fillMaxWidth().statusBarsPadding(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 2.dp)
-                .background(barColor, RoundedCornerShape(20.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(20.dp))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // ROW 0: GLOBAL COMMAND BAR (Host & Branding)
+    BlukitWidget(
+        header = {
+            // ROW 0: GLOBAL COMMAND BAR (Tactical)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -265,10 +293,9 @@ fun BlukitHarmonyTopBar(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // ROW 1: HUMANITY Stage (Back, Crowd, Identity)
+        },
+        entries = {
+            // ROW 1: HUMANITY Stage (Identity & Navigation)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -347,12 +374,23 @@ fun BlukitHarmonyTopBar(
                     }
                 }
             }
-        }
-    }
+        },
+        themeColor = themeColor,
+        showGlow = false,
+        modifier = modifier.statusBarsPadding()
+    )
     if (showClearHistoryDialog) { BlukitAlert(title = "CLEAR PULSES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", confirmLabel = "CLEAR", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
     if (showResetProfileDialog) { BlukitAlert(title = "RESET PROFILE?", text = "THIS WILL CLEAR YOUR NAME BUT KEEP YOUR PULSES.", confirmLabel = "RESET", onConfirm = { onResetProfile(); showResetProfileDialog = false }, onDismiss = { showResetProfileDialog = false }) }
 }
 
+/**
+ * PULSE HUB: The primary tactical interaction point at the bottom of the field.
+ * 
+ * Architectural Pattern: ENTRIES (inside Scaffold) / HEADER (internally)
+ * 
+ * Features a contextual header for banners (Incoming requests, creation) and
+ * a row of entries for atomic tools (Attach, Search, Input).
+ */
 @Composable
 fun BlukitPulseHub(
     currentRoute: Route,
@@ -383,113 +421,70 @@ fun BlukitPulseHub(
     val targetName = if (currentRoute is Route.GroupField) resonances.find { it.id == currentRoute.groupId }?.name?.uppercase() else null
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .zIndex(10f), 
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Selection Actions Bar
-        AnimatedVisibility(
-            visible = selectedDevices.isNotEmpty(), 
-            enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom), 
-            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom)
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(bottom = 12.dp)
-                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(20.dp))
-                    .border(1.dp, themeColor.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = onStartSidePulse, 
-                    colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black), 
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                ) { 
-                    Text("WHISPER", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
+    BlukitWidget(
+        themeColor = themeColor,
+        header = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Selection Actions Bar
+                AnimatedVisibility(
+                    visible = selectedDevices.isNotEmpty(), 
+                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom), 
+                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(bottom = 12.dp)
+                            .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(20.dp))
+                            .border(1.dp, themeColor.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(
+                            onClick = onStartSidePulse, 
+                            colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black), 
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) { 
+                            Text("WHISPER", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
+                        }
+                        Button(
+                            onClick = onStartChain, 
+                            colors = ButtonDefaults.buttonColors(containerColor = StealthRose, contentColor = Color.White), 
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) { 
+                            Text("START CHAIN", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
+                        }
+                        IconButton(
+                            onClick = onClearSelection, 
+                            modifier = Modifier.size(32.dp).background(Color.White.copy(alpha = 0.1f), CircleShape)
+                        ) { 
+                            Icon(Icons.Rounded.Close, tint = Color.White, contentDescription = "Cancel", modifier = Modifier.size(16.dp)) 
+                        }
+                    }
                 }
-                Button(
-                    onClick = onStartChain, 
-                    colors = ButtonDefaults.buttonColors(containerColor = StealthRose, contentColor = Color.White), 
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                ) { 
-                    Text("START CHAIN", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
-                }
-                IconButton(
-                    onClick = onClearSelection, 
-                    modifier = Modifier.size(32.dp).background(Color.White.copy(alpha = 0.1f), CircleShape)
-                ) { 
-                    Icon(Icons.Rounded.Close, tint = Color.White, contentDescription = "Cancel", modifier = Modifier.size(16.dp)) 
-                }
-            }
-        }
-        
-        // Contextual Creation Banner
-        val showAirBanner = isSearchMode && messageText.isNotBlank() && onCreatePublicResonance != null
-        AnimatedVisibility(
-            visible = showAirBanner, 
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }), 
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
-        ) {
-            Button(
-                onClick = { onCreatePublicResonance?.invoke(messageText, null) },
-                colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.padding(bottom = 12.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
-            ) {
-                Icon(Icons.Rounded.Grain, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(10.dp))
-                Text("CREATE RESONANCE: ${messageText.uppercase()}", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.5.sp)
-            }
-        }
-
-        // The Main Input Hub
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Color.Black.copy(alpha = 0.95f), 
-                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-                )
-                .border(
-                    width = 1.dp, 
-                    color = Color.White.copy(alpha = 0.05f), 
-                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-                ), 
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(vertical = 4.dp)
-                    .navigationBarsPadding()
-                    .imePadding()
-            ) {
-                val isPulseLocked = currentRoute is Route.Event
-                BlukitInput(
-                    crowdIsStill = crowdIsStill, 
-                    isReadOnly = false, 
-                    isPulseLocked = isPulseLocked,
-                    isFilterActive = pulsedPeers.isNotEmpty(), 
-                    isPrivate = isPrivate, 
-                    targetName = targetName, 
-                    value = messageText, 
-                    onValueChange = onMessageChange, 
-                    onSend = onSend, 
-                    onAttachFile = onAttachFile, 
-                    onManage = onManage,
-                    onNote = onNote,
-                    pulseCount = pulseCount, 
-                    isSearchActive = isSearchMode,
-                    onSearchToggle = onSearchToggle,
-                    modifier = Modifier.fillMaxWidth()
-                )
                 
+                // Contextual Creation Banner
+                val showAirBanner = isSearchMode && messageText.isNotBlank() && onCreatePublicResonance != null
+                AnimatedVisibility(
+                    visible = showAirBanner, 
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }), 
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
+                ) {
+                    Button(
+                        onClick = { onCreatePublicResonance?.invoke(messageText, null) },
+                        colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+                    ) {
+                        Icon(Icons.Rounded.Grain, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("CREATE RESONANCE: ${messageText.uppercase()}", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.5.sp)
+                    }
+                }
+
                 // Incoming Requests Row
                 if (incomingRadioRequests.isNotEmpty()) {
                     val request = incomingRadioRequests.first()
@@ -535,10 +530,94 @@ fun BlukitPulseHub(
                     }
                 }
             }
+        },
+        entries = {
+            val isPulseLocked = currentRoute is Route.Event
+            BlukitInput(
+                crowdIsStill = crowdIsStill, 
+                isReadOnly = false, 
+                isPulseLocked = isPulseLocked,
+                isFilterActive = pulsedPeers.isNotEmpty(), 
+                isPrivate = isPrivate, 
+                targetName = targetName, 
+                value = messageText, 
+                onValueChange = onMessageChange, 
+                onSend = onSend, 
+                onAttachFile = onAttachFile, 
+                onManage = onManage,
+                onNote = onNote,
+                pulseCount = pulseCount, 
+                isSearchActive = isSearchMode,
+                onSearchToggle = onSearchToggle,
+                modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
+            )
+        },
+        modifier = modifier.zIndex(10f)
+    )
+}
+
+/**
+ * BLUKIT WIDGET: The standardized tactical container for all mesh modules.
+ * Strictly follows the Header + Entries architectural pattern.
+ */
+@Composable
+fun BlukitWidget(
+    header: @Composable (BoxScope.() -> Unit)? = null,
+    entries: @Composable (ColumnScope.() -> Unit),
+    modifier: Modifier = Modifier,
+    themeColor: Color = StealthPrimary,
+    showGlow: Boolean = true
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "WidgetGlow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.05f, 
+        targetValue = 0.15f, 
+        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
+        label = "Glow"
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+    ) {
+        if (header != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                header()
+            }
+        }
+        
+        Surface(
+            color = Color.Black.copy(alpha = 0.4f),
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(modifier = Modifier.background(if (showGlow) themeColor.copy(alpha = glowAlpha) else Color.Transparent)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    entries()
+                }
+            }
         }
     }
 }
 
+/**
+ * PULSING RESONANCE TICKER: The life stream of the mesh.
+ * 
+ * Reorganizes flat pulse data into a structured hierarchy of Headers (Resonances)
+ * and indented Entries (Pulses).
+ */
 @Composable
 fun PulsingResonanceTicker(
     state: BluetoothUiState,
@@ -592,7 +671,7 @@ fun PulsingResonanceTicker(
                     isPulsed = id in pulsedPeers,
                     isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
                     isGrouped = isGrouped,
-                    isMutual = device.id in state.session.connectedRadios,
+                    isMutual = device.id in state.session.connectedTies,
                     resonance = resonance,
                     rowId = id,
                     onPulseClick = { msg?.messageId?.let { onPulseClick(it) } ?: onDeviceLongClick(device) },
@@ -615,6 +694,14 @@ fun OutgoingRadioRequestTickerItem(device: P2PDevice, onCancel: (P2PDevice) -> U
     Surface(color = Color.White.copy(alpha = 0.05f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.1f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "REQUESTING RADIO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Black); Text(text = (device.name ?: "USER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; IconButton(onClick = { onCancel(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Cancel", tint = Color.White.copy(alpha = 0.2f)) } } }
 }
 
+/**
+ * ANIMATED PULSE ITEM: The atomic unit of interaction in the ticker.
+ * 
+ * Features:
+ * - Vertical thread lines for nested entries.
+ * - Pulse-synced resonance dots.
+ * - Context-aware theme colors (Amber/Rose).
+ */
 @Composable
 fun AnimatedPulseItem(
     msg: MessagePayload?,
@@ -640,10 +727,17 @@ fun AnimatedPulseItem(
     val isPlural = msg?.isMeta == true
     val isEntry = isGrouped && msg != null
 
+    val infiniteTransition = rememberInfiniteTransition(label = "PulseEntry")
+    val dotAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f, targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = LinearOutSlowInEasing), RepeatMode.Reverse),
+        label = "DotAlpha"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
             .combinedClickable(onClick = onPulseClick, onLongClick = onDeviceLongClick)
             .background(if (isSelected) Color.White.copy(alpha = 0.05f) else Color.Transparent, RoundedCornerShape(8.dp)),
         verticalAlignment = Alignment.CenterVertically
@@ -651,24 +745,25 @@ fun AnimatedPulseItem(
         // Ticker Connection Point & Entry Indicator
         Box(
             modifier = Modifier
-                .padding(start = 8.dp)
-                .width(20.dp)
-                .fillMaxHeight(),
+                .padding(start = 12.dp)
+                .width(32.dp)
+                .height(48.dp),
             contentAlignment = Alignment.Center
         ) {
             if (isEntry) {
                 // Vertical connecting line for entries
                 Box(
                     modifier = Modifier
-                        .width(1.dp)
+                        .width(1.5.dp)
                         .fillMaxHeight()
-                        .background(themeColor.copy(alpha = 0.2f))
+                        .background(themeColor.copy(alpha = 0.15f))
                 )
-                // Small dot for the entry
+                // Small dot for the entry (The Resonance Anchor)
                 Box(
                     modifier = Modifier
-                        .size(4.dp)
-                        .background(themeColor.copy(alpha = 0.4f), CircleShape)
+                        .size(6.dp)
+                        .background(themeColor.copy(alpha = 0.3f * dotAlpha), CircleShape)
+                        .border(1.dp, themeColor.copy(alpha = 0.6f * dotAlpha), CircleShape)
                 )
             }
             
@@ -686,92 +781,69 @@ fun AnimatedPulseItem(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = if (isEntry) 4.dp else 12.dp)
+                .padding(start = 4.dp)
         ) {
-            if (isGrouped && !isEntry) {
-                // Header-style
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    val tieEmoji = when (resonance?.scope) {
-                        Resonance.SCOPE_LOCAL -> "📱"
-                        Resonance.SCOPE_PRIVATE -> "🔒"
-                        else -> "🌬️"
-                    }
-                    Text(text = tieEmoji, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        val groupLabel = (resonance?.name ?: "THE CROWD").uppercase()
-                        Text(
-                            text = groupLabel, 
-                            fontSize = 10.sp, 
-                            fontWeight = FontWeight.Black, 
-                            color = themeColor,
-                            letterSpacing = 1.sp
-                        )
-                    }
-                }
-            } else {
-                if (msg != null) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (isPlural) {
-                                Icon(Icons.Rounded.BubbleChart, contentDescription = null, tint = themeColor, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
-                            Text(
-                                text = msg.content.uppercase(), 
-                                fontSize = 11.sp, 
-                                color = if (isEntry) Color.White.copy(alpha = 0.9f) else Color.White, 
-                                fontWeight = if (isEntry) FontWeight.Bold else FontWeight.ExtraBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+            if (msg != null) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isPlural) {
+                            Icon(Icons.Rounded.BubbleChart, contentDescription = null, tint = themeColor, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                         }
-                        Spacer(modifier = Modifier.height(2.dp))
-
-                        val realSender = if (isMe) "YOU" else (msg.senderName.uppercase())
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = realSender,
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White.copy(alpha = 0.3f),
-                                letterSpacing = 0.5.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            if (pulseCount > 0) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "• $pulseCount UNITS",
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColor.copy(alpha = 0.5f)
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        val realSender = if (isMe) "YOU" else (msg?.senderName ?: senderDevice?.name ?: "?")
                         Text(
-                            text = realSender.uppercase(),
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White.copy(alpha = 0.3f),
-                            letterSpacing = 0.5.sp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "::", fontSize = 8.sp, color = Color.White.copy(alpha = 0.1f), fontWeight = FontWeight.Black)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = (msg?.content ?: "...").uppercase(), 
-                            fontSize = 10.sp, 
-                            color = Color.White.copy(alpha = if (msg != null) 0.9f else 0.2f), 
-                            maxLines = 1, 
-                            fontWeight = FontWeight.ExtraBold,
+                            text = msg.content.uppercase(), 
+                            fontSize = 11.sp, 
+                            color = if (isEntry) Color.White.copy(alpha = 0.9f) else Color.White, 
+                            fontWeight = if (isEntry) FontWeight.Bold else FontWeight.ExtraBold,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    val realSender = if (isMe) "YOU" else (msg.senderName.uppercase())
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = realSender,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White.copy(alpha = 0.3f),
+                            letterSpacing = 0.5.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (pulseCount > 0) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "• $pulseCount UNITS",
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColor.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    val realSender = if (isMe) "YOU" else (msg?.senderName ?: senderDevice?.name ?: "?")
+                    Text(
+                        text = realSender.uppercase(),
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White.copy(alpha = 0.3f),
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "::", fontSize = 8.sp, color = Color.White.copy(alpha = 0.1f), fontWeight = FontWeight.Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = (msg?.content ?: "...").uppercase(), 
+                        fontSize = 10.sp, 
+                        color = Color.White.copy(alpha = if (msg != null) 0.9f else 0.2f), 
+                        maxLines = 1, 
+                        fontWeight = FontWeight.ExtraBold,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
@@ -827,6 +899,10 @@ fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean
 /**
  * A proactive nudge that surfaces when a new Crowd frequency is discovered.
  * Features a high-intensity pulse and spectral entry.
+ */
+/**
+ * CROWD NUDGE: A proactive geospatial alert surfaced when a new frequency is discovered.
+ * Features a high-intensity scale pulse and direct AWAKEN action.
  */
 @Composable
 fun CrowdNudge(
@@ -920,6 +996,10 @@ fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Unit, onDis
     BlukitAlert(title = title, text = text, onConfirm = onConfirm, onDismiss = onDismiss)
 }
 
+/**
+ * BLUKIT ALERT: The standard high-fidelity modal for system confirmations.
+ * Features a notification-synced halo pulse animation.
+ */
 @Composable
 fun BlukitAlert(
     title: String,
@@ -1021,6 +1101,9 @@ fun BlukitAlert(
  * Spectral tips to guide users through the mesh experience.
  * Displays a glowing spectral card with a tip text and a lightbulb icon.
  * Features a subtle "breathing" border glow.
+ */
+/**
+ * SPECTRAL TIP: Glowing guidance cards for mesh onboarding and discovery.
  */
 @Composable
 fun BlukitTip(
@@ -1138,6 +1221,10 @@ fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Bool
 /**
  * RESONANCE SUMMARY: A Summary-First visual paradigm component.
  * Represents high-level containers (Crowds, Resonances, or Meta-Pulses).
+ */
+/**
+ * RESONANCE SUMMARY: A high-fidelity card representing a collective frequency.
+ * Features a spectral glow and explicit JOIN affordance.
  */
 @Composable
 fun ResonanceSummary(
@@ -1434,6 +1521,10 @@ data class GhostPulseData(
     val sourceId: String? = null
 )
 
+/**
+ * PULSE GHOST: Orbiting action menu for tactical persona management.
+ * Features a central persona core with satellite actions (Whisper, Identify, Sync).
+ */
 @Composable
 fun PulseGhost(
     data: GhostPulseData,
@@ -1579,6 +1670,9 @@ fun PulseGhost(
     }
 }
 
+/**
+ * IDENTITY RITUAL: The primary onboarding overlay for forming a tactical persona.
+ */
 @Composable
 fun OnboardingGhost(
     nickname: String,
@@ -1716,6 +1810,9 @@ fun OnboardingGhost(
     }
 }
 
+/**
+ * CROWD RITUAL: The creation overlay for establishing new public frequencies.
+ */
 @Composable
 fun CrowdRitualGhost(
     onNameChange: (String) -> Unit,
@@ -1889,6 +1986,10 @@ fun CrowdRitualGhost(
     }
 }
 
+/**
+ * PULSE NODE: The spatial representation of a Persona on the discovery radar.
+ * Utilizes coordinate mapping to draw real-time resonance threads.
+ */
 @Composable
 fun PulseNode(
     device: P2PDevice, 
@@ -1934,6 +2035,10 @@ fun PulseDot(device: P2PDevice, modifier: Modifier = Modifier, onClick: () -> Un
 }
 
 @OptIn(ExperimentalFoundationApi::class)
+/**
+ * PULSE PERSONA SIGNATURE: High-fidelity visual identity for users on the mesh.
+ * Features proximity-based glow factor and connection state indicators.
+ */
 @Composable
 fun PulsePersonaSignature(
     device: P2PDevice, 
@@ -1997,7 +2102,7 @@ fun PulsePersonaSignature(
                 } else {
                     val mediumIcon = when (device.medium) { P2PDevice.ConnectionMedium.BLUETOOTH -> Icons.Rounded.Bluetooth; P2PDevice.ConnectionMedium.WIFI -> Icons.Rounded.Wifi; P2PDevice.ConnectionMedium.LOCATION -> Icons.Rounded.LocationOn }
                     val iconSize = (size.value / 2.5f).dp
-                    Icon(imageVector = if (device.isConnecting || device.isLinkPending) Icons.Rounded.Sync else if (isSelected) Icons.Rounded.CheckCircle else mediumIcon, contentDescription = null, tint = when { isSelected -> Color.White; isPulsed -> StealthRose; isPeerPulsed -> StealthAmber; else -> Color.White.copy(alpha = 0.7f) }, modifier = Modifier.size(iconSize))
+                    Icon(imageVector = if (device.isConnecting || device.isTiePending) Icons.Rounded.Sync else if (isSelected) Icons.Rounded.CheckCircle else mediumIcon, contentDescription = null, tint = when { isSelected -> Color.White; isPulsed -> StealthRose; isPeerPulsed -> StealthAmber; else -> Color.White.copy(alpha = 0.7f) }, modifier = Modifier.size(iconSize))
                 }
                 
                 if (size > 32.dp) {
@@ -2031,14 +2136,13 @@ data class FieldScene(
 
 @Composable
 fun BlukitFieldScaffold(
-    // Field Specifics
-    fieldContent: @Composable BoxScope.() -> Unit,
-    tickerContent: @Composable BoxScope.() -> Unit,
-    inputContent: @Composable BoxScope.() -> Unit,
-    floatingContent: @Composable BoxScope.() -> Unit = {},
+    // FIELD WIDGET: Root container for the mesh experience
+    // Pattern: Header (Top) + Entries (Overlay Field)
+    header: @Composable () -> Unit,
+    entries: @Composable BoxScope.() -> Unit,
+    modifier: Modifier = Modifier,
     themeColor: Color = StealthPrimary,
-    glowIntensityTarget: Float = 0.4f,
-    modifier: Modifier = Modifier
+    glowIntensityTarget: Float = 0.4f
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "SpectralGlow")
     val wanderX by infiniteTransition.animateFloat(
@@ -2054,7 +2158,6 @@ fun BlukitFieldScaffold(
         label = "WanderY"
     )
 
-    // Background glow that shifts based on depth
     val glowIntensity by animateFloatAsState(
         targetValue = glowIntensityTarget,
         animationSpec = tween(1500),
@@ -2062,7 +2165,7 @@ fun BlukitFieldScaffold(
     )
 
     Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
-        // Deep Background Glow (Spectral)
+        // Deep Background Glow
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -2078,41 +2181,13 @@ fun BlukitFieldScaffold(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            // Top Bar is now handled by the parent (BlukitApp) to avoid duplications
-            // across navigation transitions. Screens provide their own content logic.
+            // THE HEADER (Crowd Hub)
+            header()
 
-            Box(modifier = Modifier.weight(1f)) {
-                // Main Field Content (Radar, Bubbles, etc)
-                fieldContent()
-                
-                // Ticker - Floating with spectral fade
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(280.dp)
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 80.dp)
-                        .graphicsLayer { 
-                            alpha = 0.99f 
-                        }
-                ) {
-                    tickerContent()
-                }
-
-                // Overlay for Alerts/Nudges/Tips - Centered floatingly
-                // ON TOP of ticker, but only takes needed space to allow ticker interaction
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 120.dp)
-                ) {
-                    floatingContent()
-                }
-            }
-
-            // Input interaction hub at the very bottom
-            Box(modifier = Modifier.fillMaxWidth()) {
-                inputContent()
+            // THE ENTRIES (Radar, Ticker, Pulse Hub)
+            // Using Box to allow Ticker to float over Radar
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                entries()
             }
         }
     }
@@ -2122,6 +2197,14 @@ fun BlukitFieldScaffold(
  * The primary interaction point for spreading pulses.
  * Features a "breathing" nudge animation when empty and an "aura" glow when focused.
  * The separator line features a moving spectral gradient.
+ */
+/**
+ * BLUKIT INPUT: The high-performance entry point for generating mesh energy.
+ * 
+ * Logic:
+ * - Breathing Nudge: Encourages interaction when empty.
+ * - Aura Glow: Signals active focus.
+ * - Contextual Lock: Restricts pulses based on field scoping (e.g., Event landing).
  */
 @Composable
 fun BlukitInput(

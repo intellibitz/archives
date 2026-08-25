@@ -11,7 +11,7 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 2.  Switch to the **Design** or **Split** view.
 3.  Locate the following previews:
     -   `PreviewRadarPhone`: The main **Event Field** showing high-level **Event** pulses and the spectral radar.
-    -   `PreviewChatPhone`: The **Crowd Field** and **Chain Field** interface showing **Links** and the **Resonance** summaries.
+    -   `PreviewChatPhone`: The **Crowd Field** and **Chain Field** interface showing **Ties** and the **Resonance** summaries.
     -   `PreviewTimelineField`: The visual student journey showing shared **Memories**.
     -   `PreviewPulseField`: The granular breakdown of a specific **Pulse** into its constituent units.
     -   `PreviewHarmonyHubFull`: The complete Harmony Hub architecture with recursive resonance-expansion.

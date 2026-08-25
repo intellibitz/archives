@@ -1,3 +1,9 @@
+/**
+ * BLUKIT PULSE FIELD
+ *
+ * The ultimate granular view of a single interaction.
+ * Breaks down Resonances into constituent Pulse Units.
+ */
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.animation.*
@@ -27,6 +33,13 @@ import java.util.Locale
  * PULSE FIELD: The ultimate granular view.
  * Displays child pulses (units) and nested pulse resonance metas.
  */
+/**
+ * PULSE FIELD: Granular unit drill-down.
+ * 
+ * Architectural Pattern:
+ * - Header: Harmony Top Bar.
+ * - Entries: Root Pulse Header, Unit List, Local Unit Ticker, Sub-Pulse Hub.
+ */
 @Composable
 fun PulseField(
     state: BluetoothUiState,
@@ -43,7 +56,8 @@ fun PulseField(
     crowdIsStill: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
     onAttachFile: () -> Unit = {},
-    onShowPrivacy: () -> Unit = {}
+    onShowPrivacy: () -> Unit = {},
+    header: @Composable () -> Unit
 ) {
     val rootPulse = remember(messageId, state.session.messages) {
         state.session.messages.find { it.messageId == messageId }
@@ -60,18 +74,11 @@ fun PulseField(
     BlukitFieldScaffold(
         themeColor = themeColor,
         glowIntensityTarget = 0.9f,
-        floatingContent = {
-            if (childPulses.isEmpty()) {
-                BlukitTip(
-                    text = "NO GRANULAR PULSES YET. ADD A UNIT TO EXPAND THE RESONANCE.",
-                    themeColor = themeColor,
-                    onDismiss = { }
-                )
-            }
-        },
-        fieldContent = {
-            Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
-                // Header (The Meta Root)
+        header = header,
+        entries = {
+            // MODULE 1: BASE CONTENT (Radar + Lists)
+            Column(modifier = Modifier.fillMaxSize()) {
+                // RipplesField is optional here, so we just use the main content as base
                 rootPulse?.let {
                     Surface(
                         color = themeColor.copy(alpha = 0.1f),
@@ -138,10 +145,12 @@ fun PulseField(
                         }
                     }
                 }
+                
+                // Bottom padding to avoid occlusion
+                Spacer(modifier = Modifier.height(140.dp))
             }
-        },
-        tickerContent = {
-            // Simplified ticker for Pulse Field
+
+            // MODULE 2: TICKER (Floating Overlay)
             PulsingResonanceTicker(
                 state = state,
                 energyList = childPulses.map { msg -> 
@@ -155,10 +164,14 @@ fun PulseField(
                 onPulseClick = { onNavigateToPulse(it) },
                 onDeviceLongClick = { },
                 onDeletePulse = { },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .padding(bottom = 100.dp) // Room for Hub
             )
-        },
-        inputContent = {
+
+            // MODULE 3: PULSE HUB (Bottom Overlay)
             BlukitPulseHub(
                 currentRoute = cc.thevar.blukit.ui.navigation.Route.PulseField(messageId),
                 messageText = messageText,
@@ -178,8 +191,20 @@ fun PulseField(
                 onAttachFile = onAttachFile,
                 onSearchToggle = onSearchToggle,
                 onShowPrivacy = onShowPrivacy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
             )
+
+            // MODULE 4: FLOATING TIPS
+            if (childPulses.isEmpty()) {
+                BlukitTip(
+                    text = "NO GRANULAR PULSES YET. ADD A UNIT TO EXPAND THE RESONANCE.",
+                    themeColor = themeColor,
+                    onDismiss = { },
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
         }
     )
 }

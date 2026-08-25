@@ -33,9 +33,9 @@ data class MessagePayload(
         const val TYPE_TEXT = 1
         const val TYPE_IMAGE = 2
         const val TYPE_ACK = 3
-        const val TYPE_LINK_REQUEST = 4
-        const val TYPE_LINK_ACCEPT = 5
-        const val TYPE_LINK_DENY = 6
+        const val TYPE_TIE_REQUEST = 4
+        const val TYPE_TIE_ACCEPT = 5
+        const val TYPE_TIE_DENY = 6
         const val TYPE_FILE = 7
         const val TYPE_IDENTITY_UPDATE = 8
         const val TYPE_RESYNC_REQUEST = 9

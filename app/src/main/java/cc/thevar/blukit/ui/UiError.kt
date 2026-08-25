@@ -20,6 +20,6 @@ sealed class UiError(val message: String, val isCritical: Boolean = false) {
 fun P2PError.toUiError(): UiError = when (this) {
     is P2PError.EncryptionError -> UiError.SecureChannelFailed("Security breach: $message")
     is P2PError.DiscoveryError, is P2PError.AdvertisingError -> UiError.RadiosStill("The air waves are quiet: $message")
-    is P2PError.ConnectionError -> UiError.ProximityError("Could not bridge link: $message")
+    is P2PError.ConnectionError -> UiError.ProximityError("Could not bridge tie: $message")
     else -> UiError.General(message)
 }

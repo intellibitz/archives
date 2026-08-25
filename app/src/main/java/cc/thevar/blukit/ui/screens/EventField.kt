@@ -1,3 +1,12 @@
+/**
+ * BLUKIT EVENT FIELD
+ *
+ * The root entry point of the mesh (Landing).
+ * Provides a Global Spectrum View of all nearby frequencies.
+ * 
+ * Scoping: discovery and formation. Sending pulses is locked here to maintain
+ * conceptual integrity and prevent global spam.
+ */
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.animation.*
@@ -54,10 +63,18 @@ import kotlinx.coroutines.launch
  * Displays all nearby pulses and event on a discovery radar.
  * Integrates spectral tips for onboarding and radar discovery.
  */
+/**
+ * THE EVENT FIELD: The master spectral radar and resonance feed.
+ * 
+ * Architectural Pattern:
+ * - Header: Harmony Top Bar.
+ * - Entries: Radar (Background), Resonance Ticker (Overlay), Pulse Hub (Locked).
+ */
 @Composable
 fun EventField(
     state: BluetoothUiState,
     localDeviceId: String,
+    header: @Composable () -> Unit,
     pulsedPeers: Set<String> = emptySet(),
     noiseFilterEnabled: Boolean = false,
     onStartScan: () -> Unit,
@@ -127,45 +144,9 @@ fun EventField(
     val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
-        themeColor = StealthPrimary,
-        glowIntensityTarget = 0.4f,
-        floatingContent = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                AnimatedContent(
-                    targetState = when {
-                        eventMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
-                        else -> null
-                    },
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    label = "EventTips"
-                ) { tipState ->
-                    if (tipState == "empty_mesh" && showTip) {
-                        BlukitTip(
-                            text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
-                            onDismiss = { showTip = false }
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Clear 'Create Event' affordance
-                if (!showAirGhost) {
-                    Button(
-                        onClick = onShowAirGhost,
-                        colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
-                    ) {
-                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("CREATE EVENT", fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp)
-                    }
-                }
-            }
-        },
-        fieldContent = {
-            // Radar remains for persona discovery
+        header = header,
+        entries = {
+            // MODULE 1: RADAR (Background Entry)
             RipplesField(
                 state = state,
                 localDeviceId = localDeviceId,
@@ -204,10 +185,11 @@ fun EventField(
                             onJoinAir = onNavigateToGroup
                         )
                     }
-                }
+                },
+                modifier = Modifier.fillMaxSize()
             )
-        },
-        tickerContent = {
+
+            // MODULE 2: TICKER (Overlay Entry)
             // Event ticker shows the latest global energy (Grouped by Resonance: Header + Entries)
             val combinedEnergy = remember(eventMetas, state.session.messages) {
                 val grouped = mutableListOf<Pair<P2PDevice, MessagePayload?>>()
@@ -235,20 +217,65 @@ fun EventField(
                 grouped
             }
 
-            PulsingResonanceTicker(
-                state = state,
-                energyList = combinedEnergy,
-                pulseCounts = pulseCounts,
-                localDeviceId = localDeviceId,
-                pulsedPeers = pulsedPeers,
-                isGrouped = true,
-                onPulseClick = { onNavigateToGroup(it) },
-                onDeviceLongClick = { },
-                onDeletePulse = onDeletePulse,
-                modifier = Modifier.fillMaxSize()
-            )
-        },
-        inputContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp) // Leave space for Pulse Hub
+            ) {
+                PulsingResonanceTicker(
+                    state = state,
+                    energyList = combinedEnergy,
+                    pulseCounts = pulseCounts,
+                    localDeviceId = localDeviceId,
+                    pulsedPeers = pulsedPeers,
+                    isGrouped = true,
+                    onPulseClick = { onNavigateToGroup(it) },
+                    onDeviceLongClick = { },
+                    onDeletePulse = onDeletePulse,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // FLOATING OVERLAY (Tips / Nudges)
+                Box(modifier = Modifier.fillMaxSize().padding(bottom = 16.dp), contentAlignment = Alignment.BottomCenter) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        AnimatedContent(
+                            targetState = when {
+                                eventMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
+                                else -> null
+                            },
+                            transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            label = "EventTips"
+                        ) { tipState ->
+                            if (tipState == "empty_mesh" && showTip) {
+                                BlukitTip(
+                                    text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
+                                    onDismiss = { showTip = false }
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Clear 'Create Event' affordance
+                        if (!showAirGhost) {
+                            Button(
+                                onClick = onShowAirGhost,
+                                colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                            ) {
+                                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("CREATE EVENT", fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // MODULE 3: PULSE HUB (Fixed Bottom Entry)
             BlukitPulseHub(
                 currentRoute = cc.thevar.blukit.ui.navigation.Route.Event,
                 messageText = messageText,
@@ -270,9 +297,11 @@ fun EventField(
                 onCreatePublicResonance = onCreatePublicResonance,
                 isSearchMode = isSearchActive,
                 onShowPrivacy = onShowPrivacy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
             )
-        }
+        },
+        themeColor = StealthPrimary,
+        glowIntensityTarget = 0.4f
     )
 
     if (showVault) {

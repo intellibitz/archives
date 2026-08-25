@@ -30,7 +30,7 @@ import cc.thevar.blukit.ui.theme.StealthPrimary
 @Composable
 fun PreviewRadarPhone() {
     BlukitTheme {
-        RipplesField(
+        EventField(
             state = BluetoothUiState(
                 crowd = MeshCrowd(
                     scannedDevices = listOf(
@@ -41,13 +41,11 @@ fun PreviewRadarPhone() {
                 )
             ),
             localDeviceId = "me",
-            activeBubbles = emptyList(),
-            crowdList = listOf(
-                P2PDevice("air_hub", "THE CROWD", "🌬️") to 12,
-                P2PDevice("concert", "CONCERT", "🎸") to 45
-            ),
+            header = { Text("PREVIEW HEADER", color = Color.White) },
+            onStartScan = {},
             onDeviceClick = {},
-            onStartScan = {}
+            onDeletePulse = {},
+            onWhisper = {}
         )
     }
 }
@@ -83,6 +81,7 @@ fun PreviewChatPhone() {
                 )
             ),
             localDeviceId = "me",
+            header = { Text("PREVIEW HEADER", color = Color.White) },
             groupId = "group1",
             onDisconnect = {},
             onSendMessage = { _, _ -> }
@@ -94,7 +93,7 @@ fun PreviewChatPhone() {
 @Composable
 fun PreviewRadarTablet() {
     BlukitTheme {
-        RipplesField(
+        EventField(
             state = BluetoothUiState(
                 crowd = MeshCrowd(
                     scannedDevices = listOf(
@@ -106,9 +105,11 @@ fun PreviewRadarTablet() {
                 )
             ),
             localDeviceId = "me",
-            activeBubbles = emptyList(),
+            header = { Text("PREVIEW HEADER", color = Color.White) },
+            onStartScan = {},
             onDeviceClick = {},
-            onStartScan = {}
+            onDeletePulse = {},
+            onWhisper = {}
         )
     }
 }

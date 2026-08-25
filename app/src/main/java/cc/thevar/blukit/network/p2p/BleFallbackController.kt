@@ -51,8 +51,8 @@ class BleFallbackController(
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedRadios = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedRadios = _connectedRadios.asStateFlow()
+    private val _connectedTies = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedTies = _connectedTies.asStateFlow()
 
     private val _incomingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
     override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
@@ -166,7 +166,7 @@ class BleFallbackController(
             Log.i(tag, "GATT: Disconnected from $address")
             activeGatts.remove(address)
             pendingRadioRequests.remove(address)
-            _connectedRadios.update { it - address }
+            _connectedTies.update { it - address }
             if (activeGatts.isEmpty()) _isConnected.value = false
             updateScannedDevices()
         }
@@ -176,7 +176,7 @@ class BleFallbackController(
         val address = gatt.device.address
         if (status == BluetoothGatt.GATT_SUCCESS) {
             activeGatts[address] = gatt
-            _connectedRadios.update { it + address }
+            _connectedTies.update { it + address }
             _isConnected.value = true
             sendHandshake(address)
         } else {
@@ -474,7 +474,7 @@ class BleFallbackController(
     override fun acceptRadio(device: P2PDevice) {
         pendingRadioRequests.remove(device.id)
         _incomingRadioRequests.update { it - device }
-        _connectedRadios.update { it + device.id }
+        _connectedTies.update { it + device.id }
         _isConnected.value = true
         updateScannedDevices()
     }
@@ -559,8 +559,8 @@ class BleFallbackController(
         _scannedDevices.update { current ->
             current.map { device ->
                 device.copy(
-                    isConnected = device.id in _connectedRadios.value,
-                    isLinkPending = device.id in pendingRadioRequests
+                    isConnected = device.id in _connectedTies.value,
+                    isTiePending = device.id in pendingRadioRequests
                 )
             }
         }
@@ -577,7 +577,7 @@ class BleFallbackController(
     override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? = null
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
-        // BLE implementation: Send to all connected links
+        // BLE implementation: Send to all connected ties
         // In a real scenario, this would need group addressing
         return sendMessage(content, null)?.copy(groupId = groupId)
     }
@@ -634,7 +634,7 @@ class BleFallbackController(
         activeGatts.clear()
         pulseKeys.clear()
         _isConnected.value = false
-        _connectedRadios.value = emptySet()
+        _connectedTies.value = emptySet()
     }
 
     override fun release() {

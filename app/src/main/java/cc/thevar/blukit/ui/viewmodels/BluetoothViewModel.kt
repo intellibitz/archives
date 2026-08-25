@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
  * Coordinates between the P2PController and RadioStateManager to provide
  * a reactive stream of Bluetooth and Pulsing Crowd statuses.
  */
-@OptIn(kotlinx.coroutines.FlowPreview::class)
+
 class BluetoothViewModel(
     private val p2pController: P2PController,
     private val radioStateManager: RadioStateManager,
@@ -105,7 +105,7 @@ class BluetoothViewModel(
 
         // SECURITY: Auto-Reconnect for secure Chains
         combine(
-            p2pController.connectedRadios,
+            p2pController.connectedTies,
             p2pController.scannedDevices
         ) { connected, scanned -> connected to scanned }
             .debounce(2000)
@@ -224,14 +224,14 @@ class BluetoothViewModel(
     }
 
     private val sessionDataState: Flow<PulseSession> = combine(
-        p2pController.connectedRadios,
+        p2pController.connectedTies,
         p2pController.messages,
         pulseStore.activeGroups,
         pulseStore.archivedGroups,
         p2pController.syncProgress
-    ) { links, messages, groups, archivedGroups, syncProgress ->
+    ) { ties, messages, groups, archivedGroups, syncProgress ->
         PulseSession(
-            connectedRadios = links,
+            connectedTies = ties,
             messages = messages,
             groups = groups,
             archivedGroups = archivedGroups,
@@ -262,8 +262,8 @@ class BluetoothViewModel(
             manualConnectionState != null -> manualConnectionState
             activity.uiError != null -> RadioConnectionState.Error(activity.uiError.message)
             isConnected -> {
-                val pulse = crowd.scannedDevices.find { it.id in session.connectedRadios }
-                    ?: P2PDevice(id = session.connectedRadios.firstOrNull() ?: "", name = "?", emoji = "👤")
+                val pulse = crowd.scannedDevices.find { it.id in session.connectedTies }
+                    ?: P2PDevice(id = session.connectedTies.firstOrNull() ?: "", name = "?", emoji = "👤")
                 RadioConnectionState.Connected(pulse)
             }
             activity.isDiscovering || activity.isAdvertising -> RadioConnectionState.Scanning
@@ -309,7 +309,7 @@ class BluetoothViewModel(
                 currentTry++
                 Log.i("BluetoothViewModel", "Connection attempt $currentTry for ${device.name}")
                 
-                connectivityUseCase.connectToDevice(device, state.value.session.connectedRadios)
+                connectivityUseCase.connectToDevice(device, state.value.session.connectedTies)
                 
                 // Wait for status update
                 val status = connectivityUseCase.manualConnectionStatus
@@ -507,7 +507,7 @@ class BluetoothViewModel(
                     p2pController.sendFile(uri, null, MessagePayload.PULSE_SHOUT, groupId = activeChainId, groupName = activeChain?.name)
                 }
                 MessagePayload.PULSE_WHISPER -> {
-                    val targets = state.value.crowd.selectedDevices.ifEmpty { state.value.session.connectedRadios }
+                    val targets = state.value.crowd.selectedDevices.ifEmpty { state.value.session.connectedTies }
                     if (targets.isNotEmpty()) {
                         targets.forEach { targetId ->
                             p2pController.sendFile(uri, targetId, pulseType, groupId = activeChainId, groupName = activeChain?.name)

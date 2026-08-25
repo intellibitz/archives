@@ -8,7 +8,7 @@ data class P2PDevice(
     val signalStrength: Int = 0, // RSSI value in dBm (-100 to 0)
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false,
-    val isLinkPending: Boolean = false,
+    val isTiePending: Boolean = false,
     val medium: ConnectionMedium = ConnectionMedium.LOCATION,
     val pulseCount: Int = 0,
     val isLowPower: Boolean = false,

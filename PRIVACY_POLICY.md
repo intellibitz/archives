@@ -27,7 +27,7 @@ By design, you can only communicate with people physically near you. This "Crowd
 - **Local Keys**: Secure keys are generated and stored only on your device using hardware-backed security (TEE/StrongBox).
 - **Academic Chains**: Collaborative tasks and assignments are encrypted and shared only within specific Chains.
 - **Nested Context**: Chains and Pulses exist within recursive containers (Crowds, Sub-Crowds, or Parent Pulses), keeping interactions anchored to physical and logical locations.
-- **Crowd Hierarchy**: High-level summaries (**Event, Links, Pulses**) allow you to browse mesh density with intelligent partitioning for large gatherings.
+- **Crowd Hierarchy**: High-level summaries (**Event, Ties, Pulses**) allow you to browse mesh density with intelligent partitioning for large gatherings.
 - **Crowd Templates & Roles**: Predefined structures (e.g., University) allow for specialized user roles (e.g., Faculty) to manage mesh permissions and visibility without tracking.
 - **Crowd Containment**: The hierarchy enforces that **all Crowds are discoverable** and **all Chains are private**. A Chain must be anchored to a parent Crowd to exist within the crowd spectrum.
 
@@ -47,7 +47,7 @@ Blukit follows a **Non-Monopolistic Crowd** principle. Public Crowds have no own
 - **Collaborative Rituals**: You can share your schedules with friends in a Chain to ensure all devices "Awaken" the same frequency at the same time.
 
 ## 9. Differential Pulse Sync
-To preserve your "Shared Life Log" across device upgrades, you can initiate a manual "Pulse Sync." This allows a high-speed WiFi radio link to bridge missing history entirely peer-to-peer.
+To preserve your "Shared Life Log" across device upgrades, you can initiate a manual "Pulse Sync." This allows a high-speed WiFi radio tie to bridge missing history entirely peer-to-peer.
 
 ## 10. Contact
 muthu.ramadoss@gmail.com

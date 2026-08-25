@@ -55,7 +55,7 @@ fun ContactsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "THE AIR IS STILL. FIND SOMEONE IN THE FIELD TO FORM A LINK.",
+                    text = "THE AIR IS STILL. FIND SOMEONE IN THE FIELD TO FORM A TIE.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = StealthPrimary.copy(alpha = 0.6f),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -71,7 +71,7 @@ fun ContactsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(contacts, key = { it.id }) { contact ->
-                    LinkItem(
+                    TieItem(
                         contact = contact,
                         onStartChat = { onStartChat(contact) }
                     )
@@ -82,7 +82,7 @@ fun ContactsScreen(
 }
 
 @Composable
-fun LinkItem(
+fun TieItem(
     contact: ContactEntity,
     onStartChat: () -> Unit
 ) {

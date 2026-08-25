@@ -1,3 +1,9 @@
+/**
+ * BLUKIT CHAIN FIELD
+ *
+ * The private, secure interaction layer for encrypted peer groups.
+ * Optimized for tactical whispers and persistent shared notes.
+ */
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.animation.*
@@ -61,6 +67,13 @@ private fun ScopeButton(
 /**
  * CHAIN FIELD: The deepest level of resonance. Focus on whispers and notes.
  */
+/**
+ * CHAIN FIELD: The deepest layer of resonance.
+ * 
+ * Architectural Pattern:
+ * - Header: Harmony Top Bar with Stealth Rose theme.
+ * - Entries: Private Radar, Secure Ties, Whispers Ticker, Hub with Note and Management actions.
+ */
 @Composable
 fun ChainField(
     state: BluetoothUiState,
@@ -90,7 +103,8 @@ fun ChainField(
     crowdIsStill: Boolean = false,
     onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
-    onNavigateToPulse: (String) -> Unit = {}
+    onNavigateToPulse: (String) -> Unit = {},
+    header: @Composable () -> Unit
 ) {
     var showTip by remember { mutableStateOf(true) }
     var localFocusedId by remember(externalFocusedId) { mutableStateOf(externalFocusedId) }
@@ -99,7 +113,7 @@ fun ChainField(
         state.session.groups.find { it.id == groupId }
     }
 
-    val childLinks = remember(state.session.groups, groupId) {
+    val childTies = remember(state.session.groups, groupId) {
         state.session.groups.filter { it.parentId == groupId && it.scope != Resonance.SCOPE_PUBLIC }
     }
 
@@ -126,104 +140,98 @@ fun ChainField(
     BlukitFieldScaffold(
         themeColor = if(isPrivate) StealthRose else StealthPrimary,
         glowIntensityTarget = 0.8f,
-        floatingContent = {
-            AnimatedVisibility(
-                visible = showTip && chatPulses.isEmpty() && childLinks.isEmpty(),
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                BlukitTip(
-                    text = "THIS CHAIN IS SILENT. WHISPER OR PIN A PULSE TO THE CANVAS.",
-                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
-                    onDismiss = { showTip = false }
+        header = header,
+        entries = {
+            // MODULE 1: BASE CONTENT (Radar + Lists)
+            Column(modifier = Modifier.fillMaxSize()) {
+                RipplesField(
+                    state = state,
+                    localDeviceId = localDeviceId,
+                    activeBubbles = emptyList(),
+                    pulsedPeers = emptySet(),
+                    drawBackground = false,
+                    drawNodes = false,
+                    onDeviceClick = { },
+                    onStartScan = { },
+                    modifier = Modifier.fillMaxWidth().height(280.dp)
                 )
-            }
-        },
-        fieldContent = {
-            Column(modifier = Modifier.fillMaxSize().padding(top = 80.dp)) {
-                // Links Section (formerly Nested Ties)
-                if (childLinks.isNotEmpty()) {
+
+                Column(modifier = Modifier.weight(1f)) {
+                    // Ties Section (formerly Nested Ties)
+                    if (childTies.isNotEmpty()) {
+                        Text(
+                            text = "TIES", 
+                            style = MaterialTheme.typography.labelSmall, 
+                            color = if(isPrivate) StealthRose else StealthPrimary, 
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        )
+                        
+                        LazyColumn(modifier = Modifier.weight(0.3f)) {
+                            items(childTies) { tie ->
+                                ResonanceSummary(
+                                    title = tie.name,
+                                    subtitle = "SECURE SUB-CHAIN",
+                                    icon = Icons.Rounded.Hearing,
+                                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
+                                    count = tie.memberIds.size,
+                                    lastUpdate = sdf.format(Date(tie.lastPulseTimestamp)),
+                                    onClick = { onNavigateToGroup(tie.id) },
+                                    showJoin = true
+                                )
+                            }
+                        }
+                    }
+
+                    // Pulses Section
                     Text(
-                        text = "LINKS", 
+                        text = "WHISPERS", 
                         style = MaterialTheme.typography.labelSmall, 
                         color = if(isPrivate) StealthRose else StealthPrimary, 
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp
                     )
-                    
-                    LazyColumn(modifier = Modifier.weight(0.3f)) {
-                        items(childLinks) { link ->
-                            ResonanceSummary(
-                                title = link.name,
-                                subtitle = "SECURE SUB-CHAIN",
-                                icon = Icons.Rounded.Hearing,
-                                themeColor = if(isPrivate) StealthRose else StealthPrimary,
-                                count = link.memberIds.size,
-                                lastUpdate = sdf.format(Date(link.lastPulseTimestamp)),
-                                onClick = { onNavigateToGroup(link.id) },
-                                showJoin = true
-                            )
+
+                    LazyColumn(modifier = Modifier.weight(0.7f)) {
+                        items(chatPulses) { pulse ->
+                            if (pulse.isMeta) {
+                                ResonanceSummary(
+                                    title = pulse.content.take(20),
+                                    subtitle = "RESONANCE",
+                                    icon = Icons.Rounded.BubbleChart,
+                                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
+                                    count = state.session.messages.count { it.parentMessageId == pulse.messageId },
+                                    lastUpdate = sdf.format(Date(pulse.timestamp)),
+                                    onClick = { onNavigateToPulse(pulse.messageId) }
+                                )
+                            } else {
+                                AnimatedPulseItem(
+                                    msg = pulse,
+                                    isSelected = false,
+                                    senderDevice = null,
+                                    pulseCount = 0,
+                                    isPulsed = false,
+                                    isMe = pulse.senderId == localDeviceId,
+                                    isGrouped = false,
+                                    isMutual = false,
+                                    resonance = group,
+                                    rowId = pulse.messageId,
+                                    onPulseClick = { /* Handle Unit Click */ },
+                                    onDeviceLongClick = { },
+                                    onDelete = { }
+                                )
+                            }
                         }
                     }
                 }
-
-                // Pulses Section
-                Text(
-                    text = "WHISPERS", 
-                    style = MaterialTheme.typography.labelSmall, 
-                    color = if(isPrivate) StealthRose else StealthPrimary, 
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
-                )
-
-                LazyColumn(modifier = Modifier.weight(0.7f)) {
-                    items(chatPulses) { pulse ->
-                        if (pulse.isMeta) {
-                            ResonanceSummary(
-                                title = pulse.content.take(20),
-                                subtitle = "RESONANCE",
-                                icon = Icons.Rounded.BubbleChart,
-                                themeColor = if(isPrivate) StealthRose else StealthPrimary,
-                                count = state.session.messages.count { it.parentMessageId == pulse.messageId },
-                                lastUpdate = sdf.format(Date(pulse.timestamp)),
-                                onClick = { onNavigateToPulse(pulse.messageId) }
-                            )
-                        } else {
-                            AnimatedPulseItem(
-                                msg = pulse,
-                                isSelected = false,
-                                senderDevice = null,
-                                pulseCount = 0,
-                                isPulsed = false,
-                                isMe = pulse.senderId == localDeviceId,
-                                isGrouped = false,
-                                isMutual = false,
-                                resonance = group,
-                                rowId = pulse.messageId,
-                                onPulseClick = { /* Handle Unit Click */ },
-                                onDeviceLongClick = { },
-                                onDelete = { }
-                            )
-                        }
-                    }
-                }
+                
+                // Bottom padding to avoid occlusion by the floating ticker and hub
+                Spacer(modifier = Modifier.height(140.dp))
             }
-            
-            // Canvas for Background
-            RipplesField(
-                state = state,
-                localDeviceId = localDeviceId,
-                activeBubbles = emptyList(),
-                pulsedPeers = emptySet(),
-                drawBackground = false,
-                drawNodes = false,
-                onDeviceClick = { },
-                onStartScan = { }
-            )
-        },
-        tickerContent = {
+
+            // MODULE 2: TICKER (Floating Overlay)
             PulsingResonanceTicker(
                 state = state,
                 energyList = chatPulses.map { msg -> 
@@ -237,10 +245,14 @@ fun ChainField(
                 onPulseClick = { onNavigateToPulse(it) },
                 onDeviceLongClick = { },
                 onDeletePulse = { },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .padding(bottom = 100.dp) // Room for Hub
             )
-        },
-        inputContent = {
+
+            // MODULE 3: PULSE HUB (Bottom Overlay)
             BlukitPulseHub(
                 currentRoute = cc.thevar.blukit.ui.navigation.Route.GroupField(groupId ?: ""),
                 messageText = messageText,
@@ -255,15 +267,31 @@ fun ChainField(
                 onAcceptRadio = onAcceptRadio,
                 onDenyRadio = onDenyRadio,
                 onStartSidePulse = onStartSidePulse,
-                onStartChain = { }, // Inside a Chain, this is nested Chain creation
+                onStartChain = { }, 
                 onClearSelection = onClearSelection,
                 onAttachFile = { },
                 onSearchToggle = onSearchToggle,
                 onManage = onShowManagement,
                 onNote = { showNoteEditor = true; activeNote = null },
                 onShowPrivacy = onShowPrivacy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
             )
+
+            // MODULE 4: FLOATING TIPS
+            AnimatedVisibility(
+                visible = showTip && chatPulses.isEmpty() && childTies.isEmpty(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+                modifier = Modifier.align(Alignment.TopCenter)
+            ) {
+                BlukitTip(
+                    text = "THIS CHAIN IS SILENT. WHISPER OR PIN A PULSE TO THE CANVAS.",
+                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
+                    onDismiss = { showTip = false }
+                )
+            }
         }
     )
 

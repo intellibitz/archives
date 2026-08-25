@@ -25,7 +25,7 @@ sealed class P2PError(val message: String, val isTransient: Boolean) {
 interface P2PController {
     val scannedDevices: StateFlow<List<P2PDevice>>
     val isConnected: StateFlow<Boolean>
-    val connectedRadios: StateFlow<Set<String>>
+    val connectedTies: StateFlow<Set<String>>
     val incomingRadioRequests: StateFlow<Set<P2PDevice>>
     val outgoingRadioRequests: StateFlow<Set<P2PDevice>>
     val isDiscovering: StateFlow<Boolean>

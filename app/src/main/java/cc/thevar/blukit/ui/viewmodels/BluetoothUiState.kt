@@ -53,7 +53,7 @@ data class MeshCrowd(
  */
 data class PulseSession(
     val connectionState: RadioConnectionState = RadioConnectionState.Disconnected,
-    val connectedRadios: Set<String> = emptySet(),
+    val connectedTies: Set<String> = emptySet(),
     val messages: List<MessagePayload> = emptyList(),
     val groups: List<Resonance> = emptyList(),
     val archivedGroups: List<Resonance> = emptyList(),

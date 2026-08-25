@@ -19,13 +19,13 @@ Experience the **Unified Pulse Frequency**.
 
 ### **Crowd Hierarchy (The Resonance Drill-Down)**
 - **EVENT FIELD (Landing)**: The global spectrum view. Surfaces all **Event**—the public frequencies nearby.
-- **CROWD FIELD (Public)**: Shared physical containers. All Crowd frequencies are **Discoverable**. Lists **Event**, **Links**, and **Resonances**. Recursive by design.
-- **CHAIN FIELD (Private)**: Secure, encrypted interaction layers. **All Chains are Private**. A Chain must be anchored to a parent Crowd for discoverability. Lists **Links** and **Resonances**.
+- **CROWD FIELD (Public)**: Shared physical containers. All Crowd frequencies are **Discoverable**. Lists **Event**, **Ties**, and **Resonances**. Recursive by design.
+- **CHAIN FIELD (Private)**: Secure, encrypted interaction layers. **All Chains are Private**. A Chain must be anchored to a parent Crowd for discoverability. Lists **Ties** and **Resonances**.
 - **RESONANCE FIELD (Granular)**: The deepest level of the mesh. Breaks down **Resonances** into its constituent pulses. The **Pulse** is the final, atomic unit of energy.
 - **TIMELINE FIELD (History)**: A visual chronological path of student memories and shared milestones.
 
 ### **Core Interaction Paradigm**
-- **Resonance Summaries**: A "Summary-First" visual paradigm. Users see **Event, Links, or Resonances** (collapsed high-level pulses) and drill down into **Resonance** summaries to expand into granular constituent pulses.
+- **Resonance Summaries**: A "Summary-First" visual paradigm. Users see **Event, Ties, or Resonances** (collapsed high-level pulses) and drill down into **Resonance** summaries to expand into granular constituent pulses.
 - **Expansion strategy**: Specialized crowd capabilities including **Interoperable Crowds** (logical bridging across physical locations) and **Template-Based Crowds** (predefined structures for Universities, Festivals, and Venues).
 - **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. Dynamically surfaces units from the current context and its children, with unit counts for Resonances.
 - **Scoped Sharing & Roles**: Specialized roles (e.g., Student, Faculty, Artist) within templates to manage interaction density and scoped visibility.
@@ -48,7 +48,7 @@ Experience the **Unified Pulse Frequency**.
 A high-density, ergonomic architecture for tactical crowd control:
 
 ### **Crowd Hub (Top)**
-- **Row 0 (Global Command)**: Tactical toggles for Stealth/Power + **BLUKIT PRIVACY** link + Real-time radio status.
+- **Row 0 (Global Command)**: Tactical toggles for Stealth/Power + **BLUKIT PRIVACY** tie + Real-time radio status.
 - **Row 1 (Humanity Stage)**: Minimalist navigation, centered **Event Title** (showing deep paths like `CROWD > CHAIN`), and right-anchored **Profile Persona**.
 
 ### **Interaction Hub (Bottom)**
