@@ -337,8 +337,18 @@ fun BlukitHumanityStage(
             horizontalArrangement = Arrangement.End
         ) {
             trailingContent?.invoke(this)
-            IconButton(onClick = onShowTimeline, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(18.dp))
+            
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = onShowTimeline, modifier = Modifier.size(28.dp)) {
+                    Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(16.dp))
+                }
+                Text(
+                    text = "HISTORY", 
+                    fontSize = 5.sp, 
+                    fontWeight = FontWeight.Black, 
+                    color = themeColor.copy(alpha = 0.5f),
+                    letterSpacing = 1.sp
+                )
             }
         }
     }
@@ -672,13 +682,7 @@ fun PulsingResonanceTicker(
                     resonance.allMemberIds.size
                 }
 
-                val lastMsg = state.session.messages.findLast { it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null) }
-                val dynamicSubtitle = if (lastMsg != null) {
-                    val sender = if (lastMsg.senderId == localDeviceId) "YOU" else lastMsg.senderName.uppercase()
-                    "$sender :: ${lastMsg.content.uppercase()}"
-                } else {
-                    if (resonance.scope == Resonance.SCOPE_PUBLIC) "CROWD" else "PRIVATE CHAIN"
-                }
+                val dynamicSubtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "EVENT" else "PRIVATE CHAIN"
 
                 ResonanceSummary(
                     title = resonance.name,

@@ -184,19 +184,28 @@ fun RipplesField(
                 trailingContent = {
                     // Tactical Toggles
                     if (onSearchToggle != null) {
-                        IconButton(
-                            onClick = onSearchToggle,
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
-                                contentDescription = "Toggle Search",
-                                tint = if (isSearchActive) StealthAmber else finalThemeColor,
-                                modifier = Modifier.size(14.dp)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            IconButton(
+                                onClick = onSearchToggle,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                    contentDescription = "Toggle Search",
+                                    tint = if (isSearchActive) StealthAmber else finalThemeColor,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            Text(
+                                text = if (isSearchActive) "SEARCH" else "RADAR",
+                                fontSize = 5.sp,
+                                fontWeight = FontWeight.Black,
+                                color = (if (isSearchActive) StealthAmber else finalThemeColor).copy(alpha = 0.5f),
+                                letterSpacing = 1.sp
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
             )
         },

@@ -25,7 +25,8 @@ Experience the **Unified Pulse Frequency**.
 - **TIMELINE FIELD (History)**: A visual chronological path of student memories and shared milestones.
 
 ### **Core Interaction Paradigm**
-- **Resonance Summaries**: A "Summary-First" visual paradigm. Headers display high-level context (Title, Member Count, "ENTER" affordance) and dynamic previews of the latest pulse (e.g., `YOU :: HELLO MESH`).
+- **Resonance Summaries**: A "Summary-First" visual paradigm. Headers display high-level context (Title, Member Count, "ENTER" affordance) and generic type labels (e.g., `EVENT` or `PRIVATE CHAIN`).
+- **Ticker Sectioning**: The landing view uses explicit tactical sectioning like **"JOIN ACTIVE EVENTS BELOW"** with integrated creation affordances like **"CREATE NEW EVENT"**.
 - **Context-First Navigation**: Actions are scoped to their containers. You must "Join" or "Enter" a frequency before the Pulse Hub awakens, ensuring conceptual integrity and preventing global spam.
 - **Event Ownership**: Public Crowds created by users are owned by the creator, allowing them to set a unique **Event Persona** (emoji) that identifies the frequency across the mesh. The default "THE CROWD" remains collectively owned.
 - **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. Dynamically surfaces units from the current context and its children, with unit counts for Resonances.
@@ -53,6 +54,7 @@ A high-density, ergonomic architecture for tactical crowd control:
 
 ### **Humanity Stage (Radar Header)**
 - **Row 1 (Contextual Navigation)**: Anchored directly to the Radar Field for ergonomic reach. Unified navigation breadcrumbs (showing deep paths like `THE CROWD > CONCERT`), the active **Event/Crowd Title**, and a high-contrast **User Count** badge.
+- **Tactical Icon Labels**: System tools in the header include high-contrast labels (e.g., **"RADAR"**, **"SEARCH"**, **"HISTORY"**) in ultra-small tactical fonts for maximum clarity.
 
 ### **Interaction Hub (Bottom Overlay)**
 *Available only inside a Crowd or Chain*

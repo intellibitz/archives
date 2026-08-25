@@ -264,9 +264,9 @@ fun EventField(
 
                     // MODULE 2.2: TICKER (Standard Spectrum)
                     TickerSectionHeader(
-                        title = "ACTIVE EVENTS",
+                        title = "JOIN ACTIVE EVENTS BELOW",
                         onAction = onShowAirGhost,
-                        actionLabel = "CREATE EVENT"
+                        actionLabel = "CREATE NEW EVENT"
                     )
                     
                     PulsingResonanceTicker(
