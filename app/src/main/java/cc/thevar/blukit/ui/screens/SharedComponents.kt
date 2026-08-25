@@ -2038,16 +2038,6 @@ fun BlukitFieldScaffold(
                 // Main Field Content (Radar, Bubbles, etc)
                 fieldContent()
                 
-                // Overlay for Alerts/Nudges/Tips - Centered floatingly
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 120.dp), 
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    floatingContent()
-                }
-
                 // Ticker - Floating with spectral fade
                 Box(
                     modifier = Modifier
@@ -2060,6 +2050,16 @@ fun BlukitFieldScaffold(
                         }
                 ) {
                     tickerContent()
+                }
+
+                // Overlay for Alerts/Nudges/Tips - Centered floatingly
+                // ON TOP of ticker, but only takes needed space to allow ticker interaction
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 120.dp)
+                ) {
+                    floatingContent()
                 }
             }
 

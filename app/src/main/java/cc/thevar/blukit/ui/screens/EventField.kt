@@ -93,7 +93,7 @@ fun EventField(
     var showVault by remember { mutableStateOf(false) }
 
     val eventMetas = remember(state.session.groups) {
-        state.session.groups.filter { it.scope == Resonance.SCOPE_PUBLIC && it.parentId == null }
+        state.session.groups.filter { it.scope == Resonance.SCOPE_PUBLIC && (it.parentId == null || it.parentId == Resonance.ID_CROWD) }
     }
 
     val pulsesData = remember(state.session.messages, state.session.groups, pulsedPeers, noiseFilterEnabled, isSearchActive, messageText) {
@@ -150,15 +150,17 @@ fun EventField(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 // Clear 'Create Event' affordance
-                Button(
-                    onClick = onShowAirGhost,
-                    colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
-                ) {
-                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("CREATE EVENT", fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp)
+                if (!showAirGhost) {
+                    Button(
+                        onClick = onShowAirGhost,
+                        colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("CREATE EVENT", fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp)
+                    }
                 }
             }
         },
