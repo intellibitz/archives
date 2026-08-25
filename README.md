@@ -87,6 +87,11 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 
 ---
 
+## 🛠️ DEVELOPMENT HYGIENE
+- **Temporary Files**: To maintain a clean workspace and prevent accidental leaks of transient data, all temporary files, logs, or scratch scripts MUST be created within the `.gitignore_folder` directory.
+
+---
+
 ## 🤖 THE AGENT PROTOCOL (FOR LLM COLLABORATORS)
 
 ### **Master Operational Directive**
