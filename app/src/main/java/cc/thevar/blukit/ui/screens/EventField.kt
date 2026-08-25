@@ -81,20 +81,12 @@ fun EventField(
     onDeletePulse: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
     onIdentifyUser: (String) -> Unit = {},
-    crowdIsStill: Boolean = false,
-    // Hub Callbacks
+    // Hub Callbacks (Simplified for root)
     messageText: String = "",
-    onMessageChange: (String) -> Unit = {},
-    onSend: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
     onCreatePublicResonance: ((String, String?) -> Unit)? = null,
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
-    onStartSidePulse: () -> Unit = {},
-    onStartChain: () -> Unit = {},
-    onClearSelection: () -> Unit = {},
-    onAttachFile: () -> Unit = {},
-    onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     isSearchActive: Boolean = false,
     onRestoreCrowd: (String) -> Unit = {},
@@ -141,7 +133,7 @@ fun EventField(
         Triple(sorted, counts, false)
     }
 
-    val (pulses, pulseCounts, _) = pulsesData
+    val (_, pulseCounts, _) = pulsesData
 
     BlukitFieldScaffold(
         header = header,
@@ -174,6 +166,8 @@ fun EventField(
                 },
                 onStartScan = onStartScan,
                 onCreateEvent = onShowAirGhost,
+                onSearchToggle = onSearchToggle,
+                isSearchActive = isSearchActive,
                 drawBackground = false, // Background handled by Scaffold
                 drawNodes = true,
                 airRitualGhost = {
@@ -223,22 +217,43 @@ fun EventField(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp)
+                    .height(320.dp)
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 80.dp) // Leave space for Pulse Hub
+                    .padding(bottom = 16.dp) 
             ) {
-                PulsingResonanceTicker(
-                    state = state,
-                    energyList = combinedEnergy,
-                    pulseCounts = pulseCounts,
-                    localDeviceId = localDeviceId,
-                    pulsedPeers = pulsedPeers,
-                    isGrouped = true,
-                    onPulseClick = { onNavigateToGroup(it) },
-                    onDeviceLongClick = { },
-                    onDeletePulse = onDeletePulse,
-                    modifier = Modifier.fillMaxSize()
-                )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // MODULE 2.1: INCOMING REQUESTS (High Priority)
+                    if (state.crowd.incomingRadioRequests.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            state.crowd.incomingRadioRequests.forEach { device ->
+                                RadioRequestTickerItem(
+                                    device = device, 
+                                    onAccept = onAcceptRadio, 
+                                    onDeny = onDenyRadio
+                                )
+                            }
+                        }
+                    }
+
+                    // MODULE 2.2: TICKER (Standard Spectrum)
+                    PulsingResonanceTicker(
+                        state = state,
+                        energyList = combinedEnergy,
+                        pulseCounts = pulseCounts,
+                        localDeviceId = localDeviceId,
+                        pulsedPeers = pulsedPeers,
+                        isGrouped = true,
+                        onPulseClick = { onNavigateToGroup(it) },
+                        onDeviceLongClick = { },
+                        onDeletePulse = onDeletePulse,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
                 // FLOATING OVERLAY (Tips / Nudges)
                 Box(modifier = Modifier.fillMaxSize().padding(bottom = 16.dp), contentAlignment = Alignment.BottomCenter) {
@@ -261,31 +276,6 @@ fun EventField(
                     }
                 }
             }
-
-            // MODULE 3: PULSE HUB (Fixed Bottom Entry)
-            BlukitPulseHub(
-                currentRoute = cc.thevar.blukit.ui.navigation.Route.Event,
-                messageText = messageText,
-                onMessageChange = onMessageChange,
-                onSend = onSend,
-                pulseCount = pulses.size,
-                crowdIsStill = crowdIsStill,
-                incomingRadioRequests = state.crowd.incomingRadioRequests,
-                selectedDevices = state.crowd.selectedDevices,
-                pulsedPeers = pulsedPeers,
-                resonances = state.session.groups,
-                onAcceptRadio = onAcceptRadio,
-                onDenyRadio = onDenyRadio,
-                onStartSidePulse = onStartSidePulse,
-                onStartChain = onStartChain,
-                onClearSelection = onClearSelection,
-                onAttachFile = onAttachFile,
-                onSearchToggle = onSearchToggle,
-                onCreatePublicResonance = onCreatePublicResonance,
-                isSearchMode = isSearchActive,
-                onShowPrivacy = onShowPrivacy,
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-            )
         },
         themeColor = StealthPrimary,
         glowIntensityTarget = 0.4f

@@ -419,22 +419,12 @@ fun BlukitApp(
                                     onDeletePulse = viewModel::deletePulse, 
                                     onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupPulse("WHISPER", setOf(id)); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) }, 
                                     onIdentifyUser = { highlightedUserId = it }, 
-                                    crowdIsStill = crowdIsStill,
                                     onNavigateToGroup = { gid ->
                                         backStack.add(Route.GroupField(gid))
                                         bluetoothViewModel.enterChain(gid)
                                     },
                                     // Hub Props
                                     messageText = messageText,
-                                    onMessageChange = { messageText = it },
-                                    onSend = { 
-                                        if (messageText.isNotBlank() && !isSearchMode) { 
-                                            bluetoothViewModel.spreadPulse(messageText)
-                                            if (crowdIsStill) showAirIsStillDialog = true
-                                            messageText = ""
-                                            focusManager.clearFocus() 
-                                        } 
-                                    },
                                     onSearchToggle = { isSearchMode = !isSearchMode; showAirGhost = false; messageText = "" },
                                     onCreatePublicResonance = { name, templateId ->
                                         val gid = bluetoothViewModel.startGroupPulse(name, scope = Resonance.SCOPE_PUBLIC, templateId = templateId)
@@ -445,13 +435,8 @@ fun BlukitApp(
                                     },
                                     onAcceptRadio = bluetoothViewModel::acceptRadio, 
                                     onDenyRadio = bluetoothViewModel::denyRadio,
-                                    onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
-                                    onStartChain = { val gid = bluetoothViewModel.startGroupPulse("CHAIN", bluetoothState.crowd.selectedDevices); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) },
-                                    onClearSelection = bluetoothViewModel::clearSelection,
-                                    onAttachFile = { filePickerLauncher.launch("*/*") },
-                                    onShowPrivacy = { showPrivacyProtocol = true },
-                                    isSearchActive = isSearchMode,
                                     onRestoreCrowd = bluetoothViewModel::restoreFromVault,
+                                    isSearchActive = isSearchMode,
                                     showAirGhost = showAirGhost,
                                     onShowAirGhost = { showAirGhost = true },
                                     onDismissAirGhost = { showAirGhost = false }

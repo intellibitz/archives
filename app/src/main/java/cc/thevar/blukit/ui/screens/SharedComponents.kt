@@ -95,11 +95,8 @@ fun MixedStatusBranding(
     modifier: Modifier = Modifier
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
-        StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = false, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth)
-        StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = false, isPermissionMissing = false, onClick = onAwakenWifi)
-        if (isLocationMandatory) {
-            StatusIcon(icon = Icons.Rounded.LocationOn, isOn = !isLocationOff, isWeak = false, isPermissionMissing = isPermissionMissing, onClick = onAwakenLocation)
-        }
+        StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = false, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth, onColor = StealthAmber)
+        StatusIcon(icon = Icons.Rounded.Wifi, isOn = !isWifiOff, isWeak = false, isPermissionMissing = false, onClick = onAwakenWifi, onColor = StealthAmber)
     }
 }
 
@@ -235,27 +232,34 @@ fun BlukitHarmonyTopBar(
                     EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
                 }
 
-                // CENTER: [PRIVACY]
+                // CENTER: [BLUKIT] [PRIVACY]
                 Row(
                     verticalAlignment = Alignment.CenterVertically, 
                     horizontalArrangement = Arrangement.Center, 
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onShowPrivacy() }
+                    modifier = Modifier.weight(1f)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_blukit_logo), 
                         contentDescription = null, 
-                        tint = themeColor.copy(alpha = 0.8f),
+                        tint = themeColor,
                         modifier = Modifier.size(10.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "BLUKIT", 
+                        fontSize = 7.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = Color.White, 
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "PRIVACY", 
                         fontSize = 7.sp, 
                         fontWeight = FontWeight.Black, 
                         color = themeColor.copy(alpha = 0.8f), 
-                        letterSpacing = 1.sp
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.clickable { onShowPrivacy() }
                     )
                 }
                 
@@ -304,45 +308,28 @@ fun BlukitHarmonyTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // LEFT: Navigation Exit or Logo
-                Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.CenterStart) {
+                // LEFT & CENTER: Unified Navigation & Title
+                Row(
+                    verticalAlignment = Alignment.CenterVertically, 
+                    modifier = Modifier
+                        .weight(1f)
+                        .then(if (onTitleClick != null) Modifier.clickable { onTitleClick() } else Modifier),
+                    horizontalArrangement = Arrangement.Start
+                ) {
                     if (onBack != null) {
                         IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = themeColor, modifier = Modifier.size(20.dp))
                         }
-                    } else {
-                        // Branding on left if no back button
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp)) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_blukit_logo), 
-                                contentDescription = null, 
-                                tint = themeColor,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "BLUKIT",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White,
-                                letterSpacing = 1.sp
-                            )
-                        }
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
-                }
 
-                // CENTER: Crowd Pulse
-                val isLanding = title == "THE CROWD" || title == "PUBLIC PULSES" || title == "BLUKIT" || title == "EVENT"
-                Row(
-                    verticalAlignment = Alignment.CenterVertically, 
-                    modifier = Modifier.weight(1f).then(if (onTitleClick != null) Modifier.clickable { onTitleClick() } else Modifier),
-                    horizontalArrangement = Arrangement.Center
-                ) {
                     if (breadcrumbTrail.isNotEmpty()) {
                         BreadcrumbHub(trail = breadcrumbTrail, onCrumbClick = onCrumbClick)
                     } else {
                         CrowdTicker(title = title, resonances = activeCrowds)
                     }
+
+                    val isLanding = title == "THE CROWD" || title == "PUBLIC PULSES" || title == "BLUKIT" || title == "EVENT"
                     if (isLanding && onTitleClick != null) {
                         Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
                     }
@@ -648,15 +635,20 @@ fun PulsingResonanceTicker(
             
             if (msg == null && resonance != null) {
                 // HEADER: High-level Resonance Summary
+                val userCount = if (resonance.id == Resonance.ID_CROWD) {
+                    state.crowd.scannedDevices.size
+                } else {
+                    resonance.allMemberIds.size
+                }
                 ResonanceSummary(
                     title = resonance.name,
                     subtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "CROWD" else "PRIVATE CHAIN",
                     icon = if (resonance.scope == Resonance.SCOPE_PUBLIC) Icons.Rounded.Grain else Icons.Rounded.Hearing,
                     themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
-                    count = pulseCounts[id] ?: 0,
+                    count = userCount,
                     lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
                     onClick = { onPulseClick(resonance.id) },
-                    showJoin = resonance.id != Resonance.ID_CROWD,
+                    showJoin = true,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
             } else {
@@ -746,7 +738,7 @@ fun AnimatedPulseItem(
         Box(
             modifier = Modifier
                 .padding(start = 12.dp)
-                .width(32.dp)
+                .width(24.dp)
                 .height(48.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -756,12 +748,12 @@ fun AnimatedPulseItem(
                     modifier = Modifier
                         .width(1.5.dp)
                         .fillMaxHeight()
-                        .background(themeColor.copy(alpha = 0.15f))
+                        .background(themeColor.copy(alpha = 0.1f))
                 )
                 // Small dot for the entry (The Resonance Anchor)
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(4.dp)
                         .background(themeColor.copy(alpha = 0.3f * dotAlpha), CircleShape)
                         .border(1.dp, themeColor.copy(alpha = 0.6f * dotAlpha), CircleShape)
                 )
@@ -778,10 +770,27 @@ fun AnimatedPulseItem(
             )
         }
 
+        // Persona Emoji on the Left of the content
+        Surface(
+            modifier = Modifier.size(24.dp), 
+            shape = CircleShape, 
+            color = when { isSelected -> Color.White.copy(alpha = 0.2f); isMutual -> StealthRose.copy(alpha = 0.2f); isPulsed -> StealthPrimary.copy(alpha = 0.2f); else -> Color.White.copy(alpha = 0.05f) }, 
+            border = BorderStroke(0.5.dp, when { isSelected -> Color.White; isMutual -> StealthRose; isPulsed -> StealthPrimary; else -> Color.White.copy(alpha = 0.1f) })
+        ) { 
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.onGloballyPositioned { 
+                val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                val current = coordinates[rowId] ?: PersonaConnectionPoints()
+                coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) 
+            }) { 
+                Text(text = signatureDevice.emoji, fontSize = 12.sp) 
+            } 
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 4.dp)
         ) {
             if (msg != null) {
                 Column {
@@ -805,20 +814,20 @@ fun AnimatedPulseItem(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = realSender,
-                            fontSize = 8.sp,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.Black,
-                            color = Color.White.copy(alpha = 0.3f),
+                            color = themeColor.copy(alpha = 0.6f),
                             letterSpacing = 0.5.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         if (pulseCount > 0) {
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "• $pulseCount UNITS",
-                                fontSize = 7.sp,
+                                fontSize = 8.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = themeColor.copy(alpha = 0.5f)
+                                color = themeColor.copy(alpha = 0.4f)
                             )
                         }
                     }
@@ -852,29 +861,9 @@ fun AnimatedPulseItem(
             Text(text = timestamp, fontSize = 7.sp, color = Color.White.copy(alpha = 0.15f), fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
         }
 
-        if (isMutual) { Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = StealthRose.copy(alpha = 0.3f), modifier = Modifier.size(8.dp)) }
-        
-        Spacer(modifier = Modifier.width(8.dp))
-        
-        // Right side Persona
-        Box(
-            modifier = Modifier
-                .onGloballyPositioned { 
-                    val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                    val current = coordinates[rowId] ?: PersonaConnectionPoints()
-                    coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) 
-                }
-                .size(20.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Surface(
-                modifier = Modifier.size(16.dp), 
-                shape = CircleShape, 
-                color = when { isSelected -> Color.White.copy(alpha = 0.2f); isMutual -> StealthRose.copy(alpha = 0.2f); isPulsed -> StealthPrimary.copy(alpha = 0.2f); else -> Color.White.copy(alpha = 0.05f) }, 
-                border = BorderStroke(0.5.dp, when { isSelected -> Color.White; isMutual -> StealthRose; isPulsed -> StealthPrimary; else -> Color.White.copy(alpha = 0.1f) })
-            ) { 
-                Box(contentAlignment = Alignment.Center) { Text(text = signatureDevice.emoji, fontSize = 8.sp) } 
-            }
+        if (isMutual) { 
+            Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = StealthRose.copy(alpha = 0.3f), modifier = Modifier.size(10.dp)) 
+            Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
@@ -1210,11 +1199,11 @@ fun PulseActionMenu(pulse: MessagePayload, isMe: Boolean, onInvite: () -> Unit, 
 }
 
 @Composable
-fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isWeak: Boolean, isPermissionMissing: Boolean, size: Dp = 24.dp, forceWarning: Boolean = false, onClick: () -> Unit) {
+fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Boolean, isWeak: Boolean, isPermissionMissing: Boolean, size: Dp = 24.dp, forceWarning: Boolean = false, onColor: Color = StealthPrimary, onClick: () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition(label = "StatusAnim")
     val alpha by infiniteTransition.animateFloat(initialValue = 0.4f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
     IconButton(onClick = onClick, modifier = Modifier.size(size)) {
-        Icon(imageVector = icon, contentDescription = null, tint = when { isPermissionMissing || !isOn && !forceWarning -> Color.Red; forceWarning || isWeak -> Color.Yellow; else -> StealthPrimary }.copy(alpha = if (!isOn || isWeak || forceWarning) alpha else 1f), modifier = Modifier.size(size * 0.65f))
+        Icon(imageVector = icon, contentDescription = null, tint = when { isPermissionMissing || !isOn && !forceWarning -> Color.Red; forceWarning || isWeak -> Color.Yellow; else -> onColor }.copy(alpha = if (!isOn || isWeak || forceWarning) alpha else 1f), modifier = Modifier.size(size * 0.65f))
     }
 }
 
@@ -1301,10 +1290,9 @@ fun ResonanceSummary(
                             color = themeColor.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(10.dp),
                             border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
-                            modifier = Modifier.padding(end = 12.dp)
                         ) {
                             Text(
-                                text = "JOIN",
+                                text = "ENTER",
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Black,
                                 color = themeColor,
@@ -1312,21 +1300,23 @@ fun ResonanceSummary(
                                 letterSpacing = 1.sp
                             )
                         }
+                        Spacer(modifier = Modifier.width(12.dp))
                     }
 
                     Column(horizontalAlignment = Alignment.End) {
-                        if (count > 0) {
+                        if (count >= 0) {
                             Surface(
                                 color = themeColor.copy(alpha = 0.2f),
                                 shape = RoundedCornerShape(8.dp),
                                 border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.4f))
                             ) {
                                 Text(
-                                    text = count.toString(),
-                                    fontSize = 9.sp,
+                                    text = "$count ${if (count == 1) "USER" else "USERS"}",
+                                    fontSize = 8.sp,
                                     fontWeight = FontWeight.Black,
                                     color = themeColor,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                    letterSpacing = 0.5.sp
                                 )
                             }
                         }
@@ -2112,6 +2102,20 @@ fun PulsePersonaSignature(
                 }
             }
         }
+        
+        // TACTICAL DECORATION: USER Label
+        if (!isStatic && size > 32.dp) {
+            Text(
+                text = "USER",
+                fontSize = 6.sp,
+                fontWeight = FontWeight.Black,
+                color = themeColor.copy(alpha = 0.6f),
+                letterSpacing = 1.5.sp,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = (size.value * 0.15f).dp)
+            )
+        }
     }
 }
 
@@ -2123,7 +2127,20 @@ fun PulseCrowdSignature(device: P2PDevice, pulseCount: Int, isPulsed: Boolean, s
     
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(size * 1.5f)) {
         Surface(shape = CircleShape, color = themeColor.copy(alpha = 0.05f * pulse), modifier = Modifier.size(size * pulse)) {}
-        Surface(modifier = Modifier.size(size), shape = CircleShape, color = Color(0xFF0A0C14), border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f)), tonalElevation = 4.dp) { Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Text(text = device.emoji, fontSize = (size.value / 3).sp); if (pulseCount > 0) { Text(text = pulseCount.toString(), fontSize = 8.sp, fontWeight = FontWeight.Black, color = themeColor) } } }
+        Surface(modifier = Modifier.size(size), shape = CircleShape, color = Color(0xFF0A0C14), border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f)), tonalElevation = 4.dp) { 
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { 
+                Text(text = device.emoji, fontSize = (size.value / 3).sp)
+                if (pulseCount > 0) { 
+                    Text(
+                        text = "$pulseCount ${if (pulseCount == 1) "USER" else "USERS"}", 
+                        fontSize = 7.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = themeColor,
+                        letterSpacing = 0.5.sp
+                    ) 
+                } 
+            } 
+        }
     }
 }
 

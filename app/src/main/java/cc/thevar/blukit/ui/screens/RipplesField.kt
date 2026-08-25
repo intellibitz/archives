@@ -9,6 +9,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Radar
+import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.material.icons.rounded.WifiTethering
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -89,6 +96,8 @@ fun RipplesField(
     drawNodes: Boolean = true,
     crowdList: List<Pair<P2PDevice, Int>> = emptyList(),
     onCreateEvent: (() -> Unit)? = null,
+    onSearchToggle: (() -> Unit)? = null,
+    isSearchActive: Boolean = false,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit = {},
     airRitualGhost: @Composable () -> Unit = {}
@@ -151,29 +160,43 @@ fun RipplesField(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (onCreateEvent != null) {
-                    TextButton(
-                        onClick = onCreateEvent,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                        modifier = Modifier.height(24.dp)
-                    ) {
-                        Icon(
-                            Icons.Rounded.Add, 
-                            contentDescription = null, 
-                            tint = StealthPrimary, 
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "CREATE EVENT", 
-                            color = StealthPrimary, 
-                            fontWeight = FontWeight.Black, 
-                            fontSize = 8.sp, 
-                            letterSpacing = 1.sp
-                        )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onCreateEvent != null) {
+                        TextButton(
+                            onClick = onCreateEvent,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            modifier = Modifier.height(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.Add, 
+                                contentDescription = null, 
+                                tint = StealthPrimary, 
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "CREATE EVENT", 
+                                color = StealthPrimary, 
+                                fontWeight = FontWeight.Black, 
+                                fontSize = 8.sp, 
+                                letterSpacing = 1.sp
+                            )
+                        }
                     }
-                } else {
-                    Spacer(modifier = Modifier.width(1.dp))
+
+                    if (onSearchToggle != null) {
+                        IconButton(
+                            onClick = onSearchToggle,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                contentDescription = "Toggle Search",
+                                tint = if (isSearchActive) StealthAmber else StealthPrimary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
                 }
 
                 Surface(

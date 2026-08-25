@@ -56,3 +56,4 @@ keystore.properties
 # Temporary files
 tmp/
 .artifacts/
+/.gitignore_folder/
