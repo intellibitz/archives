@@ -1,3 +1,14 @@
+/**
+ * BLUKIT SYSTEM: RADIO STATE MANAGER
+ *
+ * The unbreakable hardware monitor for Blukit's radio core.
+ * Orchestrates the "Hardware Harmony" required for 100% offline interaction.
+ * 
+ * Responsibilities:
+ * - Real-time monitoring of Bluetooth, Location, and WiFi states via BroadcastReceivers.
+ * - Deep interrogation of hardware to handle device-specific SecurityExceptions.
+ * - Mapping raw hardware states to the unified `RadioStates` domain model.
+ */
 package cc.thevar.blukit.data.system
 
 import android.bluetooth.BluetoothAdapter
@@ -10,11 +21,12 @@ import android.location.LocationManager
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * THE RADIO CORE.
- * The unbreakable monitor for hardware radio states.
+ * Data model for the current availability of Blukit's physical radios.
  */
 data class RadioStates(
     val isBluetoothEnabled: Boolean,
@@ -22,6 +34,9 @@ data class RadioStates(
     val isWifiEnabled: Boolean
 )
 
+/**
+ * Monitors and interrogates hardware radio modules.
+ */
 class RadioStateManager(private val context: Context) {
 
     private val tag = "BlukitRadio"
@@ -30,6 +45,7 @@ class RadioStateManager(private val context: Context) {
     private val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
     private val _radioStates = MutableStateFlow(getCurrentStates())
+    /** The real-time lifestream of hardware availability. */
     val radioStates: StateFlow<RadioStates> = _radioStates.asStateFlow()
 
     private val receiver = object : BroadcastReceiver() {
@@ -58,7 +74,7 @@ class RadioStateManager(private val context: Context) {
     }
 
     /**
-     * Force a fresh check of all hardware radios.
+     * Force a fresh check of all hardware radios, bypassing the receiver cache.
      */
     fun triggerRefresh() {
         _radioStates.value = getCurrentStates()
@@ -67,13 +83,17 @@ class RadioStateManager(private val context: Context) {
     /**
      * Deep hardware interrogation.
      * Handles device-specific quirks like SecurityExceptions or stale adapter states.
+     * 
+     * Bluetooth: Checks adapter availability and enabled status.
+     * Location: Verified as required for BLE discovery on modern Android.
+     * WiFi: Assume enabled if interrogation fails to ensure resilient air.
      */
     fun getCurrentStates(): RadioStates {
         val adapter = bluetoothManager?.adapter
         
         // INTERROGATION: Bluetooth
         val isBtOn = try {
-            adapter?.isEnabled == true || adapter?.state == BluetoothAdapter.STATE_ON
+            (adapter?.isEnabled == true || adapter?.state == BluetoothAdapter.STATE_ON)
         } catch (e: SecurityException) {
             Log.w(tag, "Quirk: BT SecurityException. Defaulting to false.")
             false
@@ -98,7 +118,7 @@ class RadioStateManager(private val context: Context) {
 
         return RadioStates(
             isBluetoothEnabled = isBtOn,
-            isLocationEnabled = isGpsOn, // Always reflect actual hardware state
+            isLocationEnabled = isGpsOn, 
             isWifiEnabled = isWifiOn
         )
     }

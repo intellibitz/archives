@@ -1,7 +1,33 @@
+/**
+ * BLUKIT NETWORK: BLE FALLBACK CONTROLLER
+ *
+ * A native BLE engine used when Google Nearby Connections is unavailable or fails.
+ * Implements standard BLE GATT (Generic Attribute Profile) for pulse exchange.
+ * 
+ * Logic:
+ * - Advertising: Local Persona info is shared via ScanRecord service data.
+ * - Discovery: Scans for SERVICE_UUID and extracts peer Persona metadata.
+ * - Messaging: Writes pulses to the PULSE_CHAR_UUID characteristic on the peer's GATT server.
+ * - Security: Hardware-encrypted ECDH/AES handshakes similar to the primary engine.
+ */
 package cc.thevar.blukit.network.p2p
 
-import android.bluetooth.*
-import android.bluetooth.le.*
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattServer
+import android.bluetooth.BluetoothGattServerCallback
+import android.bluetooth.BluetoothGattService
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
+import android.bluetooth.le.AdvertiseCallback
+import android.bluetooth.le.AdvertiseData
+import android.bluetooth.le.AdvertiseSettings
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.Build
 import android.os.ParcelUuid
@@ -14,20 +40,31 @@ import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
-import java.util.*
+import java.util.Collections
+import java.util.LinkedList
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.SecretKey
 
 /**
- * Native BLE Fallback Controller.
- * Used when Google Nearby Connections is unavailable or failing.
- * Implements standard BLE GATT advertising and scanning.
+ * Native BLE engine for tactical fallback.
  */
 class BleFallbackController(
     private val context: Context,
@@ -45,6 +82,7 @@ class BleFallbackController(
 
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
+    // --- P2PController State Implementation ---
     private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
     override val scannedDevices = _scannedDevices.asStateFlow()
 
@@ -82,8 +120,11 @@ class BleFallbackController(
     private val pendingRadioRequests = Collections.synchronizedSet(mutableSetOf<String>())
 
     companion object {
+        /** Unique Service UUID for Blukit BLE mesh. */
         private val SERVICE_UUID = UUID.fromString("0000fb01-0000-1000-8000-00805f9b34fb")
+        /** Characteristic UUID for writing encrypted pulses. */
         private val PULSE_CHAR_UUID = UUID.fromString("0000fb02-0000-1000-8000-00805f9b34fb")
+        /** Protocol prefix for ECDH handshake packets. */
         private const val HANDSHAKE_PREFIX = 0x01.toByte()
     }
 
@@ -93,6 +134,7 @@ class BleFallbackController(
             val scanRecord = result.scanRecord ?: return
             val serviceData = scanRecord.serviceData[ParcelUuid(SERVICE_UUID)] ?: return
             
+            // Extract peer Persona from service data (Nickname|Emoji|ID)
             val info = String(serviceData, StandardCharsets.UTF_8)
             val parts = info.split("|", limit = 3)
             if (parts.size < 3) return
@@ -153,6 +195,7 @@ class BleFallbackController(
         }
     }
 
+    /** Manages the client-side GATT connection lifecycle. */
     private fun handleGattConnectionChange(gatt: BluetoothGatt, newState: Int) {
         val address = gatt.device.address
         if (newState == BluetoothProfile.STATE_CONNECTED) {
@@ -172,6 +215,7 @@ class BleFallbackController(
         }
     }
 
+    /** Triggers secure handshake once Blukit service is discovered on peer. */
     private fun handleGattServicesDiscovered(gatt: BluetoothGatt, status: Int) {
         val address = gatt.device.address
         if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -194,6 +238,7 @@ class BleFallbackController(
         }
     }
 
+    /** Handles incoming GATT writes (Encrypted Pulses or Handshakes). */
     private fun handleCharacteristicWrite(
         device: BluetoothDevice,
         requestId: Int,
@@ -260,15 +305,11 @@ class BleFallbackController(
     }
 
     private fun handleChatMessage(address: String, payload: MessagePayload, secretKey: SecretKey) {
-        // 1. Send ACK
         sendAck(address, payload, secretKey)
-
-        // 2. Relay if broadcast
         if (payload.receiverId.isNullOrEmpty()) {
             relayMessage(address, payload)
         }
 
-        // 3. Save and Haptic
         internalScope.launch(ioDispatcher) {
             // AUTO-DISCOVER RESONANCES
             val gid = payload.groupId
@@ -297,6 +338,7 @@ class BleFallbackController(
         }
     }
 
+    /** Propagates pulses to other connected BLE ties. */
     private fun relayMessage(sourceAddress: String, payload: MessagePayload) {
         if (payload.hopCount >= 3) return
 
@@ -352,6 +394,7 @@ class BleFallbackController(
         }
     }
 
+    /** Core GATT write logic. Handles Android API version differences. */
     private fun sendData(address: String, data: ByteArray) {
         val gatt = activeGatts[address] ?: return
         val service = gatt.getService(SERVICE_UUID) ?: return
@@ -373,7 +416,7 @@ class BleFallbackController(
 
     override fun startDiscovery() {
         Log.i(tag, "BLE: startDiscovery()")
-        if (adapter == null || !adapter.isEnabled) {
+        if ((adapter == null || !adapter.isEnabled)) {
             reportError(P2PError.DiscoveryError("Bluetooth Disabled"))
             return
         }
@@ -424,6 +467,7 @@ class BleFallbackController(
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
             .build()
 
+        // Persona meta: Emoji|Nickname|DeviceID
         val localPulse = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
         val data = AdvertiseData.Builder()
             .setIncludeDeviceName(false)
@@ -440,6 +484,7 @@ class BleFallbackController(
         }
     }
 
+    /** Opens the GATT server for peer connections. */
     private fun startGattServer() {
         try {
             gattServer = bluetoothManager?.openGattServer(context, gattServerCallback)
@@ -470,7 +515,6 @@ class BleFallbackController(
     }
 
     override fun requestRadio(device: P2PDevice) {
-        // BLE implementation of Radio Request
         pendingRadioRequests.add(device.id)
         updateScannedDevices()
         sendHandshake(device.id)
@@ -588,7 +632,6 @@ class BleFallbackController(
 
     override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload {
         // BLE implementation does not yet support identity broadcasts.
-        // Returning a placeholder that won't be broadcast.
         return MessagePayload(
             messageId = "ble-placeholder",
             senderId = "ble",
@@ -600,13 +643,10 @@ class BleFallbackController(
     }
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
-        // BLE implementation: Send to all connected ties
-        // In a real scenario, this would need group addressing
         return sendMessage(content, null)?.copy(groupId = groupId)
     }
 
     override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MessagePayload? {
-        // BLE fallback: send as a standard group message but with note type
         return sendMessage(content, null, MessagePayload.PULSE_WHISPER, messageId, groupId, null)?.copy(type = MessagePayload.TYPE_NOTE_UPDATE, noteVersion = version)
     }
 

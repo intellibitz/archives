@@ -1,3 +1,14 @@
+/**
+ * BLUKIT DATA: IDENTITY REPOSITORY
+ *
+ * Manages the user's Event Persona and mesh privacy settings.
+ * Orchestrates hardware-encrypted storage for anonymous identifiers and tactical toggles.
+ * 
+ * Features:
+ * - Anonymous Personas: Map deterministic device IDs to ephemeral nicknames and emojis.
+ * - Hardware Recovery: Self-healing EncryptedSharedPreferences to handle KeyStore corruption.
+ * - Tactical Toggles: Global control for Stealth Mode and Low Power mesh operations.
+ */
 package cc.thevar.blukit.data.repository
 
 import android.content.Context
@@ -10,34 +21,42 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
 /**
- * Repository interface for managing user identity and privacy settings.
- * Handles anonymous "pulse" personas and secure storage of device-specific configuration.
+ * Repository interface for user identity and mesh configuration.
  */
 interface IdentityRepository {
+    /** The user's current tactical nickname. */
     val nicknameFlow: StateFlow<String?>
+    /** The emoji projecting the user's identity on the Discovery Radar. */
     val emojiAvatar: StateFlow<String>
+    /** Stealth Mode: DISTINGUISHES private chains in Stealth Rose. */
     val stealthMode: StateFlow<Boolean>
+    /** Low Power Mode: Throttles radio frequency to preserve hardware energy. */
     val lowPowerMode: StateFlow<Boolean>
+    /** Set of blocked peer hardware IDs. */
     val blockedUsers: StateFlow<Set<String>>
+    /** Set of identifiers for peers with active secure ties. */
     val pulsedPeers: StateFlow<Set<String>>
 
+    /** Retrieves or generates a permanent anonymous hardware anchor. */
     fun getDeviceId(): String
     fun saveNickname(name: String)
     fun getCurrentNickname(): String
     fun saveEmoji(emoji: String)
     fun toggleStealth(enabled: Boolean)
     fun toggleLowPowerMode(enabled: Boolean)
+    /** Toggles a peer's status in the user's secure orbit. */
     fun togglePulsePeer(deviceId: String)
     fun clearPulsedPeers()
     fun blockUser(deviceId: String)
     fun unblockUser(deviceId: String)
+    /** Clears nickname/emoji while preserving the device anchor. */
     fun resetProfile()
+    /** Full cryptographic reset of all identity markers. */
     fun logout()
 }
 
 /**
- * Implementation of IdentityRepository using Android KeyStore-backed
- * EncryptedSharedPreferences for maximum privacy of even anonymous identifiers.
+ * Implementation using Android KeyStore-backed EncryptedSharedPreferences.
  */
 class IdentityRepositoryImpl(
     context: Context
@@ -47,16 +66,16 @@ class IdentityRepositoryImpl(
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
+    /** Plaintext backup for critical non-PII markers to handle hardware encryption failures. */
     private val backupPrefs = context.getSharedPreferences("blukit_identity_backup", Context.MODE_PRIVATE)
 
     private val securePrefs = try {
         createEncryptedPrefs(context)
     } catch (e: Exception) {
-        // Keystore corruption - Recovery flow
+        // RECOVERY: If KeyStore is corrupted, purge secure storage and restore from backup.
         val backupId = backupPrefs.getString(KEY_DEVICE_ID, null)
         context.deleteSharedPreferences("blukit_identity_secure")
         val newPrefs = createEncryptedPrefs(context)
-        // Restore essential identity markers if possible
         if (backupId != null) {
             newPrefs.edit { putString(KEY_DEVICE_ID, backupId) }
         }
@@ -87,9 +106,7 @@ class IdentityRepositoryImpl(
     private val _emojiAvatar = MutableStateFlow(getSanitizedEmoji())
     override val emojiAvatar: StateFlow<String> = _emojiAvatar.asStateFlow()
 
-    private fun getSanitizedEmoji(): String {
-        return securePrefs.getString(KEY_EMOJI, null) ?: "👤"
-    }
+    private fun getSanitizedEmoji(): String = securePrefs.getString(KEY_EMOJI, null) ?: "👤"
 
     private val _stealthMode = MutableStateFlow(securePrefs.getBoolean(KEY_STEALTH, true))
     override val stealthMode: StateFlow<Boolean> = _stealthMode.asStateFlow()
@@ -110,7 +127,6 @@ class IdentityRepositoryImpl(
     override fun getDeviceId(): String {
         var id = securePrefs.getString(KEY_DEVICE_ID, null)
         if (id == null) {
-            // Check backup
             id = backupPrefs.getString(KEY_DEVICE_ID, null) ?: UUID.randomUUID().toString()
             securePrefs.edit { putString(KEY_DEVICE_ID, id) }
             backupPrefs.edit { putString(KEY_DEVICE_ID, id) }

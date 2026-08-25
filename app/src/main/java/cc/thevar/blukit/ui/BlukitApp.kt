@@ -1,83 +1,107 @@
+/**
+ * BLUKIT UI: MAIN APP ENTRY
+ *
+ * The root composable that orchestrates the entire mesh experience.
+ * Implements the "Harmony Hub" architecture: a high-density, ergonomic overlay system.
+ * 
+ * Features:
+ * - Breadcrumb Navigation: Hierarchical path tracking (EVENT > CROWD > CHAIN).
+ * - Identity Rituals: Automated onboarding when the user's Persona is unformed.
+ * - Coordinate Mapping: LocalPersonaCoordinates provides spatial anchors for resonance threads.
+ * - Full Lighthouse Scan: A background depth glow signaling active mesh discovery.
+ * - Differential Sync UI: Overlay for real-time history bridging progress.
+ */
 package cc.thevar.blukit.ui
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.compose.foundation.BorderStroke
-import androidx.core.content.ContextCompat
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.Resonance
-import cc.thevar.blukit.domain.model.MessagePayload
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import androidx.navigation3.runtime.NavKey
+import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.screens.*
+import cc.thevar.blukit.ui.screens.BlukitAlert
+import cc.thevar.blukit.ui.screens.BlukitTacticalHeader
+import cc.thevar.blukit.ui.screens.ChainField
+import cc.thevar.blukit.ui.screens.ConfirmationDialog
+import cc.thevar.blukit.ui.screens.CrowdField
+import cc.thevar.blukit.ui.screens.EventField
+import cc.thevar.blukit.ui.screens.LocalActivePulseId
+import cc.thevar.blukit.ui.screens.LocalPersonaCoordinates
+import cc.thevar.blukit.ui.screens.OnboardingGhost
+import cc.thevar.blukit.ui.screens.PersonaConnectionPoints
+import cc.thevar.blukit.ui.screens.PersonaOptionsMenu
+import cc.thevar.blukit.ui.screens.PulseField
+import cc.thevar.blukit.ui.screens.TimelineField
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
-import cc.thevar.blukit.ui.viewmodels.SupremePowerViewModel
 import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import cc.thevar.blukit.R
+import kotlin.time.Duration.Companion.seconds
 
+/**
+ * The main application shell. Handles permission state, global navigation, 
+ * and spatial coordinate propagation.
+ */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun BlukitApp(
@@ -97,8 +121,11 @@ fun BlukitApp(
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(bluetoothState.activity.uiError) { bluetoothState.activity.uiError?.let { snackbarHostState.showSnackbar(it.message.uppercase()) } }
+    LaunchedEffect(bluetoothState.activity.uiError) { 
+        bluetoothState.activity.uiError?.let { snackbarHostState.showSnackbar(it.message.uppercase()) } 
+    }
 
+    // Hardware Lifecycle Sync
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -118,6 +145,7 @@ fun BlukitApp(
     )
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
 
+    // Tactical Navigation State
     val initialRoute = Route.Event
     val backStack = remember { mutableStateListOf<Route>(initialRoute) }
     val currentRoute = backStack.lastOrNull()
@@ -125,6 +153,7 @@ fun BlukitApp(
     var focusedChainId by remember { mutableStateOf<String?>(null) }
     
     // BREADCRUMB LOGIC: Nested Scoping (EVENT > CROWD > CHAIN > PULSE)
+    // Ensures users always know their depth within the mesh.
     val breadcrumbTrail = remember(backStack.size, bluetoothState, focusedChainId) {
         val trail = mutableListOf<String>()
         backStack.forEach { route ->
@@ -133,7 +162,6 @@ fun BlukitApp(
                 is Route.GroupField -> {
                     val group = bluetoothState.session.groups.find { it.id == route.groupId }
                     if (group != null) {
-                        // If it has a parent Crowd, add it if not already present
                         group.parentId?.let { pid ->
                             val parent = bluetoothState.session.groups.find { it.id == pid }
                             val parentName = parent?.name ?: "Crowd"
@@ -148,24 +176,21 @@ fun BlukitApp(
             }
         }
         
-        // Add Persona if focused
-        if (focusedChainId != null && currentRoute is Route.GroupField) {
+        // Add Persona if focused on a specific peer in a field
+        if ((focusedChainId != null && currentRoute is Route.GroupField)) {
             val device = bluetoothState.crowd.scannedDevices.find { it.persistentId == focusedChainId || it.id == focusedChainId }
             trail.add(device?.name ?: "Persona")
         }
-        trail.distinct() // Ensure no duplicates if backstack already contains parent
+        trail.distinct() 
     }
 
     val onCrumbClick: (Int) -> Unit = { index ->
         val trailSize = breadcrumbTrail.size
-        // If clicking a persona crumb
         if (focusedChainId != null && index == trailSize - 1) {
-            // Stay here
+            // No-op: Already at persona depth
         } else if (focusedChainId != null && index == trailSize - 2) {
-            // Clicked the Chain crumb while in Persona view
             focusedChainId = null
         } else {
-            // Standard backstack navigation
             val routeIndex = index
             if (routeIndex < backStack.size) {
                 while (backStack.size > routeIndex + 1) {
@@ -186,6 +211,7 @@ fun BlukitApp(
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
     
+    // STILL AIR logic: Signals that mesh communication is blocked by hardware/permissions
     val crowdIsStill = (!bluetoothState.harmony.isBluetoothEnabled || 
                      !permissionState.essentialPermissionsGranted ||
                      (isLocationMandatory && (!bluetoothState.harmony.isLocationEnabled || !locationPermissionGranted))) &&
@@ -215,6 +241,7 @@ fun BlukitApp(
         }
     )
 
+    // Spatial coordinate registry for drawing resonance threads
     val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
     
     LaunchedEffect(currentRoute) {
@@ -237,7 +264,7 @@ fun BlukitApp(
     
     LaunchedEffect(highlightedUserId) {
         if (highlightedUserId != null) {
-            delay(3000)
+            delay(3.seconds)
             highlightedUserId = null
         }
     }
@@ -258,7 +285,7 @@ fun BlukitApp(
         Box(modifier = modifier.fillMaxSize()) {
             FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
             
-            // SYNC RESONANCE
+            // --- SYNC RESONANCE OVERLAY ---
             bluetoothState.session.syncProgress?.let { progress ->
                 Box(modifier = Modifier.fillMaxSize().zIndex(100f).background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -280,6 +307,8 @@ fun BlukitApp(
                 label = "Pulse"
             )
 
+            // --- RESONANCE THREAD CANVAS ---
+            // Draws dashboard-to-ticker lines based on registered coordinates
             Canvas(modifier = Modifier.fillMaxSize().zIndex(5f)) {
                 personaCoordinates.forEach { (id, points) ->
                     val isPulsed = id in bluetoothState.crowd.pulsedPeers
@@ -300,6 +329,7 @@ fun BlukitApp(
                     }
                 }
 
+                // Identity Ritual Thread
                 val hubPoint = personaCoordinates["YOU"]?.uph
                 val ghostPoint = personaCoordinates["ONBOARDING"]?.field
                 if (hubPoint != null && ghostPoint != null) {
@@ -307,9 +337,10 @@ fun BlukitApp(
                     drawLine(color = StealthAmber.copy(alpha = pulseAlpha), start = hubPoint, end = ghostPoint, strokeWidth = 2.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 20f), connectionAlpha * 30f))
                 }
 
+                // Pulse Ghost Thread
                 val pulseGhostPoint = personaCoordinates["GHOST_PULSE"]?.field
                 if (pulseGhostPoint != null) {
-                    personaCoordinates.forEach { (id, points) ->
+                    personaCoordinates.forEach { (_, points) ->
                         val sourcePoint = points.pulse
                         if (sourcePoint != null) {
                             val pulseAlpha = (0.4f + 0.6f * connectionAlpha)
@@ -359,7 +390,6 @@ fun BlukitApp(
                                     onDeletePulse = viewModel::deletePulse, 
                                     onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupPulse("WHISPER", setOf(id)); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) }, 
                                     onIdentifyUser = { highlightedUserId = it },
-                                    // Humanity Props
                                     breadcrumbTrail = breadcrumbTrail,
                                     onCrumbClick = onCrumbClick,
                                     userNickname = nickname ?: "?",
@@ -385,7 +415,6 @@ fun BlukitApp(
                                         backStack.add(Route.GroupField(gid))
                                         bluetoothViewModel.enterChain(gid)
                                     },
-                                    // Hub Props
                                     messageText = messageText,
                                     onSearchToggle = { isSearchMode = !isSearchMode; showAirGhost = false; messageText = "" },
                                     onCreatePublicResonance = { name, templateId ->
@@ -422,7 +451,6 @@ fun BlukitApp(
                                         onNavigateToPulse = { vid ->
                                             backStack.add(Route.PulseField(vid))
                                         },
-                                        // Humanity Props
                                         breadcrumbTrail = breadcrumbTrail,
                                         onCrumbClick = onCrumbClick,
                                         userNickname = nickname ?: "?",
@@ -438,7 +466,6 @@ fun BlukitApp(
                                         onResetProfile = { viewModel.resetProfile() },
                                         onBack = { backStack.removeLastOrNull(); focusedChainId = null },
                                         onTitleClick = null,
-                                        // Hub Props
                                         messageText = messageText,
                                         onMessageChange = { messageText = it },
                                         onSend = { 
@@ -481,7 +508,6 @@ fun BlukitApp(
                                         onNavigateToPulse = { vid ->
                                             backStack.add(Route.PulseField(vid))
                                         },
-                                        // Humanity Props
                                         breadcrumbTrail = breadcrumbTrail,
                                         onCrumbClick = onCrumbClick,
                                         userNickname = nickname ?: "?",
@@ -497,7 +523,6 @@ fun BlukitApp(
                                         onResetProfile = { viewModel.resetProfile() },
                                         onBack = { backStack.removeLastOrNull(); focusedChainId = null },
                                         onTitleClick = null,
-                                        // Hub Props
                                         messageText = messageText,
                                         onMessageChange = { messageText = it },
                                         onSend = { 
@@ -528,7 +553,6 @@ fun BlukitApp(
                                     messageId = key.messageId,
                                     onSendMessage = bluetoothViewModel::sendMessage,
                                     onNavigateToPulse = { vid -> backStack.add(Route.PulseField(vid)) },
-                                    // Humanity Props
                                     breadcrumbTrail = breadcrumbTrail,
                                     onCrumbClick = onCrumbClick,
                                     userNickname = nickname ?: "?",
@@ -544,13 +568,10 @@ fun BlukitApp(
                                     onResetProfile = { viewModel.resetProfile() },
                                     onBack = { backStack.removeLastOrNull() },
                                     onTitleClick = null,
-                                    // Hub Props
                                     messageText = messageText,
                                     onMessageChange = { messageText = it },
                                     onSend = {
                                         if (messageText.isNotBlank()) {
-                                            // Need to handle parentMessageId in sendMessage
-                                            // For now simplified
                                             messageText = ""
                                             focusManager.clearFocus()
                                         }
@@ -605,9 +626,9 @@ fun BlukitApp(
                         },
                         onDone = { 
                             showOnboarding = false 
-                            val oldName = nickname ?: "?"
-                            if (oldName != "?" && oldName != "SET NAME") {
-                                bluetoothViewModel.broadcastIdentityUpdate(oldName)
+                            val currentName = nickname ?: "?"
+                            if (currentName != "?" && currentName != "SET NAME") {
+                                bluetoothViewModel.broadcastIdentityUpdate(currentName)
                             }
                         },
                         onDismiss = { showOnboarding = false }
@@ -618,9 +639,13 @@ fun BlukitApp(
     }
 }
 
+/**
+ * Renders the background radar scan animation.
+ * Features spectral sweep gradients and intensity-aware background glows.
+ */
 @Composable
 private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) { 
-    if (lowPowerMode && rotation % 10 > 2) return
+    if (lowPowerMode && (rotation % 10 > 2)) return
     
     val infiniteTransition = rememberInfiniteTransition(label = "ScanGlow")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -633,7 +658,7 @@ private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) {
     Canvas(modifier = Modifier.fillMaxSize()) { 
         val center = Offset(56.dp.toPx(), size.height - 64.dp.toPx())
         
-        // Background Depth Glow
+        // Background Depth Glow: Represents the mesh reach
         drawCircle(
             brush = Brush.radialGradient(
                 0.0f to StealthPrimary.copy(alpha = pulseAlpha),
@@ -645,6 +670,7 @@ private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) {
             center = center
         )
 
+        // Spectral Sweep: Indicates active radio scanning
         rotate(rotation, pivot = center) { 
             val scanBrush = Brush.sweepGradient(
                 0.0f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.05f else 0.2f), 
@@ -663,6 +689,7 @@ interface SpreadPermissionsState {
     fun launchMultiplePermissionRequest()
 }
 
+/** Custom state handler for Blukit's mandatory mesh permissions. */
 @Composable
 fun rememberSpreadPermissionsState(
     allPermissions: List<String>,

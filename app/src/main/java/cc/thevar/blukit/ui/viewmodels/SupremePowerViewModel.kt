@@ -6,7 +6,7 @@ import cc.thevar.blukit.domain.power.SupremePowerReport
 import kotlinx.coroutines.flow.StateFlow
 
 class SupremePowerViewModel(
-    private val supremePowerManager: SupremePowerManager
+    private val supremePowerManager: SupremePowerManager,
 ) : ViewModel() {
     val report: StateFlow<SupremePowerReport> = supremePowerManager.report
 

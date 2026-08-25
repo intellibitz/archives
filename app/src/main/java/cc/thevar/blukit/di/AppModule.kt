@@ -3,7 +3,9 @@ package cc.thevar.blukit.di
 import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.data.power.SupremePowerManager
-import cc.thevar.blukit.data.repository.*
+import cc.thevar.blukit.data.repository.ContactRepository
+import cc.thevar.blukit.data.repository.IdentityRepository
+import cc.thevar.blukit.data.repository.IdentityRepositoryImpl
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager

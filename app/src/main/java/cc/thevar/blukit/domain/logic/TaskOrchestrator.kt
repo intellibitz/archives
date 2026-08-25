@@ -1,14 +1,24 @@
+/**
+ * BLUKIT LOGIC: TASK ORCHESTRATOR
+ *
+ * Manages collaborative assignment tracking and offline task synchronization.
+ * Orchestrates conflict-free task updates within private Chains.
+ * 
+ * Logic:
+ * - Deterministic versioning: Uses LWW (Last-Write-Wins) for task status resolution.
+ * - Mesh Propagation: Broadcasts assignment metadata across the peer network.
+ */
 package cc.thevar.blukit.domain.logic
 
-import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.network.p2p.P2PController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 /**
- * Task Orchestrator: Manages collaborative assignment tracking.
+ * Orchestrates academic task assignments within the mesh.
  */
 class TaskOrchestrator(
     private val pulseStore: PulseStore,
@@ -16,7 +26,7 @@ class TaskOrchestrator(
     private val scope: CoroutineScope
 ) {
     /**
-     * Creates a new assignment task and broadcasts it to the chain.
+     * Creates a new assignment task and broadcasts it to the resonant chain.
      */
     fun createAssignment(
         groupId: String,
@@ -26,8 +36,8 @@ class TaskOrchestrator(
     ) {
         val task = MessagePayload(
             messageId = UUID.randomUUID().toString(),
-            senderId = "", // Filled by controller
-            senderName = "", // Filled by controller
+            senderId = "", // Populated by mesh controller during dispatch
+            senderName = "", 
             groupId = groupId,
             content = title,
             timestamp = System.currentTimeMillis(),
@@ -43,13 +53,13 @@ class TaskOrchestrator(
                 content = task.content,
                 groupId = groupId,
                 type = MessagePayload.TYPE_ASSIGNMENT_TASK
-                // Metadata handled by controller if we extend sendMessage
             )
         }
     }
 
     /**
      * Updates an existing task's status with LWW resolution.
+     * Increments the note version to ensure deterministic mesh synchronization.
      */
     fun updateTaskStatus(
         originalTask: MessagePayload,
@@ -62,8 +72,10 @@ class TaskOrchestrator(
         )
         
         scope.launch {
+            // Local persistence with CRDT resolution
             pulseStore.upsertMessage(updatedTask)
-            // Broadcast update to the chain
+            
+            // Broadcast the state shift to the chain
             p2pController.sendMessage(
                 content = updatedTask.content,
                 groupId = updatedTask.groupId,

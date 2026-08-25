@@ -1,13 +1,22 @@
 package cc.thevar.blukit.ui.theme
 
 import android.os.Build
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -29,7 +38,7 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = BlukitDarkTertiary,
     onTertiary = BlukitDarkOnTertiary,
     tertiaryContainer = BlukitDarkTertiaryContainer,
-    onTertiaryContainer = BlukitDarkOnTertiaryContainer
+    onTertiaryContainer = BlukitDarkOnTertiaryContainer,
 )
 
 private val StealthColorScheme = darkColorScheme(
@@ -69,7 +78,7 @@ fun BlukitTheme(
 ) {
     val colorScheme = when {
         stealthMode -> StealthColorScheme
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }

@@ -14,7 +14,7 @@ data class CrowdConnection(
     val sourceId: String,
     val targetId: String,
     val bridgeType: ConnectionBridge = ConnectionBridge.PEER_TO_PEER,
-    val strength: Float = 1.0f
+    val strength: Float = 1.0f,
 )
 
 @Serializable

@@ -15,8 +15,8 @@ package cc.thevar.blukit.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,16 +51,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.compose.ui.res.painterResource
 import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
+import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -71,7 +71,7 @@ data class PersonaConnectionPoints(
     val uph: Offset? = null,
     val field: Offset? = null,
     val ticker: Offset? = null,
-    val pulse: Offset? = null
+    val pulse: Offset? = null,
 )
 
 val LocalPersonaCoordinates = staticCompositionLocalOf { mutableStateMapOf<String, PersonaConnectionPoints>() }
@@ -136,9 +136,9 @@ fun BreadcrumbHub(
             Text(
                 text = crumb.uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = if (index == trail.size - 1) FontWeight.Black else FontWeight.Bold,
+                    fontWeight = (if (index == trail.size - 1) FontWeight.Black else FontWeight.Bold),
                     letterSpacing = 1.sp,
-                    color = if (index == trail.size - 1) Color.White else Color.White.copy(alpha = 0.4f),
+                    color = (if (index == trail.size - 1) Color.White else Color.White.copy(alpha = 0.4f)),
                     fontSize = 9.sp
                 ),
                 modifier = Modifier.clickable { onCrumbClick(index) }
@@ -1435,9 +1435,9 @@ fun PersonaOptionsMenu(
                     MenuActionItem(Icons.Rounded.Close, "DENY RADIO", Color.Red, onDeny)
                 } else if (activeGroupId != null) {
                     if (isAlreadyInActiveGroup) {
-                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM CHAIN", StealthRose, { onRemoveFromGroup(activeGroupId) })
+                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM CHAIN", StealthRose) { onRemoveFromGroup(activeGroupId) }
                     } else {
-                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS CHAIN", StealthPrimary, { onAddToGroup(activeGroupId) })
+                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS CHAIN", StealthPrimary) { onAddToGroup(activeGroupId) }
                     }
                 } else if (isTied) {
                     MenuActionItem(Icons.Rounded.Sync, "PULSE SYNC", StealthAmber, onSync)
@@ -1675,8 +1675,8 @@ fun PulseGhost(
             data.actions.forEachIndexed { index, action ->
                 val angle = (index * (360f / data.actions.size)) - 90f
                 val radius = 130.dp
-                val x = (Math.cos(Math.toRadians(angle.toDouble())) * radius.value).dp
-                val y = (Math.sin(Math.toRadians(angle.toDouble())) * radius.value).dp
+                val x = (kotlin.math.cos(Math.toRadians(angle.toDouble())) * radius.value).dp
+                val y = (kotlin.math.sin(Math.toRadians(angle.toDouble())) * radius.value).dp
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -2111,7 +2111,7 @@ fun PulsePersonaSignature(
     val isProjected = projectionEmoji != null
     val basePulse = if (isProjected) 1.6f else 1.15f
     val pulseScale by if (isStatic) { 
-        remember { mutableStateOf(1.0f) } 
+        remember { androidx.compose.runtime.mutableFloatStateOf(1.0f) } 
     } else { 
         val targetPulse = if (isHighlighted) 1.5f else if ((isPulsed || isPeerPulsed)) 1.25f else basePulse
         infiniteTransition.animateFloat(

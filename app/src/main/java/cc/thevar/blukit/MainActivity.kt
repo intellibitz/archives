@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                 BlukitApp(
                     onEnterPip = {
                         enterPictureInPictureMode(
-                            android.app.PictureInPictureParams.Builder().build()
+                            android.app.PictureInPictureParams.Builder().build(),
                         )
                     }
                 )

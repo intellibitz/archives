@@ -7,10 +7,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
 import java.security.KeyPairGenerator
 import java.security.spec.ECGenParameterSpec
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [32])

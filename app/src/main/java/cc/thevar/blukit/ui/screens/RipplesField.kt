@@ -1,34 +1,64 @@
+/**
+ * BLUKIT UI: RIPPLES FIELD (THE DISCOVERY RADAR)
+ *
+ * A high-fidelity spatial view of the local mesh energy.
+ * Orchestrates the "Spectral Radar" where users, Crowds, and relay events are visualized.
+ * 
+ * Architectural Patterns:
+ * - Spatial Positioning: Maps signal strength (proximityFactor) to orbital radius.
+ * - Relay Animations: Visualizes pulses as traveling dots between nodes.
+ * - Pulse Ripples: Context-aware circles expanding from nodes when energy is emitted.
+ * - Spectral Dimming: Intelligently dims background nodes to focus user focus.
+ * - Atmospheric Heatmap: Background glow intensity based on aggregate mesh activity.
+ */
 package cc.thevar.blukit.ui.screens
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Bluetooth
-import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Grain
 import androidx.compose.material.icons.rounded.Hearing
-import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Radar
-import androidx.compose.material.icons.rounded.Sync
-import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material.icons.rounded.WifiTethering
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -42,14 +72,17 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
-import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
+import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
-import cc.thevar.blukit.ui.theme.StealthAmber
+import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import kotlinx.coroutines.delay
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.random.Random
 
+/** Metadata for local pulse visualizations (Active Bubbles). */
 data class BubbleData(
     val senderId: String,
     val content: String,
@@ -58,6 +91,7 @@ data class BubbleData(
     val isPrivate: Boolean
 )
 
+/** Transient state for mesh relay animations (Travel dots). */
 data class RelayEvent(
     val id: String,
     val start: Offset,
@@ -65,6 +99,7 @@ data class RelayEvent(
     val startTime: Long
 )
 
+/** Expanding rings signaling node energy emission. */
 data class PulseRipple(
     val id: String,
     val center: Offset,
@@ -73,7 +108,7 @@ data class PulseRipple(
 )
 
 /**
- * BLUKIT: THE CROWDS FIELD.
+ * The root spatial interaction layer.
  */
 @Composable
 fun RipplesField(
@@ -98,7 +133,7 @@ fun RipplesField(
     crowdList: List<Pair<P2PDevice, Int>> = emptyList(),
     onSearchToggle: (() -> Unit)? = null,
     isSearchActive: Boolean = false,
-    // HUMANITY STAGE PROPS
+    // --- Humanity Stage Props (Row 1) ---
     title: String = "",
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
@@ -118,11 +153,13 @@ fun RipplesField(
 ) {
     val density = LocalDensity.current
 
+    // Internal animation registries
     val relayEvents = remember { mutableStateListOf<RelayEvent>() }
     val pulseRipples = remember { mutableStateListOf<PulseRipple>() }
     val processedRelayIds = remember { mutableSetOf<String>() }
     var collectiveEnergy by remember { mutableStateOf(0f) }
 
+    // TRIGGER: Signal surge on new incoming bubbles
     LaunchedEffect(activeBubbles.size) {
         if (activeBubbles.isNotEmpty()) {
             val last = activeBubbles.last()
@@ -134,6 +171,7 @@ fun RipplesField(
                 val proximity = if (deviceIndex != -1) state.crowd.scannedDevices[deviceIndex].proximityFactor else 0.5f
                 onPulseSurge(proximity)
 
+                // Calculate spatial offset for the sender node
                 val targetOffset = if (deviceIndex != -1) {
                     val device = state.crowd.scannedDevices[deviceIndex]
                     val maxRadiusPx = with(density) { 140.dp.toPx() }
@@ -142,6 +180,7 @@ fun RipplesField(
                     Offset((radiusValue * cos(angle)).toFloat(), (radiusValue * sin(angle)).toFloat())
                 } else Offset.Zero
 
+                // Spawn travel dot from random mesh direction
                 val startOffset = Offset((Random.nextFloat() - 0.5f) * 1200f, (Random.nextFloat() - 0.5f) * 1800f)
                 relayEvents.add(RelayEvent(last.messageId, startOffset, targetOffset, System.currentTimeMillis()))
                 
@@ -151,6 +190,7 @@ fun RipplesField(
         }
     }
 
+    // Animation Cleanup Loop
     LaunchedEffect(Unit) {
         while (true) {
             val now = System.currentTimeMillis()
@@ -189,7 +229,7 @@ fun RipplesField(
                     themeColor = finalThemeColor,
                     userCount = state.crowd.scannedDevices.size,
                     trailingContent = {
-                        // Tactical Toggles
+                        // Tactical Radar Toggles
                         if (onSearchToggle != null) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 IconButton(
@@ -221,15 +261,17 @@ fun RipplesField(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(320.dp) // Fixed height for radar field
+                    .height(320.dp) 
                     .background(Color.Transparent)
                     .onGloballyPositioned { 
+                        // Synchronize spatial center with the coordinate registry
                         val centerPos = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f)
                         val current = coordinates["YOU"] ?: PersonaConnectionPoints()
                         coordinates["YOU"] = current.copy(field = centerPos)
                     }, 
                 contentAlignment = Alignment.Center
             ) {
+                // --- Environmental Layers ---
                 if (drawBackground) {
                     Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
                         AirBackground(energy = finalEnergy, lowPowerMode = lowPowerMode, onlyTies = onlyTies)
@@ -241,6 +283,7 @@ fun RipplesField(
                     RelayLayer(relayEvents, onlyTies = onlyTies)
                 }
                 
+                // --- Node Resolution ---
                 val bubbleSenders = remember(activeBubbles) { 
                     activeBubbles.asSequence().map { it.senderId }.toSet() 
                 }
@@ -258,6 +301,7 @@ fun RipplesField(
 
                 if (drawNodes) {
                     Box(modifier = Modifier.fillMaxSize().zIndex(2f)) {
+                        // Public Crowd contexts
                         if (crowdList.isNotEmpty()) {
                             Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
                                 CrowdNodes(
@@ -269,6 +313,7 @@ fun RipplesField(
                             }
                         }
 
+                        // Peer Persona nodes
                         PulseNodes(
                             state = state,
                             devices = displayDevices,
@@ -298,15 +343,15 @@ fun RipplesField(
                 }
                 
                 airRitualGhost()
-                
                 content()
             }
         },
-        showGlow = false, // Background handles glow
+        showGlow = false, 
         modifier = modifier
     )
 }
 
+/** Visualizes mesh activity intensity as a radial center glow. */
 @Composable
 private fun AtmosphericHeatmap(intensity: Float) {
     if (intensity <= 0.05f) return
@@ -334,27 +379,7 @@ private fun AtmosphericHeatmap(intensity: Float) {
     }
 }
 
-@Composable
-private fun PulseArcs(devices: List<P2PDevice>, energy: Float, onlyTies: Boolean) {
-    if (devices.isEmpty()) return
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val center = Offset(size.width / 2f, size.height / 2f)
-        devices.forEachIndexed { index, device ->
-            val maxRadiusPx = 140.dp.toPx()
-            val radiusValue = (1f - device.proximityFactor) * maxRadiusPx + 60.dp.toPx()
-            val angle = (index.toDouble() / devices.size) * 2 * PI
-            val x = (radiusValue * cos(angle)).toFloat()
-            val y = (radiusValue * sin(angle)).toFloat()
-            
-            drawCircle(
-                color = StealthPrimary.copy(alpha = 0.05f * energy),
-                radius = 2.dp.toPx(),
-                center = center + Offset(x, y)
-            )
-        }
-    }
-}
-
+/** Background sweep gradient signaling active radio scanning. */
 @Composable
 private fun AirBackground(energy: Float, lowPowerMode: Boolean, onlyTies: Boolean) {
     val infiniteTransition = rememberInfiniteTransition(label = "Background")
@@ -431,14 +456,7 @@ private fun RelayLayer(relays: List<RelayEvent>, onlyTies: Boolean) {
     }
 }
 
-@Composable
-private fun PulseConnectivity(devices: List<P2PDevice>, onlyTies: Boolean) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val center = Offset(size.width / 2f, size.height / 2f)
-        // Draw connection lines between devices if relevant
-    }
-}
-
+/** Orchestrates the positioning and state rendering of all mesh nodes. */
 @Composable
 private fun PulseNodes(
     state: BluetoothUiState,
@@ -468,12 +486,12 @@ private fun PulseNodes(
     )
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        // 1. CENTER: RESONANCE IDENTITY
+        // --- 1. CENTER: RESONANCE IDENTITY ---
         val resonance = state.session.groups.find { it.name == title || it.id == title }
         val isRoot = title == "THE CROWD" || title == "EVENT"
         val centerCount = if (isRoot) state.crowd.scannedDevices.size else resonance?.allMemberIds?.size ?: state.crowd.scannedDevices.size
         
-        // Resolve Owner Persona if exists
+        // Resolve Owner Persona if exists (for specific events)
         val owner = state.crowd.scannedDevices.find { it.id == resonance?.ownerId || it.persistentId == resonance?.ownerId }
 
         val centerIcon = when {
@@ -500,9 +518,9 @@ private fun PulseNodes(
             )
         }
 
-        // 2. NEARBY: YOUR PERSONA
+        // --- 2. NEARBY: YOUR PERSONA ---
         val userRadius = 52f
-        val userAngle = -PI / 2 // Anchored to top-ish
+        val userAngle = -PI / 2 
         val userX = (userRadius * cos(userAngle)).toFloat().dp
         val userY = (userRadius * sin(userAngle)).toFloat().dp
         
@@ -523,14 +541,15 @@ private fun PulseNodes(
                 isSelected = false,
                 isPeerPulsed = false,
                 onlyTies = false,
-                size = 46.dp, // Slightly larger
+                size = 46.dp, 
                 isStatic = false, 
                 onClick = { onNicknameChange(userNickname) }
             )
         }
 
-        // 3. OTHER USERS: Surrounding the cluster
+        // --- 3. OTHER USERS: Orbital positioning ---
         devices.forEachIndexed { index, device ->
+            // Spatial mapping: distance from center based on signal strength
             val baseRadius = (1f - device.proximityFactor) * 80f + 110f
             val angle = (index.toDouble() / devices.size) * 2 * PI
             val activeBubble = activeBubbles.findLast { it.senderId == device.id }
@@ -643,7 +662,7 @@ private fun PulseNode(
             onLongClick = onLongClick
         )
 
-        // Active Bubble Overlay
+        // Active Bubble Overlay: Transient pulse content
         activeBubble?.let {
             Box(modifier = Modifier.offset(y = (-48).dp)) {
                 Surface(

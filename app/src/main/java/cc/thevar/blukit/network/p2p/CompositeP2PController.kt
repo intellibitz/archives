@@ -1,3 +1,12 @@
+/**
+ * BLUKIT NETWORK: COMPOSITE P2P CONTROLLER
+ *
+ * A higher-order orchestrator that manages multiple radio engines (Nearby + BLE Fallback).
+ * Implements a "Best of Both Worlds" strategy:
+ * - High-speed WiFi/BLE orchestration via Nearby Connections when available.
+ * - Native BLE GATT fallback for resilience in restricted environments.
+ * - Unified state management for UI-layer transparency.
+ */
 package cc.thevar.blukit.network.p2p
 
 import cc.thevar.blukit.domain.model.ConnectionStatus
@@ -6,12 +15,16 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 
 /**
- * Composite P2P Controller:
- * Orchestrates multiple P2P engines (Nearby Connections + BLE Fallback).
- * Implements "Best of Both Worlds" logic.
+ * Higher-order orchestrator for Blukit's radio engines.
  */
 class CompositeP2PController(
     private val nearbyController: NearbyP2PController,
@@ -20,6 +33,7 @@ class CompositeP2PController(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+    /** Merges discovered devices from all active engines, deduplicating by ID. */
     override val scannedDevices: StateFlow<List<P2PDevice>> = combine(
         nearbyController.scannedDevices,
         bleController.scannedDevices
@@ -27,6 +41,7 @@ class CompositeP2PController(
         (nearby + ble).distinctBy { it.id }
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /** Signal connection if at least one engine is tied. */
     override val isConnected: StateFlow<Boolean> = combine(
         nearbyController.isConnected,
         bleController.isConnected
@@ -108,8 +123,9 @@ class CompositeP2PController(
         bleController.stopAdvertising()
     }
 
+    /** Routes connection attempts based on device ID format or engine availability. */
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
-        return if (device.id.startsWith("nearby:")) { // Example tagging
+        return if (device.id.startsWith("nearby:")) { 
             nearbyController.connectToDevice(device)
         } else {
             bleController.connectToDevice(device)

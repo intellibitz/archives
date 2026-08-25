@@ -2,7 +2,11 @@ package cc.thevar.blukit.ui.previews
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,15 +19,21 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cc.thevar.blukit.R
-import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
-import cc.thevar.blukit.ui.viewmodels.*
-import cc.thevar.blukit.ui.screens.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Groups
+import cc.thevar.blukit.ui.screens.BlukitHumanityStage
+import cc.thevar.blukit.ui.screens.BlukitTacticalHeader
+import cc.thevar.blukit.ui.screens.ChainField
+import cc.thevar.blukit.ui.screens.CrowdRitualGhost
+import cc.thevar.blukit.ui.screens.EventField
+import cc.thevar.blukit.ui.screens.PulsingResonanceTicker
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import cc.thevar.blukit.ui.theme.StealthPrimary
+import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
+import cc.thevar.blukit.ui.viewmodels.MeshCrowd
+import cc.thevar.blukit.ui.viewmodels.PulseSession
+import cc.thevar.blukit.ui.viewmodels.RadioConnectionState
 
 @Preview(name = "Radar - Phone", device = Devices.PHONE, showBackground = true)
 @Composable

@@ -1,7 +1,7 @@
 package cc.thevar.blukit.ui.viewmodels
 
-import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 
 /**
@@ -23,7 +23,7 @@ data class HardwareHarmony(
     val isBluetoothEnabled: Boolean = false,
     val isLocationEnabled: Boolean = false,
     val isWifiEnabled: Boolean = false,
-    val permissionsGranted: Boolean = false
+    val permissionsGranted: Boolean = false,
 )
 
 /**

@@ -3,26 +3,33 @@ package cc.thevar.blukit.ui.widget
 import android.content.Context
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.Button
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
-import androidx.glance.action.actionStartActivity
-import androidx.compose.ui.graphics.Color
 import androidx.glance.GlanceTheme
+import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
-import androidx.glance.layout.*
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Column
+import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
+import androidx.glance.layout.padding
+import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import cc.thevar.blukit.MainActivity
-import org.koin.core.context.GlobalContext
 import cc.thevar.blukit.data.local.PulseStore
+import org.koin.core.context.GlobalContext
 
 class BlukitWidget : GlanceAppWidget() {
 
@@ -44,7 +51,7 @@ class BlukitWidget : GlanceAppWidget() {
                     Text(
                         text = "SPREAD PULSES",
                         style = TextStyle(
-                            color = ColorProvider(Color.Cyan),
+                            color = GlanceTheme.colors.primary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -53,7 +60,7 @@ class BlukitWidget : GlanceAppWidget() {
                     Text(
                         text = "$count PULSES AROUND",
                         style = TextStyle(
-                            color = ColorProvider(Color.White),
+                            color = GlanceTheme.colors.onSurface,
                             fontSize = 10.sp
                         )
                     )
@@ -72,7 +79,7 @@ class BlukitWidget : GlanceAppWidget() {
                         Text(
                             text = "PRIVACY",
                             style = TextStyle(
-                                color = ColorProvider(Color.Gray.copy(alpha = 0.4f)),
+                                color = GlanceTheme.colors.secondary,
                                 fontSize = 6.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -81,7 +88,7 @@ class BlukitWidget : GlanceAppWidget() {
                         Text(
                             text = "BLUKIT:PULSES",
                             style = TextStyle(
-                                color = ColorProvider(Color.Cyan.copy(alpha = 0.2f)),
+                                color = GlanceTheme.colors.primary,
                                 fontSize = 6.sp,
                                 fontWeight = FontWeight.Bold
                             )

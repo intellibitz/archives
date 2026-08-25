@@ -1,16 +1,34 @@
+/**
+ * BLUKIT DATA: PULSE STORE
+ *
+ * The secure, offline persistence engine for Blukit's mesh energy.
+ * Orchestrates the "Unified Pulse Frequency" by managing chronological logs and resonance states.
+ * 
+ * Features:
+ * - Encrypted Binary Logs: Uses CryptoManager to protect local pulse history.
+ * - LWW (Last-Write-Wins) CRDT: Conflict-free resolution for shared notes and tasks.
+ * - Pulse Decay: Automated self-cleaning logic for media and inactive crowds.
+ * - Resonance Drill-Down: Hierarchical state management for active, archived, and vaulted contexts.
+ */
 package cc.thevar.blukit.data.local
 
 import android.content.Context
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.data.local.entities.ContactEntity
 import cc.thevar.blukit.data.local.entities.PeerEntity
+import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.Resonance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.DataInputStream
@@ -19,7 +37,9 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * BLUKIT PULSE STORE.
+ * Manages secure storage and reactive state of all mesh interactions.
+ * 
+ * @param historyRetentionLimit The maximum number of pulses to keep before triggering eviction.
  */
 class PulseStore(
     private val context: Context,
@@ -27,6 +47,7 @@ class PulseStore(
     private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
     private val historyRetentionLimit: Int = 1000
 ) {
+    // --- Persistence Anchors ---
     private val pulsesLogFile = File(context.filesDir, "pulses_log.bin")
     private val groupsFile = File(context.filesDir, "groups.bin")
     private val peersFile = File(context.filesDir, "peers.bin")
@@ -34,10 +55,14 @@ class PulseStore(
 
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
+    // --- Reactive State Flows ---
     private val _messages = MutableStateFlow<List<MessagePayload>>(emptyList())
+    /** The complete chronological life stream of pulses. */
     val messages: StateFlow<List<MessagePayload>> = _messages.asStateFlow()
 
     private val _groups = MutableStateFlow<Map<String, Resonance>>(emptyMap())
+    
+    /** Public frequencies and active private chains. */
     val activeGroups: StateFlow<List<Resonance>> = _groups
         .map { it.values.filter { !it.isArchived }.toList() }
         .stateIn(
@@ -46,6 +71,7 @@ class PulseStore(
             initialValue = emptyList()
         )
 
+    /** Crowds that haven't pulsed in 30 days. */
     val archivedGroups: StateFlow<List<Resonance>> = _groups
         .map { it.values.filter { it.isArchived && !it.isVaulted }.toList() }
         .stateIn(
@@ -54,6 +80,7 @@ class PulseStore(
             initialValue = emptyList()
         )
 
+    /** Explicitly preserved contexts (Sunk Pulses). */
     val vaultedGroups: StateFlow<List<Resonance>> = _groups
         .map { it.values.filter { it.isVaulted }.toList() }
         .stateIn(
@@ -75,7 +102,7 @@ class PulseStore(
 
     init {
         loadData()
-        // Ensure default ties exist immediately
+        // Ensure default ties exist immediately (THE CROWD / SILENCE)
         if (!_groups.value.containsKey(Resonance.ID_CROWD)) {
             _groups.update { it + (Resonance.ID_CROWD to Resonance(id = Resonance.ID_CROWD, name = "THE CROWD", scope = Resonance.SCOPE_PUBLIC)) }
         }
@@ -91,6 +118,7 @@ class PulseStore(
         }
     }
 
+    /** Interrogates local binary storage and decrypts the mesh state. */
     private fun loadData() {
         if (pulsesLogFile.exists()) {
             try {
@@ -144,6 +172,7 @@ class PulseStore(
         }
     }
 
+    /** Appends a single encrypted pulse to the binary log. */
     private fun appendMessageToLog(message: MessagePayload) {
         scope.launch {
             try {
@@ -160,6 +189,7 @@ class PulseStore(
         }
     }
 
+    /** Rewrites the entire pulse log to remove deleted units and deduplicate history. */
     suspend fun compactMessages() {
         val currentMessages = _messages.value
 
@@ -202,13 +232,17 @@ class PulseStore(
         }
     }
 
-    // Message Operations
+    // --- Message Operations ---
     fun getAllMessages() = messages
 
     suspend fun insertMessage(message: MessagePayload) {
         upsertMessage(message)
     }
 
+    /** 
+     * Incorporates a new pulse into the stream.
+     * Uses LWW-CRDT logic for notes and tasks to ensure deterministic state across the mesh.
+     */
     suspend fun upsertMessage(message: MessagePayload) {
         if (message.content.isBlank()) return // Validation: Ignore empty pulses
 
@@ -218,7 +252,7 @@ class PulseStore(
             if (existingIndex != -1) {
                 val existing = current[existingIndex]
                 // LWW CRDT for Note & Task Mutation
-                if (message.type == MessagePayload.TYPE_NOTE_UPDATE || message.type == MessagePayload.TYPE_ASSIGNMENT_TASK) {
+                if ((message.type == MessagePayload.TYPE_NOTE_UPDATE || message.type == MessagePayload.TYPE_ASSIGNMENT_TASK)) {
                     if (message.noteVersion > existing.noteVersion || 
                         (message.noteVersion == existing.noteVersion && message.timestamp > existing.timestamp)) {
                         appendMessageToLog(message)
@@ -245,6 +279,7 @@ class PulseStore(
         }
     }
 
+    /** Evicts low-priority pulses once a context exceeds retention limits. */
     private suspend fun pruneHistory(groupId: String) {
         val group = getGroup(groupId) ?: return
         val currentMessages = _messages.value.filter { it.groupId == groupId }
@@ -323,7 +358,9 @@ class PulseStore(
         compactMessages()
     }
 
-    // Vault & Archiving
+    // --- Vault & Archiving ---
+
+    /** Protocols automatically move inactive crowds into a "Sunk Pulse" vault. */
     fun autoArchiveCrowds() {
         val now = System.currentTimeMillis()
         _groups.update { current ->
@@ -366,6 +403,7 @@ class PulseStore(
         saveData()
     }
 
+    /** Prunes media older than 90 days, exempting Pinned/Senior pulses. */
     suspend fun pruneMedia(thresholdMs: Long) {
         val now = System.currentTimeMillis()
         val allGroups = _groups.value.values
@@ -394,7 +432,7 @@ class PulseStore(
         }
     }
 
-    // Group Operations
+    // --- Group Operations ---
     suspend fun insertGroup(group: Resonance) {
         _groups.update { it + (group.id to group) }
         saveData()
@@ -402,6 +440,7 @@ class PulseStore(
 
     suspend fun getGroup(id: String) = _groups.value[id]
 
+    /** Orchestrates member partitioning for high-density scalability. */
     suspend fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
         _groups.update { current ->
             current[groupId]?.let { group ->
@@ -503,7 +542,7 @@ class PulseStore(
         saveData()
     }
 
-    // Peer Operations
+    // --- Peer Operations ---
     suspend fun getPeer(id: String): PeerEntity? {
         return _peers.value[id]
     }
@@ -518,7 +557,7 @@ class PulseStore(
         saveData()
     }
 
-    // Contact Operations
+    // --- Contact Operations ---
     fun getAllContacts() = _contacts.asStateFlow().map { it.values.toList() }
 
     suspend fun getContact(id: String) = _contacts.value[id]

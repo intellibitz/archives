@@ -4,24 +4,41 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.theme.StealthPrimary
@@ -38,7 +55,7 @@ fun ConversationsScreen(
     onDeleteGroup: (String) -> Unit,
     onAcceptRadio: (P2PDevice) -> Unit,
     onDenyRadio: (P2PDevice) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var groupToDelete by remember { mutableStateOf<Resonance?>(null) }
 
@@ -201,12 +218,12 @@ private fun PulseTickerTitleEntry(
     onLongClick: (Resonance) -> Unit
 ) {
     val lastMessage = remember(group.id, state.session.messages) {
-        state.session.messages.filter { it.groupId == group.id }.lastOrNull()
+        state.session.messages.asSequence().filter { it.groupId == group.id }.lastOrNull()
     }
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
     
     val members = remember(group.memberIds, state.crowd.scannedDevices) {
-        state.crowd.scannedDevices.filter { it.id in group.memberIds || it.persistentId in group.memberIds }
+        state.crowd.scannedDevices.filter { (it.id in group.memberIds || it.persistentId in group.memberIds) }
     }
 
     val themeColor = when(group.scope) {
@@ -291,9 +308,9 @@ private fun PulseTickerTitleEntry(
                 )
             }
             
-            if (lastMessage != null) {
+            lastMessage?.let { msg ->
                 Text(
-                    text = timeFormatter.format(Date(lastMessage.timestamp)),
+                    text = timeFormatter.format(Date(msg.timestamp)),
                     fontSize = 8.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White.copy(alpha = 0.3f)
