@@ -7,7 +7,13 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -65,6 +71,7 @@ import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
 import cc.thevar.blukit.ui.viewmodels.SupremePowerViewModel
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import androidx.lifecycle.Lifecycle
@@ -83,15 +90,12 @@ fun BlukitApp(
     
     val viewModel: MainViewModel = koinViewModel()
     val bluetoothViewModel: BluetoothViewModel = koinViewModel()
-    val supremePowerViewModel: SupremePowerViewModel = koinViewModel()
     
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emoji by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
     val isStealthMode by viewModel.isStealthMode.collectAsStateWithLifecycle(initialValue = false)
     val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
-    val report by supremePowerViewModel.report.collectAsStateWithLifecycle()
-    val energySurge by bluetoothViewModel.energySurge.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(bluetoothState.activity.uiError) { bluetoothState.activity.uiError?.let { snackbarHostState.showSnackbar(it.message.uppercase()) } }
@@ -178,7 +182,6 @@ fun BlukitApp(
     var isNoiseFilterActive by remember { mutableStateOf(false) }
 
     val listDetailSceneStrategy = rememberListDetailSceneStrategy<Route>()
-    val personaFocusRequester = remember { FocusRequester() }
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     val locationPermissionGranted = remember(permissionState.allPermissionsGranted) {
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -195,7 +198,6 @@ fun BlukitApp(
     var showManageDialog by remember { mutableStateOf(false) }
     var isSearchMode by remember { mutableStateOf(false) }
     var showAirGhost by remember { mutableStateOf(false) }
-    var airProposalName by remember { mutableStateOf("") }
     var showPrivacyProtocol by remember { mutableStateOf(false) }
     var showOnboarding by remember { mutableStateOf(false) }
     
@@ -227,7 +229,7 @@ fun BlukitApp(
     
     LaunchedEffect(crowdIsStill) {
         if (!hasNudgedStillAir && crowdIsStill) {
-            delay(1000)
+            delay(1.seconds)
             showAirIsStillDialog = true
             hasNudgedStillAir = true
         }
@@ -318,84 +320,23 @@ fun BlukitApp(
             }
 
             val topBarHeader: @Composable () -> Unit = {
-                val topTitle = when { 
-                    currentRoute is Route.Event -> "EVENT"
-                    currentRoute is Route.GroupField -> { 
-                        val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }
-                        group?.name ?: "DEPTH"
-                    }
-                    else -> "BLUKIT" 
-                }
-                val topIcon = when { currentRoute is Route.Event -> Icons.Rounded.Groups; currentRoute is Route.GroupField -> { val group = bluetoothState.session.groups.find { it.id == currentRoute.groupId }; if (group?.scope == Resonance.SCOPE_PRIVATE) Icons.Rounded.Hearing else if (group?.scope == Resonance.SCOPE_LOCAL) Icons.Rounded.CellTower else Icons.Rounded.Grain }; else -> Icons.Rounded.Hub }
+                val themeColor = if (currentRoute is Route.Resonance || currentRoute is Route.GroupField) StealthRose else StealthPrimary
 
-                BlukitHarmonyTopBar(
-                    title = topTitle, 
-                    icon = topIcon,
-                    currentRoute = currentRoute ?: initialRoute,
-                    breadcrumbTrail = breadcrumbTrail,
-                    onCrumbClick = onCrumbClick,
-                    onNavigate = { route -> 
-                        if (currentRoute == route && route is Route.Event) { 
-                            viewModel.clearPulsedPeers()
-                            isNoiseFilterActive = false
-                            focusedChainId = null
-                        } else if (currentRoute != route) { 
-                            focusManager.clearFocus() 
-                            focusedChainId = null
-                            backStack.add(route as Route) 
-                        } 
-                    },
-                    userNickname = nickname ?: "?",
-                    userEmoji = emoji,
-                    onUserNicknameChange = { newName ->
-                        val oldName = nickname ?: "?"
-                        viewModel.saveNickname(newName)
-                        if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
-                            bluetoothViewModel.broadcastIdentityUpdate(oldName)
-                        }
-                    },
-                    onResetProfile = {
-                        viewModel.resetProfile()
-                    },
-                    userFocusRequester = personaFocusRequester,
+                BlukitTacticalHeader(
+                    isStealthMode = isStealthMode,
+                    lowPowerMode = lowPowerMode,
                     isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
-                    isLocationOff = !bluetoothState.harmony.isLocationEnabled,
                     isWifiOff = !bluetoothState.harmony.isWifiEnabled,
                     isPermissionMissing = !permissionState.essentialPermissionsGranted,
                     isPermanentlyDenied = isPermanentlyDenied,
-                    userCount = report.userCount,
-                    isStealthMode = isStealthMode,
-                    lowPowerMode = lowPowerMode,
-                    crowdIsStill = crowdIsStill,
-                    isLocationMandatory = isLocationMandatory,
-                    activeCrowds = bluetoothState.session.groups,
+                    themeColor = themeColor,
                     onToggleStealth = viewModel::toggleStealth,
                     onToggleLowPower = viewModel::toggleLowPowerMode,
                     onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
-                    onAwakenLocation = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                     onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
                     onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
                     onOpenSettings = { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = Uri.fromParts("package", context.packageName, null); addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) },
-                    onClearHistory = viewModel::clearChatHistory,
-                    onShowPrivacy = { showPrivacyProtocol = true },
-                    onShowTimeline = { backStack.add(Route.Timeline) },
-                    onProfileClick = { if (currentRoute is Route.Event) showOnboarding = true else personaFocusRequester.requestFocus() },
-                    onBack = if (currentRoute is Route.GroupField || isSearchMode || showAirGhost) { 
-                        { 
-                            if (isSearchMode || showAirGhost) { 
-                                isSearchMode = false
-                                showAirGhost = false
-                                messageText = "" 
-                            } else if (focusedChainId != null) {
-                                focusedChainId = null
-                            } else {
-                                backStack.removeLastOrNull() 
-                            }
-                        } 
-                    } else null,
-                    onTitleClick = if (currentRoute is Route.Event || currentRoute == null) {
-                        { showAirGhost = true; isSearchMode = false; messageText = "" }
-                    } else null
+                    onShowPrivacy = { showPrivacyProtocol = true }
                 )
             }
 
@@ -414,11 +355,23 @@ fun BlukitApp(
                                     header = topBarHeader,
                                     pulsedPeers = bluetoothState.crowd.pulsedPeers, 
                                     noiseFilterEnabled = isNoiseFilterActive, 
-                                    onStartScan = bluetoothViewModel::startScan, 
                                     onDeviceClick = { device -> if (bluetoothState.crowd.selectedDevices.isNotEmpty()) { bluetoothViewModel.toggleDeviceSelection(device.id) } else { val id = device.persistentId ?: device.id; viewModel.togglePulsePeer(id); isNoiseFilterActive = true } }, 
                                     onDeletePulse = viewModel::deletePulse, 
                                     onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupPulse("WHISPER", setOf(id)); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) }, 
-                                    onIdentifyUser = { highlightedUserId = it }, 
+                                    onIdentifyUser = { highlightedUserId = it },
+                                    // Humanity Props
+                                    breadcrumbTrail = breadcrumbTrail,
+                                    onCrumbClick = onCrumbClick,
+                                    onShowTimeline = { backStack.add(Route.Timeline) },
+                                    onResetProfile = { viewModel.resetProfile() },
+                                    onBack = if (isSearchMode || showAirGhost) { 
+                                        { 
+                                            isSearchMode = false
+                                            showAirGhost = false
+                                            messageText = "" 
+                                        } 
+                                    } else null,
+                                    onTitleClick = { showAirGhost = true; isSearchMode = false; messageText = "" },
                                     onNavigateToGroup = { gid ->
                                         backStack.add(Route.GroupField(gid))
                                         bluetoothViewModel.enterChain(gid)
@@ -460,6 +413,13 @@ fun BlukitApp(
                                         onNavigateToPulse = { vid ->
                                             backStack.add(Route.PulseField(vid))
                                         },
+                                        // Humanity Props
+                                        breadcrumbTrail = breadcrumbTrail,
+                                        onCrumbClick = onCrumbClick,
+                                        onShowTimeline = { backStack.add(Route.Timeline) },
+                                        onResetProfile = { viewModel.resetProfile() },
+                                        onBack = { backStack.removeLastOrNull(); focusedChainId = null },
+                                        onTitleClick = null,
                                         // Hub Props
                                         messageText = messageText,
                                         onMessageChange = { messageText = it },
@@ -501,6 +461,13 @@ fun BlukitApp(
                                         onNavigateToPulse = { vid ->
                                             backStack.add(Route.PulseField(vid))
                                         },
+                                        // Humanity Props
+                                        breadcrumbTrail = breadcrumbTrail,
+                                        onCrumbClick = onCrumbClick,
+                                        onShowTimeline = { backStack.add(Route.Timeline) },
+                                        onResetProfile = { viewModel.resetProfile() },
+                                        onBack = { backStack.removeLastOrNull(); focusedChainId = null },
+                                        onTitleClick = null,
                                         // Hub Props
                                         messageText = messageText,
                                         onMessageChange = { messageText = it },
@@ -530,6 +497,13 @@ fun BlukitApp(
                                     messageId = key.messageId,
                                     onSendMessage = bluetoothViewModel::sendMessage,
                                     onNavigateToPulse = { vid -> backStack.add(Route.PulseField(vid)) },
+                                    // Humanity Props
+                                    breadcrumbTrail = breadcrumbTrail,
+                                    onCrumbClick = onCrumbClick,
+                                    onShowTimeline = { backStack.add(Route.Timeline) },
+                                    onResetProfile = { viewModel.resetProfile() },
+                                    onBack = { backStack.removeLastOrNull() },
+                                    onTitleClick = null,
                                     // Hub Props
                                     messageText = messageText,
                                     onMessageChange = { messageText = it },

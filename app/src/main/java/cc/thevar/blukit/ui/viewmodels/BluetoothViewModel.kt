@@ -394,7 +394,8 @@ class BluetoothViewModel(
                         name = name, 
                         scope = Resonance.SCOPE_PUBLIC,
                         parentId = parentId,
-                        templateId = templateId
+                        templateId = templateId,
+                        ownerId = repository.getDeviceId()
                     )
                     pulseStore.insertGroup(newGroup)
                     
@@ -418,7 +419,7 @@ class BluetoothViewModel(
                 p2pController.startGroupPulse(name, targetMembers, scope, groupId = groupId, parentId = parentId)
                 delay(100.milliseconds) 
                 pulseStore.getGroup(groupId)?.let { tie ->
-                    pulseStore.insertGroup(tie.copy(parentId = parentId))
+                    pulseStore.insertGroup(tie.copy(parentId = parentId, ownerId = repository.getDeviceId()))
                 }
             }
         }

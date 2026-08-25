@@ -104,6 +104,14 @@ fun ChainField(
     onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
+    // Humanity Stage Props
+    breadcrumbTrail: List<String> = emptyList(),
+    onCrumbClick: (Int) -> Unit = {},
+    activeCrowds: List<Resonance> = emptyList(),
+    onShowTimeline: () -> Unit = {},
+    onResetProfile: () -> Unit = {},
+    onTitleClick: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
     header: @Composable () -> Unit
 ) {
     var showTip by remember { mutableStateOf(true) }
@@ -144,6 +152,7 @@ fun ChainField(
         entries = {
             // MODULE 1: BASE CONTENT (Radar + Lists)
             Column(modifier = Modifier.fillMaxSize()) {
+                val chainName = group?.name ?: "CHAIN"
                 RipplesField(
                     state = state,
                     localDeviceId = localDeviceId,
@@ -152,8 +161,17 @@ fun ChainField(
                     drawBackground = false,
                     drawNodes = false,
                     onDeviceClick = { },
-                    onStartScan = { },
-                    modifier = Modifier.fillMaxWidth().height(280.dp)
+                    // Humanity Stage
+                    title = chainName,
+                    breadcrumbTrail = breadcrumbTrail,
+                    onCrumbClick = onCrumbClick,
+                    activeCrowds = state.session.groups,
+                    onShowTimeline = onShowTimeline,
+                    onResetProfile = onResetProfile,
+                    onTitleClick = onTitleClick,
+                    onBack = onBack,
+                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
+                    modifier = Modifier.fillMaxWidth().height(320.dp)
                 )
 
                 Column(modifier = Modifier.weight(1f)) {

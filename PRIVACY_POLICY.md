@@ -32,7 +32,7 @@ By design, you can only communicate with people physically near you. This "Crowd
 - **Crowd Containment**: The hierarchy enforces that **all Crowds are discoverable** and **all Chains are private**. A Chain must be anchored to a parent Crowd to exist within the crowd spectrum.
 
 ## 6. Public & Shared Crowds
-Blukit follows a **Non-Monopolistic Crowd** principle. Public Crowds have no owners. Anyone can join an existing Crowd or "Awaken" a frequency by naming it. Crowd identities are **Deterministic and Scoped** by their parent context, ensuring the crowd mesh remains an open, communal, and logically organized resource.
+Blukit follows a **Shared-Public Crowd** principle. Users who "Awaken" a new frequency by naming it become the owner of that specific public event, allowing them to set its **Event Persona**. The default "THE CROWD" has no owners. All public crowds are communal and logically organized by their parent context, ensuring the mesh remains an open and intuitive resource.
 
 ## 7. Academic Sentience & Memory TIMELINE
 - **Crowd Schedules**: You can schedule recurring academic rituals. This data is used for smart reminders and automatic frequency awakening.

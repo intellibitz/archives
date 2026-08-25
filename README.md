@@ -18,15 +18,16 @@ blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-t
 Experience the **Unified Pulse Frequency**.
 
 ### **Crowd Hierarchy (The Resonance Drill-Down)**
-- **EVENT FIELD (Landing)**: The global spectrum view. Surfaces all **Event**—the public frequencies nearby.
-- **CROWD FIELD (Public)**: Shared physical containers. All Crowd frequencies are **Discoverable**. Lists **Event**, **Ties**, and **Resonances**. Recursive by design.
-- **CHAIN FIELD (Private)**: Secure, encrypted interaction layers. **All Chains are Private**. A Chain must be anchored to a parent Crowd for discoverability. Lists **Ties** and **Resonances**.
-- **PULSE FIELD (Granular)**: The deepest level of the mesh. Breaks down **Resonances** into its constituent pulses. The **Pulse** is the final, atomic unit of energy.
+- **EVENT FIELD (Landing)**: The global spectrum view. Surfaces all **Events**—the public frequencies nearby. Pure discovery zone; joining or creating events are the primary actions.
+- **CROWD FIELD (Public)**: Shared physical containers. Once joined, the interaction hub awakens. Lists **Child Crowds**, **Ties**, and **Resonances**. Recursive by design.
+- **CHAIN FIELD (Private)**: Secure, encrypted interaction layers anchored to a Crowd context. **All Chains are Private**. Lists **Ties** and **Resonances**.
+- **PULSE FIELD (Granular)**: The deepest level of the mesh. Breaks down **Resonances** into its constituent pulses.
 - **TIMELINE FIELD (History)**: A visual chronological path of student memories and shared milestones.
 
 ### **Core Interaction Paradigm**
-- **Resonance Summaries**: A "Summary-First" visual paradigm. Users see **Event, Ties, or Resonances** (collapsed high-level pulses) and drill down into **Resonance** summaries to expand into granular constituent pulses.
-- **Expansion strategy**: Specialized crowd capabilities including **Interoperable Crowds** (logical bridging across physical locations) and **Template-Based Crowds** (predefined structures for Universities, Festivals, and Venues).
+- **Resonance Summaries**: A "Summary-First" visual paradigm. Headers display high-level context (Title, Member Count, "ENTER" affordance) and dynamic previews of the latest pulse (e.g., `YOU :: HELLO MESH`).
+- **Context-First Navigation**: Actions are scoped to their containers. You must "Join" or "Enter" a frequency before the Pulse Hub awakens, ensuring conceptual integrity and preventing global spam.
+- **Event Ownership**: Public Crowds created by users are owned by the creator, allowing them to set a unique **Event Persona** (emoji) that identifies the frequency across the mesh. The default "THE CROWD" remains collectively owned.
 - **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. Dynamically surfaces units from the current context and its children, with unit counts for Resonances.
 - **Scoped Sharing & Roles**: Specialized roles (e.g., Student, Faculty, Artist) within templates to manage interaction density and scoped visibility.
 - **Rose Resonance**: Private Chains and Mutual Pulses resonate in **Stealth Rose**, distinguishing them from the Amber public Field.
@@ -47,15 +48,16 @@ Experience the **Unified Pulse Frequency**.
 ## 📱 HARMONY HUB
 A high-density, ergonomic architecture for tactical crowd control:
 
-### **Crowd Hub (Top)**
-- **Row 0 (Global Command)**: Tactical toggles for Stealth/Power + **BLUKIT PRIVACY** tie + Real-time radio status.
-- **Row 1 (Humanity Stage)**: Minimalist navigation, centered **Event Title** (showing deep paths like `CROWD > CHAIN`), and right-anchored **Profile Persona**.
+### **Tactical Header (Top Overlay)**
+- **Row 0 (Global Command)**: Low-profile system bar with tactical toggles for Stealth/Power + **BLUKIT BRANDING** next to the **PRIVACY** tie + Real-time Amber radio status (BT/WiFi).
 
-### **Interaction Hub (Bottom)**
+### **Humanity Stage (Radar Header)**
+- **Row 1 (Contextual Navigation)**: Anchored directly to the Radar Field for ergonomic reach. Unified navigation breadcrumbs (showing deep paths like `EVENT > CONCERT`), the active **Event Title**, and the user's **Profile Persona**.
+
+### **Interaction Hub (Bottom Overlay)**
 *Available only inside a Crowd or Chain*
-- **Pulse Hub**: Once you dive in, the interaction hub awakens.
-- **Discovery Radar**: Integrated directly into the input widget. Toggles between Pulsing and Searching.
-- **Unified Media**: Seamless media attachment (+) alongside the discovery radar.
+- **Pulse Hub**: The interaction hub awakens once a context is established.
+- **Discovery Radar**: Spatial view with a centralized Context Anchor, your Persona nearby, and other Users in orbit. Integrated Search/Pulse toggle.
 
 ---
 

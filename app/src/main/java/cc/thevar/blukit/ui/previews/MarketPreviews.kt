@@ -42,7 +42,6 @@ fun PreviewRadarPhone() {
             ),
             localDeviceId = "me",
             header = { Text("PREVIEW HEADER", color = Color.White) },
-            onStartScan = {},
             onDeviceClick = {},
             onDeletePulse = {},
             onWhisper = {}
@@ -106,7 +105,6 @@ fun PreviewRadarTablet() {
             ),
             localDeviceId = "me",
             header = { Text("PREVIEW HEADER", color = Color.White) },
-            onStartScan = {},
             onDeviceClick = {},
             onDeletePulse = {},
             onWhisper = {}
@@ -164,69 +162,45 @@ fun PreviewFeatureGraphic() {
     }
 }
 
-@Preview(name = "Harmony Hub - Full Phone", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Tactical Header", device = Devices.PHONE, showBackground = true)
 @Composable
-fun PreviewHarmonyHubFull() {
+fun PreviewTacticalHeader() {
+    BlukitTheme {
+        BlukitTacticalHeader(
+            isStealthMode = false,
+            lowPowerMode = false,
+            isBluetoothOff = false,
+            isWifiOff = false,
+            isPermissionMissing = false,
+            isPermanentlyDenied = false,
+            themeColor = StealthPrimary,
+            onToggleStealth = {},
+            onToggleLowPower = {},
+            onAwakenBluetooth = {},
+            onAwakenWifi = {},
+            onGrantPermissions = {},
+            onOpenSettings = {},
+            onShowPrivacy = {}
+        )
+    }
+}
+
+@Preview(name = "Humanity Stage", device = Devices.PHONE, showBackground = true)
+@Composable
+fun PreviewHumanityStage() {
     BlukitTheme {
         Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                BlukitHarmonyTopBar(
-                    title = "THE CROWD",
-                    icon = Icons.Rounded.Groups,
-                    currentRoute = Route.Event,
-                    onNavigate = {},
-                    userNickname = "BLUKIT",
-                    userEmoji = "👤",
-                    onUserNicknameChange = {},
-                    onResetProfile = {},
-                    userFocusRequester = null,
-                    isBluetoothOff = false,
-                    isLocationOff = false,
-                    isWifiOff = false,
-                    isPermissionMissing = false,
-                    isPermanentlyDenied = false,
-                    userCount = 12,
-                    isStealthMode = false,
-                    lowPowerMode = false,
-                    crowdIsStill = false,
-                    activeCrowds = emptyList(),
-                    onToggleStealth = {},
-                    onToggleLowPower = {},
-                    onAwakenBluetooth = {},
-                    onAwakenLocation = {},
-                    onAwakenWifi = {},
-                    onGrantPermissions = {},
-                    onOpenSettings = {},
-                    onClearHistory = {},
-                    onShowPrivacy = {},
-                    onBack = {},
-                    onTitleClick = {}
-                )
-                
-                Spacer(modifier = Modifier.weight(1f))
-                
-                BlukitPulseHub(
-                    currentRoute = Route.Event,
-                    messageText = "Hello Crowd",
-                    onMessageChange = {},
-                    onSend = {},
-                    pulseCount = 5,
-                    crowdIsStill = false,
-                    isSearchMode = true,
-                    onSearchToggle = {},
-                    onCreatePublicResonance = { _, _ -> },
-                    incomingRadioRequests = emptySet(),
-                    selectedDevices = emptySet(),
-                    pulsedPeers = emptySet(),
-                    onAcceptRadio = {},
-                    onDenyRadio = {},
-                    onStartSidePulse = {},
-                    onStartChain = {},
-                    onClearSelection = {},
-                    onAttachFile = {},
-                    onShowPrivacy = {}
-                )
-            }
+            BlukitHumanityStage(
+                title = "THE CROWD",
+                breadcrumbTrail = listOf("Event", "Crowd"),
+                onCrumbClick = {},
+                activeCrowds = emptyList(),
+                onShowTimeline = {},
+                onResetProfile = {},
+                onTitleClick = {},
+                onBack = {},
+                themeColor = StealthPrimary
+            )
         }
     }
 }

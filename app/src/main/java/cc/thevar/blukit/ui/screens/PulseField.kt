@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -57,6 +58,14 @@ fun PulseField(
     onSearchToggle: (() -> Unit)? = null,
     onAttachFile: () -> Unit = {},
     onShowPrivacy: () -> Unit = {},
+    // Humanity Stage Props
+    breadcrumbTrail: List<String> = emptyList(),
+    onCrumbClick: (Int) -> Unit = {},
+    activeCrowds: List<Resonance> = emptyList(),
+    onShowTimeline: () -> Unit = {},
+    onResetProfile: () -> Unit = {},
+    onTitleClick: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
     header: @Composable () -> Unit
 ) {
     val rootPulse = remember(messageId, state.session.messages) {
@@ -78,7 +87,26 @@ fun PulseField(
         entries = {
             // MODULE 1: BASE CONTENT (Radar + Lists)
             Column(modifier = Modifier.fillMaxSize()) {
-                // RipplesField is optional here, so we just use the main content as base
+                RipplesField(
+                    state = state,
+                    localDeviceId = localDeviceId,
+                    activeBubbles = emptyList(),
+                    pulsedPeers = emptySet(),
+                    drawBackground = false,
+                    drawNodes = false,
+                    onDeviceClick = { },
+                    // Humanity Stage
+                    title = "PULSE",
+                    breadcrumbTrail = breadcrumbTrail,
+                    onCrumbClick = onCrumbClick,
+                    activeCrowds = activeCrowds,
+                    onShowTimeline = onShowTimeline,
+                    onResetProfile = onResetProfile,
+                    onTitleClick = onTitleClick,
+                    onBack = onBack,
+                    themeColor = themeColor,
+                    modifier = Modifier.fillMaxWidth().height(320.dp)
+                )
                 rootPulse?.let {
                     Surface(
                         color = themeColor.copy(alpha = 0.1f),

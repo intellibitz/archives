@@ -74,6 +74,14 @@ fun CrowdField(
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
     externalFocusedId: String? = null,
+    // Humanity Stage Props
+    breadcrumbTrail: List<String> = emptyList(),
+    onCrumbClick: (Int) -> Unit = {},
+    activeCrowds: List<Resonance> = emptyList(),
+    onShowTimeline: () -> Unit = {},
+    onResetProfile: () -> Unit = {},
+    onTitleClick: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
     header: @Composable () -> Unit
 ) {
     var showTip by remember { mutableStateOf(true) }
@@ -111,6 +119,7 @@ fun CrowdField(
         entries = {
             // MODULE 1: BASE CONTENT (Radar + Lists)
             Column(modifier = Modifier.fillMaxSize()) {
+                val crowdName = crowd?.name ?: "CROWD"
                 RipplesField(
                     state = state,
                     localDeviceId = localDeviceId,
@@ -119,8 +128,17 @@ fun CrowdField(
                     drawBackground = false,
                     drawNodes = false,
                     onDeviceClick = { },
-                    onStartScan = { },
-                    modifier = Modifier.fillMaxWidth().height(280.dp)
+                    // Humanity Stage
+                    title = crowdName,
+                    breadcrumbTrail = breadcrumbTrail,
+                    onCrumbClick = onCrumbClick,
+                    activeCrowds = activeCrowds,
+                    onShowTimeline = onShowTimeline,
+                    onResetProfile = onResetProfile,
+                    onTitleClick = onTitleClick,
+                    onBack = onBack,
+                    themeColor = StealthPrimary,
+                    modifier = Modifier.fillMaxWidth().height(320.dp)
                 )
 
                 Column(modifier = Modifier.weight(1f)) {

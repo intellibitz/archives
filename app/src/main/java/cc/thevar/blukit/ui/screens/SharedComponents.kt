@@ -86,12 +86,9 @@ val LocalActivePulseId = staticCompositionLocalOf { mutableStateOf<String?>(null
 fun MixedStatusBranding(
     isBluetoothOff: Boolean,
     isWifiOff: Boolean,
-    isLocationOff: Boolean,
-    isPermissionMissing: Boolean,
-    isLocationMandatory: Boolean = false,
     onAwakenBluetooth: () -> Unit,
     onAwakenWifi: () -> Unit,
-    onAwakenLocation: () -> Unit,
+    isPermissionMissing: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
@@ -159,215 +156,179 @@ fun BreadcrumbHub(
     }
 }
 
-/**
- * HARMONY TOP BAR: The command center of every Field.
- * 
- * Architectural Pattern: HEADER
- * 
- * - Row 0: Global Tactical Controls (Dark, Eco, Privacy, Radios).
- * - Row 1: Contextual Identity and Navigation Stage (Branding, Breadcrumbs, Persona).
- */
 @Composable
-fun BlukitHarmonyTopBar(
-    title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    currentRoute: Route,
-    breadcrumbTrail: List<String> = emptyList(),
-    onCrumbClick: (Int) -> Unit = {},
-    onNavigate: (Route) -> Unit,
-    userNickname: String,
-    userEmoji: String,
-    onUserNicknameChange: (String) -> Unit,
-    onResetProfile: () -> Unit,
-    userFocusRequester: FocusRequester?,
+fun BlukitTacticalHeader(
+    isStealthMode: Boolean,
+    lowPowerMode: Boolean,
     isBluetoothOff: Boolean,
-    isLocationOff: Boolean,
     isWifiOff: Boolean,
     isPermissionMissing: Boolean,
     isPermanentlyDenied: Boolean,
-    userCount: Int,
-    isStealthMode: Boolean,
-    lowPowerMode: Boolean,
-    crowdIsStill: Boolean,
-    isLocationMandatory: Boolean = false,
-    activeCrowds: List<Resonance> = emptyList(),
+    themeColor: Color,
     onToggleStealth: (Boolean) -> Unit,
     onToggleLowPower: (Boolean) -> Unit,
     onAwakenBluetooth: () -> Unit,
-    onAwakenLocation: () -> Unit,
     onAwakenWifi: () -> Unit,
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
-    onClearHistory: () -> Unit,
-    onShowPrivacy: () -> Unit = {},
-    onShowTimeline: () -> Unit = {},
-    onBack: (() -> Unit)? = null,
-    onTitleClick: (() -> Unit)? = null,
-    onProfileClick: (() -> Unit)? = null,
+    onShowPrivacy: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(initialValue = 0.6f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
-    var showClearHistoryDialog by remember { mutableStateOf(false) }
+    val isStill = isBluetoothOff
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .background(Color.Black, RoundedCornerShape(12.dp))
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // LEFT: [DARK] [ECO]
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
+            EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
+        }
+
+        // CENTER: [BLUKIT] [PRIVACY]
+        Row(
+            verticalAlignment = Alignment.CenterVertically, 
+            horizontalArrangement = Arrangement.Center, 
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_blukit_logo), 
+                contentDescription = null, 
+                tint = themeColor,
+                modifier = Modifier.size(10.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "BLUKIT", 
+                fontSize = 7.sp, 
+                fontWeight = FontWeight.Black, 
+                color = Color.White, 
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = "PRIVACY", 
+                fontSize = 7.sp, 
+                fontWeight = FontWeight.Black, 
+                color = themeColor.copy(alpha = 0.8f), 
+                letterSpacing = 1.sp,
+                modifier = Modifier.clickable { onShowPrivacy() }
+            )
+        }
+        
+        // RIGHT: [STATUS LABEL] [RADIOS]
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
+            if (isPermissionMissing || isStill) {
+                Surface(
+                    color = Color.White.copy(alpha = 0.05f), 
+                    shape = RoundedCornerShape(8.dp), 
+                    modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                ) {
+                    Text(
+                        text = when { isPermissionMissing -> if (isPermanentlyDenied) "SETTINGS" else "ALLOW"; isStill -> "AWAKEN"; else -> "SEARCHING" }, 
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill || isPermissionMissing) Color.Red else Color.Yellow), 
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).clickable { 
+                            if (isPermissionMissing) { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() }
+                            else if (isStill) onAwakenBluetooth()
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+            
+            MixedStatusBranding(
+                isBluetoothOff = isBluetoothOff,
+                isWifiOff = isWifiOff,
+                isPermissionMissing = isPermissionMissing,
+                onAwakenBluetooth = onAwakenBluetooth,
+                onAwakenWifi = onAwakenWifi
+            )
+        }
+    }
+}
+
+/**
+ * HUMANITY STAGE: The contextual navigation and identity layer (Row 1).
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun BlukitHumanityStage(
+    title: String,
+    breadcrumbTrail: List<String>,
+    onCrumbClick: (Int) -> Unit,
+    activeCrowds: List<Resonance>,
+    onShowTimeline: () -> Unit,
+    onResetProfile: () -> Unit,
+    onTitleClick: (() -> Unit)?,
+    onBack: (() -> Unit)?,
+    themeColor: Color,
+    modifier: Modifier = Modifier
+) {
     var showResetProfileDialog by remember { mutableStateOf(false) }
-    val isPrivate = currentRoute is Route.Resonance || currentRoute is Route.GroupField
-    val themeColor = if (isPrivate) StealthRose else StealthPrimary
-    val isWeak = userCount == 0 && !isBluetoothOff && !isLocationOff
-    val isStill = isBluetoothOff || isLocationOff
-    val barColor = when { isStill -> Color.Red.copy(alpha = 0.15f); isPermissionMissing -> Color(0xFFF4511E).copy(alpha = 0.15f); else -> themeColor.copy(alpha = 0.05f) }
 
-    val isUnknown = userNickname == "?" || userNickname == "SET NAME" || userNickname.isEmpty()
-    BlukitWidget(
-        header = {
-            // ROW 0: GLOBAL COMMAND BAR (Tactical)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Black, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // LEFT: [DARK] [ECO]
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
-                    EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        // LEFT & CENTER: Unified Navigation & Title
+        Row(
+            verticalAlignment = Alignment.CenterVertically, 
+            modifier = Modifier
+                .weight(1f)
+                .then(if (onTitleClick != null) Modifier.clickable { onTitleClick() } else Modifier),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            if (onBack != null) {
+                IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = themeColor, modifier = Modifier.size(20.dp))
                 }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
 
-                // CENTER: [BLUKIT] [PRIVACY]
-                Row(
-                    verticalAlignment = Alignment.CenterVertically, 
-                    horizontalArrangement = Arrangement.Center, 
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_blukit_logo), 
-                        contentDescription = null, 
-                        tint = themeColor,
-                        modifier = Modifier.size(10.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "BLUKIT", 
-                        fontSize = 7.sp, 
-                        fontWeight = FontWeight.Black, 
-                        color = Color.White, 
-                        letterSpacing = 1.sp
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "PRIVACY", 
-                        fontSize = 7.sp, 
-                        fontWeight = FontWeight.Black, 
-                        color = themeColor.copy(alpha = 0.8f), 
-                        letterSpacing = 1.sp,
-                        modifier = Modifier.clickable { onShowPrivacy() }
-                    )
-                }
-                
-                // RIGHT: [STATUS LABEL] [RADIOS]
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-                    if (isPermissionMissing || isStill || isWeak) {
-                        Surface(
-                            color = Color.White.copy(alpha = 0.05f), 
-                            shape = RoundedCornerShape(8.dp), 
-                            modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
-                        ) {
-                            Text(
-                                text = when { isPermissionMissing -> if (isPermanentlyDenied) "SETTINGS" else "ALLOW"; isStill -> "AWAKEN"; else -> "SEARCHING" }, 
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill || isPermissionMissing) Color.Red else Color.Yellow), 
-                                maxLines = 1,
-                                softWrap = false,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).clickable { 
-                                    if (isPermissionMissing) { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() }
-                                    else if (isStill) onAwakenBluetooth()
-                                }
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-                    
-                    MixedStatusBranding(
-                        isBluetoothOff = isBluetoothOff,
-                        isWifiOff = isWifiOff,
-                        isLocationOff = isLocationOff,
-                        isPermissionMissing = isPermissionMissing,
-                        isLocationMandatory = isLocationMandatory,
-                        onAwakenBluetooth = onAwakenBluetooth,
-                        onAwakenWifi = onAwakenWifi,
-                        onAwakenLocation = onAwakenLocation
-                    )
+            if (breadcrumbTrail.isNotEmpty()) {
+                BreadcrumbHub(trail = breadcrumbTrail, onCrumbClick = onCrumbClick)
+            } else {
+                CrowdTicker(title = title, resonances = activeCrowds)
+            }
+
+            val isLanding = title == "THE CROWD" || title == "PUBLIC PULSES" || title == "BLUKIT" || title == "EVENT"
+            if (isLanding && onTitleClick != null) {
+                Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
+            }
+        }
+
+        // RIGHT: TACTICAL TOOLS
+        Box(modifier = Modifier.width(60.dp), contentAlignment = Alignment.CenterEnd) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 4.dp)) {
+                IconButton(onClick = onShowTimeline, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(18.dp))
                 }
             }
-        },
-        entries = {
-            // ROW 1: HUMANITY Stage (Identity & Navigation)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // LEFT & CENTER: Unified Navigation & Title
-                Row(
-                    verticalAlignment = Alignment.CenterVertically, 
-                    modifier = Modifier
-                        .weight(1f)
-                        .then(if (onTitleClick != null) Modifier.clickable { onTitleClick() } else Modifier),
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = themeColor, modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
+        }
+    }
 
-                    if (breadcrumbTrail.isNotEmpty()) {
-                        BreadcrumbHub(trail = breadcrumbTrail, onCrumbClick = onCrumbClick)
-                    } else {
-                        CrowdTicker(title = title, resonances = activeCrowds)
-                    }
-
-                    val isLanding = title == "THE CROWD" || title == "PUBLIC PULSES" || title == "BLUKIT" || title == "EVENT"
-                    if (isLanding && onTitleClick != null) {
-                        Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
-                    }
-                }
-
-                // RIGHT: PROFILE Persona
-                Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.CenterEnd) {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 4.dp)) {
-                        IconButton(onClick = onShowTimeline, modifier = Modifier.size(36.dp)) {
-                            Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(18.dp))
-                        }
-                        
-                        if (userFocusRequester != null) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(start = 4.dp)
-                                    .size(44.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color.White.copy(alpha = 0.04f))
-                                    .combinedClickable(
-                                        onClick = { if (isUnknown) onProfileClick?.invoke() ?: userFocusRequester.requestFocus() else userFocusRequester.requestFocus() },
-                                        onLongClick = { showResetProfileDialog = true }
-                                    ), 
-                                contentAlignment = Alignment.Center
-                            ) {
-                                UserPersona(nickname = userNickname, emoji = userEmoji, onNicknameChange = onUserNicknameChange, focusRequester = userFocusRequester)
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        themeColor = themeColor,
-        showGlow = false,
-        modifier = modifier.statusBarsPadding()
-    )
-    if (showClearHistoryDialog) { BlukitAlert(title = "CLEAR PULSES?", text = "THIS WILL PERMANENTLY REMOVE YOUR SHARED HISTORY.", confirmLabel = "CLEAR", onConfirm = { onClearHistory(); showClearHistoryDialog = false }, onDismiss = { showClearHistoryDialog = false }) }
-    if (showResetProfileDialog) { BlukitAlert(title = "RESET PROFILE?", text = "THIS WILL CLEAR YOUR NAME BUT KEEP YOUR PULSES.", confirmLabel = "RESET", onConfirm = { onResetProfile(); showResetProfileDialog = false }, onDismiss = { showResetProfileDialog = false }) }
+    if (showResetProfileDialog) {
+        BlukitAlert(
+            title = "RESET PROFILE?", 
+            text = "THIS WILL CLEAR YOUR NAME BUT KEEP YOUR PULSES.", 
+            confirmLabel = "RESET", 
+            onConfirm = { onResetProfile(); showResetProfileDialog = false }, 
+            onDismiss = { showResetProfileDialog = false }
+        )
+    }
 }
 
 /**
@@ -603,7 +564,13 @@ fun BlukitWidget(
  * TICKER SECTION HEADER: A tactical label for categorizing ticker contents.
  */
 @Composable
-fun TickerSectionHeader(title: String, color: Color = StealthPrimary, modifier: Modifier = Modifier) {
+fun TickerSectionHeader(
+    title: String, 
+    color: Color = StealthPrimary, 
+    onAction: (() -> Unit)? = null,
+    actionLabel: String? = null,
+    modifier: Modifier = Modifier
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -625,6 +592,18 @@ fun TickerSectionHeader(title: String, color: Color = StealthPrimary, modifier: 
                 .height(0.5.dp)
                 .background(color.copy(alpha = 0.2f))
         )
+        if (onAction != null && actionLabel != null) {
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = actionLabel.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.sp,
+                fontSize = 7.sp,
+                modifier = Modifier.clickable { onAction() }
+            )
+        }
     }
 }
 
@@ -808,7 +787,21 @@ fun AnimatedPulseItem(
             )
         }
 
-        // Persona Emoji on the Left of the content
+        // ENTRY: Timestamp on the left
+        if (timestamp.isNotEmpty()) {
+            Text(
+                text = timestamp, 
+                fontSize = 7.sp, 
+                color = Color.White.copy(alpha = 0.3f), 
+                fontWeight = FontWeight.Black,
+                letterSpacing = 0.5.sp,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        // Persona Emoji
         Surface(
             modifier = Modifier.size(24.dp), 
             shape = CircleShape, 
@@ -893,10 +886,6 @@ fun AnimatedPulseItem(
                     )
                 }
             }
-        }
-
-        if (timestamp.isNotEmpty()) {
-            Text(text = timestamp, fontSize = 7.sp, color = Color.White.copy(alpha = 0.15f), fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
         }
 
         if (isMutual) { 
@@ -1288,16 +1277,30 @@ fun ResonanceSummary(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .background(themeColor.copy(alpha = 0.1f), CircleShape)
-                        .border(1.dp, themeColor.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
+                // LEFT: [ICON + TIMESTAMP]
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(themeColor.copy(alpha = 0.1f), CircleShape)
+                            .border(1.dp, themeColor.copy(alpha = 0.2f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = lastUpdate,
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.3f),
+                        letterSpacing = 0.5.sp
+                    )
                 }
+
                 Spacer(modifier = Modifier.width(16.dp))
+
+                // CENTER: [TITLE + SUBTITLE]
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title.uppercase(),
@@ -1321,6 +1324,7 @@ fun ResonanceSummary(
                     }
                 }
                 
+                // RIGHT: [ENTER] [USER COUNT]
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (showJoin) {
                         Surface(
@@ -1341,30 +1345,21 @@ fun ResonanceSummary(
                         Spacer(modifier = Modifier.width(12.dp))
                     }
 
-                    Column(horizontalAlignment = Alignment.End) {
-                        if (count >= 0) {
-                            Surface(
-                                color = themeColor.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.4f))
-                            ) {
-                                Text(
-                                    text = "$count ${if (count == 1) "USER" else "USERS"}",
-                                    fontSize = 8.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = themeColor,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                    letterSpacing = 0.5.sp
-                                )
-                            }
+                    if (count >= 0) {
+                        Surface(
+                            color = themeColor.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = "$count ${if (count == 1) "USER" else "USERS"}",
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black,
+                                color = themeColor,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                letterSpacing = 0.5.sp
+                            )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = lastUpdate,
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.2f)
-                        )
                     }
                 }
             }

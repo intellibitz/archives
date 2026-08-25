@@ -10,11 +10,12 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 1.  Open `MarketPreviews.kt` in Android Studio.
 2.  Switch to the **Design** or **Split** view.
 3.  Locate the following previews:
-    -   `PreviewRadarPhone`: The main **Event Field** showing high-level **Event** pulses and the spectral radar.
-    -   `PreviewChatPhone`: The **Crowd Field** and **Chain Field** interface showing **Ties** and the **Resonance** summaries.
+    -   `PreviewRadarPhone`: The main **Event Field** showing the spatial radar and unified **Event** creation header.
+    -   `PreviewChatPhone`: The **Crowd Field** and **Chain Field** interface showing **Ties** and the **Resonance** headers with dynamic pulse previews.
     -   `PreviewTimelineField`: The visual student journey showing shared **Memories**.
     -   `PreviewPulseField`: The granular breakdown of a specific **Pulse** into its constituent units.
-    -   `PreviewHarmonyHubFull`: The complete Harmony Hub architecture with recursive resonance-expansion.
+    -   `PreviewTacticalHeader`: The low-profile Row 0 tactical controls (Eco, Stealth, Radios).
+    -   `PreviewHumanityStage`: The Row 1 navigation and identity anchor, now situated in the Radar Header.
     -   `PreviewCrowdRitualGhost`: The **Pulse Ghost** interaction model for naming Crowds and selecting **Templates**.
     -   `PreviewPulsingResonanceTickerHeaders`: High-density feed showcasing varied pulse types and unit counts.
     -   `PreviewRadarTablet`: The adaptive layout for larger spectral fields.

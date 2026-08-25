@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -90,14 +91,25 @@ fun RipplesField(
     onDismissGhost: () -> Unit = {},
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
-    onStartScan: () -> Unit = {},
     onPulseSurge: (Float) -> Unit = {},
     drawBackground: Boolean = true,
     drawNodes: Boolean = true,
     crowdList: List<Pair<P2PDevice, Int>> = emptyList(),
-    onCreateEvent: (() -> Unit)? = null,
     onSearchToggle: (() -> Unit)? = null,
     isSearchActive: Boolean = false,
+    // HUMANITY STAGE PROPS
+    title: String = "",
+    breadcrumbTrail: List<String> = emptyList(),
+    onCrumbClick: (Int) -> Unit = {},
+    userNickname: String = "",
+    userEmoji: String = "",
+    activeCrowds: List<Resonance> = emptyList(),
+    onShowTimeline: () -> Unit = {},
+    onResetProfile: () -> Unit = {},
+    onTitleClick: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
+    onNicknameChange: (String) -> Unit = {},
+    themeColor: Color = StealthPrimary,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit = {},
     airRitualGhost: @Composable () -> Unit = {}
@@ -148,70 +160,66 @@ fun RipplesField(
     }
 
     val finalEnergy = (collectiveEnergy + externalEnergy).coerceAtMost(1.0f)
+    val finalThemeColor = themeColor
 
     val coordinates = LocalPersonaCoordinates.current
 
     BlukitWidget(
+        themeColor = finalThemeColor,
         header = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (onCreateEvent != null) {
-                        TextButton(
-                            onClick = onCreateEvent,
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                            modifier = Modifier.height(24.dp)
-                        ) {
-                            Icon(
-                                Icons.Rounded.Add, 
-                                contentDescription = null, 
-                                tint = StealthPrimary, 
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "CREATE EVENT", 
-                                color = StealthPrimary, 
-                                fontWeight = FontWeight.Black, 
-                                fontSize = 8.sp, 
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
+            Column {
+                // ROW 1: HUMANITY STAGE (Navigation & Identity)
+                BlukitHumanityStage(
+                    title = title,
+                    breadcrumbTrail = breadcrumbTrail,
+                    onCrumbClick = onCrumbClick,
+                    activeCrowds = activeCrowds,
+                    onShowTimeline = onShowTimeline,
+                    onResetProfile = onResetProfile,
+                    onTitleClick = onTitleClick,
+                    onBack = onBack,
+                    themeColor = finalThemeColor
+                )
 
-                    if (onSearchToggle != null) {
-                        IconButton(
-                            onClick = onSearchToggle,
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
-                                contentDescription = "Toggle Search",
-                                tint = if (isSearchActive) StealthAmber else StealthPrimary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                    }
-                }
-
-                Surface(
-                    color = StealthPrimary.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.2f))
+                // ROW 2: TACTICAL RADAR CONTROLS
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val count = state.crowd.scannedDevices.size
-                    Text(
-                        text = "$count ${if (count == 1) "USER" else "USERS"} IN THE PUBLIC CROWD",
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = StealthPrimary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
+                    // LEFT: Tactical Toggles
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (onSearchToggle != null) {
+                            IconButton(
+                                onClick = onSearchToggle,
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                    contentDescription = "Toggle Search",
+                                    tint = if (isSearchActive) StealthAmber else finalThemeColor,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Surface(
+                        color = finalThemeColor.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(0.5.dp, finalThemeColor.copy(alpha = 0.2f))
+                    ) {
+                        val count = state.crowd.scannedDevices.size
+                        Text(
+                            text = "$count ${if (count == 1) "USER" else "USERS"} IN THE PUBLIC CROWD",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = finalThemeColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
         },
@@ -272,6 +280,9 @@ fun RipplesField(
                             isFilterMode = isFilterMode,
                             highlightedUserId = highlightedUserId,
                             subjectId = subjectId,
+                            userNickname = userNickname,
+                            userEmoji = userEmoji,
+                            title = title,
                             onDeviceClick = onDeviceClick,
                             onDeviceLongClick = onDeviceLongClick
                         )
@@ -289,7 +300,6 @@ fun RipplesField(
                 content()
             }
         },
-        themeColor = StealthPrimary,
         showGlow = false, // Background handles glow
         modifier = modifier
     )
@@ -439,20 +449,72 @@ private fun PulseNodes(
     isFilterMode: Boolean,
     highlightedUserId: String?,
     subjectId: String?,
+    userNickname: String,
+    userEmoji: String,
+    title: String,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit
 ) {
+    val coordinates = LocalPersonaCoordinates.current
+    
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        // 1. CENTER: RESONANCE IDENTITY
+        val resonance = state.session.groups.find { it.name == title || it.id == title }
+        val isRoot = title == "THE CROWD" || title == "EVENT"
+        val centerCount = if (isRoot) state.crowd.scannedDevices.size else resonance?.allMemberIds?.size ?: state.crowd.scannedDevices.size
+        
+        val centerEmoji = when {
+            isRoot -> "🌬️"
+            resonance?.projectionEmoji != null -> resonance.projectionEmoji
+            resonance?.templateId != null -> cc.thevar.blukit.domain.model.CrowdTemplates.ALL.find { it.id == resonance.templateId }?.iconEmoji ?: "🌬️"
+            else -> "🌬️"
+        }
+
+        PulseCrowdSignature(
+            device = P2PDevice(id = "CONTEXT", name = title, emoji = centerEmoji ?: "🌬️"),
+            pulseCount = centerCount,
+            isPulsed = false,
+            size = 64.dp
+        )
+
+        // 2. NEARBY: YOUR PERSONA
+        val userRadius = 52f
+        val userAngle = -PI / 2 // Anchored to top-ish
+        val userX = (userRadius * cos(userAngle)).toFloat().dp
+        val userY = (userRadius * sin(userAngle)).toFloat().dp
+        
+        Box(
+            modifier = Modifier
+                .offset(userX, userY)
+                .onGloballyPositioned { 
+                    val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                    val current = coordinates["YOU"] ?: PersonaConnectionPoints()
+                    coordinates["YOU"] = current.copy(field = it.positionInRoot() + center) 
+                }
+        ) {
+            PulsePersonaSignature(
+                device = P2PDevice(id = "YOU", name = userNickname, emoji = userEmoji),
+                isPulsed = false,
+                isSelected = false,
+                isPeerPulsed = false,
+                onlyTies = false,
+                size = 42.dp,
+                isStatic = false, // Allow interaction/edit in the field
+                onClick = { /* Could trigger nickname edit here */ }
+            )
+        }
+
+        // 3. OTHER USERS: Surrounding the cluster
         devices.forEachIndexed { index, device ->
-            val radiusValue = (1f - device.proximityFactor) * 140f + 60f
+            val baseRadius = (1f - device.proximityFactor) * 80f + 110f
             val angle = (index.toDouble() / devices.size) * 2 * PI
             val activeBubble = activeBubbles.findLast { it.senderId == device.id }
             val isTied = device.id in connectedTies
             val isPulsed = device.persistentId in pulsedPeers || device.id in pulsedPeers
             val isSelected = device.id in selectedDevices
             
-            val xOffset = (radiusValue * cos(angle)).toFloat().dp
-            val yOffset = (radiusValue * sin(angle)).toFloat().dp
+            val xOffset = (baseRadius * cos(angle)).toFloat().dp
+            val yOffset = (baseRadius * sin(angle)).toFloat().dp
 
             val isFocused = isPulsed || isTied || isSelected || device.id == subjectId || device.persistentId == subjectId
             val isBroadFocus = isFilterMode && pulsedPeers.isEmpty() && subjectId == null

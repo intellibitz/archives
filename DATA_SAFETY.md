@@ -39,7 +39,7 @@ blukit **never** connects to the internet. All "Pulses" spread directly from pho
 
 - **AES-256-GCM**: Whispers are scrambled so only the intended Chain members can pulse with them.
 - **ECDH Handshakes**: Secure keys are negotiated locally over the air.
-- **Non-Monopolistic Crowd**: Public Crowds have no "owner." They are shared frequencies that anyone can join or name. Identifiers are **Deterministic and Scoped** (e.g., `crowd_MALL_FOOD_COURT`) to ensure crowd access remains open and unique.
+- **Shared & User-Owned Crowds**: Public Crowds follow a creator-as-owner model. While anyone can join or name a crowd, the creator establishes its identity via a **Crowd Persona** (emoji). The default "THE CROWD" has no owner and belongs to the mesh. Identifiers are **Deterministic and Scoped** (e.g., `crowd_MALL_FOOD_COURT`).
 
 ---
 **Vision Updated**: August 24, 2026

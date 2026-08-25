@@ -23,6 +23,7 @@ data class Resonance(
     val memberSections: Map<String, Set<String>> = emptyMap(),
     val connections: List<CrowdConnection> = emptyList(),
     val templateId: String? = null,
+    val ownerId: String? = null,
     val userRoles: Map<String, String> = emptyMap() // Map of userId to role name
 ) {
     /**

@@ -29,6 +29,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -76,11 +77,18 @@ fun EventField(
     header: @Composable () -> Unit,
     pulsedPeers: Set<String> = emptySet(),
     noiseFilterEnabled: Boolean = false,
-    onStartScan: () -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeletePulse: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
     onIdentifyUser: (String) -> Unit = {},
+    // Humanity Stage Props
+    breadcrumbTrail: List<String> = emptyList(),
+    onCrumbClick: (Int) -> Unit = {},
+    activeCrowds: List<Resonance> = emptyList(),
+    onShowTimeline: () -> Unit = {},
+    onResetProfile: () -> Unit = {},
+    onTitleClick: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
     // Hub Callbacks (Simplified for root)
     messageText: String = "",
     onSearchToggle: (() -> Unit)? = null,
@@ -164,10 +172,18 @@ fun EventField(
                         }
                     )
                 },
-                onStartScan = onStartScan,
-                onCreateEvent = onShowAirGhost,
                 onSearchToggle = onSearchToggle,
                 isSearchActive = isSearchActive,
+                // Humanity Stage
+                title = "EVENT",
+                breadcrumbTrail = breadcrumbTrail,
+                onCrumbClick = onCrumbClick,
+                activeCrowds = activeCrowds,
+                onShowTimeline = onShowTimeline,
+                onResetProfile = onResetProfile,
+                onTitleClick = onTitleClick,
+                onBack = onBack,
+                themeColor = StealthPrimary,
                 drawBackground = false, // Background handled by Scaffold
                 drawNodes = true,
                 airRitualGhost = {
@@ -241,7 +257,11 @@ fun EventField(
                     }
 
                     // MODULE 2.2: TICKER (Standard Spectrum)
-                    TickerSectionHeader(title = "ACTIVE EVENTS")
+                    TickerSectionHeader(
+                        title = "ACTIVE EVENTS",
+                        onAction = onShowAirGhost,
+                        actionLabel = "CREATE EVENT"
+                    )
                     
                     PulsingResonanceTicker(
                         state = state,
