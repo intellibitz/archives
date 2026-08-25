@@ -60,7 +60,6 @@ import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
-import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.Date
 
