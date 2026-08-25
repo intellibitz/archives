@@ -58,8 +58,10 @@ A high-density, ergonomic architecture for tactical crowd control:
 
 ### **Interaction Hub (Bottom Overlay)**
 *Available only inside a Crowd or Chain*
-- **Pulse Hub**: The interaction hub awakens once a context is established.
-- **Discovery Radar**: Spatial view with a centralized **Context Anchor** (Named Event), your prominent **Identity Anchor** ("YOU") nearby, and other Users in orbit. Integrated Search/Pulse toggle.
+- **Pulse Hub**: The interaction hub awakens once a context is established. Featuring an **Aura Glow** that signals active focus.
+- **Discovery Radar**: Spatial view with a centralized **Context Anchor** (Named Event), your prominent **Identity Anchor** ("YOU") nearby, and other Users in orbit.
+- **Spectral Dimming**: The radar field intelligently dims when the Pulse Hub is engaged, focusing the user's energy on the current interaction while maintaining spatial mesh awareness.
+- **Tactical Identity**: Your persona node provides immediate recognition by showing your name (up to 3 characters) and an explicit **"YOU"** anchor.
 
 ---
 

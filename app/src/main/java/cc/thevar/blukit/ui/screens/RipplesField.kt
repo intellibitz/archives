@@ -112,6 +112,7 @@ fun RipplesField(
     onBack: (() -> Unit)? = null,
     onNicknameChange: (String) -> Unit = {},
     themeColor: Color = StealthPrimary,
+    isDimmed: Boolean = false,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit = {},
     airRitualGhost: @Composable () -> Unit = {}
@@ -166,48 +167,56 @@ fun RipplesField(
 
     val coordinates = LocalPersonaCoordinates.current
 
+    val dimAlpha by animateFloatAsState(
+        targetValue = if (isDimmed) 0.25f else 1.0f,
+        animationSpec = tween(500),
+        label = "SpectralDimming"
+    )
+
     BlukitWidget(
         themeColor = finalThemeColor,
         header = {
             // MERGED ROW 1 & 2: HUMANITY STAGE + TACTICAL RADAR CONTROLS
-            BlukitHumanityStage(
-                title = title,
-                breadcrumbTrail = breadcrumbTrail,
-                onCrumbClick = onCrumbClick,
-                activeCrowds = activeCrowds,
-                onShowTimeline = onShowTimeline,
-                onResetProfile = onResetProfile,
-                onTitleClick = onTitleClick,
-                onBack = onBack,
-                themeColor = finalThemeColor,
-                userCount = state.crowd.scannedDevices.size,
-                trailingContent = {
-                    // Tactical Toggles
-                    if (onSearchToggle != null) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconButton(
-                                onClick = onSearchToggle,
-                                modifier = Modifier.size(28.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
-                                    contentDescription = "Toggle Search",
-                                    tint = if (isSearchActive) StealthAmber else finalThemeColor,
-                                    modifier = Modifier.size(16.dp)
+            Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
+                BlukitHumanityStage(
+                    title = title,
+                    breadcrumbTrail = breadcrumbTrail,
+                    onCrumbClick = onCrumbClick,
+                    activeCrowds = activeCrowds,
+                    onShowTimeline = onShowTimeline,
+                    onResetProfile = onResetProfile,
+                    onTitleClick = onTitleClick,
+                    onBack = onBack,
+                    themeColor = finalThemeColor,
+                    userCount = state.crowd.scannedDevices.size,
+                    trailingContent = {
+                        // Tactical Toggles
+                        if (onSearchToggle != null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                IconButton(
+                                    onClick = onSearchToggle,
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                        contentDescription = "Toggle Search",
+                                        tint = if (isSearchActive) StealthAmber else finalThemeColor,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                Text(
+                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    fontSize = 5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = (if (isSearchActive) StealthAmber else finalThemeColor).copy(alpha = 0.5f),
+                                    letterSpacing = 1.sp
                                 )
                             }
-                            Text(
-                                text = if (isSearchActive) "SEARCH" else "RADAR",
-                                fontSize = 5.sp,
-                                fontWeight = FontWeight.Black,
-                                color = (if (isSearchActive) StealthAmber else finalThemeColor).copy(alpha = 0.5f),
-                                letterSpacing = 1.sp
-                            )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-            )
+                )
+            }
         },
         entries = {
             Box(
@@ -223,11 +232,15 @@ fun RipplesField(
                 contentAlignment = Alignment.Center
             ) {
                 if (drawBackground) {
-                    AirBackground(energy = finalEnergy, lowPowerMode = lowPowerMode, onlyTies = onlyTies)
-                    AtmosphericHeatmap(intensity = state.activity.energyIntensity)
+                    Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
+                        AirBackground(energy = finalEnergy, lowPowerMode = lowPowerMode, onlyTies = onlyTies)
+                        AtmosphericHeatmap(intensity = state.activity.energyIntensity)
+                    }
                 }
                 
-                RelayLayer(relayEvents, onlyTies = onlyTies)
+                Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
+                    RelayLayer(relayEvents, onlyTies = onlyTies)
+                }
                 
                 val bubbleSenders = remember(activeBubbles) { 
                     activeBubbles.asSequence().map { it.senderId }.toSet() 
@@ -247,12 +260,14 @@ fun RipplesField(
                 if (drawNodes) {
                     Box(modifier = Modifier.fillMaxSize().zIndex(2f)) {
                         if (crowdList.isNotEmpty()) {
-                            CrowdNodes(
-                                crowdList = crowdList,
-                                pulsedPeers = pulsedPeers,
-                                onCrowdClick = onDeviceClick,
-                                onCrowdLongClick = onDeviceLongClick
-                            )
+                            Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
+                                CrowdNodes(
+                                    crowdList = crowdList,
+                                    pulsedPeers = pulsedPeers,
+                                    onCrowdClick = onDeviceClick,
+                                    onCrowdLongClick = onDeviceLongClick
+                                )
+                            }
                         }
 
                         PulseNodes(
@@ -271,7 +286,8 @@ fun RipplesField(
                             title = title,
                             onDeviceClick = onDeviceClick,
                             onDeviceLongClick = onDeviceLongClick,
-                            onNicknameChange = onNicknameChange
+                            onNicknameChange = onNicknameChange,
+                            isDimmed = isDimmed
                         )
                     }
                 }
@@ -441,10 +457,17 @@ private fun PulseNodes(
     title: String,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit,
-    onNicknameChange: (String) -> Unit
+    onNicknameChange: (String) -> Unit,
+    isDimmed: Boolean = false
 ) {
     val coordinates = LocalPersonaCoordinates.current
     
+    val nodeDimAlpha by animateFloatAsState(
+        targetValue = if (isDimmed) 0.4f else 1.0f,
+        animationSpec = tween(500),
+        label = "NodeDimming"
+    )
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // 1. CENTER: RESONANCE IDENTITY
         val resonance = state.session.groups.find { it.name == title || it.id == title }
@@ -467,14 +490,16 @@ private fun PulseNodes(
             else -> "⚡"
         }
 
-        PulseCrowdSignature(
-            device = P2PDevice(id = "CONTEXT", name = title, emoji = centerEmoji ?: "⚡"),
-            pulseCount = centerCount,
-            isPulsed = false,
-            size = 64.dp,
-            icon = centerIcon,
-            title = title
-        )
+        Box(modifier = Modifier.graphicsLayer { alpha = nodeDimAlpha }) {
+            PulseCrowdSignature(
+                device = P2PDevice(id = "CONTEXT", name = title, emoji = centerEmoji ?: "⚡"),
+                pulseCount = centerCount,
+                isPulsed = false,
+                size = 64.dp,
+                icon = centerIcon,
+                title = title
+            )
+        }
 
         // 2. NEARBY: YOUR PERSONA
         val userRadius = 52f
@@ -519,7 +544,7 @@ private fun PulseNodes(
 
             val isFocused = isPulsed || isTied || isSelected || device.id == subjectId || device.persistentId == subjectId
             val isBroadFocus = isFilterMode && pulsedPeers.isEmpty() && subjectId == null
-            val noiseDimAlpha = if (isFilterMode && !isFocused && !isBroadFocus) 0.15f else 1f
+            val noiseDimAlpha = if (isFilterMode && !isFocused && !isBroadFocus) 0.15f else if (isDimmed && !isSelected) 0.3f else 1f
 
             Box(modifier = Modifier.graphicsLayer { alpha = noiseDimAlpha }) {
                 PulseNode(

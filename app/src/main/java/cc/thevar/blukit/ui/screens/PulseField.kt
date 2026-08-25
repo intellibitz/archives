@@ -58,6 +58,8 @@ fun PulseField(
     onSearchToggle: (() -> Unit)? = null,
     onAttachFile: () -> Unit = {},
     onShowPrivacy: () -> Unit = {},
+    isInputFocused: Boolean = false,
+    onInputFocusChange: (Boolean) -> Unit = {},
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
@@ -110,6 +112,7 @@ fun PulseField(
                     onTitleClick = onTitleClick,
                     onBack = onBack,
                     onNicknameChange = onUserNicknameChange,
+                    isDimmed = isInputFocused,
                     themeColor = themeColor,
                     modifier = Modifier.fillMaxWidth().height(320.dp)
                 )
@@ -225,6 +228,7 @@ fun PulseField(
                 onAttachFile = onAttachFile,
                 onSearchToggle = onSearchToggle,
                 onShowPrivacy = onShowPrivacy,
+                onFocusChange = onInputFocusChange,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()

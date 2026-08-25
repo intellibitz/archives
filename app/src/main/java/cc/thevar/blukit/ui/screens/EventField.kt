@@ -104,6 +104,7 @@ fun EventField(
     showAirGhost: Boolean = false,
     onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {},
+    onInputFocusChange: (Boolean) -> Unit = {}
 ) {
     var showTip by remember { mutableStateOf(value = true) }
     var airProposalName by remember { mutableStateOf("") }

@@ -396,6 +396,7 @@ fun BlukitPulseHub(
     onCreatePublicResonance: ((String, String?) -> Unit)? = null,
     isSearchMode: Boolean = false,
     onShowPrivacy: () -> Unit = {},
+    onFocusChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isPrivate = currentRoute is Route.Resonance || currentRoute is Route.GroupField
@@ -530,6 +531,7 @@ fun BlukitPulseHub(
                 pulseCount = pulseCount, 
                 isSearchActive = isSearchMode,
                 onSearchToggle = onSearchToggle,
+                onFocusChange = onFocusChange,
                 modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
             )
         },
@@ -2340,6 +2342,7 @@ fun BlukitInput(
     placeholder: String? = null,
     isSearchActive: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
+    onFocusChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
@@ -2459,7 +2462,10 @@ fun BlukitInput(
                             .fillMaxWidth()
                             .testTag("SendPulseInput")
                             .focusRequester(focusRequester)
-                            .onFocusChanged { isFocused = it.isFocused },
+                            .onFocusChanged { 
+                                isFocused = it.isFocused
+                                onFocusChange(it.isFocused)
+                            },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(
                             color = Color.White, 
                             fontWeight = FontWeight.Bold,

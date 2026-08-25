@@ -74,6 +74,8 @@ fun CrowdField(
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
     externalFocusedId: String? = null,
+    isInputFocused: Boolean = false,
+    onInputFocusChange: (Boolean) -> Unit = {},
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
@@ -143,6 +145,7 @@ fun CrowdField(
                     onTitleClick = onTitleClick,
                     onBack = onBack,
                     onNicknameChange = onUserNicknameChange,
+                    isDimmed = isInputFocused || state.crowd.selectedDevices.isNotEmpty(),
                     themeColor = StealthPrimary,
                     modifier = Modifier.fillMaxWidth().height(320.dp)
                 )
@@ -275,6 +278,7 @@ fun CrowdField(
                 onAttachFile = { },
                 onSearchToggle = onSearchToggle,
                 onShowPrivacy = onShowPrivacy,
+                onFocusChange = onInputFocusChange,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()

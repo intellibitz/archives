@@ -197,6 +197,7 @@ fun BlukitApp(
 
     var showManageDialog by remember { mutableStateOf(false) }
     var isSearchMode by remember { mutableStateOf(false) }
+    var isInputFocused by remember { mutableStateOf(false) }
     var showAirGhost by remember { mutableStateOf(false) }
     var showPrivacyProtocol by remember { mutableStateOf(false) }
     var showOnboarding by remember { mutableStateOf(false) }
@@ -453,7 +454,9 @@ fun BlukitApp(
                                         onDenyRadio = bluetoothViewModel::denyRadio,
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
-                                        onShowPrivacy = { showPrivacyProtocol = true }
+                                        onShowPrivacy = { showPrivacyProtocol = true },
+                                        isInputFocused = isInputFocused,
+                                        onInputFocusChange = { isInputFocused = it }
                                     )
                                 } else {
                                     ChainField(
@@ -510,7 +513,9 @@ fun BlukitApp(
                                         onDenyRadio = bluetoothViewModel::denyRadio,
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
-                                        onShowPrivacy = { showPrivacyProtocol = true }
+                                        onShowPrivacy = { showPrivacyProtocol = true },
+                                        isInputFocused = isInputFocused,
+                                        onInputFocusChange = { isInputFocused = it }
                                     ) 
                                 }
                             }
@@ -553,7 +558,9 @@ fun BlukitApp(
                                     },
                                     onSearchToggle = { isSearchMode = !isSearchMode; messageText = "" },
                                     onAttachFile = { filePickerLauncher.launch("*/*") },
-                                    onShowPrivacy = { showPrivacyProtocol = true }
+                                    onShowPrivacy = { showPrivacyProtocol = true },
+                                    isInputFocused = isInputFocused,
+                                    onInputFocusChange = { isInputFocused = it }
                                 )
                             }
                             Route.Timeline -> NavEntry(key) {
