@@ -60,10 +60,10 @@ class BleFallbackController(
     private val _outgoingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
     override val outgoingRadioRequests = _outgoingRadioRequests.asStateFlow()
 
-    private val _isDiscovering = MutableStateFlow(false)
+    private val _isDiscovering = MutableStateFlow(value = false)
     override val isDiscovering = _isDiscovering.asStateFlow()
 
-    private val _isAdvertising = MutableStateFlow(false)
+    private val _isAdvertising = MutableStateFlow(value = false)
     override val isAdvertising = _isAdvertising.asStateFlow()
 
     private val _errors = MutableStateFlow<P2PError?>(null)
@@ -101,7 +101,7 @@ class BleFallbackController(
                 id = device.address,
                 name = parts[1],
                 emoji = parts[0],
-                signalStrength = result.rssi
+                signalStrength = result.rssi,
             )
             _scannedDevices.update { current ->
                 current.filter { it.id != device.address } + newDevice
@@ -147,7 +147,7 @@ class BleFallbackController(
             preparedWrite: Boolean,
             responseNeeded: Boolean,
             offset: Int,
-            value: ByteArray
+            value: ByteArray,
         ) {
             handleCharacteristicWrite(device, requestId, characteristic, responseNeeded, value)
         }
@@ -199,7 +199,7 @@ class BleFallbackController(
         requestId: Int,
         characteristic: BluetoothGattCharacteristic,
         responseNeeded: Boolean,
-        value: ByteArray
+        value: ByteArray,
     ) {
         if (characteristic.uuid == PULSE_CHAR_UUID) {
             if (responseNeeded) {
@@ -242,7 +242,7 @@ class BleFallbackController(
             when (payload.type) {
                 MessagePayload.TYPE_ACK -> handleAck(payload)
                 else -> {
-                    if (isNewMessage(payload.messageId) && payload.senderId !in repository.blockedUsers.value) {
+                    if (isNewMessage(payload.messageId) && (payload.senderId !in repository.blockedUsers.value)) {
                         handleChatMessage(address, payload, secretKey)
                     }
                 }
@@ -273,7 +273,7 @@ class BleFallbackController(
             // AUTO-DISCOVER RESONANCES
             val gid = payload.groupId
             val gName = payload.groupName
-            if (gid != null && gName != null) {
+            if ((gid != null) && (gName != null)) {
                 val existing = pulseStore.getGroup(gid)
                 if (existing == null) {
                     val scope = when (payload.pulseType) {
@@ -281,12 +281,14 @@ class BleFallbackController(
                         MessagePayload.PULSE_SILENCE -> Resonance.SCOPE_LOCAL
                         else -> Resonance.SCOPE_PRIVATE
                     }
-                    pulseStore.insertGroup(Resonance(
-                        id = gid, 
-                        name = gName, 
-                        scope = scope,
-                        parentId = Resonance.ID_CROWD
-                    ))
+                    pulseStore.insertGroup(
+                        Resonance(
+                            id = gid,
+                            name = gName,
+                            scope = scope,
+                            parentId = Resonance.ID_CROWD,
+                        ),
+                    )
                 }
             }
 
@@ -399,13 +401,15 @@ class BleFallbackController(
         _isDiscovering.value = false
         try {
             adapter?.bluetoothLeScanner?.stopScan(scanCallback)
-        } catch (e: SecurityException) {}
+        } catch (e: SecurityException) {
+            Log.w("BleFallback", "Stop advertising failed: ${e.message}")
+        }
         _scannedDevices.value = emptyList()
     }
 
     override fun startAdvertising() {
         Log.i(tag, "BLE: startAdvertising()")
-        if (adapter == null || !adapter.isEnabled) {
+        if ((adapter == null) || (!adapter.isEnabled)) {
             reportError(P2PError.AdvertisingError("Bluetooth Disabled"))
             return
         }
@@ -460,7 +464,9 @@ class BleFallbackController(
             adapter?.bluetoothLeAdvertiser?.stopAdvertising(advertiseCallback)
             gattServer?.close()
             gattServer = null
-        } catch (e: SecurityException) {}
+        } catch (e: SecurityException) {
+            Log.e("BleFallback", "GATT connection change handle failed: ${e.message}")
+        }
     }
 
     override fun requestRadio(device: P2PDevice) {
@@ -496,8 +502,14 @@ class BleFallbackController(
         }
 
         try {
-            bluetoothDevice.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+            bluetoothDevice.connectGatt(
+                context,
+                false,
+                gattCallback,
+                BluetoothDevice.TRANSPORT_LE
+            )
         } catch (e: SecurityException) {
+            Log.e("BleFallback", "Permission Denied: ${e.message}")
             flow.tryEmit(ConnectionStatus.Error("Permission Denied"))
             reportError(P2PError.ConnectionError("Permission Denied"))
         }
@@ -574,7 +586,18 @@ class BleFallbackController(
         return sendMessage(content, null, pulseType, messageId, groupId, groupName, type)
     }
 
-    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? = null
+    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload {
+        // BLE implementation does not yet support identity broadcasts.
+        // Returning a placeholder that won't be broadcast.
+        return MessagePayload(
+            messageId = "ble-placeholder",
+            senderId = "ble",
+            senderName = "ble",
+            content = oldName,
+            timestamp = System.currentTimeMillis(),
+            type = MessagePayload.TYPE_IDENTITY_UPDATE
+        )
+    }
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
         // BLE implementation: Send to all connected ties
@@ -595,13 +618,15 @@ class BleFallbackController(
     override fun startGroupPulse(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
         val gid = groupId ?: Resonance.generateId(name, type)
         internalScope.launch(ioDispatcher) {
-            pulseStore.insertGroup(Resonance(
-                id = gid, 
-                name = name, 
-                memberIds = members + repository.getDeviceId(), 
-                scope = type,
-                parentId = parentId
-            ))
+            pulseStore.insertGroup(
+                Resonance(
+                    id = gid,
+                    name = name,
+                    memberIds = members + repository.getDeviceId(),
+                    scope = type,
+                    parentId = parentId,
+                )
+            )
         }
         return gid
     }

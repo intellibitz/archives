@@ -43,7 +43,7 @@ import java.util.Locale
 /**
  * CROWD FIELD: Public frequency view. 
  * Lists Ties and Shouts within a specific Crowd container.
- * Features collaborative Crowd Canvas for pinned vibes and spectral tips.
+ * Features collaborative Crowd Canvas for pinned pulses and spectral tips.
  */
 /**
  * CROWD FIELD: The primary public interaction layer.

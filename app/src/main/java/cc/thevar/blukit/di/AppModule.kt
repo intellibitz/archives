@@ -41,7 +41,6 @@ val appModule = module {
         NearbyP2PController(
             context = androidContext(),
             repository = get(),
-            contactRepository = get(),
             pulseStore = get(),
             hapticManager = get(),
             radioStateManager = get(),

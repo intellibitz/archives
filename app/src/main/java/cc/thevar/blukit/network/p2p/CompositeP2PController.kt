@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.*
  */
 class CompositeP2PController(
     private val nearbyController: NearbyP2PController,
-    private val bleController: BleFallbackController
+    private val bleController: BleFallbackController,
 ) : P2PController {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -30,7 +30,11 @@ class CompositeP2PController(
     override val isConnected: StateFlow<Boolean> = combine(
         nearbyController.isConnected,
         bleController.isConnected
-    ) { nearby, ble -> nearby || ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
+    ) { nearby, ble -> nearby || ble }.stateIn(
+        scope,
+        SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
 
     override val connectedTies: StateFlow<Set<String>> = combine(
         nearbyController.connectedTies,
@@ -41,25 +45,33 @@ class CompositeP2PController(
         nearbyController.incomingRadioRequests,
         bleController.incomingRadioRequests
     ) { nearby, ble ->
-        (nearby + ble).distinctBy { it.id }.toSet()
+        (nearby.asSequence() + ble.asSequence()).distinctBy { it.id }.toSet()
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     override val outgoingRadioRequests: StateFlow<Set<P2PDevice>> = combine(
         nearbyController.outgoingRadioRequests,
         bleController.outgoingRadioRequests
     ) { nearby, ble ->
-        (nearby + ble).distinctBy { it.id }.toSet()
+        (nearby.asSequence() + ble.asSequence()).distinctBy { it.id }.toSet()
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     override val isDiscovering: StateFlow<Boolean> = combine(
         nearbyController.isDiscovering,
         bleController.isDiscovering
-    ) { nearby, ble -> nearby || ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
+    ) { nearby, ble -> nearby || ble }.stateIn(
+        scope,
+        SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
 
     override val isAdvertising: StateFlow<Boolean> = combine(
         nearbyController.isAdvertising,
         bleController.isAdvertising
-    ) { nearby, ble -> nearby || ble }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
+    ) { nearby, ble -> nearby || ble }.stateIn(
+        scope,
+        SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
 
     override val errors: StateFlow<P2PError?> = combine(
         nearbyController.errors,
@@ -114,10 +126,10 @@ class CompositeP2PController(
         return nearby ?: ble
     }
 
-    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? {
+    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload {
         val nearby = nearbyController.broadcastIdentityUpdate(oldName)
-        val ble = bleController.broadcastIdentityUpdate(oldName)
-        return nearby ?: ble
+        bleController.broadcastIdentityUpdate(oldName)
+        return nearby
     }
 
     override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {

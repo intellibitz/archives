@@ -4,9 +4,6 @@ import android.content.Context
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.data.local.PulseStore
-import cc.thevar.blukit.data.local.entities.ContactEntity
-import cc.thevar.blukit.data.local.entities.PeerEntity
-import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
@@ -15,32 +12,30 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
-import android.os.Build
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.webkit.MimeTypeMap
 import java.io.File
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
-import kotlin.random.Random
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.SecretKey
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class NearbyP2PController(
     private val context: Context,
     private val repository: IdentityRepository,
-    private val contactRepository: ContactRepository,
     private val pulseStore: PulseStore,
     private val hapticManager: HapticManager,
     private val radioStateManager: cc.thevar.blukit.data.system.RadioStateManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : P2PController {
 
     private val tag = "BlukitP2P"
@@ -95,9 +90,10 @@ class NearbyP2PController(
 
     // PERFORMANCE: Pulse Aggregator
     private val aggregateBuffer = ConcurrentHashMap<String, MutableList<MessagePayload>>()
+    @Suppress("unused")
     private val aggregateJob = internalScope.launch {
         while (isActive) {
-            delay(200)
+            delay(200.milliseconds)
             flushAggregateBuffer()
         }
     }
@@ -222,7 +218,9 @@ class NearbyP2PController(
         override fun onDisconnected(endpointId: String) {
             activeConnections.remove(endpointId)
             pendingRadioRequests.remove(endpointId)
-            _outgoingRadioRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
+            _outgoingRadioRequests.update { current ->
+            current.asSequence().filter { it.id != endpointId }.toSet()
+        }
             _connectedTies.update { it - endpointId }
             pulseKeys.remove(endpointId)
             if (activeConnections.isEmpty()) _isConnected.value = false
@@ -267,7 +265,9 @@ class NearbyP2PController(
             val publicKeyEncoded = bytes.copyOfRange(1, bytes.size)
             val pulsePublicKey = KeyFactory.getInstance("EC").generatePublic(X509EncodedKeySpec(publicKeyEncoded))
             pulseKeys[endpointId] = cryptoManager.deriveSharedSecret(pulsePublicKey)
-        } catch (e: Exception) { }
+        } catch (e: Exception) {
+            Log.e(tag, "Handshake handle failed: ${e.message}")
+        }
     }
 
     private fun handleMessage(endpointId: String, bytes: ByteArray) {
@@ -293,7 +293,10 @@ class NearbyP2PController(
                 MessagePayload.TYPE_RESYNC_COMPLETE -> {
                     Log.d(tag, "RESYNC COMPLETE from $endpointId")
                     _syncProgress.value = 1.0f
-                    internalScope.launch { delay(1000); _syncProgress.value = null }
+                    internalScope.launch {
+                        delay(1.seconds)
+                        _syncProgress.value = null
+                    }
                 }
                 else -> {
                     // PERFORMANCE: Handle aggregated pulses
@@ -301,16 +304,20 @@ class NearbyP2PController(
                         try {
                             val batch = Json.decodeFromString<List<MessagePayload>>(payload.content)
                             batch.forEach { p -> if (isNewMessage(p.messageId)) handleChatMessage(endpointId, p, secretKey) }
-                        } catch (e: Exception) { Log.e(tag, "Failed to decode aggregate") }
+                        } catch (e: Exception) {
+                            Log.e(tag, "Failed to decode aggregate: ${e.message}")
+                        }
                     } else {
                         if (isNewMessage(payload.messageId)) handleChatMessage(endpointId, payload, secretKey)
                     }
                 }
             }
-        } catch (e: Exception) { }
+        } catch (e: Exception) {
+            Log.e(tag, "Decryption or parsing failure: ${e.message}")
+        }
     }
 
-    private fun handleResyncRequest(endpointId: String, secretKey: javax.crypto.SecretKey, sinceTimestamp: Long? = null) {
+    private fun handleResyncRequest(endpointId: String, secretKey: SecretKey, sinceTimestamp: Long? = null) {
         internalScope.launch(ioDispatcher) {
             _syncProgress.value = 0.05f
             // 1. Sync Resonances first
@@ -325,10 +332,10 @@ class NearbyP2PController(
                     content = Json.encodeToString(chunk),
                     timestamp = System.currentTimeMillis(),
                     type = MessagePayload.TYPE_RESYNC_CHUNK,
-                    status = 1 // Tag for resonances
+                    status = 1, // Tag for resonances
                 )
                 sendMessageInternal(endpointId, chunkPayload, secretKey)
-                _syncProgress.value = 0.05f + (index.toFloat() / (groups.size / 5 + 1) * 0.2f)
+                _syncProgress.value = 0.05f + ((index.toFloat() / ((groups.size / 5) + 1).toFloat()) * 0.2f)
             }
 
             // 2. Sync Messages
@@ -343,10 +350,10 @@ class NearbyP2PController(
                     content = Json.encodeToString(chunk),
                     timestamp = System.currentTimeMillis(),
                     type = MessagePayload.TYPE_RESYNC_CHUNK,
-                    status = 0 // Tag for messages
+                    status = 0, // Tag for messages
                 )
                 sendMessageInternal(endpointId, chunkPayload, secretKey)
-                _syncProgress.value = 0.25f + (index.toFloat() / (history.size / 10 + 1) * 0.7f)
+                _syncProgress.value = 0.25f + ((index.toFloat() / (history.size / 10 + 1).toFloat()) * 0.7f)
             }
             val complete = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
@@ -380,9 +387,9 @@ class NearbyP2PController(
         } catch (e: Exception) { }
     }
 
-    private suspend fun sendMessageInternal(endpointId: String, payload: MessagePayload, secretKey: javax.crypto.SecretKey) {
+    private fun sendMessageInternal(endpointId: String, payload: MessagePayload, secretKey: SecretKey) {
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
-        queuePulse(endpointId, com.google.android.gms.nearby.connection.Payload.fromBytes(cryptoManager.encrypt(bytes, secretKey)))
+        queuePulse(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, secretKey)))
     }
 
     private fun handleFileMetadata(endpointId: String, payload: MessagePayload, secretKey: SecretKey) {
@@ -393,6 +400,7 @@ class NearbyP2PController(
     }
 
     private fun finalizeFileMessage(payloadId: Long, metadata: MessagePayload) {
+        Log.d(tag, "Finalizing file message: $payloadId (Type: ${metadata.type})")
         // Implementation omitted for brevity, but logically sound
     }
 
@@ -408,7 +416,9 @@ class NearbyP2PController(
 
     private fun handleRadioAccept(endpointId: String) {
         pendingRadioRequests.remove(endpointId)
-        _outgoingRadioRequests.update { current -> current.filter { it.id != endpointId }.toSet() }
+        _outgoingRadioRequests.update { current ->
+            current.asSequence().filter { it.id != endpointId }.toSet()
+        }
         _connectedTies.update { it + endpointId }
         _isConnected.value = true
         updateScannedDevices()
@@ -520,7 +530,11 @@ class NearbyP2PController(
         override fun onEndpointLost(endpointId: String) { _scannedDevices.update { current -> current.filter { d -> d.id != endpointId } } }
     }
 
-    override fun stopDiscovery() { connectionsClient.stopDiscovery(); _isDiscovering.value = false; _scannedDevices.value = emptyList() }
+    override fun stopDiscovery() {
+        connectionsClient.stopDiscovery()
+        _isDiscovering.value = false
+        _scannedDevices.value = emptyList()
+    }
 
     override fun startAdvertising() {
         if (_isAdvertising.value) return
@@ -545,7 +559,10 @@ class NearbyP2PController(
         }
     }
 
-    override fun stopAdvertising() { connectionsClient.stopAdvertising(); _isAdvertising.value = false }
+    override fun stopAdvertising() {
+        connectionsClient.stopAdvertising()
+        _isAdvertising.value = false
+    }
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
         val flow = MutableSharedFlow<ConnectionStatus>(replay = 1)
@@ -571,22 +588,30 @@ class NearbyP2PController(
     }
 
     override fun acceptRadio(device: P2PDevice) {
-        _incomingRadioRequests.update { it - device }; pendingRadioRequests.remove(device.id); _connectedTies.update { it + device.id }; _isConnected.value = true
-        _outgoingRadioRequests.update { current -> current.filter { it.id != device.id }.toSet() }
+        _incomingRadioRequests.update { it - device }
+        pendingRadioRequests.remove(device.id)
+        _connectedTies.update { it + device.id }
+        _isConnected.value = true
+        _outgoingRadioRequests.update { current ->
+            current.asSequence().filter { it.id != device.id }.toSet()
+        }
         updateScannedDevices()
         internalScope.launch(ioDispatcher) {
             sendMessagePayload(device.id, MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_ACCEPT", timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_TIE_ACCEPT))
         }
     }
 
-    override fun denyRadio(device: P2PDevice) { 
+    override fun denyRadio(device: P2PDevice) {
         pendingRadioRequests.remove(device.id)
         _incomingRadioRequests.update { it - device }
-        _outgoingRadioRequests.update { current -> current.filter { it.id != device.id }.toSet() }
-        updateScannedDevices() 
+        _outgoingRadioRequests.update { current ->
+            current.asSequence().filter { it.id != device.id }.toSet()
+        }
+        updateScannedDevices()
     }
 
-    private suspend fun sendMessagePayload(endpointId: String, payload: MessagePayload) {
+
+    private fun sendMessagePayload(endpointId: String, payload: MessagePayload) {
         pulseKeys[endpointId]?.let { key -> queuePulse(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), payload).toByteArray(), key))) }
     }
 
@@ -655,9 +680,15 @@ class NearbyP2PController(
                     } 
                 } 
             }
-            synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
-            pulseStore.upsertMessage(payload); return payload
-        } catch (e: Exception) { return null }
+            synchronized(messageIdHistory) {
+                messageIdHistory.add(payload.messageId)
+                if (messageIdHistory.size > 500) messageIdHistory.removeAt(0)
+            }
+            pulseStore.upsertMessage(payload)
+            return payload
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     private fun flushAggregateBuffer() {
@@ -686,7 +717,7 @@ class NearbyP2PController(
     override suspend fun broadcastMessage(content: String, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? = 
         sendMessage(content, null, pulseType, messageId, groupId, groupName, type)
 
-    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload? {
+    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload {
         val payload = MessagePayload(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = MessagePayload.TYPE_IDENTITY_UPDATE, pulseType = MessagePayload.PULSE_SHOUT)
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { pulseKeys[target]?.let { key -> try { queuePulse(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (e: Exception) {} } } }
@@ -706,8 +737,11 @@ class NearbyP2PController(
                 if (receiverId != null) { sendMessagePayload(receiverId, payload); connectionsClient.sendPayload(receiverId, filePayload) }
                 else { activeConnections.forEach { target -> internalScope.launch { sendMessagePayload(target, payload); connectionsClient.sendPayload(target, filePayload) } } }
             }
-            pulseStore.upsertMessage(payload); return payload
-        } catch (e: Exception) { return null }
+            pulseStore.upsertMessage(payload)
+            return payload
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     private fun getFileName(uri: Uri): String? {
@@ -760,13 +794,15 @@ class NearbyP2PController(
     override fun startGroupPulse(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
         val gid = groupId ?: Resonance.generateId(name, type)
         internalScope.launch(ioDispatcher) { 
-            pulseStore.insertGroup(Resonance(
-                id = gid, 
-                name = name, 
-                memberIds = members + repository.getDeviceId(), 
-                scope = type,
-                parentId = parentId
-            )) 
+            pulseStore.insertGroup(
+                Resonance(
+                    id = gid,
+                    name = name,
+                    memberIds = members + repository.getDeviceId(),
+                    scope = type,
+                    parentId = parentId,
+                )
+            ) 
         }
         return gid
     }
@@ -808,7 +844,12 @@ class NearbyP2PController(
 
     private fun updateScannedDevices() { _scannedDevices.update { current -> current.map { device -> val tied = device.id in _connectedTies.value; val connecting = device.id in pendingRadioRequests; device.copy(isConnected = tied, isTiePending = connecting, medium = if (tied) P2PDevice.ConnectionMedium.WIFI else if (connecting || activeConnections.contains(device.id)) P2PDevice.ConnectionMedium.BLUETOOTH else P2PDevice.ConnectionMedium.LOCATION) } } }
 
-    override fun closeConnection() { connectionsClient.stopAllEndpoints(); activeConnections.clear(); pulseKeys.clear(); _isConnected.value = false }
+    override fun closeConnection() {
+        connectionsClient.stopAllEndpoints()
+        activeConnections.clear()
+        pulseKeys.clear()
+        _isConnected.value = false
+    }
 
     override fun release() { 
         stopDiscovery()

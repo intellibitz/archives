@@ -279,7 +279,7 @@ private fun AtmosphericHeatmap(intensity: Float) {
 }
 
 @Composable
-private fun VibeArcs(devices: List<P2PDevice>, energy: Float, onlyTies: Boolean) {
+private fun PulseArcs(devices: List<P2PDevice>, energy: Float, onlyTies: Boolean) {
     if (devices.isEmpty()) return
     Canvas(modifier = Modifier.fillMaxSize()) {
         val center = Offset(size.width / 2f, size.height / 2f)
@@ -376,7 +376,7 @@ private fun RelayLayer(relays: List<RelayEvent>, onlyTies: Boolean) {
 }
 
 @Composable
-private fun VibesConnectivity(devices: List<P2PDevice>, onlyTies: Boolean) {
+private fun PulseConnectivity(devices: List<P2PDevice>, onlyTies: Boolean) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val center = Offset(size.width / 2f, size.height / 2f)
         // Draw connection lines between devices if relevant

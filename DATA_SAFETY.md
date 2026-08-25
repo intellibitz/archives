@@ -31,7 +31,7 @@ blukit **never** connects to the internet. All "Pulses" spread directly from pho
 ## 3. Self-Cleaning Persistence
 - **Pulse Decay (Pruning)**: To keep your device light over a long journey, blukit automatically deletes large media older than 90 days.
 - **Pinned Preservation**: Any pulse you "Pin" to a **Crowd Canvas** is exempt from decay, ensuring your core data and memories are never lost.
-- **Intelligent Ticker Management**: The ticker automatically clears non-pinned ephemeral pulses after they sink into the vault, preventing local storage bloat.
+- **Intelligent Ticker Management**: The ticker automatically clears non-pinned ephemeral pulses after they sink into the **Sunk Pulse** vault, preventing local storage bloat.
 
 
 ## 4. Hardware Encryption

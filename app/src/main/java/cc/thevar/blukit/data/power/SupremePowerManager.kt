@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * The Supreme Power: Intelligence Service.
- * Monitors vibes, chains, and provides human-centric insights.
+ * Monitors resonances, chains, and provides human-centric insights.
  */
 class SupremePowerManager(
     private val p2pController: P2PController,

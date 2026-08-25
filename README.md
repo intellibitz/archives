@@ -21,7 +21,7 @@ Experience the **Unified Pulse Frequency**.
 - **EVENT FIELD (Landing)**: The global spectrum view. Surfaces all **Event**—the public frequencies nearby.
 - **CROWD FIELD (Public)**: Shared physical containers. All Crowd frequencies are **Discoverable**. Lists **Event**, **Ties**, and **Resonances**. Recursive by design.
 - **CHAIN FIELD (Private)**: Secure, encrypted interaction layers. **All Chains are Private**. A Chain must be anchored to a parent Crowd for discoverability. Lists **Ties** and **Resonances**.
-- **RESONANCE FIELD (Granular)**: The deepest level of the mesh. Breaks down **Resonances** into its constituent pulses. The **Pulse** is the final, atomic unit of energy.
+- **PULSE FIELD (Granular)**: The deepest level of the mesh. Breaks down **Resonances** into its constituent pulses. The **Pulse** is the final, atomic unit of energy.
 - **TIMELINE FIELD (History)**: A visual chronological path of student memories and shared milestones.
 
 ### **Core Interaction Paradigm**
@@ -39,7 +39,7 @@ Experience the **Unified Pulse Frequency**.
 - **Mesh Relay (Ephemeral Hops)**: 3-hop ephemeral relaying for pulses beyond immediate radio range.
 - **Chain Projection**: Collective emoji identities that project larger pulses on the Discovery Radar.
 - **Senior Vault**: Mark specific Chains for permanent preservation (exempt from all decay).
-- **Crowd Vault (Auto-Archiving)**: Over a 4-year journey, the ticker stays clean. A protocol automatically moves crowds that haven't pulsed in 30 days into a **"Sunk Resonance"** vault.
+- **Crowd Vault (Auto-Archiving)**: Over a 4-year journey, the ticker stays clean. A protocol automatically moves crowds that haven't pulsed in 30 days into a **"Sunk Pulse"** vault.
 - **Differential Pulse Sync**: High-speed WiFi radio sync that only bridges missing history, making updates 10x faster.
 
 ---
@@ -71,12 +71,13 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 
 ## 🛠️ ARCHITECTURAL SUPREMACY
 1. **100% Offline**: Zero cloud. No servers. No internet. Data stays in the air.
-2. **Media Mesh**: Composite radio orchestration (Nearby Connections + BLE Fallback).
-3. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy.
-4. **Deterministic Scoped Naming**: Public Crowd IDs are generated as paths (e.g., `crowd_MALL_FOOD_COURT`), ensuring global uniqueness.
-5. **Partitioned Group Scaling**: Intelligent member partitioning for crowds exceeding 500 members.
-6. **Decentralized-First**: Prioritize mesh efficiency and hardware-encrypted energy.
-6. **Shared :core**: Koin DI, UDF with `BluetoothUiState`, and primitive `Canvas` UI foundation.
+2. **Header + Entries Pattern**: A unified visual language across all widgets (Field, Hubs, Ticker, Radar). Headers provide collective context; Entries provide atomic interaction.
+3. **Media Mesh**: Composite radio orchestration (Nearby Connections + BLE Fallback).
+4. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy.
+5. **Deterministic Scoped Naming**: Public Crowd IDs are generated as paths (e.g., `crowd_MALL_FOOD_COURT`), ensuring global uniqueness.
+6. **Partitioned Group Scaling**: Intelligent member partitioning for crowds exceeding 500 members.
+7. **Decentralized-First**: Prioritize mesh efficiency and hardware-encrypted energy.
+8. **Shared :core**: Koin DI, UDF with `BluetoothUiState`, and primitive `Canvas` UI foundation.
 
 ---
 

@@ -11,7 +11,7 @@ import java.util.UUID
 
 /**
  * Repository interface for managing user identity and privacy settings.
- * Handles anonymous "vibe" personas and secure storage of device-specific configuration.
+ * Handles anonymous "pulse" personas and secure storage of device-specific configuration.
  */
 interface IdentityRepository {
     val nicknameFlow: StateFlow<String?>

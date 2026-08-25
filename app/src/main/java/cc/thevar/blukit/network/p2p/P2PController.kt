@@ -63,7 +63,7 @@ interface P2PController {
 
     suspend fun sendFile(fileUri: android.net.Uri, receiverId: String? = null, pulseType: Int = MessagePayload.PULSE_SHOUT, groupId: String? = null, groupName: String? = null): MessagePayload?
 
-    suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload?
+    suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload
 
     fun startGroupPulse(name: String, members: Set<String>, type: Int = Resonance.SCOPE_PUBLIC, groupId: String? = null, parentId: String? = null): String
 

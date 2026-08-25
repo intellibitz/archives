@@ -26,6 +26,10 @@ class MainViewModel(
         }
     }
 
+    /**
+     * Updates the user's emoji avatar.
+     * Note: This function is currently reserved for future profile editing flows.
+     */
     fun saveEmoji(emoji: String) {
         viewModelScope.launch {
             repository.saveEmoji(emoji)
@@ -86,6 +90,10 @@ class MainViewModel(
         }
     }
 
+    /**
+     * Logs out the user and resets device identity.
+     * Note: Currently unused, intended for tactical identity reset.
+     */
     fun logout() {
         viewModelScope.launch {
             repository.logout()

@@ -1,6 +1,6 @@
-# Privacy Policy for blukit: crowd pulses
+# Privacy Policy for blukit: crowd resonance
 
-**Effective Date: August 24, 2026**
+**Effective Date: August 25, 2026**
 
 **blukit** is built for the **Crowd**, not the **Web**. Our vision is a world of total anonymity and local pulses, where communication is a physical phenomenon, not a digital trail.
 

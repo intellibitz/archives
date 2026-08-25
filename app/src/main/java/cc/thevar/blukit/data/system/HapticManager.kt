@@ -61,11 +61,11 @@ class HapticManager(context: Context) {
 
         val effect = when {
             proximity > 0.8f -> {
-                // Strong, sharp double vibe
+                // Strong, sharp double pulse
                 VibrationEffect.createWaveform(longArrayOf(0, 60, 40, 60), -1)
             }
             proximity > 0.4f -> {
-                // Medium single vibe
+                // Medium single pulse
                 VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE)
             }
             else -> {

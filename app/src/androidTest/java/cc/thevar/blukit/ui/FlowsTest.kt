@@ -105,7 +105,7 @@ class FlowsTest : KoinTest {
         every { repository.getCurrentNickname() } returns "pulse"
 
         every { p2pController.scannedDevices } returns scannedDevicesFlow
-        every { p2pController.connectedRadios } returns connectedRadiosFlow
+        every { p2pController.connectedTies } returns connectedRadiosFlow
         every { p2pController.incomingRadioRequests } returns incomingRequestsFlow
         every { p2pController.outgoingRadioRequests } returns MutableStateFlow(emptySet())
         every { p2pController.isDiscovering } returns MutableStateFlow(true)
