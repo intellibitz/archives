@@ -241,6 +241,8 @@ fun EventField(
                     }
 
                     // MODULE 2.2: TICKER (Standard Spectrum)
+                    TickerSectionHeader(title = "ACTIVE EVENTS")
+                    
                     PulsingResonanceTicker(
                         state = state,
                         energyList = combinedEnergy,

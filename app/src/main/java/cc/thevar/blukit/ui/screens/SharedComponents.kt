@@ -600,6 +600,35 @@ fun BlukitWidget(
 }
 
 /**
+ * TICKER SECTION HEADER: A tactical label for categorizing ticker contents.
+ */
+@Composable
+fun TickerSectionHeader(title: String, color: Color = StealthPrimary, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = color.copy(alpha = 0.6f),
+            fontWeight = FontWeight.Black,
+            letterSpacing = 2.sp,
+            fontSize = 7.sp
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(0.5.dp)
+                .background(color.copy(alpha = 0.2f))
+        )
+    }
+}
+
+/**
  * PULSING RESONANCE TICKER: The life stream of the mesh.
  * 
  * Reorganizes flat pulse data into a structured hierarchy of Headers (Resonances)
@@ -640,9 +669,18 @@ fun PulsingResonanceTicker(
                 } else {
                     resonance.allMemberIds.size
                 }
+
+                val lastMsg = state.session.messages.findLast { it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null) }
+                val dynamicSubtitle = if (lastMsg != null) {
+                    val sender = if (lastMsg.senderId == localDeviceId) "YOU" else lastMsg.senderName.uppercase()
+                    "$sender :: ${lastMsg.content.uppercase()}"
+                } else {
+                    if (resonance.scope == Resonance.SCOPE_PUBLIC) "CROWD" else "PRIVATE CHAIN"
+                }
+
                 ResonanceSummary(
                     title = resonance.name,
-                    subtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "CROWD" else "PRIVATE CHAIN",
+                    subtitle = dynamicSubtitle,
                     icon = if (resonance.scope == Resonance.SCOPE_PUBLIC) Icons.Rounded.Grain else Icons.Rounded.Hearing,
                     themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
                     count = userCount,
