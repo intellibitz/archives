@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Grain
+import androidx.compose.material.icons.rounded.Hearing
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Radar
 import androidx.compose.material.icons.rounded.Sync
@@ -167,61 +169,36 @@ fun RipplesField(
     BlukitWidget(
         themeColor = finalThemeColor,
         header = {
-            Column {
-                // ROW 1: HUMANITY STAGE (Navigation & Identity)
-                BlukitHumanityStage(
-                    title = title,
-                    breadcrumbTrail = breadcrumbTrail,
-                    onCrumbClick = onCrumbClick,
-                    activeCrowds = activeCrowds,
-                    onShowTimeline = onShowTimeline,
-                    onResetProfile = onResetProfile,
-                    onTitleClick = onTitleClick,
-                    onBack = onBack,
-                    themeColor = finalThemeColor
-                )
-
-                // ROW 2: TACTICAL RADAR CONTROLS
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // LEFT: Tactical Toggles
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (onSearchToggle != null) {
-                            IconButton(
-                                onClick = onSearchToggle,
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
-                                    contentDescription = "Toggle Search",
-                                    tint = if (isSearchActive) StealthAmber else finalThemeColor,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                            }
+            // MERGED ROW 1 & 2: HUMANITY STAGE + TACTICAL RADAR CONTROLS
+            BlukitHumanityStage(
+                title = title,
+                breadcrumbTrail = breadcrumbTrail,
+                onCrumbClick = onCrumbClick,
+                activeCrowds = activeCrowds,
+                onShowTimeline = onShowTimeline,
+                onResetProfile = onResetProfile,
+                onTitleClick = onTitleClick,
+                onBack = onBack,
+                themeColor = finalThemeColor,
+                userCount = state.crowd.scannedDevices.size,
+                trailingContent = {
+                    // Tactical Toggles
+                    if (onSearchToggle != null) {
+                        IconButton(
+                            onClick = onSearchToggle,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                contentDescription = "Toggle Search",
+                                tint = if (isSearchActive) StealthAmber else finalThemeColor,
+                                modifier = Modifier.size(14.dp)
+                            )
                         }
                     }
-
-                    Surface(
-                        color = finalThemeColor.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(0.5.dp, finalThemeColor.copy(alpha = 0.2f))
-                    ) {
-                        val count = state.crowd.scannedDevices.size
-                        Text(
-                            text = "$count ${if (count == 1) "USER" else "USERS"} IN THE PUBLIC CROWD",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = finalThemeColor,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(4.dp))
                 }
-            }
+            )
         },
         entries = {
             Box(
@@ -284,7 +261,8 @@ fun RipplesField(
                             userEmoji = userEmoji,
                             title = title,
                             onDeviceClick = onDeviceClick,
-                            onDeviceLongClick = onDeviceLongClick
+                            onDeviceLongClick = onDeviceLongClick,
+                            onNicknameChange = onNicknameChange
                         )
                     }
                 }
@@ -453,7 +431,8 @@ private fun PulseNodes(
     userEmoji: String,
     title: String,
     onDeviceClick: (P2PDevice) -> Unit,
-    onDeviceLongClick: (P2PDevice) -> Unit
+    onDeviceLongClick: (P2PDevice) -> Unit,
+    onNicknameChange: (String) -> Unit
 ) {
     val coordinates = LocalPersonaCoordinates.current
     
@@ -463,18 +442,29 @@ private fun PulseNodes(
         val isRoot = title == "THE CROWD" || title == "EVENT"
         val centerCount = if (isRoot) state.crowd.scannedDevices.size else resonance?.allMemberIds?.size ?: state.crowd.scannedDevices.size
         
+        // Resolve Owner Persona if exists
+        val owner = state.crowd.scannedDevices.find { it.id == resonance?.ownerId || it.persistentId == resonance?.ownerId }
+
+        val centerIcon = when {
+            isRoot -> Icons.Rounded.Grain
+            resonance?.scope == Resonance.SCOPE_PRIVATE -> Icons.Rounded.Hearing
+            else -> null
+        }
+        
         val centerEmoji = when {
-            isRoot -> "🌬️"
+            owner != null -> owner.emoji
             resonance?.projectionEmoji != null -> resonance.projectionEmoji
-            resonance?.templateId != null -> cc.thevar.blukit.domain.model.CrowdTemplates.ALL.find { it.id == resonance.templateId }?.iconEmoji ?: "🌬️"
-            else -> "🌬️"
+            resonance?.templateId != null -> cc.thevar.blukit.domain.model.CrowdTemplates.ALL.find { it.id == resonance.templateId }?.iconEmoji ?: "⚡"
+            else -> "⚡"
         }
 
         PulseCrowdSignature(
-            device = P2PDevice(id = "CONTEXT", name = title, emoji = centerEmoji ?: "🌬️"),
+            device = P2PDevice(id = "CONTEXT", name = title, emoji = centerEmoji ?: "⚡"),
             pulseCount = centerCount,
             isPulsed = false,
-            size = 64.dp
+            size = 64.dp,
+            icon = centerIcon,
+            title = title
         )
 
         // 2. NEARBY: YOUR PERSONA
@@ -482,6 +472,8 @@ private fun PulseNodes(
         val userAngle = -PI / 2 // Anchored to top-ish
         val userX = (userRadius * cos(userAngle)).toFloat().dp
         val userY = (userRadius * sin(userAngle)).toFloat().dp
+        
+        val isIdentitySet = userNickname.isNotBlank() && userNickname != "?" && userNickname != "SET NAME"
         
         Box(
             modifier = Modifier
@@ -493,14 +485,14 @@ private fun PulseNodes(
                 }
         ) {
             PulsePersonaSignature(
-                device = P2PDevice(id = "YOU", name = userNickname, emoji = userEmoji),
+                device = P2PDevice(id = "YOU", name = if (isIdentitySet) userNickname else "YOU", emoji = userEmoji),
                 isPulsed = false,
                 isSelected = false,
                 isPeerPulsed = false,
                 onlyTies = false,
-                size = 42.dp,
-                isStatic = false, // Allow interaction/edit in the field
-                onClick = { /* Could trigger nickname edit here */ }
+                size = 46.dp, // Slightly larger
+                isStatic = false, 
+                onClick = { onNicknameChange(userNickname) }
             )
         }
 

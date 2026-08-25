@@ -61,6 +61,9 @@ fun PulseField(
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
+    userNickname: String = "",
+    userEmoji: String = "",
+    onUserNicknameChange: (String) -> Unit = {},
     activeCrowds: List<Resonance> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
@@ -99,11 +102,14 @@ fun PulseField(
                     title = "PULSE",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
+                    userNickname = userNickname,
+                    userEmoji = userEmoji,
                     activeCrowds = activeCrowds,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onTitleClick = onTitleClick,
                     onBack = onBack,
+                    onNicknameChange = onUserNicknameChange,
                     themeColor = themeColor,
                     modifier = Modifier.fillMaxWidth().height(320.dp)
                 )

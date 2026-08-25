@@ -84,6 +84,9 @@ fun EventField(
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
+    userNickname: String = "",
+    userEmoji: String = "",
+    onUserNicknameChange: (String) -> Unit = {},
     activeCrowds: List<Resonance> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
@@ -175,14 +178,17 @@ fun EventField(
                 onSearchToggle = onSearchToggle,
                 isSearchActive = isSearchActive,
                 // Humanity Stage
-                title = "EVENT",
+                title = "THE CROWD",
                 breadcrumbTrail = breadcrumbTrail,
                 onCrumbClick = onCrumbClick,
+                userNickname = userNickname,
+                userEmoji = userEmoji,
                 activeCrowds = activeCrowds,
                 onShowTimeline = onShowTimeline,
                 onResetProfile = onResetProfile,
                 onTitleClick = onTitleClick,
                 onBack = onBack,
+                onNicknameChange = onUserNicknameChange,
                 themeColor = StealthPrimary,
                 drawBackground = false, // Background handled by Scaffold
                 drawNodes = true,
@@ -223,7 +229,7 @@ fun EventField(
                     }
 
                     // 2. ADD HEADER (above pulses in UI)
-                    val headDev = P2PDevice(id = resonance.id, name = resonance.name, emoji = "🌬️", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                    val headDev = P2PDevice(id = resonance.id, name = resonance.name, emoji = "⚡", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
                     grouped.add(headDev to null)
                 }
                 
@@ -335,7 +341,7 @@ fun VaultOverlay(
                             modifier = Modifier.fillMaxWidth().padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = if (group.scope == Resonance.SCOPE_LOCAL) "📱" else "🌬️", fontSize = 20.sp)
+                            Text(text = if (group.scope == Resonance.SCOPE_LOCAL) "📱" else "⚡", fontSize = 20.sp)
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(text = group.name.uppercase(), fontWeight = FontWeight.Bold, color = Color.White)

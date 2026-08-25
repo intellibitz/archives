@@ -107,6 +107,9 @@ fun ChainField(
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
+    userNickname: String = "",
+    userEmoji: String = "",
+    onUserNicknameChange: (String) -> Unit = {},
     activeCrowds: List<Resonance> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
@@ -165,11 +168,14 @@ fun ChainField(
                     title = chainName,
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    activeCrowds = state.session.groups,
+                    userNickname = userNickname,
+                    userEmoji = userEmoji,
+                    activeCrowds = activeCrowds,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onTitleClick = onTitleClick,
                     onBack = onBack,
+                    onNicknameChange = onUserNicknameChange,
                     themeColor = if(isPrivate) StealthRose else StealthPrimary,
                     modifier = Modifier.fillMaxWidth().height(320.dp)
                 )

@@ -180,8 +180,8 @@ class IdentityRepositoryImpl(
         backupPrefs.edit { clear() }
         _nickname.value = null
         _emojiAvatar.value = "👤"
-        _stealthMode.value = false
-        _lowPowerMode.value = false
+        _stealthMode.value = true
+        _lowPowerMode.value = true
         _blockedUsers.value = emptySet()
         _pulsedPeers.value = emptySet()
     }

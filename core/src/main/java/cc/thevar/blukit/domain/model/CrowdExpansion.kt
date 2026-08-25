@@ -24,7 +24,7 @@ data class CrowdTemplate(
     val description: String,
     val roles: List<String> = emptyList(),
     val defaultChains: List<String> = emptyList(),
-    val iconEmoji: String = "🌬️"
+    val iconEmoji: String = "⚡"
 )
 
 object CrowdTemplates {

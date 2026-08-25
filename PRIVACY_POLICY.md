@@ -17,7 +17,7 @@ By design, you can only communicate with people physically near you. This "Crowd
 
 ## 4. Anonymous-First Identity
 - You start as anonymous (**YOU**).
-- You are encouraged to set a local nickname, which stays **only on your device**.
+- You are encouraged to set a local nickname and persona (emoji), which stay **only on your device**.
 - Identity is a projected property; you can change your nickname at any time to break your local trail.
 
 ## 5. End-to-End Security (**Dynamic Secure Chains**)

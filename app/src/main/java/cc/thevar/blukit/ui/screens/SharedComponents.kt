@@ -271,7 +271,9 @@ fun BlukitHumanityStage(
     onTitleClick: (() -> Unit)?,
     onBack: (() -> Unit)?,
     themeColor: Color,
-    modifier: Modifier = Modifier
+    userCount: Int? = null,
+    modifier: Modifier = Modifier,
+    trailingContent: @Composable (RowScope.() -> Unit)? = null
 ) {
     var showResetProfileDialog by remember { mutableStateOf(false) }
 
@@ -283,7 +285,7 @@ fun BlukitHumanityStage(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // LEFT & CENTER: Unified Navigation & Title
+        // LEFT & CENTER: Unified Navigation, Title & User Density
         Row(
             verticalAlignment = Alignment.CenterVertically, 
             modifier = Modifier
@@ -304,6 +306,24 @@ fun BlukitHumanityStage(
                 CrowdTicker(title = title, resonances = activeCrowds)
             }
 
+            if (userCount != null) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Surface(
+                    color = themeColor.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.2f))
+                ) {
+                    Text(
+                        text = "$userCount ${if (userCount == 1) "USER" else "USERS"}",
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Black,
+                        color = themeColor,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        letterSpacing = 0.5.sp
+                    )
+                }
+            }
+
             val isLanding = title == "THE CROWD" || title == "PUBLIC PULSES" || title == "BLUKIT" || title == "EVENT"
             if (isLanding && onTitleClick != null) {
                 Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
@@ -311,11 +331,14 @@ fun BlukitHumanityStage(
         }
 
         // RIGHT: TACTICAL TOOLS
-        Box(modifier = Modifier.width(60.dp), contentAlignment = Alignment.CenterEnd) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 4.dp)) {
-                IconButton(onClick = onShowTimeline, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(18.dp))
-                }
+        Row(
+            verticalAlignment = Alignment.CenterVertically, 
+            modifier = Modifier.padding(end = 4.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            trailingContent?.invoke(this)
+            IconButton(onClick = onShowTimeline, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(18.dp))
             }
         }
     }
@@ -2107,8 +2130,9 @@ fun PulsePersonaSignature(
     val bloomBoost = if (isStatic) 0f else if (isHighlighted) 0.3f else if ((isPulsed || isPeerPulsed || isProjected)) 0.12f else 0f
     
     val id = device.persistentId ?: device.id
+    val isMe = device.id == "YOU"
     Box(modifier = modifier.size(size * 2.2f).combinedClickable(onClick = onClick, onLongClick = onLongClick), contentAlignment = Alignment.Center) {
-        val haloAlpha = (if (isHighlighted) 0.25f else 0.08f + proximityGlow + bloomBoost) * pulseScale
+        val haloAlpha = (if (isHighlighted || isMe) 0.3f else 0.08f + proximityGlow + bloomBoost) * pulseScale
         Surface(
             shape = CircleShape, 
             color = themeColor.copy(alpha = haloAlpha.coerceAtMost(0.45f)), 
@@ -2116,10 +2140,10 @@ fun PulsePersonaSignature(
         ) {}
         Surface(
             modifier = Modifier.size(size).clip(CircleShape), 
-            color = when { isSelected -> Color.White.copy(alpha = 0.2f); isProjected || isPulsed -> StealthRose.copy(alpha = 0.15f); isPeerPulsed -> StealthAmber.copy(alpha = 0.15f); else -> Color(0xFF0D1017) }, 
-            border = BorderStroke(if (isSelected || isPulsed || isPeerPulsed || isProjected) (size.value / 24).dp.coerceAtLeast(1.dp) else (size.value / 48).dp.coerceAtLeast(0.5.dp), when { isSelected -> Color.White; isProjected || isPulsed -> StealthRose; isPeerPulsed -> StealthAmber; else -> Color.White.copy(alpha = 0.15f) }), 
+            color = when { isSelected -> Color.White.copy(alpha = 0.2f); isProjected || isPulsed -> StealthRose.copy(alpha = 0.15f); isPeerPulsed -> StealthAmber.copy(alpha = 0.15f); else -> Color.Black }, 
+            border = BorderStroke(if (isSelected || isPulsed || isPeerPulsed || isProjected || isMe) (size.value / 24).dp.coerceAtLeast(1.dp) else (size.value / 48).dp.coerceAtLeast(0.5.dp), when { isSelected || isMe -> Color.White; isProjected || isPulsed -> StealthRose; isPeerPulsed -> StealthAmber; else -> Color.White.copy(alpha = 0.15f) }), 
             shape = CircleShape, 
-            tonalElevation = 4.dp
+            tonalElevation = if (isMe) 8.dp else 4.dp
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 if (projectionEmoji != null) {
@@ -2127,19 +2151,29 @@ fun PulsePersonaSignature(
                 } else {
                     val mediumIcon = when (device.medium) { P2PDevice.ConnectionMedium.BLUETOOTH -> Icons.Rounded.Bluetooth; P2PDevice.ConnectionMedium.WIFI -> Icons.Rounded.Wifi; P2PDevice.ConnectionMedium.LOCATION -> Icons.Rounded.LocationOn }
                     val iconSize = (size.value / 2.5f).dp
-                    Icon(imageVector = if (device.isConnecting || device.isTiePending) Icons.Rounded.Sync else if (isSelected) Icons.Rounded.CheckCircle else mediumIcon, contentDescription = null, tint = when { isSelected -> Color.White; isPulsed -> StealthRose; isPeerPulsed -> StealthAmber; else -> Color.White.copy(alpha = 0.7f) }, modifier = Modifier.size(iconSize))
+                    val icon = if (isMe) Icons.Rounded.Face else if (device.isConnecting || device.isTiePending) Icons.Rounded.Sync else if (isSelected) Icons.Rounded.CheckCircle else mediumIcon
+                    Icon(imageVector = icon, contentDescription = null, tint = when { isSelected || isMe -> Color.White; isPulsed -> StealthRose; isPeerPulsed -> StealthAmber; else -> Color.White.copy(alpha = 0.7f) }, modifier = Modifier.size(iconSize))
                 }
                 
                 if (size > 32.dp) {
-                    Text(text = (device.name ?: "?").uppercase().take(1), fontSize = 10.sp, fontWeight = FontWeight.Black, color = themeColor.copy(alpha = 0.6f))
+                    val nameText = if (isMe) (device.name ?: "YOU") else (device.name ?: "?")
+                    val displayText = if (isMe && nameText == "YOU") "YOU" else nameText.take(3).uppercase()
+                    Text(
+                        text = displayText, 
+                        fontSize = 7.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = themeColor.copy(alpha = 0.6f),
+                        letterSpacing = 0.5.sp
+                    )
                 }
             }
         }
         
-        // TACTICAL DECORATION: USER Label
+        // TACTICAL DECORATION: Label
         if (!isStatic && size > 32.dp) {
+            val label = if (isMe) "YOU" else "USER"
             Text(
-                text = "USER",
+                text = label,
                 fontSize = 6.sp,
                 fontWeight = FontWeight.Black,
                 color = themeColor.copy(alpha = 0.6f),
@@ -2153,16 +2187,28 @@ fun PulsePersonaSignature(
 }
 
 @Composable
-fun PulseCrowdSignature(device: P2PDevice, pulseCount: Int, isPulsed: Boolean, size: Dp = 64.dp, modifier: Modifier = Modifier) {
+fun PulseCrowdSignature(
+    device: P2PDevice, 
+    pulseCount: Int, 
+    isPulsed: Boolean, 
+    size: Dp = 64.dp, 
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    title: String? = null,
+    modifier: Modifier = Modifier
+) {
     val themeColor = if (isPulsed) StealthRose else StealthPrimary
     val infiniteTransition = rememberInfiniteTransition(label = "CrowdPulse")
     val pulse by infiniteTransition.animateFloat(initialValue = 1.0f, targetValue = 1.2f, animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "Pulse")
     
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(size * 1.5f)) {
         Surface(shape = CircleShape, color = themeColor.copy(alpha = 0.05f * pulse), modifier = Modifier.size(size * pulse)) {}
-        Surface(modifier = Modifier.size(size), shape = CircleShape, color = Color(0xFF0A0C14), border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f)), tonalElevation = 4.dp) { 
+        Surface(modifier = Modifier.size(size), shape = CircleShape, color = Color.Black, border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f)), tonalElevation = 4.dp) { 
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { 
-                Text(text = device.emoji, fontSize = (size.value / 3).sp)
+                if (icon != null) {
+                    Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size((size.value / 2.5f).dp))
+                } else {
+                    Text(text = device.emoji, fontSize = (size.value / 3).sp)
+                }
                 if (pulseCount > 0) { 
                     Text(
                         text = "$pulseCount ${if (pulseCount == 1) "USER" else "USERS"}", 
@@ -2173,6 +2219,20 @@ fun PulseCrowdSignature(device: P2PDevice, pulseCount: Int, isPulsed: Boolean, s
                     ) 
                 } 
             } 
+        }
+
+        // Context Title Label
+        if (title != null && size > 40.dp) {
+            Text(
+                text = title.uppercase(),
+                fontSize = 7.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White.copy(alpha = 0.4f),
+                letterSpacing = 2.sp,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 2.dp)
+            )
         }
     }
 }

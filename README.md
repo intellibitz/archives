@@ -18,7 +18,7 @@ blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-t
 Experience the **Unified Pulse Frequency**.
 
 ### **Crowd Hierarchy (The Resonance Drill-Down)**
-- **EVENT FIELD (Landing)**: The global spectrum view. Surfaces all **Events**—the public frequencies nearby. Pure discovery zone; joining or creating events are the primary actions.
+- **THE CROWD (Landing)**: The global spectrum view. Surfaces all **Events**—the public frequencies nearby. Pure discovery zone; joining or creating events are the primary actions.
 - **CROWD FIELD (Public)**: Shared physical containers. Once joined, the interaction hub awakens. Lists **Child Crowds**, **Ties**, and **Resonances**. Recursive by design.
 - **CHAIN FIELD (Private)**: Secure, encrypted interaction layers anchored to a Crowd context. **All Chains are Private**. Lists **Ties** and **Resonances**.
 - **PULSE FIELD (Granular)**: The deepest level of the mesh. Breaks down **Resonances** into its constituent pulses.
@@ -52,12 +52,12 @@ A high-density, ergonomic architecture for tactical crowd control:
 - **Row 0 (Global Command)**: Low-profile system bar with tactical toggles for Stealth/Power + **BLUKIT BRANDING** next to the **PRIVACY** tie + Real-time Amber radio status (BT/WiFi).
 
 ### **Humanity Stage (Radar Header)**
-- **Row 1 (Contextual Navigation)**: Anchored directly to the Radar Field for ergonomic reach. Unified navigation breadcrumbs (showing deep paths like `EVENT > CONCERT`), the active **Event Title**, and the user's **Profile Persona**.
+- **Row 1 (Contextual Navigation)**: Anchored directly to the Radar Field for ergonomic reach. Unified navigation breadcrumbs (showing deep paths like `THE CROWD > CONCERT`), the active **Event/Crowd Title**, and a high-contrast **User Count** badge.
 
 ### **Interaction Hub (Bottom Overlay)**
 *Available only inside a Crowd or Chain*
 - **Pulse Hub**: The interaction hub awakens once a context is established.
-- **Discovery Radar**: Spatial view with a centralized Context Anchor, your Persona nearby, and other Users in orbit. Integrated Search/Pulse toggle.
+- **Discovery Radar**: Spatial view with a centralized **Context Anchor** (Named Event), your prominent **Identity Anchor** ("YOU") nearby, and other Users in orbit. Integrated Search/Pulse toggle.
 
 ---
 

@@ -130,7 +130,7 @@ fun BlukitApp(
         val trail = mutableListOf<String>()
         backStack.forEach { route ->
             when (route) {
-                is Route.Event -> trail.add("Event")
+                is Route.Event -> trail.add("The Crowd")
                 is Route.GroupField -> {
                     val group = bluetoothState.session.groups.find { it.id == route.groupId }
                     if (group != null) {
@@ -362,6 +362,15 @@ fun BlukitApp(
                                     // Humanity Props
                                     breadcrumbTrail = breadcrumbTrail,
                                     onCrumbClick = onCrumbClick,
+                                    userNickname = nickname ?: "?",
+                                    userEmoji = emoji,
+                                    onUserNicknameChange = { newName ->
+                                        val oldName = nickname ?: "?"
+                                        viewModel.saveNickname(newName)
+                                        if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
+                                            bluetoothViewModel.broadcastIdentityUpdate(oldName)
+                                        }
+                                    },
                                     onShowTimeline = { backStack.add(Route.Timeline) },
                                     onResetProfile = { viewModel.resetProfile() },
                                     onBack = if (isSearchMode || showAirGhost) { 
@@ -416,6 +425,15 @@ fun BlukitApp(
                                         // Humanity Props
                                         breadcrumbTrail = breadcrumbTrail,
                                         onCrumbClick = onCrumbClick,
+                                        userNickname = nickname ?: "?",
+                                        userEmoji = emoji,
+                                        onUserNicknameChange = { newName ->
+                                            val oldName = nickname ?: "?"
+                                            viewModel.saveNickname(newName)
+                                            if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
+                                                bluetoothViewModel.broadcastIdentityUpdate(oldName)
+                                            }
+                                        },
                                         onShowTimeline = { backStack.add(Route.Timeline) },
                                         onResetProfile = { viewModel.resetProfile() },
                                         onBack = { backStack.removeLastOrNull(); focusedChainId = null },
@@ -464,6 +482,15 @@ fun BlukitApp(
                                         // Humanity Props
                                         breadcrumbTrail = breadcrumbTrail,
                                         onCrumbClick = onCrumbClick,
+                                        userNickname = nickname ?: "?",
+                                        userEmoji = emoji,
+                                        onUserNicknameChange = { newName ->
+                                            val oldName = nickname ?: "?"
+                                            viewModel.saveNickname(newName)
+                                            if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
+                                                bluetoothViewModel.broadcastIdentityUpdate(oldName)
+                                            }
+                                        },
                                         onShowTimeline = { backStack.add(Route.Timeline) },
                                         onResetProfile = { viewModel.resetProfile() },
                                         onBack = { backStack.removeLastOrNull(); focusedChainId = null },
@@ -500,6 +527,15 @@ fun BlukitApp(
                                     // Humanity Props
                                     breadcrumbTrail = breadcrumbTrail,
                                     onCrumbClick = onCrumbClick,
+                                    userNickname = nickname ?: "?",
+                                    userEmoji = emoji,
+                                    onUserNicknameChange = { newName ->
+                                        val oldName = nickname ?: "?"
+                                        viewModel.saveNickname(newName)
+                                        if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
+                                            bluetoothViewModel.broadcastIdentityUpdate(oldName)
+                                        }
+                                    },
                                     onShowTimeline = { backStack.add(Route.Timeline) },
                                     onResetProfile = { viewModel.resetProfile() },
                                     onBack = { backStack.removeLastOrNull() },
