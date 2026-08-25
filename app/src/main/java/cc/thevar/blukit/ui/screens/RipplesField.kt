@@ -4,11 +4,11 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -83,12 +83,12 @@ fun RipplesField(
     onDismissGhost: () -> Unit = {},
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
-    onStartScan: () -> Unit,
+    onStartScan: () -> Unit = {},
     onPulseSurge: (Float) -> Unit = {},
     drawBackground: Boolean = true,
     drawNodes: Boolean = true,
     crowdList: List<Pair<P2PDevice, Int>> = emptyList(),
-    showCrowdGhost: Boolean = false,
+    onCreateEvent: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit = {},
     airRitualGhost: @Composable () -> Unit = {}
@@ -151,20 +151,39 @@ fun RipplesField(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "MESH SPECTRUM",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = StealthPrimary.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.5.sp
-                )
+                if (onCreateEvent != null) {
+                    TextButton(
+                        onClick = onCreateEvent,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier.height(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Add, 
+                            contentDescription = null, 
+                            tint = StealthPrimary, 
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "CREATE EVENT", 
+                            color = StealthPrimary, 
+                            fontWeight = FontWeight.Black, 
+                            fontSize = 8.sp, 
+                            letterSpacing = 1.sp
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.width(1.dp))
+                }
+
                 Surface(
                     color = StealthPrimary.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.2f))
                 ) {
+                    val count = state.crowd.scannedDevices.size
                     Text(
-                        text = "${state.crowd.scannedDevices.size} PERSONAS",
+                        text = "$count ${if (count == 1) "USER" else "USERS"} IN THE PUBLIC CROWD",
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold,
                         color = StealthPrimary,
@@ -193,7 +212,9 @@ fun RipplesField(
                 
                 RelayLayer(relayEvents, onlyTies = onlyTies)
                 
-                val bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
+                val bubbleSenders = remember(activeBubbles) { 
+                    activeBubbles.asSequence().map { it.senderId }.toSet() 
+                }
                 val displayDevices = if (onlyTies) {
                     state.crowd.scannedDevices.filter { 
                         it.id in state.session.connectedTies || 

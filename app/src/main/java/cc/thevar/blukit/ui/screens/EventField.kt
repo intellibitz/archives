@@ -10,7 +10,6 @@
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -101,16 +100,18 @@ fun EventField(
     onRestoreCrowd: (String) -> Unit = {},
     showAirGhost: Boolean = false,
     onShowAirGhost: () -> Unit = {},
-    onDismissAirGhost: () -> Unit = {}
+    onDismissAirGhost: () -> Unit = {},
 ) {
-    var showTip by remember { mutableStateOf(true) }
+    var showTip by remember { mutableStateOf(value = true) }
     var airProposalName by remember { mutableStateOf("") }
     val activePulseId = LocalActivePulseId.current
     var pulseGhostData by remember { mutableStateOf<GhostPulseData?>(null) }
     var showVault by remember { mutableStateOf(false) }
 
     val eventMetas = remember(state.session.groups) {
-        state.session.groups.filter { it.scope == Resonance.SCOPE_PUBLIC && (it.parentId == null || it.parentId == Resonance.ID_CROWD) }
+        state.session.groups.filter { 
+            (it.scope == Resonance.SCOPE_PUBLIC) && ((it.parentId == null) || (it.parentId == Resonance.ID_CROWD))
+        }
     }
 
     val pulsesData = remember(state.session.messages, state.session.groups, pulsedPeers, noiseFilterEnabled, isSearchActive, messageText) {
@@ -141,7 +142,6 @@ fun EventField(
     }
 
     val (pulses, pulseCounts, _) = pulsesData
-    val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
         header = header,
@@ -173,6 +173,7 @@ fun EventField(
                     )
                 },
                 onStartScan = onStartScan,
+                onCreateEvent = onShowAirGhost,
                 drawBackground = false, // Background handled by Scaffold
                 drawNodes = true,
                 airRitualGhost = {
@@ -182,7 +183,9 @@ fun EventField(
                             onDone = { templateId -> onCreatePublicResonance?.invoke(airProposalName, templateId) },
                             onDismiss = onDismissAirGhost,
                             nearbyAirs = state.session.groups,
-                            onJoinAir = onNavigateToGroup
+                            onJoinAir = onNavigateToGroup,
+                            title = "EVENT RITUAL",
+                            hint = "NAME THE EVENT"
                         )
                     }
                 },
@@ -200,7 +203,7 @@ fun EventField(
                 sortedEvents.forEach { resonance ->
                     // 1. ADD LATEST ENTRIES for this resonance (up to 3)
                     val resonancePulses = state.session.messages.filter { 
-                        it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && (it.groupId == null || it.groupId == Resonance.ID_CROWD))
+                        it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null)
                     }.sortedBy { it.timestamp }
                      .takeLast(3)
                     
@@ -253,22 +256,6 @@ fun EventField(
                                     text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
                                     onDismiss = { showTip = false }
                                 )
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Clear 'Create Event' affordance
-                        if (!showAirGhost) {
-                            Button(
-                                onClick = onShowAirGhost,
-                                colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
-                                shape = RoundedCornerShape(16.dp),
-                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
-                            ) {
-                                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("CREATE EVENT", fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp)
                             }
                         }
                     }

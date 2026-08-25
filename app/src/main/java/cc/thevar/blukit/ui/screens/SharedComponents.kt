@@ -1820,6 +1820,8 @@ fun CrowdRitualGhost(
     onDismiss: () -> Unit,
     nearbyAirs: List<Resonance> = emptyList(),
     onJoinAir: (String) -> Unit = {},
+    title: String = "CROWD RITUAL",
+    hint: String = "NAME THE CROWD",
     modifier: Modifier = Modifier
 ) {
     var airName by remember { mutableStateOf("") }
@@ -1911,7 +1913,7 @@ fun CrowdRitualGhost(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(24.dp)
                 ) {
-                    Text(text = "CROWD RITUAL", style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+                    Text(text = title, style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     BasicTextField(
@@ -1924,7 +1926,7 @@ fun CrowdRitualGhost(
                         cursorBrush = SolidColor(StealthPrimary),
                         decorationBox = { innerTextField ->
                             if (airName.isEmpty()) {
-                                Text("NAME THE CROWD", style = MaterialTheme.typography.headlineSmall.copy(color = Color.White.copy(alpha = 0.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Black))
+                                Text(hint, style = MaterialTheme.typography.headlineSmall.copy(color = Color.White.copy(alpha = 0.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Black))
                             }
                             innerTextField()
                         }

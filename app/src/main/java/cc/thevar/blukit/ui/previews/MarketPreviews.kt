@@ -291,7 +291,9 @@ fun PreviewCrowdRitualGhost() {
                 nearbyAirs = listOf(
                     Resonance("1", "GATE 7", emptySet(), Resonance.SCOPE_PUBLIC),
                     Resonance("2", "CONCERT", emptySet(), Resonance.SCOPE_PUBLIC)
-                )
+                ),
+                title = "EVENT RITUAL",
+                hint = "NAME THE EVENT"
             )
         }
     }
