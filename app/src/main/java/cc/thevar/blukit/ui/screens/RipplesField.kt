@@ -720,8 +720,7 @@ fun CrowdMiniRadar(
         contentAlignment = Alignment.Center
     ) {
         if (isDefaultCrowd) {
-            // --- DEFAULT CROWD: User Persona Anchor + Horizontal Lineup ---
-            val userEmoji = LocalUserEmoji.current
+            // --- DEFAULT CROWD: Unified Anchor (Outside) + Horizontal Lineup ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -729,43 +728,7 @@ fun CrowdMiniRadar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
-                // 1. THE USER PERSONA ANCHOR (Owned by all)
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(end = 12.dp)
-                ) {
-                    PulsePersonaSignature(
-                        device = P2PDevice(id = "YOU", name = "YOU", emoji = userEmoji),
-                        isPulsed = bubbleSenders.contains("YOU"),
-                        isSelected = false,
-                        isPeerPulsed = false,
-                        size = 36.dp,
-                        isStatic = false, // Allow pulse on activity
-                        themeColor = themeColor,
-                        onClick = { onDeviceClick(P2PDevice(id = "YOU", name = "YOU", emoji = userEmoji)) }
-                    )
-                    // 2. "BRING N USERS UNDER THE USER PERSONA" (Small group)
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy((-6).dp),
-                        modifier = Modifier.padding(top = 2.dp)
-                    ) {
-                        members.take(3).forEach { device ->
-                            PulsePersonaSignature(
-                                device = device,
-                                isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
-                                isSelected = false,
-                                isPeerPulsed = false,
-                                size = 20.dp,
-                                isStatic = false,
-                                themeColor = themeColor,
-                                onClick = { onDeviceClick(device) },
-                                onLongClick = { onDeviceLongClick(device) }
-                            )
-                        }
-                    }
-                }
-
-                // TACTICAL DIVIDER
+                // TACTICAL DIVIDER (Aligned with the row's left Persona anchor)
                 Box(
                     modifier = Modifier
                         .width(1.dp)
@@ -780,7 +743,7 @@ fun CrowdMiniRadar(
                         .padding(start = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy((-8).dp) // Tactical overlapping
                 ) {
-                    members.drop(3).take(10).forEach { device ->
+                    members.take(12).forEach { device ->
                         PulsePersonaSignature(
                             device = device,
                             isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
@@ -793,7 +756,7 @@ fun CrowdMiniRadar(
                             onLongClick = { onDeviceLongClick(device) }
                         )
                     }
-                    if (members.size > 13) {
+                    if (members.size > 12) {
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
@@ -803,7 +766,7 @@ fun CrowdMiniRadar(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "+${members.size - 13}",
+                                text = "+${members.size - 12}",
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Black,
                                 color = themeColor.copy(alpha = 0.7f)

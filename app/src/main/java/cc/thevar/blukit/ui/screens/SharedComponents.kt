@@ -696,6 +696,7 @@ fun PulsingResonanceTicker(
     energyList: List<Pair<P2PDevice, MessagePayload?>>,
     pulseCounts: Map<String, Int>,
     localDeviceId: String,
+    localNickname: String = "?",
     pulsedPeers: Set<String>,
     activeBubbles: List<BubbleData> = emptyList(),
     isGrouped: Boolean = true,
@@ -744,7 +745,21 @@ fun PulsingResonanceTicker(
                     lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
                     onClick = { onPulseClick(resonance.id) },
                     showJoin = true,
-                    personaEmoji = if (resonance.id == Resonance.ID_CROWD) userEmoji else null,
+                    leftContent = if (resonance.id == Resonance.ID_CROWD) {
+                        {
+                            PulsePersonaSignature(
+                                device = P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji),
+                                isPulsed = false,
+                                isSelected = false,
+                                isPeerPulsed = false,
+                                size = 44.dp,
+                                isStatic = false,
+                                themeColor = StealthPrimary,
+                                subLabel = "YOU",
+                                onClick = { onDeviceClick(P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji)) }
+                            )
+                        }
+                    } else null,
                     topContent = {
                         CrowdMiniRadar(
                             resonance = resonance,
@@ -1234,7 +1249,7 @@ fun ResonanceSummary(
     lastUpdate: String,
     onClick: () -> Unit,
     showJoin: Boolean = false,
-    personaEmoji: String? = null,
+    leftContent: @Composable (() -> Unit)? = null,
     topContent: @Composable (() -> Unit)? = null,
     underIconContent: @Composable (ColumnScope.() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -1270,16 +1285,16 @@ fun ResonanceSummary(
                 ) {
                 // LEFT: [ICON + TIMESTAMP]
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .background(themeColor.copy(alpha = 0.1f), CircleShape)
-                            .border(1.dp, themeColor.copy(alpha = 0.2f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (personaEmoji != null) {
-                            Text(text = personaEmoji, fontSize = 20.sp)
-                        } else {
+                    if (leftContent != null) {
+                        leftContent()
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(themeColor.copy(alpha = 0.1f), CircleShape)
+                                .border(1.dp, themeColor.copy(alpha = 0.2f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
                         }
                     }
@@ -1934,6 +1949,7 @@ fun PulsePersonaSignature(
     isHighlighted: Boolean = false, 
     projectionEmoji: String? = null,
     themeColor: Color? = null,
+    subLabel: String? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
@@ -1981,8 +1997,9 @@ fun PulsePersonaSignature(
             tonalElevation = if (isMe) 8.dp else 4.dp
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                if (projectionEmoji != null) {
-                    Text(text = projectionEmoji, fontSize = (size.value / 2).sp)
+                val emojiToShow = projectionEmoji ?: device.emoji
+                if (emojiToShow.isNotBlank() && emojiToShow != "👤") {
+                    Text(text = emojiToShow, fontSize = (size.value / 2).sp)
                 } else {
                     val mediumIcon = when (device.medium) { P2PDevice.ConnectionMedium.BLUETOOTH -> Icons.Rounded.Bluetooth; P2PDevice.ConnectionMedium.WIFI -> Icons.Rounded.Wifi; P2PDevice.ConnectionMedium.LOCATION -> Icons.Rounded.LocationOn }
                     val iconSize = (size.value / 2.5f).dp
@@ -2004,18 +2021,18 @@ fun PulsePersonaSignature(
             }
         }
         
-        // TACTICAL DECORATION: Label
-        if (!isStatic && size > 32.dp) {
-            val label = if (isMe) "YOU" else "USER"
+        // TACTICAL DECORATION: Label (YOU/USER/CUSTOM)
+        val finalLabel = subLabel ?: if (isMe) "YOU" else "USER"
+        if (size > 32.dp) {
             Text(
-                text = label,
+                text = finalLabel.uppercase(),
                 fontSize = 6.sp,
                 fontWeight = FontWeight.Black,
                 color = personaThemeColor.copy(alpha = 0.6f),
                 letterSpacing = 1.5.sp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = (size.value * 0.15f).dp)
+                    .padding(bottom = (size.value * 0.12f).dp)
             )
         }
     }

@@ -256,6 +256,7 @@ fun CrowdField(
                 },
                 pulseCounts = pulseCounts,
                 localDeviceId = localDeviceId,
+                localNickname = userNickname,
                 pulsedPeers = emptySet(),
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },

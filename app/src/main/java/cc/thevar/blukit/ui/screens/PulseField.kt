@@ -195,6 +195,7 @@ fun PulseField(
                 },
                 pulseCounts = emptyMap(),
                 localDeviceId = localDeviceId,
+                localNickname = userNickname,
                 pulsedPeers = emptySet(),
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },

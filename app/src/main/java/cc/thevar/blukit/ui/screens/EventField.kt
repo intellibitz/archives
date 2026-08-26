@@ -269,6 +269,7 @@ fun EventField(
                         energyList = combinedEnergy,
                         pulseCounts = pulseCounts,
                         localDeviceId = localDeviceId,
+                        localNickname = userNickname,
                         pulsedPeers = pulsedPeers,
                         isGrouped = true,
                         onPulseClick = { onNavigateToGroup(it) },

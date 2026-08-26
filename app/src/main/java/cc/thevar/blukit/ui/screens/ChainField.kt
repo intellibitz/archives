@@ -258,6 +258,7 @@ fun ChainField(
                 },
                 pulseCounts = pulseCounts,
                 localDeviceId = localDeviceId,
+                localNickname = userNickname,
                 pulsedPeers = memberSet,
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },

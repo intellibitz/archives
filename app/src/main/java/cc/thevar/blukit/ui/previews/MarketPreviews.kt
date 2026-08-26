@@ -247,6 +247,7 @@ fun PreviewPulsingResonanceTickerHeaders() {
                 energyList = energyList,
                 pulseCounts = mapOf(user1 to 1, me to 1, user2 to 5),
                 localDeviceId = me,
+                localNickname = "ME",
                 pulsedPeers = emptySet(),
                 isGrouped = true,
                 onPulseClick = {},
