@@ -95,6 +95,7 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 
 ## 🛠️ DEVELOPMENT HYGIENE
 - **Temporary Files**: To maintain a clean workspace and prevent accidental leaks of transient data, all temporary files, logs, or scratch scripts MUST be created within the `.gitignore_folder` directory.
+- **Clean Builds**: A dedicated script `./.gitignore_folder/clean_build.sh` is provided for performing a full clean assembly.
 
 ---
 
@@ -119,6 +120,10 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 
 ## 🚀 START THE PULSE
 ```bash
+# Full clean assembly
+./.gitignore_folder/clean_build.sh
+
+# Or standard installation
 ./gradlew installDebug
 ```
 

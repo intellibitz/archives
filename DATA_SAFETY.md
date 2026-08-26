@@ -46,4 +46,4 @@ blukit **never** connects to the internet. All "Pulses" spread directly from pho
 - **Shared & User-Owned Crowds**: Public Crowds follow a creator-as-owner model. While anyone can join or name a crowd, the creator establishes its identity via a **Crowd Persona** (emoji) which is displayed at the spatial center of the radar. The default "THE CROWD" has no owner and belongs to the mesh. Identifiers are **Deterministic and Scoped** (e.g., `crowd_MALL_FOOD_COURT`).
 
 ---
-**Vision Updated**: August 24, 2026
+**Vision Updated**: August 26, 2026

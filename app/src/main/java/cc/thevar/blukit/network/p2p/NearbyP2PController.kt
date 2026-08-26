@@ -129,13 +129,24 @@ class NearbyP2PController(
     private val outgoingQueues = ConcurrentHashMap<String, kotlinx.coroutines.channels.Channel<Payload>>()
     private val _connectionUpdates = MutableSharedFlow<Pair<String, ConnectionStatus>>(extraBufferCapacity = 20)
 
+    /**
+     * Internal callback for handling incoming Nearby Connection payloads.
+     * Manages raw bytes and incoming file stream registration.
+     */
     private val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
             when (payload.type) {
                 Payload.Type.BYTES -> handleReceivedBytes(endpointId, payload.asBytes()!!)
                 Payload.Type.FILE -> {
-                    // Pre-register file payload ID for successful transfer assembly
-                    incomingFiles[payload.id] = MessagePayload(messageId = "pending_${payload.id}", senderId = endpointId, senderName = "PENDING", content = "", timestamp = System.currentTimeMillis())
+                    // Pre-register file payload ID for successful transfer assembly.
+                    // The actual file contents are processed once the transfer is SUCCESS.
+                    incomingFiles[payload.id] = MessagePayload(
+                        messageId = "pending_${payload.id}",
+                        senderId = endpointId,
+                        senderName = "PENDING",
+                        content = "",
+                        timestamp = System.currentTimeMillis()
+                    )
                 }
                 else -> Log.w(tag, "Unsupported payload type received")
             }
@@ -145,14 +156,20 @@ class NearbyP2PController(
             if (update.status == PayloadTransferUpdate.Status.SUCCESS) {
                 val payloadId = update.payloadId
                 Log.d(tag, "Payload SUCCESS: $payloadId")
+                // Once the file is fully transferred, finalize it into the PulseStore.
                 incomingFiles[payloadId]?.let { finalizeFileMessage(payloadId, it) }
             }
         }
     }
 
+    /**
+     * Manages the lifecycle of a radio connection.
+     * Implements automated handshake triggering and state synchronization upon link establishment.
+     */
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
-            // SECURITY: Automated acceptance based on ECDH handshake verification
+            // SECURITY: Automated acceptance based on ECDH handshake verification.
+            // All connections are accepted at the radio level and filtered at the encryption level.
             connectionsClient.acceptConnection(endpointId, payloadCallback)
         }
 
@@ -160,6 +177,7 @@ class NearbyP2PController(
             if (result.status.isSuccess) {
                 activeConnections.add(endpointId)
                 internalScope.launch { _connectionUpdates.emit(endpointId to ConnectionStatus.Connected) }
+                // CRITICAL: Trigger the ECDH handshake as soon as the radio link is established.
                 sendHandshake(endpointId)
             } else {
                 internalScope.launch { _connectionUpdates.emit(endpointId to ConnectionStatus.Error(result.status.statusMessage ?: "Link Refused")) }
@@ -174,6 +192,7 @@ class NearbyP2PController(
             _connectedTies.update { it - endpointId }
             if (activeConnections.isEmpty()) _isConnected.value = false
             updateScannedDevices()
+            // Emit ConnectionLost to notify UI and domain layers of the severed link.
             internalScope.launch { _connectionUpdates.emit(endpointId to ConnectionStatus.ConnectionLost()) }
         }
     }
@@ -340,17 +359,22 @@ class NearbyP2PController(
         return dispatchPulse(payload)
     }
 
-    /** Encrypts and transmits a payload to a target or via mesh relay. */
+    /**
+     * Encrypts and transmits a payload to a target or via mesh relay.
+     * Uses Selective Broadcasting to manage radio energy in high-density crowds.
+     */
     private suspend fun dispatchPulse(payload: MessagePayload): MessagePayload? {
         val bytes = Json.encodeToString(MessagePayload.serializer(), payload).toByteArray()
         val targetRid = payload.receiverId
         try {
             if (targetRid != null) { 
-                getPulseKeyWithRetry(targetRid)?.let { key -> 
+                // Unicast: Direct transmission to a specific peer.
+                getPulseKeyWithRetry(targetRid)?.let { key ->
                     queuePulse(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
                 } 
             } else { 
-                // SELECTIVE BROADCASTING: Prioritize anchor nodes in large crowds to prevent broadcast storms
+                // Broadcast: Scoped transmission across the mesh.
+                // SELECTIVE BROADCASTING: Prioritize anchor nodes in large crowds to prevent broadcast storms.
                 val targets = if (activeConnections.size > 20) {
                     activeConnections.shuffled().take(10) 
                 } else {
@@ -365,10 +389,12 @@ class NearbyP2PController(
                     } 
                 } 
             }
+            // Add to history to prevent echo/duplicate processing.
             synchronized(messageIdHistory) {
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 500) messageIdHistory.removeAt(0)
             }
+            // Commit to local secure storage.
             pulseStore.upsertMessage(payload)
             return payload
         } catch (_: Exception) {
@@ -376,7 +402,10 @@ class NearbyP2PController(
         }
     }
 
-    /** Bundles multiple pending pulses into a single high-density radio transmission. */
+    /**
+     * Bundles multiple pending pulses into a single high-density radio transmission.
+     * Optimizes radio efficiency for non-priority crowd pulses by aggregating them into a single packet.
+     */
     private fun flushAggregateBuffer() {
         val groupsToFlush = aggregateBuffer.keys().toList()
         groupsToFlush.forEach { gid ->
@@ -559,16 +588,23 @@ class NearbyP2PController(
 
     private fun isHandshakePayload(bytes: ByteArray): Boolean = bytes.isNotEmpty() && (bytes[0] == 0x01.toByte())
 
+    /**
+     * Initiates the secure cryptographic handshake with a peer.
+     * Derives a shared secret using ECDH and HKDF for AES-256-GCM encryption.
+     */
     private fun handleHandshake(endpointId: String, bytes: ByteArray) {
         try {
             val peerPublicKeyBytes = bytes.copyOfRange(1, bytes.size)
             val keyFactory = java.security.KeyFactory.getInstance("EC")
             val peerPublicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(peerPublicKeyBytes))
+
+            // Generate shared secret key for AES-GCM pulse encryption.
             val secretKey = cryptoManager.deriveSharedSecret(peerPublicKey)
             pulseKeys[endpointId] = secretKey
             Log.i(tag, "SECURE: Radio link established with $endpointId")
             
-            // AUTOMATED HISTORY BRIDGING: Sync pulses upon successful secure link
+            // AUTOMATED HISTORY BRIDGING: Sync pulses upon successful secure link creation.
+            // This ensures missing pulses are bridged as soon as the peers are in range.
             syncPulseHistory(endpointId)
         } catch (_: Exception) {
             Log.e(tag, "Handshake handle failed")
