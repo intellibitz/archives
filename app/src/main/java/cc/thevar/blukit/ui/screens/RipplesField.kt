@@ -6,6 +6,7 @@
  * 
  * Architectural Patterns:
  * - Spatial Positioning: Maps signal strength (proximityFactor) to orbital radius.
+ * - Crowd Canvas: Surfaces high-resonance pulses determined by swarm consensus.
  * - Relay Animations: Visualizes pulses as traveling dots between nodes.
  * - Pulse Ripples: Context-aware circles expanding from nodes when energy is emitted.
  * - Spectral Dimming: Intelligently dims background nodes to focus user focus.
@@ -81,6 +82,7 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Metadata for local pulse visualizations (Active Bubbles). */
 data class BubbleData(
@@ -197,7 +199,7 @@ fun RipplesField(
             relayEvents.removeAll { now - it.startTime > 800 }
             pulseRipples.removeAll { now - it.startTime > 2000 }
             if (collectiveEnergy > 0f) collectiveEnergy = (collectiveEnergy - 0.04f).coerceAtLeast(0f)
-            delay(100)
+            delay(100.milliseconds)
         }
     }
 

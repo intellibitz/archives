@@ -8,6 +8,7 @@
  * - 100% Offline: Zero cloud dependency.
  * - Pulse Aggregation: Batching low-priority pulses for radio efficiency.
  * - Mesh Relay: 3-hop ephemeral relaying for extended range.
+ * - Intelligence Support: Carrier for decentralized Crowd AI and swarm votes.
  * - Differential Sync: Rapid history bridging using WiFi/BLE composite radios.
  */
 package cc.thevar.blukit.network.p2p
@@ -69,6 +70,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.SecretKey
 import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -570,7 +572,7 @@ class NearbyP2PController(
             while (_isDiscovering.value) {
                 val isBoosted = _scannedDevices.value.count { it.isConnected } >= 3
                 val scanDelay = if (isBoosted) 10000L else 30000L
-                delay(scanDelay)
+                delay(scanDelay.milliseconds)
                 if (_isDiscovering.value && _scannedDevices.value.isEmpty()) {
                     connectionsClient.stopDiscovery()
                     connectionsClient.startDiscovery(serviceId, createDiscoveryCallback(), options)
@@ -621,7 +623,7 @@ class NearbyP2PController(
                     }
                 
                 // Stability: Periodic restart to refresh radio state or name updates
-                delay(60000) 
+                delay(1.minutes) 
                 if (_isAdvertising.value) connectionsClient.stopAdvertising()
             }
         }
@@ -684,7 +686,7 @@ class NearbyP2PController(
     }
 
     private suspend fun getPulseKeyWithRetry(id: String): SecretKey? {
-        var a = 0; while (pulseKeys[id] == null && a < 30) { delay(100); a++ }; return pulseKeys[id]
+        var a = 0; while (pulseKeys[id] == null && a < 30) { delay(100.milliseconds); a++ }; return pulseKeys[id]
     }
 
     private fun syncPulseHistory(endpointId: String) {

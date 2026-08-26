@@ -6,6 +6,7 @@
  * 
  * Responsibilities:
  * - Hardware Harmony: Monitoring Bluetooth/Location availability and permissions.
+ * - Crowd AI Orchestration: Integrating ambient intelligence for resonance synthesis.
  * - Crowd Awakening: Automatically promoting local pulses to the mesh when radios engage.
  * - Ritual Sentience: Executing scheduled context activations and smart reminders.
  * - Storage Pruning: Orchestrating the "Pulse Decay" protocol for media and history.
@@ -20,6 +21,7 @@ import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
+import cc.thevar.blukit.domain.logic.IntelligenceManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
@@ -39,6 +41,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
@@ -61,6 +64,7 @@ class BluetoothViewModel(
     private val permissionManager: SpreadPermissionManager,
     private val pulseStore: PulseStore,
     private val connectivityUseCase: ConnectivityUseCase,
+    private val intelligenceManager: IntelligenceManager,
 ) : ViewModel() {
 
     private val _selectedDevices = MutableStateFlow<Set<String>>(emptySet())
@@ -77,6 +81,14 @@ class BluetoothViewModel(
     val discoveredCrowds = p2pController.discoveredCrowds
         .filter { it.id != _currentChainId.value }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
+
+    /** CROWD CANVAS: Reactive flow of high-resonance pulses for the spatial header. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val highResonancePulses: StateFlow<List<MessagePayload>> = _currentChainId
+        .flatMapLatest { groupId ->
+            pulseStore.getHighResonancePulses(groupId)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Merged status of hardware radios and runtime permissions. */
     private val harmonyState: Flow<HardwareHarmony> = combine(
@@ -586,6 +598,13 @@ class BluetoothViewModel(
 
     fun unpinPulse(groupId: String, messageId: String) {
         viewModelScope.launch { pulseStore.unpinPulse(groupId, messageId) }
+    }
+
+    /** Triggers a swarm consensus vote to adjust pulse resonance. */
+    fun castVote(pulseId: String, weight: Int) {
+        viewModelScope.launch {
+            intelligenceManager.castConsensusVote(pulseId, _currentChainId.value, weight)
+        }
     }
 
     fun updateProjection(groupId: String, emoji: String?) {

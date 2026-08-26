@@ -1,6 +1,6 @@
-# blukit: crowd resonance
+# blukit: crowd AI.
 
-**CROWD (B) RESONANCE. ANYWHERE.**
+**CROWD (B) INTELLIGENCE. ANYWHERE.**
 
 blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-to-peer **Media Mesh** that lets you spread pulses, share media, and establish secure chains in any physical environment—festivals, subways, crowd hubs, or universities—without a single byte touching the internet.
 
@@ -11,6 +11,7 @@ blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-t
 - **CROWD**: Public, discoverable frequencies where name *is* identity. Shared physical containers.
 - **CHAIN**: Private, encrypted interaction layers. Anchored to a Crowd context.
 - **PULSE**: The atomic unit of energy. A single resonant pulse.
+- **RESONANCE**: The synthesized intelligence of a crowd context. A collective pulse frequency.
 
 ---
 
@@ -43,25 +44,29 @@ Experience the **Unified Pulse Frequency**.
 - **Senior Vault**: Mark specific Chains for permanent preservation (exempt from all decay).
 - **Crowd Vault (Auto-Archiving)**: Over a 4-year journey, the ticker stays clean. A protocol automatically moves crowds that haven't pulsed in 30 days into a **"Sunk Pulse"** vault.
 - **Differential Pulse Sync**: High-speed WiFi radio sync that only bridges missing history, making updates 10x faster.
+- **Ambient Intelligence (Crowd AI)**: On-device synthesis of local pulse data to generate real-time "Resonance Summaries," converting raw crowd noise into actionable intelligence without cloud processing.
 
 ---
 
 ## 📱 HARMONY HUB
-A high-density, ergonomic architecture for tactical crowd control:
+A high-density, ergonomic architecture for tactical crowd control, differentiated by Blukit's **Amber** (Public/Action) and **Stealth Rose** (Private/Secure) themes.
 
-### **Tactical Header (Top Overlay)**
-- **Row 0 (Global Command)**: Low-profile system bar with tactical toggles for Stealth/Power + **BLUKIT BRANDING** next to the **PRIVACY** tie + Real-time Amber radio status (BT/WiFi).
+### **⚡ Actionable Layer (The Interaction Hub)**
+*Active, interactive elements signaled by high-intensity pulses and glows.*
+- **Pulse Hub (Amber/Rose Glow)**: The primary interaction engine. Features an **Aura Glow** that signals active focus. High-contrast triggers for pulsing energy.
+- **Tactical Inputs**: Text entry fields signaled by high-intensity **Amber Focus** (Public) or **Rose Glow** (Private) borders. Interaction triggers a haptic resonant pulse.
+- **Discovery Radar (Spatial Nodes)**: Interactive user nodes. Your **Identity Anchor ("YOU")** and orbit nodes are clickable for resonance.
+- **Ticker Entries**: High-density summaries with explicit **"ENTER"** and **"JOIN"** affordances.
+- **Tactical Toggles**: Quick-action switches in the header for **Stealth Mode** and **Radio Power**.
 
-### **Humanity Stage (Radar Header)**
-- **Row 1 (Contextual Navigation)**: Anchored directly to the Radar Field for ergonomic reach. Unified navigation breadcrumbs (showing deep paths like `THE CROWD > CONCERT`), the active **Event/Crowd Title**, and a high-contrast **User Count** badge.
-- **Tactical Icon Labels**: System tools in the header include high-contrast labels (e.g., **"RADAR"**, **"SEARCH"**, **"HISTORY"**) in ultra-small tactical fonts for maximum clarity.
-
-### **Interaction Hub (Bottom Overlay)**
-*Available only inside a Crowd or Chain*
-- **Pulse Hub**: The interaction hub awakens once a context is established. Featuring an **Aura Glow** that signals active focus.
-- **Discovery Radar**: Spatial view with a centralized **Context Anchor** (Named Event), your prominent **Identity Anchor** ("YOU") nearby, and other Users in orbit.
-- **Spectral Dimming**: The radar field intelligently dims when the Pulse Hub is engaged, focusing the user's energy on the current interaction while maintaining spatial mesh awareness.
-- **Tactical Identity**: Your persona node provides immediate recognition by showing your name (up to 3 characters) and an explicit **"YOU"** anchor.
+### **🛡️ Non-Actionable Layer (The Contextual Stage)**
+*Passive, informational elements using tactical dimming and low-profile styling.*
+- **Tactical Text & Labels**: Read-only labels and metadata in low-profile **Tactical Mono fonts**. High-contrast for clarity but low-intensity to prevent distraction.
+- **Humanity Stage (Breadcrumbs)**: Non-interactive navigational paths (e.g., `THE CROWD > CONCERT`) providing situational awareness.
+- **Tactical Header (System Bar)**: Low-profile status indicators for **Amber Radio Status** and **Privacy Ties**.
+- **Spectral Dimming**: Automatic background dimming of the Radar Field to focus attention on the Pulse Hub without removing mesh context.
+- **Event Personas**: Visual identity anchors (emojis) that represent frequencies but do not trigger direct actions unless part of an entry.
+- **User Count Badges**: High-contrast, read-only badges showing mesh density.
 
 ---
 
@@ -78,12 +83,13 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 ## 🛠️ ARCHITECTURAL SUPREMACY
 1. **100% Offline**: Zero cloud. No servers. No internet. Data stays in the air.
 2. **Header + Entries Pattern**: A unified visual language across all widgets (Field, Hubs, Ticker, Radar). Headers provide collective context; Entries provide atomic interaction.
-3. **Media Mesh**: Composite radio orchestration (Nearby Connections + BLE Fallback).
-4. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy.
-5. **Deterministic Scoped Naming**: Public Crowd IDs are generated as paths (e.g., `crowd_MALL_FOOD_COURT`), ensuring global uniqueness.
-6. **Partitioned Group Scaling**: Intelligent member partitioning for crowds exceeding 500 members.
-7. **Decentralized-First**: Prioritize mesh efficiency and hardware-encrypted energy.
-8. **Shared :core**: Koin DI, UDF with `BluetoothUiState`, and primitive `Canvas` UI foundation.
+3. **Intelligence Layer**: Scoped, on-device AI that processes local pulses to provide context-aware insights (e.g., lecture summaries, crowd movement, or event highlights).
+4. **Media Mesh**: Composite radio orchestration (Nearby Connections + BLE Fallback).
+5. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy.
+6. **Deterministic Scoped Naming**: Public Crowd IDs are generated as paths (e.g., `crowd_MALL_FOOD_COURT`), ensuring global uniqueness.
+7. **Partitioned Group Scaling**: Intelligent member partitioning for crowds exceeding 500 members.
+8. **Decentralized-First**: Prioritize mesh efficiency and hardware-encrypted energy.
+9. **Shared :core**: Koin DI, UDF with `BluetoothUiState`, and primitive `Canvas` UI foundation.
 
 ---
 
@@ -95,9 +101,10 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 ## 🤖 THE AGENT PROTOCOL (FOR LLM COLLABORATORS)
 
 ### **Master Operational Directive**
-*   **Production Excellence**: All code must be production-ready, bug-free, and accompanied by comprehensive unit tests.
+*   **Production Excellence**: All code must be production-ready, bug-free, and accompanied by comprehensive unit tests. No unused imports. No deprecated usages. Warnings should be fixed, without breaking features.
 *   **Security & Safety**: Prioritize secure coding practices (ECDH, AES-256) and thread-safe operations.
-*   **Performance Engineering**: Write highly performant code with a focus on low battery consumption—crucial for persistent mesh operations.
+*   **Performance Engineering**: Write highly performant code with a focus on low battery consumption—crucial for persistent mesh operations and local AI synthesis.
+*   **Ambient Intelligence**: Focus on on-device, privacy-preserving AI patterns. Avoid cloud dependencies for data processing.
 *   **Architectural Integrity**: Android, Kotlin, and Gradle code must be modular, decoupled, and adhere to clean architecture principles.
 *   **Comprehensive Documentation**: Every file MUST include detailed header comments, MUST include detailed function comments, and detailed inline comments explaining its purpose, logic, and integration points. This ensures LLM collaborators can instantly grasp the code's intent and function.
 *   **Modern Toolstack**: Always leverage the latest stable libraries, tools, and idiomatic Kotlin/Compose patterns.

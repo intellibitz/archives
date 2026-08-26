@@ -7,6 +7,7 @@
  * Features:
  * - Encrypted Binary Logs: Uses CryptoManager to protect local pulse history.
  * - LWW (Last-Write-Wins) CRDT: Conflict-free resolution for shared notes and tasks.
+ * - Swarm Logic: Weight-based pulse prioritization for collective resonance.
  * - Pulse Decay: Automated self-cleaning logic for media and inactive crowds.
  * - Resonance Drill-Down: Hierarchical state management for active, archived, and vaulted contexts.
  */
@@ -242,9 +243,15 @@ class PulseStore(
     /** 
      * Incorporates a new pulse into the stream.
      * Uses LWW-CRDT logic for notes and tasks to ensure deterministic state across the mesh.
+     * Also handles Crowd AI consensus voting to adjust resonance weights.
      */
     suspend fun upsertMessage(message: MessagePayload) {
         if (message.content.isBlank()) return // Validation: Ignore empty pulses
+
+        if (message.type == MessagePayload.TYPE_CONSENSUS_VOTE) {
+            handleConsensusVote(message)
+            return
+        }
 
         _messages.update { current ->
             val existingIndex = current.indexOfFirst { it.messageId == message.messageId }
@@ -277,6 +284,34 @@ class PulseStore(
                 pruneHistory(targetGid)
             }
         }
+    }
+
+    /**
+     * SWARM LOGIC: Processes a consensus vote to adjust the weight of a target pulse.
+     */
+    private suspend fun handleConsensusVote(votePulse: MessagePayload) {
+        val targetPulseId = votePulse.parentMessageId ?: return
+        val weight = try { votePulse.content.toInt() } catch (e: Exception) { 0 }
+        
+        _messages.update { current ->
+            current.map { 
+                if (it.messageId == targetPulseId) {
+                    it.copy(resonanceWeight = it.resonanceWeight + weight)
+                } else it
+            }
+        }
+        compactMessages()
+    }
+
+    /**
+     * CROWD CANVAS: Retrieves high-priority pulses for the spatial header.
+     */
+    fun getHighResonancePulses(groupId: String, limit: Int = 3): StateFlow<List<MessagePayload>> {
+        return messages.map { list ->
+            list.filter { it.groupId == groupId && it.resonanceWeight > 0 }
+                .sortedByDescending { it.resonanceWeight }
+                .take(limit)
+        }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
     }
 
     /** Evicts low-priority pulses once a context exceeds retention limits. */

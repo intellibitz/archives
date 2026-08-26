@@ -119,6 +119,7 @@ fun BlukitApp(
     val isStealthMode by viewModel.isStealthMode.collectAsStateWithLifecycle(initialValue = false)
     val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
+    val highResonancePulses by bluetoothViewModel.highResonancePulses.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(bluetoothState.activity.uiError) { 
@@ -444,6 +445,8 @@ fun BlukitApp(
                                         onDisconnect = bluetoothViewModel::disconnect, 
                                         onSendMessage = bluetoothViewModel::sendMessage, 
                                         crowdIsStill = crowdIsStill,
+                                        highResonancePulses = highResonancePulses,
+                                        onVote = bluetoothViewModel::castVote,
                                         onNavigateToGroup = { gid ->
                                             backStack.add(Route.GroupField(gid))
                                             bluetoothViewModel.enterChain(gid)

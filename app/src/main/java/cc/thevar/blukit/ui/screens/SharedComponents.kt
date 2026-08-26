@@ -118,6 +118,54 @@ fun CrowdTicker(title: String, resonances: List<Resonance> = emptyList(), modifi
 }
 
 /**
+ * CROWD CANVAS: The spatial intelligence header for high-resonance pulses.
+ * Features a horizontal row of high-priority energy nodes that "glow" based on consensus.
+ */
+@Composable
+fun CrowdCanvas(
+    highResonancePulses: List<MessagePayload>,
+    themeColor: Color,
+    onPulseClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        highResonancePulses.forEach { pulse ->
+            val infiniteTransition = rememberInfiniteTransition(label = "CanvasGlow")
+            val glowScale by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.15f,
+                animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                label = "Pulse"
+            )
+
+            Surface(
+                onClick = { onPulseClick(pulse.messageId) },
+                color = Color.Black.copy(alpha = 0.6f),
+                shape = CircleShape,
+                border = BorderStroke(1.dp, themeColor.copy(alpha = 0.4f)),
+                modifier = Modifier
+                    .padding(horizontal = 6.dp)
+                    .size(32.dp)
+                    .graphicsLayer {
+                        scaleX = glowScale
+                        scaleY = glowScale
+                    }
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(text = pulse.senderEmoji ?: "🔥", fontSize = 14.sp)
+                }
+            }
+        }
+    }
+}
+
+/**
  * Tactical navigation landmark. Displays the nested path (e.g., EVENT > CROWD > CHAIN).
  * Supports direct crumb interactions for rapid hierarchy traversal.
  */
@@ -1213,7 +1261,7 @@ fun BlukitTip(
 }
 
 @Composable
-fun PulseActionMenu(pulse: MessagePayload, isMe: Boolean, onInvite: () -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit, onBroadcast: () -> Unit) {
+fun PulseActionMenu(pulse: MessagePayload, isMe: Boolean, onInvite: () -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit, onBroadcast: () -> Unit, onVote: (Int) -> Unit = {}) {
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF0A0C14),
@@ -1227,8 +1275,14 @@ fun PulseActionMenu(pulse: MessagePayload, isMe: Boolean, onInvite: () -> Unit, 
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Swarm Logic: Consensus Voting
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MenuActionItem(Icons.Rounded.ThumbUp, "UPVOTE", StealthPrimary, modifier = Modifier.weight(1f)) { onVote(1); onDismiss() }
+                    MenuActionItem(Icons.Rounded.ThumbDown, "DOWNVOTE", Color.Red.copy(alpha = 0.6f), modifier = Modifier.weight(1f)) { onVote(-1); onDismiss() }
+                }
+
                 if (isMe && pulse.pulseType == MessagePayload.PULSE_SILENCE) {
-                    MenuActionItem(Icons.Rounded.Grain, "BROADCAST TO CROWD", StealthPrimary, onBroadcast)
+                    MenuActionItem(Icons.Rounded.Grain, "BROADCAST TO CROWD", StealthPrimary, onClick = onBroadcast)
                 } else if (pulse.pulseType == MessagePayload.PULSE_SHOUT) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -1241,8 +1295,8 @@ fun PulseActionMenu(pulse: MessagePayload, isMe: Boolean, onInvite: () -> Unit, 
                     }
                 }
                 
-                MenuActionItem(Icons.Rounded.Handshake, "INVITE TO PRIVATE", StealthRose, onInvite)
-                MenuActionItem(Icons.Rounded.Delete, "DELETE PULSE", Color.Red, onDelete)
+                MenuActionItem(Icons.Rounded.Handshake, "INVITE TO PRIVATE", StealthRose, onClick = onInvite)
+                MenuActionItem(Icons.Rounded.Delete, "DELETE PULSE", Color.Red, onClick = onDelete)
             }
         },
         confirmButton = {
@@ -1344,7 +1398,7 @@ fun ResonanceSummary(
                             text = subtitle.uppercase(),
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold,
-                            color = themeColor.copy(alpha = 0.6f),
+                            color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.6f),
                             letterSpacing = 1.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -1431,25 +1485,25 @@ fun PersonaOptionsMenu(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (isRequesting) {
-                    MenuActionItem(Icons.Rounded.Handshake, "ACCEPT RADIO", StealthPrimary, onAccept)
-                    MenuActionItem(Icons.Rounded.Close, "DENY RADIO", Color.Red, onDeny)
+                    MenuActionItem(Icons.Rounded.Handshake, "ACCEPT RADIO", StealthPrimary, onClick = onAccept)
+                    MenuActionItem(Icons.Rounded.Close, "DENY RADIO", Color.Red, onClick = onDeny)
                 } else if (activeGroupId != null) {
                     if (isAlreadyInActiveGroup) {
-                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM CHAIN", StealthRose) { onRemoveFromGroup(activeGroupId) }
+                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM CHAIN", StealthRose, onClick = { onRemoveFromGroup(activeGroupId) })
                     } else {
-                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS CHAIN", StealthPrimary) { onAddToGroup(activeGroupId) }
+                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS CHAIN", StealthPrimary, onClick = { onAddToGroup(activeGroupId) })
                     }
                 } else if (isTied) {
-                    MenuActionItem(Icons.Rounded.Sync, "PULSE SYNC", StealthAmber, onSync)
-                    MenuActionItem(Icons.Rounded.SettingsInputAntenna, "DISCONNECT", StealthRose, onDisconnect)
+                    MenuActionItem(Icons.Rounded.Sync, "PULSE SYNC", StealthAmber, onClick = onSync)
+                    MenuActionItem(Icons.Rounded.SettingsInputAntenna, "DISCONNECT", StealthRose, onClick = onDisconnect)
                 } else {
-                    MenuActionItem(Icons.Rounded.Hearing, "WHISPER", StealthPrimary, onPulse)
-                    MenuActionItem(Icons.Rounded.SettingsInputAntenna, "SECURE RADIO", StealthRose, onSelect)
+                    MenuActionItem(Icons.Rounded.Hearing, "WHISPER", StealthPrimary, onClick = onPulse)
+                    MenuActionItem(Icons.Rounded.SettingsInputAntenna, "SECURE RADIO", StealthRose, onClick = onSelect)
                 }
                 
-                MenuActionItem(Icons.Rounded.Radar, "IDENTIFY", Color.White, onIdentify)
-                if (isBlocked) MenuActionItem(Icons.Rounded.LockOpen, "UNBLOCK USER", StealthPrimary, onUnblock) 
-                else MenuActionItem(Icons.Rounded.Block, "BLOCK USER", Color.Red, onBlock)
+                MenuActionItem(Icons.Rounded.Radar, "IDENTIFY", Color.White, onClick = onIdentify)
+                if (isBlocked) MenuActionItem(Icons.Rounded.LockOpen, "UNBLOCK USER", StealthPrimary, onClick = onUnblock) 
+                else MenuActionItem(Icons.Rounded.Block, "BLOCK USER", Color.Red, onClick = onBlock)
             }
         },
         confirmButton = {
@@ -1461,8 +1515,8 @@ fun PersonaOptionsMenu(
 }
 
 @Composable
-fun MenuActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, color: Color, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = Color.White.copy(alpha = 0.03f), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) { Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) { Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp)); Spacer(modifier = Modifier.width(12.dp)); Text(text = label, fontWeight = FontWeight.ExtraBold, color = color, fontSize = 11.sp, letterSpacing = 1.sp) } }
+fun MenuActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Surface(onClick = onClick, color = Color.White.copy(alpha = 0.03f), shape = RoundedCornerShape(16.dp), modifier = modifier.fillMaxWidth()) { Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) { Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp)); Spacer(modifier = Modifier.width(12.dp)); Text(text = label, fontWeight = FontWeight.ExtraBold, color = color, fontSize = 11.sp, letterSpacing = 1.sp) } }
 }
 
 @Composable
@@ -2111,7 +2165,7 @@ fun PulsePersonaSignature(
     val isProjected = projectionEmoji != null
     val basePulse = if (isProjected) 1.6f else 1.15f
     val pulseScale by if (isStatic) { 
-        remember { androidx.compose.runtime.mutableFloatStateOf(1.0f) } 
+        remember { mutableFloatStateOf(1.0f) }
     } else { 
         val targetPulse = if (isHighlighted) 1.5f else if ((isPulsed || isPeerPulsed)) 1.25f else basePulse
         infiniteTransition.animateFloat(
@@ -2482,7 +2536,7 @@ fun BlukitInput(
                                         letterSpacing = 1.sp
                                     )
                                 ) 
-                            }; 
+                            }
                             innerTextField() 
                         }
                     )

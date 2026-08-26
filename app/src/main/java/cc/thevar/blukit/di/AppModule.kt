@@ -9,6 +9,7 @@ import cc.thevar.blukit.data.repository.IdentityRepositoryImpl
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
+import cc.thevar.blukit.domain.logic.IntelligenceManager
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
 import cc.thevar.blukit.network.p2p.NearbyP2PController
 import cc.thevar.blukit.network.p2p.P2PController
@@ -54,10 +55,11 @@ val appModule = module {
     // Use Cases & Managers
     single { SupremePowerManager(get(), get(), get(), get()) }
     single { ConnectivityUseCase(get(), get(), get(), get()) }
+    single(createdAtStart = true) { IntelligenceManager(androidContext(), get()) }
     
     // ViewModels
     viewModel { MainViewModel(get(), get()) }
-    viewModel { BluetoothViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { BluetoothViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SupremePowerViewModel(get()) }
     viewModel { ContactsViewModel(get()) }
 }

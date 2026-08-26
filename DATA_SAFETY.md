@@ -3,10 +3,12 @@
 **blukit is 100% offline, anonymous, and secured by proximity.**
 
 ## 1. Zero Cloud Dependency
-blukit **never** connects to the internet. All "Pulses" spread directly from phone to phone using peer-to-peer radios.
+blukit **never** connects to the internet. All "Pulses" spread directly from phone to phone using peer-to-peer radios. All intelligence is synthesized locally.
 
 | Energy Type | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
+| **Ambient Intelligence** | Only on your phone | Mesh partners | On-device synthesis of **Resonance Summaries** for collective context. |
+| **Swarm Logic (Votes)** | Only on your phone | Mesh partners | Anonymous consensus to prioritize pulses on the **Crowd Canvas**. |
 | **Nickname & Roles** | Only on your phone | Nearby people only | Local identification and template-specific permissions. |
 | **Assignments & Tasks** | Only on your phone | Chain members only | Collaborative academic tracking (exempt from decay). |
 | **Chains (Shout/Whisper/Silence)** | Only on your phone | Mesh/Chain partners | To maintain local and shared history. |
@@ -23,6 +25,8 @@ blukit **never** connects to the internet. All "Pulses" spread directly from pho
 
 ## 2. Absolute Proximity Privacy
 - **Absolute Proximity Privacy**: By design, **all Crowds are public and discoverable**, while **all Chains are private and encrypted**. Your data never leaves the physical radio range of your device.
+- **Privacy-Preserving Analytics**: Blukit performs **Local Synthesis** of crowd energy. Only aggregated insights (e.g., "High Resonance around Stage B") are shared as **Crowd AI** metadata. Raw pulse content remains protected by hardware encryption.
+- **Swarm Logic**: Consensus on the **Crowd Canvas** is achieved via anonymous votes. No voter identity is linked to the priority pulse.
 - **Crowd Boundaries**: If someone isn't in your immediate "Crowd Field," they cannot see your **Shouts**.
 - **Anchored Discovery**: Private Chains must be anchored to a parent Crowd to be surfaced in the crowd hierarchy, ensuring secure interaction layers remain discoverable by trusted circles.
 - **Branded Resonance**: **Whispers** and **Private Chains** resonate in **Stealth Rose** and stay encrypted between you and your trusted circles, nested safely inside a public Crowd.

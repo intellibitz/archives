@@ -93,10 +93,13 @@ fun CrowdField(
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
+    highResonancePulses: List<MessagePayload> = emptyList(),
+    onVote: (String, Int) -> Unit = { _, _ -> },
     header: @Composable () -> Unit
 ) {
     var showTip by remember { mutableStateOf(true) }
     var localFocusedId by remember(externalFocusedId) { mutableStateOf(externalFocusedId) }
+    var selectedPulseForMenu by remember { mutableStateOf<MessagePayload?>(null) }
 
     val crowd = remember(crowdId, state.session.groups) {
         state.session.groups.find { it.id == crowdId }
@@ -131,6 +134,14 @@ fun CrowdField(
             // MODULE 1: BASE CONTENT (Radar + Lists)
             Column(modifier = Modifier.fillMaxSize()) {
                 val crowdName = crowd?.name ?: "CROWD"
+                
+                // SWARM LOGIC: Crowd Canvas for High-Resonance Pulses
+                CrowdCanvas(
+                    highResonancePulses = highResonancePulses,
+                    themeColor = StealthPrimary,
+                    onPulseClick = { onNavigateToPulse(it) }
+                )
+
                 RipplesField(
                     state = state,
                     localDeviceId = localDeviceId,
@@ -230,8 +241,8 @@ fun CrowdField(
                                     isMutual = false,
                                     resonance = crowd,
                                     rowId = pulse.messageId,
-                                    onPulseClick = { /* Handle Unit Click */ },
-                                    onDeviceLongClick = { },
+                                    onPulseClick = { onNavigateToPulse(pulse.messageId) },
+                                    onDeviceLongClick = { selectedPulseForMenu = pulse },
                                     onDelete = { }
                                 )
                             }
@@ -255,7 +266,9 @@ fun CrowdField(
                 pulsedPeers = emptySet(),
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },
-                onDeviceLongClick = { },
+                onDeviceLongClick = { dev -> 
+                    chatPulses.find { it.senderId == dev.id }?.let { selectedPulseForMenu = it }
+                },
                 onDeletePulse = { },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -263,6 +276,19 @@ fun CrowdField(
                     .height(280.dp)
                     .padding(bottom = 100.dp) // Room for Hub
             )
+
+            // Pulse Action Menu for Swarm Voting
+            if (selectedPulseForMenu != null) {
+                PulseActionMenu(
+                    pulse = selectedPulseForMenu!!,
+                    isMe = selectedPulseForMenu!!.senderId == localDeviceId,
+                    onInvite = { /* Handle invite */ },
+                    onDelete = { /* Handle delete */ },
+                    onBroadcast = { /* Handle broadcast */ },
+                    onVote = { weight -> onVote(selectedPulseForMenu!!.messageId, weight) },
+                    onDismiss = { selectedPulseForMenu = null }
+                )
+            }
 
             // MODULE 3: PULSE HUB (Bottom Overlay)
             BlukitPulseHub(

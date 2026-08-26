@@ -45,6 +45,7 @@ data class MessagePayload(
     val dueDate: Long? = null,
     val assigneeId: String? = null,
     val taskStatus: Int = 0,
+    val resonanceWeight: Int = 0, // Consensus weight for Crowd AI
 ) {
     companion object {
         // --- Core Pulse Types ---
@@ -68,6 +69,11 @@ data class MessagePayload(
         const val TYPE_ASSIGNMENT_TASK = 14
         const val TYPE_CALENDAR_EVENT = 15
         const val TYPE_MEMORY = 16
+
+        // --- Crowd AI & Intelligence ---
+        const val TYPE_AI_SUMMARY = 17
+        const val TYPE_CONSENSUS_VOTE = 18
+        const val TYPE_CROWD_INSIGHT = 19
 
         // --- Task Status (CRDT) ---
         const val TASK_PENDING = 0
