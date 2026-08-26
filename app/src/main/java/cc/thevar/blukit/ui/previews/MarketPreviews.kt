@@ -52,7 +52,6 @@ fun PreviewRadarPhone() {
             localDeviceId = "me",
             header = { Text("PREVIEW HEADER", color = Color.White) },
             onDeviceClick = {},
-            onDeletePulse = {},
             onWhisper = {}
         )
     }
@@ -91,8 +90,6 @@ fun PreviewChatPhone() {
             localDeviceId = "me",
             header = { Text("PREVIEW HEADER", color = Color.White) },
             groupId = "group1",
-            onDisconnect = {},
-            onSendMessage = { _, _ -> }
         )
     }
 }
@@ -115,7 +112,6 @@ fun PreviewRadarTablet() {
             localDeviceId = "me",
             header = { Text("PREVIEW HEADER", color = Color.White) },
             onDeviceClick = {},
-            onDeletePulse = {},
             onWhisper = {}
         )
     }
@@ -255,7 +251,6 @@ fun PreviewPulsingResonanceTickerHeaders() {
                 isGrouped = true,
                 onPulseClick = {},
                 onDeviceLongClick = {},
-                onDeletePulse = {},
                 reverseLayout = false
             )
         }

@@ -63,9 +63,6 @@ fun CrowdField(
     state: BluetoothUiState,
     localDeviceId: String,
     crowdId: String?,
-    onDisconnect: () -> Unit,
-    onSendMessage: (String, String) -> Unit,
-    crowdIsStill: Boolean = false,
     // Hub Callbacks
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
@@ -76,7 +73,6 @@ fun CrowdField(
     onStartSidePulse: () -> Unit = {},
     onStartChain: () -> Unit = {},
     onClearSelection: () -> Unit = {},
-    onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
     externalFocusedId: String? = null,
@@ -123,7 +119,7 @@ fun CrowdField(
         }
     }
 
-    val (chatPulses, pulseCounts, isPulseFocused) = pulsesData
+    val (chatPulses, pulseCounts, _) = pulsesData
     val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
@@ -144,7 +140,6 @@ fun CrowdField(
 
                 RipplesField(
                     state = state,
-                    localDeviceId = localDeviceId,
                     activeBubbles = emptyList(),
                     pulsedPeers = emptySet(),
                     drawBackground = false,
@@ -239,11 +234,9 @@ fun CrowdField(
                                     isMe = pulse.senderId == localDeviceId,
                                     isGrouped = false,
                                     isMutual = false,
-                                    resonance = crowd,
                                     rowId = pulse.messageId,
                                     onPulseClick = { onNavigateToPulse(pulse.messageId) },
-                                    onDeviceLongClick = { selectedPulseForMenu = pulse },
-                                    onDelete = { }
+                                    onDeviceLongClick = { selectedPulseForMenu = pulse }
                                 )
                             }
                         }
@@ -269,7 +262,6 @@ fun CrowdField(
                 onDeviceLongClick = { dev -> 
                     chatPulses.find { it.senderId == dev.id }?.let { selectedPulseForMenu = it }
                 },
-                onDeletePulse = { },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
@@ -297,10 +289,8 @@ fun CrowdField(
                 onMessageChange = onMessageChange,
                 onSend = onSend,
                 pulseCount = state.session.messages.size,
-                crowdIsStill = crowdIsStill,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
-                pulsedPeers = emptySet(),
                 resonances = state.session.groups,
                 onAcceptRadio = onAcceptRadio,
                 onDenyRadio = onDenyRadio,
@@ -309,7 +299,6 @@ fun CrowdField(
                 onClearSelection = onClearSelection,
                 onAttachFile = { },
                 onSearchToggle = onSearchToggle,
-                onShowPrivacy = onShowPrivacy,
                 onFocusChange = onInputFocusChange,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

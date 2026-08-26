@@ -105,8 +105,7 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun BlukitApp(
-    onEnterPip: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val permissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager = koinInject()
@@ -178,7 +177,7 @@ fun BlukitApp(
         }
         
         // Add Persona if focused on a specific peer in a field
-        if ((focusedChainId != null && currentRoute is Route.GroupField)) {
+        if ((focusedChainId != null) && (currentRoute is Route.GroupField)) {
             val device = bluetoothState.crowd.scannedDevices.find { it.persistentId == focusedChainId || it.id == focusedChainId }
             trail.add(device?.name ?: "Persona")
         }
@@ -192,9 +191,8 @@ fun BlukitApp(
         } else if (focusedChainId != null && index == trailSize - 2) {
             focusedChainId = null
         } else {
-            val routeIndex = index
-            if (routeIndex < backStack.size) {
-                while (backStack.size > routeIndex + 1) {
+            if (index < backStack.size) {
+                while (backStack.size > index + 1) {
                     backStack.removeLastOrNull()
                 }
                 focusedChainId = null
@@ -204,7 +202,7 @@ fun BlukitApp(
 
     val hubRotation by rememberInfiniteTransition(label = "HubScan").animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)), label = "Scan")
     var selectedPersonaForMenu by remember { mutableStateOf<P2PDevice?>(null) }
-    var isNoiseFilterActive by remember { mutableStateOf(false) }
+    var isNoiseFilterActive by remember { mutableStateOf(value = false) }
 
     val listDetailSceneStrategy = rememberListDetailSceneStrategy<Route>()
     val isLocationMandatory = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
@@ -221,7 +219,7 @@ fun BlukitApp(
     var messageText by remember { mutableStateOf("") }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
-    var showManageDialog by remember { mutableStateOf(false) }
+    var showManageDialog by remember { mutableStateOf(value = false) }
     var isSearchMode by remember { mutableStateOf(false) }
     var isInputFocused by remember { mutableStateOf(false) }
     var showAirGhost by remember { mutableStateOf(false) }
@@ -236,11 +234,10 @@ fun BlukitApp(
     }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-        onResult = { uri: Uri? ->
-            uri?.let { bluetoothViewModel.spreadFile(it) }
-        }
-    )
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { bluetoothViewModel.spreadFile(it) }
+    }
 
     // Spatial coordinate registry for drawing resonance threads
     val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
@@ -388,7 +385,6 @@ fun BlukitApp(
                                     pulsedPeers = bluetoothState.crowd.pulsedPeers, 
                                     noiseFilterEnabled = isNoiseFilterActive, 
                                     onDeviceClick = { device -> if (bluetoothState.crowd.selectedDevices.isNotEmpty()) { bluetoothViewModel.toggleDeviceSelection(device.id) } else { val id = device.persistentId ?: device.id; viewModel.togglePulsePeer(id); isNoiseFilterActive = true } }, 
-                                    onDeletePulse = viewModel::deletePulse, 
                                     onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupPulse("WHISPER", setOf(id)); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) }, 
                                     onIdentifyUser = { highlightedUserId = it },
                                     breadcrumbTrail = breadcrumbTrail,
@@ -431,7 +427,7 @@ fun BlukitApp(
                                     isSearchActive = isSearchMode,
                                     showAirGhost = showAirGhost,
                                     onShowAirGhost = { showAirGhost = true },
-                                    onDismissAirGhost = { showAirGhost = false }
+                                    onDismissAirGhost = { showAirGhost = false },
                                 ) 
                             }
                             is Route.GroupField -> NavEntry(key) { 
@@ -442,9 +438,6 @@ fun BlukitApp(
                                         localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
                                         header = topBarHeader,
                                         crowdId = key.groupId, 
-                                        onDisconnect = bluetoothViewModel::disconnect, 
-                                        onSendMessage = bluetoothViewModel::sendMessage, 
-                                        crowdIsStill = crowdIsStill,
                                         highResonancePulses = highResonancePulses,
                                         onVote = bluetoothViewModel::castVote,
                                         onNavigateToGroup = { gid ->
@@ -483,7 +476,6 @@ fun BlukitApp(
                                         onDenyRadio = bluetoothViewModel::denyRadio,
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
-                                        onShowPrivacy = { showPrivacyProtocol = true },
                                         isInputFocused = isInputFocused,
                                         onInputFocusChange = { isInputFocused = it }
                                     )
@@ -493,8 +485,6 @@ fun BlukitApp(
                                         localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
                                         header = topBarHeader,
                                         groupId = key.groupId, 
-                                        onDisconnect = bluetoothViewModel::disconnect, 
-                                        onSendMessage = bluetoothViewModel::sendMessage, 
                                         onRemoveMember = bluetoothViewModel::removeMemberFromGroup, 
                                         onVaultGroup = bluetoothViewModel::vaultGroup,
                                         onSeniorVaultGroup = bluetoothViewModel::seniorVaultGroup,
@@ -540,7 +530,6 @@ fun BlukitApp(
                                         onDenyRadio = bluetoothViewModel::denyRadio,
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
-                                        onShowPrivacy = { showPrivacyProtocol = true },
                                         isInputFocused = isInputFocused,
                                         onInputFocusChange = { isInputFocused = it }
                                     ) 
@@ -551,10 +540,7 @@ fun BlukitApp(
                                     state = bluetoothState,
                                     localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value,
                                     header = topBarHeader,
-                                    localNickname = nickname ?: "?",
-                                    localEmoji = emoji,
                                     messageId = key.messageId,
-                                    onSendMessage = bluetoothViewModel::sendMessage,
                                     onNavigateToPulse = { vid -> backStack.add(Route.PulseField(vid)) },
                                     breadcrumbTrail = breadcrumbTrail,
                                     onCrumbClick = onCrumbClick,
@@ -581,7 +567,6 @@ fun BlukitApp(
                                     },
                                     onSearchToggle = { isSearchMode = !isSearchMode; messageText = "" },
                                     onAttachFile = { filePickerLauncher.launch("*/*") },
-                                    onShowPrivacy = { showPrivacyProtocol = true },
                                     isInputFocused = isInputFocused,
                                     onInputFocusChange = { isInputFocused = it }
                                 )
@@ -601,7 +586,7 @@ fun BlukitApp(
             if (selectedPersonaForMenu != null) {
                 val menuDevice = selectedPersonaForMenu!!
                 val menuId = menuDevice.persistentId ?: menuDevice.id
-                PersonaOptionsMenu(device = menuDevice, isTied = menuDevice.id in bluetoothState.session.connectedTies, isBlocked = menuId in bluetoothState.crowd.blockedUsers, isSelected = menuDevice.id in bluetoothState.crowd.selectedDevices, isRequesting = bluetoothState.crowd.incomingRadioRequests.any { it.id == menuDevice.id }, activeGroupId = (currentRoute as? Route.GroupField)?.groupId, isAlreadyInActiveGroup = (bluetoothState.session.groups.find { it.id == (currentRoute as? Route.GroupField)?.groupId }?.memberIds?.contains(menuId) == true), onPulse = { bluetoothViewModel.requestWhisper(menuDevice); selectedPersonaForMenu = null }, onAccept = { bluetoothViewModel.acceptRadio(menuDevice); selectedPersonaForMenu = null }, onDeny = { bluetoothViewModel.denyRadio(menuDevice); selectedPersonaForMenu = null }, onDisconnect = { bluetoothViewModel.disconnect(); selectedPersonaForMenu = null }, onSelect = { bluetoothViewModel.toggleDeviceSelection(menuDevice.id); selectedPersonaForMenu = null }, onIdentify = { highlightedUserId = menuId; selectedPersonaForMenu = null }, onBlock = { viewModel.blockUser(menuId); selectedPersonaForMenu = null }, onUnblock = { viewModel.unblockUser(menuId); selectedPersonaForMenu = null }, onSync = { bluetoothViewModel.initiateHistorySync(menuDevice.id); selectedPersonaForMenu = null }, onAddToGroup = { gid -> bluetoothViewModel.addMemberToGroup(gid, menuDevice.id); selectedPersonaForMenu = null }, onRemoveFromGroup = { gid -> bluetoothViewModel.removeMemberFromGroup(gid, menuDevice.id); selectedPersonaForMenu = null }, onDismiss = { selectedPersonaForMenu = null })
+                PersonaOptionsMenu(device = menuDevice, isTied = menuDevice.id in bluetoothState.session.connectedTies, isBlocked = menuId in bluetoothState.crowd.blockedUsers, isRequesting = bluetoothState.crowd.incomingRadioRequests.any { it.id == menuDevice.id }, activeGroupId = (currentRoute as? Route.GroupField)?.groupId, isAlreadyInActiveGroup = (bluetoothState.session.groups.find { it.id == (currentRoute as? Route.GroupField)?.groupId }?.memberIds?.contains(menuId) == true), onPulse = { bluetoothViewModel.requestWhisper(menuDevice); selectedPersonaForMenu = null }, onAccept = { bluetoothViewModel.acceptRadio(menuDevice); selectedPersonaForMenu = null }, onDeny = { bluetoothViewModel.denyRadio(menuDevice); selectedPersonaForMenu = null }, onDisconnect = { bluetoothViewModel.disconnect(); selectedPersonaForMenu = null }, onSelect = { bluetoothViewModel.toggleDeviceSelection(menuDevice.id); selectedPersonaForMenu = null }, onIdentify = { highlightedUserId = menuId; selectedPersonaForMenu = null }, onBlock = { viewModel.blockUser(menuId); selectedPersonaForMenu = null }, onUnblock = { viewModel.unblockUser(menuId); selectedPersonaForMenu = null }, onSync = { bluetoothViewModel.initiateHistorySync(menuDevice.id); selectedPersonaForMenu = null }, onAddToGroup = { gid -> bluetoothViewModel.addMemberToGroup(gid, menuDevice.id); selectedPersonaForMenu = null }, onRemoveFromGroup = { gid -> bluetoothViewModel.removeMemberFromGroup(gid, menuDevice.id); selectedPersonaForMenu = null }, onDismiss = { selectedPersonaForMenu = null })
             }
 
             if (showAirIsStillDialog) {
@@ -614,6 +599,7 @@ fun BlukitApp(
                     title = "PRIVACY PROTOCOL",
                     text = "BLUKIT IS ANONYMOUS-FIRST. 100% OFFLINE P2P. ALL PULSES STAY ON YOUR DEVICE UNTIL YOU CHOOSE TO CLEAR THEM.",
                     confirmLabel = "UNDERSTOOD",
+                    themeColor = themeColor,
                     onConfirm = { showPrivacyProtocol = false },
                     onDismiss = { showPrivacyProtocol = false }
                 )

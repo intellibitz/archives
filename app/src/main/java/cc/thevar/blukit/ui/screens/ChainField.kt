@@ -66,30 +66,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@Composable
-private fun ScopeButton(
-    label: String,
-    scope: Int,
-    isSelected: Boolean,
-    color: Color,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        color = if (isSelected) color.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, if (isSelected) color else Color.White.copy(alpha = 0.1f)),
-        modifier = Modifier.height(32.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
-            Text(text = label, fontSize = 8.sp, fontWeight = FontWeight.Black, color = if (isSelected) color else Color.White.copy(alpha = 0.4f))
-        }
-    }
-}
-
-/**
- * CHAIN FIELD: The deepest level of resonance. Focus on whispers and notes.
- */
 /**
  * CHAIN FIELD: The deepest layer of resonance.
  * 
@@ -102,8 +78,6 @@ fun ChainField(
     state: BluetoothUiState,
     localDeviceId: String,
     groupId: String?,
-    onDisconnect: () -> Unit,
-    onSendMessage: (String, String) -> Unit,
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
     onVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
     onSeniorVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
@@ -123,8 +97,6 @@ fun ChainField(
     onDenyRadio: (P2PDevice) -> Unit = {},
     onStartSidePulse: () -> Unit = {},
     onClearSelection: () -> Unit = {},
-    crowdIsStill: Boolean = false,
-    onShowPrivacy: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
     isInputFocused: Boolean = false,
@@ -171,7 +143,6 @@ fun ChainField(
 
     var showNoteEditor by remember { mutableStateOf(false) }
     var activeNote by remember { mutableStateOf<MessagePayload?>(null) }
-    val activePulseId = LocalActivePulseId.current
 
     BlukitFieldScaffold(
         themeColor = if(isPrivate) StealthRose else StealthPrimary,
@@ -183,7 +154,6 @@ fun ChainField(
                 val chainName = group?.name ?: "CHAIN"
                 RipplesField(
                     state = state,
-                    localDeviceId = localDeviceId,
                     activeBubbles = emptyList(),
                     pulsedPeers = emptySet(),
                     drawBackground = false,
@@ -266,11 +236,9 @@ fun ChainField(
                                     isMe = pulse.senderId == localDeviceId,
                                     isGrouped = false,
                                     isMutual = false,
-                                    resonance = group,
                                     rowId = pulse.messageId,
                                     onPulseClick = { /* Handle Unit Click */ },
-                                    onDeviceLongClick = { },
-                                    onDelete = { }
+                                    onDeviceLongClick = { }
                                 )
                             }
                         }
@@ -294,7 +262,6 @@ fun ChainField(
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },
                 onDeviceLongClick = { },
-                onDeletePulse = { },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
@@ -309,10 +276,8 @@ fun ChainField(
                 onMessageChange = onMessageChange,
                 onSend = onSend,
                 pulseCount = state.session.messages.filter { it.groupId == groupId }.size,
-                crowdIsStill = crowdIsStill,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
-                pulsedPeers = memberSet,
                 resonances = state.session.groups,
                 onAcceptRadio = onAcceptRadio,
                 onDenyRadio = onDenyRadio,
@@ -323,7 +288,6 @@ fun ChainField(
                 onSearchToggle = onSearchToggle,
                 onManage = onShowManagement,
                 onNote = { showNoteEditor = true; activeNote = null },
-                onShowPrivacy = onShowPrivacy,
                 onFocusChange = onInputFocusChange,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

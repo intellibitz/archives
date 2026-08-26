@@ -115,7 +115,6 @@ data class PulseRipple(
 @Composable
 fun RipplesField(
     state: BluetoothUiState,
-    localDeviceId: String,
     activeBubbles: List<BubbleData>,
     selectedDevices: Set<String> = emptySet(),
     pulsedPeers: Set<String> = emptySet(),
@@ -276,13 +275,13 @@ fun RipplesField(
                 // --- Environmental Layers ---
                 if (drawBackground) {
                     Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
-                        AirBackground(energy = finalEnergy, lowPowerMode = lowPowerMode, onlyTies = onlyTies)
+                        AirBackground(energy = finalEnergy, lowPowerMode = lowPowerMode)
                         AtmosphericHeatmap(intensity = state.activity.energyIntensity)
                     }
                 }
                 
                 Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
-                    RelayLayer(relayEvents, onlyTies = onlyTies)
+                    RelayLayer(relayEvents)
                 }
                 
                 // --- Node Resolution ---
@@ -310,7 +309,6 @@ fun RipplesField(
                                     crowdList = crowdList,
                                     pulsedPeers = pulsedPeers,
                                     onCrowdClick = onDeviceClick,
-                                    onCrowdLongClick = onDeviceLongClick
                                 )
                             }
                         }
@@ -383,7 +381,7 @@ private fun AtmosphericHeatmap(intensity: Float) {
 
 /** Background sweep gradient signaling active radio scanning. */
 @Composable
-private fun AirBackground(energy: Float, lowPowerMode: Boolean, onlyTies: Boolean) {
+private fun AirBackground(energy: Float, lowPowerMode: Boolean) {
     val infiniteTransition = rememberInfiniteTransition(label = "Background")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f, targetValue = 360f,
@@ -441,7 +439,7 @@ private fun PulseRippleLayer(ripples: List<PulseRipple>) {
 }
 
 @Composable
-private fun RelayLayer(relays: List<RelayEvent>, onlyTies: Boolean) {
+private fun RelayLayer(relays: List<RelayEvent>) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val center = Offset(size.width / 2f, size.height / 2f)
         relays.forEach { relay ->
@@ -542,7 +540,6 @@ private fun PulseNodes(
                 isPulsed = false,
                 isSelected = false,
                 isPeerPulsed = false,
-                onlyTies = false,
                 size = 46.dp, 
                 isStatic = false, 
                 onClick = { onNicknameChange(userNickname) }
@@ -567,21 +564,20 @@ private fun PulseNodes(
             val noiseDimAlpha = if (isFilterMode && !isFocused && !isBroadFocus) 0.15f else if (isDimmed && !isSelected) 0.3f else 1f
 
             Box(modifier = Modifier.graphicsLayer { alpha = noiseDimAlpha }) {
-                PulseNode(
-                    device = device, 
-                    isPulsed = isTied,
-                    isSelected = isSelected,
-                    isPeerPulsed = isPulsed,
-                    onlyTies = onlyTies,
-                    xOffset = xOffset, 
-                    yOffset = yOffset, 
-                    activeBubble = activeBubble,
-                    onClick = { onDeviceClick(device) },
-                    onLongClick = { onDeviceLongClick(device) },
-                    isFilterActive = isFilterMode,
-                    isHighlighted = device.id == highlightedUserId,
-                    projectionEmoji = state.session.groups.find { it.id == device.persistentId || it.id == device.id }?.projectionEmoji
-                )
+    PulseNode(
+        device = device, 
+        isPulsed = isTied,
+        isSelected = isSelected,
+        isPeerPulsed = isPulsed,
+        onlyTies = onlyTies,
+        xOffset = xOffset, 
+        yOffset = yOffset, 
+        activeBubble = activeBubble,
+        onClick = { onDeviceClick(device) },
+        onLongClick = { onDeviceLongClick(device) },
+        isHighlighted = device.id == highlightedUserId,
+        projectionEmoji = state.session.groups.find { it.id == device.persistentId || it.id == device.id }?.projectionEmoji
+    )
             }
         }
     }
@@ -592,7 +588,6 @@ private fun CrowdNodes(
     crowdList: List<Pair<P2PDevice, Int>>, 
     pulsedPeers: Set<String>,
     onCrowdClick: (P2PDevice) -> Unit,
-    onCrowdLongClick: (P2PDevice) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         crowdList.forEachIndexed { index, (device, count) ->
@@ -627,7 +622,6 @@ private fun PulseNode(
     activeBubble: BubbleData?, 
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    isFilterActive: Boolean = false,
     isHighlighted: Boolean = false,
     projectionEmoji: String? = null
 ) {
@@ -646,7 +640,6 @@ private fun PulseNode(
             isPulsed = isPulsed,
             isSelected = isSelected,
             isPeerPulsed = isPeerPulsed,
-            onlyTies = onlyTies,
             size = nodeSize,
             isHighlighted = isHighlighted,
             projectionEmoji = projectionEmoji,

@@ -202,7 +202,7 @@ class BleFallbackController(
             Log.i(tag, "GATT: Connected to $address")
             try {
                 gatt.discoverServices()
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 reportError(P2PError.ConnectionError("Permission Denied for Service Discovery"))
             }
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -356,7 +356,7 @@ class BleFallbackController(
                         try {
                             val encrypted = cryptoManager.encrypt(bytes, key)
                             sendData(address, encrypted)
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             Log.e(tag, "BLE RELAY FAIL to $address")
                         }
                     }
@@ -373,7 +373,7 @@ class BleFallbackController(
             content = "",
             timestamp = System.currentTimeMillis(),
             type = MessagePayload.TYPE_ACK,
-            receiverId = originalPayload.senderId
+            receiverId = originalPayload.senderId,
         )
         internalScope.launch(ioDispatcher) {
             try {
@@ -416,7 +416,7 @@ class BleFallbackController(
 
     override fun startDiscovery() {
         Log.i(tag, "BLE: startDiscovery()")
-        if ((adapter == null || !adapter.isEnabled)) {
+        if ((adapter == null) || !adapter.isEnabled) {
             reportError(P2PError.DiscoveryError("Bluetooth Disabled"))
             return
         }
@@ -433,7 +433,7 @@ class BleFallbackController(
 
         try {
             scanner.startScan(listOf(filter), settings, scanCallback)
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             reportError(P2PError.DiscoveryError("Permission Denied"))
             _isDiscovering.value = false
         }
@@ -478,7 +478,7 @@ class BleFallbackController(
         try {
             advertiser.startAdvertising(settings, data, advertiseCallback)
             startGattServer()
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             reportError(P2PError.AdvertisingError("Permission Denied"))
             _isAdvertising.value = false
         }
@@ -492,7 +492,7 @@ class BleFallbackController(
             val characteristic = BluetoothGattCharacteristic(
                 PULSE_CHAR_UUID,
                 BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE,
-                BluetoothGattCharacteristic.PERMISSION_WRITE
+                BluetoothGattCharacteristic.PERMISSION_WRITE,
             )
             service.addCharacteristic(characteristic)
             gattServer?.addService(service)
@@ -607,7 +607,7 @@ class BleFallbackController(
                 if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
             }
             return payload
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return null
         }
     }
@@ -693,7 +693,7 @@ class BleFallbackController(
             try { 
                 it.disconnect()
                 it.close() 
-            } catch (_: SecurityException) {
+            } catch (e: SecurityException) {
                 Log.w(tag, "SecurityException during disconnect")
             } catch (_: Exception) {}
         }

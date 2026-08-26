@@ -52,19 +52,14 @@ import java.util.Locale
 fun PulseField(
     state: BluetoothUiState,
     localDeviceId: String,
-    localNickname: String,
-    localEmoji: String,
     messageId: String,
-    onSendMessage: (String, String?) -> Unit,
     onNavigateToPulse: (String) -> Unit = {},
     // Hub Callbacks
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
-    crowdIsStill: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
     onAttachFile: () -> Unit = {},
-    onShowPrivacy: () -> Unit = {},
     isInputFocused: Boolean = false,
     onInputFocusChange: (Boolean) -> Unit = {},
     // Humanity Stage Props
@@ -101,7 +96,6 @@ fun PulseField(
             Column(modifier = Modifier.fillMaxSize()) {
                 RipplesField(
                     state = state,
-                    localDeviceId = localDeviceId,
                     activeBubbles = emptyList(),
                     pulsedPeers = emptySet(),
                     drawBackground = false,
@@ -180,11 +174,9 @@ fun PulseField(
                                 isMe = pulse.senderId == localDeviceId,
                                 isGrouped = false,
                                 isMutual = false,
-                                resonance = null,
                                 rowId = pulse.messageId,
                                 onPulseClick = { },
-                                onDeviceLongClick = { },
-                                onDelete = { }
+                                onDeviceLongClick = { }
                             )
                         }
                     }
@@ -207,7 +199,6 @@ fun PulseField(
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },
                 onDeviceLongClick = { },
-                onDeletePulse = { },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
@@ -222,10 +213,8 @@ fun PulseField(
                 onMessageChange = onMessageChange,
                 onSend = onSend,
                 pulseCount = childPulses.size,
-                crowdIsStill = crowdIsStill,
                 incomingRadioRequests = emptySet(),
                 selectedDevices = emptySet(),
-                pulsedPeers = emptySet(),
                 resonances = emptyList(),
                 onAcceptRadio = { },
                 onDenyRadio = { },
@@ -234,7 +223,6 @@ fun PulseField(
                 onClearSelection = { },
                 onAttachFile = onAttachFile,
                 onSearchToggle = onSearchToggle,
-                onShowPrivacy = onShowPrivacy,
                 onFocusChange = onInputFocusChange,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

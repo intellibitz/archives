@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -45,8 +46,8 @@ import java.io.FileOutputStream
 class PulseStore(
     private val context: Context,
     private val cryptoManager: CryptoManager,
-    private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
-    private val historyRetentionLimit: Int = 1000
+    ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+    private val historyRetentionLimit: Int = 1000,
 ) {
     // --- Persistence Anchors ---
     private val pulsesLogFile = File(context.filesDir, "pulses_log.bin")
@@ -69,7 +70,7 @@ class PulseStore(
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
-            initialValue = emptyList()
+            initialValue = emptyList(),
         )
 
     /** Crowds that haven't pulsed in 30 days. */
@@ -78,7 +79,7 @@ class PulseStore(
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
-            initialValue = emptyList()
+            initialValue = emptyList(),
         )
 
     /** Explicitly preserved contexts (Sunk Pulses). */
@@ -87,7 +88,7 @@ class PulseStore(
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
-            initialValue = emptyList()
+            initialValue = emptyList(),
         )
 
     val groups: StateFlow<List<Resonance>> = _groups
@@ -95,7 +96,7 @@ class PulseStore(
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
-            initialValue = emptyList()
+            initialValue = emptyList(),
         )
 
     private val _peers = MutableStateFlow<Map<String, PeerEntity>>(emptyMap())
@@ -136,7 +137,7 @@ class PulseStore(
                         messageMap[message.messageId] = message
                     }
                 }
-                _messages.value = messageMap.values.toList().sortedBy { it.timestamp }
+                _messages.value = messageMap.values.asSequence().sortedBy { it.timestamp }.toList()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -179,10 +180,12 @@ class PulseStore(
             try {
                 val json = Json.encodeToString(message)
                 val encrypted = cryptoManager.encryptLocal(json.encodeToByteArray())
-                FileOutputStream(pulsesLogFile, true).use { fos ->
-                    val dos = DataOutputStream(fos)
-                    dos.writeInt(encrypted.size)
-                    dos.write(encrypted)
+                withContext(Dispatchers.IO) {
+                    FileOutputStream(pulsesLogFile, true).use { fos ->
+                        val dos = DataOutputStream(fos)
+                        dos.writeInt(encrypted.size)
+                        dos.write(encrypted)
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -236,16 +239,12 @@ class PulseStore(
     // --- Message Operations ---
     fun getAllMessages() = messages
 
-    suspend fun insertMessage(message: MessagePayload) {
-        upsertMessage(message)
-    }
-
     /** 
      * Incorporates a new pulse into the stream.
      * Uses LWW-CRDT logic for notes and tasks to ensure deterministic state across the mesh.
      * Also handles Crowd AI consensus voting to adjust resonance weights.
      */
-    suspend fun upsertMessage(message: MessagePayload) {
+    fun upsertMessage(message: MessagePayload) {
         if (message.content.isBlank()) return // Validation: Ignore empty pulses
 
         if (message.type == MessagePayload.TYPE_CONSENSUS_VOTE) {
@@ -259,9 +258,9 @@ class PulseStore(
             if (existingIndex != -1) {
                 val existing = current[existingIndex]
                 // LWW CRDT for Note & Task Mutation
-                if ((message.type == MessagePayload.TYPE_NOTE_UPDATE || message.type == MessagePayload.TYPE_ASSIGNMENT_TASK)) {
-                    if (message.noteVersion > existing.noteVersion || 
-                        (message.noteVersion == existing.noteVersion && message.timestamp > existing.timestamp)) {
+                if ((message.type == MessagePayload.TYPE_NOTE_UPDATE) || (message.type == MessagePayload.TYPE_ASSIGNMENT_TASK)) {
+                    if ((message.noteVersion > existing.noteVersion) || 
+                        ((message.noteVersion == existing.noteVersion) && (message.timestamp > existing.timestamp))) {
                         appendMessageToLog(message)
                         current.toMutableList().apply { set(existingIndex, message) }
                     } else {
@@ -289,9 +288,9 @@ class PulseStore(
     /**
      * SWARM LOGIC: Processes a consensus vote to adjust the weight of a target pulse.
      */
-    private suspend fun handleConsensusVote(votePulse: MessagePayload) {
+    private fun handleConsensusVote(votePulse: MessagePayload) {
         val targetPulseId = votePulse.parentMessageId ?: return
-        val weight = try { votePulse.content.toInt() } catch (e: Exception) { 0 }
+        val weight = try { votePulse.content.toInt() } catch (_: Exception) { 0 }
         
         _messages.update { current ->
             current.map { 
@@ -308,14 +307,16 @@ class PulseStore(
      */
     fun getHighResonancePulses(groupId: String, limit: Int = 3): StateFlow<List<MessagePayload>> {
         return messages.map { list ->
-            list.filter { it.groupId == groupId && it.resonanceWeight > 0 }
+            list.asSequence()
+                .filter { it.groupId == groupId && it.resonanceWeight > 0 }
                 .sortedByDescending { it.resonanceWeight }
                 .take(limit)
+                .toList()
         }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
     }
 
     /** Evicts low-priority pulses once a context exceeds retention limits. */
-    private suspend fun pruneHistory(groupId: String) {
+    private fun pruneHistory(groupId: String) {
         val group = getGroup(groupId) ?: return
         val currentMessages = _messages.value.filter { it.groupId == groupId }
         
@@ -329,19 +330,20 @@ class PulseStore(
             // 1. Keep Pinned pulses
             // 2. Keep Task updates (Assignments)
             // 3. Keep meta-headers for threads
-            val messagesToDelete = currentMessages
+            val messagesToDelete = currentMessages.asSequence()
                 .filter { it.messageId !in group.pinnedPulseIds }
                 .filter { it.type != MessagePayload.TYPE_ASSIGNMENT_TASK }
                 .filter { !it.isMeta }
                 .sortedBy { it.timestamp }
                 .take(toRemoveCount)
+                .toList()
 
             messagesToDelete.forEach { deleteMessage(it.messageId) }
             Log.i("PulseStore", "Smarter Eviction for $groupId. Removed ${messagesToDelete.size} low-priority pulses.")
         }
     }
 
-    suspend fun updateMessageStatus(messageId: String, status: Int) {
+    fun updateMessageStatus(messageId: String, status: Int) {
         var updated: MessagePayload? = null
         _messages.update { list ->
             list.map {
@@ -355,29 +357,12 @@ class PulseStore(
         updated?.let { appendMessageToLog(it) }
     }
 
-    suspend fun updatePulseScope(messageId: String, pulseType: Int) {
-        var updated: MessagePayload? = null
-        _messages.update { list ->
-            list.map {
-                if (it.messageId == messageId) {
-                    val m = it.copy(pulseType = pulseType)
-                    updated = m
-                    m
-                } else it
-            }
-        }
-        updated?.let { 
-            appendMessageToLog(it)
-            compactMessages()
-        }
-    }
-
-    suspend fun clearAllMessages() {
+    fun clearAllMessages() {
         _messages.value = emptyList()
         if (pulsesLogFile.exists()) pulsesLogFile.delete()
     }
 
-    suspend fun deleteMessage(messageId: String) {
+    fun deleteMessage(messageId: String) {
         val message = _messages.value.find { it.messageId == messageId }
         if (message?.type == MessagePayload.TYPE_IMAGE || message?.type == MessagePayload.TYPE_FILE) {
             message.content.let { path ->
@@ -386,7 +371,7 @@ class PulseStore(
                     if (file.exists() && file.absolutePath.contains(context.filesDir.absolutePath)) {
                         file.delete()
                     }
-                } catch (ignored: Exception) {}
+                } catch (_: Exception) {}
             }
         }
         _messages.update { it.filter { m -> m.messageId != messageId } }
@@ -439,10 +424,10 @@ class PulseStore(
     }
 
     /** Prunes media older than 90 days, exempting Pinned/Senior pulses. */
-    suspend fun pruneMedia(thresholdMs: Long) {
+    fun pruneMedia(thresholdMs: Long) {
         val now = System.currentTimeMillis()
         val allGroups = _groups.value.values
-        val allPinnedPulses = allGroups.flatMap { it.pinnedPulseIds }.toSet()
+        val allPinnedPulses = allGroups.asSequence().flatMap { it.pinnedPulseIds }.toSet()
         val vaultedGroupIds = allGroups.filter { it.isVaulted }.map { it.id }.toSet()
         val seniorVaultIds = allGroups.filter { it.isSeniorVault }.map { it.id }.toSet()
 
@@ -460,7 +445,7 @@ class PulseStore(
                                 file.delete()
                                 Log.i("PulseStore", "Pruned media: ${message.messageId}")
                             }
-                        } catch (ignored: Exception) {}
+                        } catch (_: Exception) {}
                     }
                 }
             }
@@ -468,19 +453,19 @@ class PulseStore(
     }
 
     // --- Group Operations ---
-    suspend fun insertGroup(group: Resonance) {
+    fun insertGroup(group: Resonance) {
         _groups.update { it + (group.id to group) }
         saveData()
     }
 
-    suspend fun getGroup(id: String) = _groups.value[id]
+    fun getGroup(id: String) = _groups.value[id]
 
     /** Orchestrates member partitioning for high-density scalability. */
-    suspend fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
+    fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
         _groups.update { current ->
             current[groupId]?.let { group ->
                 // LIMIT ENFORCEMENT: Absolute cap on section size
-                val cappedMembers = memberIds.take(Resonance.MAX_MEMBERS_PER_SECTION).toSet()
+                val cappedMembers = memberIds.asSequence().take(Resonance.MAX_MEMBERS_PER_SECTION).toSet()
                 
                 val updatedGroup = if (cappedMembers.size > group.partitionThreshold) {
                     // PARTITIONING: Split members into sections for scalability
@@ -497,7 +482,7 @@ class PulseStore(
         saveData()
     }
 
-    suspend fun updateGroupScope(groupId: String, scope: Int) {
+    fun updateGroupScope(groupId: String, scope: Int) {
         _groups.update { current ->
             current[groupId]?.let { 
                 current + (groupId to it.copy(scope = scope))
@@ -506,7 +491,7 @@ class PulseStore(
         saveData()
     }
 
-    suspend fun updateGroupLastPulse(groupId: String, timestamp: Long) {
+    fun updateGroupLastPulse(groupId: String, timestamp: Long) {
         _groups.update { current ->
             current[groupId]?.let { 
                 current + (groupId to it.copy(lastPulseTimestamp = timestamp))
@@ -515,39 +500,7 @@ class PulseStore(
         saveData()
     }
 
-    suspend fun deleteGroup(id: String) {
-        _groups.update { it - id }
-        saveData()
-    }
-
-    suspend fun pinPulse(groupId: String, messageId: String) {
-        _groups.update { current ->
-            current[groupId]?.let { group ->
-                current + (groupId to group.copy(pinnedPulseIds = group.pinnedPulseIds + messageId))
-            } ?: current
-        }
-        saveData()
-    }
-
-    suspend fun unpinPulse(groupId: String, messageId: String) {
-        _groups.update { current ->
-            current[groupId]?.let { group ->
-                current + (groupId to group.copy(pinnedPulseIds = group.pinnedPulseIds - messageId))
-            } ?: current
-        }
-        saveData()
-    }
-
-    suspend fun updateGroupProjection(groupId: String, emoji: String?) {
-        _groups.update { current ->
-            current[groupId]?.let { group ->
-                current + (groupId to group.copy(projectionEmoji = emoji))
-            } ?: current
-        }
-        saveData()
-    }
-
-    suspend fun addCrowdSchedule(groupId: String, schedule: cc.thevar.blukit.domain.model.CrowdSchedule) {
+    fun addCrowdSchedule(groupId: String, schedule: cc.thevar.blukit.domain.model.CrowdSchedule) {
         _groups.update { current ->
             current[groupId]?.let { group ->
                 current + (groupId to group.copy(schedules = group.schedules + schedule))
@@ -556,58 +509,23 @@ class PulseStore(
         saveData()
     }
 
-    suspend fun assignUserRole(groupId: String, userId: String, role: String) {
-        _groups.update { current ->
-            current[groupId]?.let { group ->
-                val updatedRoles = group.userRoles.toMutableMap()
-                updatedRoles[userId] = role
-                current + (groupId to group.copy(userRoles = updatedRoles))
-            } ?: current
-        }
-        saveData()
-    }
-
-    suspend fun addCrowdConnection(connection: cc.thevar.blukit.domain.model.CrowdConnection) {
-        _groups.update { current ->
-            val sourceGroup = current[connection.sourceId]
-            if (sourceGroup != null) {
-                current + (connection.sourceId to sourceGroup.copy(connections = sourceGroup.connections + connection))
-            } else current
-        }
-        saveData()
-    }
-
     // --- Peer Operations ---
-    suspend fun getPeer(id: String): PeerEntity? {
-        return _peers.value[id]
-    }
-
-    suspend fun insertPeer(peer: PeerEntity) {
-        _peers.update { it + (peer.endpointId to peer) }
-        saveData()
-    }
-
-    suspend fun clearPeers() {
-        _peers.value = emptyMap()
-        saveData()
-    }
-
     // --- Contact Operations ---
     fun getAllContacts() = _contacts.asStateFlow().map { it.values.toList() }
 
-    suspend fun getContact(id: String) = _contacts.value[id]
+    fun getContact(id: String) = _contacts.value[id]
 
-    suspend fun insertContact(contact: ContactEntity) {
+    fun insertContact(contact: ContactEntity) {
         _contacts.update { it + (contact.id to contact) }
         saveData()
     }
 
-    suspend fun deleteContact(id: String) {
+    fun deleteContact(id: String) {
         _contacts.update { it - id }
         saveData()
     }
 
-    suspend fun deleteAllContacts() {
+    fun deleteAllContacts() {
         _contacts.value = emptyMap()
         saveData()
     }

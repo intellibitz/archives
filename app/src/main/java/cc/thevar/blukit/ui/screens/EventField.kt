@@ -73,7 +73,6 @@ fun EventField(
     pulsedPeers: Set<String> = emptySet(),
     noiseFilterEnabled: Boolean = false,
     onDeviceClick: (P2PDevice) -> Unit,
-    onDeletePulse: (String) -> Unit,
     onWhisper: (P2PDevice) -> Unit,
     onIdentifyUser: (String) -> Unit = {},
     // Humanity Stage Props
@@ -99,7 +98,6 @@ fun EventField(
     showAirGhost: Boolean = false,
     onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {},
-    onInputFocusChange: (Boolean) -> Unit = {}
 ) {
     var showTip by remember { mutableStateOf(value = true) }
     var airProposalName by remember { mutableStateOf("") }
@@ -115,7 +113,7 @@ fun EventField(
 
     val pulsesData = remember(state.session.messages, state.session.groups, pulsedPeers, noiseFilterEnabled, isSearchActive, messageText) {
         val basePulses = if (noiseFilterEnabled && pulsedPeers.isNotEmpty()) {
-            state.session.messages.filter { it.senderId in pulsedPeers || it.senderId == localDeviceId }
+            state.session.messages.filter { (it.senderId in pulsedPeers) || (it.senderId == localDeviceId) }
         } else {
             state.session.messages
         }
@@ -148,7 +146,6 @@ fun EventField(
             // MODULE 1: RADAR (Background Entry)
             RipplesField(
                 state = state,
-                localDeviceId = localDeviceId,
                 activeBubbles = emptyList(),
                 selectedDevices = state.crowd.selectedDevices,
                 pulsedPeers = pulsedPeers,
@@ -274,7 +271,6 @@ fun EventField(
                         isGrouped = true,
                         onPulseClick = { onNavigateToGroup(it) },
                         onDeviceLongClick = { },
-                        onDeletePulse = onDeletePulse,
                         modifier = Modifier.weight(1f)
                     )
                 }

@@ -6,7 +6,6 @@
  */
 package cc.thevar.blukit.domain.logic
 
-import android.content.Context
 import android.util.Log
 import cc.thevar.blukit.data.local.PulseStore
 import cc.thevar.blukit.domain.model.MessagePayload
@@ -21,9 +20,8 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
 class IntelligenceManager(
-    private val context: Context,
     private val pulseStore: PulseStore,
-    private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO
+    ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
@@ -67,7 +65,7 @@ class IntelligenceManager(
                 timestamp = System.currentTimeMillis(),
                 type = MessagePayload.TYPE_AI_SUMMARY,
                 isPriority = true,
-                isMeta = true
+                isMeta = true,
             )
             pulseStore.upsertMessage(aiPulse)
             Log.i("IntelligenceManager", "Swarm Logic: AI Summary broadcasted for $groupId")
@@ -78,14 +76,16 @@ class IntelligenceManager(
      * LOCAL SYNTHESIS: Simulates on-device NLP to cluster pulses into a summary.
      */
     private fun generateResonanceSummary(groupId: String, pulses: List<MessagePayload>): ResonanceSummary {
-        val keywords = pulses.flatMap { it.content.split(" ") }
+        val keywords = pulses.asSequence()
+            .flatMap { it.content.split(" ") }
             .filter { it.length > 4 }
             .groupingBy { it.uppercase() }
             .eachCount()
-            .toList()
-            .sortedByDescending { it.second }
+            .asSequence()
+            .sortedByDescending { it.value }
             .take(5)
-            .map { it.first }
+            .map { it.key }
+            .toList()
 
         val mainTopic = keywords.firstOrNull() ?: "GENERAL ACTIVITY"
         val sentiment = if (pulses.any { it.content.contains("!") }) 0.5f else 0.1f
@@ -103,7 +103,7 @@ class IntelligenceManager(
     /**
      * SWARM CONSENSUS: Triggers a vote pulse for a specific resonance point.
      */
-    suspend fun castConsensusVote(pulseId: String, groupId: String, weight: Int) {
+    fun castConsensusVote(pulseId: String, groupId: String, weight: Int) {
         val votePulse = MessagePayload(
             messageId = UUID.randomUUID().toString(),
             senderId = "LOCAL_USER", // Real implementation uses IdentityRepository.userId
@@ -112,7 +112,7 @@ class IntelligenceManager(
             groupId = groupId,
             content = weight.toString(),
             timestamp = System.currentTimeMillis(),
-            type = MessagePayload.TYPE_CONSENSUS_VOTE
+            type = MessagePayload.TYPE_CONSENSUS_VOTE,
         )
         pulseStore.upsertMessage(votePulse)
     }

@@ -88,7 +88,7 @@ fun MixedStatusBranding(
     onAwakenBluetooth: () -> Unit,
     onAwakenWifi: () -> Unit,
     isPermissionMissing: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
         StatusIcon(icon = Icons.Rounded.Bluetooth, isOn = !isBluetoothOff, isWeak = false, isPermissionMissing = isPermissionMissing, onClick = onAwakenBluetooth, onColor = StealthAmber)
@@ -101,7 +101,7 @@ fun MixedStatusBranding(
  * Utilizes a pulsing amber dot to signal active spectrum discovery.
  */
 @Composable
-fun CrowdTicker(title: String, resonances: List<Resonance> = emptyList(), modifier: Modifier = Modifier) {
+fun CrowdTicker(modifier: Modifier = Modifier, title: String, resonances: List<Resonance> = emptyList()) {
     val infiniteTransition = rememberInfiniteTransition(label = "CrowdTicker")
     val alpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 0.7f, animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
     
@@ -126,14 +126,14 @@ fun CrowdCanvas(
     highResonancePulses: List<MessagePayload>,
     themeColor: Color,
     onPulseClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         highResonancePulses.forEach { pulse ->
             val infiniteTransition = rememberInfiniteTransition(label = "CanvasGlow")
@@ -173,7 +173,7 @@ fun CrowdCanvas(
 fun BreadcrumbHub(
     trail: List<String>,
     onCrumbClick: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -184,9 +184,9 @@ fun BreadcrumbHub(
             Text(
                 text = crumb.uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = (if (index == trail.size - 1) FontWeight.Black else FontWeight.Bold),
+                    fontWeight = (if (index == (trail.size - 1)) FontWeight.Black else FontWeight.Bold),
                     letterSpacing = 1.sp,
-                    color = (if (index == trail.size - 1) Color.White else Color.White.copy(alpha = 0.4f)),
+                    color = (if (index == (trail.size - 1)) Color.White else Color.White.copy(alpha = 0.4f)),
                     fontSize = 9.sp
                 ),
                 modifier = Modifier.clickable { onCrumbClick(index) }
@@ -219,10 +219,9 @@ fun BlukitTacticalHeader(
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
     onShowPrivacy: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(initialValue = 0.6f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
-    val isStill = isBluetoothOff
 
     Row(
         modifier = modifier
@@ -272,20 +271,20 @@ fun BlukitTacticalHeader(
         
         // RIGHT: [STATUS LABEL] [RADIOS]
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-            if (isPermissionMissing || isStill) {
+            if (isPermissionMissing || isBluetoothOff) {
                 Surface(
                     color = Color.White.copy(alpha = 0.05f), 
                     shape = RoundedCornerShape(8.dp), 
                     modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                 ) {
                     Text(
-                        text = when { isPermissionMissing -> if (isPermanentlyDenied) "SETTINGS" else "ALLOW"; isStill -> "AWAKEN"; else -> "SEARCHING" }, 
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isStill || isPermissionMissing) Color.Red else Color.Yellow), 
+                        text = when { isPermissionMissing -> if (isPermanentlyDenied) "SETTINGS" else "ALLOW"; isBluetoothOff -> "AWAKEN"; else -> "SEARCHING" }, 
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isBluetoothOff || isPermissionMissing) Color.Red else Color.Yellow), 
                         maxLines = 1,
                         softWrap = false,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).clickable { 
                             if (isPermissionMissing) { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() }
-                            else if (isStill) onAwakenBluetooth()
+                            else if (isBluetoothOff) onAwakenBluetooth()
                         }
                     )
                 }
@@ -306,7 +305,6 @@ fun BlukitTacticalHeader(
 /**
  * HUMANITY STAGE: The contextual navigation and identity layer (Row 1).
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BlukitHumanityStage(
     title: String,
@@ -318,11 +316,11 @@ fun BlukitHumanityStage(
     onTitleClick: (() -> Unit)?,
     onBack: (() -> Unit)?,
     themeColor: Color,
-    userCount: Int? = null,
     modifier: Modifier = Modifier,
+    userCount: Int? = null,
     trailingContent: @Composable (RowScope.() -> Unit)? = null
 ) {
-    var showResetProfileDialog by remember { mutableStateOf(false) }
+    var showResetProfileDialog by remember { mutableStateOf(value = false) }
 
     Row(
         modifier = modifier
@@ -426,10 +424,9 @@ fun BlukitPulseHub(
     onMessageChange: (String) -> Unit,
     onSend: () -> Unit,
     pulseCount: Int,
-    crowdIsStill: Boolean,
     incomingRadioRequests: Set<P2PDevice>,
     selectedDevices: Set<String>,
-    pulsedPeers: Set<String>,
+    modifier: Modifier = Modifier,
     resonances: List<Resonance> = emptyList(),
     onAcceptRadio: (P2PDevice) -> Unit,
     onDenyRadio: (P2PDevice) -> Unit,
@@ -442,9 +439,7 @@ fun BlukitPulseHub(
     onNote: (() -> Unit)? = null,
     onCreatePublicResonance: ((String, String?) -> Unit)? = null,
     isSearchMode: Boolean = false,
-    onShowPrivacy: () -> Unit = {},
     onFocusChange: (Boolean) -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val isPrivate = currentRoute is Route.Resonance || currentRoute is Route.GroupField
     val targetName = if (currentRoute is Route.GroupField) resonances.find { it.id == currentRoute.groupId }?.name?.uppercase() else null
@@ -563,10 +558,8 @@ fun BlukitPulseHub(
         entries = {
             val isPulseLocked = currentRoute is Route.Event
             BlukitInput(
-                crowdIsStill = crowdIsStill, 
                 isReadOnly = false, 
                 isPulseLocked = isPulseLocked,
-                isFilterActive = pulsedPeers.isNotEmpty(), 
                 isPrivate = isPrivate, 
                 targetName = targetName, 
                 value = messageText, 
@@ -592,9 +585,9 @@ fun BlukitPulseHub(
  */
 @Composable
 fun BlukitWidget(
-    header: @Composable (BoxScope.() -> Unit)? = null,
     entries: @Composable (ColumnScope.() -> Unit),
     modifier: Modifier = Modifier,
+    header: @Composable (BoxScope.() -> Unit)? = null,
     themeColor: Color = StealthPrimary,
     showGlow: Boolean = true
 ) {
@@ -648,10 +641,10 @@ fun BlukitWidget(
 @Composable
 fun TickerSectionHeader(
     title: String, 
+    modifier: Modifier = Modifier,
     color: Color = StealthPrimary, 
     onAction: (() -> Unit)? = null,
-    actionLabel: String? = null,
-    modifier: Modifier = Modifier
+    actionLabel: String? = null
 ) {
     Row(
         modifier = modifier
@@ -705,10 +698,8 @@ fun PulsingResonanceTicker(
     isGrouped: Boolean = true,
     onPulseClick: (String) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit,
-    onDeletePulse: (String) -> Unit,
-    onIdentifyUser: (P2PDevice) -> Unit = {},
     reverseLayout: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     val sdf = remember { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
@@ -757,12 +748,9 @@ fun PulsingResonanceTicker(
                     isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
                     isGrouped = isGrouped,
                     isMutual = device.id in state.session.connectedTies,
-                    resonance = resonance,
                     rowId = id,
                     onPulseClick = { msg?.messageId?.let { onPulseClick(it) } ?: onDeviceLongClick(device) },
-                    onDeviceLongClick = { onDeviceLongClick(device) },
-                    onDelete = { msg?.messageId?.let { onDeletePulse(it) } },
-                    onIdentify = { onIdentifyUser(device) }
+                    onDeviceLongClick = { onDeviceLongClick(device) }
                 )
             }
         }
@@ -774,10 +762,6 @@ fun RadioRequestTickerItem(device: P2PDevice, onAccept: (P2PDevice) -> Unit, onD
     Surface(color = StealthPrimary.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "RADIO REQUEST", style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black); Text(text = (device.name ?: "USER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; Row { IconButton(onClick = { onDeny(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Deny", tint = Color.Red.copy(alpha = 0.6f)) }; IconButton(onClick = { onAccept(device) }) { Icon(Icons.Rounded.Check, contentDescription = "Accept", tint = StealthPrimary) } } } }
 }
 
-@Composable
-fun OutgoingRadioRequestTickerItem(device: P2PDevice, onCancel: (P2PDevice) -> Unit) {
-    Surface(color = Color.White.copy(alpha = 0.05f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.1f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "REQUESTING RADIO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Black); Text(text = (device.name ?: "USER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; IconButton(onClick = { onCancel(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Cancel", tint = Color.White.copy(alpha = 0.2f)) } } }
-}
 
 /**
  * ANIMATED PULSE ITEM: The atomic unit of interaction in the ticker.
@@ -797,17 +781,13 @@ fun AnimatedPulseItem(
     isMe: Boolean,
     isGrouped: Boolean,
     isMutual: Boolean,
-    resonance: Resonance?,
     rowId: String,
     onPulseClick: () -> Unit,
-    onDeviceLongClick: () -> Unit,
-    onDelete: () -> Unit,
-    onIdentify: (() -> Unit)? = null
+    onDeviceLongClick: () -> Unit
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val timestamp = msg?.let { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(Date(it.timestamp)) } ?: ""
     val themeColor = if (isMutual) StealthRose else if (isPulsed) StealthPrimary else Color.White
-    
     val signatureDevice = senderDevice ?: P2PDevice(id = msg?.senderId ?: "", name = msg?.senderName ?: "USER", emoji = msg?.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
     val isPlural = msg?.isMeta == true
     val isEntry = isGrouped && msg != null
@@ -941,9 +921,9 @@ fun AnimatedPulseItem(
                 }
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    val realSender = if (isMe) "YOU" else (msg?.senderName ?: senderDevice?.name ?: "?")
+                    val realSender = if (isMe) "YOU" else (senderDevice?.name ?: "?").uppercase()
                     Text(
-                        text = realSender.uppercase(),
+                        text = realSender,
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Black,
                         color = Color.White.copy(alpha = 0.3f),
@@ -953,9 +933,9 @@ fun AnimatedPulseItem(
                     Text(text = "::", fontSize = 8.sp, color = Color.White.copy(alpha = 0.1f), fontWeight = FontWeight.Black)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = (msg?.content ?: "...").uppercase(), 
+                        text = "...", 
                         fontSize = 10.sp, 
-                        color = Color.White.copy(alpha = if (msg != null) 0.9f else 0.2f), 
+                        color = Color.White.copy(alpha = 0.2f), 
                         maxLines = 1, 
                         fontWeight = FontWeight.ExtraBold,
                         overflow = TextOverflow.Ellipsis
@@ -985,101 +965,6 @@ fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean
             ),
             modifier = Modifier.scale(0.6f)
         )
-    }
-}
-
-/**
- * A proactive nudge that surfaces when a new Crowd frequency is discovered.
- * Features a high-intensity pulse and spectral entry.
- */
-/**
- * CROWD NUDGE: A proactive geospatial alert surfaced when a new frequency is discovered.
- * Features a high-intensity scale pulse and direct AWAKEN action.
- */
-@Composable
-fun CrowdNudge(
-    resonance: Resonance,
-    onJoin: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "NudgePulse")
-    val pulse by infiniteTransition.animateFloat(
-        initialValue = 0.95f, 
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "Pulse"
-    )
-
-    Surface(
-        modifier = modifier
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .fillMaxWidth()
-            .graphicsLayer { 
-                scaleX = pulse
-                scaleY = pulse
-            },
-        color = Color.Black,
-        shape = RoundedCornerShape(28.dp),
-        border = BorderStroke(1.dp, StealthPrimary.copy(alpha = 0.3f)),
-        shadowElevation = 12.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .background(StealthPrimary.copy(alpha = 0.1f), CircleShape)
-                    .border(1.dp, StealthPrimary.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Rounded.Grain, 
-                    contentDescription = null, 
-                    tint = StealthPrimary,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "CROWD DISCOVERED", 
-                    style = MaterialTheme.typography.labelSmall, 
-                    color = StealthPrimary,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.5.sp
-                )
-                Text(
-                    text = resonance.name.uppercase(), 
-                    style = MaterialTheme.typography.titleMedium, 
-                    color = Color.White,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${resonance.memberIds.size + 1} PERSONAS NEARBY", 
-                    fontSize = 8.sp, 
-                    color = Color.White.copy(alpha = 0.4f),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                IconButton(onClick = onDismiss, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Dismiss", tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
-                }
-                Button(
-                    onClick = onJoin,
-                    colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Text("AWAKEN", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 0.5.sp)
-                }
-            }
-        }
     }
 }
 
@@ -1202,7 +1087,7 @@ fun BlukitTip(
     text: String,
     themeColor: Color = StealthAmber,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "TipGlow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -1334,7 +1219,7 @@ fun ResonanceSummary(
     lastUpdate: String,
     onClick: () -> Unit,
     showJoin: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -1393,17 +1278,17 @@ fun ResonanceSummary(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if (subtitle != null) {
-                        Text(
-                            text = subtitle.uppercase(),
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.6f),
-                            letterSpacing = 1.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+            if (subtitle != null) {
+                Text(
+                    text = subtitle.uppercase(),
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.6f),
+                    letterSpacing = 1.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
                 }
                 
                 // RIGHT: [ENTER] [USER COUNT]
@@ -1454,7 +1339,6 @@ fun PersonaOptionsMenu(
     device: P2PDevice,
     isTied: Boolean,
     isBlocked: Boolean,
-    isSelected: Boolean,
     isRequesting: Boolean,
     activeGroupId: String? = null,
     isAlreadyInActiveGroup: Boolean = false,
@@ -1519,97 +1403,6 @@ fun MenuActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label:
     Surface(onClick = onClick, color = Color.White.copy(alpha = 0.03f), shape = RoundedCornerShape(16.dp), modifier = modifier.fillMaxWidth()) { Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) { Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp)); Spacer(modifier = Modifier.width(12.dp)); Text(text = label, fontWeight = FontWeight.ExtraBold, color = color, fontSize = 11.sp, letterSpacing = 1.sp) } }
 }
 
-@Composable
-fun UserPersona(nickname: String, emoji: String, onNicknameChange: (String) -> Unit, focusRequester: FocusRequester) {
-    var localNickname by remember(nickname) { mutableStateOf(if (nickname == "?") "" else nickname) }
-    val isUnknown = nickname == "?" || nickname == "SET NAME" || nickname.isEmpty()
-    val infiniteTransition = rememberInfiniteTransition(label = "PersonaAnim")
-    
-    val haloScale by infiniteTransition.animateFloat(
-        initialValue = 1.0f, 
-        targetValue = 1.4f, 
-        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), 
-        label = "HaloPulse"
-    )
-    
-    val themeColor = if (isUnknown) StealthAmber else StealthPrimary
-
-    val coordinates = LocalPersonaCoordinates.current
-    Column(
-        verticalArrangement = Arrangement.Center, 
-        horizontalAlignment = Alignment.CenterHorizontally, 
-        modifier = Modifier
-            .fillMaxHeight()
-            .padding(horizontal = 4.dp)
-            .onGloballyPositioned { 
-                val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                val current = coordinates["YOU"] ?: PersonaConnectionPoints()
-                coordinates["YOU"] = current.copy(uph = it.positionInRoot() + center)
-            }
-    ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(36.dp)) {
-            // Spectral Halo
-            Surface(
-                shape = CircleShape,
-                color = themeColor.copy(alpha = 0.1f),
-                modifier = Modifier.size(32.dp * haloScale)
-            ) {}
-            
-            Surface(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape),
-                color = Color(0xFF0D1017),
-                border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.6f)),
-                tonalElevation = 4.dp
-            ) { 
-                Box(contentAlignment = Alignment.Center) {
-                    Text(text = emoji, fontSize = 14.sp) 
-                }
-            }
-            
-            Icon(
-                painter = painterResource(id = R.drawable.ic_blukit_logo), 
-                contentDescription = null, 
-                tint = themeColor, 
-                modifier = Modifier
-                    .size(10.dp)
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 2.dp, y = 2.dp)
-                    .background(Color.Black, CircleShape)
-                    .padding(1.dp)
-            )
-        }
-        
-        // Inline Nickname entry (minimalist)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(contentAlignment = Alignment.Center) {
-                if (localNickname.isEmpty()) { 
-                    Text(text = "SET NAME", fontSize = 6.sp, fontWeight = FontWeight.Black, color = StealthAmber.copy(alpha = 0.6f), letterSpacing = 0.5.sp) 
-                }
-                BasicTextField(
-                    value = localNickname, 
-                    onValueChange = { if (it.length <= 8) { localNickname = it; onNicknameChange(it) } }, 
-                    modifier = Modifier
-                        .widthIn(min = 40.dp)
-                        .width(IntrinsicSize.Min)
-                        .focusRequester(focusRequester)
-                        .testTag("IdentityPulseInput"), 
-                    textStyle = MaterialTheme.typography.labelSmall.copy(
-                        color = if(isUnknown) StealthAmber else Color.White, 
-                        fontWeight = FontWeight.Black, 
-                        fontSize = 7.sp, 
-                        textAlign = TextAlign.Center,
-                        letterSpacing = 0.5.sp
-                    ), 
-                    cursorBrush = SolidColor(themeColor), 
-                    singleLine = true
-                )
-            }
-        }
-    }
-}
-
 data class GhostAction(
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
     val label: String,
@@ -1634,7 +1427,7 @@ data class GhostPulseData(
 fun PulseGhost(
     data: GhostPulseData,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "GhostPulseAnim")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -1785,7 +1578,7 @@ fun OnboardingGhost(
     onNicknameChange: (String) -> Unit,
     onDone: () -> Unit = {},
     onDismiss: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
     val infiniteTransition = rememberInfiniteTransition(label = "GhostAnim")
@@ -1927,7 +1720,7 @@ fun CrowdRitualGhost(
     onJoinAir: (String) -> Unit = {},
     title: String = "CROWD RITUAL",
     hint: String = "NAME THE CROWD",
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var airName by remember { mutableStateOf("") }
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
@@ -2093,54 +1886,6 @@ fun CrowdRitualGhost(
     }
 }
 
-/**
- * PULSE NODE: The spatial representation of a Persona on the discovery radar.
- * Utilizes coordinate mapping to draw real-time resonance threads.
- */
-@Composable
-fun PulseNode(
-    device: P2PDevice, 
-    isPulsed: Boolean,
-    isSelected: Boolean,
-    isPeerPulsed: Boolean,
-    onlyTies: Boolean,
-    projectionEmoji: String? = null,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
-) {
-    val coordinates = LocalPersonaCoordinates.current
-    val activePulseId = LocalActivePulseId.current.value
-    val key = device.persistentId ?: device.id
-    val isPulsing = activePulseId == key
-
-    PulsePersonaSignature(
-        device = device,
-        isPulsed = isPulsed,
-        isSelected = isSelected,
-        isPeerPulsed = isPeerPulsed,
-        onlyTies = onlyTies,
-        projectionEmoji = projectionEmoji,
-        modifier = modifier
-            .testTag("PersonaNode_$key")
-            .onGloballyPositioned {
-                val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                val current = coordinates[key] ?: PersonaConnectionPoints()
-                coordinates[key] = current.copy(
-                    field = it.positionInRoot() + center,
-                    pulse = if (isPulsing) it.positionInRoot() + center else null
-                )
-            },
-        onClick = onClick,
-        onLongClick = onLongClick
-    )
-}
-
-@Composable
-fun PulseDot(device: P2PDevice, modifier: Modifier = Modifier, onClick: () -> Unit = {}, onLongClick: () -> Unit = {}) {
-    Box(modifier = modifier.size(8.dp).clip(CircleShape).background(StealthPrimary.copy(alpha = 0.4f)).combinedClickable(onClick = onClick, onLongClick = onLongClick))
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 /**
  * PULSE PERSONA SIGNATURE: High-fidelity visual identity for users on the mesh.
@@ -2152,7 +1897,6 @@ fun PulsePersonaSignature(
     isPulsed: Boolean, 
     isSelected: Boolean, 
     isPeerPulsed: Boolean, 
-    onlyTies: Boolean, 
     size: Dp = 52.dp, 
     isStatic: Boolean = false, 
     isHighlighted: Boolean = false, 
@@ -2188,7 +1932,6 @@ fun PulsePersonaSignature(
     val proximityGlow = if (isStatic) 0f else (device.proximityFactor * 0.2f).coerceAtLeast(0f)
     val bloomBoost = if (isStatic) 0f else if (isHighlighted) 0.3f else if ((isPulsed || isPeerPulsed || isProjected)) 0.12f else 0f
     
-    val id = device.persistentId ?: device.id
     val isMe = device.id == "YOU"
     Box(modifier = modifier.size(size * 2.2f).combinedClickable(onClick = onClick, onLongClick = onLongClick), contentAlignment = Alignment.Center) {
         val haloAlpha = (if (isHighlighted || isMe) 0.3f else 0.08f + proximityGlow + bloomBoost) * pulseScale
@@ -2215,7 +1958,7 @@ fun PulsePersonaSignature(
                 }
                 
                 if (size > 32.dp) {
-                    val nameText = if (isMe) (device.name ?: "YOU") else (device.name ?: "?")
+                    val nameText = device.name ?: if (isMe) "YOU" else "?"
                     val displayText = if (isMe && nameText == "YOU") "YOU" else nameText.take(3).uppercase()
                     Text(
                         text = displayText, 
@@ -2253,7 +1996,7 @@ fun PulseCrowdSignature(
     size: Dp = 64.dp, 
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     title: String? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val themeColor = if (isPulsed) StealthRose else StealthPrimary
     val infiniteTransition = rememberInfiniteTransition(label = "CrowdPulse")
@@ -2296,14 +2039,6 @@ fun PulseCrowdSignature(
     }
 }
 
-data class FieldScene(
-    val title: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val fieldContent: @Composable (BoxScope.() -> Unit),
-    val tickerContent: @Composable (BoxScope.() -> Unit),
-    val inputContent: @Composable (BoxScope.() -> Unit),
-    val floatingContent: @Composable (BoxScope.() -> Unit) = {}
-)
 
 @Composable
 fun BlukitFieldScaffold(
@@ -2379,7 +2114,6 @@ fun BlukitFieldScaffold(
  */
 @Composable
 fun BlukitInput(
-    crowdIsStill: Boolean,
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
@@ -2389,20 +2123,19 @@ fun BlukitInput(
     pulseCount: Int = 0,
     isReadOnly: Boolean = false,
     isPulseLocked: Boolean = false,
-    isFilterActive: Boolean = false,
     isPrivate: Boolean = false,
     targetName: String? = null,
     placeholder: String? = null,
     isSearchActive: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
     onFocusChange: (Boolean) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
     val focusRequester = remember { FocusRequester() }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     
-    var isFocused by remember { mutableStateOf(false) }
+    var isFocused by remember { mutableStateOf(value = false) }
     
     val infiniteTransition = rememberInfiniteTransition(label = "InputNudge")
     

@@ -26,13 +26,7 @@ class MainActivity : ComponentActivity() {
             val isStealthMode by identityRepository.stealthMode.collectAsStateWithLifecycle(initialValue = false)
             
             BlukitTheme(stealthMode = isStealthMode) {
-                BlukitApp(
-                    onEnterPip = {
-                        enterPictureInPictureMode(
-                            android.app.PictureInPictureParams.Builder().build(),
-                        )
-                    }
-                )
+                BlukitApp()
             }
         }
     }
