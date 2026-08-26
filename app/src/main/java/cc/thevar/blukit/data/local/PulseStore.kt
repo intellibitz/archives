@@ -16,6 +16,7 @@ package cc.thevar.blukit.data.local
 import android.content.Context
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
+import cc.thevar.blukit.data.local.db.PulseDatabase
 import cc.thevar.blukit.data.local.entities.ContactEntity
 import cc.thevar.blukit.data.local.entities.PeerEntity
 import cc.thevar.blukit.domain.model.MessagePayload
@@ -55,6 +56,7 @@ class PulseStore(
     private val peersFile = File(context.filesDir, "peers.bin")
     private val contactsFile = File(context.filesDir, "contacts.bin")
 
+    private val database = PulseDatabase(context)
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     // --- Reactive State Flows ---
@@ -113,35 +115,44 @@ class PulseStore(
         }
         saveData()
         scope.launch {
-            compactMessages()
-        }
-        scope.launch {
             autoArchiveCrowds()
         }
     }
 
-    /** Interrogates local binary storage and decrypts the mesh state. */
+    /** Interrogates local binary storage and raw SQLite DAG to decrypt the mesh state. */
     private fun loadData() {
+        // MIGRATION: Move from binary log to SQLite DAG if necessary
         if (pulsesLogFile.exists()) {
             try {
-                val messageMap = mutableMapOf<String, MessagePayload>()
                 pulsesLogFile.inputStream().use { fis ->
                     val dis = DataInputStream(fis)
                     while (fis.available() > 0) {
                         val length = dis.readInt()
                         val encrypted = ByteArray(length)
                         dis.readFully(encrypted)
-                        val decrypted = cryptoManager.decryptLocal(encrypted)
-                        val json = decrypted.decodeToString()
-                        val message = Json.decodeFromString<MessagePayload>(json)
-                        messageMap[message.messageId] = message
+                        try {
+                            val decrypted = cryptoManager.decryptLocal(encrypted)
+                            val message = Json.decodeFromString<MessagePayload>(decrypted.decodeToString())
+                            database.insertPulse(message, encrypted)
+                        } catch (_: Exception) {}
                     }
                 }
-                _messages.value = messageMap.values.asSequence().sortedBy { it.timestamp }.toList()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+                pulsesLogFile.delete()
+            } catch (e: Exception) { e.printStackTrace() }
         }
+
+        try {
+            val rawPulses = database.getAllRawPulses()
+            val messageMap = mutableMapOf<String, MessagePayload>()
+            rawPulses.forEach { encrypted ->
+                try {
+                    val decrypted = cryptoManager.decryptLocal(encrypted)
+                    val message = Json.decodeFromString<MessagePayload>(decrypted.decodeToString())
+                    messageMap[message.messageId] = message
+                } catch (_: Exception) {}
+            }
+            _messages.value = messageMap.values.asSequence().sortedBy { it.timestamp }.toList()
+        } catch (e: Exception) { e.printStackTrace() }
         if (groupsFile.exists()) {
             try {
                 val encrypted = groupsFile.readBytes()
@@ -174,45 +185,39 @@ class PulseStore(
         }
     }
 
-    /** Appends a single encrypted pulse to the binary log. */
-    private fun appendMessageToLog(message: MessagePayload) {
+    /** Persists an encrypted pulse to the SQLite DAG. */
+    private fun savePulseToDb(message: MessagePayload) {
         scope.launch {
             try {
                 val json = Json.encodeToString(message)
                 val encrypted = cryptoManager.encryptLocal(json.encodeToByteArray())
-                withContext(Dispatchers.IO) {
-                    FileOutputStream(pulsesLogFile, true).use { fos ->
-                        val dos = DataOutputStream(fos)
-                        dos.writeInt(encrypted.size)
-                        dos.write(encrypted)
-                    }
-                }
+                database.insertPulse(message, encrypted)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
 
-    /** Rewrites the entire pulse log to remove deleted units and deduplicate history. */
-    fun compactMessages() {
-        val currentMessages = _messages.value
-
-        val tempFile = File(context.filesDir, "pulses_log.tmp")
-        try {
-            tempFile.outputStream().use { fos ->
-                val dos = DataOutputStream(fos)
-                currentMessages.forEach { message ->
-                    val json = Json.encodeToString(message)
-                    val encrypted = cryptoManager.encryptLocal(json.encodeToByteArray())
-                    dos.writeInt(encrypted.size)
-                    dos.write(encrypted)
-                }
+    /**
+     * Git-inspired Merge: Incorporates raw pulses from a peer into the local DAG.
+     * Identifies missing "commits" and updates the reactive message stream.
+     */
+    fun mergeHistory(incomingPulses: List<ByteArray>) {
+        scope.launch {
+            val newMessages = mutableListOf<MessagePayload>()
+            incomingPulses.forEach { encrypted ->
+                try {
+                    val decrypted = cryptoManager.decryptLocal(encrypted)
+                    val message = Json.decodeFromString<MessagePayload>(decrypted.decodeToString())
+                    if (_messages.value.none { it.messageId == message.messageId }) {
+                        database.insertPulse(message, encrypted)
+                        newMessages.add(message)
+                    }
+                } catch (_: Exception) {}
             }
-            if (tempFile.exists()) {
-                tempFile.renameTo(pulsesLogFile)
+            if (newMessages.isNotEmpty()) {
+                _messages.update { (it + newMessages).sortedBy { m -> m.timestamp } }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
@@ -261,17 +266,17 @@ class PulseStore(
                 if ((message.type == MessagePayload.TYPE_NOTE_UPDATE) || (message.type == MessagePayload.TYPE_ASSIGNMENT_TASK)) {
                     if ((message.noteVersion > existing.noteVersion) || 
                         ((message.noteVersion == existing.noteVersion) && (message.timestamp > existing.timestamp))) {
-                        appendMessageToLog(message)
+                        savePulseToDb(message)
                         current.toMutableList().apply { set(existingIndex, message) }
                     } else {
                         current
                     }
                 } else {
-                    appendMessageToLog(message)
+                    savePulseToDb(message)
                     current.toMutableList().apply { set(existingIndex, message) }
                 }
             } else {
-                appendMessageToLog(message)
+                savePulseToDb(message)
                 current + message
             }
         }
@@ -295,11 +300,12 @@ class PulseStore(
         _messages.update { current ->
             current.map { 
                 if (it.messageId == targetPulseId) {
-                    it.copy(resonanceWeight = it.resonanceWeight + weight)
+                    val newWeight = it.resonanceWeight + weight
+                    database.updateWeight(targetPulseId, newWeight)
+                    it.copy(resonanceWeight = newWeight)
                 } else it
             }
         }
-        compactMessages()
     }
 
     /**
@@ -354,7 +360,7 @@ class PulseStore(
                 } else it
             }
         }
-        updated?.let { appendMessageToLog(it) }
+        updated?.let { savePulseToDb(it) }
     }
 
     fun clearAllMessages() {
@@ -374,8 +380,8 @@ class PulseStore(
                 } catch (_: Exception) {}
             }
         }
+        database.deletePulse(messageId)
         _messages.update { it.filter { m -> m.messageId != messageId } }
-        compactMessages()
     }
 
     // --- Vault & Archiving ---

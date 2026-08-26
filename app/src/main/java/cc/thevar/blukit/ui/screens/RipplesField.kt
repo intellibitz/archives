@@ -351,29 +351,32 @@ fun RipplesField(
     )
 }
 
-/** Visualizes mesh activity intensity as a radial center glow. */
+/** Visualizes mesh activity intensity as a multi-spectral heat glow. */
 @Composable
 private fun AtmosphericHeatmap(intensity: Float) {
     if (intensity <= 0.05f) return
     
     val infiniteTransition = rememberInfiniteTransition(label = "HeatmapAnim")
     val pulse by infiniteTransition.animateFloat(
-        initialValue = 0.6f, targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(tween(4000, easing = LinearOutSlowInEasing), RepeatMode.Reverse),
+        initialValue = 0.5f, targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(3000, easing = LinearOutSlowInEasing), RepeatMode.Reverse),
         label = "HeatPulse"
     )
 
-    Canvas(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = intensity * pulse * 0.4f }) {
+    Canvas(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = intensity * pulse * 0.6f }) {
         val center = Offset(size.width / 2f, size.height / 2f)
+
+        // Multi-spectral gradient representing collective "Atmospheric Trends"
         drawCircle(
             brush = Brush.radialGradient(
-                0.0f to StealthPrimary.copy(alpha = 0.5f),
-                0.7f to StealthPrimary.copy(alpha = 0.1f),
+                0.0f to StealthAmber.copy(alpha = 0.6f),
+                0.4f to StealthPrimary.copy(alpha = 0.3f),
+                0.7f to StealthRose.copy(alpha = 0.2f),
                 1.0f to Color.Transparent,
                 center = center,
-                radius = size.minDimension / 1.5f
+                radius = size.minDimension / 1.2f
             ),
-            radius = size.minDimension / 1.5f,
+            radius = size.minDimension / 1.2f,
             center = center
         )
     }
@@ -645,7 +648,14 @@ private fun PulseNode(
             projectionEmoji = projectionEmoji,
             modifier = Modifier
                 .testTag("PersonaNode_$key")
-                .onGloballyPositioned { 
+                .graphicsLayer {
+                    // AURA GLOW: Visual identity anchor pulses with ambient mesh energy
+                    if (isHighlighted || isSelected) {
+                        scaleX = 1.05f
+                        scaleY = 1.05f
+                    }
+                }
+                .onGloballyPositioned {
                     val center = Offset(it.size.width / 2f, it.size.height / 2f)
                     val current = coordinates[key] ?: PersonaConnectionPoints()
                     coordinates[key] = current.copy(

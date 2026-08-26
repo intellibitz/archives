@@ -7,7 +7,7 @@ blukit **never** connects to the internet. All "Pulses" spread directly from pho
 
 | Energy Type | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
-| **Ambient Intelligence** | Only on your phone | Mesh partners | On-device synthesis of **Resonance Summaries** for collective context. |
+| **Ambient Intelligence** | Only on your phone | Mesh partners | On-device synthesis of **Atmospheric Trends** for collective context. Battery-optimized. |
 | **Swarm Logic (Votes)** | Only on your phone | Mesh partners | Anonymous consensus to prioritize pulses on the **Crowd Canvas**. |
 | **Nickname & Roles** | Only on your phone | Nearby people only | Local identification and template-specific permissions. |
 | **Assignments & Tasks** | Only on your phone | Chain members only | Collaborative academic tracking (exempt from decay). |
@@ -35,6 +35,7 @@ blukit **never** connects to the internet. All "Pulses" spread directly from pho
 ## 3. Self-Cleaning Persistence
 - **Pulse Decay (Pruning)**: To keep your device light over a long journey, blukit automatically deletes large media older than 90 days.
 - **Pinned Preservation**: Any pulse you "Pin" to a **Crowd Canvas** is exempt from decay, ensuring your core data and memories are never lost.
+- **Pulse-Git DAG**: Local storage uses a Directed Acyclic Graph to ensure history consistency across the mesh without central coordination.
 - **Intelligent Ticker Management**: The ticker automatically clears non-pinned ephemeral pulses after they sink into the **Sunk Pulse** vault, preventing local storage bloat.
 
 
@@ -46,4 +47,4 @@ blukit **never** connects to the internet. All "Pulses" spread directly from pho
 - **Shared & User-Owned Crowds**: Public Crowds follow a creator-as-owner model. While anyone can join or name a crowd, the creator establishes its identity via a **Crowd Persona** (emoji) which is displayed at the spatial center of the radar. The default "THE CROWD" has no owner and belongs to the mesh. Identifiers are **Deterministic and Scoped** (e.g., `crowd_MALL_FOOD_COURT`).
 
 ---
-**Vision Updated**: August 26, 2026
+**Vision Updated**: August 26, 2026 (Pulse-Git & Intent Sync)

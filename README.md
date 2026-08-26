@@ -44,7 +44,8 @@ Experience the **Unified Pulse Frequency**.
 - **Senior Vault**: Mark specific Chains for permanent preservation (exempt from all decay).
 - **Crowd Vault (Auto-Archiving)**: Over a 4-year journey, the ticker stays clean. A protocol automatically moves crowds that haven't pulsed in 30 days into a **"Sunk Pulse"** vault.
 - **Differential Pulse Sync**: High-speed WiFi radio sync that only bridges missing history, making updates 10x faster.
-- **Ambient Intelligence (Crowd AI)**: On-device synthesis of local pulse data to generate real-time "Resonance Summaries," converting raw crowd noise into actionable intelligence without cloud processing.
+- **Ambient Intelligence (Crowd AI)**: On-device synthesis of local pulse data to generate real-time "Resonance Summaries," converting raw crowd noise into actionable "Atmospheric Trends" (e.g., Academic Rituals, Social Synergy) without cloud processing.
+- **Pulse-Git Storage**: A Git-inspired Directed Acyclic Graph (DAG) for pulses, allowing peers to "Merge" offline history seamlessly.
 
 ---
 
@@ -53,7 +54,7 @@ A high-density, ergonomic architecture for tactical crowd control, differentiate
 
 ### **⚡ Actionable Layer (The Interaction Hub)**
 *Active, interactive elements signaled by high-intensity pulses and glows.*
-- **Pulse Hub (Amber/Rose Glow)**: The primary interaction engine. Features an **Aura Glow** that signals active focus. High-contrast triggers for pulsing energy.
+- **Pulse Hub (Amber/Rose Glow)**: The primary interaction engine. Features a reactive **Aura Glow** that signals active resonance and focus. High-contrast triggers for pulsing energy.
 - **Tactical Inputs**: Text entry fields signaled by high-intensity **Amber Focus** (Public) or **Rose Glow** (Private) borders. Interaction triggers a haptic resonant pulse.
 - **Discovery Radar (Spatial Nodes)**: Interactive user nodes. Your **Identity Anchor ("YOU")** and orbit nodes are clickable for resonance.
 - **Ticker Entries**: High-density summaries with explicit **"ENTER"** and **"JOIN"** affordances.
@@ -67,6 +68,7 @@ A high-density, ergonomic architecture for tactical crowd control, differentiate
 - **Spectral Dimming**: Automatic background dimming of the Radar Field to focus attention on the Pulse Hub without removing mesh context.
 - **Event Personas**: Visual identity anchors (emojis) that represent frequencies but do not trigger direct actions unless part of an entry.
 - **User Count Badges**: High-contrast, read-only badges showing mesh density.
+- **Atmospheric Heatmap**: Background glow intensity based on aggregate mesh activity and synthesized AI trends.
 
 ---
 
@@ -83,13 +85,14 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 ## 🛠️ ARCHITECTURAL SUPREMACY
 1. **100% Offline**: Zero cloud. No servers. No internet. Data stays in the air.
 2. **Header + Entries Pattern**: A unified visual language across all widgets (Field, Hubs, Ticker, Radar). Headers provide collective context; Entries provide atomic interaction.
-3. **Intelligence Layer**: Scoped, on-device AI that processes local pulses to provide context-aware insights (e.g., lecture summaries, crowd movement, or event highlights).
-4. **Media Mesh**: Composite radio orchestration (Nearby Connections + BLE Fallback).
+3. **Intelligence Layer**: Scoped, on-device AI synthesis and battery-aware intent recognition.
+4. **Media Mesh**: Composite radio orchestration with **Adaptive Discovery** scaling.
 5. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy.
-6. **Deterministic Scoped Naming**: Public Crowd IDs are generated as paths (e.g., `crowd_MALL_FOOD_COURT`), ensuring global uniqueness.
-7. **Partitioned Group Scaling**: Intelligent member partitioning for crowds exceeding 500 members.
-8. **Decentralized-First**: Prioritize mesh efficiency and hardware-encrypted energy.
-9. **Shared :core**: Koin DI, UDF with `BluetoothUiState`, and primitive `Canvas` UI foundation.
+6. **Pulse-Git Storage**: Git-inspired DAG in raw SQLite for deterministic mesh merging.
+7. **Deterministic Scoped Naming**: Public Crowd IDs are generated as paths (e.g., `crowd_MALL_FOOD_COURT`), ensuring global uniqueness.
+8. **Partitioned Group Scaling**: Intelligent member partitioning for crowds exceeding 500 members.
+9. **Decentralized-First**: Prioritize mesh efficiency and hardware-encrypted energy.
+10. **Shared :core**: Koin DI, UDF with `BluetoothUiState`, and primitive `Canvas` UI foundation.
 
 ---
 

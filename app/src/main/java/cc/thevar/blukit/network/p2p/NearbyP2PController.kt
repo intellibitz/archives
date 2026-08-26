@@ -223,13 +223,29 @@ class NearbyP2PController(
     override fun startDiscovery() {
         if (_isDiscovering.value) return
         _isDiscovering.value = true
-        val options = DiscoveryOptions.Builder().setStrategy(getStrategy()).build()
-        connectionsClient.startDiscovery(serviceId, discoveryCallback, options)
-            .addOnFailureListener { e ->
-                Log.e(tag, "Discovery failed to start: ${e.message}")
-                _errors.value = P2PError.DiscoveryError(e.message ?: "Failed to start discovery")
-                _isDiscovering.value = false
+
+        internalScope.launch(ioDispatcher) {
+            while (_isDiscovering.value) {
+                // ADAPTIVE DISCOVERY: Scale radio activity based on crowd density.
+                // If many peers are found, discovery slows down to preserve battery.
+                val peerCount = _scannedDevices.value.size
+                val scanDuration = if (peerCount > 10) 10.seconds else 30.seconds
+                val idleDuration = if (peerCount > 10) 30.seconds else 5.seconds
+
+                val options = DiscoveryOptions.Builder().setStrategy(getStrategy()).build()
+                connectionsClient.startDiscovery(serviceId, discoveryCallback, options)
+                    .addOnFailureListener { e ->
+                        Log.e(tag, "Discovery failed to start: ${e.message}")
+                        _errors.value = P2PError.DiscoveryError(e.message ?: "Failed to start discovery")
+                    }
+
+                delay(scanDuration)
+                if (_isDiscovering.value) {
+                    connectionsClient.stopDiscovery()
+                    delay(idleDuration)
+                }
             }
+        }
     }
 
     override fun stopDiscovery() {
@@ -318,7 +334,8 @@ class NearbyP2PController(
     }
 
     private suspend fun getPulseKeyWithRetry(id: String): SecretKey? {
-        var a = 0; while (pulseKeys[id] == null && a < 30) { delay(100.milliseconds); a++ }; return pulseKeys[id]
+        // Optimized retry: faster polling for secure key readiness
+        var a = 0; while (pulseKeys[id] == null && a < 50) { delay(20.milliseconds); a++ }; return pulseKeys[id]
     }
 
     private fun syncPulseHistory(endpointId: String) {
