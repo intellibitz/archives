@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -268,7 +269,7 @@ fun RipplesField(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(320.dp) 
+                    .then(if (drawNodes) Modifier.height(320.dp) else Modifier.wrapContentHeight())
                     .background(Color.Transparent)
                     .onGloballyPositioned { 
                         // Synchronize spatial center with the coordinate registry

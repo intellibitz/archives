@@ -31,7 +31,7 @@ Experience the **Unified Pulse Frequency**.
 - **User-Owned Crowds**: Any user can create a new Crowd. The creator is assigned as the **Owner**, allowing them to project a unique **Event Persona** (emoji) at the center of the radar.
 - **Unified Crowd Radar**: A high-fidelity, nested spatial paradigm. Each Crowd context in the ticker features its own **interactive Mini Radar** anchored by the Owner, with other users orbital around them. Peers share the same high-fidelity **Persona Signature** styling as the user, ensuring identity parity across the mesh. For the default crowd, the user's own **Identity Anchor** serves as the primary row icon, reinforcing collective ownership. The background remains as a pure atmospheric **Spectral Field** for spatial awareness.
 - **Resonance Summaries**: A "Summary-First" visual paradigm. Headers display high-level context (Title, Last Update, "ENTER" affordance) and generic type labels (e.g., `EVENT` or `PRIVATE CHAIN`). Crowd metadata, such as the **User Count**, is linked directly to the primary identity anchor in the left column, removing redundant UI badges and grounding the context in its members. The default crowd header features a prominent **interactive Persona Signature** of the user.
-- **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. Dynamically surfaces units from the current context and its children, with unit counts for Resonances.
+- **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. Dynamically surfaces units from the current context and its children, with unit counts for Resonances. In the **Event Field**, the ticker takes the full vertical space below the top hub to maximize interaction density and peer discovery.
 - **Scoped Sharing & Roles**: Specialized roles (e.g., Student, Faculty, Artist) within templates to manage interaction density and scoped visibility.
 - **Rose Resonance**: Private Chains and Mutual Pulses resonate in **Stealth Rose**, distinguishing them from the Amber public Field.
 - **Media Mesh**: High-speed, localized media sharing using composite **Radios** (BLE + WiFi).
@@ -85,7 +85,7 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 
 ## 🛠️ ARCHITECTURAL SUPREMACY
 1. **100% Offline**: Zero cloud. No servers. No internet. Data stays in the air.
-2. **Header + Entries Pattern**: A unified visual language across all widgets (Field, Hubs, Ticker, Radar). Headers provide collective context; Entries provide atomic interaction.
+2. **Header + Entries Pattern**: A unified visual language across all widgets (Field, Hubs, Ticker, Radar). Headers provide collective context; Entries provide atomic interaction. In landing fields, entries are optimized to take the full screen height for high-density tactical control.
 3. **Intelligence Layer**: Scoped, on-device AI synthesis and battery-aware intent recognition.
 4. **Media Mesh**: Composite radio orchestration with **Adaptive Discovery** scaling.
 5. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy.

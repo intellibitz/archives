@@ -662,13 +662,40 @@ fun TickerSectionHeader(
             letterSpacing = 2.sp,
             fontSize = 7.sp
         )
+        
         Spacer(modifier = Modifier.width(10.dp))
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(0.5.dp)
-                .background(color.copy(alpha = 0.2f))
-        )
+        
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(0.5.dp)
+                    .background(color.copy(alpha = 0.2f))
+            )
+            
+            if (onAction != null && actionLabel != null) {
+                Text(
+                    text = "OR",
+                    fontSize = 6.sp,
+                    fontWeight = FontWeight.Black,
+                    color = color.copy(alpha = 0.3f),
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    letterSpacing = 1.sp
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(0.5.dp)
+                        .background(color.copy(alpha = 0.2f))
+                )
+            }
+        }
+
         if (onAction != null && actionLabel != null) {
             Spacer(modifier = Modifier.width(10.dp))
             Text(

@@ -156,10 +156,37 @@ fun EventField(
 
     val (_, pulseCounts, _) = pulsesData
 
+    // Event ticker shows the latest global energy (Grouped by Resonance: Header + Entries)
+    val combinedEnergy = remember(eventMetas, state.session.messages) {
+        val grouped = mutableListOf<Pair<P2PDevice, MessagePayload?>>()
+        
+        // Sort events by latest activity (ascending for reverseLayout)
+        val sortedEvents = eventMetas.sortedBy { it.lastPulseTimestamp }
+        
+        sortedEvents.forEach { resonance ->
+            // 1. ADD LATEST ENTRIES for this resonance (up to 3)
+            val resonancePulses = state.session.messages.filter { 
+                (it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null))
+            }.sortedBy { it.timestamp }
+             .takeLast(3)
+            
+            resonancePulses.forEach { msg ->
+                val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                grouped.add(dev to msg)
+            }
+
+            // 2. ADD HEADER (above pulses in UI)
+            val headDev = P2PDevice(id = resonance.id, name = resonance.name, emoji = "⚡", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+            grouped.add(headDev to null)
+        }
+        
+        grouped
+    }
+
     BlukitFieldScaffold(
         header = header,
         entries = {
-            // MODULE 1: RADAR (Background Entry)
+            // MODULE 1: CONTEXTUAL FIELD (Radar Background + Hub + Ticker)
             RipplesField(
                 state = state,
                 activeBubbles = emptyList(),
@@ -172,7 +199,7 @@ fun EventField(
                 onDeviceLongClick = handleDeviceLongClick,
                 onSearchToggle = onSearchToggle,
                 isSearchActive = isSearchActive,
-                // Humanity Stage
+                // Humanity Stage Props
                 title = "THE CROWD",
                 breadcrumbTrail = breadcrumbTrail,
                 onCrumbClick = onCrumbClick,
@@ -200,102 +227,71 @@ fun EventField(
                         )
                     }
                 },
-                modifier = Modifier.fillMaxSize()
-            )
-
-            // MODULE 2: TICKER (Overlay Entry)
-            // Event ticker shows the latest global energy (Grouped by Resonance: Header + Entries)
-            val combinedEnergy = remember(eventMetas, state.session.messages) {
-                val grouped = mutableListOf<Pair<P2PDevice, MessagePayload?>>()
-                
-                // Sort events by latest activity (ascending for reverseLayout)
-                val sortedEvents = eventMetas.sortedBy { it.lastPulseTimestamp }
-                
-                sortedEvents.forEach { resonance ->
-                    // 1. ADD LATEST ENTRIES for this resonance (up to 3)
-                    val resonancePulses = state.session.messages.filter { 
-                        (it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null))
-                    }.sortedBy { it.timestamp }
-                     .takeLast(3)
-                    
-                    resonancePulses.forEach { msg ->
-                        val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                        grouped.add(dev to msg)
-                    }
-
-                    // 2. ADD HEADER (above pulses in UI)
-                    val headDev = P2PDevice(id = resonance.id, name = resonance.name, emoji = "⚡", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                    grouped.add(headDev to null)
-                }
-                
-                grouped
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(320.dp)
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp) 
-            ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // MODULE 2.1: INCOMING REQUESTS (High Priority)
-                    if (state.crowd.incomingRadioRequests.isNotEmpty()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            state.crowd.incomingRadioRequests.forEach { device ->
-                                RadioRequestTickerItem(
-                                    device = device, 
-                                    onAccept = onAcceptRadio, 
-                                    onDeny = onDenyRadio
-                                )
+                modifier = Modifier.fillMaxSize(),
+                content = {
+                    // MODULE 2: FULL-SCREEN TICKER
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // MODULE 2.1: INCOMING REQUESTS (High Priority)
+                        if (state.crowd.incomingRadioRequests.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                state.crowd.incomingRadioRequests.forEach { device ->
+                                    RadioRequestTickerItem(
+                                        device = device, 
+                                        onAccept = onAcceptRadio, 
+                                        onDeny = onDenyRadio
+                                    )
+                                }
                             }
                         }
+
+                        // MODULE 2.2: TICKER (Standard Spectrum)
+                        TickerSectionHeader(
+                            title = "JOIN ACTIVE EVENTS BELOW",
+                            onAction = onShowAirGhost,
+                            actionLabel = "CREATE NEW EVENT"
+                        )
+                        
+                        PulsingResonanceTicker(
+                            state = state,
+                            energyList = combinedEnergy,
+                            pulseCounts = pulseCounts,
+                            localDeviceId = localDeviceId,
+                            localNickname = userNickname,
+                            pulsedPeers = pulsedPeers,
+                            isGrouped = true,
+                            onPulseClick = { onNavigateToGroup(it) },
+                            onDeviceClick = onDeviceClick,
+                            onDeviceLongClick = handleDeviceLongClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                        
+                        // Bottom padding for edge-to-edge comfort
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
-
-                    // MODULE 2.2: TICKER (Standard Spectrum)
-                    TickerSectionHeader(
-                        title = "JOIN ACTIVE EVENTS BELOW",
-                        onAction = onShowAirGhost,
-                        actionLabel = "CREATE NEW EVENT"
-                    )
-                    
-                    PulsingResonanceTicker(
-                        state = state,
-                        energyList = combinedEnergy,
-                        pulseCounts = pulseCounts,
-                        localDeviceId = localDeviceId,
-                        localNickname = userNickname,
-                        pulsedPeers = pulsedPeers,
-                        isGrouped = true,
-                        onPulseClick = { onNavigateToGroup(it) },
-                        onDeviceClick = onDeviceClick,
-                        onDeviceLongClick = handleDeviceLongClick,
-                        modifier = Modifier.weight(1f)
-                    )
                 }
+            )
 
-                // FLOATING OVERLAY (Tips / Nudges)
-                Box(modifier = Modifier.fillMaxSize().padding(bottom = 16.dp), contentAlignment = Alignment.BottomCenter) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        AnimatedContent(
-                            targetState = when {
-                                eventMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
-                                else -> null
-                            },
-                            transitionSpec = { fadeIn() togetherWith fadeOut() },
-                            label = "EventTips"
-                        ) { tipState ->
-                            if (tipState == "empty_mesh" && showTip) {
-                                BlukitTip(
-                                    text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
-                                    onDismiss = { showTip = false }
-                                )
-                            }
+            // Pulse Ghost Menus and Overlays (Floating)
+            Box(modifier = Modifier.fillMaxSize().padding(bottom = 16.dp), contentAlignment = Alignment.BottomCenter) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    AnimatedContent(
+                        targetState = when {
+                            eventMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
+                            else -> null
+                        },
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        label = "EventTips"
+                    ) { tipState ->
+                        if (tipState == "empty_mesh" && showTip) {
+                            BlukitTip(
+                                text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
+                                onDismiss = { showTip = false }
+                            )
                         }
                     }
                 }
