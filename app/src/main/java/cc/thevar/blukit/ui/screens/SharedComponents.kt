@@ -56,6 +56,7 @@ import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.navigation.Route
+import cc.thevar.blukit.ui.screens.CrowdMiniRadar
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -76,6 +77,7 @@ data class PersonaConnectionPoints(
 
 val LocalPersonaCoordinates = staticCompositionLocalOf { mutableStateMapOf<String, PersonaConnectionPoints>() }
 val LocalActivePulseId = staticCompositionLocalOf { mutableStateOf<String?>(null) }
+val LocalUserEmoji = staticCompositionLocalOf { "👤" }
 
 /**
  * Provides a composite view of system radio statuses (BT, WiFi, GPS).
@@ -695,8 +697,10 @@ fun PulsingResonanceTicker(
     pulseCounts: Map<String, Int>,
     localDeviceId: String,
     pulsedPeers: Set<String>,
+    activeBubbles: List<BubbleData> = emptyList(),
     isGrouped: Boolean = true,
     onPulseClick: (String) -> Unit,
+    onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit,
     reverseLayout: Boolean = true,
     modifier: Modifier = Modifier,
@@ -729,6 +733,7 @@ fun PulsingResonanceTicker(
                 }
 
                 val dynamicSubtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "EVENT" else "PRIVATE CHAIN"
+                val userEmoji = LocalUserEmoji.current
 
                 ResonanceSummary(
                     title = resonance.name,
@@ -739,11 +744,16 @@ fun PulsingResonanceTicker(
                     lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
                     onClick = { onPulseClick(resonance.id) },
                     showJoin = true,
+                    personaEmoji = if (resonance.id == Resonance.ID_CROWD) userEmoji else null,
                     topContent = {
                         CrowdMiniRadar(
                             resonance = resonance,
                             members = members,
-                            themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose
+                            isDefaultCrowd = resonance.id == Resonance.ID_CROWD,
+                            themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
+                            onDeviceClick = onDeviceClick,
+                            onDeviceLongClick = onDeviceLongClick,
+                            activeBubbles = activeBubbles
                         )
                     },
                     modifier = Modifier.padding(horizontal = 8.dp)
@@ -1214,14 +1224,6 @@ fun StatusIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isOn: Bool
     }
 }
 
-/**
- * RESONANCE SUMMARY: A Summary-First visual paradigm component.
- * Represents high-level containers (Crowds, Resonances, or Meta-Pulses).
- */
-/**
- * RESONANCE SUMMARY: A high-fidelity card representing a collective frequency.
- * Features a spectral glow and explicit JOIN affordance.
- */
 @Composable
 fun ResonanceSummary(
     title: String,
@@ -1232,7 +1234,9 @@ fun ResonanceSummary(
     lastUpdate: String,
     onClick: () -> Unit,
     showJoin: Boolean = false,
+    personaEmoji: String? = null,
     topContent: @Composable (() -> Unit)? = null,
+    underIconContent: @Composable (ColumnScope.() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
@@ -1273,8 +1277,15 @@ fun ResonanceSummary(
                             .border(1.dp, themeColor.copy(alpha = 0.2f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
+                        if (personaEmoji != null) {
+                            Text(text = personaEmoji, fontSize = 20.sp)
+                        } else {
+                            Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
+                        }
                     }
+                    
+                    underIconContent?.invoke(this)
+
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = lastUpdate,

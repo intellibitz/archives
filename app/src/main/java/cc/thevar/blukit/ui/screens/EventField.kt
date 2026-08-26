@@ -99,11 +99,27 @@ fun EventField(
     onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {},
 ) {
-    var showTip by remember { mutableStateOf(value = true) }
+    var showTip by remember { mutableStateOf(true) }
     var airProposalName by remember { mutableStateOf("") }
     val activePulseId = LocalActivePulseId.current
     var pulseGhostData by remember { mutableStateOf<GhostPulseData?>(null) }
     var showVault by remember { mutableStateOf(false) }
+
+    val handleDeviceLongClick: (P2PDevice) -> Unit = { targetDevice ->
+        val menuId = targetDevice.persistentId ?: targetDevice.id
+        activePulseId.value = menuId
+        pulseGhostData = GhostPulseData(
+            emoji = targetDevice.emoji,
+            title = targetDevice.name ?: "PERSONA",
+            subtitle = "CROWD NODE",
+            themeColor = StealthPrimary,
+            sourceId = menuId,
+            actions = mutableListOf<GhostAction>().apply {
+                add(GhostAction(Icons.Rounded.Hearing, "WHISPER", StealthPrimary) { onWhisper(targetDevice) })
+                add(GhostAction(Icons.Rounded.Radar, "IDENTIFY", Color.White) { onIdentifyUser(menuId) })
+            }
+        )
+    }
 
     val eventMetas = remember(state.session.groups) {
         state.session.groups.filter { 
@@ -153,21 +169,7 @@ fun EventField(
                 pulseGhostData = pulseGhostData,
                 onDismissGhost = { pulseGhostData = null; activePulseId.value = null },
                 onDeviceClick = onDeviceClick,
-                onDeviceLongClick = { targetDevice ->
-                    val menuId = targetDevice.persistentId ?: targetDevice.id
-                    activePulseId.value = menuId
-                    pulseGhostData = GhostPulseData(
-                        emoji = targetDevice.emoji,
-                        title = targetDevice.name ?: "PERSONA",
-                        subtitle = "CROWD NODE",
-                        themeColor = StealthPrimary,
-                        sourceId = menuId,
-                        actions = mutableListOf<GhostAction>().apply {
-                            add(GhostAction(Icons.Rounded.Hearing, "WHISPER", StealthPrimary) { onWhisper(targetDevice) })
-                            add(GhostAction(Icons.Rounded.Radar, "IDENTIFY", Color.White) { onIdentifyUser(menuId) })
-                        }
-                    )
-                },
+                onDeviceLongClick = handleDeviceLongClick,
                 onSearchToggle = onSearchToggle,
                 isSearchActive = isSearchActive,
                 // Humanity Stage
@@ -184,7 +186,7 @@ fun EventField(
                 onNicknameChange = onUserNicknameChange,
                 themeColor = StealthPrimary,
                 drawBackground = false, // Background handled by Scaffold
-                drawNodes = true,
+                drawNodes = false, // UNIFIED RADAR: Nodes move to Ticker
                 airRitualGhost = {
                     if (showAirGhost) {
                         CrowdRitualGhost(
@@ -270,7 +272,8 @@ fun EventField(
                         pulsedPeers = pulsedPeers,
                         isGrouped = true,
                         onPulseClick = { onNavigateToGroup(it) },
-                        onDeviceLongClick = { },
+                        onDeviceClick = onDeviceClick,
+                        onDeviceLongClick = handleDeviceLongClick,
                         modifier = Modifier.weight(1f)
                     )
                 }

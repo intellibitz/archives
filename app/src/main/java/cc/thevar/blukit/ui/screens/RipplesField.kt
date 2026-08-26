@@ -24,9 +24,12 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +39,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Grain
@@ -55,6 +59,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -77,6 +82,7 @@ import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
+import cc.thevar.blukit.ui.screens.LocalUserEmoji
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.cos
@@ -699,48 +705,151 @@ fun CrowdMiniRadar(
     resonance: Resonance,
     members: List<P2PDevice>,
     themeColor: Color = StealthPrimary,
+    isDefaultCrowd: Boolean = false,
+    onDeviceClick: (P2PDevice) -> Unit = {},
+    onDeviceLongClick: (P2PDevice) -> Unit = {},
+    activeBubbles: List<BubbleData> = emptyList(),
     modifier: Modifier = Modifier
 ) {
+    val bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(110.dp),
         contentAlignment = Alignment.Center
     ) {
-        // --- 1. CENTER: THE OWNER (The Identity Anchor) ---
-        val owner = members.find { it.id == resonance.ownerId || it.persistentId == resonance.ownerId }
-        val centerEmoji = owner?.emoji ?: resonance.projectionEmoji ?: "⚡"
+        if (isDefaultCrowd) {
+            // --- DEFAULT CROWD: User Persona Anchor + Horizontal Lineup ---
+            val userEmoji = LocalUserEmoji.current
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                // 1. THE USER PERSONA ANCHOR (Owned by all)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(end = 12.dp)
+                ) {
+                    PulsePersonaSignature(
+                        device = P2PDevice(id = "YOU", name = "YOU", emoji = userEmoji),
+                        isPulsed = bubbleSenders.contains("YOU"),
+                        isSelected = false,
+                        isPeerPulsed = false,
+                        size = 36.dp,
+                        isStatic = false, // Allow pulse on activity
+                        themeColor = themeColor,
+                        onClick = { onDeviceClick(P2PDevice(id = "YOU", name = "YOU", emoji = userEmoji)) }
+                    )
+                    // 2. "BRING N USERS UNDER THE USER PERSONA" (Small group)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy((-6).dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        members.take(3).forEach { device ->
+                            PulsePersonaSignature(
+                                device = device,
+                                isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
+                                isSelected = false,
+                                isPeerPulsed = false,
+                                size = 20.dp,
+                                isStatic = false,
+                                themeColor = themeColor,
+                                onClick = { onDeviceClick(device) },
+                                onLongClick = { onDeviceLongClick(device) }
+                            )
+                        }
+                    }
+                }
 
-        Box(modifier = Modifier.zIndex(2f)) {
-            PulsePersonaSignature(
-                device = P2PDevice(id = "OWNER", name = owner?.name ?: resonance.name, emoji = centerEmoji),
-                isPulsed = true,
-                isSelected = false,
-                isPeerPulsed = false,
-                size = 48.dp,
-                isStatic = true,
-                themeColor = themeColor
-            )
-        }
+                // TACTICAL DIVIDER
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(32.dp)
+                        .background(themeColor.copy(alpha = 0.2f))
+                )
 
-        // --- 2. ORBIT: OTHER MEMBERS (Lined up in a ring) ---
-        val others = members.filter { it.id != resonance.ownerId && it.persistentId != resonance.ownerId }
-        others.take(8).forEachIndexed { index, device ->
-            val radius = 44f
-            val angle = (index.toDouble() / others.size.coerceAtLeast(1)) * 2 * PI
-            val xOffset = (radius * cos(angle)).toFloat().dp
-            val yOffset = (radius * sin(angle)).toFloat().dp
+                // 3. REMAINING USERS LINED UP HORIZONTALLY
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy((-8).dp) // Tactical overlapping
+                ) {
+                    members.drop(3).take(10).forEach { device ->
+                        PulsePersonaSignature(
+                            device = device,
+                            isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
+                            isSelected = false,
+                            isPeerPulsed = false,
+                            size = 28.dp,
+                            isStatic = false,
+                            themeColor = themeColor,
+                            onClick = { onDeviceClick(device) },
+                            onLongClick = { onDeviceLongClick(device) }
+                        )
+                    }
+                    if (members.size > 13) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.5f))
+                                .border(0.5.dp, themeColor.copy(alpha = 0.3f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "+${members.size - 13}",
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black,
+                                color = themeColor.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            // --- USER-OWNED CROWD: Orbital lineup around Owner ---
+            val owner = members.find { it.id == resonance.ownerId || it.persistentId == resonance.ownerId }
+            val centerEmoji = owner?.emoji ?: resonance.projectionEmoji ?: "⚡"
 
-            Box(modifier = Modifier.offset(xOffset, yOffset)) {
+            Box(modifier = Modifier.zIndex(2f)) {
                 PulsePersonaSignature(
-                    device = device,
-                    isPulsed = false,
+                    device = P2PDevice(id = "OWNER", name = owner?.name ?: resonance.name, emoji = centerEmoji),
+                    isPulsed = owner?.let { bubbleSenders.contains(it.id) || bubbleSenders.contains(it.persistentId) } ?: false,
                     isSelected = false,
                     isPeerPulsed = false,
-                    size = 28.dp,
-                    isStatic = true,
-                    themeColor = themeColor
+                    size = 48.dp,
+                    isStatic = false,
+                    themeColor = themeColor,
+                    onClick = { owner?.let { onDeviceClick(it) } }
                 )
+            }
+
+            val others = members.filter { it.id != resonance.ownerId && it.persistentId != resonance.ownerId }
+            others.take(8).forEachIndexed { index, device ->
+                val radius = 44f
+                val angle = (index.toDouble() / others.size.coerceAtLeast(1)) * 2 * PI
+                val xOffset = (radius * cos(angle)).toFloat().dp
+                val yOffset = (radius * sin(angle)).toFloat().dp
+
+                Box(modifier = Modifier.offset(xOffset, yOffset)) {
+                    PulsePersonaSignature(
+                        device = device,
+                        isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
+                        isSelected = false,
+                        isPeerPulsed = false,
+                        size = 28.dp,
+                        isStatic = false,
+                        themeColor = themeColor,
+                        onClick = { onDeviceClick(device) },
+                        onLongClick = { onDeviceLongClick(device) }
+                    )
+                }
             }
         }
     }

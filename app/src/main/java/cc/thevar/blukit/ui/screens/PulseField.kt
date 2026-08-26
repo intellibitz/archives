@@ -198,6 +198,7 @@ fun PulseField(
                 pulsedPeers = emptySet(),
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },
+                onDeviceClick = { },
                 onDeviceLongClick = { },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

@@ -261,6 +261,7 @@ fun ChainField(
                 pulsedPeers = memberSet,
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },
+                onDeviceClick = { dev -> onNavigateToPulse(dev.id) },
                 onDeviceLongClick = { },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

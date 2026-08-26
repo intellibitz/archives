@@ -10,8 +10,8 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 1.  Open `MarketPreviews.kt` in Android Studio.
 2.  Switch to the **Design** or **Split** view.
 3.  Locate the following previews:
-    -   `PreviewRadarPhone`: The main **The Crowd** field showing the spatial radar with its centralized context anchor, prominent identity anchor ("YOU"), and the unified tactical header with "RADAR/SEARCH" labels. Includes the **Spectral Dimming** effect and the AI-driven **Atmospheric Heatmap** and **Aura Glow**.
-    -   `PreviewChatPhone`: The **Crowd Field** and **Chain Field** interface showing **Ties** and the **Resonance** headers with **Unified Mini Radars**, high-density "ENTER" affordances, and user counts.
+    -   `PreviewRadarPhone`: The main **The Crowd** field showing the atmospheric **Spectral Field** with its centralized context anchor, prominent identity anchor ("YOU"), and the unified tactical header with "RADAR/SEARCH" labels. Includes the AI-driven **Atmospheric Heatmap** and **Aura Glow**. Interaction is consolidated into the Ticker.
+    -   `PreviewChatPhone`: The **Crowd Field** and **Chain Field** interface showing **Ties** and the **Resonance** headers with **Interactive Mini Radars**, high-density "ENTER" affordances, and user counts.
     -   `PreviewTimelineField`: The visual student journey showing shared **Memories**.
     -   `PreviewPulseField`: The granular breakdown of a specific **Pulse** into its constituent units.
     -   `PreviewTacticalHeader`: The low-profile Row 0 tactical controls (Eco, Stealth, Radios).

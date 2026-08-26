@@ -83,6 +83,7 @@ import cc.thevar.blukit.ui.screens.CrowdField
 import cc.thevar.blukit.ui.screens.EventField
 import cc.thevar.blukit.ui.screens.LocalActivePulseId
 import cc.thevar.blukit.ui.screens.LocalPersonaCoordinates
+import cc.thevar.blukit.ui.screens.LocalUserEmoji
 import cc.thevar.blukit.ui.screens.OnboardingGhost
 import cc.thevar.blukit.ui.screens.PersonaConnectionPoints
 import cc.thevar.blukit.ui.screens.PersonaOptionsMenu
@@ -278,7 +279,8 @@ fun BlukitApp(
 
     CompositionLocalProvider(
         LocalPersonaCoordinates provides personaCoordinates,
-        LocalActivePulseId provides activePulseId
+        LocalActivePulseId provides activePulseId,
+        LocalUserEmoji provides emoji
     ) {
         Box(modifier = modifier.fillMaxSize()) {
             FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)

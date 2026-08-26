@@ -250,6 +250,7 @@ fun PreviewPulsingResonanceTickerHeaders() {
                 pulsedPeers = emptySet(),
                 isGrouped = true,
                 onPulseClick = {},
+                onDeviceClick = {},
                 onDeviceLongClick = {},
                 reverseLayout = false
             )

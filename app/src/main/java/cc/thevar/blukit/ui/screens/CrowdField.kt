@@ -259,6 +259,7 @@ fun CrowdField(
                 pulsedPeers = emptySet(),
                 isGrouped = false,
                 onPulseClick = { onNavigateToPulse(it) },
+                onDeviceClick = { dev -> onNavigateToPulse(dev.id) }, // Default action for context
                 onDeviceLongClick = { dev -> 
                     chatPulses.find { it.senderId == dev.id }?.let { selectedPulseForMenu = it }
                 },

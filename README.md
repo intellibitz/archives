@@ -29,7 +29,7 @@ Experience the **Unified Pulse Frequency**.
 - **Participation Rights**: Users can **see and listen** to all nearby public Crowds automatically. However, to **participate** (send pulses), a user must explicitly "Join" the crowd.
 - **Collective Ownership**: The default root crowd (**THE CROWD**) is owned by the mesh. All users are pre-joined to this frequency, ensuring immediate global participation.
 - **User-Owned Crowds**: Any user can create a new Crowd. The creator is assigned as the **Owner**, allowing them to project a unique **Event Persona** (emoji) at the center of the radar.
-- **Unified Crowd Radar**: A high-fidelity, nested spatial paradigm. Each Crowd context in the ticker features its own **Mini Radar** anchored by the Owner, with other users orbital around them.
+- **Unified Crowd Radar**: A high-fidelity, nested spatial paradigm. Each Crowd context in the ticker features its own **interactive Mini Radar** anchored by the Owner, with other users orbital around them. The background remains as a pure atmospheric **Spectral Field** for spatial awareness.
 - **Resonance Summaries**: A "Summary-First" visual paradigm. Headers display high-level context (Title, Member Count, "ENTER" affordance) and generic type labels (e.g., `EVENT` or `PRIVATE CHAIN`).
 - **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. Dynamically surfaces units from the current context and its children, with unit counts for Resonances.
 - **Scoped Sharing & Roles**: Specialized roles (e.g., Student, Faculty, Artist) within templates to manage interaction density and scoped visibility.
@@ -57,7 +57,7 @@ A high-density, ergonomic architecture for tactical crowd control, differentiate
 *Active, interactive elements signaled by high-intensity pulses and glows.*
 - **Pulse Hub (Amber/Rose Glow)**: The primary interaction engine. Features a reactive **Aura Glow** that signals active resonance and focus. High-contrast triggers for pulsing energy.
 - **Tactical Inputs**: Text entry fields signaled by high-intensity **Amber Focus** (Public) or **Rose Glow** (Private) borders. Interaction triggers a haptic resonant pulse.
-- **Discovery Radar (Spatial Nodes)**: Interactive user nodes. Your **Identity Anchor ("YOU")** and orbit nodes are clickable for resonance.
+- **Contextual Radar (Ticker Nodes)**: Interactive user nodes located within the ticker's Mini Radars. Your **Identity Anchor ("YOU")** and orbit nodes are clickable for resonance.
 - **Ticker Entries**: High-density summaries with explicit **"ENTER"** and **"JOIN"** affordances.
 - **Tactical Toggles**: Quick-action switches in the header for **Stealth Mode** and **Radio Power**.
 
@@ -66,7 +66,7 @@ A high-density, ergonomic architecture for tactical crowd control, differentiate
 - **Tactical Text & Labels**: Read-only labels and metadata in low-profile **Tactical Mono fonts**. High-contrast for clarity but low-intensity to prevent distraction.
 - **Humanity Stage (Breadcrumbs)**: Non-interactive navigational paths (e.g., `THE CROWD > CONCERT`) providing situational awareness.
 - **Tactical Header (System Bar)**: Low-profile status indicators for **Amber Radio Status** and **Privacy Ties**.
-- **Spectral Dimming**: Automatic background dimming of the Radar Field to focus attention on the Pulse Hub without removing mesh context.
+- **Spectral Field (Atmospheric Background)**: A non-interactive spatial background providing situational awareness and aggregate mesh energy through heatmaps and scan lines.
 - **Event Personas**: Visual identity anchors (emojis) that represent frequencies but do not trigger direct actions unless part of an entry.
 - **User Count Badges**: High-contrast, read-only badges showing mesh density.
 - **Atmospheric Heatmap**: Background glow intensity based on aggregate mesh activity and synthesized AI trends.
