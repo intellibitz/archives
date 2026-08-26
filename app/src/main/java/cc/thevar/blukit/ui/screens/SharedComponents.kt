@@ -745,6 +745,7 @@ fun PulsingResonanceTicker(
                     lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
                     onClick = { onPulseClick(resonance.id) },
                     showJoin = true,
+                    showCountBadge = false, // UNIFIED: Count moved to leftContent
                     leftContent = if (resonance.id == Resonance.ID_CROWD) {
                         {
                             PulsePersonaSignature(
@@ -760,6 +761,16 @@ fun PulsingResonanceTicker(
                             )
                         }
                     } else null,
+                    underIconContent = {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "$userCount ${if (userCount == 1) "USER" else "USERS"}",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = (if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose).copy(alpha = 0.6f),
+                            letterSpacing = 0.5.sp
+                        )
+                    },
                     topContent = {
                         CrowdMiniRadar(
                             resonance = resonance,
@@ -1249,6 +1260,7 @@ fun ResonanceSummary(
     lastUpdate: String,
     onClick: () -> Unit,
     showJoin: Boolean = false,
+    showCountBadge: Boolean = true,
     leftContent: @Composable (() -> Unit)? = null,
     topContent: @Composable (() -> Unit)? = null,
     underIconContent: @Composable (ColumnScope.() -> Unit)? = null,
@@ -1358,7 +1370,7 @@ fun ResonanceSummary(
                         Spacer(modifier = Modifier.width(12.dp))
                     }
 
-                    if (count >= 0) {
+                    if (count >= 0 && showCountBadge) {
                         Surface(
                             color = themeColor.copy(alpha = 0.2f),
                             shape = RoundedCornerShape(8.dp),
@@ -2007,12 +2019,12 @@ fun PulsePersonaSignature(
                     Icon(imageVector = icon, contentDescription = null, tint = when { isSelected || isMe -> Color.White; isPulsed -> StealthRose; isPeerPulsed -> StealthAmber; else -> Color.White.copy(alpha = 0.7f) }, modifier = Modifier.size(iconSize))
                 }
                 
-                if (size > 32.dp) {
+                if (size >= 24.dp) {
                     val nameText = device.name ?: if (isMe) "YOU" else "?"
                     val displayText = if (isMe && nameText == "YOU") "YOU" else nameText.take(3).uppercase()
                     Text(
                         text = displayText, 
-                        fontSize = 7.sp, 
+                        fontSize = (size.value / 6).coerceAtLeast(5f).sp, 
                         fontWeight = FontWeight.Black, 
                         color = personaThemeColor.copy(alpha = 0.6f),
                         letterSpacing = 0.5.sp
@@ -2023,10 +2035,10 @@ fun PulsePersonaSignature(
         
         // TACTICAL DECORATION: Label (YOU/USER/CUSTOM)
         val finalLabel = subLabel ?: if (isMe) "YOU" else "USER"
-        if (size > 32.dp) {
+        if (size >= 24.dp) {
             Text(
                 text = finalLabel.uppercase(),
-                fontSize = 6.sp,
+                fontSize = (size.value / 8).coerceAtLeast(4f).sp,
                 fontWeight = FontWeight.Black,
                 color = personaThemeColor.copy(alpha = 0.6f),
                 letterSpacing = 1.5.sp,

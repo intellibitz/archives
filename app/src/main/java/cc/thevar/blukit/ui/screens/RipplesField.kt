@@ -741,32 +741,33 @@ fun CrowdMiniRadar(
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy((-8).dp) // Tactical overlapping
+                    horizontalArrangement = Arrangement.spacedBy((-12).dp) // Tactical overlapping for 32dp nodes
                 ) {
-                    members.take(12).forEach { device ->
+                    members.take(10).forEach { device ->
                         PulsePersonaSignature(
                             device = device,
                             isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
                             isSelected = false,
                             isPeerPulsed = false,
-                            size = 28.dp,
+                            size = 32.dp,
                             isStatic = false,
                             themeColor = themeColor,
+                            subLabel = "USER",
                             onClick = { onDeviceClick(device) },
                             onLongClick = { onDeviceLongClick(device) }
                         )
                     }
-                    if (members.size > 12) {
+                    if (members.size > 10) {
                         Box(
                             modifier = Modifier
-                                .size(28.dp)
+                                .size(32.dp)
                                 .clip(CircleShape)
                                 .background(Color.Black.copy(alpha = 0.5f))
                                 .border(0.5.dp, themeColor.copy(alpha = 0.3f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "+${members.size - 12}",
+                                text = "+${members.size - 10}",
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Black,
                                 color = themeColor.copy(alpha = 0.7f)
@@ -789,13 +790,14 @@ fun CrowdMiniRadar(
                     size = 48.dp,
                     isStatic = false,
                     themeColor = themeColor,
+                    subLabel = if (owner == null) "EVENT" else "OWNER",
                     onClick = { owner?.let { onDeviceClick(it) } }
                 )
             }
 
             val others = members.filter { it.id != resonance.ownerId && it.persistentId != resonance.ownerId }
             others.take(8).forEachIndexed { index, device ->
-                val radius = 44f
+                val radius = 48f // Increased radius for 32dp nodes
                 val angle = (index.toDouble() / others.size.coerceAtLeast(1)) * 2 * PI
                 val xOffset = (radius * cos(angle)).toFloat().dp
                 val yOffset = (radius * sin(angle)).toFloat().dp
@@ -806,9 +808,10 @@ fun CrowdMiniRadar(
                         isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
                         isSelected = false,
                         isPeerPulsed = false,
-                        size = 28.dp,
+                        size = 32.dp,
                         isStatic = false,
                         themeColor = themeColor,
+                        subLabel = "USER",
                         onClick = { onDeviceClick(device) },
                         onLongClick = { onDeviceLongClick(device) }
                     )
