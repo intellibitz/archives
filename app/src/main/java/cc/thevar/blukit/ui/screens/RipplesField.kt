@@ -689,3 +689,59 @@ private fun PulseNode(
         }
     }
 }
+
+/**
+ * MINI RADAR: A lightweight spatial view for a specific crowd context.
+ * Unifies the spatial radar with the ticker entries.
+ */
+@Composable
+fun CrowdMiniRadar(
+    resonance: Resonance,
+    members: List<P2PDevice>,
+    themeColor: Color = StealthPrimary,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(110.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        // --- 1. CENTER: THE OWNER (The Identity Anchor) ---
+        val owner = members.find { it.id == resonance.ownerId || it.persistentId == resonance.ownerId }
+        val centerEmoji = owner?.emoji ?: resonance.projectionEmoji ?: "⚡"
+
+        Box(modifier = Modifier.zIndex(2f)) {
+            PulsePersonaSignature(
+                device = P2PDevice(id = "OWNER", name = owner?.name ?: resonance.name, emoji = centerEmoji),
+                isPulsed = true,
+                isSelected = false,
+                isPeerPulsed = false,
+                size = 48.dp,
+                isStatic = true,
+                themeColor = themeColor
+            )
+        }
+
+        // --- 2. ORBIT: OTHER MEMBERS (Lined up in a ring) ---
+        val others = members.filter { it.id != resonance.ownerId && it.persistentId != resonance.ownerId }
+        others.take(8).forEachIndexed { index, device ->
+            val radius = 44f
+            val angle = (index.toDouble() / others.size.coerceAtLeast(1)) * 2 * PI
+            val xOffset = (radius * cos(angle)).toFloat().dp
+            val yOffset = (radius * sin(angle)).toFloat().dp
+
+            Box(modifier = Modifier.offset(xOffset, yOffset)) {
+                PulsePersonaSignature(
+                    device = device,
+                    isPulsed = false,
+                    isSelected = false,
+                    isPeerPulsed = false,
+                    size = 28.dp,
+                    isStatic = true,
+                    themeColor = themeColor
+                )
+            }
+        }
+    }
+}

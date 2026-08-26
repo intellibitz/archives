@@ -29,6 +29,7 @@ Experience the **Unified Pulse Frequency**.
 - **Participation Rights**: Users can **see and listen** to all nearby public Crowds automatically. However, to **participate** (send pulses), a user must explicitly "Join" the crowd.
 - **Collective Ownership**: The default root crowd (**THE CROWD**) is owned by the mesh. All users are pre-joined to this frequency, ensuring immediate global participation.
 - **User-Owned Crowds**: Any user can create a new Crowd. The creator is assigned as the **Owner**, allowing them to project a unique **Event Persona** (emoji) at the center of the radar.
+- **Unified Crowd Radar**: A high-fidelity, nested spatial paradigm. Each Crowd context in the ticker features its own **Mini Radar** anchored by the Owner, with other users orbital around them.
 - **Resonance Summaries**: A "Summary-First" visual paradigm. Headers display high-level context (Title, Member Count, "ENTER" affordance) and generic type labels (e.g., `EVENT` or `PRIVATE CHAIN`).
 - **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. Dynamically surfaces units from the current context and its children, with unit counts for Resonances.
 - **Scoped Sharing & Roles**: Specialized roles (e.g., Student, Faculty, Artist) within templates to manage interaction density and scoped visibility.

@@ -263,7 +263,7 @@ fun BlukitTacticalHeader(
                 text = "PRIVACY", 
                 fontSize = 7.sp, 
                 fontWeight = FontWeight.Black, 
-                color = themeColor.copy(alpha = 0.8f), 
+                color = themeColor.copy(alpha = 0.8f),
                 letterSpacing = 1.sp,
                 modifier = Modifier.clickable { onShowPrivacy() }
             )
@@ -716,6 +716,12 @@ fun PulsingResonanceTicker(
             
             if (msg == null && resonance != null) {
                 // HEADER: High-level Resonance Summary
+                val members = if (resonance.id == Resonance.ID_CROWD) {
+                    state.crowd.scannedDevices
+                } else {
+                    state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
+                }
+
                 val userCount = if (resonance.id == Resonance.ID_CROWD) {
                     state.crowd.scannedDevices.size
                 } else {
@@ -733,6 +739,13 @@ fun PulsingResonanceTicker(
                     lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
                     onClick = { onPulseClick(resonance.id) },
                     showJoin = true,
+                    topContent = {
+                        CrowdMiniRadar(
+                            resonance = resonance,
+                            members = members,
+                            themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose
+                        )
+                    },
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
             } else {
@@ -959,7 +972,7 @@ fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean
             checked = checked, 
             onCheckedChange = onCheckedChange,
             colors = CheckboxDefaults.colors(
-                checkedColor = themeColor.copy(alpha = 0.2f), 
+                checkedColor = themeColor.copy(alpha = 0.2f),
                 uncheckedColor = Color.White.copy(alpha = 0.1f), 
                 checkmarkColor = themeColor
             ),
@@ -1219,6 +1232,7 @@ fun ResonanceSummary(
     lastUpdate: String,
     onClick: () -> Unit,
     showJoin: Boolean = false,
+    topContent: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
@@ -1240,10 +1254,16 @@ fun ResonanceSummary(
         tonalElevation = 4.dp
     ) {
         Box(modifier = Modifier.background(themeColor.copy(alpha = glowAlpha))) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column {
+                if (topContent != null) {
+                    Box(modifier = Modifier.padding(top = 16.dp)) {
+                        topContent()
+                    }
+                }
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                 // LEFT: [ICON + TIMESTAMP]
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
@@ -1332,6 +1352,7 @@ fun ResonanceSummary(
             }
         }
     }
+}
 }
 
 @Composable
@@ -1901,6 +1922,7 @@ fun PulsePersonaSignature(
     isStatic: Boolean = false, 
     isHighlighted: Boolean = false, 
     projectionEmoji: String? = null,
+    themeColor: Color? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
@@ -1920,7 +1942,7 @@ fun PulsePersonaSignature(
         ) 
     }
     
-    val themeColor = when {
+    val personaThemeColor = themeColor ?: when {
         isHighlighted -> StealthAmber
         isProjected -> StealthRose
         isSelected -> Color.White
@@ -1937,7 +1959,7 @@ fun PulsePersonaSignature(
         val haloAlpha = (if (isHighlighted || isMe) 0.3f else 0.08f + proximityGlow + bloomBoost) * pulseScale
         Surface(
             shape = CircleShape, 
-            color = themeColor.copy(alpha = haloAlpha.coerceAtMost(0.45f)), 
+            color = personaThemeColor.copy(alpha = haloAlpha.coerceAtMost(0.45f)),
             modifier = Modifier.size(size * pulseScale * (if (isProjected) 1.8f else 1.4f) + (proximityGlow + bloomBoost).dp)
         ) {}
         Surface(
@@ -1964,7 +1986,7 @@ fun PulsePersonaSignature(
                         text = displayText, 
                         fontSize = 7.sp, 
                         fontWeight = FontWeight.Black, 
-                        color = themeColor.copy(alpha = 0.6f),
+                        color = personaThemeColor.copy(alpha = 0.6f),
                         letterSpacing = 0.5.sp
                     )
                 }
@@ -1978,7 +2000,7 @@ fun PulsePersonaSignature(
                 text = label,
                 fontSize = 6.sp,
                 fontWeight = FontWeight.Black,
-                color = themeColor.copy(alpha = 0.6f),
+                color = personaThemeColor.copy(alpha = 0.6f),
                 letterSpacing = 1.5.sp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -2004,7 +2026,7 @@ fun PulseCrowdSignature(
     
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(size * 1.5f)) {
         Surface(shape = CircleShape, color = themeColor.copy(alpha = 0.05f * pulse), modifier = Modifier.size(size * pulse)) {}
-        Surface(modifier = Modifier.size(size), shape = CircleShape, color = Color.Black, border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f)), tonalElevation = 4.dp) { 
+        Surface(modifier = Modifier.size(size), shape = CircleShape, color = Color.Black, border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f)), tonalElevation = 4.dp) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { 
                 if (icon != null) {
                     Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size((size.value / 2.5f).dp))
@@ -2206,7 +2228,7 @@ fun BlukitInput(
                     .background(Color.White.copy(alpha = 0.03f + (if(isFocused) 0.05f else 0f)), RoundedCornerShape(28.dp))
                     .border(
                         width = 1.dp, 
-                        color = themeColor.copy(alpha = glowAlpha * 0.6f), 
+                        color = themeColor.copy(alpha = glowAlpha * 0.6f),
                         shape = RoundedCornerShape(28.dp)
                     )
                     .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -2280,7 +2302,7 @@ fun BlukitInput(
                     if (!isSearchActive) {
                         if (pulseCount > 0) { 
                             Surface(
-                                color = themeColor.copy(alpha = 0.15f), 
+                                color = themeColor.copy(alpha = 0.15f),
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.padding(end = 4.dp)
                             ) {
@@ -2310,7 +2332,7 @@ fun BlukitInput(
                                 Icon(
                                     imageVector = Icons.Rounded.Groups, 
                                     contentDescription = "Manage", 
-                                    tint = themeColor.copy(alpha = 0.6f), 
+                                    tint = themeColor.copy(alpha = 0.6f),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
