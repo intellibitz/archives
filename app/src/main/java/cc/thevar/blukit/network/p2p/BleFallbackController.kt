@@ -535,6 +535,10 @@ class BleFallbackController(
         updateScannedDevices()
     }
 
+    override fun joinCrowd(groupId: String) {
+        pulseStore.joinGroup(groupId, repository.getDeviceId())
+    }
+
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
         val flow = MutableSharedFlow<ConnectionStatus>(replay = 1)
         flow.tryEmit(ConnectionStatus.Connecting)
@@ -571,6 +575,11 @@ class BleFallbackController(
     }
 
     override suspend fun sendMessage(content: String, receiverId: String?, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        // ENFORCE PARTICIPATION
+        groupId?.let { gid ->
+            if (!pulseStore.isMember(gid, repository.getDeviceId())) return null
+        }
+
         val payload = MessagePayload(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
@@ -666,6 +675,7 @@ class BleFallbackController(
                     memberIds = members + repository.getDeviceId(),
                     scope = type,
                     parentId = parentId,
+                    ownerId = repository.getDeviceId()
                 )
             )
         }

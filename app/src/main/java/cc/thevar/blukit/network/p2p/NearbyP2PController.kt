@@ -328,6 +328,10 @@ class NearbyP2PController(
         updateScannedDevices()
     }
 
+    override fun joinCrowd(groupId: String) {
+        pulseStore.joinGroup(groupId, repository.getDeviceId())
+    }
+
 
     private fun sendMessagePayload(endpointId: String, payload: MessagePayload) {
         pulseKeys[endpointId]?.let { key -> queuePulse(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), payload).toByteArray(), key))) }
@@ -350,6 +354,14 @@ class NearbyP2PController(
     }
 
     override suspend fun sendMessage(content: String, receiverId: String?, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+        // ENFORCE PARTICIPATION: Users must join a crowd to participate (except for the root crowd).
+        groupId?.let { gid ->
+            if (!pulseStore.isMember(gid, repository.getDeviceId())) {
+                Log.w(tag, "Participation Denied: User not a member of $gid")
+                return null
+            }
+        }
+
         val payload = MessagePayload(
             messageId = messageId ?: UUID.randomUUID().toString(), 
             senderId = repository.getDeviceId(), 
@@ -534,6 +546,7 @@ class NearbyP2PController(
                     memberIds = members + repository.getDeviceId(),
                     scope = type,
                     parentId = parentId,
+                    ownerId = repository.getDeviceId() // Set the creating user as owner
                 )
             ) 
         }

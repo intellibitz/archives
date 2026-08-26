@@ -26,10 +26,10 @@ Experience the **Unified Pulse Frequency**.
 - **TIMELINE FIELD (History)**: A visual chronological path of student memories and shared milestones.
 
 ### **Core Interaction Paradigm**
+- **Participation Rights**: Users can **see and listen** to all nearby public Crowds automatically. However, to **participate** (send pulses), a user must explicitly "Join" the crowd.
+- **Collective Ownership**: The default root crowd (**THE CROWD**) is owned by the mesh. All users are pre-joined to this frequency, ensuring immediate global participation.
+- **User-Owned Crowds**: Any user can create a new Crowd. The creator is assigned as the **Owner**, allowing them to project a unique **Event Persona** (emoji) at the center of the radar.
 - **Resonance Summaries**: A "Summary-First" visual paradigm. Headers display high-level context (Title, Member Count, "ENTER" affordance) and generic type labels (e.g., `EVENT` or `PRIVATE CHAIN`).
-- **Ticker Sectioning**: The landing view uses explicit tactical sectioning like **"JOIN ACTIVE EVENTS BELOW"** with integrated creation affordances like **"CREATE NEW EVENT"**.
-- **Context-First Navigation**: Actions are scoped to their containers. You must "Join" or "Enter" a frequency before the Pulse Hub awakens, ensuring conceptual integrity and preventing global spam.
-- **Event Ownership**: Public Crowds created by users are owned by the creator, allowing them to set a unique **Event Persona** (emoji) that identifies the frequency across the mesh. The default "THE CROWD" remains collectively owned.
 - **Intelligent Ticker (The Life Stream)**: A real-time feed of the mesh's energy. Dynamically surfaces units from the current context and its children, with unit counts for Resonances.
 - **Scoped Sharing & Roles**: Specialized roles (e.g., Student, Faculty, Artist) within templates to manage interaction density and scoped visibility.
 - **Rose Resonance**: Private Chains and Mutual Pulses resonate in **Stealth Rose**, distinguishing them from the Amber public Field.

@@ -48,6 +48,9 @@ data class Resonance(
      */
     val allMemberIds: Set<String> get() = memberIds + memberSections.values.flatten().toSet()
 
+    /** True if this is the root collective crowd that all users are pre-joined to. */
+    val isDefaultCrowd: Boolean get() = id == ID_CROWD
+
     companion object {
         // --- Scoping Levels ---
         const val SCOPE_PUBLIC = 0

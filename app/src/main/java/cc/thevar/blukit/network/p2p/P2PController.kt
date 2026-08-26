@@ -85,6 +85,12 @@ interface P2PController {
     fun denyRadio(device: P2PDevice)
 
     /**
+     * Joins a discoverable crowd to enable participation (sending pulses).
+     * All users are pre-joined to the default crowd.
+     */
+    fun joinCrowd(groupId: String)
+
+    /**
      * Sends an encrypted pulse to a specific peer or the local crowd.
      * @return The generated MessagePayload metadata.
      */

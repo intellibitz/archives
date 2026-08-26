@@ -464,6 +464,25 @@ class PulseStore(
         saveData()
     }
 
+    /** Adds a user to a specific crowd or chain membership list. */
+    fun joinGroup(groupId: String, userId: String) {
+        _groups.update { current ->
+            current[groupId]?.let { group ->
+                current + (groupId to group.copy(memberIds = group.memberIds + userId))
+            } ?: current
+        }
+        saveData()
+    }
+
+    /**
+     * Verifies if a user has participation rights in a context.
+     * Members of the default root crowd are always permitted.
+     */
+    fun isMember(groupId: String, userId: String): Boolean {
+        val group = _groups.value[groupId] ?: return false
+        return group.isDefaultCrowd || userId in group.allMemberIds
+    }
+
     fun getGroup(id: String) = _groups.value[id]
 
     /** Orchestrates member partitioning for high-density scalability. */

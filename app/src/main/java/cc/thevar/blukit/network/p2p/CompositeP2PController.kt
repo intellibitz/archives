@@ -204,6 +204,11 @@ class CompositeP2PController(
         }
     }
 
+    override fun joinCrowd(groupId: String) {
+        nearbyController.joinCrowd(groupId)
+        bleController.joinCrowd(groupId)
+    }
+
     override fun closeConnection() {
         nearbyController.closeConnection()
         bleController.closeConnection()
