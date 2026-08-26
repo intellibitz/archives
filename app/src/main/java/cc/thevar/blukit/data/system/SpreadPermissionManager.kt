@@ -83,7 +83,12 @@ class SpreadPermissionManager(private val context: Context) {
     private fun isRuntimePermission(permission: String): Boolean {
         return try {
             val info = context.packageManager.getPermissionInfo(permission, 0)
-            (info.protectionLevel and android.content.pm.PermissionInfo.PROTECTION_DANGEROUS) != 0
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                info.protection == android.content.pm.PermissionInfo.PROTECTION_DANGEROUS
+            } else {
+                @Suppress("DEPRECATION")
+                (info.protectionLevel and android.content.pm.PermissionInfo.PROTECTION_DANGEROUS) != 0
+            }
         } catch (e: Exception) {
             false
         }

@@ -21,7 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val appModule = module {
@@ -48,7 +48,7 @@ val appModule = module {
             hapticManager = get(),
             radioStateManager = get(),
             cryptoManager = get(),
-            ioDispatcher = Dispatchers.IO
+            ioDispatcher = Dispatchers.IO,
         )
     }
     
@@ -58,8 +58,8 @@ val appModule = module {
     single(createdAtStart = true) { IntelligenceManager(androidContext(), get()) }
     
     // ViewModels
-    viewModel { MainViewModel(get(), get()) }
-    viewModel { BluetoothViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { SupremePowerViewModel(get()) }
-    viewModel { ContactsViewModel(get()) }
+    viewModelOf(::MainViewModel)
+    viewModelOf(::BluetoothViewModel)
+    viewModelOf(::SupremePowerViewModel)
+    viewModelOf(::ContactsViewModel)
 }

@@ -65,7 +65,7 @@ class PulseStore(
     
     /** Public frequencies and active private chains. */
     val activeGroups: StateFlow<List<Resonance>> = _groups
-        .map { it.values.filter { !it.isArchived }.toList() }
+        .map { groupMap -> groupMap.values.filter { !it.isArchived }.toList() }
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
@@ -74,7 +74,7 @@ class PulseStore(
 
     /** Crowds that haven't pulsed in 30 days. */
     val archivedGroups: StateFlow<List<Resonance>> = _groups
-        .map { it.values.filter { it.isArchived && !it.isVaulted }.toList() }
+        .map { groupMap -> groupMap.values.filter { it.isArchived && !it.isVaulted }.toList() }
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
@@ -83,7 +83,7 @@ class PulseStore(
 
     /** Explicitly preserved contexts (Sunk Pulses). */
     val vaultedGroups: StateFlow<List<Resonance>> = _groups
-        .map { it.values.filter { it.isVaulted }.toList() }
+        .map { groupMap -> groupMap.values.filter { it.isVaulted }.toList() }
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
@@ -191,7 +191,7 @@ class PulseStore(
     }
 
     /** Rewrites the entire pulse log to remove deleted units and deduplicate history. */
-    suspend fun compactMessages() {
+    fun compactMessages() {
         val currentMessages = _messages.value
 
         val tempFile = File(context.filesDir, "pulses_log.tmp")

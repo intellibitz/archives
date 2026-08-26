@@ -3,6 +3,7 @@ package cc.thevar.blukit
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertFalse
@@ -19,7 +20,15 @@ class CommandmentsTest {
     @Test
     fun testCommandment1_BluetoothOnlyPermissions() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val packageInfo = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+        val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+        }
         val permissions = packageInfo.requestedPermissions ?: emptyArray<String>()
 
         // Check if mandatory permissions are limited to BT group (on modern APIs)

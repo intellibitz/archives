@@ -546,6 +546,7 @@ class BleFallbackController(
         }
 
         try {
+            @Suppress("DEPRECATION")
             bluetoothDevice.connectGatt(
                 context,
                 false,

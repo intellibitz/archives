@@ -29,6 +29,7 @@ import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
+import com.google.android.gms.nearby.connection.ConnectionOptions
 import com.google.android.gms.nearby.connection.ConnectionResolution
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo
 import com.google.android.gms.nearby.connection.DiscoveryOptions
@@ -595,7 +596,8 @@ class NearbyP2PController(
             // Deterministic connection: prevent race conditions where both devices request at once
             if (myDeviceId < pulseDeviceId && !activeConnections.contains(endpointId)) {
                 val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId|${getRadioFlag()}"
-                connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback)
+                val options = ConnectionOptions.Builder().build()
+                connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback, options)
             }
         }
         override fun onEndpointLost(endpointId: String) { _scannedDevices.update { current -> current.filter { d -> d.id != endpointId } } }
@@ -640,7 +642,8 @@ class NearbyP2PController(
             flow.emit(ConnectionStatus.Connecting)
             internalScope.launch { _connectionUpdates.filter { it.first == device.id }.collect { flow.emit(it.second) } }
             val name = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
-            connectionsClient.requestConnection(name, device.id, connectionLifecycleCallback)
+            val options = ConnectionOptions.Builder().build()
+            connectionsClient.requestConnection(name, device.id, connectionLifecycleCallback, options)
                 .addOnFailureListener { e -> flow.tryEmit(ConnectionStatus.Error(e.message ?: "Fail")) }
         }
         return flow.asSharedFlow()

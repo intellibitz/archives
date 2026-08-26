@@ -22,6 +22,7 @@ import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.domain.power.SupremePowerReport
+import cc.thevar.blukit.domain.logic.IntelligenceManager
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.network.p2p.P2PError
@@ -40,7 +41,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -63,6 +64,7 @@ class FlowsTest : KoinTest {
     private val permissionManager: SpreadPermissionManager = mockk(relaxed = true)
     private val connectivityUseCase: ConnectivityUseCase = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
+    private val intelligenceManager: IntelligenceManager = mockk(relaxed = true)
 
     private val radioStatesFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = true, isLocationEnabled = true, isWifiEnabled = true))
     private val scannedDevicesFlow = MutableStateFlow<List<P2PDevice>>(emptyList())
@@ -86,10 +88,11 @@ class FlowsTest : KoinTest {
         single(createdAtStart = true) { permissionManager }
         single(createdAtStart = true) { connectivityUseCase }
         single(createdAtStart = true) { hapticManager }
+        single(createdAtStart = true) { intelligenceManager }
 
-        viewModel { MainViewModel(get(), get()) }
-        viewModel { BluetoothViewModel(get(), get(), get(), get(), get(), get()) }
-        viewModel { SupremePowerViewModel(get()) }
+        viewModelOf(::MainViewModel)
+        viewModelOf(::BluetoothViewModel)
+        viewModelOf(::SupremePowerViewModel)
     }
 
     @Before
