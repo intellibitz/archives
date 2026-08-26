@@ -551,7 +551,7 @@ class BleFallbackController(
                 context,
                 false,
                 gattCallback,
-                BluetoothDevice.TRANSPORT_LE
+                BluetoothDevice.TRANSPORT_LE,
             )
         } catch (e: SecurityException) {
             Log.e("BleFallback", "Permission Denied: ${e.message}")
@@ -582,7 +582,7 @@ class BleFallbackController(
             content = content,
             timestamp = System.currentTimeMillis(),
             pulseType = pulseType,
-            type = type
+            type = type,
         )
         val json = Json.encodeToString(MessagePayload.serializer(), payload)
         val bytes = json.toByteArray()
@@ -597,7 +597,7 @@ class BleFallbackController(
                     pulseKeys[target]?.let { key ->
                         try {
                             sendData(target, cryptoManager.encrypt(bytes, key))
-                        } catch (e: Exception) {}
+                        } catch (_: Exception) {}
                     }
                 }
             }
@@ -693,7 +693,7 @@ class BleFallbackController(
             try { 
                 it.disconnect()
                 it.close() 
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 Log.w(tag, "SecurityException during disconnect")
             } catch (_: Exception) {}
         }

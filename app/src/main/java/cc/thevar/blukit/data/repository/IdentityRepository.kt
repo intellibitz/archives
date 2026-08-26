@@ -58,8 +58,9 @@ interface IdentityRepository {
 /**
  * Implementation using Android KeyStore-backed EncryptedSharedPreferences.
  */
+@Suppress("DEPRECATION")
 class IdentityRepositoryImpl(
-    context: Context
+    context: Context,
 ) : IdentityRepository {
 
     private val masterKey = MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
@@ -69,9 +70,9 @@ class IdentityRepositoryImpl(
     /** Plaintext backup for critical non-PII markers to handle hardware encryption failures. */
     private val backupPrefs = context.getSharedPreferences("blukit_identity_backup", Context.MODE_PRIVATE)
 
-    private val securePrefs = try {
+        private val securePrefs = try {
         createEncryptedPrefs(context)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         // RECOVERY: If KeyStore is corrupted, purge secure storage and restore from backup.
         val backupId = backupPrefs.getString(KEY_DEVICE_ID, null)
         context.deleteSharedPreferences("blukit_identity_secure")
@@ -125,13 +126,13 @@ class IdentityRepositoryImpl(
     override val pulsedPeers: StateFlow<Set<String>> = _pulsedPeers.asStateFlow()
 
     override fun getDeviceId(): String {
-        var id = securePrefs.getString(KEY_DEVICE_ID, null)
-        if (id == null) {
-            id = backupPrefs.getString(KEY_DEVICE_ID, null) ?: UUID.randomUUID().toString()
-            securePrefs.edit { putString(KEY_DEVICE_ID, id) }
-            backupPrefs.edit { putString(KEY_DEVICE_ID, id) }
-        }
-        return id ?: ""
+        val existingId = securePrefs.getString(KEY_DEVICE_ID, null)
+        existingId?.let { return it }
+
+        val id = backupPrefs.getString(KEY_DEVICE_ID, null) ?: UUID.randomUUID().toString()
+        securePrefs.edit { putString(KEY_DEVICE_ID, id) }
+        backupPrefs.edit { putString(KEY_DEVICE_ID, id) }
+        return id
     }
 
     override fun saveNickname(name: String) {
@@ -159,7 +160,7 @@ class IdentityRepositoryImpl(
     override fun blockUser(deviceId: String) {
         val current = _blockedUsers.value.toMutableSet()
         current.add(deviceId)
-        securePrefs.edit { putStringSet(KEY_BLOCKED_USERS, current.filterNotNull().toSet()) }
+        securePrefs.edit { putStringSet(KEY_BLOCKED_USERS, current.asSequence().filterNotNull().toSet()) }
         _blockedUsers.value = current
     }
 

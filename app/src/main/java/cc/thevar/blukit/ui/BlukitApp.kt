@@ -141,7 +141,7 @@ fun BlukitApp(
 
     val permissionState = rememberSpreadPermissionsState(
         allPermissions = permissionManager.requiredPermissions,
-        essentialPermissions = permissionManager.essentialPermissions
+        essentialPermissions = permissionManager.essentialPermissions,
     )
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
 
@@ -178,7 +178,7 @@ fun BlukitApp(
         
         // Add Persona if focused on a specific peer in a field
         if ((focusedChainId != null) && (currentRoute is Route.GroupField)) {
-            val device = bluetoothState.crowd.scannedDevices.find { it.persistentId == focusedChainId || it.id == focusedChainId }
+            val device = bluetoothState.crowd.scannedDevices.find { (it.persistentId == focusedChainId) || (it.id == focusedChainId) }
             trail.add(device?.name ?: "Persona")
         }
         trail.distinct() 
@@ -220,7 +220,7 @@ fun BlukitApp(
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
     var showManageDialog by remember { mutableStateOf(value = false) }
-    var isSearchMode by remember { mutableStateOf(false) }
+    var isSearchMode by remember { mutableStateOf(value = false) }
     var isInputFocused by remember { mutableStateOf(false) }
     var showAirGhost by remember { mutableStateOf(false) }
     var showPrivacyProtocol by remember { mutableStateOf(false) }

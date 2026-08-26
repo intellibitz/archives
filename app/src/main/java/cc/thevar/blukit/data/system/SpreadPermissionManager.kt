@@ -89,7 +89,7 @@ class SpreadPermissionManager(private val context: Context) {
                 @Suppress("DEPRECATION")
                 (info.protectionLevel and android.content.pm.PermissionInfo.PROTECTION_DANGEROUS) != 0
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

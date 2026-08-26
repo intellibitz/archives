@@ -32,7 +32,7 @@ class SupremePowerManager(
     private val pulseStore: PulseStore,
     private val identityRepository: cc.thevar.blukit.data.repository.IdentityRepository,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager? = null,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
@@ -66,8 +66,11 @@ class SupremePowerManager(
                 _breezeFlow.onStart { emit("") },
                 _lastLocation
             ) { args: Array<Any?> ->
+                @Suppress("UNCHECKED_CAST")
                 val scanned = args[0] as List<cc.thevar.blukit.domain.model.P2PDevice>
+                @Suppress("UNCHECKED_CAST")
                 val connected = args[1] as Set<String>
+                @Suppress("UNCHECKED_CAST")
                 val messages = args[2] as List<cc.thevar.blukit.domain.model.MessagePayload>
                 val lowPower = args[3] as Boolean
                 
@@ -138,7 +141,7 @@ class SupremePowerManager(
             .onEach { msgs ->
                 if (msgs.isNotEmpty()) {
                     val last = msgs.last()
-                    if (System.currentTimeMillis() - last.timestamp < 1000) {
+                    if ((System.currentTimeMillis() - last.timestamp) < 1000) {
                         emitBreeze("PULSE SPREAD")
                     }
                 }

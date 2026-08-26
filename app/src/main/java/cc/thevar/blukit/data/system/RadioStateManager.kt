@@ -31,13 +31,13 @@ import kotlinx.coroutines.flow.asStateFlow
 data class RadioStates(
     val isBluetoothEnabled: Boolean,
     val isLocationEnabled: Boolean,
-    val isWifiEnabled: Boolean
+    val isWifiEnabled: Boolean,
 )
 
 /**
  * Monitors and interrogates hardware radio modules.
  */
-class RadioStateManager(private val context: Context) {
+class RadioStateManager(context: Context) {
 
     private val tag = "BlukitRadio"
     private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
@@ -92,9 +92,9 @@ class RadioStateManager(private val context: Context) {
         val adapter = bluetoothManager?.adapter
         
         // INTERROGATION: Bluetooth
-        val isBtOn = try {
-            (adapter?.isEnabled == true || adapter?.state == BluetoothAdapter.STATE_ON)
-        } catch (e: SecurityException) {
+        val isBtOn = try        {
+            ((adapter?.isEnabled == true) || (adapter?.state == BluetoothAdapter.STATE_ON))
+        } catch (_: SecurityException) {
             Log.w(tag, "Quirk: BT SecurityException. Defaulting to false.")
             false
         }

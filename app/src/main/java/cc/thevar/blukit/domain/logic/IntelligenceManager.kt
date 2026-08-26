@@ -96,7 +96,7 @@ class IntelligenceManager(
             topKeywords = keywords,
             sentimentScore = sentiment,
             derivedTimestamp = System.currentTimeMillis(),
-            pulseCountSampled = pulses.size
+            pulseCountSampled = pulses.size,
         )
     }
 
