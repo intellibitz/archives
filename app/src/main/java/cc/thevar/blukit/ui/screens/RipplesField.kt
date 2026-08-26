@@ -716,7 +716,7 @@ fun CrowdMiniRadar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(110.dp),
+            .height(90.dp),
         contentAlignment = Alignment.Center
     ) {
         if (isDefaultCrowd) {

@@ -713,7 +713,7 @@ fun PulsingResonanceTicker(
         state = listState,
         modifier = modifier.fillMaxWidth(),
         reverseLayout = reverseLayout,
-        contentPadding = PaddingValues(vertical = 16.dp)
+        contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         items(energyList, key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
             val id = device.persistentId ?: device.id
@@ -1269,18 +1269,18 @@ fun ResonanceSummary(
         border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 12.dp, vertical = 2.dp),
         tonalElevation = 4.dp
     ) {
         Box(modifier = Modifier.background(themeColor.copy(alpha = glowAlpha))) {
             Column {
                 if (topContent != null) {
-                    Box(modifier = Modifier.padding(top = 16.dp)) {
+                    Box(modifier = Modifier.padding(top = 8.dp)) {
                         topContent()
                     }
                 }
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = if (topContent != null) 2.dp else 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                 // LEFT: [ICON]
