@@ -745,7 +745,6 @@ fun PulsingResonanceTicker(
                     lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
                     onClick = { onPulseClick(resonance.id) },
                     showJoin = true,
-                    showCountBadge = false, // UNIFIED: Count moved to leftContent
                     leftContent = if (resonance.id == Resonance.ID_CROWD) {
                         {
                             PulsePersonaSignature(
@@ -761,16 +760,6 @@ fun PulsingResonanceTicker(
                             )
                         }
                     } else null,
-                    underIconContent = {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "$userCount ${if (userCount == 1) "USER" else "USERS"}",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = (if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose).copy(alpha = 0.6f),
-                            letterSpacing = 0.5.sp
-                        )
-                    },
                     topContent = {
                         CrowdMiniRadar(
                             resonance = resonance,
@@ -1260,7 +1249,6 @@ fun ResonanceSummary(
     lastUpdate: String,
     onClick: () -> Unit,
     showJoin: Boolean = false,
-    showCountBadge: Boolean = true,
     leftContent: @Composable (() -> Unit)? = null,
     topContent: @Composable (() -> Unit)? = null,
     underIconContent: @Composable (ColumnScope.() -> Unit)? = null,
@@ -1295,7 +1283,7 @@ fun ResonanceSummary(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                // LEFT: [ICON + TIMESTAMP]
+                // LEFT: [ICON]
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (leftContent != null) {
                         leftContent()
@@ -1312,21 +1300,21 @@ fun ResonanceSummary(
                     }
                     
                     underIconContent?.invoke(this)
-
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = lastUpdate,
-                        fontSize = 7.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.3f),
-                        letterSpacing = 0.5.sp
-                    )
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // CENTER: [TITLE + SUBTITLE]
+                // CENTER: [COUNT + TITLE + SUBTITLE]
                 Column(modifier = Modifier.weight(1f)) {
+                    if (count >= 0) {
+                        Text(
+                            text = "$count ${if (count == 1) "USER" else "USERS"}",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = themeColor.copy(alpha = 0.6f),
+                            letterSpacing = 0.5.sp
+                        )
+                    }
                     Text(
                         text = title.uppercase(),
                         fontSize = 13.sp,
@@ -1349,8 +1337,8 @@ fun ResonanceSummary(
             }
                 }
                 
-                // RIGHT: [ENTER] [USER COUNT]
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // RIGHT: [ENTER + TIMESTAMP]
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (showJoin) {
                         Surface(
                             onClick = onClick,
@@ -1367,25 +1355,16 @@ fun ResonanceSummary(
                                 letterSpacing = 1.sp
                             )
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                     }
 
-                    if (count >= 0 && showCountBadge) {
-                        Surface(
-                            color = themeColor.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.4f))
-                        ) {
-                            Text(
-                                text = "$count ${if (count == 1) "USER" else "USERS"}",
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Black,
-                                color = themeColor,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                letterSpacing = 0.5.sp
-                            )
-                        }
-                    }
+                    Text(
+                        text = lastUpdate,
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.3f),
+                        letterSpacing = 0.5.sp
+                    )
                 }
             }
         }
