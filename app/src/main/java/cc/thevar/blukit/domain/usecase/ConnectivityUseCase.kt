@@ -90,13 +90,4 @@ class ConnectivityUseCase(
                 }
             }.launchIn(scope)
     }
-
-    fun disconnect() {
-        p2pController.closeConnection()
-        _manualConnectionStatus.value = null
-    }
-
-    fun clearManualStatus() {
-        _manualConnectionStatus.value = null
-    }
 }

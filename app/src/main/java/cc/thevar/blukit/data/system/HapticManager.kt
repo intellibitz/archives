@@ -46,33 +46,4 @@ class HapticManager(context: Context) {
         }
         vibrator.vibrate(effect)
     }
-
-    /**
-     * Legacy compatibility wrapper.
-     */
-    fun triggerMessageAlert() = triggerPulse(PulseType.MESSAGE)
-
-    /**
-     * Triggers a proximity-based pulse for incoming surges.
-     * High Fidelity implementation: Stronger pulses for closer devices.
-     */
-    fun triggerProximityPulse(proximity: Float) {
-        if (!vibrator.hasVibrator()) return
-
-        val effect = when {
-            proximity > 0.8f -> {
-                // Strong, sharp double pulse
-                VibrationEffect.createWaveform(longArrayOf(0, 60, 40, 60), -1)
-            }
-            proximity > 0.4f -> {
-                // Medium single pulse
-                VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE)
-            }
-            else -> {
-                // Subtle, faint ripple
-                VibrationEffect.createWaveform(longArrayOf(0, 20, 30, 20, 30, 20), -1)
-            }
-        }
-        vibrator.vibrate(effect)
-    }
 }

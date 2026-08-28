@@ -98,8 +98,6 @@ fun PulseField(
                     state = state,
                     activeBubbles = emptyList(),
                     pulsedPeers = emptySet(),
-                    drawBackground = false,
-                    drawNodes = false,
                     onDeviceClick = { },
                     // Humanity Stage
                     title = "PULSE",

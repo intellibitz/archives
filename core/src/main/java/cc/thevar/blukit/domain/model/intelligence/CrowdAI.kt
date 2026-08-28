@@ -19,25 +19,3 @@ data class ResonanceSummary(
     val derivedTimestamp: Long,
     val pulseCountSampled: Int
 )
-
-/**
- * A vote in the swarm to determine consensus for the Crowd Canvas.
- */
-@Serializable
-data class ConsensusVote(
-    val pulseId: String,
-    val voterId: String,
-    val weight: Int = 1, // 1 for UP, -1 for DOWN
-    val timestamp: Long = System.currentTimeMillis()
-)
-
-/**
- * Aggregated insights for a crowd area (Privacy-Preserving Analytics).
- */
-@Serializable
-data class CrowdInsight(
-    val groupId: String,
-    val activityLevel: Float, // 0.0 to 1.0
-    val trend: String, // e.g., "SURGING", "STABLE", "DECAYING"
-    val majorResonancePoint: String? = null // e.g., "STAGE B", "ENTRANCE"
-)

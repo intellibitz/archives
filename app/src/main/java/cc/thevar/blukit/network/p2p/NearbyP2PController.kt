@@ -431,32 +431,6 @@ class NearbyP2PController(
         }
     }
 
-    /**
-     * Bundles multiple pending pulses into a single high-density radio transmission.
-     * Optimizes radio efficiency for non-priority crowd pulses by aggregating them into a single packet.
-     */
-    private fun flushAggregateBuffer() {
-        val groupsToFlush = aggregateBuffer.keys().toList()
-        groupsToFlush.forEach { gid ->
-            val pulses = aggregateBuffer.remove(gid) ?: return@forEach
-            if (pulses.isEmpty()) return@forEach
-            
-            internalScope.launch(ioDispatcher) {
-                val bundle = MessagePayload(
-                    messageId = "aggregate_${System.currentTimeMillis()}",
-                    senderId = "CROWD_SYSTEM",
-                    senderName = "AGGREGATOR",
-                    content = Json.encodeToString(pulses),
-                    timestamp = System.currentTimeMillis(),
-                    groupId = gid,
-                    type = MessagePayload.TYPE_TEXT, 
-                    isPriority = false,
-                )
-                dispatchPulse(bundle)
-            }
-        }
-    }
-
     override suspend fun broadcastMessage(content: String, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? = 
         sendMessage(content, null, pulseType, messageId, groupId, groupName, type)
 

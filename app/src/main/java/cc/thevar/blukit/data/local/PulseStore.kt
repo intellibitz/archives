@@ -32,12 +32,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.DataInputStream
-import java.io.DataOutputStream
 import java.io.File
-import java.io.FileOutputStream
 
 /**
  * Manages secure storage and reactive state of all mesh interactions.
@@ -194,29 +191,6 @@ class PulseStore(
                 database.insertPulse(message, encrypted)
             } catch (e: Exception) {
                 e.printStackTrace()
-            }
-        }
-    }
-
-    /**
-     * Git-inspired Merge: Incorporates raw pulses from a peer into the local DAG.
-     * Identifies missing "commits" and updates the reactive message stream.
-     */
-    fun mergeHistory(incomingPulses: List<ByteArray>) {
-        scope.launch {
-            val newMessages = mutableListOf<MessagePayload>()
-            incomingPulses.forEach { encrypted ->
-                try {
-                    val decrypted = cryptoManager.decryptLocal(encrypted)
-                    val message = Json.decodeFromString<MessagePayload>(decrypted.decodeToString())
-                    if (_messages.value.none { it.messageId == message.messageId }) {
-                        database.insertPulse(message, encrypted)
-                        newMessages.add(message)
-                    }
-                } catch (_: Exception) {}
-            }
-            if (newMessages.isNotEmpty()) {
-                _messages.update { (it + newMessages).sortedBy { m -> m.timestamp } }
             }
         }
     }

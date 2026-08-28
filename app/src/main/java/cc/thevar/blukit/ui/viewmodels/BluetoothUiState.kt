@@ -65,9 +65,4 @@ data class BluetoothUiState(
     val activity: EventActivity = EventActivity(),
     val crowd: MeshCrowd = MeshCrowd(),
     val session: PulseSession = PulseSession()
-) {
-    // Helper properties for backward compatibility or convenience in UI logic
-    val isConnected: Boolean get() = session.connectionState is RadioConnectionState.Connected
-    val isConnecting: Boolean get() = session.connectionState is RadioConnectionState.Connecting
-    val connectedPulse: P2PDevice? get() = (session.connectionState as? RadioConnectionState.Connected)?.device
-}
+)

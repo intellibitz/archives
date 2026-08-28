@@ -6,11 +6,10 @@ import cc.thevar.blukit.network.p2p.P2PError
  * Represents a user-facing error within the Blukit experience.
  * Bridges the gap between low-level technical errors and human-centric feedback.
  */
-sealed class UiError(val message: String, val isCritical: Boolean = false) {
+sealed class UiError(val message: String) {
     data class RadiosStill(val msg: String) : UiError(msg)
-    data class SecureChannelFailed(val msg: String) : UiError(msg, isCritical = true)
+    data class SecureChannelFailed(val msg: String) : UiError(msg)
     data class ProximityError(val msg: String) : UiError(msg)
-    data class PermissionDenied(val msg: String, val permanently: Boolean = false) : UiError(msg)
     data class General(val msg: String) : UiError(msg)
 }
 

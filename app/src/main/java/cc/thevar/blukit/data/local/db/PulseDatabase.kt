@@ -15,9 +15,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import cc.thevar.blukit.domain.model.MessagePayload
-import kotlinx.serialization.json.Json
 
 class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -77,22 +75,6 @@ class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
             }
             db.insertWithOnConflict(TAB_PULSES, null, values, SQLiteDatabase.CONFLICT_REPLACE)
         }
-    }
-
-    /** Retrieves the raw encrypted energy stream for a specific context. */
-    fun getRawPulsesForGroup(groupId: String): List<ByteArray> {
-        val list = mutableListOf<ByteArray>()
-        readableDatabase.rawQuery(
-            "SELECT $COL_PAYLOAD FROM $TAB_PULSES WHERE $COL_GROUP_ID = ? ORDER BY $COL_TIMESTAMP ASC",
-            arrayOf(groupId)
-        ).use { cursor ->
-            if (cursor.moveToFirst()) {
-                do {
-                    list.add(cursor.getBlob(0))
-                } while (cursor.moveToNext())
-            }
-        }
-        return list
     }
 
     /** Returns all raw encrypted pulses for a full memory bridge. */

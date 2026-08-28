@@ -14,7 +14,6 @@ import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
 import cc.thevar.blukit.network.p2p.NearbyP2PController
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
-import cc.thevar.blukit.ui.viewmodels.ContactsViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
 import cc.thevar.blukit.ui.viewmodels.SupremePowerViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -61,5 +60,4 @@ val appModule = module {
     viewModelOf(::MainViewModel)
     viewModelOf(::BluetoothViewModel)
     viewModelOf(::SupremePowerViewModel)
-    viewModelOf(::ContactsViewModel)
 }

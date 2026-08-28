@@ -8,16 +8,7 @@ sealed interface Route : NavKey {
     data object Event : Route
     
     @Serializable
-    data object Energy : Route
-    
-    @Serializable
-    data object Chat : Route
-
-    @Serializable
     data object Resonance : Route
-
-    @Serializable
-    data object Focus : Route
 
     @Serializable
     data object Timeline : Route

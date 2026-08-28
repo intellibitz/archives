@@ -213,8 +213,6 @@ fun EventField(
                 onBack = onBack,
                 onNicknameChange = onUserNicknameChange,
                 themeColor = StealthPrimary,
-                drawBackground = false, // Background handled by Scaffold
-                drawNodes = false, // UNIFIED RADAR: Nodes move to Ticker
                 airRitualGhost = {
                     if (showAirGhost) {
                         CrowdRitualGhost(

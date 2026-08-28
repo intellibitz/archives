@@ -44,22 +44,6 @@ data class P2PDevice(
     }
 
     /**
-     * Returns a human-readable proximity label based on signal strength.
-     * Logic derived from standard BLE RSSI thresholds:
-     * - Strong signal (>-40 dBm): "Very Close"
-     * - Medium signal (-60 to -75 dBm): "Moderate"
-     * - Weak signal (<-85 dBm): "Very Far"
-     */
-    val proximityLabel: String
-        get() = when {
-            signalStrength > -40 -> "Very Close"
-            signalStrength > -60 -> "Close"
-            signalStrength > -75 -> "Moderate" 
-            signalStrength > -85 -> "Far"
-            else -> "Very Far"
-        }
-
-    /**
      * Returns a normalized proximity factor (0.0 to 1.0) for radar positioning.
      * 0.0 represents the center (Self/Identity Anchor), 1.0 represents the edge of discovery.
      */

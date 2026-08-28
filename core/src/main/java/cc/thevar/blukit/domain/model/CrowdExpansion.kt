@@ -4,9 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class ConnectionBridge {
-    PEER_TO_PEER,
-    MESH_RELAY,
-    GHOST_BRIDGE
+    PEER_TO_PEER
 }
 
 @Serializable

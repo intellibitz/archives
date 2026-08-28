@@ -16,17 +16,15 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * Categorized P2P Errors for ergonomic UI feedback and tactical retry logic.
  */
-sealed class P2PError(val message: String, val isTransient: Boolean) {
+sealed class P2PError(val message: String) {
     /** Failure during the discovery scan. Usually recoverable by restarting the radio. */
-    class DiscoveryError(msg: String) : P2PError(msg, true)
+    class DiscoveryError(msg: String) : P2PError(msg)
     /** Failure during advertising. May require a brief cooldown period. */
-    class AdvertisingError(msg: String) : P2PError(msg, true)
+    class AdvertisingError(msg: String) : P2PError(msg)
     /** Physical link failure or handshake rejection. */
-    class ConnectionError(msg: String) : P2PError(msg, true)
+    class ConnectionError(msg: String) : P2PError(msg)
     /** Failure in ECDH key derivation or AES-GCM decryption. */
-    class EncryptionError(msg: String) : P2PError(msg, false)
-    /** Unknown or non-specific radio failure. */
-    class GenericError(msg: String) : P2PError(msg, false)
+    class EncryptionError(msg: String) : P2PError(msg)
 }
 
 /**

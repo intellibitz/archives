@@ -33,7 +33,6 @@ mockk = "1.14.11"
 turbine = "1.2.1"
 archCoreTesting = "2.2.0"
 robolectric = "4.16.1"
-dexmaker = "2.28.6"
 glance = "1.2.0"
 coil = "2.7.0"
 wearCompose = "1.6.2"
@@ -41,17 +40,6 @@ wearNavigation = "1.6.2"
 desugar_jdk_libs = "2.1.5"
 koin = "4.2.2"
 dependencyAnalysis = "3.19.1"
-guava = "33.7.1-jre"
-protobuf = "4.36.0"
-okhttp = "5.5.0"
-jackson = "2.22.2"
-commonsCollections = "4.6.0"
-commonsIo = "2.22.0"
-commonsCodec = "1.22.1"
-netty = "4.1.112.Final"
-grpc = "1.83.1"
-json = "20260814"
-snakeyaml = "2.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -95,7 +83,6 @@ material = { group = "com.google.android.material", name = "material", version.r
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 mockk-agent-android = { group = "io.mockk", name = "mockk-agent-android", version.ref = "mockk" }
-dexmaker = { group = "com.linkedin.dexmaker", name = "dexmaker-mockito-inline", version.ref = "dexmaker" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
@@ -109,22 +96,6 @@ desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", ver
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
-
-# Security fixes
-guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
-protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
-okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
-jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
-jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
-jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
-commons-collections4 = { group = "org.apache.commons", name = "commons-collections4", version.ref = "commonsCollections" }
-commons-io = { group = "commons-io", name = "commons-io", version.ref = "commonsIo" }
-commons-codec = { group = "commons-codec", name = "commons-codec", version.ref = "commonsCodec" }
-netty-all = { group = "io.netty", name = "netty-all", version.ref = "netty" }
-grpc-netty-shaded = { group = "io.grpc", name = "grpc-netty-shaded", version.ref = "grpc" }
-json = { group = "org.json", name = "json", version.ref = "json" }
-snakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeyaml" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

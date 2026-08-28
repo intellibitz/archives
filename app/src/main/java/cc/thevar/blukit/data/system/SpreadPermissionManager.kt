@@ -55,11 +55,6 @@ class SpreadPermissionManager(private val context: Context) {
     val permissionsGranted: StateFlow<Boolean> = _permissionsGranted.asStateFlow()
 
     /**
-     * Checks if all required permissions (essential + optional) are healthy.
-     */
-    fun checkAllGranted(): Boolean = checkListGranted(requiredPermissions)
-
-    /**
      * Checks if essential permissions (Bluetooth) are healthy.
      */
     fun checkEssentialGranted(): Boolean = checkListGranted(essentialPermissions)
