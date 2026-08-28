@@ -56,7 +56,6 @@ import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.screens.CrowdMiniRadar
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
@@ -193,7 +192,7 @@ fun BreadcrumbHub(
                 ),
                 modifier = Modifier.clickable { onCrumbClick(index) }
             )
-            if (index < trail.size - 1) {
+            if (index < (trail.size - 1)) {
                 Icon(
                     imageVector = Icons.Rounded.ChevronRight, 
                     contentDescription = null, 
@@ -405,7 +404,10 @@ fun BlukitHumanityStage(
             title = "RESET PROFILE?", 
             text = "THIS WILL CLEAR YOUR NAME BUT KEEP YOUR PULSES.", 
             confirmLabel = "RESET", 
-            onConfirm = { onResetProfile(); showResetProfileDialog = false }, 
+            onConfirm = { 
+                onResetProfile()
+                showResetProfileDialog = false 
+            }, 
             onDismiss = { showResetProfileDialog = false }
         )
     }
@@ -1044,6 +1046,7 @@ fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Unit, onDis
  */
 @Composable
 fun BlukitAlert(
+    modifier: Modifier = Modifier,
     title: String,
     text: String,
     confirmLabel: String = "OK",
@@ -1065,7 +1068,7 @@ fun BlukitAlert(
         containerColor = Color(0xFF0A0C14),
         shape = RoundedCornerShape(32.dp),
         tonalElevation = 8.dp,
-        modifier = Modifier.border(1.dp, themeColor.copy(alpha = 0.1f), RoundedCornerShape(32.dp)),
+        modifier = modifier.border(1.dp, themeColor.copy(alpha = 0.1f), RoundedCornerShape(32.dp)),
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(48.dp)) {
@@ -1307,96 +1310,106 @@ fun ResonanceSummary(
                     }
                 }
                 Row(
-                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = if (topContent != null) 2.dp else 12.dp),
+                    modifier = Modifier.padding(
+                        start = 12.dp, 
+                        end = 12.dp, 
+                        bottom = 12.dp, 
+                        top = if (topContent != null) 2.dp else 12.dp
+                    ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                // LEFT: [ICON]
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (leftContent != null) {
-                        leftContent()
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .background(themeColor.copy(alpha = 0.1f), CircleShape)
-                                .border(1.dp, themeColor.copy(alpha = 0.2f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
+                    // LEFT: [ICON]
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (leftContent != null) {
+                            leftContent()
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .background(themeColor.copy(alpha = 0.1f), CircleShape)
+                                    .border(1.dp, themeColor.copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = icon, 
+                                    contentDescription = null, 
+                                    tint = themeColor, 
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
+                        
+                        underIconContent?.invoke(this)
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // CENTER: [COUNT + TITLE + SUBTITLE]
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (count >= 0) {
+                            Text(
+                                text = "$count ${if (count == 1) "USER" else "USERS"}",
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black,
+                                color = themeColor.copy(alpha = 0.6f),
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                        Text(
+                            text = title.uppercase(),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            letterSpacing = 1.5.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+    if (subtitle != null) {
+        Text(
+            text = subtitle.uppercase(),
+            fontSize = 8.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.6f),
+            letterSpacing = 1.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
                     }
                     
-                    underIconContent?.invoke(this)
-                }
+                    // RIGHT: [ENTER + TIMESTAMP]
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (showJoin) {
+                            Surface(
+                                onClick = onClick,
+                                color = themeColor.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
+                            ) {
+                                Text(
+                                    text = "ENTER",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = themeColor,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // CENTER: [COUNT + TITLE + SUBTITLE]
-                Column(modifier = Modifier.weight(1f)) {
-                    if (count >= 0) {
                         Text(
-                            text = "$count ${if (count == 1) "USER" else "USERS"}",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Black,
-                            color = themeColor.copy(alpha = 0.6f),
+                            text = lastUpdate,
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.3f),
                             letterSpacing = 0.5.sp
                         )
                     }
-                    Text(
-                        text = title.uppercase(),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color.White,
-                        letterSpacing = 1.5.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle.uppercase(),
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.6f),
-                    letterSpacing = 1.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-                }
-                
-                // RIGHT: [ENTER + TIMESTAMP]
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (showJoin) {
-                        Surface(
-                            onClick = onClick,
-                            color = themeColor.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
-                        ) {
-                            Text(
-                                text = "ENTER",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Black,
-                                color = themeColor,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                letterSpacing = 1.sp
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                    }
-
-                    Text(
-                        text = lastUpdate,
-                        fontSize = 7.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.3f),
-                        letterSpacing = 0.5.sp
-                    )
                 }
             }
         }
     }
-}
 }
 
 @Composable
@@ -1983,7 +1996,7 @@ fun PulsePersonaSignature(
             initialValue = 1.0f, 
             targetValue = targetPulse + (device.proximityFactor * 0.1f), 
             animationSpec = infiniteRepeatable(tween(if (isHighlighted) 500 else 2000 + (device.proximityFactor * 1000).toInt(), easing = FastOutSlowInEasing), RepeatMode.Reverse), 
-            label = "Pulse"
+            label = "Pulse",
         ) 
     }
     
@@ -2182,6 +2195,7 @@ fun BlukitFieldScaffold(
  */
 @Composable
 fun BlukitInput(
+    modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
@@ -2197,7 +2211,6 @@ fun BlukitInput(
     isSearchActive: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
     onFocusChange: (Boolean) -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
     val focusRequester = remember { FocusRequester() }

@@ -54,7 +54,6 @@ data class MessagePayload(
         const val TYPE_ACK = 3
         const val TYPE_TIE_REQUEST = 4
         const val TYPE_TIE_ACCEPT = 5
-        const val TYPE_TIE_DENY = 6
         const val TYPE_FILE = 7
         const val TYPE_IDENTITY_UPDATE = 8
         
@@ -67,18 +66,14 @@ data class MessagePayload(
         const val TYPE_NOTE_UPDATE = 12
         const val TYPE_RITUAL_PUSH = 13
         const val TYPE_ASSIGNMENT_TASK = 14
-        const val TYPE_CALENDAR_EVENT = 15
         const val TYPE_MEMORY = 16
 
         // --- Crowd AI & Intelligence ---
         const val TYPE_AI_SUMMARY = 17
         const val TYPE_CONSENSUS_VOTE = 18
-        const val TYPE_CROWD_INSIGHT = 19
 
         // --- Task Status (CRDT) ---
         const val TASK_PENDING = 0
-        const val TASK_IN_PROGRESS = 1
-        const val TASK_COMPLETED = 2
 
         // --- Scoping Lexicon ---
         const val PULSE_SHOUT = 0
@@ -86,11 +81,9 @@ data class MessagePayload(
         const val PULSE_SILENCE = 3
 
         const val PULSE_PUBLIC = PULSE_SHOUT
-        const val PULSE_LOCAL = PULSE_SILENCE
         const val PULSE_PRIVATE = PULSE_WHISPER
 
         // --- Propagation Status ---
-        const val STATUS_PENDING = 0
         const val STATUS_SENT = 1
         const val STATUS_DELIVERED = 2
     }

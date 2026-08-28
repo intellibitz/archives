@@ -264,7 +264,7 @@ class BluetoothViewModel(
             pulsedPeers = pulsed,
             blockedUsers = blocked,
             incomingRadioRequests = incoming,
-            outgoingRadioRequests = outgoing
+            outgoingRadioRequests = outgoing,
         )
     }
 
@@ -273,7 +273,7 @@ class BluetoothViewModel(
         p2pController.messages,
         pulseStore.activeGroups,
         pulseStore.archivedGroups,
-        p2pController.syncProgress
+        p2pController.syncProgress,
     ) { ties, messages, groups, archivedGroups, syncProgress ->
         PulseSession(
             connectedTies = ties,

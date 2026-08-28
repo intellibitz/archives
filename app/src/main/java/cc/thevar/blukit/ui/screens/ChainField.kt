@@ -13,7 +13,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -112,22 +111,22 @@ fun ChainField(
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
-    header: @Composable () -> Unit
+    header: @Composable () -> Unit,
 ) {
-    var showTip by remember { mutableStateOf(true) }
-    var localFocusedId by remember(externalFocusedId) { mutableStateOf(externalFocusedId) }
+    var showTip by remember { mutableStateOf(value = true) }
+    var localFocusedId by remember(externalFocusedId) { mutableStateOf(value = externalFocusedId) }
 
     val group = remember(groupId, state.session.groups) {
         state.session.groups.find { it.id == groupId }
     }
 
     val childTies = remember(state.session.groups, groupId) {
-        state.session.groups.filter { it.parentId == groupId && it.scope != Resonance.SCOPE_PUBLIC }
+        state.session.groups.filter { (it.parentId == groupId && it.scope != Resonance.SCOPE_PUBLIC) }
     }
 
     val pulsesData = remember(state.session.messages, groupId, localDeviceId, localFocusedId) {
         if (groupId == null) {
-            Triple(emptyList<MessagePayload>(), emptyMap<String, Int>(), false)
+            Triple(emptyList(), emptyMap<String, Int>(), false)
         } else {
             val basePulses = state.session.messages.filter { it.groupId == groupId && it.parentMessageId == null }
             val counts = basePulses.groupBy { it.senderId }.mapValues { it.value.size }
@@ -145,7 +144,7 @@ fun ChainField(
     var activeNote by remember { mutableStateOf<MessagePayload?>(null) }
 
     BlukitFieldScaffold(
-        themeColor = if(isPrivate) StealthRose else StealthPrimary,
+        themeColor = if (isPrivate) StealthRose else StealthPrimary,
         glowIntensityTarget = 0.8f,
         header = header,
         entries = {
@@ -172,7 +171,7 @@ fun ChainField(
                     onBack = onBack,
                     onNicknameChange = onUserNicknameChange,
                     isDimmed = isInputFocused || state.crowd.selectedDevices.isNotEmpty(),
-                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
+                    themeColor = if (isPrivate) StealthRose else StealthPrimary,
                     modifier = Modifier.fillMaxWidth().height(320.dp)
                 )
 
@@ -182,7 +181,7 @@ fun ChainField(
                         Text(
                             text = "TIES", 
                             style = MaterialTheme.typography.labelSmall, 
-                            color = if(isPrivate) StealthRose else StealthPrimary, 
+                            color = if (isPrivate) StealthRose else StealthPrimary, 
                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp
@@ -194,7 +193,7 @@ fun ChainField(
                                     title = tie.name,
                                     subtitle = "SECURE SUB-CHAIN",
                                     icon = Icons.Rounded.Hearing,
-                                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
+                                    themeColor = if (isPrivate) StealthRose else StealthPrimary,
                                     count = tie.memberIds.size,
                                     lastUpdate = sdf.format(Date(tie.lastPulseTimestamp)),
                                     onClick = { onNavigateToGroup(tie.id) },
@@ -208,7 +207,7 @@ fun ChainField(
                     Text(
                         text = "WHISPERS", 
                         style = MaterialTheme.typography.labelSmall, 
-                        color = if(isPrivate) StealthRose else StealthPrimary, 
+                        color = if (isPrivate) StealthRose else StealthPrimary, 
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp
@@ -221,7 +220,7 @@ fun ChainField(
                                     title = pulse.content.take(20),
                                     subtitle = "RESONANCE",
                                     icon = Icons.Rounded.BubbleChart,
-                                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
+                                    themeColor = if (isPrivate) StealthRose else StealthPrimary,
                                     count = state.session.messages.count { it.parentMessageId == pulse.messageId },
                                     lastUpdate = sdf.format(Date(pulse.timestamp)),
                                     onClick = { onNavigateToPulse(pulse.messageId) }
@@ -238,7 +237,7 @@ fun ChainField(
                                     isMutual = false,
                                     rowId = pulse.messageId,
                                     onPulseClick = { /* Handle Unit Click */ },
-                                    onDeviceLongClick = { }
+                                    onDeviceLongClick = {}
                                 )
                             }
                         }
@@ -305,7 +304,7 @@ fun ChainField(
             ) {
                 BlukitTip(
                     text = "THIS CHAIN IS SILENT. WHISPER OR PIN A PULSE TO THE CANVAS.",
-                    themeColor = if(isPrivate) StealthRose else StealthPrimary,
+                    themeColor = if (isPrivate) StealthRose else StealthPrimary,
                     onDismiss = { showTip = false }
                 )
             }
@@ -342,7 +341,7 @@ fun ChainField(
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                                 Text(text = member?.emoji ?: "👤", fontSize = 16.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = (member?.name ?: if(memberId == localDeviceId) "YOU" else "UNKNOWN").uppercase(), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(text = (member?.name ?: if (memberId == localDeviceId) "YOU" else "UNKNOWN").uppercase(), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 if (memberId != localDeviceId) {
                                     IconButton(onClick = { onRemoveMember(group.id, memberId) }) {
                                         Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Remove", tint = Color.Red.copy(alpha = 0.6f))

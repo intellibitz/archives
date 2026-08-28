@@ -46,7 +46,7 @@ data class Resonance(
      * Resolves all unique member IDs across flat list and partitioned sections.
      * Ensuring a unified view for identity resolution.
      */
-    val allMemberIds: Set<String> get() = memberIds + memberSections.values.flatten().toSet()
+    val allMemberIds: Set<String> get() = memberIds + memberSections.values.asSequence().flatten().toSet()
 
     /** True if this is the root collective crowd that all users are pre-joined to. */
     val isDefaultCrowd: Boolean get() = id == ID_CROWD
@@ -69,11 +69,6 @@ data class Resonance(
          * Optimization: prevents O(N) lookup issues during rapid radio broadcasts.
          */
         const val MAX_MEMBERS_PER_SECTION = 500
-
-        /**
-         * The default threshold for triggering a new member partition.
-         */
-        const val DEFAULT_PARTITION_THRESHOLD = 100
 
         /**
          * Generates a deterministic ID for public frequencies or a UUID for private ones.

@@ -99,11 +99,11 @@ fun EventField(
     onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {},
 ) {
-    var showTip by remember { mutableStateOf(true) }
-    var airProposalName by remember { mutableStateOf("") }
+    var showTip by remember { mutableStateOf(value = true) }
+    var airProposalName by remember { mutableStateOf(value = "") }
     val activePulseId = LocalActivePulseId.current
-    var pulseGhostData by remember { mutableStateOf<GhostPulseData?>(null) }
-    var showVault by remember { mutableStateOf(false) }
+    var pulseGhostData by remember { mutableStateOf<GhostPulseData?>(value = null) }
+    var showVault by remember { mutableStateOf(value = false) }
 
     val handleDeviceLongClick: (P2PDevice) -> Unit = { targetDevice ->
         val menuId = targetDevice.persistentId ?: targetDevice.id
@@ -122,21 +122,21 @@ fun EventField(
     }
 
     val eventMetas = remember(state.session.groups) {
-        state.session.groups.filter { 
-            (it.scope == Resonance.SCOPE_PUBLIC) && ((it.parentId == null) || (it.parentId == Resonance.ID_CROWD))
-        }
+        state.session.groups.asSequence().filter { 
+            ((it.scope == Resonance.SCOPE_PUBLIC) && ((it.parentId == null) || (it.parentId == Resonance.ID_CROWD)))
+        }.toList()
     }
 
     val pulsesData = remember(state.session.messages, state.session.groups, pulsedPeers, noiseFilterEnabled, isSearchActive, messageText) {
         val basePulses = if (noiseFilterEnabled && pulsedPeers.isNotEmpty()) {
-            state.session.messages.filter { (it.senderId in pulsedPeers) || (it.senderId == localDeviceId) }
+            state.session.messages.asSequence().filter { ((it.senderId in pulsedPeers) || (it.senderId == localDeviceId)) }
         } else {
-            state.session.messages
+            state.session.messages.asSequence()
         }
         
         val searchFiltered = if (!isSearchActive || messageText.isBlank()) basePulses else {
             basePulses.filter { msg ->
-                msg.content.contains(messageText, ignoreCase = true) || msg.senderName.contains(messageText, ignoreCase = true)
+                (msg.content.contains(messageText, ignoreCase = true) || msg.senderName.contains(messageText, ignoreCase = true))
             }
         }
         
@@ -165,9 +165,10 @@ fun EventField(
         
         sortedEvents.forEach { resonance ->
             // 1. ADD LATEST ENTRIES for this resonance (up to 3)
-            val resonancePulses = state.session.messages.filter { 
+            val resonancePulses = state.session.messages.asSequence().filter { 
                 (it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null))
             }.sortedBy { it.timestamp }
+             .toList()
              .takeLast(3)
             
             resonancePulses.forEach { msg ->
@@ -304,7 +305,9 @@ fun EventField(
     if (showVault) {
         VaultOverlay(
             archivedGroups = state.session.archivedGroups,
-            onRestore = { onRestoreCrowd(it); showVault = false },
+            onRestore = { onRestoreCrowd(it)
+                showVault = false 
+            },
             onDismiss = { showVault = false }
         )
     }
