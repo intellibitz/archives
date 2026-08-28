@@ -1,7 +1,7 @@
 # Blukit Production ProGuard Rules
 
 # Google Nearby Connections
--keep class com.google.android.gms.nearby.** { *; }
+-keep class com.google.android.gms.nearby.** { <fields>; <methods>; }
 -keep interface com.google.android.gms.nearby.** { *; }
 
 
@@ -20,7 +20,7 @@
 # Internal Crypto & Networking (Ensure handshakes work)
 -keep class cc.thevar.blukit.data.crypto.** { *; }
 -keep class cc.thevar.blukit.network.p2p.** { *; }
--keep class cc.thevar.blukit.domain.model.** { *; }
+-keep class cc.thevar.blukit.domain.model.** { <fields>; <methods>; }
 
 # Android Keystore
 -keep class android.security.keystore.** { *; }

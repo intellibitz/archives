@@ -1,58 +1,8 @@
 <resources>
-    <string name="app_slogan">MAKE PEOPLE PULSE</string>
     <string name="app_name">Blukit</string>
-    <string name="profile_title">设置您的身份</string>
-    <string name="profile_nickname_label">昵称</string>
-    <string name="profile_stealth_mode">隐身剧院模式</string>
-    <string name="profile_stealth_desc">针对 OLED 纯黑主题的黑暗环境进行了优化。</string>
-    <string name="profile_start_exploring">开始探索</string>
-    <string name="discovery_title">雷达搜索</string>
-    <string name="discovery_start_server">启动服务器</string>
-    <string name="discovery_connecting">正在连接…</string>
-    <string name="discovery_no_devices">未找到设备</string>
-    <string name="discovery_paired_devices">已配对设备</string>
-    <string name="discovery_scanned_devices">已扫描设备</string>
-    <string name="discovery_unknown_device">(未知设备)</string>
-    <string name="discovery_select_placeholder">选择一个设备开始聊天</string>
-    <string name="permission_title">需要权限</string>
-    <string name="permission_desc">Blukit 需要权限才能在没有互联网的情况下查找并连接到附近的设备。</string>
-    <string name="permission_grant">授予权限</string>
-    <string name="radio_warning_both">蓝牙和位置服务已禁用。</string>
-    <string name="radio_warning_bluetooth">蓝牙已禁用。</string>
-    <string name="radio_warning_location">位置服务已禁用。</string>
-    <string name="radio_warning_required">附近的搜索需要同时开启这两项服务。</string>
-    <string name="radio_enable_btn">启用</string>
-    <string name="chat_title">体育场大厅</string>
-    <string name="chat_connected_desc">已连接到附近的节点</string>
-    <string name="chat_type_placeholder">输入消息</string>
-    <string name="chat_disconnect">断开连接</string>
-    <string name="chat_send">发送</string>
-    <string name="mod_report_block_title">举报并屏蔽用户？</string>
-    <string name="mod_report_block_desc">您确定要举报并屏蔽 %1$s 吗？这将阻止该用户未来的所有消息。</string>
-    <string name="mod_report_block_btn">举报并屏蔽</string>
-    <string name="mod_cancel">取消</string>
-    <string name="me">我</string>
-    <string name="anonymous">匿名</string>
-    <string name="error_connection_failed">连接失败：%1$s</string>
-    <string name="error_unknown">未知错误</string>
-
-    <!-- Chat Screen Additions -->
-    <string name="chat_stadium_lobby">空气大厅</string>
-    <string name="chat_broadcast_desc">已连接 %1$d 个节点</string>
-
-    <!-- Contacts Screen -->
-    <string name="contacts_title">已知节点</string>
-    <string name="contacts_empty_hint">尚无已知节点。开始扫描以寻找某人！</string>
-    <string name="contacts_last_seen">上次在线：%1$s</string>
-    <string name="contacts_chat_now">聊天</string>
-
-    <!-- Profile Screen Additions -->
-    <string name="profile_clear_history">清除所有聊天记录</string>
-    <string name="profile_logout">登出 / 重置个人资料</string>
-    <string name="profile_clear_history_confirm_title">清除历史记录？</string>
-    <string name="profile_clear_history_confirm_desc">这将永久删除您的所有聊天消息。</string>
-    <string name="profile_logout_confirm_title">重置个人资料？</string>
-    <string name="profile_logout_confirm_desc">这将清除您的身份，您需要重新设置。</string>
-    <string name="profile_clear_btn">清除</string>
-    <string name="profile_reset_btn">重置</string>
+    <string name="btn_send">发送</string>
+    <string name="mod_block_title">举报并屏蔽用户？</string>
+    <string name="mod_block_desc">您确定要举报并屏蔽 %1$s 吗？这将阻止该用户未来的所有消息。</string>
+    <string name="btn_block">举报并屏蔽</string>
+    <string name="btn_cancel">取消</string>
 </resources>

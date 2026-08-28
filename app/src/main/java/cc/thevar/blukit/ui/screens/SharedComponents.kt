@@ -430,13 +430,13 @@ fun BlukitPulseHub(
     pulseCount: Int,
     incomingRadioRequests: Set<P2PDevice>,
     selectedDevices: Set<String>,
-    modifier: Modifier = Modifier,
-    resonances: List<Resonance> = emptyList(),
     onAcceptRadio: (P2PDevice) -> Unit,
     onDenyRadio: (P2PDevice) -> Unit,
     onStartSidePulse: () -> Unit,
     onStartChain: () -> Unit,
     onClearSelection: () -> Unit,
+    modifier: Modifier = Modifier,
+    resonances: List<Resonance> = emptyList(),
     onAttachFile: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
     onManage: (() -> Unit)? = null,
@@ -725,15 +725,15 @@ fun PulsingResonanceTicker(
     energyList: List<Pair<P2PDevice, MessagePayload?>>,
     pulseCounts: Map<String, Int>,
     localDeviceId: String,
-    localNickname: String = "?",
     pulsedPeers: Set<String>,
-    activeBubbles: List<BubbleData> = emptyList(),
-    isGrouped: Boolean = true,
     onPulseClick: (String) -> Unit,
     onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit,
-    reverseLayout: Boolean = true,
     modifier: Modifier = Modifier,
+    localNickname: String = "?",
+    activeBubbles: List<BubbleData> = emptyList(),
+    isGrouped: Boolean = true,
+    reverseLayout: Boolean = true,
 ) {
     val listState = rememberLazyListState()
     val sdf = remember { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
@@ -1046,14 +1046,14 @@ fun ConfirmationDialog(title: String, text: String, onConfirm: () -> Unit, onDis
  */
 @Composable
 fun BlukitAlert(
-    modifier: Modifier = Modifier,
     title: String,
     text: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     confirmLabel: String = "OK",
     dismissLabel: String = "CANCEL",
-    themeColor: Color = StealthPrimary,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    themeColor: Color = StealthPrimary
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "AlertGlow")
     val pulseScale by infiniteTransition.animateFloat(
@@ -1153,9 +1153,9 @@ fun BlukitAlert(
 @Composable
 fun BlukitTip(
     text: String,
-    themeColor: Color = StealthAmber,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    themeColor: Color = StealthAmber
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "TipGlow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -1278,11 +1278,11 @@ fun ResonanceSummary(
     count: Int,
     lastUpdate: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     showJoin: Boolean = false,
     leftContent: @Composable (() -> Unit)? = null,
     topContent: @Composable (() -> Unit)? = null,
-    underIconContent: @Composable (ColumnScope.() -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    underIconContent: @Composable (ColumnScope.() -> Unit)? = null
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -1654,9 +1654,9 @@ fun OnboardingGhost(
     nickname: String,
     emoji: String,
     onNicknameChange: (String) -> Unit,
-    onDone: () -> Unit = {},
-    onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onDone: () -> Unit = {},
+    onDismiss: () -> Unit = {}
 ) {
     val focusRequester = remember { FocusRequester() }
     val infiniteTransition = rememberInfiniteTransition(label = "GhostAnim")
@@ -1794,11 +1794,11 @@ fun CrowdRitualGhost(
     onNameChange: (String) -> Unit,
     onDone: (String?) -> Unit, // Returns templateId if selected
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     nearbyAirs: List<Resonance> = emptyList(),
     onJoinAir: (String) -> Unit = {},
     title: String = "CROWD RITUAL",
-    hint: String = "NAME THE CROWD",
-    modifier: Modifier = Modifier,
+    hint: String = "NAME THE CROWD"
 ) {
     var airName by remember { mutableStateOf("") }
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
@@ -1975,13 +1975,13 @@ fun PulsePersonaSignature(
     isPulsed: Boolean, 
     isSelected: Boolean, 
     isPeerPulsed: Boolean, 
+    modifier: Modifier = Modifier,
     size: Dp = 52.dp, 
     isStatic: Boolean = false, 
     isHighlighted: Boolean = false, 
     projectionEmoji: String? = null,
     themeColor: Color? = null,
     subLabel: String? = null,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
@@ -2074,10 +2074,10 @@ fun PulseCrowdSignature(
     device: P2PDevice, 
     pulseCount: Int, 
     isPulsed: Boolean, 
+    modifier: Modifier = Modifier,
     size: Dp = 64.dp, 
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    title: String? = null,
-    modifier: Modifier = Modifier,
+    title: String? = null
 ) {
     val themeColor = if (isPulsed) StealthRose else StealthPrimary
     val infiniteTransition = rememberInfiniteTransition(label = "CrowdPulse")
@@ -2123,8 +2123,6 @@ fun PulseCrowdSignature(
 
 @Composable
 fun BlukitFieldScaffold(
-    // FIELD WIDGET: Root container for the mesh experience
-    // Pattern: Header (Top) + Entries (Overlay Field)
     header: @Composable () -> Unit,
     entries: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
@@ -2195,10 +2193,10 @@ fun BlukitFieldScaffold(
  */
 @Composable
 fun BlukitInput(
-    modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
+    modifier: Modifier = Modifier,
     onAttachFile: () -> Unit = {},
     onManage: (() -> Unit)? = null,
     onNote: (() -> Unit)? = null,
@@ -2210,7 +2208,7 @@ fun BlukitInput(
     placeholder: String? = null,
     isSearchActive: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
-    onFocusChange: (Boolean) -> Unit = {},
+    onFocusChange: (Boolean) -> Unit = {}
 ) {
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
     val focusRequester = remember { FocusRequester() }

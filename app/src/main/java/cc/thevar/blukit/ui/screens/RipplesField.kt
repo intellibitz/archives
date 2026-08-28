@@ -123,6 +123,8 @@ data class PulseRipple(
 fun RipplesField(
     state: BluetoothUiState,
     activeBubbles: List<BubbleData>,
+    onDeviceClick: (P2PDevice) -> Unit,
+    modifier: Modifier = Modifier,
     selectedDevices: Set<String> = emptySet(),
     pulsedPeers: Set<String> = emptySet(),
     externalEnergy: Float = 0f,
@@ -133,7 +135,6 @@ fun RipplesField(
     subjectId: String? = null,
     pulseGhostData: GhostPulseData? = null,
     onDismissGhost: () -> Unit = {},
-    onDeviceClick: (P2PDevice) -> Unit,
     onDeviceLongClick: (P2PDevice) -> Unit = {},
     onPulseSurge: (Float) -> Unit = {},
     drawBackground: Boolean = true,
@@ -155,7 +156,6 @@ fun RipplesField(
     onNicknameChange: (String) -> Unit = {},
     themeColor: Color = StealthPrimary,
     isDimmed: Boolean = false,
-    modifier: Modifier = Modifier,
     content: @Composable () -> Unit = {},
     airRitualGhost: @Composable () -> Unit = {}
 ) {
@@ -165,7 +165,7 @@ fun RipplesField(
     val relayEvents = remember { mutableStateListOf<RelayEvent>() }
     val pulseRipples = remember { mutableStateListOf<PulseRipple>() }
     val processedRelayIds = remember { mutableSetOf<String>() }
-    var collectiveEnergy by remember { mutableStateOf(0f) }
+    var collectiveEnergy by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
 
     // TRIGGER: Signal surge on new incoming bubbles
     LaunchedEffect(activeBubbles.size) {
@@ -705,12 +705,12 @@ private fun PulseNode(
 fun CrowdMiniRadar(
     resonance: Resonance,
     members: List<P2PDevice>,
+    modifier: Modifier = Modifier,
     themeColor: Color = StealthPrimary,
     isDefaultCrowd: Boolean = false,
     onDeviceClick: (P2PDevice) -> Unit = {},
     onDeviceLongClick: (P2PDevice) -> Unit = {},
-    activeBubbles: List<BubbleData> = emptyList(),
-    modifier: Modifier = Modifier
+    activeBubbles: List<BubbleData> = emptyList()
 ) {
     val bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
 
