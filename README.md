@@ -86,6 +86,15 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 
 ---
 
+## 🧠 EVOLUTIONARY UX PRINCIPLES
+The design of Blukit is guided by these key evolutionary learnings:
+*   **Semantic Clarity over Tactical Metaphor**: Prioritize literal terminology (**Join, Group, Message**) to bridge the accessibility gap for a diverse "Any Crowd" audience.
+*   **Managed Visual Hierarchy**: Dim background "noise" (Radar) to 95% opacity when content is present to reduce visual anxiety for non-technical users.
+*   **AI Heroism**: Elevate **Ambient Intelligence** by making Global Mesh Synthesis the hero of the landing experience.
+*   **Reinforced Physicality**: Use **haptic feedback** at key interaction points (Join, Send) to reinforce the physical nature of mesh communication.
+
+---
+
 ## 🤖 THE AGENT PROTOCOL (FOR LLM COLLABORATORS)
 
 ### **Master Operational Directive**
