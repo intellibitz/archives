@@ -417,9 +417,24 @@ fun BlukitHumanityStage(
                 }
             }
 
-            val isLanding = (title == "THE CROWD") || (title == "PUBLIC PULSES") || (title == "BLUKIT") || (title == "EVENT")
+            val isLanding = (title == "THE SPECTRUM") || (title == "PUBLIC PULSES") || (title == "BLUKIT") || (title == "EVENT")
             if (isLanding && onTitleClick != null) {
-                Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
+                Surface(
+                    onClick = { onTitleClick() },
+                    color = StealthAmber.copy(alpha = 0.1f),
+                    shape = CircleShape,
+                    border = BorderStroke(1.dp, StealthAmber.copy(alpha = 0.3f)),
+                    modifier = Modifier.padding(start = 8.dp).size(24.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.Add, 
+                            contentDescription = "New Resonance", 
+                            tint = StealthAmber, 
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
             }
         }
 
@@ -2799,9 +2814,9 @@ fun BlukitInput(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onAttachFile, enabled = !isReadOnly, modifier = Modifier.size(40.dp)) { 
                         Icon(
-                            imageVector = Icons.Rounded.Add, 
-                            contentDescription = "Attach", 
-                            tint = themeColor.copy(alpha = 0.7f),
+                            imageVector = if (isPulseLocked) Icons.Rounded.Grain else Icons.Rounded.Add, 
+                            contentDescription = if (isPulseLocked) "New Ritual" else "Attach", 
+                            tint = if (isPulseLocked) StealthAmber else themeColor.copy(alpha = 0.7f),
                             modifier = Modifier.size(20.dp)
                         ) 
                     }

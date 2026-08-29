@@ -269,7 +269,7 @@ fun EventField(
                 onStartSidePulse = { }, 
                 onStartChain = { }, 
                 onClearSelection = { },
-                onAttachFile = { },
+                onAttachFile = onShowAirGhost,
                 onSearchToggle = onSearchToggle,
                 onCreatePublicResonance = onCreatePublicResonance,
                 isSearchMode = isSearchActive,
@@ -279,7 +279,15 @@ fun EventField(
             )
 
             // MODULE 4: ARCHIVE / VAULT TIP
-            if (state.session.archivedGroups.isNotEmpty()) {
+            if (eventMetas.isEmpty() && !isSearchActive) {
+                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
+                    BlukitTip(
+                        text = "THE SPECTRUM IS SILENT. EMIT A RESONANCE OR INITIATE A RITUAL.",
+                        themeColor = StealthAmber,
+                        onDismiss = onShowAirGhost
+                    )
+                }
+            } else if (state.session.archivedGroups.isNotEmpty()) {
                 Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
                     BlukitTip(
                         text = "${state.session.archivedGroups.size} ECHOES IN THE VAULT. AWAKEN?",
