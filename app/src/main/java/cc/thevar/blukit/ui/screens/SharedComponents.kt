@@ -313,7 +313,7 @@ fun BlukitTacticalHeader(
             Row(
                 verticalAlignment = Alignment.CenterVertically, 
                 horizontalArrangement = Arrangement.Center, 
-                modifier = Modifier.weight(1.2f)
+                modifier = Modifier.weight(1.5f)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_blukit_logo), 
