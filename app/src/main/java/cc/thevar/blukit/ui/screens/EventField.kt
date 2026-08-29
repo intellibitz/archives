@@ -130,39 +130,11 @@ fun EventField(
     BlukitFieldScaffold(
         header = header,
         entries = {
-            // MODULE: SUPREME POWER LANDMARKS
-            if (supremeReport?.suggestedAirs?.isNotEmpty() == true) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 100.dp, end = 16.dp)
-                        .zIndex(20f)
-                ) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "PROXIMITY HUB",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = StealthAmber,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 8.sp
-                        )
-                        supremeReport.suggestedAirs.forEach { hub ->
-                            Text(
-                                text = hub.uppercase(),
-                                color = Color.White,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-                }
-            }
-
-            // MODULE 1: CONTEXTUAL FIELD (Humanity Stage + Unified Ticker/Radar)
+            // MODULE 1: BASE CONTENT (Humanity Stage + Unified Ticker/Radar)
             Column(modifier = Modifier.fillMaxSize()) {
                 // Humanity Stage (Breadcrumbs)
                 BlukitHumanityStage(
-                    title = "THE CROWD",
+                    title = "THE SPECTRUM",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeCrowds = activeCrowds,
@@ -200,25 +172,7 @@ fun EventField(
                     }
                 )
 
-                // MODULE 2.1: INCOMING REQUESTS (High Priority)
-                if (state.crowd.incomingRadioRequests.isNotEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        state.crowd.incomingRadioRequests.forEach { request ->
-                            RadioRequestEntry(
-                                device = request,
-                                onAccept = { onAcceptRadio(request) },
-                                onDeny = { onDenyRadio(request) }
-                            )
-                        }
-                    }
-                }
-
-                // MODULE 2.2: UNIFIED RESONANCE TICKER (With integrated Radar)
+                // MODULE 2: UNIFIED RESONANCE TICKER (With integrated Radar)
                 PulsingResonanceTicker(
                     state = state,
                     energyList = combinedEnergy,
@@ -226,32 +180,10 @@ fun EventField(
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = pulsedPeers,
-                    isGrouped = true,
-                    onPulseClick = { onNavigateToPulse(it) },
-                    onDeviceClick = { dev -> 
-                        if (eventMetas.any { it.id == dev.id }) {
-                            onNavigateToGroup(dev.id)
-                        } else {
-                            onIdentifyUser(dev.id)
-                        }
-                    },
+                    onPulseClick = onNavigateToPulse,
+                    onDeviceClick = { onNavigateToPulse(it.id) },
                     onDeviceLongClick = { },
-                    modifier = Modifier.weight(1f),
-                    themeColor = StealthPrimary
-                )
-            }
-
-            // GHOST OVERLAYS (Rituals)
-            if (showAirGhost) {
-                CrowdRitualGhost(
-                    onNameChange = { airProposalName = it },
-                    onDone = { templateId -> onCreatePublicResonance?.invoke(airProposalName, templateId) },
-                    onDismiss = onDismissAirGhost,
-                    nearbyAirs = state.session.groups,
-                    onJoinAir = onNavigateToGroup,
-                    title = "EVENT RITUAL",
-                    hint = "NAME THE EVENT",
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.weight(1f)
                 )
             }
 
@@ -260,42 +192,24 @@ fun EventField(
                 currentRoute = cc.thevar.blukit.ui.navigation.Route.Event,
                 messageText = messageText,
                 onMessageChange = onMessageChange,
-                onSend = { },
+                onSend = { }, // Locked in root
                 pulseCount = state.session.messages.size,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
-                onAcceptRadio = onAcceptRadio, 
+                onAcceptRadio = onAcceptRadio,
                 onDenyRadio = onDenyRadio,
                 onStartSidePulse = { }, 
                 onStartChain = { }, 
                 onClearSelection = { },
-                onAttachFile = onShowAirGhost,
+                onAttachFile = { },
+                isSearchMode = isSearchActive,
                 onSearchToggle = onSearchToggle,
                 onCreatePublicResonance = onCreatePublicResonance,
-                isSearchMode = isSearchActive,
+                onFocusChange = { },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
             )
-
-            // MODULE 4: ARCHIVE / VAULT TIP
-            if (eventMetas.isEmpty() && !isSearchActive) {
-                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
-                    BlukitTip(
-                        text = "THE SPECTRUM IS SILENT. EMIT A RESONANCE OR INITIATE A RITUAL.",
-                        themeColor = StealthAmber,
-                        onDismiss = onShowAirGhost
-                    )
-                }
-            } else if (state.session.archivedGroups.isNotEmpty()) {
-                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
-                    BlukitTip(
-                        text = "${state.session.archivedGroups.size} ECHOES IN THE VAULT. AWAKEN?",
-                        themeColor = StealthPrimary,
-                        onDismiss = { showVault = true }
-                    )
-                }
-            }
         }
     )
 
