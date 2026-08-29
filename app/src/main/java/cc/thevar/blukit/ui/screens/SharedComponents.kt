@@ -1021,6 +1021,15 @@ fun PulsingResonanceTicker(
     val sdf = remember { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
     val density = LocalDensity.current
 
+    // TACTICAL DEPTH: Dim background based on scroll or presence of items
+    val isScrolling = listState.isScrollInProgress
+    val hasContent = energyList.isNotEmpty()
+    val backgroundAlpha by animateFloatAsState(
+        targetValue = if (isScrolling || hasContent) 0.15f else 0.8f,
+        animationSpec = tween(1000),
+        label = "RadarDimming"
+    )
+
     // Internal animation registries (from RipplesField)
     val relayEvents = remember { mutableStateListOf<RelayEvent>() }
     val pulseRipples = remember { mutableStateListOf<PulseRipple>() }
@@ -1071,7 +1080,12 @@ fun PulsingResonanceTicker(
 
     Box(modifier = modifier.fillMaxWidth()) {
         // MODULE 1: CONTEXTUAL FIELD BACKGROUND (The Radar)
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = backgroundAlpha }, 
+            contentAlignment = Alignment.Center
+        ) {
             AtmosphericHeatmap(energy = collectiveEnergy, themeColor = themeColor)
             RelayLayer(relayEvents)
             
@@ -1081,7 +1095,7 @@ fun PulsingResonanceTicker(
                 onDeviceLongClick = onDeviceLongClick,
                 selectedDevices = state.crowd.selectedDevices,
                 pulsedPeers = pulsedPeers,
-                bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() },
+                bubbleSenders = remember(activeBubbles) { activeBubbles.asSequence().map { it.senderId }.toSet() },
                 themeColor = themeColor,
                 density = density
             )
@@ -1090,103 +1104,119 @@ fun PulsingResonanceTicker(
         }
 
         // MODULE 2: THE TICKER
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            reverseLayout = reverseLayout,
-            contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp)
-        ) {
-            items(energyList, key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
-                val id = device.persistentId ?: device.id
-                val resonance = state.session.groups.find { it.id == (msg?.groupId ?: device.id) }
-                
-                if (msg == null && resonance != null) {
-                    // HEADER: High-level Resonance Summary
-                    val members = if (resonance.id == Resonance.ID_CROWD) {
-                        state.crowd.scannedDevices
-                    } else {
-                        state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
-                    }
-
-                    val userCount = if (resonance.id == Resonance.ID_CROWD) {
-                        state.crowd.scannedDevices.size
-                    } else {
-                        resonance.allMemberIds.size
-                    }
-
-                    val dynamicSubtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "EVENT" else "PRIVATE CHAIN"
-                    val userEmoji = LocalUserEmoji.current
-
-                    ResonanceSummary(
-                        title = resonance.name,
-                        subtitle = dynamicSubtitle,
-                        icon = if (resonance.scope == Resonance.SCOPE_PUBLIC) Icons.Rounded.Grain else Icons.Rounded.Hearing,
-                        themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
-                        count = userCount,
-                        lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
-                        onClick = { onPulseClick(resonance.id) },
-                        showJoin = true,
-                        aiTrend = device.statusLabel,
-                        leftContent = if (resonance.id == Resonance.ID_CROWD) {
-                            {
-                                PulsePersonaSignature(
-                                    device = P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji),
-                                    isPulsed = false,
-                                    isSelected = false,
-                                    isPeerPulsed = false,
-                                    size = 44.dp,
-                                    isStatic = false,
-                                    themeColor = StealthPrimary,
-                                    subLabel = "YOU",
-                                    onClick = { onDeviceClick(P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji)) }
-                                )
-                            }
-                        } else null,
-                        topContent = {
-                            CrowdMiniRadar(
-                                resonance = resonance,
-                                members = members,
-                                isDefaultCrowd = resonance.id == Resonance.ID_CROWD,
-                                themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
-                                onDeviceClick = onDeviceClick,
-                                onDeviceLongClick = onDeviceLongClick,
-                                activeBubbles = activeBubbles
-                            )
-                        },
-                        modifier = Modifier.padding(horizontal = 8.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.4f),
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.6f)
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
                     )
-                } else {
-                    // ENTRY: Atomic Pulse Item
-                    val count = if (isGrouped) pulseCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == msg?.messageId }
+                )
+        ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                reverseLayout = reverseLayout,
+                contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp)
+            ) {
+                items(energyList, key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
+                    val id = device.persistentId ?: device.id
+                    val resonance = state.session.groups.find { it.id == (msg?.groupId ?: device.id) }
                     
-                    AnimatedPulseItem(
-                        msg = msg,
-                        isSelected = device.id in state.crowd.selectedDevices,
-                        senderDevice = device,
-                        pulseCount = count,
-                        isPulsed = id in pulsedPeers,
-                        isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
-                        isGrouped = isGrouped,
-                        isMutual = device.id in state.session.connectedTies,
-                        rowId = id,
-                        onPulseClick = { msg?.messageId?.let { onPulseClick(it) } ?: onDeviceLongClick(device) },
-                        onDeviceLongClick = { onDeviceLongClick(device) },
-                        topContent = {
-                            // INTEGRATED RADAR: Each ticker entry gets a mini radar context if it's a grouped message
-                            if (isGrouped && resonance != null) {
-                                val members = state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
+                    if (msg == null && resonance != null) {
+                        // HEADER: High-level Resonance Summary
+                        val members = if (resonance.id == Resonance.ID_CROWD) {
+                            state.crowd.scannedDevices
+                        } else {
+                            state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
+                        }
+
+                        val userCount = if (resonance.id == Resonance.ID_CROWD) {
+                            state.crowd.scannedDevices.size
+                        } else {
+                            resonance.allMemberIds.size
+                        }
+
+                        val dynamicSubtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "EVENT" else "PRIVATE CHAIN"
+                        val userEmoji = LocalUserEmoji.current
+
+                        ResonanceSummary(
+                            title = resonance.name,
+                            subtitle = dynamicSubtitle,
+                            icon = if (resonance.scope == Resonance.SCOPE_PUBLIC) Icons.Rounded.Grain else Icons.Rounded.Hearing,
+                            themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
+                            count = userCount,
+                            lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
+                            onClick = { onPulseClick(resonance.id) },
+                            showJoin = true,
+                            aiTrend = device.statusLabel,
+                            leftContent = if (resonance.id == Resonance.ID_CROWD) {
+                                {
+                                    PulsePersonaSignature(
+                                        device = P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji),
+                                        isPulsed = false,
+                                        isSelected = false,
+                                        isPeerPulsed = false,
+                                        size = 44.dp,
+                                        isStatic = false,
+                                        themeColor = StealthPrimary,
+                                        subLabel = "PEER",
+                                        onClick = { onDeviceClick(P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji)) }
+                                    )
+                                }
+                            } else null,
+                            topContent = {
                                 CrowdMiniRadar(
                                     resonance = resonance,
                                     members = members,
+                                    isDefaultCrowd = resonance.id == Resonance.ID_CROWD,
                                     themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
                                     onDeviceClick = onDeviceClick,
                                     onDeviceLongClick = onDeviceLongClick,
-                                    activeBubbles = activeBubbles,
-                                    modifier = Modifier.height(60.dp).padding(vertical = 4.dp)
+                                    activeBubbles = activeBubbles
                                 )
+                            },
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    } else {
+                        // ENTRY: Atomic Pulse Item
+                        val count = if (isGrouped) pulseCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == msg?.messageId }
+                        
+                        AnimatedPulseItem(
+                            msg = msg,
+                            isSelected = device.id in state.crowd.selectedDevices,
+                            senderDevice = device,
+                            pulseCount = count,
+                            isPulsed = id in pulsedPeers,
+                            isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
+                            isGrouped = isGrouped,
+                            isMutual = device.id in state.session.connectedTies,
+                            rowId = id,
+                            onPulseClick = { msg?.messageId?.let { onPulseClick(it) } ?: onDeviceLongClick(device) },
+                            onDeviceLongClick = { onDeviceLongClick(device) },
+                            topContent = {
+                                // INTEGRATED RADAR: Each ticker entry gets a mini radar context if it's a grouped message
+                                if (isGrouped && resonance != null) {
+                                    val members = state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
+                                    CrowdMiniRadar(
+                                        resonance = resonance,
+                                        members = members,
+                                        themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
+                                        onDeviceClick = onDeviceClick,
+                                        onDeviceLongClick = onDeviceLongClick,
+                                        activeBubbles = activeBubbles,
+                                        modifier = Modifier.height(60.dp).padding(vertical = 4.dp)
+                                    )
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
