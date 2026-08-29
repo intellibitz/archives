@@ -180,7 +180,13 @@ fun EventField(
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = pulsedPeers,
-                    onPulseClick = onNavigateToPulse,
+                    onPulseClick = { id ->
+                        if (state.session.groups.any { it.id == id }) {
+                            onNavigateToGroup(id)
+                        } else {
+                            onNavigateToPulse(id)
+                        }
+                    },
                     onDeviceClick = { onNavigateToPulse(it.id) },
                     onDeviceLongClick = { },
                     modifier = Modifier.weight(1f)

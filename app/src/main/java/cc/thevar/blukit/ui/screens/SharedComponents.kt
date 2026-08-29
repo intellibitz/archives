@@ -284,7 +284,7 @@ fun BlukitTacticalHeader(
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.2f)
-                .fillMaxHeight()
+                .matchParentSize()
                 .align(Alignment.CenterStart)
                 .graphicsLayer { translationX = scanLinePos * 1500f }
                 .background(

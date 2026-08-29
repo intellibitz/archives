@@ -106,7 +106,7 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 ## 🤖 THE AGENT PROTOCOL (FOR LLM COLLABORATORS)
 
 ### **Master Operational Directive**
-*   **Production Excellence**: All code must be production-ready, bug-free, and accompanied by comprehensive unit tests. No unused imports. No deprecated usages. Warnings should be fixed, without breaking features.
+*   **Production Excellence**: All code must be production-ready, bug-free, and accompanied by comprehensive unit tests. No unused imports. No deprecated usages. Warnings should be fixed, without breaking features. Run formatting, unit tests, Android lint, and Gradle checks after code changes.
 *   **Security & Safety**: Prioritize secure coding practices (ECDH, AES-256) and thread-safe operations.
 *   **Performance Engineering**: Write highly performant code with a focus on low battery consumption—crucial for persistent mesh operations and local AI synthesis.
 *   **Ambient Intelligence**: Focus on on-device, privacy-preserving AI patterns. Avoid cloud dependencies for data processing.
@@ -126,9 +126,6 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 
 ## 🚀 START THE PULSE
 ```bash
-# Full clean assembly
-./.gitignore_folder/clean_build.sh
-
 # Or standard installation
 ./gradlew installDebug
 ```
