@@ -75,6 +75,10 @@ fun ChainField(
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
+    isStealthMode: Boolean = false,
+    lowPowerMode: Boolean = false,
+    onToggleStealth: (Boolean) -> Unit = {},
+    onToggleLowPower: (Boolean) -> Unit = {},
     header: @Composable () -> Unit,
 ) {
     var showTip by remember { mutableStateOf(value = true) }
@@ -219,6 +223,10 @@ fun ChainField(
                 onNote = { showNoteEditor = true; activeNote = null },
                 onTask = { showAssignmentCreator = true },
                 onFocusChange = onInputFocusChange,
+                isStealthMode = isStealthMode,
+                lowPowerMode = lowPowerMode,
+                onToggleStealth = onToggleStealth,
+                onToggleLowPower = onToggleLowPower,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()

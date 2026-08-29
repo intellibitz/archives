@@ -168,15 +168,7 @@ fun PreviewFeatureGraphic() {
 fun PreviewTacticalHeader() {
     BlukitTheme {
         BlukitTacticalHeader(
-            isStealthMode = false,
-            lowPowerMode = false,
-            isBluetoothOff = false,
-            isWifiOff = false,
-            isPermissionMissing = false,
-            isPermanentlyDenied = false,
             themeColor = StealthPrimary,
-            onToggleStealth = {},
-            onToggleLowPower = {},
             onAwakenBluetooth = {},
             onAwakenWifi = {},
             onGrantPermissions = {},

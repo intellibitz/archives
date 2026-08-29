@@ -240,20 +240,16 @@ fun BreadcrumbHub(
 
 @Composable
 fun BlukitTacticalHeader(
-    isStealthMode: Boolean,
-    lowPowerMode: Boolean,
-    isBluetoothOff: Boolean,
-    isWifiOff: Boolean,
-    isPermissionMissing: Boolean,
-    isPermanentlyDenied: Boolean,
     themeColor: Color,
-    onToggleStealth: (Boolean) -> Unit,
-    onToggleLowPower: (Boolean) -> Unit,
     onAwakenBluetooth: () -> Unit,
     onAwakenWifi: () -> Unit,
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
     onShowPrivacy: () -> Unit,
+    isBluetoothOff: Boolean = false,
+    isWifiOff: Boolean = false,
+    isPermissionMissing: Boolean = false,
+    isPermanentlyDenied: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "HarmonyCycle")
@@ -302,11 +298,28 @@ fun BlukitTacticalHeader(
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // LEFT: [DARK] [ECO]
+            // LEFT: AI Insights / Dynamic Status
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
-                Spacer(modifier = Modifier.width(4.dp))
-                EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
+                Surface(
+                    color = StealthAmber.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(0.5.dp, StealthAmber.copy(alpha = 0.3f)),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "AI ACTIVE", 
+                            fontSize = 11.sp, 
+                            fontWeight = FontWeight.Black, 
+                            color = StealthAmber,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
             }
 
             // CENTER: [BLUKIT] [PROTOCOL]
@@ -519,12 +532,10 @@ fun BlukitHumanityStage(
 }
 
 /**
- * PULSE HUB: The primary tactical interaction point at the bottom of the field.
+ * PULSE HUB: The primary interaction point at the bottom of the field.
  * 
- * Architectural Pattern: ENTRIES (inside Scaffold) / HEADER (internally)
- * 
- * Features a contextual header for banners (Incoming requests, creation) and
- * a row of entries for atomic tools (Attach, Search, Input).
+ * Features a contextual header for banners and
+ * a row of entries for message tools (Attach, Search, Input) and system toggles.
  */
 @Composable
 fun BlukitPulseHub(
@@ -550,6 +561,10 @@ fun BlukitPulseHub(
     onTask: (() -> Unit)? = null, // NEW: For assignment creation
     isSearchMode: Boolean = false,
     onFocusChange: (Boolean) -> Unit = {},
+    isStealthMode: Boolean = false,
+    lowPowerMode: Boolean = false,
+    onToggleStealth: (Boolean) -> Unit = {},
+    onToggleLowPower: (Boolean) -> Unit = {}
 ) {
     val isPrivate = currentRoute is Route.Resonance || currentRoute is Route.GroupField
     val targetName = if (currentRoute is Route.GroupField) resonances.find { it.id == currentRoute.groupId }?.name?.uppercase() else null
@@ -667,24 +682,37 @@ fun BlukitPulseHub(
         },
         entries = {
             val isPulseLocked = currentRoute is Route.Event
-            BlukitInput(
-                isReadOnly = false, 
-                isPulseLocked = isPulseLocked,
-                isPrivate = isPrivate, 
-                targetName = targetName, 
-                value = messageText, 
-                onValueChange = onMessageChange, 
-                onSend = onSend, 
-                onAttachFile = onAttachFile, 
-                onManage = onManage,
-                onNote = onNote,
-                onTask = onTask, // NEW: Propagate to Input
-                pulseCount = pulseCount, 
-                isSearchActive = isSearchMode,
-                onSearchToggle = onSearchToggle,
-                onFocusChange = onFocusChange,
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
-            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // SYSTEM TOGGLES (Moved from Top Bar)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
+                }
+
+                BlukitInput(
+                    isReadOnly = false, 
+                    isPulseLocked = isPulseLocked,
+                    isPrivate = isPrivate, 
+                    targetName = targetName, 
+                    value = messageText, 
+                    onValueChange = onMessageChange, 
+                    onSend = onSend, 
+                    onAttachFile = onAttachFile, 
+                    onManage = onManage,
+                    onNote = onNote,
+                    onTask = onTask, // NEW: Propagate to Input
+                    pulseCount = pulseCount, 
+                    isSearchActive = isSearchMode,
+                    onSearchToggle = onSearchToggle,
+                    onFocusChange = onFocusChange,
+                    modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
+                )
+            }
         },
         modifier = modifier.zIndex(10f)
     )
@@ -1164,7 +1192,7 @@ fun PulsingResonanceTicker(
 
         // TACTICAL DEPTH: Dim background based on scroll or presence of items
         val dimmingAlpha by animateFloatAsState(
-            targetValue = if (isScrolling || hasContent) backgroundAlpha else 0f,
+            targetValue = if (isScrolling || hasContent) 0.95f else 0f,
             animationSpec = tween(500),
             label = "DimmingAlpha"
         )
@@ -1973,21 +2001,20 @@ fun ResonanceSummary(
                     // RIGHT: [ENTER + TIMESTAMP]
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         if (showJoin) {
-                            Surface(
+                            Button(
                                 onClick = { 
                                     haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                                     onClick() 
                                 },
-                                color = themeColor.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColor),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                             ) {
                                 Text(
                                     text = "JOIN",
-                                    fontSize = 11.sp,
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = themeColor,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                    color = Color.Black,
                                     letterSpacing = 1.sp
                                 )
                             }

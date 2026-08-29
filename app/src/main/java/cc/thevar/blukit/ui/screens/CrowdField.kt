@@ -95,6 +95,10 @@ fun CrowdField(
     onBack: (() -> Unit)? = null,
     highResonancePulses: List<MessagePayload> = emptyList(),
     onVote: (String, Int) -> Unit = { _, _ -> },
+    isStealthMode: Boolean = false,
+    lowPowerMode: Boolean = false,
+    onToggleStealth: (Boolean) -> Unit = {},
+    onToggleLowPower: (Boolean) -> Unit = {},
     header: @Composable () -> Unit,
 ) {
     var showTip by remember { mutableStateOf(value = true) }
@@ -232,6 +236,10 @@ fun CrowdField(
                 onAttachFile = { },
                 onSearchToggle = onSearchToggle,
                 onFocusChange = onInputFocusChange,
+                isStealthMode = isStealthMode,
+                lowPowerMode = lowPowerMode,
+                onToggleStealth = onToggleStealth,
+                onToggleLowPower = onToggleLowPower,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()

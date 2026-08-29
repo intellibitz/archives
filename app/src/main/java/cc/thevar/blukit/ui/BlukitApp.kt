@@ -161,7 +161,7 @@ fun BlukitApp(
         val trail = mutableListOf<String>()
         backStack.forEach { route ->
             when (route) {
-                is Route.Event -> trail.add("THE SPECTRUM")
+                is Route.Event -> trail.add("LIVE CROWD")
                 is Route.GroupField -> {
                     val group = bluetoothState.session.groups.find { it.id == route.groupId }
                     if (group != null) {
@@ -356,20 +356,16 @@ fun BlukitApp(
                 val themeColor = if (currentRoute is Route.Resonance || currentRoute is Route.GroupField) StealthRose else StealthPrimary
 
                 BlukitTacticalHeader(
-                    isStealthMode = isStealthMode,
-                    lowPowerMode = lowPowerMode,
-                    isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
-                    isWifiOff = !bluetoothState.harmony.isWifiEnabled,
-                    isPermissionMissing = !permissionState.essentialPermissionsGranted,
-                    isPermanentlyDenied = isPermanentlyDenied,
                     themeColor = themeColor,
-                    onToggleStealth = viewModel::toggleStealth,
-                    onToggleLowPower = viewModel::toggleLowPowerMode,
                     onAwakenBluetooth = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
                     onAwakenWifi = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) },
                     onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
                     onOpenSettings = { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = Uri.fromParts("package", context.packageName, null); addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) },
-                    onShowPrivacy = { showPrivacyProtocol = true }
+                    onShowPrivacy = { showPrivacyProtocol = true },
+                    isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
+                    isWifiOff = !bluetoothState.harmony.isWifiEnabled,
+                    isPermissionMissing = !permissionState.essentialPermissionsGranted,
+                    isPermanentlyDenied = isPermanentlyDenied
                 )
             }
 
@@ -460,7 +456,11 @@ fun BlukitApp(
                                         onDenyRadio = bluetoothViewModel::denyRadio,
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
-                                        onInputFocusChange = { isInputFocused = it }
+                                        onInputFocusChange = { isInputFocused = it },
+                                        isStealthMode = isStealthMode,
+                                        lowPowerMode = lowPowerMode,
+                                        onToggleStealth = viewModel::toggleStealth,
+                                        onToggleLowPower = viewModel::toggleLowPowerMode
                                     )
                                 } else {
                                     ChainField(
@@ -506,7 +506,11 @@ fun BlukitApp(
                                         onDenyRadio = bluetoothViewModel::denyRadio,
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
-                                        onInputFocusChange = { isInputFocused = it }
+                                        onInputFocusChange = { isInputFocused = it },
+                                        isStealthMode = isStealthMode,
+                                        lowPowerMode = lowPowerMode,
+                                        onToggleStealth = viewModel::toggleStealth,
+                                        onToggleLowPower = viewModel::toggleLowPowerMode
                                     ) 
                                 }
                             }

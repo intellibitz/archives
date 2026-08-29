@@ -141,7 +141,7 @@ fun EventField(
             Column(modifier = Modifier.fillMaxSize()) {
                 // Humanity Stage (Breadcrumbs)
                 BlukitHumanityStage(
-                    title = "CHANNELS",
+                    title = "LIVE CROWD",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeCrowds = activeCrowds,
@@ -152,7 +152,7 @@ fun EventField(
                     themeColor = StealthPrimary,
                     userCount = state.crowd.scannedDevices.size,
                     trailingContent = {
-                        // Tactical Radar Toggles
+                        // Radar Toggles
                         if (onSearchToggle != null) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 IconButton(
