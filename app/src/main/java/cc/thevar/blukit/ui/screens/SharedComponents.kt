@@ -679,7 +679,14 @@ private fun RadarNodesLayer(
     themeColor: Color,
     density: androidx.compose.ui.unit.Density
 ) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    // TACTICAL CONSTRAINT: Constrain background radar nodes to the upper 70% of the field
+    // to avoid occlusion by the bottom Hub on shorter devices.
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 120.dp), // Lift the "Center" upwards
+        contentAlignment = Alignment.Center
+    ) {
         devices.forEachIndexed { index, device ->
             val maxRadiusPx = with(density) { 140.dp.toPx() }
             // PROXIMITY mapping: closer signal = smaller orbital radius
@@ -1025,7 +1032,7 @@ fun PulsingResonanceTicker(
     val isScrolling = listState.isScrollInProgress
     val hasContent = energyList.isNotEmpty()
     val backgroundAlpha by animateFloatAsState(
-        targetValue = if (isScrolling || hasContent) 0.15f else 0.8f,
+        targetValue = if (isScrolling || hasContent) 0.05f else 0.8f,
         animationSpec = tween(1000),
         label = "RadarDimming"
     )
@@ -1166,7 +1173,7 @@ fun PulsingResonanceTicker(
                                         size = 44.dp,
                                         isStatic = false,
                                         themeColor = StealthPrimary,
-                                        subLabel = "PEER",
+                                        subLabel = "YOU",
                                         onClick = { onDeviceClick(P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji)) }
                                     )
                                 }
