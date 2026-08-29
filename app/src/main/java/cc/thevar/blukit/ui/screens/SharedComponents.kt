@@ -33,7 +33,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -257,83 +256,127 @@ fun BlukitTacticalHeader(
     onShowPrivacy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pulseAlpha by rememberInfiniteTransition(label = "AlertPulse").animateFloat(initialValue = 0.6f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
+    val infiniteTransition = rememberInfiniteTransition(label = "HarmonyCycle")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f, 
+        targetValue = 1f, 
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), 
+        label = "Alpha"
+    )
+    
+    val scanLinePos by infiniteTransition.animateFloat(
+        initialValue = -0.2f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)),
+        label = "ScanLine"
+    )
 
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-            .background(Color.Black, RoundedCornerShape(12.dp))
-            .padding(horizontal = 4.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 6.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.Black)
+            .border(0.5.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
     ) {
-        // LEFT: [DARK] [ECO]
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
-            EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
-        }
+        // TACTICAL SCAN LINE HINT
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.2f)
+                .fillMaxHeight()
+                .align(Alignment.CenterStart)
+                .graphicsLayer { translationX = scanLinePos * 1500f }
+                .background(
+                    androidx.compose.ui.graphics.Brush.horizontalGradient(
+                        0.0f to Color.Transparent,
+                        0.5f to themeColor.copy(alpha = 0.03f),
+                        1.0f to Color.Transparent
+                    )
+                )
+        )
 
-        // CENTER: [BLUKIT] [PRIVACY]
         Row(
-            verticalAlignment = Alignment.CenterVertically, 
-            horizontalArrangement = Arrangement.Center, 
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_blukit_logo), 
-                contentDescription = null, 
-                tint = themeColor,
-                modifier = Modifier.size(10.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = "BLUKIT", 
-                fontSize = 7.sp, 
-                fontWeight = FontWeight.Black, 
-                color = Color.White, 
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "PROTOCOL", 
-                fontSize = 7.sp, 
-                fontWeight = FontWeight.Black, 
-                color = themeColor.copy(alpha = 0.8f),
-                letterSpacing = 1.sp,
-                modifier = Modifier.clickable { onShowPrivacy() }
-            )
-        }
-        
-        // RIGHT: [STATUS LABEL] [RADIOS]
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-            if (isPermissionMissing || isBluetoothOff) {
+            // LEFT: [DARK] [ECO]
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                EnvironmentToggle(label = "DARK", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
+                Spacer(modifier = Modifier.width(4.dp))
+                EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
+            }
+
+            // CENTER: [BLUKIT] [PROTOCOL]
+            Row(
+                verticalAlignment = Alignment.CenterVertically, 
+                horizontalArrangement = Arrangement.Center, 
+                modifier = Modifier.weight(1.2f)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_blukit_logo), 
+                    contentDescription = null, 
+                    tint = themeColor,
+                    modifier = Modifier.size(12.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "BLUKIT", 
+                    fontSize = 8.sp, 
+                    fontWeight = FontWeight.Black, 
+                    color = Color.White, 
+                    letterSpacing = 1.5.sp
+                )
+                Spacer(modifier = Modifier.width(12.dp))
                 Surface(
-                    color = Color.White.copy(alpha = 0.05f), 
-                    shape = RoundedCornerShape(8.dp), 
-                    modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                    onClick = { onShowPrivacy() },
+                    color = themeColor.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(4.dp),
+                    border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.3f))
                 ) {
                     Text(
-                        text = when { isPermissionMissing -> if (isPermanentlyDenied) "SETTINGS" else "ALLOW"; isBluetoothOff -> "AWAKEN"; else -> "SEARCHING" }, 
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isBluetoothOff || isPermissionMissing) Color.Red else Color.Yellow), 
-                        maxLines = 1,
-                        softWrap = false,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).clickable { 
-                            if (isPermissionMissing) { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() }
-                            else if (isBluetoothOff) onAwakenBluetooth()
-                        }
+                        text = "PROTOCOL", 
+                        fontSize = 6.sp, 
+                        fontWeight = FontWeight.Black, 
+                        color = themeColor,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(6.dp))
             }
             
-            MixedStatusBranding(
-                isBluetoothOff = isBluetoothOff,
-                isWifiOff = isWifiOff,
-                isPermissionMissing = isPermissionMissing,
-                onAwakenBluetooth = onAwakenBluetooth,
-                onAwakenWifi = onAwakenWifi
-            )
+            // RIGHT: [STATUS LABEL] [RADIOS]
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
+                if (isPermissionMissing || isBluetoothOff) {
+                    Surface(
+                        color = Color.White.copy(alpha = 0.05f), 
+                        shape = RoundedCornerShape(8.dp), 
+                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                    ) {
+                        Text(
+                            text = when { isPermissionMissing -> if (isPermanentlyDenied) "SETTINGS" else "ALLOW"; isBluetoothOff -> "AWAKEN"; else -> "SCANNING" }, 
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isBluetoothOff || isPermissionMissing) Color.Red else Color.Yellow), 
+                            maxLines = 1,
+                            softWrap = false,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).clickable { 
+                                if (isPermissionMissing) { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() }
+                                else if (isBluetoothOff) onAwakenBluetooth()
+                            }
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
+                
+                MixedStatusBranding(
+                    isBluetoothOff = isBluetoothOff,
+                    isWifiOff = isWifiOff,
+                    isPermissionMissing = isPermissionMissing,
+                    onAwakenBluetooth = onAwakenBluetooth,
+                    onAwakenWifi = onAwakenWifi
+                )
+            }
         }
     }
 }
@@ -1460,18 +1503,55 @@ fun AnimatedPulseItem(
 }
 
 @Composable
-fun EnvironmentToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, themeColor: Color = StealthPrimary) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 2.dp)) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if (checked) themeColor else Color.White.copy(alpha = 0.2f), letterSpacing = 1.sp))
-        Checkbox(
-            checked = checked, 
-            onCheckedChange = onCheckedChange,
-            colors = CheckboxDefaults.colors(
-                checkedColor = themeColor.copy(alpha = 0.2f),
-                uncheckedColor = Color.White.copy(alpha = 0.1f), 
-                checkmarkColor = themeColor
-            ),
-            modifier = Modifier.scale(0.6f)
+fun EnvironmentToggle(
+    label: String, 
+    checked: Boolean, 
+    onCheckedChange: (Boolean) -> Unit, 
+    themeColor: Color = StealthPrimary
+) {
+    val indicatorAlpha by animateFloatAsState(
+        targetValue = if (checked) 1f else 0.3f,
+        animationSpec = tween(500),
+        label = "IndicatorAlpha"
+    )
+    
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (checked) 0.6f else 0f,
+        animationSpec = tween(500),
+        label = "IndicatorGlow"
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically, 
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .graphicsLayer { alpha = indicatorAlpha }
+    ) {
+        // TACTICAL LED INDICATOR
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(if (checked) themeColor else Color.White.copy(alpha = 0.1f))
+                .border(
+                    width = 1.dp, 
+                    color = if (checked) themeColor.copy(alpha = glowAlpha) else Color.Transparent, 
+                    shape = CircleShape
+                )
+        )
+        
+        Spacer(modifier = Modifier.width(6.dp))
+        
+        Text(
+            text = label, 
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 7.sp, 
+                fontWeight = FontWeight.Black, 
+                color = if (checked) Color.White else Color.White.copy(alpha = 0.2f), 
+                letterSpacing = 1.sp
+            )
         )
     }
 }
