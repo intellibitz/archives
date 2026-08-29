@@ -102,7 +102,7 @@ data class RelayEvent(
     val start: Offset,
     val end: Offset,
     val startTime: Long,
-    val color: Color = StealthPrimary
+    val color: Color = StealthPrimary,
 )
 
 /** Expanding rings signaling node energy emission. */
@@ -110,7 +110,7 @@ data class PulseRipple(
     val id: String,
     val center: Offset,
     val startTime: Long,
-    val color: Color
+    val color: Color,
 )
 
 /**
@@ -418,7 +418,7 @@ fun BlukitHumanityStage(
             }
 
             val isLanding = (title == "THE CROWD") || (title == "PUBLIC PULSES") || (title == "BLUKIT") || (title == "EVENT")
-            if ((isLanding && onTitleClick != null)) {
+            if (isLanding && onTitleClick != null) {
                 Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
             }
         }
@@ -545,7 +545,7 @@ fun BlukitPulseHub(
                 val showAirBanner = isSearchMode && messageText.isNotBlank() && onCreatePublicResonance != null
                 AnimatedVisibility(
                     visible = showAirBanner, 
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }), 
+                    enter = fadeIn() + slideInVertically { it / 2 },
                     exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
                 ) {
                     Button(
@@ -753,7 +753,7 @@ fun CrowdMiniRadar(
     onDeviceLongClick: (P2PDevice) -> Unit = {},
     activeBubbles: List<BubbleData> = emptyList()
 ) {
-    val bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
+    val bubbleSenders = remember(activeBubbles) { activeBubbles.asSequence().map { it.senderId }.toSet() }
 
     Box(
         modifier = modifier
@@ -1025,7 +1025,7 @@ fun PulsingResonanceTicker(
     val relayEvents = remember { mutableStateListOf<RelayEvent>() }
     val pulseRipples = remember { mutableStateListOf<PulseRipple>() }
     val processedRelayIds = remember { mutableSetOf<String>() }
-    var collectiveEnergy by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    var collectiveEnergy by remember { mutableFloatStateOf(0f) }
 
     // TRIGGER: Signal surge on new incoming bubbles
     LaunchedEffect(activeBubbles.size) {
@@ -1309,11 +1309,14 @@ fun AnimatedPulseItem(
                 color = when { isSelected -> Color.White.copy(alpha = 0.2f); isMutual -> StealthRose.copy(alpha = 0.2f); isPulsed -> StealthPrimary.copy(alpha = 0.2f); else -> Color.White.copy(alpha = 0.05f) }, 
                 border = BorderStroke(0.5.dp, when { isSelected -> Color.White; isMutual -> StealthRose; isPulsed -> StealthPrimary; else -> Color.White.copy(alpha = 0.1f) })
             ) { 
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.onGloballyPositioned { 
-                    val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                    val current = coordinates[rowId] ?: PersonaConnectionPoints()
-                    coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) 
-                }) { 
+                Box(
+                    contentAlignment = Alignment.Center, 
+                    modifier = Modifier.onGloballyPositioned { 
+                        val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                        val current = coordinates[rowId] ?: PersonaConnectionPoints()
+                        coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) 
+                    }
+                ) { 
                     Text(text = signatureDevice.emoji, fontSize = 12.sp) 
                 } 
             }

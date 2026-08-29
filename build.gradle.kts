@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.dependency.analysis)
 }
 
-allprojects {
+subprojects {
     configurations.all {
         resolutionStrategy {
             eachDependency {
