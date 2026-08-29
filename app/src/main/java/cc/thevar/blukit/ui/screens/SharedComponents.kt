@@ -57,6 +57,7 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.theme.StealthAmber
+import cc.thevar.blukit.ui.components.AssignmentItem
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -319,6 +320,8 @@ fun BlukitHumanityStage(
     themeColor: Color,
     modifier: Modifier = Modifier,
     userCount: Int? = null,
+    isVaulted: Boolean = false,
+    isSeniorVault: Boolean = false,
     trailingContent: @Composable (RowScope.() -> Unit)? = null
 ) {
     var showResetProfileDialog by remember { mutableStateOf(value = false) }
@@ -352,6 +355,16 @@ fun BlukitHumanityStage(
                 CrowdTicker(title = title, resonances = activeCrowds)
             }
 
+            // Vault Status Indicators
+            if (isVaulted) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(Icons.Rounded.Archive, contentDescription = "Vaulted", tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(12.dp))
+            }
+            if (isSeniorVault) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(Icons.Rounded.VerifiedUser, contentDescription = "Senior Vault", tint = StealthRose, modifier = Modifier.size(12.dp))
+            }
+
             if (userCount != null) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Surface(
@@ -370,7 +383,7 @@ fun BlukitHumanityStage(
                 }
             }
 
-            val isLanding = title == "THE CROWD" || title == "PUBLIC PULSES" || title == "BLUKIT" || title == "EVENT"
+            val isLanding = (title == "THE CROWD") || (title == "PUBLIC PULSES") || (title == "BLUKIT") || (title == "EVENT")
             if (isLanding && onTitleClick != null) {
                 Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
             }
@@ -442,6 +455,7 @@ fun BlukitPulseHub(
     onManage: (() -> Unit)? = null,
     onNote: (() -> Unit)? = null,
     onCreatePublicResonance: ((String, String?) -> Unit)? = null,
+    onTask: (() -> Unit)? = null, // NEW: For assignment creation
     isSearchMode: Boolean = false,
     onFocusChange: (Boolean) -> Unit = {},
 ) {
@@ -572,6 +586,7 @@ fun BlukitPulseHub(
                 onAttachFile = onAttachFile, 
                 onManage = onManage,
                 onNote = onNote,
+                onTask = onTask, // NEW: Propagate to Input
                 pulseCount = pulseCount, 
                 isSearchActive = isSearchMode,
                 onSearchToggle = onSearchToggle,
@@ -774,6 +789,7 @@ fun PulsingResonanceTicker(
                     lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
                     onClick = { onPulseClick(resonance.id) },
                     showJoin = true,
+                    aiTrend = device.statusLabel, // Propagate AI trend from the dummy device header
                     leftContent = if (resonance.id == Resonance.ID_CROWD) {
                         {
                             PulsePersonaSignature(
@@ -946,7 +962,14 @@ fun AnimatedPulseItem(
             modifier = Modifier
                 .weight(1f)
         ) {
-            if (msg != null) {
+            if (msg?.type == MessagePayload.TYPE_ASSIGNMENT_TASK) {
+                AssignmentItem(
+                    assignment = msg,
+                    onStatusChange = { /* Propagated via PulseStore CRDT */ },
+                    themeColor = if (isMutual) StealthRose else StealthPrimary,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            } else if (msg != null) {
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isPlural) {
@@ -1151,6 +1174,63 @@ fun BlukitAlert(
  * SPECTRAL TIP: Glowing guidance cards for mesh onboarding and discovery.
  */
 @Composable
+fun RadioRequestEntry(
+    device: P2PDevice,
+    onAccept: () -> Unit,
+    onDeny: () -> Unit,
+    themeColor: Color = StealthPrimary
+) {
+    Surface(
+        color = themeColor.copy(alpha = 0.1f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = device.emoji, fontSize = 20.sp)
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = "RADIO REQUEST", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Black)
+                Text(text = (device.name ?: "PEER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            IconButton(onClick = onDeny) { Icon(Icons.Rounded.Close, contentDescription = "Deny", tint = Color.Red.copy(alpha = 0.6f)) }
+            IconButton(onClick = onAccept) { Icon(Icons.Rounded.Check, contentDescription = "Accept", tint = themeColor) }
+        }
+    }
+}
+
+@Composable
+fun SunkPulseVault(
+    archivedCrowds: List<Resonance>,
+    onRestore: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.Black,
+        title = { Text("SUNK PULSE VAULT", fontWeight = FontWeight.Black, color = StealthPrimary) },
+        text = {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(archivedCrowds) { resonance ->
+                    ResonanceSummary(
+                        title = resonance.name,
+                        subtitle = "ARCHIVED",
+                        icon = Icons.Rounded.Unarchive,
+                        themeColor = Color.Gray,
+                        count = -1,
+                        lastUpdate = "SUNK",
+                        onClick = { onRestore(resonance.id) }
+                    )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("CLOSE", color = StealthPrimary, fontWeight = FontWeight.Black) } }
+    )
+}
+@Composable
 fun BlukitTip(
     text: String,
     onDismiss: () -> Unit,
@@ -1282,7 +1362,8 @@ fun ResonanceSummary(
     showJoin: Boolean = false,
     leftContent: @Composable (() -> Unit)? = null,
     topContent: @Composable (() -> Unit)? = null,
-    underIconContent: @Composable (ColumnScope.() -> Unit)? = null
+    underIconContent: @Composable (ColumnScope.() -> Unit)? = null,
+    aiTrend: String? = null // NEW: For showing synthesized trends
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -1364,17 +1445,36 @@ fun ResonanceSummary(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-    if (subtitle != null) {
-        Text(
-            text = subtitle.uppercase(),
-            fontSize = 8.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.6f),
-            letterSpacing = 1.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
+                        if (subtitle != null || aiTrend != null) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (aiTrend != null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(StealthAmber.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = aiTrend.uppercase(),
+                                            fontSize = 7.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = StealthAmber
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
+                                if (subtitle != null) {
+                                    Text(
+                                        text = subtitle.uppercase(),
+                                        fontSize = 8.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.6f),
+                                        letterSpacing = 1.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
                     }
                     
                     // RIGHT: [ENTER + TIMESTAMP]
@@ -2200,6 +2300,7 @@ fun BlukitInput(
     onAttachFile: () -> Unit = {},
     onManage: (() -> Unit)? = null,
     onNote: (() -> Unit)? = null,
+    onTask: (() -> Unit)? = null, // NEW: For assignment creation
     pulseCount: Int = 0,
     isReadOnly: Boolean = false,
     isPulseLocked: Boolean = false,
@@ -2374,12 +2475,23 @@ fun BlukitInput(
                         }
                         
                         if (onNote != null) {
-                            IconButton(onClick = onNote, modifier = Modifier.size(40.dp)) {
+                            IconButton(onClick = onNote, modifier = Modifier.size(36.dp)) {
                                 Icon(
                                     imageVector = Icons.Rounded.EditNote, 
                                     contentDescription = "Note", 
                                     tint = StealthRose.copy(alpha = 0.8f),
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        if (onTask != null) {
+                            IconButton(onClick = onTask, modifier = Modifier.size(36.dp)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Assignment, 
+                                    contentDescription = "Task", 
+                                    tint = StealthAmber.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }

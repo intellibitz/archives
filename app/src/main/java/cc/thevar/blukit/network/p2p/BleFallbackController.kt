@@ -626,7 +626,7 @@ class BleFallbackController(
             current.map { device ->
                 device.copy(
                     isConnected = device.id in _connectedTies.value,
-                    isTiePending = device.id in pendingRadioRequests
+                    isTiePending = device.id in pendingRadioRequests,
                 )
             }
         }

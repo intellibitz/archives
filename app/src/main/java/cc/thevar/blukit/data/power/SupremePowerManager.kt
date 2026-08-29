@@ -45,7 +45,7 @@ class SupremePowerManager(
     // Geofencing coordinates (Campus landmarks)
     private val landmarks = mapOf(
         "AIR HUB" to (12.9716 to 77.5946),
-        "LIBRARY" to (12.9724 to 77.5937)
+        "LIBRARY" to (12.9724 to 77.5937),
     )
 
     init {
@@ -164,8 +164,8 @@ class SupremePowerManager(
             users == 0 -> "MAKE PEOPLE PULSE"
             users > 15 -> "PULSE PULSE: MESH DENSE"
             harmony < 0.3f -> "BLUKIT NEARBY: SPREAD PULSES"
-            users > 10 && harmony > 0.8f -> "PULSE PULSE"
-            radios == 0 && users > 0 -> "CROWD ENERGY"
+            (users > 10) && (harmony > 0.8f) -> "PULSE PULSE"
+            (radios == 0) && (users > 0) -> "CROWD ENERGY"
             msgs > 100 -> "PULSE FLOW"
             else -> "MAKE PEOPLE PULSE"
         }

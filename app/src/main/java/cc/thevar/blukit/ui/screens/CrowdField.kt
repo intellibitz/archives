@@ -91,9 +91,9 @@ fun CrowdField(
     onBack: (() -> Unit)? = null,
     highResonancePulses: List<MessagePayload> = emptyList(),
     onVote: (String, Int) -> Unit = { _, _ -> },
-    header: @Composable () -> Unit
+    header: @Composable () -> Unit,
 ) {
-    var showTip by remember { mutableStateOf(true) }
+    var showTip by remember { mutableStateOf(value = true) }
     var localFocusedId by remember(externalFocusedId) { mutableStateOf(externalFocusedId) }
     var selectedPulseForMenu by remember { mutableStateOf<MessagePayload?>(null) }
 
@@ -110,9 +110,9 @@ fun CrowdField(
 
     val pulsesData = remember(state.session.messages, crowdId, localDeviceId, localFocusedId) {
         if (crowdId == null) {
-            Triple(emptyList<MessagePayload>(), emptyMap<String, Int>(), false)
+            Triple(emptyList(), emptyMap(), false)
         } else {
-            val basePulses = state.session.messages.filter { it.groupId == crowdId && it.parentMessageId == null }
+            val basePulses = state.session.messages.filter { (it.groupId == crowdId) && (it.parentMessageId == null) }
             val counts = basePulses.groupBy { it.senderId }.mapValues { it.value.size }
             val sorted = basePulses.sortedBy { it.timestamp }
             Triple(sorted, counts, localFocusedId != null)
@@ -135,7 +135,7 @@ fun CrowdField(
                 CrowdCanvas(
                     highResonancePulses = highResonancePulses,
                     themeColor = StealthPrimary,
-                    onPulseClick = { onNavigateToPulse(it) }
+                    onPulseClick = { onNavigateToPulse(it) },
                 )
 
                 RipplesField(

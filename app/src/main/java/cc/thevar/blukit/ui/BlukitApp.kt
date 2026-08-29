@@ -113,6 +113,7 @@ fun BlukitApp(
     
     val viewModel: MainViewModel = koinViewModel()
     val bluetoothViewModel: BluetoothViewModel = koinViewModel()
+    val supremePowerViewModel: cc.thevar.blukit.ui.viewmodels.SupremePowerViewModel = koinViewModel()
     
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emoji by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
@@ -120,6 +121,7 @@ fun BlukitApp(
     val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
     val highResonancePulses by bluetoothViewModel.highResonancePulses.collectAsStateWithLifecycle()
+    val supremeReport by supremePowerViewModel.report.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(bluetoothState.activity.uiError) { 
@@ -222,7 +224,7 @@ fun BlukitApp(
 
     var showManageDialog by remember { mutableStateOf(value = false) }
     var isSearchMode by remember { mutableStateOf(value = false) }
-    var isInputFocused by remember { mutableStateOf(false) }
+    var isInputFocused by remember { mutableStateOf(value = false) }
     var showAirGhost by remember { mutableStateOf(false) }
     var showPrivacyProtocol by remember { mutableStateOf(false) }
     var showOnboarding by remember { mutableStateOf(false) }
@@ -235,7 +237,7 @@ fun BlukitApp(
     }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.GetContent(),
     ) { uri: Uri? ->
         uri?.let { bluetoothViewModel.spreadFile(it) }
     }
@@ -402,6 +404,7 @@ fun BlukitApp(
                                     },
                                     onShowTimeline = { backStack.add(Route.Timeline) },
                                     onResetProfile = { viewModel.resetProfile() },
+                                    supremeReport = supremeReport,
                                     onBack = if (isSearchMode || showAirGhost) { 
                                         { 
                                             isSearchMode = false
@@ -425,6 +428,7 @@ fun BlukitApp(
                                     },
                                     onAcceptRadio = bluetoothViewModel::acceptRadio, 
                                     onDenyRadio = bluetoothViewModel::denyRadio,
+                                    onNavigateToPulse = { backStack.add(Route.PulseField(it)) },
                                     onRestoreCrowd = bluetoothViewModel::restoreFromVault,
                                     isSearchActive = isSearchMode,
                                     showAirGhost = showAirGhost,
@@ -493,6 +497,7 @@ fun BlukitApp(
                                         onAssignRole = bluetoothViewModel::assignRole,
                                         onUpdateNote = bluetoothViewModel::updateNote,
                                         onPushRitual = bluetoothViewModel::pushRitual,
+                                        onSendMessage = bluetoothViewModel::sendMessage,
                                         showMemberManagement = showManageDialog, 
                                         onShowManagement = { showManageDialog = true }, 
                                         onDismissManagement = { showManageDialog = false }, 

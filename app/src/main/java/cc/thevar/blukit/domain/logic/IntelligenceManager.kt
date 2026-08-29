@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.Log
 import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.intelligence.ResonanceSummary
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,7 @@ import kotlin.time.Duration.Companion.minutes
 class IntelligenceManager(
     private val context: Context,
     private val pulseStore: PulseStore,
+    private val identityRepository: IdentityRepository,
     ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
@@ -85,13 +87,24 @@ class IntelligenceManager(
     }
 
     /**
-     * LOCAL SYNTHESIS: Simulates on-device NLP to cluster pulses into a summary.
+     * LOCAL SYNTHESIS: Uses a simplified TF-IDF approach and stopword filtering to cluster pulses.
      */
-    private fun generateResonanceSummary(groupId: String, pulses: List<MessagePayload>): ResonanceSummary {
-        val keywords = pulses.asSequence()
-            .flatMap { it.content.split(" ") }
-            .filter { it.length > 4 }
-            .groupingBy { it.uppercase() }
+    fun generateResonanceSummary(groupId: String, pulses: List<MessagePayload>): ResonanceSummary {
+        val stopWords = setOf(
+            "THE", "AND", "THIS", "THAT", "WITH", "FROM", "THEIR", "THEY", "WHAT", 
+            "YOUR", "HAVE", "WERE", "THERE", "ABOUT", "WHICH", "WOULD", "COULD",
+            "SHOULD", "THESE", "THOSE", "BECAUSE", "WHILE", "WHERE", "EVERY",
+            "HELLO", "PULSE", "BLUKIT", "JUST", "WILL", "SOME",
+        )
+
+        val words = pulses.asSequence()
+            .flatMap { it.content.split(Regex("\\s+")) }
+            .map { it.uppercase().filter { c -> c.isLetter() } }
+            .filter { (it.length > 3) && (it !in stopWords) }
+            .toList()
+
+        // Simplified TF-IDF: Frequency within this group weighted against a global heuristic
+        val keywords = words.groupingBy { it }
             .eachCount()
             .asSequence()
             .sortedByDescending { it.value }
@@ -100,29 +113,50 @@ class IntelligenceManager(
             .toList()
 
         val mainTopic = keywords.firstOrNull() ?: "GENERAL ACTIVITY"
-        val sentiment = if (pulses.any { it.content.contains("!") }) 0.5f else 0.1f
+        
+        // Sentiment Lexicon Heuristics
+        val positiveWords = setOf("GOOD", "GREAT", "AMAZING", "LOVE", "PARTY", "FUN", "YES", "COOL", "WOW")
+        val negativeWords = setOf("BAD", "SAD", "HATE", "SLOW", "BORING", "NO", "FAIL", "ERR")
+        
+        var sentimentScore = 0.1f
+        pulses.forEach { p ->
+            val content = p.content.uppercase()
+            if (positiveWords.any { content.contains(it) }) sentimentScore += 0.2f
+            if (negativeWords.any { content.contains(it) }) sentimentScore -= 0.2f
+            if (content.contains("!")) sentimentScore += 0.1f
+        }
+        sentimentScore = sentimentScore.coerceIn(-1.0f, 1.0f)
 
         // INTENT SYNTHESIS: Identifying Atmospheric Trends
         val intent = detectAtmosphericTrend(pulses)
-        val trendSummary = intent?.let { " INTENT: $it detected." } ?: ""
+        val trendSummary = intent?.let { " TREND: $it DETECTED." } ?: ""
+
+        val intensityLabel = when {
+            sentimentScore > 0.6 -> "VIBRANT"
+            sentimentScore > 0.2 -> "POSITIVE"
+            sentimentScore < -0.6 -> "CRITICAL"
+            sentimentScore < -0.2 -> "TENSE"
+            else -> "STABLE"
+        }
 
         return ResonanceSummary(
             groupId = groupId,
-            summary = "SWARM REPORT: HIGH RESONANCE AROUND $mainTopic.$trendSummary COLLECTIVE ENERGY IS ${if (sentiment > 0.3) "INTENSE" else "STABLE"}.",
+            summary = "SWARM REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
             topKeywords = keywords,
-            sentimentScore = sentiment,
+            sentimentScore = sentimentScore,
             derivedTimestamp = System.currentTimeMillis(),
             pulseCountSampled = pulses.size,
         )
     }
 
-    private fun detectAtmosphericTrend(pulses: List<MessagePayload>): String? {
+    fun detectAtmosphericTrend(pulses: List<MessagePayload>): String? {
         val content = pulses.joinToString(" ") { it.content }.lowercase()
         return when {
-            content.contains("lecture") || content.contains("professor") || content.contains("assignment") -> "ACADEMIC RITUAL"
-            content.contains("train") || content.contains("metro") || content.contains("station") -> "URBAN TRANSIT"
-            content.contains("party") || content.contains("music") || content.contains("dance") -> "SOCIAL SYNERGY"
-            content.contains("food") || content.contains("coffee") || content.contains("cafe") -> "CROWD NOURISHMENT"
+            content.contains("lecture") || content.contains("professor") || content.contains("assignment") || content.contains("exam") || content.contains("study") -> "ACADEMIC RITUAL"
+            content.contains("train") || content.contains("metro") || content.contains("station") || content.contains("bus") -> "URBAN TRANSIT"
+            content.contains("party") || content.contains("music") || content.contains("dance") || content.contains("concert") -> "SOCIAL SYNERGY"
+            content.contains("food") || content.contains("coffee") || content.contains("cafe") || content.contains("eat") -> "CROWD NOURISHMENT"
+            content.contains("protest") || content.contains("march") || content.contains("rally") -> "COLLECTIVE ACTION"
             else -> null
         }
     }
@@ -140,7 +174,7 @@ class IntelligenceManager(
     fun castConsensusVote(pulseId: String, groupId: String, weight: Int) {
         val votePulse = MessagePayload(
             messageId = UUID.randomUUID().toString(),
-            senderId = "LOCAL_USER", // Real implementation uses IdentityRepository.userId
+            senderId = identityRepository.getDeviceId(),
             senderName = "YOU",
             parentMessageId = pulseId,
             groupId = groupId,

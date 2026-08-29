@@ -1,80 +1,44 @@
 /**
- * BLUKIT CHAIN FIELD
- *
- * The private, secure interaction layer for encrypted peer groups.
- * Optimized for tactical whispers and persistent shared notes.
- */
-package cc.thevar.blukit.ui.screens
-
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BubbleChart
-import androidx.compose.material.icons.rounded.Hearing
-import androidx.compose.material.icons.rounded.IosShare
-import androidx.compose.material.icons.rounded.RemoveCircleOutline
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.Resonance
-import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthRose
-import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-
-/**
  * CHAIN FIELD: The deepest layer of resonance.
  * 
  * Architectural Pattern:
  * - Header: Harmony Top Bar with Stealth Rose theme.
  * - Entries: Private Radar, Secure Ties, Whispers Ticker, Hub with Note and Management actions.
  */
+package cc.thevar.blukit.ui.screens
+
+import androidx.compose.animation.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.Resonance
+import cc.thevar.blukit.ui.components.AssignmentCreator
+import cc.thevar.blukit.ui.theme.StealthPrimary
+import cc.thevar.blukit.ui.theme.StealthRose
+import java.text.SimpleDateFormat
+import java.util.*
+
 @Composable
 fun ChainField(
-    state: BluetoothUiState,
+    state: cc.thevar.blukit.ui.viewmodels.BluetoothUiState,
     localDeviceId: String,
     groupId: String?,
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
@@ -95,6 +59,7 @@ fun ChainField(
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
     onStartSidePulse: () -> Unit = {},
+    onSendMessage: (String, String?) -> Unit = { _, _ -> },
     onClearSelection: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
@@ -114,50 +79,49 @@ fun ChainField(
     header: @Composable () -> Unit,
 ) {
     var showTip by remember { mutableStateOf(value = true) }
-    var localFocusedId by remember(externalFocusedId) { mutableStateOf(value = externalFocusedId) }
-
+    
     val group = remember(groupId, state.session.groups) {
         state.session.groups.find { it.id == groupId }
     }
 
     val childTies = remember(state.session.groups, groupId) {
-        state.session.groups.filter { (it.parentId == groupId && it.scope != Resonance.SCOPE_PUBLIC) }
+        state.session.groups.filter { (it.parentId == groupId) && (it.scope != Resonance.SCOPE_PUBLIC) }
     }
 
-    val pulsesData = remember(state.session.messages, groupId, localDeviceId, localFocusedId) {
+    val pulsesData = remember(state.session.messages, groupId, localDeviceId) {
         if (groupId == null) {
-            Triple(emptyList(), emptyMap<String, Int>(), false)
+            Triple(emptyList(), emptyMap(), false)
         } else {
             val basePulses = state.session.messages.filter { it.groupId == groupId && it.parentMessageId == null }
             val counts = basePulses.groupBy { it.senderId }.mapValues { it.value.size }
             val sorted = basePulses.sortedBy { it.timestamp }
-            Triple(sorted, counts, localFocusedId != null)
+            Triple(sorted, counts, false)
         }
     }
 
     val (chatPulses, pulseCounts, _) = pulsesData
     val memberSet = remember(group, localDeviceId) { (group?.memberIds ?: emptySet()) - localDeviceId }
     val isPrivate = group?.scope == Resonance.SCOPE_PRIVATE
-    val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    val themeColor = if (isPrivate) StealthRose else StealthPrimary
 
-    var showNoteEditor by remember { mutableStateOf(false) }
+    var showNoteEditor by remember { mutableStateOf(value = false) }
     var activeNote by remember { mutableStateOf<MessagePayload?>(null) }
+    var showAssignmentCreator by remember { mutableStateOf(false) }
 
     BlukitFieldScaffold(
-        themeColor = if (isPrivate) StealthRose else StealthPrimary,
+        themeColor = themeColor,
         glowIntensityTarget = 0.8f,
         header = header,
         entries = {
             // MODULE 1: BASE CONTENT (Radar + Lists)
             Column(modifier = Modifier.fillMaxSize()) {
-                val chainName = group?.name ?: "CHAIN"
                 RipplesField(
                     state = state,
                     activeBubbles = emptyList(),
-                    pulsedPeers = emptySet(),
+                    pulsedPeers = memberSet,
                     onDeviceClick = { },
                     // Humanity Stage
-                    title = chainName,
+                    title = group?.name ?: "CHAIN",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     userNickname = userNickname,
@@ -168,82 +132,40 @@ fun ChainField(
                     onTitleClick = onTitleClick,
                     onBack = onBack,
                     onNicknameChange = onUserNicknameChange,
-                    isDimmed = isInputFocused || state.crowd.selectedDevices.isNotEmpty(),
-                    themeColor = if (isPrivate) StealthRose else StealthPrimary,
-                    modifier = Modifier.fillMaxWidth().height(320.dp)
+                    isDimmed = isInputFocused,
+                    themeColor = themeColor,
+                    isVaulted = group?.isVaulted == true,
+                    isSeniorVault = group?.isSeniorVault == true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp),
                 )
 
-                Column(modifier = Modifier.weight(1f)) {
-                    // Ties Section (formerly Nested Ties)
-                    if (childTies.isNotEmpty()) {
-                        Text(
-                            text = "TIES", 
-                            style = MaterialTheme.typography.labelSmall, 
-                            color = if (isPrivate) StealthRose else StealthPrimary, 
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
-                        )
-                        
-                        LazyColumn(modifier = Modifier.weight(0.3f)) {
-                            items(childTies) { tie ->
-                                ResonanceSummary(
-                                    title = tie.name,
-                                    subtitle = "SECURE SUB-CHAIN",
-                                    icon = Icons.Rounded.Hearing,
-                                    themeColor = if (isPrivate) StealthRose else StealthPrimary,
-                                    count = tie.memberIds.size,
-                                    lastUpdate = sdf.format(Date(tie.lastPulseTimestamp)),
-                                    onClick = { onNavigateToGroup(tie.id) },
-                                    showJoin = true
-                                )
-                            }
-                        }
-                    }
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    // Pulses Section
-                    Text(
-                        text = "WHISPERS", 
-                        style = MaterialTheme.typography.labelSmall, 
-                        color = if (isPrivate) StealthRose else StealthPrimary, 
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    )
-
-                    LazyColumn(modifier = Modifier.weight(0.7f)) {
-                        items(chatPulses) { pulse ->
-                            if (pulse.isMeta) {
-                                ResonanceSummary(
-                                    title = pulse.content.take(20),
-                                    subtitle = "RESONANCE",
-                                    icon = Icons.Rounded.BubbleChart,
-                                    themeColor = if (isPrivate) StealthRose else StealthPrimary,
-                                    count = state.session.messages.count { it.parentMessageId == pulse.messageId },
-                                    lastUpdate = sdf.format(Date(pulse.timestamp)),
-                                    onClick = { onNavigateToPulse(pulse.messageId) }
-                                )
-                            } else {
-                                AnimatedPulseItem(
-                                    msg = pulse,
-                                    isSelected = false,
-                                    senderDevice = null,
-                                    pulseCount = 0,
-                                    isPulsed = false,
-                                    isMe = pulse.senderId == localDeviceId,
-                                    isGrouped = false,
-                                    isMutual = false,
-                                    rowId = pulse.messageId,
-                                    onPulseClick = { /* Handle Unit Click */ },
-                                    onDeviceLongClick = {}
-                                )
-                            }
+                // CHILD TIES ROW
+                if (childTies.isNotEmpty()) {
+                    TickerSectionHeader(title = "SECURE TIES", color = themeColor)
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(childTies) { tie ->
+                            ResonanceSummary(
+                                title = tie.name,
+                                subtitle = "SUB-CHAIN",
+                                icon = Icons.Rounded.Hearing,
+                                themeColor = StealthRose,
+                                count = tie.memberIds.size,
+                                lastUpdate = "ACTIVE",
+                                onClick = { onNavigateToGroup(tie.id) },
+                                modifier = Modifier.width(280.dp)
+                            )
                         }
                     }
                 }
-                
-                // Bottom padding to avoid occlusion by the floating ticker and hub
-                Spacer(modifier = Modifier.height(140.dp))
+
+                Spacer(modifier = Modifier.height(160.dp)) // Avoid ticker occlusion
             }
 
             // MODULE 2: TICKER (Floating Overlay)
@@ -265,7 +187,7 @@ fun ChainField(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .height(280.dp)
-                    .padding(bottom = 100.dp) // Room for Hub
+                    .padding(bottom = 100.dp) 
             )
 
             // MODULE 3: PULSE HUB (Bottom Overlay)
@@ -277,7 +199,6 @@ fun ChainField(
                 pulseCount = state.session.messages.filter { it.groupId == groupId }.size,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
-                resonances = state.session.groups,
                 onAcceptRadio = onAcceptRadio,
                 onDenyRadio = onDenyRadio,
                 onStartSidePulse = onStartSidePulse,
@@ -287,6 +208,7 @@ fun ChainField(
                 onSearchToggle = onSearchToggle,
                 onManage = onShowManagement,
                 onNote = { showNoteEditor = true; activeNote = null },
+                onTask = { showAssignmentCreator = true },
                 onFocusChange = onInputFocusChange,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -302,7 +224,7 @@ fun ChainField(
             ) {
                 BlukitTip(
                     text = "THIS CHAIN IS SILENT. WHISPER OR PIN A PULSE TO THE CANVAS.",
-                    themeColor = if (isPrivate) StealthRose else StealthPrimary,
+                    themeColor = themeColor,
                     onDismiss = { showTip = false }
                 )
             }
@@ -317,8 +239,29 @@ fun ChainField(
                 showNoteEditor = false
                 activeNote = null
             },
-            onDismiss = { showNoteEditor = false; activeNote = null }
+            onDismiss = {
+                showNoteEditor = false
+                activeNote = null
+            }
         )
+    }
+
+    if (showAssignmentCreator && group != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.8f))
+                .clickable { showAssignmentCreator = false },
+            contentAlignment = Alignment.Center
+        ) {
+            AssignmentCreator(
+                onAssignmentCreated = { content, _ ->
+                    onSendMessage(content, group.id)
+                },
+                themeColor = themeColor,
+                onDismiss = { showAssignmentCreator = false }
+            )
+        }
     }
 
     if (showMemberManagement && group != null) {

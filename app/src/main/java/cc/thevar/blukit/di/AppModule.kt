@@ -54,7 +54,7 @@ val appModule = module {
     // Use Cases & Managers
     single { SupremePowerManager(get(), get(), get(), get()) }
     single { ConnectivityUseCase(get(), get(), get(), get()) }
-    single(createdAtStart = true) { IntelligenceManager(androidContext(), get()) }
+    single(createdAtStart = true) { IntelligenceManager(androidContext(), get(), get()) }
     
     // ViewModels
     viewModelOf(::MainViewModel)

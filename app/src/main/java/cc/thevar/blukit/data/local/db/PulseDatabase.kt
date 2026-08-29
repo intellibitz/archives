@@ -79,8 +79,16 @@ class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
 
     /** Returns all raw encrypted pulses for a full memory bridge. */
     fun getAllRawPulses(): List<ByteArray> {
+        return getRawPulsesSince(0)
+    }
+
+    /** Returns raw encrypted pulses since a specific timestamp. */
+    fun getRawPulsesSince(timestamp: Long): List<ByteArray> {
         val list = mutableListOf<ByteArray>()
-        readableDatabase.rawQuery("SELECT $COL_PAYLOAD FROM $TAB_PULSES", null).use { cursor ->
+        readableDatabase.rawQuery(
+            "SELECT $COL_PAYLOAD FROM $TAB_PULSES WHERE $COL_TIMESTAMP > ? ORDER BY $COL_TIMESTAMP ASC",
+            arrayOf(timestamp.toString())
+        ).use { cursor ->
             if (cursor.moveToFirst()) {
                 do {
                     list.add(cursor.getBlob(0))
@@ -88,6 +96,17 @@ class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
             }
         }
         return list
+    }
+
+    /** Returns the latest pulse ID in the local DAG. */
+    fun getLatestPulseId(): String? {
+        readableDatabase.rawQuery(
+            "SELECT $COL_PULSE_ID FROM $TAB_PULSES ORDER BY $COL_TIMESTAMP DESC LIMIT 1",
+            null
+        ).use { cursor ->
+            if (cursor.moveToFirst()) return cursor.getString(0)
+        }
+        return null
     }
 
     fun updateWeight(pulseId: String, newWeight: Int) {

@@ -218,6 +218,12 @@ class PulseStore(
     // --- Message Operations ---
     fun getAllMessages() = messages
 
+    /** Returns raw encrypted pulses since a specific timestamp for differential sync. */
+    fun getRawPulsesSince(timestamp: Long): List<ByteArray> = database.getRawPulsesSince(timestamp)
+
+    /** Returns the latest pulse ID in the local DAG. */
+    fun getLatestPulseId(): String? = database.getLatestPulseId()
+
     /** 
      * Incorporates a new pulse into the stream.
      * Uses LWW-CRDT logic for notes and tasks to ensure deterministic state across the mesh.
@@ -236,8 +242,16 @@ class PulseStore(
             
             if (existingIndex != -1) {
                 val existing = current[existingIndex]
+                
+                // --- GIT-STYLE DAG MERGE ---
+                // If the messageId matches but hashes differ, we have a branch.
+                // In Blukit's decentralized model, we prioritize the one with higher noteVersion 
+                // or later timestamp (LWW).
+                
                 // LWW CRDT for Note & Task Mutation
-                if ((message.type == MessagePayload.TYPE_NOTE_UPDATE) || (message.type == MessagePayload.TYPE_ASSIGNMENT_TASK)) {
+                val isMutableType = (message.type == MessagePayload.TYPE_NOTE_UPDATE) || (message.type == MessagePayload.TYPE_ASSIGNMENT_TASK)
+                
+                if (isMutableType) {
                     if ((message.noteVersion > existing.noteVersion) || 
                         ((message.noteVersion == existing.noteVersion) && (message.timestamp > existing.timestamp))) {
                         savePulseToDb(message)
@@ -246,12 +260,12 @@ class PulseStore(
                         current
                     }
                 } else {
-                    savePulseToDb(message)
-                    current.toMutableList().apply { set(existingIndex, message) }
+                    // For static pulses (Text/Image), we don't overwrite unless version/timestamp is newer (unlikely for same ID)
+                    current
                 }
             } else {
                 savePulseToDb(message)
-                current + message
+                (current + message).sortedBy { it.timestamp }
             }
         }
         
@@ -288,7 +302,7 @@ class PulseStore(
     fun getHighResonancePulses(groupId: String, limit: Int = 3): StateFlow<List<MessagePayload>> {
         return messages.map { list ->
             list.asSequence()
-                .filter { it.groupId == groupId && it.resonanceWeight > 0 }
+                .filter { (it.groupId == groupId) && (it.resonanceWeight > 0) }
                 .sortedByDescending { it.resonanceWeight }
                 .take(limit)
                 .toList()
@@ -408,8 +422,8 @@ class PulseStore(
         val now = System.currentTimeMillis()
         val allGroups = _groups.value.values
         val allPinnedPulses = allGroups.asSequence().flatMap { it.pinnedPulseIds }.toSet()
-        val vaultedGroupIds = allGroups.filter { it.isVaulted }.map { it.id }.toSet()
-        val seniorVaultIds = allGroups.filter { it.isSeniorVault }.map { it.id }.toSet()
+        val vaultedGroupIds = allGroups.asSequence().filter { it.isVaulted }.map { it.id }.toSet()
+        val seniorVaultIds = allGroups.asSequence().filter { it.isSeniorVault }.map { it.id }.toSet()
 
         _messages.value.forEach { message ->
             val isFromVaultedGroup = message.groupId in vaultedGroupIds

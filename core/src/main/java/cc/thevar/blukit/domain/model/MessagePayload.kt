@@ -74,6 +74,9 @@ data class MessagePayload(
 
         // --- Task Status (CRDT) ---
         const val TASK_PENDING = 0
+        const val TASK_COMPLETED = 1
+        const val TASK_BLOCKED = 2
+        const val TASK_ABANDONED = 3
 
         // --- Scoping Lexicon ---
         const val PULSE_SHOUT = 0

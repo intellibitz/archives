@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
+import cc.thevar.blukit.ui.components.AssignmentItem
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -113,7 +114,9 @@ fun PulseField(
                     onNicknameChange = onUserNicknameChange,
                     isDimmed = isInputFocused,
                     themeColor = themeColor,
-                    modifier = Modifier.fillMaxWidth().height(320.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp),
                 )
                 rootPulse?.let {
                     Surface(
@@ -151,7 +154,17 @@ fun PulseField(
 
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(childPulses) { pulse ->
-                        if (pulse.isMeta) {
+                        if (pulse.type == MessagePayload.TYPE_ASSIGNMENT_TASK) {
+                            AssignmentItem(
+                                assignment = pulse,
+                                onStatusChange = { _ ->
+                                    // In a real implementation, we'd call viewModel.updateTaskStatus
+                                    // For now, we'll rely on the CRDT upsert logic in PulseStore
+                                },
+                                themeColor = themeColor,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                        } else if (pulse.isMeta) {
                             ResonanceSummary(
                                 title = pulse.content.take(20),
                                 subtitle = "RESONANCE",

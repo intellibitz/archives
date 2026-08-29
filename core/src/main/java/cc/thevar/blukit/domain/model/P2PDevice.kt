@@ -30,6 +30,7 @@ data class P2PDevice(
     val pulseCount: Int = 0,
     val isLowPower: Boolean = false,
     val distanceMm: Int = -1, // WiFi RTT distance if available
+    val statusLabel: String? = null, // Temporary status or AI trend projection
 ) {
     /**
      * The physical radio medium used for the mesh connection.
@@ -50,7 +51,11 @@ data class P2PDevice(
     val proximityFactor: Float
         get() =
             // Normalization logic: maps RSSI -90 to -40 range to 0.0 to 1.0
-            kotlin.math.max(0f, kotlin.math.min(1f, 
-                (signalStrength + 90f) / 50f
-            ))
+            kotlin.math.max(
+                0f,
+                kotlin.math.min(
+                    1f,
+                    (signalStrength + 90f) / 50f,
+                ),
+            )
 }

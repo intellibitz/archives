@@ -77,7 +77,7 @@ data class Resonance(
         fun generateId(name: String, scope: Int, parentGroup: Resonance? = null): String {
             val normalized = name.uppercase().trim()
             return if (scope == SCOPE_PUBLIC) {
-                if ((normalized == "CROWD" || normalized == "THE CROWD")) {
+                if (normalized == "CROWD" || normalized == "THE CROWD") {
                     ID_CROWD
                 } else {
                     // Recursive path generation for Child Crowds

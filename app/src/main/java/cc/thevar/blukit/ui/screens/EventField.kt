@@ -9,37 +9,15 @@
  */
 package cc.thevar.blukit.ui.screens
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Hearing
-import androidx.compose.material.icons.rounded.Radar
-import androidx.compose.material.icons.rounded.Unarchive
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,15 +27,10 @@ import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
+import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 
-/**
- * THE EVENT FIELD: The top-level spectrum view of the mesh.
- * Displays all nearby pulses and event on a discovery radar.
- * Integrates spectral tips for onboarding and radar discovery.
- */
 /**
  * THE EVENT FIELD: The master spectral radar and resonance feed.
  * 
@@ -86,67 +59,26 @@ fun EventField(
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
+    supremeReport: cc.thevar.blukit.domain.power.SupremePowerReport? = null,
     // Hub Callbacks (Simplified for root)
     messageText: String = "",
+    onMessageChange: (String) -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
+    isSearchActive: Boolean = false,
     onCreatePublicResonance: ((String, String?) -> Unit)? = null,
+    onNavigateToGroup: (String) -> Unit = {},
+    onNavigateToPulse: (String) -> Unit = {},
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
-    onNavigateToGroup: (String) -> Unit = {},
-    isSearchActive: Boolean = false,
     onRestoreCrowd: (String) -> Unit = {},
     showAirGhost: Boolean = false,
     onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {},
 ) {
-    var showTip by remember { mutableStateOf(value = true) }
-    var airProposalName by remember { mutableStateOf(value = "") }
-    val activePulseId = LocalActivePulseId.current
-    var pulseGhostData by remember { mutableStateOf<GhostPulseData?>(value = null) }
-    var showVault by remember { mutableStateOf(value = false) }
-
-    val handleDeviceLongClick: (P2PDevice) -> Unit = { targetDevice ->
-        val menuId = targetDevice.persistentId ?: targetDevice.id
-        activePulseId.value = menuId
-        pulseGhostData = GhostPulseData(
-            emoji = targetDevice.emoji,
-            title = targetDevice.name ?: "PERSONA",
-            subtitle = "CROWD NODE",
-            themeColor = StealthPrimary,
-            sourceId = menuId,
-            actions = mutableListOf<GhostAction>().apply {
-                add(GhostAction(Icons.Rounded.Hearing, "WHISPER", StealthPrimary) { onWhisper(targetDevice) })
-                add(GhostAction(Icons.Rounded.Radar, "IDENTIFY", Color.White) { onIdentifyUser(menuId) })
-            }
-        )
-    }
-
-    val eventMetas = remember(state.session.groups) {
-        state.session.groups.asSequence().filter { 
-            ((it.scope == Resonance.SCOPE_PUBLIC) && ((it.parentId == null) || (it.parentId == Resonance.ID_CROWD)))
-        }.toList()
-    }
-
-    val pulsesData = remember(state.session.messages, state.session.groups, pulsedPeers, noiseFilterEnabled, isSearchActive, messageText) {
-        val basePulses = if (noiseFilterEnabled && pulsedPeers.isNotEmpty()) {
-            state.session.messages.asSequence().filter { ((it.senderId in pulsedPeers) || (it.senderId == localDeviceId)) }
-        } else {
-            state.session.messages.asSequence()
-        }
-        
-        val searchFiltered = if (!isSearchActive || messageText.isBlank()) basePulses else {
-            basePulses.filter { msg ->
-                (msg.content.contains(messageText, ignoreCase = true) || msg.senderName.contains(messageText, ignoreCase = true))
-            }
-        }
-        
-        val groupedByTie = searchFiltered.groupBy { msg ->
-            when {
-                msg.pulseType == MessagePayload.PULSE_SILENCE -> Resonance.ID_SILENCE
-                msg.groupId != null -> msg.groupId!!
-                else -> Resonance.ID_CROWD
-            }
-        }
+    val eventMetas = state.session.groups.filter { it.scope == Resonance.SCOPE_PUBLIC }
+    
+    val pulsesData = remember(state.session.messages, eventMetas) {
+        val groupedByTie = state.session.messages.groupBy { it.groupId ?: Resonance.ID_CROWD }
         
         val counts = groupedByTie.mapValues { it.value.size }
         val filtered = groupedByTie.map { it.value.maxBy { msg -> msg.timestamp } }
@@ -164,6 +96,11 @@ fun EventField(
         val sortedEvents = eventMetas.sortedBy { it.lastPulseTimestamp }
         
         sortedEvents.forEach { resonance ->
+            // Fetch latest AI summary for this resonance if it exists
+            val latestAiSummary = state.session.messages.findLast { 
+                (it.groupId == resonance.id) && (it.type == MessagePayload.TYPE_AI_SUMMARY)
+            }
+
             // 1. ADD LATEST ENTRIES for this resonance (up to 3)
             val resonancePulses = state.session.messages.asSequence().filter { 
                 (it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null))
@@ -177,16 +114,52 @@ fun EventField(
             }
 
             // 2. ADD HEADER (above pulses in UI)
-            val headDev = P2PDevice(id = resonance.id, name = resonance.name, emoji = "⚡", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+            val headDev = P2PDevice(
+                id = resonance.id, 
+                name = resonance.name, 
+                emoji = resonance.projectionEmoji ?: "⚡", 
+                medium = P2PDevice.ConnectionMedium.BLUETOOTH,
+                statusLabel = latestAiSummary?.content
+            )
             grouped.add(headDev to null)
         }
         
         grouped
     }
 
+    var airProposalName by remember { mutableStateOf("") }
+    var showVault by remember { mutableStateOf(false) }
+
     BlukitFieldScaffold(
         header = header,
         entries = {
+            // MODULE: SUPREME POWER LANDMARKS
+            if (supremeReport?.suggestedAirs?.isNotEmpty() == true) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 60.dp, end = 16.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "NEARBY HUB",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = StealthAmber,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 8.sp
+                        )
+                        supremeReport.suggestedAirs.forEach { hub ->
+                            Text(
+                                text = hub.uppercase(),
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            }
+
             // MODULE 1: CONTEXTUAL FIELD (Radar Background + Hub + Ticker)
             RipplesField(
                 state = state,
@@ -194,10 +167,8 @@ fun EventField(
                 selectedDevices = state.crowd.selectedDevices,
                 pulsedPeers = pulsedPeers,
                 isFilterMode = noiseFilterEnabled,
-                pulseGhostData = pulseGhostData,
-                onDismissGhost = { pulseGhostData = null; activePulseId.value = null },
                 onDeviceClick = onDeviceClick,
-                onDeviceLongClick = handleDeviceLongClick,
+                onDeviceLongClick = { },
                 onSearchToggle = onSearchToggle,
                 isSearchActive = isSearchActive,
                 // Humanity Stage Props
@@ -238,23 +209,17 @@ fun EventField(
                                     .padding(bottom = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                state.crowd.incomingRadioRequests.forEach { device ->
-                                    RadioRequestTickerItem(
-                                        device = device, 
-                                        onAccept = onAcceptRadio, 
-                                        onDeny = onDenyRadio
+                                state.crowd.incomingRadioRequests.forEach { request ->
+                                    RadioRequestEntry(
+                                        device = request,
+                                        onAccept = { onAcceptRadio(request) },
+                                        onDeny = { onDenyRadio(request) }
                                     )
                                 }
                             }
                         }
 
-                        // MODULE 2.2: TICKER (Standard Spectrum)
-                        TickerSectionHeader(
-                            title = "JOIN ACTIVE EVENTS BELOW",
-                            onAction = onShowAirGhost,
-                            actionLabel = "CREATE NEW EVENT"
-                        )
-                        
+                        // MODULE 2.2: GLOBAL RESONANCE TICKER
                         PulsingResonanceTicker(
                             state = state,
                             energyList = combinedEnergy,
@@ -263,91 +228,65 @@ fun EventField(
                             localNickname = userNickname,
                             pulsedPeers = pulsedPeers,
                             isGrouped = true,
-                            onPulseClick = { onNavigateToGroup(it) },
-                            onDeviceClick = onDeviceClick,
-                            onDeviceLongClick = handleDeviceLongClick,
+                            onPulseClick = { onNavigateToPulse(it) },
+                            onDeviceClick = { dev -> 
+                                if (eventMetas.any { it.id == dev.id }) {
+                                    onNavigateToGroup(dev.id)
+                                } else {
+                                    onIdentifyUser(dev.id)
+                                }
+                            },
+                            onDeviceLongClick = { },
                             modifier = Modifier.weight(1f)
                         )
                         
-                        // Bottom padding for edge-to-edge comfort
-                        Spacer(modifier = Modifier.height(16.dp))
+                        // Bottom Hub spacer
+                        Spacer(modifier = Modifier.height(110.dp))
                     }
                 }
             )
 
-            // Pulse Ghost Menus and Overlays (Floating)
-            Box(modifier = Modifier.fillMaxSize().padding(bottom = 16.dp), contentAlignment = Alignment.BottomCenter) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    AnimatedContent(
-                        targetState = when {
-                            eventMetas.isEmpty() && state.crowd.scannedDevices.isEmpty() -> "empty_mesh"
-                            else -> null
-                        },
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "EventTips"
-                    ) { tipState ->
-                        if (tipState == "empty_mesh" && showTip) {
-                            BlukitTip(
-                                text = "THE MESH IS SILENT. AWAKEN A CROWD OR WAIT FOR NEARBY PERSONAS.",
-                                onDismiss = { showTip = false }
-                            )
-                        }
-                    }
+            // MODULE 3: PULSE HUB (Bottom Overlay)
+            BlukitPulseHub(
+                currentRoute = cc.thevar.blukit.ui.navigation.Route.Event,
+                messageText = messageText,
+                onMessageChange = onMessageChange,
+                onSend = { },
+                pulseCount = state.session.messages.size,
+                incomingRadioRequests = state.crowd.incomingRadioRequests,
+                selectedDevices = state.crowd.selectedDevices,
+                onAcceptRadio = onAcceptRadio, 
+                onDenyRadio = onDenyRadio,
+                onStartSidePulse = { }, 
+                onStartChain = { }, 
+                onClearSelection = { },
+                onAttachFile = { },
+                onSearchToggle = onSearchToggle,
+                onCreatePublicResonance = onCreatePublicResonance,
+                isSearchMode = isSearchActive,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+            )
+
+            // MODULE 4: ARCHIVE / VAULT TIP
+            if (state.session.archivedGroups.isNotEmpty()) {
+                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
+                    BlukitTip(
+                        text = "${state.session.archivedGroups.size} SUNK PULSES IN THE VAULT. RESTORE?",
+                        themeColor = StealthPrimary,
+                        onDismiss = { showVault = true }
+                    )
                 }
             }
-        },
-        themeColor = StealthPrimary,
-        glowIntensityTarget = 0.4f
+        }
     )
 
     if (showVault) {
-        VaultOverlay(
-            archivedGroups = state.session.archivedGroups,
-            onRestore = { onRestoreCrowd(it)
-                showVault = false 
-            },
+        SunkPulseVault(
+            archivedCrowds = state.session.archivedGroups,
+            onRestore = onRestoreCrowd,
             onDismiss = { showVault = false }
         )
     }
-}
-
-@Composable
-fun VaultOverlay(
-    archivedGroups: List<Resonance>,
-    onRestore: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Color(0xFF0A0C14),
-        titleContentColor = StealthRose,
-        title = { Text("SUNK PULSE VAULT", fontWeight = FontWeight.Black, fontSize = 16.sp) },
-        text = {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(archivedGroups) { group ->
-                    Surface(
-                        onClick = { onRestore(group.id) },
-                        color = Color.White.copy(alpha = 0.05f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = if (group.scope == Resonance.SCOPE_LOCAL) "📱" else "⚡", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(text = group.name.uppercase(), fontWeight = FontWeight.Bold, color = Color.White)
-                                Text(text = "INACTIVE FOR 30+ DAYS", fontSize = 10.sp, color = Color.White.copy(alpha = 0.4f))
-                            }
-                            Icon(Icons.Rounded.Unarchive, contentDescription = null, tint = StealthPrimary)
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("CLOSE", color = Color.White.copy(alpha = 0.5f)) }
-        }
-    )
 }

@@ -280,7 +280,7 @@ class BluetoothViewModel(
             messages = messages,
             groups = groups,
             archivedGroups = archivedGroups,
-            syncProgress = syncProgress
+            syncProgress = syncProgress,
         )
     }
 

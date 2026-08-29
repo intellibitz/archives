@@ -91,7 +91,7 @@ class NearbyP2PController(
     private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
     override val scannedDevices = _scannedDevices.asStateFlow()
 
-    private val _isConnected = MutableStateFlow(false)
+    private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
     private val _connectedTies = MutableStateFlow<Set<String>>(emptySet())
@@ -145,7 +145,7 @@ class NearbyP2PController(
                         senderId = endpointId,
                         senderName = "PENDING",
                         content = "",
-                        timestamp = System.currentTimeMillis()
+                        timestamp = System.currentTimeMillis(),
                     )
                 }
                 else -> Log.w(tag, "Unsupported payload type received")
@@ -339,17 +339,30 @@ class NearbyP2PController(
 
     private suspend fun getPulseKeyWithRetry(id: String): SecretKey? {
         // Optimized retry: faster polling for secure key readiness
-        var a = 0; while (pulseKeys[id] == null && a < 50) { delay(20.milliseconds); a++ }; return pulseKeys[id]
+        var a = 0
+        while ((pulseKeys[id] == null) && (a < 50)) {
+            delay(20.milliseconds)
+            a++
+        }
+        return pulseKeys[id]
     }
 
     private fun syncPulseHistory(endpointId: String) {
         internalScope.launch(ioDispatcher) {
             val key = getPulseKeyWithRetry(endpointId) ?: return@launch
-            val allMessages = pulseStore.messages.value
-            // Only bridge recent public history
-            allMessages.filter { it.receiverId.isNullOrBlank() }.takeLast(10).forEach { payload ->
-                try { queuePulse(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MessagePayload.serializer(), payload).toByteArray(), key))) } catch (_: Exception) {}
-            }
+            
+            // DIFFERENTIAL SYNC: Request missing pulses since our latest local pulse.
+            val latestPulseId = pulseStore.getLatestPulseId()
+            val request = MessagePayload(
+                messageId = UUID.randomUUID().toString(),
+                senderId = repository.getDeviceId(),
+                senderName = "SYNC_BOOTSTRAP",
+                content = latestPulseId ?: "0",
+                timestamp = System.currentTimeMillis(),
+                type = MessagePayload.TYPE_RESYNC_REQUEST
+            )
+            sendMessageInternal(endpointId, request, key)
+            Log.i(tag, "Differential Sync: Bootstrapping mesh with $endpointId from $latestPulseId")
         }
     }
 
@@ -620,9 +633,9 @@ class NearbyP2PController(
             MessagePayload.TYPE_ACK -> handleAck(payload)
             MessagePayload.TYPE_IDENTITY_UPDATE -> handleIdentityUpdate(endpointId, payload, secretKey)
             MessagePayload.TYPE_TIE_REQUEST -> handleTieRequest(endpointId, payload)
-            MessagePayload.TYPE_TIE_ACCEPT -> handleTieAccept(endpointId, payload)
+            MessagePayload.TYPE_TIE_ACCEPT -> handleTieAccept(endpointId)
             MessagePayload.TYPE_RESYNC_REQUEST -> handleSyncRequest(endpointId, payload, secretKey)
-            MessagePayload.TYPE_RESYNC_CHUNK -> handleSyncChunk(endpointId, payload)
+            MessagePayload.TYPE_RESYNC_CHUNK -> handleSyncChunk(payload)
             MessagePayload.TYPE_RESYNC_COMPLETE -> handleSyncComplete(endpointId, payload)
             else -> handleChatMessage(endpointId, payload, secretKey)
         }
@@ -647,7 +660,7 @@ class NearbyP2PController(
         hapticManager.triggerPulse(HapticManager.PulseType.CONNECTION)
     }
 
-    private fun handleTieAccept(endpointId: String, payload: MessagePayload) {
+    private fun handleTieAccept(endpointId: String) {
         pendingRadioRequests.remove(endpointId)
         _outgoingRadioRequests.update { current ->
             current.asSequence().filter { it.id != endpointId }.toSet()
@@ -658,23 +671,34 @@ class NearbyP2PController(
     }
 
     private fun handleSyncRequest(endpointId: String, payload: MessagePayload, secretKey: SecretKey) {
-        val since = payload.content.toLongOrNull() ?: 0L
-        val history = pulseStore.messages.value.filter { it.timestamp > since && it.receiverId.isNullOrBlank() }
+        val sinceId = payload.content
+        val allLocalMessages = pulseStore.messages.value
+        
+        // Find the timestamp of the requested pulse ID to start differential sync
+        val sinceTimestamp = if (sinceId == "0") 0L else {
+            allLocalMessages.find { it.messageId == sinceId }?.timestamp ?: 0L
+        }
+        
+        val historyToSync = pulseStore.getRawPulsesSince(sinceTimestamp)
         
         internalScope.launch(ioDispatcher) {
-            history.chunked(10).forEachIndexed { index, chunk ->
+            _syncProgress.value = 0.1f
+            historyToSync.chunked(5).forEachIndexed { index, chunk ->
                 val chunkPayload = MessagePayload(
                     messageId = UUID.randomUUID().toString(),
                     senderId = repository.getDeviceId(),
-                    senderName = "SYNC",
-                    content = Json.encodeToString(chunk),
+                    senderName = "SYNC_CHUNK",
+                    content = Json.encodeToString(chunk.map { it.decodeToString() }), // Simple encoding for the chunk
                     timestamp = System.currentTimeMillis(),
                     type = MessagePayload.TYPE_RESYNC_CHUNK,
-                    status = 0, 
                 )
+                
+                // We send the raw encrypted bytes wrapped in a SYNC_CHUNK payload
+                // The receiver will decrypt the SYNC_CHUNK, then decrypt each pulse inside it.
                 sendMessageInternal(endpointId, chunkPayload, secretKey)
-                _syncProgress.value = 0.25f + ((index.toFloat() / (((history.size / 10.0) + 1).toFloat())) * 0.7f)
+                _syncProgress.value = 0.1f + ((index.toFloat() / (historyToSync.size / 5f + 1)) * 0.8f)
             }
+            
             val complete = MessagePayload(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
@@ -684,14 +708,32 @@ class NearbyP2PController(
                 type = MessagePayload.TYPE_RESYNC_COMPLETE,
             )
             sendMessageInternal(endpointId, complete, secretKey)
+            _syncProgress.value = 1.0f
+            delay(1.seconds)
+            _syncProgress.value = null
         }
     }
 
-    private fun handleSyncChunk(endpointId: String, payload: MessagePayload) {
+    private fun handleSyncChunk(payload: MessagePayload) {
         try {
-            val pulses = Json.decodeFromString<List<MessagePayload>>(payload.content)
-            pulses.forEach { p -> if (isNewMessage(p.messageId)) pulseStore.upsertMessage(p) }
-        } catch (_: Exception) {}
+            // Content is a JSON array of Base64 or raw strings of encrypted pulses
+            val encryptedPulses = Json.decodeFromString<List<String>>(payload.content)
+            encryptedPulses.forEach { encryptedStr ->
+                // Note: The PulseStore.upsertMessage handles decryption/parsing when loading from DB,
+                // but here we are receiving raw encrypted pulses that we need to store.
+                // We'll decrypt them first to verify and then upsert.
+                try {
+                    val encryptedBytes = encryptedStr.toByteArray() // Simplified
+                    val decrypted = cryptoManager.decryptLocal(encryptedBytes)
+                    val pulse = Json.decodeFromString<MessagePayload>(decrypted.decodeToString())
+                    if (isNewMessage(pulse.messageId)) {
+                        pulseStore.upsertMessage(pulse)
+                    }
+                } catch (_: Exception) {}
+            }
+        } catch (_: Exception) {
+            Log.e(tag, "Failed to parse sync chunk")
+        }
     }
 
     private fun handleSyncComplete(endpointId: String, payload: MessagePayload) {

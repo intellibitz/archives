@@ -103,7 +103,8 @@ data class RelayEvent(
     val id: String,
     val start: Offset,
     val end: Offset,
-    val startTime: Long
+    val startTime: Long,
+    val color: Color = StealthPrimary
 )
 
 /** Expanding rings signaling node energy emission. */
@@ -152,6 +153,8 @@ fun RipplesField(
     onNicknameChange: (String) -> Unit = {},
     themeColor: Color = StealthPrimary,
     isDimmed: Boolean = false,
+    isVaulted: Boolean = false,
+    isSeniorVault: Boolean = false,
     content: @Composable () -> Unit = {},
     airRitualGhost: @Composable () -> Unit = {}
 ) {
@@ -189,6 +192,7 @@ fun RipplesField(
                 relayEvents.add(RelayEvent(last.messageId, startOffset, targetOffset, System.currentTimeMillis()))
                 
                 val rippleColor = if (last.isPrivate) StealthRose else StealthPrimary
+                relayEvents.add(RelayEvent(last.messageId, startOffset, targetOffset, System.currentTimeMillis(), rippleColor))
                 pulseRipples.add(PulseRipple(last.messageId, targetOffset, System.currentTimeMillis(), rippleColor))
             }
         }
@@ -229,6 +233,8 @@ fun RipplesField(
                     onBack = onBack,
                     themeColor = themeColor,
                     userCount = state.crowd.scannedDevices.size,
+                    isVaulted = isVaulted,
+                    isSeniorVault = isSeniorVault,
                     trailingContent = {
                         // Tactical Radar Toggles
                         if (onSearchToggle != null) {
@@ -272,10 +278,24 @@ fun RipplesField(
                     }, 
                 contentAlignment = Alignment.Center
             ) {
+                AtmosphericHeatmap(energy = collectiveEnergy, themeColor = themeColor)
+
                 Box(modifier = Modifier.graphicsLayer { alpha = dimAlpha }) {
                     RelayLayer(relayEvents)
                 }
                 
+                // MAIN RADAR NODES: Visualizing local peers
+                RadarNodesLayer(
+                    devices = if (onlyTies) state.crowd.scannedDevices.filter { it.isConnected } else state.crowd.scannedDevices,
+                    onDeviceClick = onDeviceClick,
+                    onDeviceLongClick = onDeviceLongClick,
+                    selectedDevices = selectedDevices,
+                    pulsedPeers = pulsedPeers,
+                    bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() },
+                    themeColor = themeColor,
+                    density = density
+                )
+
                 PulseRippleLayer(pulseRipples)
 
                 if (pulseGhostData != null) {
@@ -291,6 +311,24 @@ fun RipplesField(
     )
 }
 
+
+@Composable
+private fun RelayLayer(relays: List<RelayEvent>) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        relays.forEach { relay ->
+            val progress = (System.currentTimeMillis() - relay.startTime) / 800f
+            if (progress in 0f..1f) {
+                val currentPos = relay.start + (relay.end - relay.start) * progress
+                drawCircle(
+                    color = relay.color.copy(alpha = 0.8f * (1f - progress)),
+                    radius = 3.dp.toPx(),
+                    center = center + currentPos
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun PulseRippleLayer(ripples: List<PulseRipple>) {
@@ -311,20 +349,72 @@ private fun PulseRippleLayer(ripples: List<PulseRipple>) {
 }
 
 @Composable
-private fun RelayLayer(relays: List<RelayEvent>) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val center = Offset(size.width / 2f, size.height / 2f)
-        relays.forEach { relay ->
-            val progress = (System.currentTimeMillis() - relay.startTime) / 800f
-            if (progress in 0f..1f) {
-                val currentPos = relay.start + (relay.end - relay.start) * progress
-                drawCircle(
-                    color = StealthPrimary.copy(alpha = 0.8f * (1f - progress)),
-                    radius = 3.dp.toPx(),
-                    center = center + currentPos
+private fun RadarNodesLayer(
+    devices: List<P2PDevice>,
+    onDeviceClick: (P2PDevice) -> Unit,
+    onDeviceLongClick: (P2PDevice) -> Unit,
+    selectedDevices: Set<String>,
+    pulsedPeers: Set<String>,
+    bubbleSenders: Set<String>,
+    themeColor: Color,
+    density: androidx.compose.ui.unit.Density
+) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        devices.forEachIndexed { index, device ->
+            val maxRadiusPx = with(density) { 140.dp.toPx() }
+            // PROXIMITY mapping: closer signal = smaller orbital radius
+            val radiusValue = (1f - device.proximityFactor) * maxRadiusPx + with(density) { 60.dp.toPx() }
+            val angle = (index.toDouble() / devices.size.coerceAtLeast(1)) * 2 * PI
+            
+            val xOffset = (radiusValue * cos(angle)).toFloat()
+            val yOffset = (radiusValue * sin(angle)).toFloat()
+            
+            Box(modifier = Modifier.offset(with(density) { xOffset.toDp() }, with(density) { yOffset.toDp() })) {
+                PulsePersonaSignature(
+                    device = device,
+                    isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
+                    isSelected = selectedDevices.contains(device.id),
+                    isPeerPulsed = pulsedPeers.contains(device.id),
+                    size = 40.dp,
+                    themeColor = themeColor,
+                    onClick = { onDeviceClick(device) },
+                    onLongClick = { onDeviceLongClick(device) }
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AtmosphericHeatmap(energy: Float, themeColor: Color) {
+    val infiniteTransition = rememberInfiniteTransition(label = "HeatmapPulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Pulse"
+    )
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val radius = size.minDimension * 0.8f * pulseScale
+        
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    themeColor.copy(alpha = 0.15f * energy),
+                    themeColor.copy(alpha = 0.05f * energy),
+                    Color.Transparent
+                ),
+                center = center,
+                radius = radius
+            ),
+            radius = radius,
+            center = center
+        )
     }
 }
 
