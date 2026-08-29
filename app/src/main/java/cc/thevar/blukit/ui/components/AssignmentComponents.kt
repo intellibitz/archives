@@ -112,8 +112,8 @@ fun AssignmentItem(
                     val statusText = when {
                         isBlocked -> "BLOCKED"
                         isAbandoned -> "ABANDONED"
-                        isCompleted -> "ACCOMPLISHED"
-                        else -> "MISSION END: ${assignment.dueDate?.let { sdf.format(Date(it)) } ?: "OPEN ENDED"}"
+                        isCompleted -> "COMPLETED"
+                        else -> "DUE DATE: ${assignment.dueDate?.let { sdf.format(Date(it)) } ?: "OPEN ENDED"}"
                     }
                     val statusColor = when {
                         isBlocked -> Color.Red
@@ -131,7 +131,7 @@ fun AssignmentItem(
                     Text(
                         text = statusText,
                         color = statusColor,
-                        fontSize = 10.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Black
                     )
                 }
@@ -159,7 +159,7 @@ fun AssignmentItem(
                         Text(
                             text = "ASSIGNED",
                             color = StealthAmber,
-                            fontSize = 8.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Black
                         )
                     }
@@ -188,9 +188,9 @@ fun AssignmentCreator(
             .padding(16.dp)
     ) {
         Text(
-            text = "NEW MISSION",
+            text = "NEW TASK",
             color = themeColor,
-            fontSize = 12.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Black,
             letterSpacing = 2.sp
         )
@@ -209,7 +209,7 @@ fun AssignmentCreator(
                 focusedIndicatorColor = themeColor,
                 unfocusedIndicatorColor = themeColor.copy(alpha = 0.5f)
             ),
-            placeholder = { Text("Objective details...", color = Color.Gray, fontSize = 14.sp) }
+            placeholder = { Text("Task details...", color = Color.Gray, fontSize = 14.sp) }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -218,7 +218,7 @@ fun AssignmentCreator(
             TextButton(onClick = { /* In real app, trigger date picker */ selectedDate = System.currentTimeMillis() + 86400000 }) {
                 Icon(Icons.Rounded.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp), tint = themeColor)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("SET MISSION END", color = themeColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("SET DUE DATE", color = themeColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             
             Spacer(modifier = Modifier.weight(1f))
@@ -232,7 +232,7 @@ fun AssignmentCreator(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeColor)
             ) {
-                Text("PULSE", color = Color.Black, fontWeight = FontWeight.Black)
+                Text("CREATE", color = Color.Black, fontWeight = FontWeight.Black)
             }
         }
     }

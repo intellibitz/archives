@@ -55,14 +55,14 @@ fun TimelineField(
         containerColor = Color.Black,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("MEMORY TIMELINE", fontWeight = FontWeight.Black, fontSize = 14.sp) },
+                title = { Text("MESSAGE HISTORY", fontWeight = FontWeight.Black, fontSize = 14.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black, titleContentColor = Color.White)
             )
         }
     ) { padding ->
         if (memories.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("NO MEMORIES FOUND. PIN A PULSE TO PRESERVE IT.", color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp)
+                Text("NO SAVED MESSAGES FOUND. SAVE A MESSAGE TO PRESERVE IT.", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
             }
         } else {
             LazyColumn(
@@ -97,7 +97,7 @@ private fun MemoryItem(memory: MessagePayload, dateStr: String) {
         Spacer(modifier = Modifier.width(16.dp))
         
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = dateStr, fontSize = 9.sp, color = StealthPrimary, fontWeight = FontWeight.Black)
+            Text(text = dateStr, fontSize = 11.sp, color = StealthPrimary, fontWeight = FontWeight.Black)
             Spacer(modifier = Modifier.height(4.dp))
             Surface(
                 color = Color.White.copy(alpha = 0.05f),
@@ -106,7 +106,7 @@ private fun MemoryItem(memory: MessagePayload, dateStr: String) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(text = memory.content.uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "FROM ${memory.senderName.uppercase()}", color = Color.White.copy(alpha = 0.4f), fontSize = 8.sp)
+                    Text(text = "FROM ${memory.senderName.uppercase()}", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
                 }
             }
         }

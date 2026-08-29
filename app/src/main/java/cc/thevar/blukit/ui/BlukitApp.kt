@@ -287,11 +287,11 @@ fun BlukitApp(
         Box(modifier = modifier.fillMaxSize()) {
             FullLighthouseScan(rotation = hubRotation, lowPowerMode = lowPowerMode)
             
-            // --- SYNC RESONANCE OVERLAY ---
+            // --- SYNC OVERLAY ---
             bluetoothState.session.syncProgress?.let { progress ->
                 Box(modifier = Modifier.fillMaxSize().zIndex(100f).background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("PULSE SYNC IN PROGRESS", color = StealthAmber, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 2.sp)
+                        Text("MESSAGE SYNC IN PROGRESS", color = StealthAmber, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 2.sp)
                         Spacer(modifier = Modifier.height(16.dp))
                         LinearProgressIndicator(
                             progress = { progress },

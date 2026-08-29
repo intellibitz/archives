@@ -146,7 +146,7 @@ fun CrowdTicker(modifier: Modifier = Modifier, title: String, resonances: List<R
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(4.dp).background(StealthPrimary.copy(alpha = alpha), CircleShape))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = if (resonances.isEmpty()) "UNIVERSAL FREQUENCY" else "${resonances.size} ACTIVE TIES", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.6f), letterSpacing = 1.sp))
+                Text(text = if (resonances.isEmpty()) "UNIVERSAL FREQUENCY" else "${resonances.size} ACTIVE GROUPS", style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Black, color = StealthPrimary.copy(alpha = 0.8f), letterSpacing = 1.sp))
             }
         }
     }
@@ -221,8 +221,8 @@ fun BreadcrumbHub(
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = (if (index == (trail.size - 1)) FontWeight.Black else FontWeight.Bold),
                     letterSpacing = 1.sp,
-                    color = (if (index == (trail.size - 1)) Color.White else Color.White.copy(alpha = 0.4f)),
-                    fontSize = 9.sp
+                    color = (if (index == (trail.size - 1)) Color.White else Color.White.copy(alpha = 0.6f)),
+                    fontSize = 11.sp
                 ),
                 modifier = Modifier.clickable { onCrumbClick(index) }
             )
@@ -324,7 +324,7 @@ fun BlukitTacticalHeader(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "BLUKIT", 
-                    fontSize = 8.sp, 
+                    fontSize = 11.sp, 
                     fontWeight = FontWeight.Black, 
                     color = Color.White, 
                     letterSpacing = 1.5.sp
@@ -338,7 +338,7 @@ fun BlukitTacticalHeader(
                 ) {
                     Text(
                         text = "PROTOCOL", 
-                        fontSize = 6.sp, 
+                        fontSize = 11.sp, 
                         fontWeight = FontWeight.Black, 
                         color = themeColor,
                         letterSpacing = 1.sp,
@@ -357,7 +357,7 @@ fun BlukitTacticalHeader(
                     ) {
                         Text(
                             text = when { isPermissionMissing -> if (isPermanentlyDenied) "SETTINGS" else "ALLOW"; isBluetoothOff -> "AWAKEN"; else -> "SCANNING" }, 
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, fontWeight = FontWeight.Black, color = if(isBluetoothOff || isPermissionMissing) Color.Red else Color.Yellow), 
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Black, color = if(isBluetoothOff || isPermissionMissing) Color.Red else Color.Yellow), 
                             maxLines = 1,
                             softWrap = false,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).clickable { 
@@ -450,8 +450,8 @@ fun BlukitHumanityStage(
                     border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.2f))
                 ) {
                     Text(
-                        text = "$userCount ${if (userCount == 1) "PEER" else "PEERS"}",
-                        fontSize = 7.sp,
+                        text = "$userCount ${if (userCount == 1) "MEMBER" else "MEMBERS"}",
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Black,
                         color = themeColor,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -494,10 +494,10 @@ fun BlukitHumanityStage(
                     Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(16.dp))
                 }
                 Text(
-                    text = "TRACES", 
-                    fontSize = 5.sp, 
+                    text = "HISTORY", 
+                    fontSize = 11.sp, 
                     fontWeight = FontWeight.Black, 
-                    color = themeColor.copy(alpha = 0.5f),
+                    color = themeColor.copy(alpha = 0.8f),
                     letterSpacing = 1.sp
                 )
             }
@@ -580,7 +580,7 @@ fun BlukitPulseHub(
                             shape = RoundedCornerShape(12.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                         ) { 
-                            Text("WHISPER", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
+                            Text("PRIVATE", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp) 
                         }
                         Button(
                             onClick = onStartChain, 
@@ -588,7 +588,7 @@ fun BlukitPulseHub(
                             shape = RoundedCornerShape(12.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                         ) { 
-                            Text("START CHAIN", fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp) 
+                            Text("NEW GROUP", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp) 
                         }
                         IconButton(
                             onClick = onClearSelection, 
@@ -615,7 +615,7 @@ fun BlukitPulseHub(
                     ) {
                         Icon(Icons.Rounded.Grain, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("CREATE RESONANCE: ${messageText.uppercase()}", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.5.sp)
+                        Text("CREATE GROUP: ${messageText.uppercase()}", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.5.sp)
                     }
                 }
 
@@ -1004,10 +1004,10 @@ fun TickerSectionHeader(
         Text(
             text = title.uppercase(),
             style = MaterialTheme.typography.labelSmall,
-            color = color.copy(alpha = 0.6f),
+            color = color.copy(alpha = 0.8f),
             fontWeight = FontWeight.Black,
             letterSpacing = 2.sp,
-            fontSize = 7.sp
+            fontSize = 11.sp
         )
         
         Spacer(modifier = Modifier.width(10.dp))
@@ -1027,9 +1027,9 @@ fun TickerSectionHeader(
             if (onAction != null && actionLabel != null) {
                 Text(
                     text = "OR",
-                    fontSize = 6.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Black,
-                    color = color.copy(alpha = 0.3f),
+                    color = color.copy(alpha = 0.6f),
                     modifier = Modifier.padding(horizontal = 8.dp),
                     letterSpacing = 1.sp
                 )
@@ -1051,7 +1051,7 @@ fun TickerSectionHeader(
                 color = color,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 1.sp,
-                fontSize = 7.sp,
+                fontSize = 11.sp,
                 modifier = Modifier.clickable { onAction() }
             )
         }
@@ -1242,7 +1242,7 @@ fun PulsingResonanceTicker(
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                 } else {
-                    // ENTRY: Atomic Pulse Item
+                    // ENTRY: Atomic Message Item
                     val count = if (isGrouped) pulseCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == msg?.messageId }
                     
                     AnimatedPulseItem(
@@ -1281,7 +1281,7 @@ fun PulsingResonanceTicker(
 
 @Composable
 fun RadioRequestTickerItem(device: P2PDevice, onAccept: (P2PDevice) -> Unit, onDeny: (P2PDevice) -> Unit) {
-    Surface(color = StealthPrimary.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "RADIO REQUEST", style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black); Text(text = (device.name ?: "USER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; Row { IconButton(onClick = { onDeny(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Deny", tint = Color.Red.copy(alpha = 0.6f)) }; IconButton(onClick = { onAccept(device) }) { Icon(Icons.Rounded.Check, contentDescription = "Accept", tint = StealthPrimary) } } } }
+    Surface(color = StealthPrimary.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.3f)), modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(text = device.emoji, fontSize = 18.sp); Spacer(modifier = Modifier.width(12.dp)); Column(modifier = Modifier.weight(1f)) { Text(text = "RADIO REQUEST", style = MaterialTheme.typography.labelSmall, color = StealthPrimary, fontWeight = FontWeight.Black); Text(text = (device.name ?: "MEMBER").uppercase(), style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold) }; Row { IconButton(onClick = { onDeny(device) }) { Icon(Icons.Rounded.Close, contentDescription = "Deny", tint = Color.Red.copy(alpha = 0.6f)) }; IconButton(onClick = { onAccept(device) }) { Icon(Icons.Rounded.Check, contentDescription = "Accept", tint = StealthPrimary) } } } }
 }
 
 
@@ -1311,7 +1311,7 @@ fun AnimatedPulseItem(
     val coordinates = LocalPersonaCoordinates.current
     val timestamp = msg?.let { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(Date(it.timestamp)) } ?: ""
     val themeColor = if (isMutual) StealthRose else if (isPulsed) StealthPrimary else Color.White
-    val signatureDevice = senderDevice ?: P2PDevice(id = msg?.senderId ?: "", name = msg?.senderName ?: "PEER", emoji = msg?.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+    val signatureDevice = senderDevice ?: P2PDevice(id = msg?.senderId ?: "", name = msg?.senderName ?: "MEMBER", emoji = msg?.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
     val isPlural = msg?.isMeta == true
     val isEntry = isGrouped && msg != null
 
@@ -1378,8 +1378,8 @@ fun AnimatedPulseItem(
             if (timestamp.isNotEmpty()) {
                 Text(
                     text = timestamp, 
-                    fontSize = 7.sp, 
-                    color = Color.White.copy(alpha = 0.3f), 
+                    fontSize = 10.sp, 
+                    color = Color.White.copy(alpha = 0.6f), 
                     fontWeight = FontWeight.Black,
                     letterSpacing = 0.5.sp,
                     modifier = Modifier.padding(start = 4.dp)
@@ -1442,9 +1442,9 @@ fun AnimatedPulseItem(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = realSender,
-                                fontSize = 9.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Black,
-                                color = themeColor.copy(alpha = 0.6f),
+                                color = themeColor.copy(alpha = 0.8f),
                                 letterSpacing = 0.5.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -1452,10 +1452,10 @@ fun AnimatedPulseItem(
                             if (pulseCount > 0) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "• $pulseCount UNITS",
-                                    fontSize = 8.sp,
+                                    text = "• $pulseCount REPLIES",
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = themeColor.copy(alpha = 0.4f)
+                                    color = themeColor.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -1465,13 +1465,13 @@ fun AnimatedPulseItem(
                         val realSender = if (isMe) "YOU" else (senderDevice?.name ?: "?").uppercase()
                         Text(
                             text = realSender,
-                            fontSize = 8.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Black,
-                            color = Color.White.copy(alpha = 0.3f),
+                            color = Color.White.copy(alpha = 0.6f),
                             letterSpacing = 0.5.sp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "::", fontSize = 8.sp, color = Color.White.copy(alpha = 0.1f), fontWeight = FontWeight.Black)
+                        Text(text = "::", fontSize = 11.sp, color = Color.White.copy(alpha = 0.2f), fontWeight = FontWeight.Black)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "...", 
@@ -1538,9 +1538,9 @@ fun EnvironmentToggle(
         Text(
             text = label, 
             style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 7.sp, 
+                fontSize = 11.sp, 
                 fontWeight = FontWeight.Black, 
-                color = if (checked) Color.White else Color.White.copy(alpha = 0.2f), 
+                color = if (checked) Color.White else Color.White.copy(alpha = 0.6f), 
                 letterSpacing = 1.sp
             )
         )
@@ -1813,7 +1813,7 @@ fun PulseActionMenu(pulse: MessagePayload, isMe: Boolean, onInvite: () -> Unit, 
                     ) {
                         Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = StealthPrimary, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "ALREADY BROADCASTED", color = StealthPrimary.copy(alpha = 0.6f), fontSize = 8.sp, fontWeight = FontWeight.Black)
+                        Text(text = "ALREADY BROADCASTED", color = StealthPrimary.copy(alpha = 0.8f), fontSize = 11.sp, fontWeight = FontWeight.Black)
                     }
                 }
                 
@@ -1823,7 +1823,7 @@ fun PulseActionMenu(pulse: MessagePayload, isMe: Boolean, onInvite: () -> Unit, 
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("BACK", color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Bold, fontSize = 9.sp)
+                Text("BACK", color = Color.White.copy(alpha = 0.6f), fontWeight = FontWeight.Bold, fontSize = 11.sp)
             }
         }
     )
@@ -1855,6 +1855,7 @@ fun ResonanceSummary(
     aiTrend: String? = null // NEW: For showing synthesized trends
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.05f, 
         targetValue = 0.15f, 
@@ -1863,7 +1864,10 @@ fun ResonanceSummary(
     )
 
     Surface(
-        onClick = onClick,
+        onClick = { 
+            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+            onClick() 
+        },
         color = Color.Black,
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
@@ -1918,10 +1922,10 @@ fun ResonanceSummary(
                     Column(modifier = Modifier.weight(1f)) {
                         if (count >= 0) {
                             Text(
-                                text = "$count ${if (count == 1) "PEER" else "PEERS"}",
-                                fontSize = 8.sp,
+                                text = "$count ${if (count == 1) "MEMBER" else "MEMBERS"}",
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Black,
-                                color = themeColor.copy(alpha = 0.6f),
+                                color = themeColor.copy(alpha = 0.8f),
                                 letterSpacing = 0.5.sp
                             )
                         }
@@ -1944,7 +1948,7 @@ fun ResonanceSummary(
                                     ) {
                                         Text(
                                             text = aiTrend.uppercase(),
-                                            fontSize = 7.sp,
+                                            fontSize = 11.sp,
                                             fontWeight = FontWeight.Black,
                                             color = StealthAmber
                                         )
@@ -1954,9 +1958,9 @@ fun ResonanceSummary(
                                 if (subtitle != null) {
                                     Text(
                                         text = subtitle.uppercase(),
-                                        fontSize = 8.sp,
+                                        fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.6f),
+                                        color = if (subtitle == "SWARM REPORT" || subtitle == "AI SUMMARY") StealthAmber else themeColor.copy(alpha = 0.8f),
                                         letterSpacing = 1.sp,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -1970,14 +1974,17 @@ fun ResonanceSummary(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         if (showJoin) {
                             Surface(
-                                onClick = onClick,
+                                onClick = { 
+                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                    onClick() 
+                                },
                                 color = themeColor.copy(alpha = 0.15f),
                                 shape = RoundedCornerShape(10.dp),
                                 border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
                             ) {
                                 Text(
-                                    text = "DIVE",
-                                    fontSize = 9.sp,
+                                    text = "JOIN",
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,
                                     color = themeColor,
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
@@ -1989,9 +1996,9 @@ fun ResonanceSummary(
 
                         Text(
                             text = lastUpdate,
-                            fontSize = 7.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.3f),
+                            color = Color.White.copy(alpha = 0.6f),
                             letterSpacing = 0.5.sp
                         )
                     }
@@ -2040,16 +2047,16 @@ fun PersonaOptionsMenu(
                     MenuActionItem(Icons.Rounded.Close, "DENY RADIO", Color.Red, onClick = onDeny)
                 } else if (activeGroupId != null) {
                     if (isAlreadyInActiveGroup) {
-                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM CHAIN", StealthRose, onClick = { onRemoveFromGroup(activeGroupId) })
+                        MenuActionItem(Icons.Rounded.PersonRemove, "REMOVE FROM GROUP", StealthRose, onClick = { onRemoveFromGroup(activeGroupId) })
                     } else {
-                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS CHAIN", StealthPrimary, onClick = { onAddToGroup(activeGroupId) })
+                        MenuActionItem(Icons.Rounded.PersonAdd, "ADD TO THIS GROUP", StealthPrimary, onClick = { onAddToGroup(activeGroupId) })
                     }
                 } else if (isTied) {
-                    MenuActionItem(Icons.Rounded.Sync, "PULSE SYNC", StealthAmber, onClick = onSync)
+                    MenuActionItem(Icons.Rounded.Sync, "SYNC MESSAGES", StealthAmber, onClick = onSync)
                     MenuActionItem(Icons.Rounded.SettingsInputAntenna, "DISCONNECT", StealthRose, onClick = onDisconnect)
                 } else {
-                    MenuActionItem(Icons.Rounded.Hearing, "WHISPER", StealthPrimary, onClick = onPulse)
-                    MenuActionItem(Icons.Rounded.SettingsInputAntenna, "SECURE RADIO", StealthRose, onClick = onSelect)
+                    MenuActionItem(Icons.Rounded.Hearing, "PRIVATE MESSAGE", StealthPrimary, onClick = onPulse)
+                    MenuActionItem(Icons.Rounded.SettingsInputAntenna, "CONNECT", StealthRose, onClick = onSelect)
                 }
                 
                 MenuActionItem(Icons.Rounded.Radar, "IDENTIFY", Color.White, onClick = onIdentify)
@@ -2059,7 +2066,7 @@ fun PersonaOptionsMenu(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("BACK", color = Color.White.copy(alpha = 0.4f), fontWeight = FontWeight.Bold, fontSize = 9.sp)
+                Text("BACK", color = Color.White.copy(alpha = 0.6f), fontWeight = FontWeight.Bold, fontSize = 11.sp)
             }
         }
     )
@@ -2174,7 +2181,7 @@ fun PulseGhost(
                 ) {
                     Text(
                         text = data.subtitle.uppercase(),
-                        fontSize = 9.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = data.themeColor,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
@@ -2222,7 +2229,7 @@ fun PulseGhost(
                     ) {
                         Text(
                             text = action.label.uppercase(),
-                            fontSize = 8.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Black,
                             color = Color.White.copy(alpha = 0.9f),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -2330,7 +2337,7 @@ fun OnboardingGhost(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(24.dp)
                 ) {
-                    Text(text = "IDENTITY RITUAL", style = MaterialTheme.typography.labelSmall, color = StealthAmber, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+                    Text(text = "USER SETUP", style = MaterialTheme.typography.labelSmall, color = StealthAmber, fontWeight = FontWeight.Black, letterSpacing = 2.sp, fontSize = 11.sp)
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     BasicTextField(
@@ -2343,7 +2350,7 @@ fun OnboardingGhost(
                         cursorBrush = SolidColor(StealthAmber),
                         decorationBox = { innerTextField ->
                             if (nickname.isEmpty()) {
-                                Text("SET NICKNAME", style = MaterialTheme.typography.headlineSmall.copy(color = Color.White.copy(alpha = 0.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Black))
+                                Text("ENTER NICKNAME", style = MaterialTheme.typography.headlineSmall.copy(color = Color.White.copy(alpha = 0.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Black))
                             }
                             innerTextField()
                         }
@@ -2366,7 +2373,7 @@ fun OnboardingGhost(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1.5f).height(48.dp)
                         ) {
-                            Text("AWAKEN", fontWeight = FontWeight.Black)
+                            Text("START", fontWeight = FontWeight.Black)
                         }
                     }
                 }
@@ -2512,7 +2519,7 @@ fun CrowdRitualGhost(
                             ) {
                                 Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(text = template.iconEmoji, fontSize = 16.sp)
-                                    Text(text = template.name.uppercase(), fontSize = 6.sp, fontWeight = FontWeight.Black, color = if (isSelected) StealthPrimary else Color.White)
+                                    Text(text = template.name.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Black, color = if (isSelected) StealthPrimary else Color.White)
                                 }
                             }
                         }
@@ -2520,7 +2527,7 @@ fun CrowdRitualGhost(
 
                     if (nearbyAirs.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "NEARBY FREQUENCIES", fontSize = 7.sp, color = Color.White.copy(alpha = 0.3f), fontWeight = FontWeight.Black)
+                        Text(text = "NEARBY GROUPS", fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f), fontWeight = FontWeight.Black)
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             nearbyAirs.take(3).forEach { air ->
@@ -2530,7 +2537,7 @@ fun CrowdRitualGhost(
                                     shape = RoundedCornerShape(8.dp),
                                     border = BorderStroke(0.5.dp, StealthPrimary.copy(alpha = 0.2f))
                                 ) {
-                                    Text(text = air.name.uppercase(), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 8.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
+                                    Text(text = air.name.uppercase(), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 11.sp, fontWeight = FontWeight.Black, color = StealthPrimary)
                                 }
                             }
                         }
@@ -2545,7 +2552,7 @@ fun CrowdRitualGhost(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("AWAKEN", fontWeight = FontWeight.Black)
+                        Text("CREATE", fontWeight = FontWeight.Black)
                     }
                 }
             }
@@ -2641,14 +2648,14 @@ fun PulsePersonaSignature(
             }
         }
         
-        // TACTICAL DECORATION: Label (YOU/USER/CUSTOM)
-        val finalLabel = subLabel ?: if (isMe) "YOU" else "PEER"
+        // DECORATION: Label (YOU/MEMBER/CUSTOM)
+        val finalLabel = subLabel ?: if (isMe) "YOU" else "MEMBER"
         if (size >= 24.dp) {
             Text(
                 text = finalLabel.uppercase(),
-                fontSize = (size.value / 8).coerceAtLeast(4f).sp,
+                fontSize = (size.value / 8).coerceAtLeast(11f).sp,
                 fontWeight = FontWeight.Black,
-                color = personaThemeColor.copy(alpha = 0.6f),
+                color = personaThemeColor.copy(alpha = 0.8f),
                 letterSpacing = 1.5.sp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -2683,8 +2690,8 @@ fun PulseCrowdSignature(
                 }
                 if (pulseCount > 0) { 
                     Text(
-                        text = "$pulseCount ${if (pulseCount == 1) "PEER" else "PEERS"}", 
-                        fontSize = 7.sp, 
+                        text = "$pulseCount ${if (pulseCount == 1) "MEMBER" else "MEMBERS"}", 
+                        fontSize = 11.sp, 
                         fontWeight = FontWeight.Black, 
                         color = themeColor,
                         letterSpacing = 0.5.sp
@@ -2693,13 +2700,12 @@ fun PulseCrowdSignature(
             } 
         }
 
-        // Context Title Label
         if (title != null && size > 40.dp) {
             Text(
                 text = title.uppercase(),
-                fontSize = 7.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Black,
-                color = Color.White.copy(alpha = 0.4f),
+                color = Color.White.copy(alpha = 0.6f),
                 letterSpacing = 2.sp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -2762,6 +2768,7 @@ fun BlukitInput(
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
     val focusRequester = remember { FocusRequester() }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     
     var isFocused by remember { mutableStateOf(value = false) }
     
@@ -2789,13 +2796,13 @@ fun BlukitInput(
     )
 
     val actualPlaceholder = when { 
-        isSearchActive -> "SCAN MESH: TYPE SIGNATURE OR PULSE..."
-        isPulseLocked -> "JOIN A CROWD TO EMIT A PULSE..."
+        isSearchActive -> "SCAN NETWORK: TYPE NAME OR MESSAGE..."
+        isPulseLocked -> "JOIN A GROUP TO SEND A MESSAGE..."
         placeholder != null -> placeholder 
         isReadOnly -> "INTERCEPTED" 
-        isPrivate && targetName != null -> "PRIVATE PULSE TO $targetName..."
-        isPrivate -> "EMIT A SECURE PULSE..."
-        else -> "SPREAD A PULSE TO ${targetName ?: "THE CROWD"}..." 
+        isPrivate && targetName != null -> "PRIVATE MESSAGE TO $targetName..."
+        isPrivate -> "SEND A SECURE MESSAGE..."
+        else -> "SEND A MESSAGE TO ${targetName ?: "THE GROUP"}..." 
     }
     
     Column(modifier = modifier.graphicsLayer { scaleX = nudgeScale; scaleY = nudgeScale }) {
@@ -2914,7 +2921,7 @@ fun BlukitInput(
                             ) {
                                 Text(
                                     text = pulseCount.toString(), 
-                                    fontSize = 8.sp, 
+                                    fontSize = 11.sp, 
                                     fontWeight = FontWeight.Black, 
                                     color = themeColor, 
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -2956,7 +2963,11 @@ fun BlukitInput(
                         }
                         
                         IconButton(
-                            onClick = { onSend(); focusManager.clearFocus() }, 
+                            onClick = { 
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                onSend()
+                                focusManager.clearFocus() 
+                            }, 
                             enabled = value.isNotBlank() && !isReadOnly && !isPulseLocked, 
                             modifier = Modifier
                                 .size(44.dp)

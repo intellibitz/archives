@@ -127,6 +127,13 @@ fun EventField(
     var airProposalName by remember { mutableStateOf("") }
     var showVault by remember { mutableStateOf(false) }
 
+    // Global AI Insights for the entire mesh
+    val globalAiSummary = remember(state.session.messages) {
+        state.session.messages.findLast { 
+            (it.groupId == Resonance.ID_CROWD || it.groupId == null) && (it.type == MessagePayload.TYPE_AI_SUMMARY) 
+        }
+    }
+
     BlukitFieldScaffold(
         header = header,
         entries = {
@@ -134,7 +141,7 @@ fun EventField(
             Column(modifier = Modifier.fillMaxSize()) {
                 // Humanity Stage (Breadcrumbs)
                 BlukitHumanityStage(
-                    title = "THE SPECTRUM",
+                    title = "CHANNELS",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeCrowds = activeCrowds,
@@ -161,9 +168,9 @@ fun EventField(
                                 }
                                 Text(
                                     text = if (isSearchActive) "SCAN" else "RADAR",
-                                    fontSize = 5.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = 0.5f),
+                                    color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = 0.8f),
                                     letterSpacing = 1.sp
                                 )
                             }
@@ -171,6 +178,29 @@ fun EventField(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                 )
+
+                // CROWD AI SYNTHESIS: Prominent global summary
+                globalAiSummary?.let { summary ->
+                    BlukitWidget(
+                        header = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("GLOBAL MESH SYNTHESIS", style = MaterialTheme.typography.labelSmall, color = StealthAmber, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                            }
+                        },
+                        entries = {
+                            Text(
+                                text = summary.content.uppercase(),
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp),
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        },
+                        themeColor = StealthAmber,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
 
                 // MODULE 2: UNIFIED RESONANCE TICKER (With integrated Radar)
                 PulsingResonanceTicker(

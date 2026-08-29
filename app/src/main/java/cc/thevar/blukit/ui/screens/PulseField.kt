@@ -102,7 +102,7 @@ fun PulseField(
             Column(modifier = Modifier.fillMaxSize()) {
                 // Humanity Stage (Breadcrumbs)
                 BlukitHumanityStage(
-                    title = "PULSE",
+                    title = "MESSAGE",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeCrowds = activeCrowds,
@@ -129,9 +129,9 @@ fun PulseField(
                                 }
                                 Text(
                                     text = if (isSearchActive) "SCAN" else "RADAR",
-                                    fontSize = 5.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.5f),
+                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.8f),
                                     letterSpacing = 1.sp
                                 )
                             }
@@ -149,7 +149,7 @@ fun PulseField(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "ROOT PULSE",
+                                text = "ORIGINAL MESSAGE",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = themeColor,
                                 fontWeight = FontWeight.Black
@@ -212,7 +212,7 @@ fun PulseField(
             // MODULE 4: FLOATING TIPS
             if (childPulses.isEmpty()) {
                 BlukitTip(
-                    text = "NO GRANULAR PULSES DETECTED. ADD A UNIT TO EXPAND THE RESONANCE.",
+                    text = "NO REPLIES DETECTED. REPLY TO START THE CONVERSATION.",
                     themeColor = themeColor,
                     onDismiss = { },
                     modifier = Modifier.align(Alignment.TopCenter)

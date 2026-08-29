@@ -145,9 +145,9 @@ fun ChainField(
                                 }
                                 Text(
                                     text = if (isSearchActive) "SCAN" else "RADAR",
-                                    fontSize = 5.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.5f),
+                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.8f),
                                     letterSpacing = 1.sp
                                 )
                             }
@@ -156,9 +156,9 @@ fun ChainField(
                     }
                 )
 
-                // CHILD TIES ROW
+                // CHILD GROUPS ROW
                 if (childTies.isNotEmpty()) {
-                    TickerSectionHeader(title = "SECURE TIES", color = themeColor)
+                    TickerSectionHeader(title = "SECURE GROUPS", color = themeColor)
                     LazyRow(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -166,7 +166,7 @@ fun ChainField(
                         items(childTies) { tie ->
                             ResonanceSummary(
                                 title = tie.name,
-                                subtitle = "SUB-CHAIN",
+                                subtitle = "SUB-GROUP",
                                 icon = Icons.Rounded.Hearing,
                                 themeColor = StealthRose,
                                 count = tie.memberIds.size,
@@ -232,7 +232,7 @@ fun ChainField(
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 BlukitTip(
-                    text = "THIS CHAIN IS SILENCE. WHISPER OR PIN A PULSE TO COLLABORATE.",
+                    text = "THIS GROUP IS SILENT. SEND A PRIVATE MESSAGE OR PIN A PULSE TO COLLABORATE.",
                     themeColor = themeColor,
                     onDismiss = { showTip = false }
                 )
@@ -279,7 +279,7 @@ fun ChainField(
             containerColor = Color.Black,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White,
-            title = { Text("MANAGE CHAIN", fontWeight = FontWeight.Black) },
+            title = { Text("MANAGE GROUP", fontWeight = FontWeight.Black) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("MEMBERS", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
@@ -311,7 +311,7 @@ fun ChainField(
                                             shape = RoundedCornerShape(4.dp),
                                             border = BorderStroke(0.5.dp, if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.1f))
                                         ) {
-                                            Text(text = role.uppercase(), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 6.sp, fontWeight = FontWeight.Black, color = if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.4f))
+                                            Text(text = role.uppercase(), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 11.sp, fontWeight = FontWeight.Black, color = if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.6f))
                                         }
                                     }
                                 }
@@ -320,7 +320,7 @@ fun ChainField(
                     }
                     HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("CROWD VAULT", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f), modifier = Modifier.weight(1f))
+                        Text("GROUP ARCHIVE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
                         Switch(
                             checked = group.isVaulted,
                             onCheckedChange = { onVaultGroup(group.id, it) },
@@ -329,8 +329,8 @@ fun ChainField(
                     }
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("SENIOR VAULT", style = MaterialTheme.typography.labelSmall, color = StealthRose, fontWeight = FontWeight.Black)
-                            Text("EXEMPT FROM ALL DECAY", fontSize = 7.sp, color = Color.White.copy(alpha = 0.3f))
+                            Text("SENIOR ARCHIVE", style = MaterialTheme.typography.labelSmall, color = StealthRose, fontWeight = FontWeight.Black)
+                            Text("EXEMPT FROM ALL DECAY", fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f))
                         }
                         Switch(
                             checked = group.isSeniorVault,
@@ -380,7 +380,7 @@ fun NoteEditor(
         },
         confirmButton = {
             TextButton(onClick = { onSave(text) }) {
-                Text("RESONATE", color = StealthRose, fontWeight = FontWeight.Black)
+                Text("SEND", color = StealthRose, fontWeight = FontWeight.Black)
             }
         },
         dismissButton = {
