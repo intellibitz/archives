@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Assignment
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -39,9 +40,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +66,11 @@ import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Spatial coordinates for Persona connections within the field.
@@ -78,6 +86,32 @@ data class PersonaConnectionPoints(
 val LocalPersonaCoordinates = staticCompositionLocalOf { mutableStateMapOf<String, PersonaConnectionPoints>() }
 val LocalActivePulseId = staticCompositionLocalOf { mutableStateOf<String?>(null) }
 val LocalUserEmoji = staticCompositionLocalOf { "👤" }
+
+/** Metadata for local pulse visualizations (Active Bubbles). */
+data class BubbleData(
+    val senderId: String,
+    val content: String,
+    val timestamp: Long,
+    val messageId: String,
+    val isPrivate: Boolean,
+)
+
+/** Transient state for mesh relay animations (Travel dots). */
+data class RelayEvent(
+    val id: String,
+    val start: Offset,
+    val end: Offset,
+    val startTime: Long,
+    val color: Color = StealthPrimary
+)
+
+/** Expanding rings signaling node energy emission. */
+data class PulseRipple(
+    val id: String,
+    val center: Offset,
+    val startTime: Long,
+    val color: Color
+)
 
 /**
  * Provides a composite view of system radio statuses (BT, WiFi, GPS).
@@ -384,7 +418,7 @@ fun BlukitHumanityStage(
             }
 
             val isLanding = (title == "THE CROWD") || (title == "PUBLIC PULSES") || (title == "BLUKIT") || (title == "EVENT")
-            if (isLanding && onTitleClick != null) {
+            if ((isLanding && onTitleClick != null)) {
                 Icon(imageVector = Icons.Rounded.Edit, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(start = 4.dp).size(8.dp))
             }
         }
@@ -598,6 +632,237 @@ fun BlukitPulseHub(
     )
 }
 
+@Composable
+private fun RelayLayer(relays: List<RelayEvent>) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        relays.forEach { relay ->
+            val progress = (System.currentTimeMillis() - relay.startTime) / 800f
+            if (progress in 0f..1f) {
+                val currentPos = relay.start + (relay.end - relay.start) * progress
+                drawCircle(
+                    color = relay.color.copy(alpha = 0.8f * (1f - progress)),
+                    radius = 3.dp.toPx(),
+                    center = center + currentPos
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PulseRippleLayer(ripples: List<PulseRipple>) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        ripples.forEach { ripple ->
+            val progress = (System.currentTimeMillis() - ripple.startTime) / 2000f
+            if (progress in 0f..1f) {
+                drawCircle(
+                    color = ripple.color.copy(alpha = 0.4f * (1f - progress)),
+                    radius = progress * 300.dp.toPx(),
+                    center = center + ripple.center,
+                    style = Stroke(width = 2.dp.toPx())
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RadarNodesLayer(
+    devices: List<P2PDevice>,
+    onDeviceClick: (P2PDevice) -> Unit,
+    onDeviceLongClick: (P2PDevice) -> Unit,
+    selectedDevices: Set<String>,
+    pulsedPeers: Set<String>,
+    bubbleSenders: Set<String>,
+    themeColor: Color,
+    density: androidx.compose.ui.unit.Density
+) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        devices.forEachIndexed { index, device ->
+            val maxRadiusPx = with(density) { 140.dp.toPx() }
+            // PROXIMITY mapping: closer signal = smaller orbital radius
+            val radiusValue = (1f - device.proximityFactor) * maxRadiusPx + with(density) { 60.dp.toPx() }
+            val angle = (index.toDouble() / devices.size.coerceAtLeast(1)) * 2 * PI
+            
+            val xOffset = (radiusValue * cos(angle)).toFloat()
+            val yOffset = (radiusValue * sin(angle)).toFloat()
+            
+            Box(modifier = Modifier.offset(with(density) { xOffset.toDp() }, with(density) { yOffset.toDp() })) {
+                PulsePersonaSignature(
+                    device = device,
+                    isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
+                    isSelected = selectedDevices.contains(device.id),
+                    isPeerPulsed = pulsedPeers.contains(device.id),
+                    size = 40.dp,
+                    themeColor = themeColor,
+                    onClick = { onDeviceClick(device) },
+                    onLongClick = { onDeviceLongClick(device) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AtmosphericHeatmap(energy: Float, themeColor: Color) {
+    val infiniteTransition = rememberInfiniteTransition(label = "HeatmapPulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Pulse"
+    )
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val radius = size.minDimension * 0.8f * pulseScale
+        
+        drawCircle(
+            brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                colors = listOf(
+                    themeColor.copy(alpha = 0.15f * energy),
+                    themeColor.copy(alpha = 0.05f * energy),
+                    Color.Transparent
+                ),
+                center = center,
+                radius = radius
+            ),
+            radius = radius,
+            center = center
+        )
+    }
+}
+
+/**
+ * MINI RADAR: A lightweight spatial view for a specific crowd context.
+ * Unifies the spatial radar with the ticker entries.
+ */
+@Composable
+fun CrowdMiniRadar(
+    resonance: Resonance,
+    members: List<P2PDevice>,
+    modifier: Modifier = Modifier,
+    themeColor: Color = StealthPrimary,
+    isDefaultCrowd: Boolean = false,
+    onDeviceClick: (P2PDevice) -> Unit = {},
+    onDeviceLongClick: (P2PDevice) -> Unit = {},
+    activeBubbles: List<BubbleData> = emptyList()
+) {
+    val bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(90.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isDefaultCrowd) {
+            // --- DEFAULT CROWD: Unified Anchor (Outside) + Horizontal Lineup ---
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                // TACTICAL DIVIDER (Aligned with the row's left Persona anchor)
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(32.dp)
+                        .background(themeColor.copy(alpha = 0.2f))
+                )
+
+                // 3. REMAINING USERS LINED UP HORIZONTALLY
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy((-12).dp) // Tactical overlapping for 32dp nodes
+                ) {
+                    members.take(10).forEach { device ->
+                        PulsePersonaSignature(
+                            device = device,
+                            isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
+                            isSelected = false,
+                            isPeerPulsed = false,
+                            size = 32.dp,
+                            isStatic = false,
+                            themeColor = themeColor,
+                            subLabel = "USER",
+                            onClick = { onDeviceClick(device) },
+                            onLongClick = { onDeviceLongClick(device) }
+                        )
+                    }
+                    if (members.size > 10) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.5f))
+                                .border(0.5.dp, themeColor.copy(alpha = 0.3f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "+${members.size - 10}",
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black,
+                                color = themeColor.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            // --- USER-OWNED CROWD: Orbital lineup around Owner ---
+            val owner = members.find { it.id == resonance.ownerId || it.persistentId == resonance.ownerId }
+            val centerEmoji = owner?.emoji ?: resonance.projectionEmoji ?: "⚡"
+
+            Box(modifier = Modifier.zIndex(2f)) {
+                PulsePersonaSignature(
+                    device = P2PDevice(id = "OWNER", name = owner?.name ?: resonance.name, emoji = centerEmoji),
+                    isPulsed = owner?.let { bubbleSenders.contains(it.id) || bubbleSenders.contains(it.persistentId) } ?: false,
+                    isSelected = false,
+                    isPeerPulsed = false,
+                    size = 48.dp,
+                    isStatic = false,
+                    themeColor = themeColor,
+                    subLabel = if (owner == null) "EVENT" else "OWNER",
+                    onClick = { owner?.let { onDeviceClick(it) } }
+                )
+            }
+
+            val others = members.filter { it.id != resonance.ownerId && it.persistentId != resonance.ownerId }
+            others.take(8).forEachIndexed { index, device ->
+                val radius = 48f // Increased radius for 32dp nodes
+                val angle = (index.toDouble() / others.size.coerceAtLeast(1)) * 2 * PI
+                val xOffset = (radius * cos(angle)).toFloat().dp
+                val yOffset = (radius * sin(angle)).toFloat().dp
+
+                Box(modifier = Modifier.offset(xOffset, yOffset)) {
+                    PulsePersonaSignature(
+                        device = device,
+                        isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
+                        isSelected = false,
+                        isPeerPulsed = false,
+                        size = 32.dp,
+                        isStatic = false,
+                        themeColor = themeColor,
+                        subLabel = "USER",
+                        onClick = { onDeviceClick(device) },
+                        onLongClick = { onDeviceLongClick(device) }
+                    )
+                }
+            }
+        }
+    }
+}
+
 /**
  * BLUKIT WIDGET: The standardized tactical container for all mesh modules.
  * Strictly follows the Header + Entries architectural pattern.
@@ -749,92 +1014,180 @@ fun PulsingResonanceTicker(
     activeBubbles: List<BubbleData> = emptyList(),
     isGrouped: Boolean = true,
     reverseLayout: Boolean = true,
+    themeColor: Color = StealthPrimary,
+    onPulseSurge: (Float) -> Unit = {}
 ) {
     val listState = rememberLazyListState()
     val sdf = remember { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
+    val density = LocalDensity.current
 
-    LazyColumn(
-        state = listState,
-        modifier = modifier.fillMaxWidth(),
-        reverseLayout = reverseLayout,
-        contentPadding = PaddingValues(vertical = 8.dp)
-    ) {
-        items(energyList, key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
-            val id = device.persistentId ?: device.id
-            val resonance = state.session.groups.find { it.id == (msg?.groupId ?: device.id) }
-            
-            if (msg == null && resonance != null) {
-                // HEADER: High-level Resonance Summary
-                val members = if (resonance.id == Resonance.ID_CROWD) {
-                    state.crowd.scannedDevices
-                } else {
-                    state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
-                }
+    // Internal animation registries (from RipplesField)
+    val relayEvents = remember { mutableStateListOf<RelayEvent>() }
+    val pulseRipples = remember { mutableStateListOf<PulseRipple>() }
+    val processedRelayIds = remember { mutableSetOf<String>() }
+    var collectiveEnergy by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
 
-                val userCount = if (resonance.id == Resonance.ID_CROWD) {
-                    state.crowd.scannedDevices.size
-                } else {
-                    resonance.allMemberIds.size
-                }
-
-                val dynamicSubtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "EVENT" else "PRIVATE CHAIN"
-                val userEmoji = LocalUserEmoji.current
-
-                ResonanceSummary(
-                    title = resonance.name,
-                    subtitle = dynamicSubtitle,
-                    icon = if (resonance.scope == Resonance.SCOPE_PUBLIC) Icons.Rounded.Grain else Icons.Rounded.Hearing,
-                    themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
-                    count = userCount,
-                    lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
-                    onClick = { onPulseClick(resonance.id) },
-                    showJoin = true,
-                    aiTrend = device.statusLabel, // Propagate AI trend from the dummy device header
-                    leftContent = if (resonance.id == Resonance.ID_CROWD) {
-                        {
-                            PulsePersonaSignature(
-                                device = P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji),
-                                isPulsed = false,
-                                isSelected = false,
-                                isPeerPulsed = false,
-                                size = 44.dp,
-                                isStatic = false,
-                                themeColor = StealthPrimary,
-                                subLabel = "YOU",
-                                onClick = { onDeviceClick(P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji)) }
-                            )
-                        }
-                    } else null,
-                    topContent = {
-                        CrowdMiniRadar(
-                            resonance = resonance,
-                            members = members,
-                            isDefaultCrowd = resonance.id == Resonance.ID_CROWD,
-                            themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
-                            onDeviceClick = onDeviceClick,
-                            onDeviceLongClick = onDeviceLongClick,
-                            activeBubbles = activeBubbles
-                        )
-                    },
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-            } else {
-                // ENTRY: Atomic Pulse Item
-                val count = if (isGrouped) pulseCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == msg?.messageId }
+    // TRIGGER: Signal surge on new incoming bubbles
+    LaunchedEffect(activeBubbles.size) {
+        if (activeBubbles.isNotEmpty()) {
+            val last = activeBubbles.last()
+            if (last.messageId !in processedRelayIds) {
+                processedRelayIds.add(last.messageId)
+                collectiveEnergy = (collectiveEnergy + 0.35f).coerceAtMost(1.0f)
                 
-                AnimatedPulseItem(
-                    msg = msg,
-                    isSelected = device.id in state.crowd.selectedDevices,
-                    senderDevice = device,
-                    pulseCount = count,
-                    isPulsed = id in pulsedPeers,
-                    isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
-                    isGrouped = isGrouped,
-                    isMutual = device.id in state.session.connectedTies,
-                    rowId = id,
-                    onPulseClick = { msg?.messageId?.let { onPulseClick(it) } ?: onDeviceLongClick(device) },
-                    onDeviceLongClick = { onDeviceLongClick(device) }
-                )
+                val deviceIndex = state.crowd.scannedDevices.indexOfFirst { it.id == last.senderId }
+                val proximity = if (deviceIndex != -1) state.crowd.scannedDevices[deviceIndex].proximityFactor else 0.5f
+                onPulseSurge(proximity)
+
+                // Calculate spatial offset for the sender node
+                val targetOffset = if (deviceIndex != -1) {
+                    val device = state.crowd.scannedDevices[deviceIndex]
+                    val maxRadiusPx = with(density) { 140.dp.toPx() }
+                    val radiusValue = (1f - device.proximityFactor) * maxRadiusPx + with(density) { 60.dp.toPx() }
+                    val angle = (deviceIndex.toDouble() / state.crowd.scannedDevices.size.coerceAtLeast(1)) * 2 * PI
+                    Offset((radiusValue * cos(angle)).toFloat(), (radiusValue * sin(angle)).toFloat())
+                } else Offset.Zero
+
+                val startOffset = Offset((Random.nextFloat() - 0.5f) * 1200f, (Random.nextFloat() - 0.5f) * 1800f)
+                relayEvents.add(RelayEvent(last.messageId, startOffset, targetOffset, System.currentTimeMillis()))
+                
+                val rippleColor = if (last.isPrivate) StealthRose else StealthPrimary
+                relayEvents.add(RelayEvent(last.messageId, startOffset, targetOffset, System.currentTimeMillis(), rippleColor))
+                pulseRipples.add(PulseRipple(last.messageId, targetOffset, System.currentTimeMillis(), rippleColor))
+            }
+        }
+    }
+
+    // Animation Cleanup Loop
+    LaunchedEffect(Unit) {
+        while (true) {
+            val now = System.currentTimeMillis()
+            relayEvents.removeAll { now - it.startTime > 800 }
+            pulseRipples.removeAll { now - it.startTime > 2000 }
+            collectiveEnergy = (collectiveEnergy - 0.04f).coerceAtLeast(0f)
+            kotlinx.coroutines.delay(100.milliseconds)
+        }
+    }
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        // MODULE 1: CONTEXTUAL FIELD BACKGROUND (The Radar)
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            AtmosphericHeatmap(energy = collectiveEnergy, themeColor = themeColor)
+            RelayLayer(relayEvents)
+            
+            RadarNodesLayer(
+                devices = state.crowd.scannedDevices,
+                onDeviceClick = onDeviceClick,
+                onDeviceLongClick = onDeviceLongClick,
+                selectedDevices = state.crowd.selectedDevices,
+                pulsedPeers = pulsedPeers,
+                bubbleSenders = remember(activeBubbles) { activeBubbles.map { it.senderId }.toSet() },
+                themeColor = themeColor,
+                density = density
+            )
+
+            PulseRippleLayer(pulseRipples)
+        }
+
+        // MODULE 2: THE TICKER
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            reverseLayout = reverseLayout,
+            contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp)
+        ) {
+            items(energyList, key = { it.second?.messageId ?: it.first.id }) { (device, msg) ->
+                val id = device.persistentId ?: device.id
+                val resonance = state.session.groups.find { it.id == (msg?.groupId ?: device.id) }
+                
+                if (msg == null && resonance != null) {
+                    // HEADER: High-level Resonance Summary
+                    val members = if (resonance.id == Resonance.ID_CROWD) {
+                        state.crowd.scannedDevices
+                    } else {
+                        state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
+                    }
+
+                    val userCount = if (resonance.id == Resonance.ID_CROWD) {
+                        state.crowd.scannedDevices.size
+                    } else {
+                        resonance.allMemberIds.size
+                    }
+
+                    val dynamicSubtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "EVENT" else "PRIVATE CHAIN"
+                    val userEmoji = LocalUserEmoji.current
+
+                    ResonanceSummary(
+                        title = resonance.name,
+                        subtitle = dynamicSubtitle,
+                        icon = if (resonance.scope == Resonance.SCOPE_PUBLIC) Icons.Rounded.Grain else Icons.Rounded.Hearing,
+                        themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
+                        count = userCount,
+                        lastUpdate = sdf.format(Date(resonance.lastPulseTimestamp)),
+                        onClick = { onPulseClick(resonance.id) },
+                        showJoin = true,
+                        aiTrend = device.statusLabel,
+                        leftContent = if (resonance.id == Resonance.ID_CROWD) {
+                            {
+                                PulsePersonaSignature(
+                                    device = P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji),
+                                    isPulsed = false,
+                                    isSelected = false,
+                                    isPeerPulsed = false,
+                                    size = 44.dp,
+                                    isStatic = false,
+                                    themeColor = StealthPrimary,
+                                    subLabel = "YOU",
+                                    onClick = { onDeviceClick(P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji)) }
+                                )
+                            }
+                        } else null,
+                        topContent = {
+                            CrowdMiniRadar(
+                                resonance = resonance,
+                                members = members,
+                                isDefaultCrowd = resonance.id == Resonance.ID_CROWD,
+                                themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
+                                onDeviceClick = onDeviceClick,
+                                onDeviceLongClick = onDeviceLongClick,
+                                activeBubbles = activeBubbles
+                            )
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                } else {
+                    // ENTRY: Atomic Pulse Item
+                    val count = if (isGrouped) pulseCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == msg?.messageId }
+                    
+                    AnimatedPulseItem(
+                        msg = msg,
+                        isSelected = device.id in state.crowd.selectedDevices,
+                        senderDevice = device,
+                        pulseCount = count,
+                        isPulsed = id in pulsedPeers,
+                        isMe = msg?.senderId == localDeviceId || device.id == localDeviceId,
+                        isGrouped = isGrouped,
+                        isMutual = device.id in state.session.connectedTies,
+                        rowId = id,
+                        onPulseClick = { msg?.messageId?.let { onPulseClick(it) } ?: onDeviceLongClick(device) },
+                        onDeviceLongClick = { onDeviceLongClick(device) },
+                        topContent = {
+                            // INTEGRATED RADAR: Each ticker entry gets a mini radar context if it's a grouped message
+                            if (isGrouped && resonance != null) {
+                                val members = state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
+                                CrowdMiniRadar(
+                                    resonance = resonance,
+                                    members = members,
+                                    themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
+                                    onDeviceClick = onDeviceClick,
+                                    onDeviceLongClick = onDeviceLongClick,
+                                    activeBubbles = activeBubbles,
+                                    modifier = Modifier.height(60.dp).padding(vertical = 4.dp)
+                                )
+                            }
+                        }
+                    )
+                }
             }
         }
     }
@@ -866,7 +1219,8 @@ fun AnimatedPulseItem(
     isMutual: Boolean,
     rowId: String,
     onPulseClick: () -> Unit,
-    onDeviceLongClick: () -> Unit
+    onDeviceLongClick: () -> Unit,
+    topContent: @Composable (() -> Unit)? = null
 ) {
     val coordinates = LocalPersonaCoordinates.current
     val timestamp = msg?.let { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(Date(it.timestamp)) } ?: ""
@@ -882,161 +1236,170 @@ fun AnimatedPulseItem(
         label = "DotAlpha"
     )
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 2.dp)
             .combinedClickable(onClick = onPulseClick, onLongClick = onDeviceLongClick)
-            .background(if (isSelected) Color.White.copy(alpha = 0.05f) else Color.Transparent, RoundedCornerShape(8.dp)),
-        verticalAlignment = Alignment.CenterVertically
+            .background(if (isSelected) Color.White.copy(alpha = 0.05f) else Color.Transparent, RoundedCornerShape(8.dp))
     ) {
-        // Ticker Connection Point & Entry Indicator
-        Box(
-            modifier = Modifier
-                .padding(start = 12.dp)
-                .width(24.dp)
-                .height(48.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isEntry) {
-                // Vertical connecting line for entries
-                Box(
-                    modifier = Modifier
-                        .width(1.5.dp)
-                        .fillMaxHeight()
-                        .background(themeColor.copy(alpha = 0.1f))
-                )
-                // Small dot for the entry (The Resonance Anchor)
-                Box(
-                    modifier = Modifier
-                        .size(4.dp)
-                        .background(themeColor.copy(alpha = 0.3f * dotAlpha), CircleShape)
-                        .border(1.dp, themeColor.copy(alpha = 0.6f * dotAlpha), CircleShape)
-                )
+        if (topContent != null) {
+            Box(modifier = Modifier.padding(start = 48.dp)) {
+                topContent()
             }
-            
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Ticker Connection Point & Entry Indicator
             Box(
                 modifier = Modifier
-                    .onGloballyPositioned { 
-                        val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                        val current = coordinates[rowId] ?: PersonaConnectionPoints()
-                        coordinates[rowId] = current.copy(ticker = it.positionInRoot() + center) 
-                    }
-                    .size(1.dp)
-            )
-        }
-
-        // ENTRY: Timestamp on the left
-        if (timestamp.isNotEmpty()) {
-            Text(
-                text = timestamp, 
-                fontSize = 7.sp, 
-                color = Color.White.copy(alpha = 0.3f), 
-                fontWeight = FontWeight.Black,
-                letterSpacing = 0.5.sp,
-                modifier = Modifier.padding(start = 4.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        // Persona Emoji
-        Surface(
-            modifier = Modifier.size(24.dp), 
-            shape = CircleShape, 
-            color = when { isSelected -> Color.White.copy(alpha = 0.2f); isMutual -> StealthRose.copy(alpha = 0.2f); isPulsed -> StealthPrimary.copy(alpha = 0.2f); else -> Color.White.copy(alpha = 0.05f) }, 
-            border = BorderStroke(0.5.dp, when { isSelected -> Color.White; isMutual -> StealthRose; isPulsed -> StealthPrimary; else -> Color.White.copy(alpha = 0.1f) })
-        ) { 
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.onGloballyPositioned { 
-                val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                val current = coordinates[rowId] ?: PersonaConnectionPoints()
-                coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) 
-            }) { 
-                Text(text = signatureDevice.emoji, fontSize = 12.sp) 
-            } 
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-        ) {
-            if (msg?.type == MessagePayload.TYPE_ASSIGNMENT_TASK) {
-                AssignmentItem(
-                    assignment = msg,
-                    onStatusChange = { /* Propagated via PulseStore CRDT */ },
-                    themeColor = if (isMutual) StealthRose else StealthPrimary,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            } else if (msg != null) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (isPlural) {
-                            Icon(Icons.Rounded.BubbleChart, contentDescription = null, tint = themeColor, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
+                    .padding(start = 12.dp)
+                    .width(24.dp)
+                    .height(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isEntry) {
+                    // Vertical connecting line for entries
+                    Box(
+                        modifier = Modifier
+                            .width(1.5.dp)
+                            .fillMaxHeight()
+                            .background(themeColor.copy(alpha = 0.1f))
+                    )
+                    // Small dot for the entry (The Resonance Anchor)
+                    Box(
+                        modifier = Modifier
+                            .size(4.dp)
+                            .background(themeColor.copy(alpha = 0.3f * dotAlpha), CircleShape)
+                            .border(1.dp, themeColor.copy(alpha = 0.6f * dotAlpha), CircleShape)
+                    )
+                }
+                
+                Box(
+                    modifier = Modifier
+                        .onGloballyPositioned { 
+                            val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                            val current = coordinates[rowId] ?: PersonaConnectionPoints()
+                            coordinates[rowId] = current.copy(ticker = it.positionInRoot() + center) 
                         }
-                        Text(
-                            text = msg.content.uppercase(), 
-                            fontSize = 11.sp, 
-                            color = if (isEntry) Color.White.copy(alpha = 0.9f) else Color.White, 
-                            fontWeight = if (isEntry) FontWeight.Bold else FontWeight.ExtraBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(2.dp))
+                        .size(1.dp)
+                )
+            }
 
-                    val realSender = if (isMe) "YOU" else (msg.senderName.uppercase())
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = realSender,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            color = themeColor.copy(alpha = 0.6f),
-                            letterSpacing = 0.5.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (pulseCount > 0) {
-                            Spacer(modifier = Modifier.width(8.dp))
+            // ENTRY: Timestamp on the left
+            if (timestamp.isNotEmpty()) {
+                Text(
+                    text = timestamp, 
+                    fontSize = 7.sp, 
+                    color = Color.White.copy(alpha = 0.3f), 
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            // Persona Emoji
+            Surface(
+                modifier = Modifier.size(24.dp), 
+                shape = CircleShape, 
+                color = when { isSelected -> Color.White.copy(alpha = 0.2f); isMutual -> StealthRose.copy(alpha = 0.2f); isPulsed -> StealthPrimary.copy(alpha = 0.2f); else -> Color.White.copy(alpha = 0.05f) }, 
+                border = BorderStroke(0.5.dp, when { isSelected -> Color.White; isMutual -> StealthRose; isPulsed -> StealthPrimary; else -> Color.White.copy(alpha = 0.1f) })
+            ) { 
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.onGloballyPositioned { 
+                    val center = Offset(it.size.width / 2f, it.size.height / 2f)
+                    val current = coordinates[rowId] ?: PersonaConnectionPoints()
+                    coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) 
+                }) { 
+                    Text(text = signatureDevice.emoji, fontSize = 12.sp) 
+                } 
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                if (msg?.type == MessagePayload.TYPE_ASSIGNMENT_TASK) {
+                    AssignmentItem(
+                        assignment = msg,
+                        onStatusChange = { /* Propagated via PulseStore CRDT */ },
+                        themeColor = if (isMutual) StealthRose else StealthPrimary,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                } else if (msg != null) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isPlural) {
+                                Icon(Icons.Rounded.BubbleChart, contentDescription = null, tint = themeColor, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
                             Text(
-                                text = "• $pulseCount UNITS",
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColor.copy(alpha = 0.4f)
+                                text = msg.content.uppercase(), 
+                                fontSize = 11.sp, 
+                                color = if (isEntry) Color.White.copy(alpha = 0.9f) else Color.White, 
+                                fontWeight = if (isEntry) FontWeight.Bold else FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
+                        Spacer(modifier = Modifier.height(2.dp))
+
+                        val realSender = if (isMe) "YOU" else (msg.senderName.uppercase())
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = realSender,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = themeColor.copy(alpha = 0.6f),
+                                letterSpacing = 0.5.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (pulseCount > 0) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "• $pulseCount UNITS",
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColor.copy(alpha = 0.4f)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        val realSender = if (isMe) "YOU" else (senderDevice?.name ?: "?").uppercase()
+                        Text(
+                            text = realSender,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White.copy(alpha = 0.3f),
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "::", fontSize = 8.sp, color = Color.White.copy(alpha = 0.1f), fontWeight = FontWeight.Black)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "...", 
+                            fontSize = 10.sp, 
+                            color = Color.White.copy(alpha = 0.2f), 
+                            maxLines = 1, 
+                            fontWeight = FontWeight.ExtraBold,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
-            } else {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    val realSender = if (isMe) "YOU" else (senderDevice?.name ?: "?").uppercase()
-                    Text(
-                        text = realSender,
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color.White.copy(alpha = 0.3f),
-                        letterSpacing = 0.5.sp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "::", fontSize = 8.sp, color = Color.White.copy(alpha = 0.1f), fontWeight = FontWeight.Black)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "...", 
-                        fontSize = 10.sp, 
-                        color = Color.White.copy(alpha = 0.2f), 
-                        maxLines = 1, 
-                        fontWeight = FontWeight.ExtraBold,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
             }
-        }
 
-        if (isMutual) { 
-            Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = StealthRose.copy(alpha = 0.3f), modifier = Modifier.size(10.dp)) 
-            Spacer(modifier = Modifier.width(8.dp))
+            if (isMutual) { 
+                Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = StealthRose.copy(alpha = 0.3f), modifier = Modifier.size(10.dp)) 
+                Spacer(modifier = Modifier.width(8.dp))
+            }
         }
     }
 }
@@ -2488,7 +2851,7 @@ fun BlukitInput(
                         if (onTask != null) {
                             IconButton(onClick = onTask, modifier = Modifier.size(36.dp)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Assignment, 
+                                    imageVector = Icons.AutoMirrored.Rounded.Assignment, 
                                     contentDescription = "Task", 
                                     tint = StealthAmber.copy(alpha = 0.8f),
                                     modifier = Modifier.size(18.dp)

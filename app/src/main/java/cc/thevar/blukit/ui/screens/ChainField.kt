@@ -31,6 +31,7 @@ import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.components.AssignmentCreator
+import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import java.text.SimpleDateFormat
@@ -55,6 +56,7 @@ fun ChainField(
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
+    isSearchActive: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
@@ -63,14 +65,11 @@ fun ChainField(
     onClearSelection: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
-    isInputFocused: Boolean = false,
     onInputFocusChange: (Boolean) -> Unit = {},
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    userEmoji: String = "",
-    onUserNicknameChange: (String) -> Unit = {},
     activeCrowds: List<Resonance> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
@@ -113,35 +112,49 @@ fun ChainField(
         glowIntensityTarget = 0.8f,
         header = header,
         entries = {
-            // MODULE 1: BASE CONTENT (Radar + Lists)
+            // MODULE 1: BASE CONTENT (Humanity Stage + Unified Ticker/Radar)
             Column(modifier = Modifier.fillMaxSize()) {
-                RipplesField(
-                    state = state,
-                    activeBubbles = emptyList(),
-                    pulsedPeers = memberSet,
-                    onDeviceClick = { },
-                    // Humanity Stage
+                // Humanity Stage (Breadcrumbs)
+                BlukitHumanityStage(
                     title = group?.name ?: "CHAIN",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    userNickname = userNickname,
-                    userEmoji = userEmoji,
                     activeCrowds = activeCrowds,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onTitleClick = onTitleClick,
                     onBack = onBack,
-                    onNicknameChange = onUserNicknameChange,
-                    isDimmed = isInputFocused,
                     themeColor = themeColor,
+                    userCount = group?.memberIds?.size ?: 0,
                     isVaulted = group?.isVaulted == true,
                     isSeniorVault = group?.isSeniorVault == true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(320.dp),
+                    trailingContent = {
+                        // Tactical Radar Toggles
+                        if (onSearchToggle != null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                IconButton(
+                                    onClick = onSearchToggle,
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                        contentDescription = "Toggle Search",
+                                        tint = if (isSearchActive) StealthAmber else themeColor,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                Text(
+                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    fontSize = 5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.5f),
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 // CHILD TIES ROW
                 if (childTies.isNotEmpty()) {
@@ -165,30 +178,25 @@ fun ChainField(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(160.dp)) // Avoid ticker occlusion
+                // MODULE 2: UNIFIED RESONANCE TICKER (With integrated Radar)
+                PulsingResonanceTicker(
+                    state = state,
+                    energyList = chatPulses.map { msg -> 
+                        val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                        dev to msg 
+                    },
+                    pulseCounts = pulseCounts,
+                    localDeviceId = localDeviceId,
+                    localNickname = userNickname,
+                    pulsedPeers = memberSet,
+                    isGrouped = false,
+                    onPulseClick = { onNavigateToPulse(it) },
+                    onDeviceClick = { dev -> onNavigateToPulse(dev.id) },
+                    onDeviceLongClick = { },
+                    modifier = Modifier.weight(1f),
+                    themeColor = themeColor
+                )
             }
-
-            // MODULE 2: TICKER (Floating Overlay)
-            PulsingResonanceTicker(
-                state = state,
-                energyList = chatPulses.map { msg -> 
-                    val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                    dev to msg 
-                },
-                pulseCounts = pulseCounts,
-                localDeviceId = localDeviceId,
-                localNickname = userNickname,
-                pulsedPeers = memberSet,
-                isGrouped = false,
-                onPulseClick = { onNavigateToPulse(it) },
-                onDeviceClick = { dev -> onNavigateToPulse(dev.id) },
-                onDeviceLongClick = { },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(280.dp)
-                    .padding(bottom = 100.dp) 
-            )
 
             // MODULE 3: PULSE HUB (Bottom Overlay)
             BlukitPulseHub(
@@ -205,6 +213,7 @@ fun ChainField(
                 onStartChain = { }, 
                 onClearSelection = onClearSelection,
                 onAttachFile = { },
+                isSearchMode = isSearchActive,
                 onSearchToggle = onSearchToggle,
                 onManage = onShowManagement,
                 onNote = { showNoteEditor = true; activeNote = null },

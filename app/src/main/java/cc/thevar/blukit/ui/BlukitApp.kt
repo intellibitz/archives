@@ -387,21 +387,10 @@ fun BlukitApp(
                                     localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle(initialValue = "").value, 
                                     header = topBarHeader,
                                     pulsedPeers = bluetoothState.crowd.pulsedPeers, 
-                                    noiseFilterEnabled = isNoiseFilterActive, 
-                                    onDeviceClick = { device -> if (bluetoothState.crowd.selectedDevices.isNotEmpty()) { bluetoothViewModel.toggleDeviceSelection(device.id) } else { val id = device.persistentId ?: device.id; viewModel.togglePulsePeer(id); isNoiseFilterActive = true } }, 
-                                    onWhisper = { device -> val id = device.persistentId ?: device.id; val gid = bluetoothViewModel.startGroupPulse("WHISPER", setOf(id)); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) }, 
                                     onIdentifyUser = { highlightedUserId = it },
                                     breadcrumbTrail = breadcrumbTrail,
                                     onCrumbClick = onCrumbClick,
                                     userNickname = nickname ?: "?",
-                                    userEmoji = emoji,
-                                    onUserNicknameChange = { newName ->
-                                        val oldName = nickname ?: "?"
-                                        viewModel.saveNickname(newName)
-                                        if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
-                                            bluetoothViewModel.broadcastIdentityUpdate(oldName)
-                                        }
-                                    },
                                     onShowTimeline = { backStack.add(Route.Timeline) },
                                     onResetProfile = { viewModel.resetProfile() },
                                     supremeReport = supremeReport,
@@ -446,24 +435,14 @@ fun BlukitApp(
                                         crowdId = key.groupId, 
                                         highResonancePulses = highResonancePulses,
                                         onVote = bluetoothViewModel::castVote,
-                                        onNavigateToGroup = { gid ->
-                                            backStack.add(Route.GroupField(gid))
-                                            bluetoothViewModel.enterChain(gid)
-                                        },
+                                        isSearchActive = isSearchMode,
+                                        onSearchToggle = { isSearchMode = !isSearchMode; messageText = "" },
                                         onNavigateToPulse = { vid ->
                                             backStack.add(Route.PulseField(vid))
                                         },
                                         breadcrumbTrail = breadcrumbTrail,
                                         onCrumbClick = onCrumbClick,
                                         userNickname = nickname ?: "?",
-                                        userEmoji = emoji,
-                                        onUserNicknameChange = { newName ->
-                                            val oldName = nickname ?: "?"
-                                            viewModel.saveNickname(newName)
-                                            if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
-                                                bluetoothViewModel.broadcastIdentityUpdate(oldName)
-                                            }
-                                        },
                                         onShowTimeline = { backStack.add(Route.Timeline) },
                                         onResetProfile = { viewModel.resetProfile() },
                                         onBack = { backStack.removeLastOrNull(); focusedChainId = null },
@@ -477,12 +456,10 @@ fun BlukitApp(
                                                 focusManager.clearFocus() 
                                             } 
                                         },
-                                        onSearchToggle = { isSearchMode = !isSearchMode; messageText = "" },
                                         onAcceptRadio = bluetoothViewModel::acceptRadio, 
                                         onDenyRadio = bluetoothViewModel::denyRadio,
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
-                                        isInputFocused = isInputFocused,
                                         onInputFocusChange = { isInputFocused = it }
                                     )
                                 } else {
@@ -511,14 +488,6 @@ fun BlukitApp(
                                         breadcrumbTrail = breadcrumbTrail,
                                         onCrumbClick = onCrumbClick,
                                         userNickname = nickname ?: "?",
-                                        userEmoji = emoji,
-                                        onUserNicknameChange = { newName ->
-                                            val oldName = nickname ?: "?"
-                                            viewModel.saveNickname(newName)
-                                            if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
-                                                bluetoothViewModel.broadcastIdentityUpdate(oldName)
-                                            }
-                                        },
                                         onShowTimeline = { backStack.add(Route.Timeline) },
                                         onResetProfile = { viewModel.resetProfile() },
                                         onBack = { backStack.removeLastOrNull(); focusedChainId = null },
@@ -537,7 +506,6 @@ fun BlukitApp(
                                         onDenyRadio = bluetoothViewModel::denyRadio,
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
-                                        isInputFocused = isInputFocused,
                                         onInputFocusChange = { isInputFocused = it }
                                     ) 
                                 }
@@ -552,14 +520,6 @@ fun BlukitApp(
                                     breadcrumbTrail = breadcrumbTrail,
                                     onCrumbClick = onCrumbClick,
                                     userNickname = nickname ?: "?",
-                                    userEmoji = emoji,
-                                    onUserNicknameChange = { newName ->
-                                        val oldName = nickname ?: "?"
-                                        viewModel.saveNickname(newName)
-                                        if (oldName != "?" && oldName != newName && oldName != "SET NAME") {
-                                            bluetoothViewModel.broadcastIdentityUpdate(oldName)
-                                        }
-                                    },
                                     onShowTimeline = { backStack.add(Route.Timeline) },
                                     onResetProfile = { viewModel.resetProfile() },
                                     onBack = { backStack.removeLastOrNull() },
@@ -574,7 +534,6 @@ fun BlukitApp(
                                     },
                                     onSearchToggle = { isSearchMode = !isSearchMode; messageText = "" },
                                     onAttachFile = { filePickerLauncher.launch("*/*") },
-                                    isInputFocused = isInputFocused,
                                     onInputFocusChange = { isInputFocused = it }
                                 )
                             }

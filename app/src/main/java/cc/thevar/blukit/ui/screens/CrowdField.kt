@@ -39,6 +39,13 @@ import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.rounded.WifiTethering
+import androidx.compose.material.icons.rounded.Radar
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -68,22 +75,19 @@ fun CrowdField(
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
+    isSearchActive: Boolean = false,
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
     onStartSidePulse: () -> Unit = {},
     onStartChain: () -> Unit = {},
     onClearSelection: () -> Unit = {},
-    onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
     externalFocusedId: String? = null,
-    isInputFocused: Boolean = false,
     onInputFocusChange: (Boolean) -> Unit = {},
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    userEmoji: String = "",
-    onUserNicknameChange: (String) -> Unit = {},
     activeCrowds: List<Resonance> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
@@ -105,9 +109,6 @@ fun CrowdField(
         state.session.groups.filter { it.parentId == crowdId }
     }
 
-    val childCrowds = childGroups.filter { it.scope == Resonance.SCOPE_PUBLIC }
-    val childTies = childGroups.filter { it.scope != Resonance.SCOPE_PUBLIC }
-
     val pulsesData = remember(state.session.messages, crowdId, localDeviceId, localFocusedId) {
         if (crowdId == null) {
             Triple(emptyList(), emptyMap(), false)
@@ -127,9 +128,49 @@ fun CrowdField(
         glowIntensityTarget = 0.6f,
         header = header,
         entries = {
-            // MODULE 1: BASE CONTENT (Radar + Lists)
+            // MODULE 1: BASE CONTENT (Humanity Stage + Ticker/Radar)
             Column(modifier = Modifier.fillMaxSize()) {
                 val crowdName = crowd?.name ?: "CROWD"
+
+                // Humanity Stage (Breadcrumbs)
+                BlukitHumanityStage(
+                    title = crowdName,
+                    breadcrumbTrail = breadcrumbTrail,
+                    onCrumbClick = onCrumbClick,
+                    activeCrowds = activeCrowds,
+                    onShowTimeline = onShowTimeline,
+                    onResetProfile = onResetProfile,
+                    onTitleClick = onTitleClick,
+                    onBack = onBack,
+                    themeColor = StealthPrimary,
+                    userCount = crowd?.memberIds?.size ?: state.crowd.scannedDevices.size,
+                    trailingContent = {
+                        // Tactical Radar Toggles
+                        if (onSearchToggle != null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                IconButton(
+                                    onClick = onSearchToggle,
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                        contentDescription = "Toggle Search",
+                                        tint = if (isSearchActive) StealthAmber else StealthPrimary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                Text(
+                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    fontSize = 5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = 0.5f),
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                )
                 
                 // SWARM LOGIC: Crowd Canvas for High-Resonance Pulses
                 CrowdCanvas(
@@ -138,136 +179,27 @@ fun CrowdField(
                     onPulseClick = { onNavigateToPulse(it) },
                 )
 
-                RipplesField(
+                // MODULE 2: UNIFIED RESONANCE TICKER (With integrated Radar)
+                PulsingResonanceTicker(
                     state = state,
-                    activeBubbles = emptyList(),
+                    energyList = chatPulses.map { msg -> 
+                        val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                        dev to msg 
+                    },
+                    pulseCounts = pulseCounts,
+                    localDeviceId = localDeviceId,
+                    localNickname = userNickname,
                     pulsedPeers = emptySet(),
-                    onDeviceClick = { },
-                    // Humanity Stage
-                    title = crowdName,
-                    breadcrumbTrail = breadcrumbTrail,
-                    onCrumbClick = onCrumbClick,
-                    userNickname = userNickname,
-                    userEmoji = userEmoji,
-                    activeCrowds = activeCrowds,
-                    onShowTimeline = onShowTimeline,
-                    onResetProfile = onResetProfile,
-                    onTitleClick = onTitleClick,
-                    onBack = onBack,
-                    onNicknameChange = onUserNicknameChange,
-                    isDimmed = isInputFocused || state.crowd.selectedDevices.isNotEmpty(),
-                    themeColor = StealthPrimary,
-                    modifier = Modifier.fillMaxWidth().height(320.dp)
+                    isGrouped = false,
+                    onPulseClick = { onNavigateToPulse(it) },
+                    onDeviceClick = { dev -> onNavigateToPulse(dev.id) },
+                    onDeviceLongClick = { dev -> 
+                        chatPulses.find { it.senderId == dev.id }?.let { selectedPulseForMenu = it }
+                    },
+                    modifier = Modifier.weight(1f),
+                    themeColor = StealthPrimary
                 )
-
-                Column(modifier = Modifier.weight(1f)) {
-                    // Meta Sections
-                    if (childCrowds.isNotEmpty() || childTies.isNotEmpty()) {
-                        Text(
-                            text = "EVENT & TIES", 
-                            style = MaterialTheme.typography.labelSmall, 
-                            color = StealthPrimary, 
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
-                        )
-                        
-                        LazyColumn(modifier = Modifier.weight(0.4f)) {
-                            items(childCrowds) { nestedCrowd ->
-                                ResonanceSummary(
-                                    title = nestedCrowd.name,
-                                    subtitle = "NESTED CROWD",
-                                    icon = Icons.Rounded.Grain,
-                                    themeColor = StealthPrimary,
-                                    count = nestedCrowd.memberIds.size,
-                                    lastUpdate = sdf.format(Date(nestedCrowd.lastPulseTimestamp)),
-                                    onClick = { onNavigateToGroup(nestedCrowd.id) },
-                                    showJoin = true
-                                )
-                            }
-                            items(childTies) { tie ->
-                                ResonanceSummary(
-                                    title = tie.name,
-                                    subtitle = if (tie.scope == Resonance.SCOPE_PUBLIC) "CHAIN" else "LOCAL CHAIN",
-                                    icon = if (tie.scope == Resonance.SCOPE_PRIVATE) Icons.Rounded.Hearing else Icons.Rounded.CellTower,
-                                    themeColor = if (tie.scope == Resonance.SCOPE_PRIVATE) StealthRose else StealthPrimary,
-                                    count = tie.memberIds.size,
-                                    lastUpdate = sdf.format(Date(tie.lastPulseTimestamp)),
-                                    onClick = { onNavigateToGroup(tie.id) },
-                                    showJoin = true
-                                )
-                            }
-                        }
-                    }
-
-                    // Pulses
-                    Text(
-                        text = "PULSES", 
-                        style = MaterialTheme.typography.labelSmall, 
-                        color = StealthPrimary, 
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    )
-
-                    LazyColumn(modifier = Modifier.weight(0.6f)) {
-                        items(chatPulses) { pulse ->
-                            if (pulse.isMeta) {
-                                ResonanceSummary(
-                                    title = pulse.content.take(20),
-                                    subtitle = "RESONANCE",
-                                    icon = Icons.Rounded.BubbleChart,
-                                    themeColor = StealthPrimary,
-                                    count = state.session.messages.count { it.parentMessageId == pulse.messageId },
-                                    lastUpdate = sdf.format(Date(pulse.timestamp)),
-                                    onClick = { onNavigateToPulse(pulse.messageId) }
-                                )
-                            } else {
-                                AnimatedPulseItem(
-                                    msg = pulse,
-                                    isSelected = false,
-                                    senderDevice = null,
-                                    pulseCount = 0,
-                                    isPulsed = false,
-                                    isMe = pulse.senderId == localDeviceId,
-                                    isGrouped = false,
-                                    isMutual = false,
-                                    rowId = pulse.messageId,
-                                    onPulseClick = { onNavigateToPulse(pulse.messageId) },
-                                    onDeviceLongClick = { selectedPulseForMenu = pulse }
-                                )
-                            }
-                        }
-                    }
-                }
-                
-                // Bottom padding to avoid occlusion by the floating ticker and hub
-                Spacer(modifier = Modifier.height(140.dp))
             }
-
-            // MODULE 2: TICKER (Floating Overlay)
-            PulsingResonanceTicker(
-                state = state,
-                energyList = chatPulses.map { msg -> 
-                    val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                    dev to msg 
-                },
-                pulseCounts = pulseCounts,
-                localDeviceId = localDeviceId,
-                localNickname = userNickname,
-                pulsedPeers = emptySet(),
-                isGrouped = false,
-                onPulseClick = { onNavigateToPulse(it) },
-                onDeviceClick = { dev -> onNavigateToPulse(dev.id) }, // Default action for context
-                onDeviceLongClick = { dev -> 
-                    chatPulses.find { it.senderId == dev.id }?.let { selectedPulseForMenu = it }
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(280.dp)
-                    .padding(bottom = 100.dp) // Room for Hub
-            )
 
             // Pulse Action Menu for Swarm Voting
             if (selectedPulseForMenu != null) {

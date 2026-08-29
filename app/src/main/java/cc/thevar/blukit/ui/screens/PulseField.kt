@@ -27,10 +27,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.rounded.WifiTethering
+import androidx.compose.material.icons.rounded.Radar
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.zIndex
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.components.AssignmentItem
+import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthRose
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
@@ -59,16 +67,14 @@ fun PulseField(
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
+    isSearchActive: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
     onAttachFile: () -> Unit = {},
-    isInputFocused: Boolean = false,
     onInputFocusChange: (Boolean) -> Unit = {},
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    userEmoji: String = "",
-    onUserNicknameChange: (String) -> Unit = {},
     activeCrowds: List<Resonance> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
@@ -86,38 +92,54 @@ fun PulseField(
     }
 
     val themeColor = if (rootPulse?.pulseType == MessagePayload.PULSE_PRIVATE) StealthRose else StealthPrimary
-    val sdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     BlukitFieldScaffold(
         themeColor = themeColor,
         glowIntensityTarget = 0.9f,
         header = header,
         entries = {
-            // MODULE 1: BASE CONTENT (Radar + Lists)
+            // MODULE 1: BASE CONTENT (Humanity Stage + Unified Ticker/Radar)
             Column(modifier = Modifier.fillMaxSize()) {
-                RipplesField(
-                    state = state,
-                    activeBubbles = emptyList(),
-                    pulsedPeers = emptySet(),
-                    onDeviceClick = { },
-                    // Humanity Stage
+                // Humanity Stage (Breadcrumbs)
+                BlukitHumanityStage(
                     title = "PULSE",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    userNickname = userNickname,
-                    userEmoji = userEmoji,
                     activeCrowds = activeCrowds,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onTitleClick = onTitleClick,
                     onBack = onBack,
-                    onNicknameChange = onUserNicknameChange,
-                    isDimmed = isInputFocused,
                     themeColor = themeColor,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(320.dp),
+                    userCount = childPulses.size,
+                    trailingContent = {
+                        // Tactical Radar Toggles
+                        if (onSearchToggle != null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                IconButton(
+                                    onClick = onSearchToggle,
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                        contentDescription = "Toggle Search",
+                                        tint = if (isSearchActive) StealthAmber else themeColor,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                Text(
+                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    fontSize = 5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.5f),
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                 )
+
                 rootPulse?.let {
                     Surface(
                         color = themeColor.copy(alpha = 0.1f),
@@ -143,81 +165,25 @@ fun PulseField(
                     }
                 }
 
-                Text(
-                    text = "PULSE UNITS", 
-                    style = MaterialTheme.typography.labelSmall, 
-                    color = themeColor, 
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
+                // MODULE 2: UNIFIED RESONANCE TICKER (With integrated Radar)
+                PulsingResonanceTicker(
+                    state = state,
+                    energyList = childPulses.map { msg -> 
+                        val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+                        dev to msg 
+                    },
+                    pulseCounts = emptyMap(),
+                    localDeviceId = localDeviceId,
+                    localNickname = userNickname,
+                    pulsedPeers = emptySet(),
+                    isGrouped = false,
+                    onPulseClick = { onNavigateToPulse(it) },
+                    onDeviceClick = { },
+                    onDeviceLongClick = { },
+                    modifier = Modifier.weight(1f),
+                    themeColor = themeColor
                 )
-
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(childPulses) { pulse ->
-                        if (pulse.type == MessagePayload.TYPE_ASSIGNMENT_TASK) {
-                            AssignmentItem(
-                                assignment = pulse,
-                                onStatusChange = { _ ->
-                                    // In a real implementation, we'd call viewModel.updateTaskStatus
-                                    // For now, we'll rely on the CRDT upsert logic in PulseStore
-                                },
-                                themeColor = themeColor,
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                            )
-                        } else if (pulse.isMeta) {
-                            ResonanceSummary(
-                                title = pulse.content.take(20),
-                                subtitle = "RESONANCE",
-                                icon = Icons.Rounded.BubbleChart,
-                                themeColor = themeColor,
-                                count = state.session.messages.count { it.parentMessageId == pulse.messageId },
-                                lastUpdate = sdf.format(Date(pulse.timestamp)),
-                                onClick = { onNavigateToPulse(pulse.messageId) },
-                                showJoin = true
-                            )
-                        } else {
-                            AnimatedPulseItem(
-                                msg = pulse,
-                                isSelected = false,
-                                senderDevice = null,
-                                pulseCount = 0,
-                                isPulsed = false,
-                                isMe = pulse.senderId == localDeviceId,
-                                isGrouped = false,
-                                isMutual = false,
-                                rowId = pulse.messageId,
-                                onPulseClick = { },
-                                onDeviceLongClick = { }
-                            )
-                        }
-                    }
-                }
-                
-                // Bottom padding to avoid occlusion
-                Spacer(modifier = Modifier.height(140.dp))
             }
-
-            // MODULE 2: TICKER (Floating Overlay)
-            PulsingResonanceTicker(
-                state = state,
-                energyList = childPulses.map { msg -> 
-                    val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                    dev to msg 
-                },
-                pulseCounts = emptyMap(),
-                localDeviceId = localDeviceId,
-                localNickname = userNickname,
-                pulsedPeers = emptySet(),
-                isGrouped = false,
-                onPulseClick = { onNavigateToPulse(it) },
-                onDeviceClick = { },
-                onDeviceLongClick = { },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(280.dp)
-                    .padding(bottom = 100.dp) // Room for Hub
-            )
 
             // MODULE 3: PULSE HUB (Bottom Overlay)
             BlukitPulseHub(
@@ -235,6 +201,7 @@ fun PulseField(
                 onStartChain = { },
                 onClearSelection = { },
                 onAttachFile = onAttachFile,
+                isSearchMode = isSearchActive,
                 onSearchToggle = onSearchToggle,
                 onFocusChange = onInputFocusChange,
                 modifier = Modifier

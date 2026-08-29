@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
@@ -44,16 +45,11 @@ fun EventField(
     localDeviceId: String,
     header: @Composable () -> Unit,
     pulsedPeers: Set<String> = emptySet(),
-    noiseFilterEnabled: Boolean = false,
-    onDeviceClick: (P2PDevice) -> Unit,
-    onWhisper: (P2PDevice) -> Unit,
     onIdentifyUser: (String) -> Unit = {},
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    userEmoji: String = "",
-    onUserNicknameChange: (String) -> Unit = {},
     activeCrowds: List<Resonance> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
@@ -138,7 +134,8 @@ fun EventField(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(top = 60.dp, end = 16.dp)
+                        .padding(top = 100.dp, end = 16.dp)
+                        .zIndex(20f)
                 ) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
@@ -160,91 +157,102 @@ fun EventField(
                 }
             }
 
-            // MODULE 1: CONTEXTUAL FIELD (Radar Background + Hub + Ticker)
-            RipplesField(
-                state = state,
-                activeBubbles = emptyList(),
-                selectedDevices = state.crowd.selectedDevices,
-                pulsedPeers = pulsedPeers,
-                isFilterMode = noiseFilterEnabled,
-                onDeviceClick = onDeviceClick,
-                onDeviceLongClick = { },
-                onSearchToggle = onSearchToggle,
-                isSearchActive = isSearchActive,
-                // Humanity Stage Props
-                title = "THE CROWD",
-                breadcrumbTrail = breadcrumbTrail,
-                onCrumbClick = onCrumbClick,
-                userNickname = userNickname,
-                userEmoji = userEmoji,
-                activeCrowds = activeCrowds,
-                onShowTimeline = onShowTimeline,
-                onResetProfile = onResetProfile,
-                onTitleClick = onTitleClick,
-                onBack = onBack,
-                onNicknameChange = onUserNicknameChange,
-                themeColor = StealthPrimary,
-                airRitualGhost = {
-                    if (showAirGhost) {
-                        CrowdRitualGhost(
-                            onNameChange = { airProposalName = it },
-                            onDone = { templateId -> onCreatePublicResonance?.invoke(airProposalName, templateId) },
-                            onDismiss = onDismissAirGhost,
-                            nearbyAirs = state.session.groups,
-                            onJoinAir = onNavigateToGroup,
-                            title = "EVENT RITUAL",
-                            hint = "NAME THE EVENT"
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-                content = {
-                    // MODULE 2: FULL-SCREEN TICKER
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        // MODULE 2.1: INCOMING REQUESTS (High Priority)
-                        if (state.crowd.incomingRadioRequests.isNotEmpty()) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                state.crowd.incomingRadioRequests.forEach { request ->
-                                    RadioRequestEntry(
-                                        device = request,
-                                        onAccept = { onAcceptRadio(request) },
-                                        onDeny = { onDenyRadio(request) }
+            // MODULE 1: CONTEXTUAL FIELD (Humanity Stage + Unified Ticker/Radar)
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Humanity Stage (Breadcrumbs)
+                BlukitHumanityStage(
+                    title = "THE CROWD",
+                    breadcrumbTrail = breadcrumbTrail,
+                    onCrumbClick = onCrumbClick,
+                    activeCrowds = activeCrowds,
+                    onShowTimeline = onShowTimeline,
+                    onResetProfile = onResetProfile,
+                    onTitleClick = onTitleClick,
+                    onBack = onBack,
+                    themeColor = StealthPrimary,
+                    userCount = state.crowd.scannedDevices.size,
+                    trailingContent = {
+                        // Tactical Radar Toggles
+                        if (onSearchToggle != null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                IconButton(
+                                    onClick = onSearchToggle,
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                        contentDescription = "Toggle Search",
+                                        tint = if (isSearchActive) StealthAmber else StealthPrimary,
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
+                                Text(
+                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    fontSize = 5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = 0.5f),
+                                    letterSpacing = 1.sp
+                                )
                             }
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                )
 
-                        // MODULE 2.2: GLOBAL RESONANCE TICKER
-                        PulsingResonanceTicker(
-                            state = state,
-                            energyList = combinedEnergy,
-                            pulseCounts = pulseCounts,
-                            localDeviceId = localDeviceId,
-                            localNickname = userNickname,
-                            pulsedPeers = pulsedPeers,
-                            isGrouped = true,
-                            onPulseClick = { onNavigateToPulse(it) },
-                            onDeviceClick = { dev -> 
-                                if (eventMetas.any { it.id == dev.id }) {
-                                    onNavigateToGroup(dev.id)
-                                } else {
-                                    onIdentifyUser(dev.id)
-                                }
-                            },
-                            onDeviceLongClick = { },
-                            modifier = Modifier.weight(1f)
-                        )
-                        
-                        // Bottom Hub spacer
-                        Spacer(modifier = Modifier.height(110.dp))
+                // MODULE 2.1: INCOMING REQUESTS (High Priority)
+                if (state.crowd.incomingRadioRequests.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        state.crowd.incomingRadioRequests.forEach { request ->
+                            RadioRequestEntry(
+                                device = request,
+                                onAccept = { onAcceptRadio(request) },
+                                onDeny = { onDenyRadio(request) }
+                            )
+                        }
                     }
                 }
-            )
+
+                // MODULE 2.2: UNIFIED RESONANCE TICKER (With integrated Radar)
+                PulsingResonanceTicker(
+                    state = state,
+                    energyList = combinedEnergy,
+                    pulseCounts = pulseCounts,
+                    localDeviceId = localDeviceId,
+                    localNickname = userNickname,
+                    pulsedPeers = pulsedPeers,
+                    isGrouped = true,
+                    onPulseClick = { onNavigateToPulse(it) },
+                    onDeviceClick = { dev -> 
+                        if (eventMetas.any { it.id == dev.id }) {
+                            onNavigateToGroup(dev.id)
+                        } else {
+                            onIdentifyUser(dev.id)
+                        }
+                    },
+                    onDeviceLongClick = { },
+                    modifier = Modifier.weight(1f),
+                    themeColor = StealthPrimary
+                )
+            }
+
+            // GHOST OVERLAYS (Rituals)
+            if (showAirGhost) {
+                CrowdRitualGhost(
+                    onNameChange = { airProposalName = it },
+                    onDone = { templateId -> onCreatePublicResonance?.invoke(airProposalName, templateId) },
+                    onDismiss = onDismissAirGhost,
+                    nearbyAirs = state.session.groups,
+                    onJoinAir = onNavigateToGroup,
+                    title = "EVENT RITUAL",
+                    hint = "NAME THE EVENT",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
 
             // MODULE 3: PULSE HUB (Bottom Overlay)
             BlukitPulseHub(

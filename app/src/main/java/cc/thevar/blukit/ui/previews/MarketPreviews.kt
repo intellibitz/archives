@@ -50,9 +50,7 @@ fun PreviewRadarPhone() {
                 )
             ),
             localDeviceId = "me",
-            header = { Text("PREVIEW HEADER", color = Color.White) },
-            onDeviceClick = {},
-            onWhisper = {}
+            header = { Text("PREVIEW HEADER", color = Color.White) }
         )
     }
 }
@@ -110,9 +108,7 @@ fun PreviewRadarTablet() {
                 )
             ),
             localDeviceId = "me",
-            header = { Text("PREVIEW HEADER", color = Color.White) },
-            onDeviceClick = {},
-            onWhisper = {}
+            header = { Text("PREVIEW HEADER", color = Color.White) }
         )
     }
 }
