@@ -98,8 +98,9 @@ fun EventField(
             }
 
             // 1. ADD LATEST ENTRIES for this resonance (up to 3)
+            // TACTICAL FILTER: Exclude own pulses from the landing spectrum to focus on discovery
             val resonancePulses = state.session.messages.asSequence().filter { 
-                (it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null))
+                (it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null)) && (it.senderId != localDeviceId)
             }.sortedBy { it.timestamp }
              .toList()
              .takeLast(3)
