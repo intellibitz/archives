@@ -296,7 +296,7 @@ fun BlukitTacticalHeader(
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = "PRIVACY", 
+                text = "PROTOCOL", 
                 fontSize = 7.sp, 
                 fontWeight = FontWeight.Black, 
                 color = themeColor.copy(alpha = 0.8f),
@@ -407,7 +407,7 @@ fun BlukitHumanityStage(
                     border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.2f))
                 ) {
                     Text(
-                        text = "$userCount ${if (userCount == 1) "USER" else "USERS"}",
+                        text = "$userCount ${if (userCount == 1) "PEER" else "PEERS"}",
                         fontSize = 7.sp,
                         fontWeight = FontWeight.Black,
                         color = themeColor,
@@ -436,7 +436,7 @@ fun BlukitHumanityStage(
                     Icon(Icons.Rounded.Timeline, contentDescription = "Timeline", tint = themeColor, modifier = Modifier.size(16.dp))
                 }
                 Text(
-                    text = "HISTORY", 
+                    text = "TRACES", 
                     fontSize = 5.sp, 
                     fontWeight = FontWeight.Black, 
                     color = themeColor.copy(alpha = 0.5f),
@@ -794,7 +794,7 @@ fun CrowdMiniRadar(
                             size = 32.dp,
                             isStatic = false,
                             themeColor = themeColor,
-                            subLabel = "USER",
+                            subLabel = "PEER",
                             onClick = { onDeviceClick(device) },
                             onLongClick = { onDeviceLongClick(device) }
                         )
@@ -853,7 +853,7 @@ fun CrowdMiniRadar(
                         size = 32.dp,
                         isStatic = false,
                         themeColor = themeColor,
-                        subLabel = "USER",
+                        subLabel = "PEER",
                         onClick = { onDeviceClick(device) },
                         onLongClick = { onDeviceLongClick(device) }
                     )
@@ -1225,7 +1225,7 @@ fun AnimatedPulseItem(
     val coordinates = LocalPersonaCoordinates.current
     val timestamp = msg?.let { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(Date(it.timestamp)) } ?: ""
     val themeColor = if (isMutual) StealthRose else if (isPulsed) StealthPrimary else Color.White
-    val signatureDevice = senderDevice ?: P2PDevice(id = msg?.senderId ?: "", name = msg?.senderName ?: "USER", emoji = msg?.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
+    val signatureDevice = senderDevice ?: P2PDevice(id = msg?.senderId ?: "", name = msg?.senderName ?: "PEER", emoji = msg?.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
     val isPlural = msg?.isMeta == true
     val isEntry = isGrouped && msg != null
 
@@ -1795,7 +1795,7 @@ fun ResonanceSummary(
                     Column(modifier = Modifier.weight(1f)) {
                         if (count >= 0) {
                             Text(
-                                text = "$count ${if (count == 1) "USER" else "USERS"}",
+                                text = "$count ${if (count == 1) "PEER" else "PEERS"}",
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Black,
                                 color = themeColor.copy(alpha = 0.6f),
@@ -1853,7 +1853,7 @@ fun ResonanceSummary(
                                 border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
                             ) {
                                 Text(
-                                    text = "ENTER",
+                                    text = "DIVE",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Black,
                                     color = themeColor,
@@ -2519,7 +2519,7 @@ fun PulsePersonaSignature(
         }
         
         // TACTICAL DECORATION: Label (YOU/USER/CUSTOM)
-        val finalLabel = subLabel ?: if (isMe) "YOU" else "USER"
+        val finalLabel = subLabel ?: if (isMe) "YOU" else "PEER"
         if (size >= 24.dp) {
             Text(
                 text = finalLabel.uppercase(),
@@ -2560,7 +2560,7 @@ fun PulseCrowdSignature(
                 }
                 if (pulseCount > 0) { 
                     Text(
-                        text = "$pulseCount ${if (pulseCount == 1) "USER" else "USERS"}", 
+                        text = "$pulseCount ${if (pulseCount == 1) "PEER" else "PEERS"}", 
                         fontSize = 7.sp, 
                         fontWeight = FontWeight.Black, 
                         color = themeColor,
@@ -2707,12 +2707,12 @@ fun BlukitInput(
     )
 
     val actualPlaceholder = when { 
-        isSearchActive -> "SEARCH PULSES: TYPE NICKNAME OR PULSE..."
-        isPulseLocked -> "JOIN A CROWD TO SPREAD A PULSE..."
+        isSearchActive -> "SCAN MESH: TYPE SIGNATURE OR PULSE..."
+        isPulseLocked -> "JOIN A CROWD TO EMIT A PULSE..."
         placeholder != null -> placeholder 
-        isReadOnly -> "FILTERED" 
+        isReadOnly -> "INTERCEPTED" 
         isPrivate && targetName != null -> "PRIVATE PULSE TO $targetName..."
-        isPrivate -> "TYPE A SECURE PULSE..."
+        isPrivate -> "EMIT A SECURE PULSE..."
         else -> "SPREAD A PULSE TO ${targetName ?: "THE CROWD"}..." 
     }
     
@@ -2772,7 +2772,7 @@ fun BlukitInput(
                         IconButton(onClick = onSearchToggle, modifier = Modifier.size(40.dp)) {
                             Icon(
                                 imageVector = Icons.Rounded.Radar, 
-                                contentDescription = "Search", 
+                                contentDescription = "Scan", 
                                 tint = if (isSearchActive) themeColor else Color.White.copy(alpha = 0.2f),
                                 modifier = Modifier.size(18.dp)
                             )

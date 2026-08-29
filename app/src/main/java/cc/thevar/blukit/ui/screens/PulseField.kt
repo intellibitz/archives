@@ -128,7 +128,7 @@ fun PulseField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    text = if (isSearchActive) "SCAN" else "RADAR",
                                     fontSize = 5.sp,
                                     fontWeight = FontWeight.Black,
                                     color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.5f),
@@ -212,7 +212,7 @@ fun PulseField(
             // MODULE 4: FLOATING TIPS
             if (childPulses.isEmpty()) {
                 BlukitTip(
-                    text = "NO GRANULAR PULSES YET. ADD A UNIT TO EXPAND THE RESONANCE.",
+                    text = "NO GRANULAR PULSES DETECTED. ADD A UNIT TO EXPAND THE RESONANCE.",
                     themeColor = themeColor,
                     onDismiss = { },
                     modifier = Modifier.align(Alignment.TopCenter)

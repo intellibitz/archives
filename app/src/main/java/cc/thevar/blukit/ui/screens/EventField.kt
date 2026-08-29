@@ -139,7 +139,7 @@ fun EventField(
                 ) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "NEARBY HUB",
+                            text = "PROXIMITY HUB",
                             style = MaterialTheme.typography.labelSmall,
                             color = StealthAmber,
                             fontWeight = FontWeight.Black,
@@ -187,7 +187,7 @@ fun EventField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    text = if (isSearchActive) "SCAN" else "RADAR",
                                     fontSize = 5.sp,
                                     fontWeight = FontWeight.Black,
                                     color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = 0.5f),
@@ -281,7 +281,7 @@ fun EventField(
             if (state.session.archivedGroups.isNotEmpty()) {
                 Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)) {
                     BlukitTip(
-                        text = "${state.session.archivedGroups.size} SUNK PULSES IN THE VAULT. RESTORE?",
+                        text = "${state.session.archivedGroups.size} ECHOES IN THE VAULT. AWAKEN?",
                         themeColor = StealthPrimary,
                         onDismiss = { showVault = true }
                     )

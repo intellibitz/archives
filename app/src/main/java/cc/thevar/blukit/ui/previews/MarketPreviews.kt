@@ -153,7 +153,7 @@ fun PreviewFeatureGraphic() {
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "MAKE PEOPLE PULSE",
+                    text = "RESONATE THE CROWD",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Bold

@@ -112,8 +112,8 @@ fun AssignmentItem(
                     val statusText = when {
                         isBlocked -> "BLOCKED"
                         isAbandoned -> "ABANDONED"
-                        isCompleted -> "COMPLETED"
-                        else -> "DUE: ${assignment.dueDate?.let { sdf.format(Date(it)) } ?: "NO DEADLINE"}"
+                        isCompleted -> "ACCOMPLISHED"
+                        else -> "MISSION END: ${assignment.dueDate?.let { sdf.format(Date(it)) } ?: "OPEN ENDED"}"
                     }
                     val statusColor = when {
                         isBlocked -> Color.Red
@@ -188,7 +188,7 @@ fun AssignmentCreator(
             .padding(16.dp)
     ) {
         Text(
-            text = "NEW ASSIGNMENT",
+            text = "NEW MISSION",
             color = themeColor,
             fontSize = 12.sp,
             fontWeight = FontWeight.Black,
@@ -209,7 +209,7 @@ fun AssignmentCreator(
                 focusedIndicatorColor = themeColor,
                 unfocusedIndicatorColor = themeColor.copy(alpha = 0.5f)
             ),
-            placeholder = { Text("Task description...", color = Color.Gray, fontSize = 14.sp) }
+            placeholder = { Text("Objective details...", color = Color.Gray, fontSize = 14.sp) }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -218,7 +218,7 @@ fun AssignmentCreator(
             TextButton(onClick = { /* In real app, trigger date picker */ selectedDate = System.currentTimeMillis() + 86400000 }) {
                 Icon(Icons.Rounded.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp), tint = themeColor)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("SET DEADLINE", color = themeColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("SET MISSION END", color = themeColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             
             Spacer(modifier = Modifier.weight(1f))

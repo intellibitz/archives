@@ -161,21 +161,21 @@ fun BlukitApp(
         val trail = mutableListOf<String>()
         backStack.forEach { route ->
             when (route) {
-                is Route.Event -> trail.add("The Crowd")
+                is Route.Event -> trail.add("THE SPECTRUM")
                 is Route.GroupField -> {
                     val group = bluetoothState.session.groups.find { it.id == route.groupId }
                     if (group != null) {
                         group.parentId?.let { pid ->
                             val parent = bluetoothState.session.groups.find { it.id == pid }
-                            val parentName = parent?.name ?: "Crowd"
+                            val parentName = parent?.name ?: "CROWD"
                             if (trail.lastOrNull() != parentName) trail.add(parentName)
                         }
                         trail.add(group.name)
                     } else {
-                        trail.add("Depth")
+                        trail.add("DEPTH")
                     }
                 }
-                else -> trail.add("Blukit")
+                else -> trail.add("BLUKIT")
             }
         }
         
@@ -556,15 +556,15 @@ fun BlukitApp(
             }
 
             if (showAirIsStillDialog) {
-                ConfirmationDialog(title = "AIR IS STILL", text = "BLUKIT RADIOS ARE SILENT. AWAKEN BLUETOOTH OR GRANT PERMISSIONS TO SPREAD PULSES.", onConfirm = { showAirIsStillDialog = false; if (!permissionState.essentialPermissionsGranted) permissionState.launchMultiplePermissionRequest() else if (!bluetoothState.harmony.isBluetoothEnabled) context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) else if (isLocationMandatory && (!bluetoothState.harmony.isLocationEnabled || !locationPermissionGranted)) context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) }, onDismiss = { showAirIsStillDialog = false })
+                ConfirmationDialog(title = "SPECTRUM SILENT", text = "BLUKIT RADIOS ARE SILENCE. AWAKEN BLUETOOTH OR GRANT PERMISSIONS TO DIVE INTO THE MESH.", onConfirm = { showAirIsStillDialog = false; if (!permissionState.essentialPermissionsGranted) permissionState.launchMultiplePermissionRequest() else if (!bluetoothState.harmony.isBluetoothEnabled) context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) else if (isLocationMandatory && (!bluetoothState.harmony.isLocationEnabled || !locationPermissionGranted)) context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) }, onDismiss = { showAirIsStillDialog = false })
             }
 
             if (showPrivacyProtocol) {
                 val themeColor = if (currentRoute is Route.Resonance || currentRoute is Route.GroupField) StealthRose else StealthPrimary
                 BlukitAlert(
-                    title = "PRIVACY PROTOCOL",
-                    text = "BLUKIT IS ANONYMOUS-FIRST. 100% OFFLINE P2P. ALL PULSES STAY ON YOUR DEVICE UNTIL YOU CHOOSE TO CLEAR THEM.",
-                    confirmLabel = "UNDERSTOOD",
+                    title = "MESH PROTOCOL",
+                    text = "BLUKIT IS ANONYMOUS-FIRST. 100% OFFLINE P2P. ALL PULSES STAY ON YOUR DEVICE UNTIL YOU CHOOSE TO EMIT THEM TO NEARBY PEERS.",
+                    confirmLabel = "RESPECT",
                     themeColor = themeColor,
                     onConfirm = { showPrivacyProtocol = false },
                     onDismiss = { showPrivacyProtocol = false }

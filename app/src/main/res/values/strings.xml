@@ -2,14 +2,14 @@
     <string name="app_name">blukit</string>
 
     <!-- Smart Flow -->
-    <string name="smart_flow_title">JOIN THE PEOPLE?</string>
+    <string name="smart_flow_title">JOIN THE CROWD?</string>
     <string name="smart_flow_desc">START SPREADING PULSES TO SEE THE CONNECTION.</string>
     <string name="smart_flow_action">Join</string>
 
     <!-- Shared UI -->
-    <string name="btn_send">Pulse</string>
-    <string name="btn_cancel">Cancel</string>
-    <string name="btn_block">Block</string>
-    <string name="mod_block_title">Block this person?</string>
-    <string name="mod_block_desc">You won\'t see pulses from %1$s anymore.</string>
+    <string name="btn_send">Emit</string>
+    <string name="btn_cancel">Abort</string>
+    <string name="btn_block">Shield</string>
+    <string name="mod_block_title">Shield from this person?</string>
+    <string name="mod_block_desc">You won\'t intercept pulses from %1$s anymore.</string>
 </resources>

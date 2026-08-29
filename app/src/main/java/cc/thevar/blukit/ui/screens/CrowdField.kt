@@ -160,7 +160,7 @@ fun CrowdField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    text = if (isSearchActive) "SCAN" else "RADAR",
                                     fontSize = 5.sp,
                                     fontWeight = FontWeight.Black,
                                     color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = 0.5f),
@@ -245,7 +245,7 @@ fun CrowdField(
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 BlukitTip(
-                    text = "THE CROWD IS SILENT. CREATE A TIE OR SPREAD A PULSE TO START.",
+                    text = "THIS CROWD IS SILENT. CREATE A TIE OR EMIT A PULSE TO START RESONANCE.",
                     onDismiss = { showTip = false }
                 )
             }

@@ -144,7 +144,7 @@ fun ChainField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SEARCH" else "RADAR",
+                                    text = if (isSearchActive) "SCAN" else "RADAR",
                                     fontSize = 5.sp,
                                     fontWeight = FontWeight.Black,
                                     color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.5f),
@@ -232,7 +232,7 @@ fun ChainField(
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 BlukitTip(
-                    text = "THIS CHAIN IS SILENT. WHISPER OR PIN A PULSE TO THE CANVAS.",
+                    text = "THIS CHAIN IS SILENCE. WHISPER OR PIN A PULSE TO COLLABORATE.",
                     themeColor = themeColor,
                     onDismiss = { showTip = false }
                 )
