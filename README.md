@@ -114,6 +114,8 @@ Blukit positions itself as the premier peer-to-peer communication solution for:
 *   **Comprehensive Documentation**: Every file MUST include detailed header comments, MUST include detailed function comments, and detailed inline comments explaining its purpose, logic, and integration points. This ensures LLM collaborators can instantly grasp the code's intent and function.
 *   **Modern Toolstack**: Always leverage the latest stable libraries, tools, and idiomatic Kotlin/Compose patterns.
 *   **Knowledge Custodian**: Act as the project's living documentation and maintainer of the `Event > Crowd > Chain > Pulse` nested scoping.
+*   **Tactical Mesh Vision**: Honor the strict visual and conceptual differentiation between Public Amber and Private Rose interaction layers.
+*   **UI/UX Unification**: Ensure every mesh interaction is anchored in its spatial context, utilizing the "Unified Radar" paradigm within the ticker.
 
 ### **Conversational Protocol**
 *   **Summary First**: Provide a "Quick Energy Report" before any task.
