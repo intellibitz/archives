@@ -119,7 +119,7 @@ fun ChainField(
             Column(modifier = Modifier.fillMaxSize()) {
                 // Humanity Stage (Breadcrumbs)
                 BlukitHumanityStage(
-                    title = group?.name ?: "CHAIN",
+                    title = group?.name ?: "ROOM",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeCrowds = activeCrowds,
@@ -148,7 +148,7 @@ fun ChainField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SCAN" else "RADAR",
+                                    text = if (isSearchActive) "SEARCH" else "PEOPLE",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
                                 )
@@ -160,7 +160,7 @@ fun ChainField(
 
                 // CHILD GROUPS ROW
                 if (childTies.isNotEmpty()) {
-                    TickerSectionHeader(title = "SECURE GROUPS", color = themeColor)
+                    TickerSectionHeader(title = "PRIVATE ROOMS", color = themeColor)
                     LazyRow(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -238,7 +238,7 @@ fun ChainField(
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 BlukitTip(
-                    text = "THIS GROUP IS SILENT. SEND A PRIVATE MESSAGE OR PIN A PULSE TO COLLABORATE.",
+                    text = "THIS ROOM IS SILENT. START A CONVERSATION TO COLLABORATE.",
                     themeColor = themeColor,
                     onDismiss = { showTip = false }
                 )
@@ -282,13 +282,13 @@ fun ChainField(
     if (showMemberManagement && group != null) {
         AlertDialog(
             onDismissRequest = onDismissManagement,
-            containerColor = Color.Black,
+            containerColor = StealthBlack,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White,
-            title = { Text("MANAGE GROUP", fontWeight = FontWeight.Black) },
+            title = { Text("MANAGE ROOM", style = MaterialTheme.typography.titleMedium) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("MEMBERS", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
+                    Text("PEOPLE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
                     group.memberIds.forEach { memberId ->
                         val member = state.crowd.scannedDevices.find { it.id == memberId || it.persistentId == memberId }
                         val currentRole = group.userRoles[memberId]
@@ -297,10 +297,14 @@ fun ChainField(
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                                 Text(text = member?.emoji ?: "👤", fontSize = 16.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = (member?.name ?: if (memberId == localDeviceId) "YOU" else "UNKNOWN").uppercase(), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(
+                                    text = member?.name ?: if (memberId == localDeviceId) "You" else "Unknown", 
+                                    modifier = Modifier.weight(1f), 
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
                                 if (memberId != localDeviceId) {
                                     IconButton(onClick = { onRemoveMember(group.id, memberId) }) {
-                                        Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Remove", tint = Color.Red.copy(alpha = 0.6f))
+                                        Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Remove", tint = StealthError.copy(alpha = 0.6f))
                                     }
                                 }
                             }
@@ -313,11 +317,16 @@ fun ChainField(
                                         val isAssigned = currentRole == role
                                         Surface(
                                             onClick = { onAssignRole(group.id, memberId, role) }, 
-                                            color = if (isAssigned) StealthPrimary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f),
-                                            shape = RoundedCornerShape(4.dp),
-                                            border = BorderStroke(0.5.dp, if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.1f))
+                                            color = if (isAssigned) StealthPrimary.copy(alpha = StealthAlphaLow) else Color.White.copy(alpha = 0.05f),
+                                            shape = RoundedCornerShape(8.dp),
+                                            border = BorderStroke(1.dp, if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.1f))
                                         ) {
-                                            Text(text = role.uppercase(), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 11.sp, fontWeight = FontWeight.Black, color = if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.6f))
+                                            Text(
+                                                text = role, 
+                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), 
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.6f)
+                                            )
                                         }
                                     }
                                 }
@@ -326,7 +335,7 @@ fun ChainField(
                     }
                     HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("GROUP ARCHIVE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
+                        Text("ROOM ARCHIVE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
                         Switch(
                             checked = group.isVaulted,
                             onCheckedChange = { onVaultGroup(group.id, it) },

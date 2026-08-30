@@ -28,8 +28,7 @@ import androidx.compose.ui.zIndex
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
-import cc.thevar.blukit.ui.theme.StealthAmber
-import cc.thevar.blukit.ui.theme.StealthPrimary
+import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.components.MeshSearchingView
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 
@@ -90,8 +89,10 @@ fun EventField(
     val combinedEnergy = remember(eventMetas, state.session.messages) {
         val grouped = mutableListOf<Pair<P2PDevice, MessagePayload?>>()
         
-        // Sort events by latest activity (ascending for reverseLayout)
-        val sortedEvents = eventMetas.sortedBy { it.lastPulseTimestamp }
+        // Task 3: Priority Landing (Pinned Rooms first)
+        val pinned = eventMetas.filter { it.isPinned }.sortedByDescending { it.lastPulseTimestamp }
+        val others = eventMetas.filter { !it.isPinned }.sortedBy { it.lastPulseTimestamp }
+        val sortedEvents = others + pinned // Ascending order because reverseLayout is used in Ticker
         
         sortedEvents.forEach { resonance ->
             // Fetch latest AI summary for this resonance if it exists
@@ -115,7 +116,7 @@ fun EventField(
             // 2. ADD HEADER (above pulses in UI)
             val headDev = P2PDevice(
                 id = resonance.id, 
-                name = if (resonance.id == Resonance.ID_GLOBAL) "GLOBAL GROUP" else resonance.name, 
+                name = if (resonance.id == Resonance.ID_GLOBAL) "Global Mesh" else resonance.name, 
                 emoji = resonance.projectionEmoji ?: "✨", 
                 medium = P2PDevice.ConnectionMedium.BLUETOOTH,
                 statusLabel = latestAiSummary?.content
@@ -171,11 +172,9 @@ fun EventField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SCAN" else "RADAR",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = 0.8f),
-                                    letterSpacing = 1.sp
+                                    text = if (isSearchActive) "SEARCH" else "PEOPLE",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = StealthAlphaHigh)
                                 )
                             }
                         }

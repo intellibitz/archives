@@ -135,7 +135,7 @@ fun MixedStatusBranding(
  * Utilizes a pulsing amber dot to signal active spectrum discovery.
  */
 @Composable
-fun CrowdTicker(modifier: Modifier = Modifier, title: String, resonances: List<Resonance> = emptyList()) {
+fun CrowdTicker(title: String, modifier: Modifier = Modifier, resonances: List<Resonance> = emptyList()) {
     val infiniteTransition = rememberInfiniteTransition(label = "CrowdTicker")
     val alpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 0.7f, animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
     
@@ -150,7 +150,7 @@ fun CrowdTicker(modifier: Modifier = Modifier, title: String, resonances: List<R
                 Box(modifier = Modifier.size(6.dp).background(StealthPrimary.copy(alpha = alpha), CircleShape))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (resonances.isEmpty()) "universal frequency" else "${resonances.size} groups active", 
+                    text = if (resonances.isEmpty()) "nearby people" else "${resonances.size} rooms active", 
                     style = MaterialTheme.typography.labelSmall,
                     color = StealthPrimary.copy(alpha = StealthAlphaHigh)
                 )
@@ -251,11 +251,11 @@ fun BlukitTacticalHeader(
     onGrantPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
     onShowPrivacy: () -> Unit,
+    modifier: Modifier = Modifier,
     isBluetoothOff: Boolean = false,
     isWifiOff: Boolean = false,
     isPermissionMissing: Boolean = false,
     isPermanentlyDenied: Boolean = false,
-    modifier: Modifier = Modifier,
     aiSummary: String? = null
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "HarmonyCycle")
@@ -440,7 +440,7 @@ fun BlukitHumanityStage(
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "GROUPS", 
+                                    text = "ROOMS", 
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (!isLiveFeedMode) StealthOnPrimary else Color.White.copy(alpha = StealthAlphaHigh)
                                 )
@@ -611,7 +611,7 @@ fun BlukitPulseHub(
                             shape = RoundedCornerShape(20.dp), // Softened
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                         ) { 
-                            Text("NEW GROUP", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp) 
+                            Text("NEW ROOM", style = MaterialTheme.typography.labelLarge) 
                         }
                         IconButton(
                             onClick = onClearSelection, 
@@ -638,7 +638,10 @@ fun BlukitPulseHub(
                     ) {
                         Icon(Icons.Rounded.Grain, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("CREATE GROUP: ${messageText.uppercase()}", fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.5.sp)
+                        Text(
+                            text = "START ROOM: $messageText", 
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                 }
 
@@ -1240,7 +1243,7 @@ fun PulsingResonanceTicker(
                         resonance.allMemberIds.size
                     }
 
-                    val dynamicSubtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "EVENT" else "PRIVATE CHAIN"
+                    val dynamicSubtitle = if (resonance.scope == Resonance.SCOPE_PUBLIC) "Public Room" else "Private Room"
                     val userEmoji = LocalUserEmoji.current
 
                     ResonanceSummary(
@@ -1766,7 +1769,7 @@ fun SunkPulseVault(
         shape = RoundedCornerShape(28.dp),
         title = { 
             Text(
-                text = "Sunk Pulse Vault", 
+                text = "Room Archive", 
                 style = MaterialTheme.typography.titleMedium,
                 color = StealthPrimary
             ) 
@@ -2433,7 +2436,7 @@ fun OnboardingGhost(
                     modifier = Modifier.padding(24.dp)
                 ) {
                     Text(
-                        text = "FORM YOUR PERSONA", 
+                        text = "WELCOME HOME", 
                         style = MaterialTheme.typography.labelSmall, 
                         color = StealthAmber
                     )
@@ -2450,7 +2453,7 @@ fun OnboardingGhost(
                         decorationBox = { innerTextField ->
                             if (nickname.isEmpty()) {
                                 Text(
-                                    text = "ENTER NICKNAME", 
+                                    text = "WHO ARE YOU?", 
                                     style = MaterialTheme.typography.headlineSmall,
                                     color = Color.White.copy(alpha = 0.2f), 
                                     textAlign = TextAlign.Center,
@@ -2464,7 +2467,7 @@ fun OnboardingGhost(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = "Blukit is local and anonymous. Your persona stays on your device until you choose to emit energy into the mesh.",
+                        text = "Blukit is a private mesh for your family. No internet required. Your name and messages stay strictly inside these walls.",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.5f),
                         textAlign = TextAlign.Center,
@@ -2515,8 +2518,8 @@ fun CrowdRitualGhost(
     modifier: Modifier = Modifier,
     nearbyAirs: List<Resonance> = emptyList(),
     onJoinAir: (String) -> Unit = {},
-    title: String = "ESTABLISH FREQUENCY",
-    hint: String = "TITLE YOUR FREQUENCY"
+    title: String = "START A ROOM",
+    hint: String = "NAME YOUR ROOM"
 ) {
     var airName by remember { mutableStateOf("") }
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
@@ -2964,13 +2967,13 @@ fun BlukitInput(
     )
 
     val actualPlaceholder = when { 
-        isSearchActive -> "Scan network: Type name or message..."
-        isPulseLocked -> "Signal the mesh: Start a frequency..."
+        isSearchActive -> "Search people or messages..."
+        isPulseLocked -> "Start a conversation: Pick a room..."
         placeholder != null -> placeholder 
         isReadOnly -> "INTERCEPTED" 
-        isPrivate && targetName != null -> "Private message to $targetName..."
+        isPrivate && targetName != null -> "Message to $targetName..."
         isPrivate -> "Send a secure message..."
-        else -> "Send a message to ${targetName ?: "the group"}..." 
+        else -> "Type a message..." 
     }
     
     Column(modifier = modifier) {

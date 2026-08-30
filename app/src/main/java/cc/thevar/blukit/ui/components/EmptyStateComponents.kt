@@ -94,7 +94,7 @@ fun MeshSearchingView(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "SEARCHING THE MESH",
+            text = "LOOKING FOR PEOPLE...",
             style = MaterialTheme.typography.titleMedium,
             color = StealthPrimary,
             letterSpacing = 2.sp
@@ -103,7 +103,7 @@ fun MeshSearchingView(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "The air is silent. No nearby users detected. Signal your presence to attract other nomads to the mesh.",
+            text = "The air is silent. No one else is using Blukit nearby. Say hello to the mesh to start the first conversation.",
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -124,7 +124,7 @@ fun MeshSearchingView(
             Icon(Icons.Rounded.GraphicEq, contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "SIGNAL PRESENCE",
+                text = "SAY HELLO",
                 style = MaterialTheme.typography.labelLarge
             )
         }

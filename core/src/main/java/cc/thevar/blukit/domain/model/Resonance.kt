@@ -33,6 +33,7 @@ data class Resonance(
     val projectionEmoji: String? = null,
     val isVaulted: Boolean = false,
     val isSeniorVault: Boolean = false,
+    val isPinned: Boolean = false, // Task 3: For priority family/home rooms
     val vaultTimestamp: Long? = null,
     val schedules: List<CrowdSchedule> = emptyList(),
     val partitionThreshold: Int = 100,

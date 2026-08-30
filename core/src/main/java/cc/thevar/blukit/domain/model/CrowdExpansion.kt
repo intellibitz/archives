@@ -53,5 +53,32 @@ object CrowdTemplates {
         iconEmoji = "🏟️"
     )
 
-    val ALL = listOf(UNIVERSITY, FESTIVAL, VENUE)
+    val FAMILY = CrowdTemplate(
+        id = "template_family",
+        name = "Family Home",
+        description = "Private mesh for the household. Sync lists and share memories.",
+        roles = listOf("Parent", "Kid", "Resident"),
+        defaultChains = listOf("Kitchen", "Chores", "General"),
+        iconEmoji = "🏠"
+    )
+
+    val STUDY = CrowdTemplate(
+        id = "template_study",
+        name = "Study Group",
+        description = "Focused room for projects and sharing notes.",
+        roles = listOf("Student", "Editor", "Viewer"),
+        defaultChains = listOf("Research", "Drafts", "Deadlines"),
+        iconEmoji = "📚"
+    )
+
+    val DINING = CrowdTemplate(
+        id = "template_dining",
+        name = "Kitchen",
+        description = "Room for recipes, groceries, and dining updates.",
+        roles = listOf("Chef", "Foodie", "Helper"),
+        defaultChains = listOf("Menu", "Groceries", "Feedback"),
+        iconEmoji = "🍳"
+    )
+
+    val ALL = listOf(UNIVERSITY, FESTIVAL, VENUE, FAMILY, STUDY, DINING)
 }

@@ -133,7 +133,7 @@ fun CrowdField(
         entries = {
             // MODULE 1: BASE CONTENT (Humanity Stage + Ticker/Radar)
             Column(modifier = Modifier.fillMaxSize()) {
-                val crowdName = crowd?.name ?: "CROWD"
+                val crowdName = crowd?.name ?: "ROOM"
 
                 // Humanity Stage (Breadcrumbs)
                 BlukitHumanityStage(
@@ -164,7 +164,7 @@ fun CrowdField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SCAN" else "RADAR",
+                                    text = if (isSearchActive) "SEARCH" else "PEOPLE",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = StealthAlphaHigh),
                                 )
@@ -251,7 +251,7 @@ fun CrowdField(
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 BlukitTip(
-                    text = "THIS GROUP IS SILENT. START A CONVERSATION OR SEND A MESSAGE TO CONNECT.",
+                    text = "THIS ROOM IS SILENT. START A CONVERSATION TO CONNECT.",
                     onDismiss = { showTip = false }
                 )
             }

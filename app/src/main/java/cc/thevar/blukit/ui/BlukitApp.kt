@@ -628,9 +628,9 @@ fun BlukitApp(
             // --- GUIDED DISCOVERY TIPS ---
             if (onboardingStep > 0 && onboardingStep <= 3 && !showOnboarding) {
                 val tipText = when (onboardingStep) {
-                    1 -> "Welcome to the Mesh. All pulses are 100% offline and encrypted."
-                    2 -> "DISCOVERY shows nearby public energy and groups."
-                    else -> "Switch to LIVE FEED to see every raw pulse hitting your radio."
+                    1 -> "This app works without the internet. It uses your phone's radio to talk to people in the same house."
+                    2 -> "ROOMS are like different areas of the house. See who is in each room on the radar."
+                    else -> "Switch to LIVE FEED to see a continuous stream of everything happening nearby."
                 }
                 
                 Box(modifier = Modifier.fillMaxSize().padding(top = 120.dp).zIndex(150f), contentAlignment = Alignment.TopCenter) {
