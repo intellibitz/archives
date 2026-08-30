@@ -43,7 +43,7 @@ class BlukitWidget : GlanceAppWidget() {
                 Column(
                     modifier = GlanceModifier
                         .fillMaxSize()
-                        .background(Color.Black)
+                        .background(Color(0xFF0D1017))
                         .padding(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalAlignment = Alignment.CenterVertically

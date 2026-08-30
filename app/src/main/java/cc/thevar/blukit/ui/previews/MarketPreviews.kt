@@ -119,7 +119,7 @@ fun PreviewPlayStoreIcon() {
     Box(
         modifier = Modifier
             .size(512.dp)
-            .background(Color.Black),
+            .background(Color(0xFF0D1017)),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -142,7 +142,7 @@ fun PreviewFeatureGraphic() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(Color(0xFF0D1017)),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -153,7 +153,7 @@ fun PreviewFeatureGraphic() {
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "RESONATE THE CROWD",
+                    text = "DISCOVER THE CROWD",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Bold
@@ -182,10 +182,10 @@ fun PreviewTacticalHeader() {
 @Composable
 fun PreviewHumanityStage() {
     BlukitTheme {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0D1017))) {
             BlukitHumanityStage(
-                title = "THE CROWD",
-                breadcrumbTrail = listOf("Event", "Crowd"),
+                title = "GLOBAL GROUP",
+                breadcrumbTrail = listOf("DISCOVERY", "GROUP"),
                 onCrumbClick = {},
                 activeCrowds = emptyList(),
                 onShowTimeline = {},
@@ -206,13 +206,13 @@ fun PreviewPulsingResonanceTickerHeaders() {
     val user2 = "user2"
     
     val messages = listOf(
-        MessagePayload("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "THE CROWD", content = "Public pulse!", timestamp = System.currentTimeMillis(), pulseType = MessagePayload.PULSE_SHOUT),
+        MessagePayload("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "GLOBAL GROUP", content = "Public message!", timestamp = System.currentTimeMillis(), pulseType = MessagePayload.PULSE_SHOUT),
         MessagePayload("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, pulseType = MessagePayload.PULSE_SILENCE),
         MessagePayload("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private group", timestamp = System.currentTimeMillis() - 2000, pulseType = MessagePayload.PULSE_WHISPER)
     )
     
     val groups = listOf(
-        Resonance("air_hub", "THE CROWD", setOf(user1, me), Resonance.SCOPE_PUBLIC),
+        Resonance("air_hub", "GLOBAL GROUP", setOf(user1, me), Resonance.SCOPE_PUBLIC),
         Resonance("silence", "SILENCE", setOf(me), Resonance.SCOPE_LOCAL),
         Resonance("tie1", "PARTY", setOf(user2, me, "user3"), Resonance.SCOPE_PRIVATE)
     )
@@ -224,7 +224,7 @@ fun PreviewPulsingResonanceTickerHeaders() {
     )
 
     BlukitTheme(stealthMode = true) {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black).padding(16.dp)) {
+        Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0D1017)).padding(16.dp)) {
             PulsingResonanceTicker(
                 state = BluetoothUiState(
                     session = PulseSession(
@@ -247,11 +247,11 @@ fun PreviewPulsingResonanceTickerHeaders() {
     }
 }
 
-@Preview(name = "Crowd Ritual Ghost", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Group Schedule Ghost", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewCrowdRitualGhost() {
     BlukitTheme {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0D1017)), contentAlignment = Alignment.Center) {
             CrowdRitualGhost(
                 onNameChange = {},
                 onDone = { _ -> },
@@ -260,8 +260,8 @@ fun PreviewCrowdRitualGhost() {
                     Resonance("1", "GATE 7", emptySet(), Resonance.SCOPE_PUBLIC),
                     Resonance("2", "CONCERT", emptySet(), Resonance.SCOPE_PUBLIC)
                 ),
-                title = "EVENT RITUAL",
-                hint = "NAME THE EVENT"
+                title = "GROUP SCHEDULE",
+                hint = "NAME THE GROUP"
             )
         }
     }

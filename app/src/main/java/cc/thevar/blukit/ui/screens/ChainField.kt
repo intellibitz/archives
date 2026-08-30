@@ -267,7 +267,7 @@ fun ChainField(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.8f))
+                .background(Color(0xFF0D1017).copy(alpha = 0.8f))
                 .clickable { showAssignmentCreator = false },
             contentAlignment = Alignment.Center
         ) {
@@ -349,7 +349,7 @@ fun ChainField(
                     if (group.schedules.isNotEmpty()) {
                         HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Text("SHARE RITUALS", style = MaterialTheme.typography.labelSmall, color = StealthPrimary.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
+                            Text("SHARE SCHEDULES", style = MaterialTheme.typography.labelSmall, color = StealthPrimary.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
                             IconButton(onClick = { group.schedules.firstOrNull()?.let { onPushRitual(group.id, it) } }) {
                                 Icon(Icons.Rounded.IosShare, contentDescription = "Push", tint = StealthPrimary, modifier = Modifier.size(16.dp))
                             }

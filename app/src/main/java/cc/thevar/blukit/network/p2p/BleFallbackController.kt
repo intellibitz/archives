@@ -327,7 +327,7 @@ class BleFallbackController(
                             id = gid,
                             name = gName,
                             scope = scope,
-                            parentId = Resonance.ID_CROWD,
+                            parentId = Resonance.ID_GLOBAL,
                         ),
                     )
                 }

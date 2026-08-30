@@ -6,7 +6,7 @@
  * 
  * Features:
  * - Breadcrumb Navigation: Hierarchical path tracking (EVENT > CROWD > CHAIN).
- * - Identity Rituals: Automated onboarding when the user's Persona is unformed.
+ * - Group Setup: Automated onboarding when the user's Persona is unformed.
  * - Coordinate Mapping: LocalPersonaCoordinates provides spatial anchors for resonance threads.
  * - Full Lighthouse Scan: A background depth glow signaling active mesh discovery.
  * - Differential Sync UI: Overlay for real-time history bridging progress.
@@ -72,6 +72,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.navigation.Route
@@ -161,7 +162,7 @@ fun BlukitApp(
         val trail = mutableListOf<String>()
         backStack.forEach { route ->
             when (route) {
-                is Route.Event -> trail.add("LIVE CROWD")
+                is Route.Event -> trail.add("DISCOVERY")
                 is Route.GroupField -> {
                     val group = bluetoothState.session.groups.find { it.id == route.groupId }
                     if (group != null) {
@@ -229,7 +230,7 @@ fun BlukitApp(
     var showPrivacyProtocol by remember { mutableStateOf(false) }
     var showOnboarding by remember { mutableStateOf(false) }
     
-    // IDENTITY RITUAL: Trigger onboarding if identity is unformed and mesh is awake
+    // ONBOARDING: Trigger onboarding if identity is unformed and mesh is awake
     LaunchedEffect(nickname, crowdIsStill) {
         if ((nickname == null || nickname == "?" || nickname == "" || nickname == "SET NAME") && !crowdIsStill) {
             showOnboarding = true
@@ -248,7 +249,7 @@ fun BlukitApp(
     LaunchedEffect(currentRoute) {
         personaCoordinates.clear()
         if (currentRoute is Route.Event) {
-            bluetoothViewModel.enterChain(Resonance.ID_CROWD)
+            bluetoothViewModel.enterChain(Resonance.ID_GLOBAL)
         }
     }
     var highlightedUserId by remember { mutableStateOf<String?>(null) }
@@ -289,7 +290,7 @@ fun BlukitApp(
             
             // --- SYNC OVERLAY ---
             bluetoothState.session.syncProgress?.let { progress ->
-                Box(modifier = Modifier.fillMaxSize().zIndex(100f).background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxSize().zIndex(100f).background(Color(0xFF0D1017).copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("MESSAGE SYNC IN PROGRESS", color = StealthAmber, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 2.sp)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -331,7 +332,7 @@ fun BlukitApp(
                     }
                 }
 
-                // Identity Ritual Thread
+                // User Setup Thread
                 val hubPoint = personaCoordinates["YOU"]?.uph
                 val ghostPoint = personaCoordinates["ONBOARDING"]?.field
                 if (hubPoint != null && ghostPoint != null) {
@@ -365,7 +366,8 @@ fun BlukitApp(
                     isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
                     isWifiOff = !bluetoothState.harmony.isWifiEnabled,
                     isPermissionMissing = !permissionState.essentialPermissionsGranted,
-                    isPermanentlyDenied = isPermanentlyDenied
+                    isPermanentlyDenied = isPermanentlyDenied,
+                    aiSummary = supremeReport?.aiInsight ?: bluetoothState.session.messages.findLast { it.type == MessagePayload.TYPE_AI_SUMMARY }?.content
                 )
             }
 

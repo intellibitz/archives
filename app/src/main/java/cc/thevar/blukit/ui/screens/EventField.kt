@@ -74,7 +74,7 @@ fun EventField(
     val eventMetas = state.session.groups.filter { it.scope == Resonance.SCOPE_PUBLIC }
     
     val pulsesData = remember(state.session.messages, eventMetas) {
-        val groupedByTie = state.session.messages.groupBy { it.groupId ?: Resonance.ID_CROWD }
+        val groupedByTie = state.session.messages.groupBy { it.groupId ?: Resonance.ID_GLOBAL }
         
         val counts = groupedByTie.mapValues { it.value.size }
         val filtered = groupedByTie.map { it.value.maxBy { msg -> msg.timestamp } }
@@ -100,7 +100,7 @@ fun EventField(
             // 1. ADD LATEST ENTRIES for this resonance (up to 3)
             // TACTICAL FILTER: Exclude own pulses from the landing spectrum to focus on discovery
             val resonancePulses = state.session.messages.asSequence().filter { 
-                (it.groupId == resonance.id || (resonance.id == Resonance.ID_CROWD && it.groupId == null)) && (it.senderId != localDeviceId)
+                (it.groupId == resonance.id || (resonance.id == Resonance.ID_GLOBAL && it.groupId == null)) && (it.senderId != localDeviceId)
             }.sortedBy { it.timestamp }
              .toList()
              .takeLast(3)
@@ -113,8 +113,8 @@ fun EventField(
             // 2. ADD HEADER (above pulses in UI)
             val headDev = P2PDevice(
                 id = resonance.id, 
-                name = resonance.name, 
-                emoji = resonance.projectionEmoji ?: "⚡", 
+                name = if (resonance.id == Resonance.ID_GLOBAL) "GLOBAL GROUP" else resonance.name, 
+                emoji = resonance.projectionEmoji ?: "✨", 
                 medium = P2PDevice.ConnectionMedium.BLUETOOTH,
                 statusLabel = latestAiSummary?.content
             )
@@ -130,7 +130,7 @@ fun EventField(
     // Global AI Insights for the entire mesh
     val globalAiSummary = remember(state.session.messages) {
         state.session.messages.findLast { 
-            (it.groupId == Resonance.ID_CROWD || it.groupId == null) && (it.type == MessagePayload.TYPE_AI_SUMMARY) 
+            (it.groupId == Resonance.ID_GLOBAL || it.groupId == null) && (it.type == MessagePayload.TYPE_AI_SUMMARY) 
         }
     }
 
@@ -141,7 +141,7 @@ fun EventField(
             Column(modifier = Modifier.fillMaxSize()) {
                 // Humanity Stage (Breadcrumbs)
                 BlukitHumanityStage(
-                    title = "LIVE CROWD",
+                    title = "DISCOVERY",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeCrowds = activeCrowds,

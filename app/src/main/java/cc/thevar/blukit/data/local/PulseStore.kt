@@ -104,8 +104,8 @@ class PulseStore(
     init {
         loadData()
         // Ensure default ties exist immediately (THE CROWD / SILENCE)
-        if (!_groups.value.containsKey(Resonance.ID_CROWD)) {
-            _groups.update { it + (Resonance.ID_CROWD to Resonance(id = Resonance.ID_CROWD, name = "THE CROWD", scope = Resonance.SCOPE_PUBLIC)) }
+        if (!_groups.value.containsKey(Resonance.ID_GLOBAL)) {
+            _groups.update { it + (Resonance.ID_GLOBAL to Resonance(id = Resonance.ID_GLOBAL, name = "GLOBAL GROUP", scope = Resonance.SCOPE_PUBLIC)) }
         }
         if (!_groups.value.containsKey(Resonance.ID_SILENCE)) {
             _groups.update { it + (Resonance.ID_SILENCE to Resonance(id = Resonance.ID_SILENCE, name = "SILENCE", scope = Resonance.SCOPE_LOCAL)) }
@@ -379,7 +379,7 @@ class PulseStore(
         val now = System.currentTimeMillis()
         _groups.update { current ->
             current.mapValues { (id, group) ->
-                val isDefault = id == Resonance.ID_CROWD || id == Resonance.ID_SILENCE
+                val isDefault = id == Resonance.ID_GLOBAL || id == Resonance.ID_SILENCE
                 if (!isDefault && !group.isArchived && !group.isVaulted && (now - group.lastPulseTimestamp) > Resonance.ARCHIVE_THRESHOLD_MS) {
                     group.copy(isArchived = true)
                 } else {

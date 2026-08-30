@@ -69,7 +69,7 @@ class BluetoothViewModel(
 
     private val _selectedDevices = MutableStateFlow<Set<String>>(emptySet())
 
-    private val _currentChainId = MutableStateFlow(Resonance.ID_CROWD)
+    private val _currentChainId = MutableStateFlow(Resonance.ID_GLOBAL)
     /** The currently focused Resonance context (Crowd or Chain ID). */
     @Suppress("unused")
     val currentChainId = _currentChainId.asStateFlow()
@@ -213,7 +213,7 @@ class BluetoothViewModel(
         }
         
         silentPulses.forEach { pulse ->
-            p2pController.broadcastMessage(pulse.content, MessagePayload.PULSE_SHOUT, pulse.messageId, groupId = Resonance.ID_CROWD, groupName = "THE CROWD")
+            p2pController.broadcastMessage(pulse.content, MessagePayload.PULSE_SHOUT, pulse.messageId, groupId = Resonance.ID_GLOBAL, groupName = "THE CROWD")
         }
     }
 

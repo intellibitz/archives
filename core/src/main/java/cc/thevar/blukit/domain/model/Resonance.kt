@@ -49,7 +49,7 @@ data class Resonance(
     val allMemberIds: Set<String> get() = memberIds + memberSections.values.asSequence().flatten().toSet()
 
     /** True if this is the root collective crowd that all users are pre-joined to. */
-    val isDefaultCrowd: Boolean get() = id == ID_CROWD
+    val isDefaultCrowd: Boolean get() = id == ID_GLOBAL
 
     companion object {
         // --- Scoping Levels ---
@@ -58,7 +58,7 @@ data class Resonance(
         const val SCOPE_LOCAL = 2
 
         // --- Root Identity Identifiers ---
-        const val ID_CROWD = "crowd_chain"
+        const val ID_GLOBAL = "global_group"
         const val ID_SILENCE = "silence_chain"
 
         /** The duration after which an inactive frequency is auto-archived (Sunk Pulse). */
@@ -77,11 +77,11 @@ data class Resonance(
         fun generateId(name: String, scope: Int, parentGroup: Resonance? = null): String {
             val normalized = name.uppercase().trim()
             return if (scope == SCOPE_PUBLIC) {
-                if (normalized == "CROWD" || normalized == "THE CROWD") {
-                    ID_CROWD
+                if (normalized == "GLOBAL" || normalized == "THE CROWD") {
+                    ID_GLOBAL
                 } else {
                     // Recursive path generation for Child Crowds
-                    if (parentGroup?.scope == SCOPE_PUBLIC && parentGroup.id != ID_CROWD) {
+                    if (parentGroup?.scope == SCOPE_PUBLIC && parentGroup.id != ID_GLOBAL) {
                         "${parentGroup.id}_${normalized.replace(" ", "_")}"
                     } else {
                         "crowd_${normalized.replace(" ", "_")}"

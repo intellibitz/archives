@@ -52,11 +52,11 @@ fun TimelineField(
     val sdf = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
 
     Scaffold(
-        containerColor = Color.Black,
+        containerColor = Color(0xFF0D1017),
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("MESSAGE HISTORY", fontWeight = FontWeight.Black, fontSize = 14.sp) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black, titleContentColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0D1017), titleContentColor = Color.White)
             )
         }
     ) { padding ->

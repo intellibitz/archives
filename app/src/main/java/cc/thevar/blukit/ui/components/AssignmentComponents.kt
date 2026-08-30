@@ -182,7 +182,7 @@ fun AssignmentCreator(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.Black)
+            .background(Color(0xFF0D1017))
             .padding(16.dp)
             .border(1.dp, themeColor.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
             .padding(16.dp)

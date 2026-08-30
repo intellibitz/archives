@@ -761,7 +761,7 @@ class NearbyP2PController(
                     MessagePayload.PULSE_SILENCE -> Resonance.SCOPE_LOCAL
                     else -> Resonance.SCOPE_PRIVATE
                 }
-                pulseStore.insertGroup(Resonance(id = gid, name = gName, scope = scope, parentId = Resonance.ID_CROWD))
+                pulseStore.insertGroup(Resonance(id = gid, name = gName, scope = scope, parentId = Resonance.ID_GLOBAL))
             }
         }
         hapticManager.triggerPulse(HapticManager.PulseType.MESSAGE)

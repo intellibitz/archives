@@ -181,7 +181,7 @@ fun CrowdCanvas(
 
             Surface(
                 onClick = { onPulseClick(pulse.messageId) },
-                color = Color.Black.copy(alpha = 0.6f),
+                color = Color(0xFF0D1017).copy(alpha = 0.6f),
                 shape = CircleShape,
                 border = BorderStroke(1.dp, themeColor.copy(alpha = 0.4f)),
                 modifier = Modifier
@@ -251,6 +251,7 @@ fun BlukitTacticalHeader(
     isPermissionMissing: Boolean = false,
     isPermanentlyDenied: Boolean = false,
     modifier: Modifier = Modifier,
+    aiSummary: String? = null
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "HarmonyCycle")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -273,10 +274,10 @@ fun BlukitTacticalHeader(
             .statusBarsPadding()
             .padding(horizontal = 6.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.Black)
+            .background(Color(0xFF0D1017))
             .border(0.5.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
     ) {
-        // TACTICAL SCAN LINE HINT
+        // SCAN LINE HINT
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.2f)
@@ -298,8 +299,8 @@ fun BlukitTacticalHeader(
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // LEFT: AI Insights / Dynamic Status
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            // LEFT: AI Insights
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(2f)) {
                 Surface(
                     color = StealthAmber.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp),
@@ -312,50 +313,30 @@ fun BlukitTacticalHeader(
                         Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "AI ACTIVE", 
+                            text = aiSummary?.uppercase() ?: "SCANNING MESH...", 
                             fontSize = 11.sp, 
                             fontWeight = FontWeight.Black, 
                             color = StealthAmber,
-                            letterSpacing = 1.sp
+                            letterSpacing = 0.5.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
 
-            // CENTER: [BLUKIT] [PROTOCOL]
+            // CENTER: SETTINGS
             Row(
                 verticalAlignment = Alignment.CenterVertically, 
                 horizontalArrangement = Arrangement.Center, 
-                modifier = Modifier.weight(1.5f)
+                modifier = Modifier.weight(0.5f)
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_blukit_logo), 
-                    contentDescription = null, 
-                    tint = themeColor,
-                    modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "BLUKIT", 
-                    fontSize = 11.sp, 
-                    fontWeight = FontWeight.Black, 
-                    color = Color.White, 
-                    letterSpacing = 1.5.sp
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Surface(
-                    onClick = { onShowPrivacy() },
-                    color = themeColor.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(4.dp),
-                    border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.3f))
-                ) {
-                    Text(
-                        text = "PROTOCOL", 
-                        fontSize = 11.sp, 
-                        fontWeight = FontWeight.Black, 
-                        color = themeColor,
-                        letterSpacing = 1.sp,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                IconButton(onClick = onShowPrivacy, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Rounded.Settings, 
+                        contentDescription = "Settings", 
+                        tint = Color.White.copy(alpha = 0.4f),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -583,7 +564,7 @@ fun BlukitPulseHub(
                     Row(
                         modifier = Modifier
                             .padding(bottom = 12.dp)
-                            .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(20.dp))
+                            .background(Color(0xFF0D1017).copy(alpha = 0.8f), RoundedCornerShape(20.dp))
                             .border(1.dp, themeColor.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
                             .padding(horizontal = 8.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -765,33 +746,45 @@ private fun RadarNodesLayer(
     themeColor: Color,
     density: androidx.compose.ui.unit.Density
 ) {
-    // TACTICAL CONSTRAINT: Constrain background radar nodes to the upper 70% of the field
+    // CONSTRAINT: Constrain background radar nodes to the upper 70% of the field
     // to avoid occlusion by the bottom Hub on shorter devices.
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 120.dp), // Lift the "Center" upwards
-        contentAlignment = Alignment.Center
+            .fillMaxWidth()
+            .fillMaxHeight(0.7f)
+            .padding(24.dp)
     ) {
+        val maxRadiusPx = with(density) { 140.dp.toPx() }
+
         devices.forEachIndexed { index, device ->
-            val maxRadiusPx = with(density) { 140.dp.toPx() }
-            // PROXIMITY mapping: closer signal = smaller orbital radius
-            val radiusValue = (1f - device.proximityFactor) * maxRadiusPx + with(density) { 60.dp.toPx() }
-            val angle = (index.toDouble() / devices.size.coerceAtLeast(1)) * 2 * PI
+            val id = device.persistentId ?: device.id
+            val isPulsed = id in pulsedPeers
+            val isSelected = device.id in selectedDevices
+            val isBubbleSender = id in bubbleSenders
             
-            val xOffset = (radiusValue * cos(angle)).toFloat()
-            val yOffset = (radiusValue * sin(angle)).toFloat()
+            // Calculate spatial position
+            val proximity = device.proximityFactor
+            val radiusValue = (1f - proximity) * maxRadiusPx + with(density) { 60.dp.toPx() }
+            val angle = (index.toDouble() / devices.size.coerceAtLeast(1)) * 2 * Math.PI
             
-            Box(modifier = Modifier.offset(with(density) { xOffset.toDp() }, with(density) { yOffset.toDp() })) {
+            val offsetX = (radiusValue * Math.cos(angle)).toFloat()
+            val offsetY = (radiusValue * Math.sin(angle)).toFloat()
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(x = with(density) { offsetX.toDp() }, y = with(density) { offsetY.toDp() })
+            ) {
                 PulsePersonaSignature(
                     device = device,
-                    isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
-                    isSelected = selectedDevices.contains(device.id),
-                    isPeerPulsed = pulsedPeers.contains(device.id),
+                    isPulsed = isPulsed,
+                    isSelected = isSelected,
+                    isPeerPulsed = isBubbleSender,
                     size = 40.dp,
-                    themeColor = themeColor,
                     onClick = { onDeviceClick(device) },
-                    onLongClick = { onDeviceLongClick(device) }
+                    onLongClick = { onDeviceLongClick(device) },
+                    subLabel = device.name ?: "MEMBER"
                 )
             }
         }
@@ -897,7 +890,7 @@ fun CrowdMiniRadar(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.5f))
+                                .background(Color(0xFF0D1017).copy(alpha = 0.5f))
                                 .border(0.5.dp, themeColor.copy(alpha = 0.3f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
@@ -993,7 +986,7 @@ fun BlukitWidget(
         }
         
         Surface(
-            color = Color.Black.copy(alpha = 0.4f),
+            color = Color(0xFF0D1017).copy(alpha = 0.4f),
             shape = RoundedCornerShape(20.dp),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f)),
             modifier = Modifier.fillMaxWidth()
@@ -1200,7 +1193,7 @@ fun PulsingResonanceTicker(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = dimmingAlpha))
+                .background(Color(0xFF0D1017).copy(alpha = dimmingAlpha))
         )
 
         // MODULE 2: THE TICKER
@@ -1216,13 +1209,13 @@ fun PulsingResonanceTicker(
                 
                 if (msg == null && resonance != null) {
                     // HEADER: High-level Resonance Summary
-                    val members = if (resonance.id == Resonance.ID_CROWD) {
+                    val members = if (resonance.id == Resonance.ID_GLOBAL) {
                         state.crowd.scannedDevices
                     } else {
                         state.crowd.scannedDevices.filter { it.id in resonance.allMemberIds || it.persistentId in resonance.allMemberIds }
                     }
 
-                    val userCount = if (resonance.id == Resonance.ID_CROWD) {
+                    val userCount = if (resonance.id == Resonance.ID_GLOBAL) {
                         state.crowd.scannedDevices.size
                     } else {
                         resonance.allMemberIds.size
@@ -1241,7 +1234,7 @@ fun PulsingResonanceTicker(
                         onClick = { onPulseClick(resonance.id) },
                         showJoin = true,
                         aiTrend = device.statusLabel,
-                        leftContent = if (resonance.id == Resonance.ID_CROWD) {
+                        leftContent = if (resonance.id == Resonance.ID_GLOBAL) {
                             {
                                 PulsePersonaSignature(
                                     device = P2PDevice(id = "YOU", name = localNickname, emoji = userEmoji),
@@ -1260,7 +1253,7 @@ fun PulsingResonanceTicker(
                             CrowdMiniRadar(
                                 resonance = resonance,
                                 members = members,
-                                isDefaultCrowd = resonance.id == Resonance.ID_CROWD,
+                                isDefaultCrowd = resonance.id == Resonance.ID_GLOBAL,
                                 themeColor = if (resonance.scope == Resonance.SCOPE_PUBLIC) StealthPrimary else StealthRose,
                                 onDeviceClick = onDeviceClick,
                                 onDeviceLongClick = onDeviceLongClick,
@@ -1896,7 +1889,7 @@ fun ResonanceSummary(
             haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
             onClick() 
         },
-        color = Color.Black,
+        color = Color(0xFF0D1017),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f)),
         modifier = modifier
@@ -2156,7 +2149,7 @@ fun PulseGhost(
         modifier = modifier
             .fillMaxSize()
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() }
-            .background(Color.Black.copy(alpha = 0.6f))
+            .background(Color(0xFF0D1017).copy(alpha = 0.6f))
     ) {
         // Source connection point
         Box(
@@ -2178,7 +2171,7 @@ fun PulseGhost(
         ) {
             Surface(
                 shape = CircleShape,
-                color = Color.Black,
+                color = Color(0xFF0D1017),
                 border = BorderStroke(2.dp, data.themeColor.copy(alpha = glowAlpha)),
                 modifier = Modifier.size(120.dp),
                 tonalElevation = 12.dp
@@ -2234,7 +2227,7 @@ fun PulseGhost(
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = Color.Black,
+                        color = Color(0xFF0D1017),
                         border = BorderStroke(1.5.dp, action.color.copy(alpha = 0.7f)),
                         modifier = Modifier.size(64.dp),
                         tonalElevation = 6.dp
@@ -2250,7 +2243,7 @@ fun PulseGhost(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
-                        color = Color.Black.copy(alpha = 0.7f),
+                        color = Color(0xFF0D1017).copy(alpha = 0.7f),
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                     ) {
@@ -2305,7 +2298,7 @@ fun OnboardingGhost(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.95f))
+            .background(Color(0xFF0D1017).copy(alpha = 0.95f))
             .navigationBarsPadding()
             .imePadding()
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() },
@@ -2355,7 +2348,7 @@ fun OnboardingGhost(
             Spacer(modifier = Modifier.height(24.dp))
             
             Surface(
-                color = Color.Black,
+                color = Color(0xFF0D1017),
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, StealthAmber.copy(alpha = 0.4f)),
                 modifier = Modifier.padding(horizontal = 40.dp).clickable(enabled = false) {}
@@ -2420,8 +2413,8 @@ fun CrowdRitualGhost(
     modifier: Modifier = Modifier,
     nearbyAirs: List<Resonance> = emptyList(),
     onJoinAir: (String) -> Unit = {},
-    title: String = "CROWD RITUAL",
-    hint: String = "NAME THE CROWD"
+    title: String = "GROUP SCHEDULE",
+    hint: String = "NAME THE GROUP"
 ) {
     var airName by remember { mutableStateOf("") }
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
@@ -2455,7 +2448,7 @@ fun CrowdRitualGhost(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.85f))
+            .background(Color(0xFF0D1017).copy(alpha = 0.85f))
             .navigationBarsPadding()
             .imePadding()
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() },
@@ -2645,7 +2638,7 @@ fun PulsePersonaSignature(
         ) {}
         Surface(
             modifier = Modifier.size(size).clip(CircleShape), 
-            color = when { isSelected -> Color.White.copy(alpha = 0.2f); isProjected || isPulsed -> StealthRose.copy(alpha = 0.15f); isPeerPulsed -> StealthAmber.copy(alpha = 0.15f); else -> Color.Black }, 
+            color = when { isSelected -> Color.White.copy(alpha = 0.2f); isProjected || isPulsed -> StealthRose.copy(alpha = 0.15f); isPeerPulsed -> StealthAmber.copy(alpha = 0.15f); else -> Color(0xFF0D1017) }, 
             border = BorderStroke(if (isSelected || isPulsed || isPeerPulsed || isProjected || isMe) (size.value / 24).dp.coerceAtLeast(1.dp) else (size.value / 48).dp.coerceAtLeast(0.5.dp), when { isSelected || isMe -> Color.White; isProjected || isPulsed -> StealthRose; isPeerPulsed -> StealthAmber; else -> Color.White.copy(alpha = 0.15f) }), 
             shape = CircleShape, 
             tonalElevation = if (isMe) 8.dp else 4.dp
@@ -2671,6 +2664,23 @@ fun PulsePersonaSignature(
                         color = personaThemeColor.copy(alpha = 0.6f),
                         letterSpacing = 0.5.sp
                     )
+                    
+                    // Signal Strength
+                    if (!isMe) {
+                        Row(
+                            modifier = Modifier.padding(top = 2.dp),
+                            horizontalArrangement = Arrangement.spacedBy(1.dp)
+                        ) {
+                            val bars = (device.proximityFactor * 4).toInt().coerceAtLeast(1)
+                            repeat(4) { i ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 2.dp, height = (2 + i * 2).dp)
+                                        .background(if (i < bars) personaThemeColor else Color.White.copy(alpha = 0.1f))
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2708,7 +2718,7 @@ fun PulseCrowdSignature(
     
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(size * 1.5f)) {
         Surface(shape = CircleShape, color = themeColor.copy(alpha = 0.05f * pulse), modifier = Modifier.size(size * pulse)) {}
-        Surface(modifier = Modifier.size(size), shape = CircleShape, color = Color.Black, border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f)), tonalElevation = 4.dp) {
+        Surface(modifier = Modifier.size(size), shape = CircleShape, color = Color(0xFF0D1017), border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f)), tonalElevation = 4.dp) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { 
                 if (icon != null) {
                     Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size((size.value / 2.5f).dp))
@@ -2751,7 +2761,7 @@ fun BlukitFieldScaffold(
     themeColor: Color = StealthPrimary,
     glowIntensityTarget: Float = 0.4f
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().background(Color(0xFF0D1017))) {
         header()
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             entries()
@@ -2858,7 +2868,7 @@ fun BlukitInput(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.98f))
+                .background(Color(0xFF0D1017).copy(alpha = 0.98f))
                 .padding(bottom = 12.dp, top = 8.dp)
         ) {
             Row(
@@ -2879,7 +2889,7 @@ fun BlukitInput(
                     IconButton(onClick = onAttachFile, enabled = !isReadOnly, modifier = Modifier.size(40.dp)) { 
                         Icon(
                             imageVector = if (isPulseLocked) Icons.Rounded.Grain else Icons.Rounded.Add, 
-                            contentDescription = if (isPulseLocked) "New Ritual" else "Attach", 
+                            contentDescription = if (isPulseLocked) "New Schedule" else "Attach", 
                             tint = if (isPulseLocked) StealthAmber else themeColor.copy(alpha = 0.7f),
                             modifier = Modifier.size(20.dp)
                         ) 
