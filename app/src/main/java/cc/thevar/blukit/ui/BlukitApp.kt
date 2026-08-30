@@ -31,12 +31,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.SnackbarHostState
@@ -51,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -226,6 +222,8 @@ fun BlukitApp(
     var messageText by remember { mutableStateOf("") }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
+    var onboardingStep by remember { mutableIntStateOf(0) }
+    
     var showManageDialog by remember { mutableStateOf(value = false) }
     var isSearchMode by remember { mutableStateOf(value = false) }
     var isInputFocused by remember { mutableStateOf(value = false) }
@@ -616,12 +614,30 @@ fun BlukitApp(
                         },
                         onDone = { 
                             showOnboarding = false 
+                            onboardingStep = 1 // Start guided discovery
                             val currentName = nickname ?: "?"
                             if (currentName != "?" && currentName != "SET NAME") {
                                 bluetoothViewModel.broadcastIdentityUpdate(currentName)
                             }
                         },
                         onDismiss = { showOnboarding = false }
+                    )
+                }
+            }
+
+            // --- GUIDED DISCOVERY TIPS ---
+            if (onboardingStep > 0 && onboardingStep <= 3 && !showOnboarding) {
+                val tipText = when (onboardingStep) {
+                    1 -> "Welcome to the Mesh. All pulses are 100% offline and encrypted."
+                    2 -> "DISCOVERY shows nearby public energy and groups."
+                    else -> "Switch to LIVE FEED to see every raw pulse hitting your radio."
+                }
+                
+                Box(modifier = Modifier.fillMaxSize().padding(top = 120.dp).zIndex(150f), contentAlignment = Alignment.TopCenter) {
+                    cc.thevar.blukit.ui.screens.BlukitTip(
+                        text = tipText,
+                        onDismiss = { onboardingStep++ },
+                        themeColor = if (onboardingStep == 3) StealthRose else StealthAmber
                     )
                 }
             }

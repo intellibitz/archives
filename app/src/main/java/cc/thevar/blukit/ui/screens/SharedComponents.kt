@@ -418,14 +418,23 @@ fun BlukitHumanityStage(
 
             if (isDiscovery) {
                 // MODE SWITCHER: Groups vs Live Feed
+                val infiniteTransition = rememberInfiniteTransition(label = "ModeGlow")
+                val glowAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.4f,
+                    targetValue = 0.8f,
+                    animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse),
+                    label = "Glow"
+                )
+
                 Surface(
                     color = Color.White.copy(alpha = StealthAlphaLow),
                     shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(1.dp, themeColor.copy(alpha = glowAlpha * 0.2f))
                 ) {
                     Row(modifier = Modifier.padding(2.dp)) {
                         Surface(
                             onClick = { onModeChange(false) },
-                            color = if (!isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium) else Color.Transparent,
+                            color = if (!isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium * glowAlpha) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
@@ -439,7 +448,7 @@ fun BlukitHumanityStage(
                         }
                         Surface(
                             onClick = { onModeChange(true) },
-                            color = if (isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium) else Color.Transparent,
+                            color = if (isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium * glowAlpha) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
@@ -2424,7 +2433,7 @@ fun OnboardingGhost(
                     modifier = Modifier.padding(24.dp)
                 ) {
                     Text(
-                        text = "User Setup", 
+                        text = "FORM YOUR PERSONA", 
                         style = MaterialTheme.typography.labelSmall, 
                         color = StealthAmber
                     )
@@ -2436,19 +2445,30 @@ fun OnboardingGhost(
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester),
-                        textStyle = MaterialTheme.typography.headlineSmall.copy(color = Color.White, textAlign = TextAlign.Center),
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(color = Color.White, textAlign = TextAlign.Center, fontWeight = FontWeight.Black),
                         cursorBrush = SolidColor(StealthAmber),
                         decorationBox = { innerTextField ->
                             if (nickname.isEmpty()) {
                                 Text(
-                                    text = "Enter Nickname", 
+                                    text = "ENTER NICKNAME", 
                                     style = MaterialTheme.typography.headlineSmall,
                                     color = Color.White.copy(alpha = 0.2f), 
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = FontWeight.Black
                                 )
                             }
                             innerTextField()
                         }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "Blukit is local and anonymous. Your persona stays on your device until you choose to emit energy into the mesh.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.5f),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 16.sp
                     )
                     
                     Spacer(modifier = Modifier.height(24.dp))
@@ -2459,7 +2479,7 @@ fun OnboardingGhost(
                             modifier = Modifier.weight(1f).height(48.dp)
                         ) {
                             Text(
-                                text = "BACK", 
+                                text = "LURK", 
                                 style = MaterialTheme.typography.labelLarge,
                                 color = Color.White.copy(alpha = 0.4f)
                             )
@@ -2469,11 +2489,11 @@ fun OnboardingGhost(
                             onClick = onDone,
                             enabled = nickname.isNotBlank() && nickname != "SET NAME",
                             colors = ButtonDefaults.buttonColors(containerColor = StealthAmber, contentColor = Color.Black),
-                            shape = RoundedCornerShape(16.dp), // Standardized
+                            shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.weight(1.5f).height(48.dp)
                         ) {
                             Text(
-                                text = "START", 
+                                text = "DIVE IN", 
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -2495,8 +2515,8 @@ fun CrowdRitualGhost(
     modifier: Modifier = Modifier,
     nearbyAirs: List<Resonance> = emptyList(),
     onJoinAir: (String) -> Unit = {},
-    title: String = "GROUP SCHEDULE",
-    hint: String = "NAME THE GROUP"
+    title: String = "ESTABLISH FREQUENCY",
+    hint: String = "TITLE YOUR FREQUENCY"
 ) {
     var airName by remember { mutableStateOf("") }
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
@@ -2588,7 +2608,7 @@ fun CrowdRitualGhost(
                     modifier = Modifier.padding(24.dp)
                 ) {
                     Text(
-                        text = title.uppercase(), 
+                        text = title, 
                         style = MaterialTheme.typography.labelSmall, 
                         color = StealthPrimary
                     )
@@ -2945,7 +2965,7 @@ fun BlukitInput(
 
     val actualPlaceholder = when { 
         isSearchActive -> "Scan network: Type name or message..."
-        isPulseLocked -> "Join a group to send a message..."
+        isPulseLocked -> "Signal the mesh: Start a frequency..."
         placeholder != null -> placeholder 
         isReadOnly -> "INTERCEPTED" 
         isPrivate && targetName != null -> "Private message to $targetName..."

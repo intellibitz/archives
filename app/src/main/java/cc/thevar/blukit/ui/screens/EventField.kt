@@ -30,6 +30,7 @@ import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.theme.StealthAmber
 import cc.thevar.blukit.ui.theme.StealthPrimary
+import cc.thevar.blukit.ui.components.MeshSearchingView
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 
 /**
@@ -183,47 +184,62 @@ fun EventField(
                 )
 
                 // CROWD AI SYNTHESIS: Prominent global summary
-                globalAiSummary?.let { summary ->
-                    BlukitWidget(
-                        header = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("GLOBAL MESH SYNTHESIS", style = MaterialTheme.typography.labelSmall, color = StealthAmber, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                if (state.crowd.scannedDevices.isNotEmpty()) {
+                    globalAiSummary?.let { summary ->
+                        BlukitWidget(
+                            header = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Mesh AI Insights", 
+                                        style = MaterialTheme.typography.labelSmall, 
+                                        color = StealthAmber
+                                    )
+                                }
+                            },
+                            entries = {
+                                Text(
+                                    text = summary.content, 
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(12.dp)
+                                )
+                            },
+                            themeColor = StealthAmber,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+
+                    // MODULE 2: UNIFIED RESONANCE TICKER (With integrated Radar)
+                    PulsingResonanceTicker(
+                        state = state,
+                        energyList = combinedEnergy,
+                        pulseCounts = pulseCounts,
+                        localDeviceId = localDeviceId,
+                        localNickname = userNickname,
+                        pulsedPeers = pulsedPeers,
+                        onPulseClick = { id ->
+                            if (state.session.groups.any { it.id == id }) {
+                                onNavigateToGroup(id)
+                            } else {
+                                onNavigateToPulse(id)
                             }
                         },
-                        entries = {
-                            Text(
-                                text = summary.content.uppercase(),
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp),
-                                modifier = Modifier.padding(8.dp)
-                            )
-                        },
-                        themeColor = StealthAmber,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        onDeviceClick = { onNavigateToPulse(it.id) },
+                        onDeviceLongClick = { },
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    // EMPTY STATE: Scanning the air
+                    MeshSearchingView(
+                        onSignalPresence = {
+                            // Trigger a global shout or presence signal
+                            // For now, we can just open the air ghost or send a generic "Hello"
+                            onShowAirGhost()
+                        }
                     )
                 }
-
-                // MODULE 2: UNIFIED RESONANCE TICKER (With integrated Radar)
-                PulsingResonanceTicker(
-                    state = state,
-                    energyList = combinedEnergy,
-                    pulseCounts = pulseCounts,
-                    localDeviceId = localDeviceId,
-                    localNickname = userNickname,
-                    pulsedPeers = pulsedPeers,
-                    onPulseClick = { id ->
-                        if (state.session.groups.any { it.id == id }) {
-                            onNavigateToGroup(id)
-                        } else {
-                            onNavigateToPulse(id)
-                        }
-                    },
-                    onDeviceClick = { onNavigateToPulse(it.id) },
-                    onDeviceLongClick = { },
-                    modifier = Modifier.weight(1f)
-                )
             }
 
             // MODULE 3: PULSE HUB (Bottom Overlay)
@@ -251,6 +267,22 @@ fun EventField(
             )
         }
     )
+
+    if (showAirGhost) {
+        CrowdRitualGhost(
+            onNameChange = { airProposalName = it },
+            onDone = { templateId ->
+                onCreatePublicResonance?.invoke(airProposalName, templateId)
+                onDismissAirGhost()
+            },
+            onDismiss = onDismissAirGhost,
+            nearbyAirs = state.session.groups.filter { it.scope == Resonance.SCOPE_PUBLIC && it.id != Resonance.ID_GLOBAL },
+            onJoinAir = { gid ->
+                onNavigateToGroup(gid)
+                onDismissAirGhost()
+            }
+        )
+    }
 
     if (showVault) {
         SunkPulseVault(
