@@ -20,9 +20,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.ui.theme.StealthAmber
-import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthRose
+import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -39,12 +37,12 @@ fun AssignmentItem(
     val sdf = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
 
     Surface(
-        color = Color.Black,
-        shape = RoundedCornerShape(12.dp),
+        color = StealthSurface,
+        shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, when {
-            isBlocked -> Color.Red.copy(alpha = 0.4f)
-            isAbandoned -> Color.Gray.copy(alpha = 0.4f)
-            else -> themeColor.copy(alpha = 0.2f)
+            isBlocked -> StealthError.copy(alpha = StealthAlphaHigh)
+            isAbandoned -> StealthGray.copy(alpha = StealthAlphaHigh)
+            else -> themeColor.copy(alpha = StealthAlphaMedium)
         }),
         modifier = modifier
             .fillMaxWidth()
@@ -52,21 +50,21 @@ fun AssignmentItem(
     ) {
         Row(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Task Toggle
             Box(
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(28.dp)
                     .clip(CircleShape)
                     .background(when {
                         isCompleted -> themeColor
-                        isBlocked -> Color.Red.copy(alpha = 0.2f)
+                        isBlocked -> StealthError.copy(alpha = StealthAlphaLow)
                         else -> Color.Transparent
                     })
-                    .border(2.dp, if (isBlocked) Color.Red else themeColor, CircleShape)
+                    .border(2.dp, if (isBlocked) StealthError else themeColor, CircleShape)
                     .clickable {
                         val nextStatus = when {
                             isCompleted -> MessagePayload.TASK_PENDING
@@ -81,14 +79,14 @@ fun AssignmentItem(
                         imageVector = Icons.Rounded.Check,
                         contentDescription = "Complete",
                         tint = Color.Black,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 } else if (isBlocked) {
                     Icon(
                         imageVector = Icons.Rounded.Block,
                         contentDescription = "Blocked",
-                        tint = Color.Red,
-                        modifier = Modifier.size(14.dp)
+                        tint = StealthError,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -97,42 +95,40 @@ fun AssignmentItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = assignment.content.uppercase(),
+                    text = assignment.content, // Removed uppercase
+                    style = MaterialTheme.typography.bodyLarge,
                     color = when {
-                        isCompleted -> Color.Gray
-                        isAbandoned -> Color.Gray.copy(alpha = 0.5f)
+                        isCompleted -> StealthGray
+                        isAbandoned -> StealthGray.copy(alpha = StealthAlphaHigh)
                         else -> Color.White
                     },
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
                     textDecoration = if (isCompleted || isAbandoned) TextDecoration.LineThrough else null
                 )
                 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
                     val statusText = when {
-                        isBlocked -> "BLOCKED"
-                        isAbandoned -> "ABANDONED"
-                        isCompleted -> "COMPLETED"
-                        else -> "DUE DATE: ${assignment.dueDate?.let { sdf.format(Date(it)) } ?: "OPEN ENDED"}"
+                        isBlocked -> "Blocked"
+                        isAbandoned -> "Abandoned"
+                        isCompleted -> "Completed"
+                        else -> "Due: ${assignment.dueDate?.let { sdf.format(Date(it)) } ?: "Open Ended"}"
                     }
                     val statusColor = when {
-                        isBlocked -> Color.Red
-                        isAbandoned -> Color.Gray
-                        else -> themeColor.copy(alpha = 0.6f)
+                        isBlocked -> StealthError
+                        isAbandoned -> StealthGray
+                        else -> themeColor.copy(alpha = StealthAlphaHigh)
                     }
 
                     Icon(
                         imageVector = if (isCompleted) Icons.Rounded.TaskAlt else Icons.Rounded.Event,
                         contentDescription = null,
                         tint = statusColor,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(14.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = statusText,
-                        color = statusColor,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor
                     )
                 }
             }
@@ -144,8 +140,8 @@ fun AssignmentItem(
                         Icon(
                             Icons.Rounded.PriorityHigh, 
                             contentDescription = "Block", 
-                            tint = if (isBlocked) Color.Red else Color.White.copy(alpha = 0.2f),
-                            modifier = Modifier.size(16.dp)
+                            tint = if (isBlocked) StealthError else Color.White.copy(alpha = 0.2f),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -153,14 +149,13 @@ fun AssignmentItem(
                     Box(
                         modifier = Modifier
                             .align(Alignment.CenterVertically)
-                            .background(StealthAmber.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                            .background(StealthAmber.copy(alpha = StealthAlphaLow), RoundedCornerShape(4.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "ASSIGNED",
-                            color = StealthAmber,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Black
+                            text = "Assigned",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = StealthAmber
                         )
                     }
                 }
@@ -176,49 +171,55 @@ fun AssignmentCreator(
     onDismiss: () -> Unit
 ) {
     var text by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf<Long?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF0D1017))
+            .background(StealthBlack)
             .padding(16.dp)
-            .border(1.dp, themeColor.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-            .padding(16.dp)
+            .border(1.dp, themeColor.copy(alpha = StealthAlphaBorder), RoundedCornerShape(28.dp)) // Standardized
+            .padding(24.dp)
     ) {
         Text(
-            text = "NEW TASK",
-            color = themeColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 2.sp
+            text = "New Task",
+            style = MaterialTheme.typography.titleMedium,
+            color = themeColor
         )
         
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = text,
             onValueChange = { text = it },
             modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
+            colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedIndicatorColor = themeColor,
-                unfocusedIndicatorColor = themeColor.copy(alpha = 0.5f)
+                focusedBorderColor = themeColor,
+                unfocusedBorderColor = themeColor.copy(alpha = StealthAlphaMedium)
             ),
-            placeholder = { Text("Task details...", color = Color.Gray, fontSize = 14.sp) }
+            placeholder = { 
+                Text(
+                    text = "Describe the task...", 
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = StealthGray
+                ) 
+            }
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = { /* In real app, trigger date picker */ selectedDate = System.currentTimeMillis() + 86400000 }) {
-                Icon(Icons.Rounded.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp), tint = themeColor)
+            TextButton(onClick = { selectedDate = System.currentTimeMillis() + 86400000 }) {
+                Icon(Icons.Rounded.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp), tint = themeColor)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("SET DUE DATE", color = themeColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Set Due Date", 
+                    style = MaterialTheme.typography.labelLarge,
+                    color = themeColor
+                )
             }
             
             Spacer(modifier = Modifier.weight(1f))
@@ -230,9 +231,15 @@ fun AssignmentCreator(
                         onDismiss()
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = themeColor)
+                colors = ButtonDefaults.buttonColors(containerColor = themeColor),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.height(44.dp)
             ) {
-                Text("CREATE", color = Color.Black, fontWeight = FontWeight.Black)
+                Text(
+                    text = "CREATE", 
+                    style = MaterialTheme.typography.labelLarge,
+                    color = StealthOnPrimary
+                )
             }
         }
     }

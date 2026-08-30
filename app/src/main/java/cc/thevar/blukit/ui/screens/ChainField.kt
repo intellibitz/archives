@@ -31,9 +31,7 @@ import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
 import cc.thevar.blukit.ui.components.AssignmentCreator
-import cc.thevar.blukit.ui.theme.StealthAmber
-import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthRose
+import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -151,14 +149,12 @@ fun ChainField(
                                 }
                                 Text(
                                     text = if (isSearchActive) "SCAN" else "RADAR",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.8f),
-                                    letterSpacing = 1.sp
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                     }
                 )
 
@@ -269,7 +265,7 @@ fun ChainField(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF0D1017).copy(alpha = 0.8f))
+                .background(StealthBlack.copy(alpha = 0.8f))
                 .clickable { showAssignmentCreator = false },
             contentAlignment = Alignment.Center
         ) {

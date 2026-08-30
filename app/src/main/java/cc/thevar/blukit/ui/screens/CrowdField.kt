@@ -45,9 +45,7 @@ import androidx.compose.material.icons.rounded.WifiTethering
 import androidx.compose.material.icons.rounded.Radar
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
-import cc.thevar.blukit.ui.theme.StealthAmber
-import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthRose
+import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -167,14 +165,12 @@ fun CrowdField(
                                 }
                                 Text(
                                     text = if (isSearchActive) "SCAN" else "RADAR",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = 0.8f),
-                                    letterSpacing = 1.sp
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = StealthAlphaHigh),
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                     }
                 )
                 

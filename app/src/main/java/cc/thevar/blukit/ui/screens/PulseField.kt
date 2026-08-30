@@ -6,56 +6,30 @@
  */
 package cc.thevar.blukit.ui.screens
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BubbleChart
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.rounded.Radar
+import androidx.compose.material.icons.rounded.WifiTethering
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.rounded.WifiTethering
-import androidx.compose.material.icons.rounded.Radar
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Icon
-import androidx.compose.ui.zIndex
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.domain.model.Resonance
-import cc.thevar.blukit.ui.components.AssignmentItem
-import cc.thevar.blukit.ui.theme.StealthAmber
-import cc.thevar.blukit.ui.theme.StealthPrimary
-import cc.thevar.blukit.ui.theme.StealthRose
+import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
- * PULSE FIELD: The ultimate granular view.
- * Displays child pulses (units) and nested pulse resonance metas.
- */
-/**
  * PULSE FIELD: Granular unit drill-down.
- * 
- * Architectural Pattern:
- * - Header: Harmony Top Bar.
- * - Entries: Root Pulse Header, Unit List, Local Unit Ticker, Sub-Pulse Hub.
  */
 @Composable
 fun PulseField(
@@ -131,37 +105,33 @@ fun PulseField(
                                 }
                                 Text(
                                     text = if (isSearchActive) "SCAN" else "RADAR",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = 0.8f),
-                                    letterSpacing = 1.sp
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                     }
                 )
 
                 rootPulse?.let {
                     Surface(
-                        color = themeColor.copy(alpha = 0.1f),
+                        color = StealthSurface,
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, themeColor.copy(alpha = 0.4f))
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, themeColor.copy(alpha = StealthAlphaMedium))
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "ORIGINAL MESSAGE",
+                                text = "Original Message",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = themeColor,
-                                fontWeight = FontWeight.Black
+                                color = themeColor
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = it.content.uppercase(),
+                                text = it.content, 
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White,
-                                fontWeight = FontWeight.ExtraBold
+                                color = Color.White
                             )
                         }
                     }
@@ -214,7 +184,7 @@ fun PulseField(
             // MODULE 4: FLOATING TIPS
             if (childPulses.isEmpty()) {
                 BlukitTip(
-                    text = "NO REPLIES DETECTED. REPLY TO START THE CONVERSATION.",
+                    text = "No replies detected. Reply to start the conversation.",
                     themeColor = themeColor,
                     onDismiss = { },
                     modifier = Modifier.align(Alignment.TopCenter)

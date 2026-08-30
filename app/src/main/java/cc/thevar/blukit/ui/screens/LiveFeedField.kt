@@ -6,20 +6,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.MessagePayload
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.ui.theme.StealthBlack
+import cc.thevar.blukit.ui.theme.*
 
 /**
  * LIVE FEED FIELD: A flat, real-time stream of every message on the mesh.
@@ -37,7 +32,13 @@ fun LiveFeedField(
         containerColor = StealthBlack,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("LIVE FEED", fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 2.sp) },
+                title = { 
+                    Text(
+                        text = "Live Feed", 
+                        style = MaterialTheme.typography.titleMedium,
+                        letterSpacing = 2.sp
+                    ) 
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = StealthBlack,
                     titleContentColor = Color.White
@@ -49,8 +50,8 @@ fun LiveFeedField(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            contentPadding = PaddingValues(bottom = 80.dp, top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             items(messages.reversed(), key = { it.messageId }) { msg ->
                 val sender = peers.find { it.id == msg.senderId || it.persistentId == msg.senderId }

@@ -66,6 +66,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
+import cc.thevar.blukit.ui.theme.*
+import androidx.compose.material3.*
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -291,9 +293,13 @@ fun BlukitApp(
             
             // --- SYNC OVERLAY ---
             bluetoothState.session.syncProgress?.let { progress ->
-                Box(modifier = Modifier.fillMaxSize().zIndex(100f).background(Color(0xFF0D1017).copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxSize().zIndex(100f).background(StealthBlack.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("MESSAGE SYNC IN PROGRESS", color = StealthAmber, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 2.sp)
+                        Text(
+                            text = "Syncing mesh history...", 
+                            style = MaterialTheme.typography.titleMedium,
+                            color = StealthAmber
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                         LinearProgressIndicator(
                             progress = { progress },
@@ -575,14 +581,24 @@ fun BlukitApp(
             }
 
             if (showAirIsStillDialog) {
-                ConfirmationDialog(title = "SPECTRUM SILENT", text = "BLUKIT RADIOS ARE SILENCE. AWAKEN BLUETOOTH OR GRANT PERMISSIONS TO DIVE INTO THE MESH.", onConfirm = { showAirIsStillDialog = false; if (!permissionState.essentialPermissionsGranted) permissionState.launchMultiplePermissionRequest() else if (!bluetoothState.harmony.isBluetoothEnabled) context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) else if (isLocationMandatory && (!bluetoothState.harmony.isLocationEnabled || !locationPermissionGranted)) context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) }, onDismiss = { showAirIsStillDialog = false })
+                ConfirmationDialog(
+                    title = "Spectrum Silent", 
+                    text = "Radios are silent. Awaken Bluetooth or grant permissions to dive into the mesh.", 
+                    onConfirm = { 
+                        showAirIsStillDialog = false
+                        if (!permissionState.essentialPermissionsGranted) permissionState.launchMultiplePermissionRequest() 
+                        else if (!bluetoothState.harmony.isBluetoothEnabled) context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) 
+                        else if (isLocationMandatory && (!bluetoothState.harmony.isLocationEnabled || !locationPermissionGranted)) context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) 
+                    }, 
+                    onDismiss = { showAirIsStillDialog = false }
+                )
             }
 
             if (showPrivacyProtocol) {
                 val themeColor = if (currentRoute is Route.Resonance || currentRoute is Route.GroupField) StealthRose else StealthPrimary
                 BlukitAlert(
-                    title = "MESH PROTOCOL",
-                    text = "BLUKIT IS ANONYMOUS-FIRST. 100% OFFLINE P2P. ALL PULSES STAY ON YOUR DEVICE UNTIL YOU CHOOSE TO EMIT THEM TO NEARBY PEERS.",
+                    title = "Mesh Protocol",
+                    text = "Blukit is anonymous-first. 100% offline P2P. Pulses stay on your device until you choose to emit them.",
                     confirmLabel = "RESPECT",
                     themeColor = themeColor,
                     onConfirm = { showPrivacyProtocol = false },
@@ -647,7 +663,7 @@ private fun FullLighthouseScan(rotation: Float, lowPowerMode: Boolean) {
         // Spectral Sweep: Indicates active radio scanning
         rotate(rotation, pivot = center) { 
             val scanBrush = Brush.sweepGradient(
-                0.0f to StealthPrimary.copy(alpha = if (lowPowerMode) 0.05f else 0.2f), 
+                0.0f to StealthPrimary.copy(alpha = if (lowPowerMode) StealthAlphaLow else 0.2f), 
                 0.15f to Color.Transparent, 
                 center = center
             )
