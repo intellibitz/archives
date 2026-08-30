@@ -1,128 +1,86 @@
 # blukit: crowd AI.
 
-**CROWD (B) INTELLIGENCE. ANYWHERE.**
+**INSTANT CONNECTION. ON-DEVICE INTELLIGENCE. ANYWHERE.**
 
-blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-to-peer **Media Mesh** that lets you spread pulses, share media, and establish secure chains in any physical environment—festivals, subways, crowd hubs, or universities—without a single byte touching the internet.
-
----
-
-## 🌬️ CROWD LEXICON
-- **LIVE CROWD**: The root entry point. Rebranding of "The Spectrum." Global discovery of nearby groups.
-- **GROUP**: Shared physical containers where name *is* identity. Replaces "Crowd/Chain" for clarity.
-- **MESSAGE**: The atomic unit of communication. Replaces "Pulse."
-- **AI SYNTHESIS**: The synthesized intelligence of a group context.
-- **MEMBER**: An individual user on the mesh. Replaces "Peer/Tie."
-- **JOIN**: The primary action to participate in a group. Replaces "Dive."
+blukit is built for the **Crowd**, not the **Web**. It is a 100% offline, peer-to-peer **Community Mesh** that lets you find groups, share messages, and coordinate locally—at festivals, subways, stadiums, or campuses—without a single byte touching the internet.
 
 ---
 
-## ⚡ THE CROWD FIELD
-Experience the **Classic Mesh Interaction**.
-
-### **Crowd Hierarchy (The Group Drill-Down)**
-- **LIVE CROWD (Landing)**: The global discovery view. Surfaces all nearby **Groups**. Pure discovery zone; joining or creating groups are the primary actions.
-- **GROUP FIELD (Public)**: Shared physical containers. Once joined, the interaction hub awakens. Lists **Sub-Groups** and **Messages**.
-- **PRIVATE GROUP (Chain)**: Secure, encrypted interaction layers. Lists **Messages**.
-- **MESSAGE FIELD (Granular)**: The deepest level of the mesh. Breaks down a message into its constituent replies.
-- **HISTORY FIELD (Timeline)**: A visual chronological path of saved messages and shared milestones.
-
-### **Core Interaction Paradigm**
-- **Classic Mode UX**: Prioritize literal terminology (Join, Group, Message) over technical metaphors to ensure accessibility for any crowd.
-- **AI Synthesis Hero**: Global Mesh Synthesis is the most prominent element on the landing page, providing immediate value through on-device crowd intelligence.
-- **Participation Rights**: Users can see nearby public Groups automatically. To **participate** (send messages), a user must explicitly "Join" the group.
-- **Unified Radar Focus**: Background Radar nodes are dimmed to 5% visibility (`0.95f` black overlay) when content cards are present, ensuring clear focus on human communication.
-- **Interactive Mini Radar**: Each Group context in the ticker features its own interactive Mini Radar. Members share high-fidelity **Persona Signatures** with minimum **11sp** labels for legibility.
-- **Heroic Actions**: Primary buttons (e.g., **JOIN**) are designed as high-contrast, large-surface-area triggers with integrated haptic feedback.
-- **System Control Relocation**: Technical toggles (Dark Mode/Low Power) are moved to the **Bottom Hub** to keep the header focused on "AI ACTIVE" status and navigation.
+## 🧠 CROWD AI: THE BRAIN OF THE MESH
+Unlike standard chat apps, blukit uses **On-Device Ambient Intelligence** to synthesize the energy of the crowd.
+- **Group Summaries**: Local AI reads the flow of messages to give you a real-time "Vibe Check" of any group before you join.
+- **Mesh Synthesis**: The AI identifies trends, schedules, and urgent needs across the mesh, providing a "Global Synthesis" at the top of your discovery feed.
+- **Privacy First**: All AI processing happens locally on your hardware. Your data never leaves the physical air around you.
 
 ---
 
-## 📱 HARMONY HUB
-A high-density, ergonomic architecture for tactical crowd control, differentiated by Blukit's **Amber** (Public/Action) and **Stealth Rose** (Private/Secure) themes.
-
-### **⚡ Actionable Layer (The Interaction Hub)**
-*Active, interactive elements signaled by high-intensity messages and glows.*
-- **Pulse Hub (Amber/Rose Glow)**: The primary interaction engine. Features a reactive **Aura Glow** and relocation of **Environment Toggles** (Dark/Eco) for a cleaner header.
-- **Tactical Inputs**: Text entry fields signaled by high-intensity borders. Interaction triggers a **haptic resonant pulse**.
-- **Heroic Join Button**: Large, primary action fill for joining groups, ensuring maximum conversion and clarity.
-- **Ticker Entries**: High-density summaries with explicit **"JOIN"** and **"HISTORY"** affordances.
-
-### **🛡️ Non-Actionable Layer (The Contextual Stage)**
-*Passive, informational elements using tactical dimming and high-legibility styling.*
-- **Accessible Text**: Labels (Radar, History, Member) scaled to **11sp+** for universal visibility.
-- **AI Status Bubble**: A prominent "AI ACTIVE" indicator replacing technical toggles in the top bar.
-- **Humanity Stage (Breadcrumbs)**: Navigation paths (e.g., `LIVE CROWD > CONCERT`) providing situational awareness.
-- **Spectral Field (Dimmed Background)**: A 95% dimmed spatial background providing situational awareness without competing with content.
+## 🌬️ SIMPLE LEXICON
+- **DISCOVERY**: The landing page. A real-time scan of the groups and people around you.
+- **GROUP**: A shared physical space for conversation. Can be **Public** (Global) or **Private** (Encrypted).
+- **MESSAGE**: A simple, instant unit of communication.
+- **MEMBER**: A person nearby on the mesh.
+- **SCHEDULE**: Automated coordination for events, meetings, or rituals.
 
 ---
 
-## 🎯 MARKET POSITION
-Blukit positions itself as the premier peer-to-peer communication solution for:
-- **Campus Communities**: Tailored for university life, lectures, and secure student groups.
-- **Event Management**: High-density coordination for festivals, concerts, and conferences.
-- **Physical Venues**: Shared frequencies for offices, hubs, and stadiums.
-- **Local Gatherings**: Spontaneous neighborhood groups and physical social circles.
-- **Tactical Coordination**: Secure, offline communication in critical physical areas.
+## ⚡ THE INTERACTION FLOW
+Experience the **Classic Mesh Interaction**—literal, fast, and powerful.
+
+### **1. Discover**
+Open the app to see the **Live Crowd**. The background Radar shows you exactly who is nearby and how strong their signal is. The AI Synthesis bubble at the top tells you what the mesh is thinking *right now*.
+
+### **2. Join**
+See a Group that interests you? Hit the heroic **JOIN** button. You can see the conversation immediately. For public groups, participation is open. For private ones, a secure "Handshake" ensures your privacy.
+
+### **3. Chat**
+Send text, media, or tasks. All interactions are reinforced with **haptic feedback**, making the mesh feel like a physical machine in your hands.
+
+---
+
+## 📱 THE HARMONY INTERFACE
+A high-density, ergonomic architecture designed for clarity and depth.
+
+- **Heroic Actions**: Primary buttons are large and high-contrast, optimized for "Any Crowd" accessibility.
+- **Deep Grey Foundation**: A sophisticated `#0D1017` background provides visual grounding and OLED efficiency without the "lonely void" of pure black.
+- **Managed Noise**: The background Radar automatically dims to 5% visibility when you are focused on content, ensuring your messages always come first.
+- **System Control**: Technical toggles (Dark Mode, Power Saving) are tucked away in the bottom interaction hub, keeping your header clean for AI insights.
+
+---
+
+## 🎯 WHO IS BLUKIT FOR?
+- **Festivals & Concerts**: Find your friends and see the crowd's energy when the cell towers fail.
+- **Campus Life**: Spontaneous study groups and secure project coordination.
+- **Emergency Response**: Reliable, encrypted communication in critical zones.
+- **Any Crowd**: Any physical gathering where the internet is a distraction or an impossibility.
 
 ---
 
 ## 🛠️ ARCHITECTURAL SUPREMACY
-1. **100% Offline**: Zero cloud. No servers. No internet. Data stays in the air.
-2. **Header + Entries Pattern**: A unified visual language across all widgets (Field, Hubs, Ticker, Radar). Headers provide collective context; Entries provide atomic interaction. In landing fields, entries are optimized to take the full screen height for high-density tactical control.
-3. **Intelligence Layer**: Scoped, on-device AI synthesis and battery-aware intent recognition.
-4. **Media Mesh**: Composite radio orchestration with **Adaptive Discovery** scaling.
-5. **Hardware Encrypted**: ECDH handshakes + AES-256-GCM for absolute local privacy.
-6. **Pulse-Git Storage**: Git-inspired DAG in raw SQLite for deterministic mesh merging.
-7. **Deterministic Scoped Naming**: Public Crowd IDs are generated as paths (e.g., `crowd_MALL_FOOD_COURT`), ensuring global uniqueness.
-8. **Partitioned Group Scaling**: Intelligent member partitioning for crowds exceeding 500 members.
-9. **Decentralized-First**: Prioritize mesh efficiency and hardware-encrypted energy.
-10. **Shared :core**: Koin DI, UDF with `BluetoothUiState`, and primitive `Canvas` UI foundation.
-
----
-
-## 🛠️ DEVELOPMENT HYGIENE
-- **Temporary Files**: To maintain a clean workspace and prevent accidental leaks of transient data, all temporary files, logs, or scratch scripts MUST be created within the `.gitignore_folder` directory.
-- **Clean Builds**: A dedicated script `./.gitignore_folder/clean_build.sh` is provided for performing a full clean assembly.
+1. **100% Offline**: Zero cloud. Zero servers. Zero tracking.
+2. **Hardware Encrypted**: ECDH + AES-256-GCM security.
+3. **Pulse-Git Storage**: A deterministic DAG database that lets peers "merge" history seamlessly.
+4. **Differential Sync**: 10x faster history bridging using prioritized WiFi radios.
+5. **Shared :core**: Powered by Koin DI and a performance-first Canvas UI foundation.
 
 ---
 
 ## 🧠 EVOLUTIONARY UX PRINCIPLES
-The design of Blukit is guided by these key evolutionary learnings:
-*   **Semantic Clarity over Tactical Metaphor**: Prioritize literal terminology (**Join, Group, Message**) to bridge the accessibility gap for a diverse "Any Crowd" audience.
-*   **Managed Visual Hierarchy**: Dim background "noise" (Radar) to 95% opacity when content is present to reduce visual anxiety for non-technical users.
-*   **AI Heroism**: Elevate **Ambient Intelligence** by making Global Mesh Synthesis the hero of the landing experience.
-*   **Reinforced Physicality**: Use **haptic feedback** at key interaction points (Join, Send) to reinforce the physical nature of mesh communication.
+*   **Semantic Clarity over Tactical Metaphor**: Prioritize literal terminology (**Join, Group, Message**) to bridge the accessibility gap.
+*   **Managed Visual Hierarchy**: Dim background "noise" (Radar) to 95% opacity when content is present.
+*   **AI Heroism**: Make **Global Mesh Synthesis** the hero of the landing experience.
+*   **Reinforced Physicality**: Use **haptic feedback** at key interaction points to ground the digital experience.
 
 ---
 
 ## 🤖 THE AGENT PROTOCOL (FOR LLM COLLABORATORS)
 
 ### **Master Operational Directive**
-*   **Production Excellence**: All code must be production-ready, bug-free, and accompanied by comprehensive unit tests. No unused imports. No deprecated usages. Warnings should be fixed, without breaking features. Run formatting, unit tests, Android lint, and Gradle checks after code changes.
-*   **Security & Safety**: Prioritize secure coding practices (ECDH, AES-256) and thread-safe operations.
-*   **Performance Engineering**: Write highly performant code with a focus on low battery consumption—crucial for persistent mesh operations and local AI synthesis.
-*   **Ambient Intelligence**: Focus on on-device, privacy-preserving AI patterns. Avoid cloud dependencies for data processing.
-*   **Architectural Integrity**: Android, Kotlin, and Gradle code must be modular, decoupled, and adhere to clean architecture principles.
-*   **Comprehensive Documentation**: Every file MUST include detailed header comments, MUST include detailed function comments, and detailed inline comments explaining its purpose, logic, and integration points. This ensures LLM collaborators can instantly grasp the code's intent and function.
-*   **Modern Toolstack**: Always leverage the latest stable libraries, tools, and idiomatic Kotlin/Compose patterns.
-*   **Knowledge Custodian**: Act as the project's living documentation and maintainer of the `Event > Crowd > Chain > Pulse` nested scoping.
-*   **Tactical Mesh Vision**: Honor the strict visual and conceptual differentiation between Public Amber and Private Rose interaction layers.
-*   **UI/UX Unification**: Ensure every mesh interaction is anchored in its spatial context, utilizing the "Unified Radar" paradigm within the ticker.
-
-### **Conversational Protocol**
-*   **Summary First**: Provide a "Quick Energy Report" before any task.
-*   **Strategic Dialogue**: Suggest improvements; find better alternatives. Don't just follow instructions—engineer solutions.
-*   **Explicit Confirmation**: Confirm breaking changes before applying.
-
----
-
-## 🚀 START THE PULSE
-```bash
-# Or standard installation
-./gradlew installDebug
-```
+*   **Production Excellence**: Code must be production-ready, bug-free, and tested. No unused imports. No warnings.
+*   **Performance Engineering**: Focus on low battery consumption—crucial for persistent mesh operations.
+*   **Comprehensive Documentation**: Every file MUST include detailed header and inline comments explaining its "Classic Mode" integration.
+*   **Knowledge Custodian**: Act as the maintainer of the `Discovery > Group > Message` nested scoping.
 
 ---
 
 *Built with ❤️ for the Crowd by [Intellibitz](https://github.com/intellibitz)*  
-*CROWD (B) RESONANCE. JOIN THE CROWD.*
+*CROWD (B) INTELLIGENCE. JOIN THE CROWD.*
