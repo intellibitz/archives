@@ -1,7 +1,7 @@
 /**
- * BLUKIT CORE DOMAIN: RESONANCE
+ * BLUKIT CORE DOMAIN: MESH ROOM
  *
- * A shared container for pulses. Represents both public Crowds and private Chains.
+ * A shared container for family chats and campus rooms.
  * Orchestrates group scaling and partition strategies for decentralized efficiency.
  */
 package cc.thevar.blukit.domain.model
@@ -9,36 +9,36 @@ package cc.thevar.blukit.domain.model
 import kotlinx.serialization.Serializable
 
 /**
- * Data model for a Crowd or Chain context.
+ * Data model for a Mesh Room (Public) or Private Channel.
  *
- * @property id Unique identifier, often deterministic for public Crowds (crowd_NAME).
- * @property name Human-readable title of the frequency.
- * @property scope Scoping level: PUBLIC (Crowd), PRIVATE (Chain), or LOCAL (Device).
- * @property isArchived True if the frequency has hasn't pulsed in 30 days (Sunk Pulse).
+ * @property id Unique identifier, often deterministic for public Rooms (room_NAME).
+ * @property name Human-readable title of the room.
+ * @property scope Scoping level: PUBLIC (Open Room), PRIVATE (Family/Channel), or LOCAL (Device).
+ * @property isArchived True if the room hasn't messaged in 30 days (Sunk Message).
  * @property partitionThreshold Threshold for member partitioning to maintain radio efficiency.
- * @property memberSections Partitioned buckets of members for large-scale Crowds (>500 members).
+ * @property memberSections Partitioned buckets of members for large-scale Rooms (>500 members).
  */
 @Serializable
-data class Resonance(
+data class MeshRoom(
     val id: String,
     val name: String,
     val memberIds: Set<String> = emptySet(),
     val scope: Int = SCOPE_PUBLIC,
-    val lastPulseTimestamp: Long = System.currentTimeMillis(),
+    val lastMessageTimestamp: Long = System.currentTimeMillis(),
     val isPersistent: Boolean = true,
     val isArchived: Boolean = false,
     val parentId: String? = null,
     val isMeta: Boolean = true,
-    val pinnedPulseIds: Set<String> = emptySet(),
+    val pinnedMessageIds: Set<String> = emptySet(),
     val projectionEmoji: String? = null,
     val isVaulted: Boolean = false,
     val isSeniorVault: Boolean = false,
-    val isPinned: Boolean = false, // Task 3: For priority family/home rooms
+    val isPinned: Boolean = false, // For priority family/home rooms
     val vaultTimestamp: Long? = null,
-    val schedules: List<CrowdSchedule> = emptyList(),
+    val schedules: List<RoomEvent> = emptyList(),
     val partitionThreshold: Int = 100,
     val memberSections: Map<String, Set<String>> = emptyMap(),
-    val connections: List<CrowdConnection> = emptyList(),
+    val connections: List<RoomConnection> = emptyList(),
     val templateId: String? = null,
     val ownerId: String? = null,
     val userRoles: Map<String, String> = emptyMap(), // Map of userId to role name
@@ -49,20 +49,23 @@ data class Resonance(
      */
     val allMemberIds: Set<String> get() = memberIds + memberSections.values.asSequence().flatten().toSet()
 
-    /** True if this is the root collective crowd that all users are pre-joined to. */
-    val isDefaultCrowd: Boolean get() = id == ID_GLOBAL
+    /** True if this is the root collective room that all users are pre-joined to. */
+    val isDefaultRoom: Boolean get() = id == ID_GLOBAL
 
     companion object {
-        // --- Scoping Levels ---
+        // --- Scoping Levels (Social Aliases) ---
         const val SCOPE_PUBLIC = 0
         const val SCOPE_PRIVATE = 1
         const val SCOPE_LOCAL = 2
 
-        // --- Root Identity Identifiers ---
-        const val ID_GLOBAL = "global_group"
-        const val ID_SILENCE = "silence_chain"
+        const val TYPE_OPEN_ROOM = SCOPE_PUBLIC
+        const val TYPE_PRIVATE_CHANNEL = SCOPE_PRIVATE
 
-        /** The duration after which an inactive frequency is auto-archived (Sunk Pulse). */
+        // --- Root Identity Identifiers ---
+        const val ID_GLOBAL = "global_room"
+        const val ID_SILENCE = "silence_room"
+
+        /** The duration after which an inactive room is auto-archived. */
         const val ARCHIVE_THRESHOLD_MS = 30L * 24 * 60 * 60 * 1000 // 30 Days
 
         /**
@@ -72,24 +75,23 @@ data class Resonance(
         const val MAX_MEMBERS_PER_SECTION = 500
 
         /**
-         * Generates a deterministic ID for public frequencies or a UUID for private ones.
-         * Deterministic naming (crowd_NAME) allows cross-device resonance discovery.
+         * Generates a deterministic ID for public rooms or a UUID for private ones.
          */
-        fun generateId(name: String, scope: Int, parentGroup: Resonance? = null): String {
+        fun generateId(name: String, scope: Int, parentGroup: MeshRoom? = null): String {
             val normalized = name.uppercase().trim()
             return if (scope == SCOPE_PUBLIC) {
-                if (normalized == "GLOBAL" || normalized == "THE CROWD") {
+                if (normalized == "GLOBAL" || normalized == "OPEN MESH") {
                     ID_GLOBAL
                 } else {
-                    // Recursive path generation for Child Crowds
+                    // Recursive path generation for Child Rooms
                     if (parentGroup?.scope == SCOPE_PUBLIC && parentGroup.id != ID_GLOBAL) {
                         "${parentGroup.id}_${normalized.replace(" ", "_")}"
                     } else {
-                        "crowd_${normalized.replace(" ", "_")}"
+                        "room_${normalized.replace(" ", "_")}"
                     }
                 }
             } else {
-                // Private Chains are always unique anchors
+                // Private Channels are always unique anchors
                 java.util.UUID.randomUUID().toString()
             }
         }

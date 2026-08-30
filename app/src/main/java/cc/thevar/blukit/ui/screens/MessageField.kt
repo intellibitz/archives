@@ -1,20 +1,15 @@
 /**
- * BLUKIT PULSE FIELD
+ * BLUKIT MESSAGE FIELD
  *
  * The ultimate granular view of a single interaction.
- * Breaks down Resonances into constituent Pulse Units.
  */
 package cc.thevar.blukit.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BubbleChart
-import androidx.compose.material.icons.rounded.Radar
-import androidx.compose.material.icons.rounded.WifiTethering
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,17 +17,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.MeshMessage
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.Resonance
+import cc.thevar.blukit.domain.model.MeshRoom
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
+import cc.thevar.blukit.ui.navigation.Route
 
 /**
- * PULSE FIELD: Granular unit drill-down.
+ * MESSAGE FIELD: Granular message detail.
  */
 @Composable
-fun PulseField(
+fun MessageField(
     state: BluetoothUiState,
     localDeviceId: String,
     messageId: String,
@@ -50,7 +46,7 @@ fun PulseField(
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    activeCrowds: List<Resonance> = emptyList(),
+    activeCrowds: List<MeshRoom> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
@@ -66,30 +62,26 @@ fun PulseField(
             .sortedBy { it.timestamp }.toList()
     }
 
-    val themeColor = if (rootPulse?.pulseType == MessagePayload.PULSE_PRIVATE) StealthRose else StealthPrimary
+    val themeColor = if (rootPulse?.messageScope == MeshMessage.SCOPE_PRIVATE) StealthRose else StealthPrimary
 
     BlukitFieldScaffold(
         themeColor = themeColor,
         glowIntensityTarget = 0.9f,
         header = header,
         entries = {
-            // MODULE 1: BASE CONTENT (Humanity Stage + Unified Ticker/Radar)
             Column(modifier = Modifier.fillMaxSize()) {
-                // Humanity Stage (Breadcrumbs)
-                BlukitHumanityStage(
+                IdentityStage(
                     title = "MESSAGE",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    activeCrowds = activeCrowds,
+                    activeRooms = activeCrowds,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
-                    onTitleClick = onTitleClick,
                     onBack = onBack,
                     themeColor = themeColor,
                     userCount = childPulses.size,
                     onModeChange = { onNavigateToLiveFeed() },
                     trailingContent = {
-                        // Tactical Radar Toggles
                         if (onSearchToggle != null) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 IconButton(
@@ -97,14 +89,14 @@ fun PulseField(
                                     modifier = Modifier.size(28.dp)
                                 ) {
                                     Icon(
-                                        imageVector = if (isSearchActive) Icons.Rounded.WifiTethering else Icons.Rounded.Radar,
+                                        imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People,
                                         contentDescription = "Toggle Search",
                                         tint = if (isSearchActive) StealthAmber else themeColor,
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SCAN" else "RADAR",
+                                    text = if (isSearchActive) "SEARCH" else "PEOPLE",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
                                 )
@@ -122,23 +114,46 @@ fun PulseField(
                         border = BorderStroke(1.dp, themeColor.copy(alpha = StealthAlphaMedium))
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
+                            val headerLabel = when (it.type) {
+                                MeshMessage.TYPE_FILE -> "Shared File"
+                                MeshMessage.TYPE_NOTE_UPDATE -> "Shared Note"
+                                else -> "Topic"
+                            }
                             Text(
-                                text = "Original Message",
+                                text = headerLabel,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = themeColor
                             )
                             Spacer(modifier = Modifier.height(8.dp))
+                            
+                            if (it.type == MeshMessage.TYPE_FILE) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Rounded.Description, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(text = it.fileName ?: "Document", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                                        Text(text = "${(it.fileSize ?: 0) / 1024} KB", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                                    }
+                                }
+                            } else {
+                                Text(
+                                    text = it.content, 
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.White
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = it.content, 
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White
+                                text = "Shared by ${it.senderName}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.4f)
                             )
                         }
                     }
                 }
 
-                // MODULE 2: UNIFIED RESONANCE TICKER (With integrated Radar)
-                PulsingResonanceTicker(
+                LiveMessageTicker(
                     state = state,
                     energyList = childPulses.map { msg -> 
                         val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
@@ -150,28 +165,26 @@ fun PulseField(
                     pulsedPeers = emptySet(),
                     isGrouped = false,
                     onPulseClick = { onNavigateToPulse(it) },
-                    onDeviceClick = { },
-                    onDeviceLongClick = { },
+                    onDeviceClick = {  },
+                    onDeviceLongClick = {  },
                     modifier = Modifier.weight(1f),
                     themeColor = themeColor
                 )
             }
 
-            // MODULE 3: PULSE HUB (Bottom Overlay)
-            BlukitPulseHub(
-                currentRoute = cc.thevar.blukit.ui.navigation.Route.PulseField(messageId),
+            MessageHub(
+                currentRoute = Route.MessageField(messageId),
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
-                pulseCount = childPulses.size,
+                messageCount = childPulses.size,
                 incomingRadioRequests = emptySet(),
                 selectedDevices = emptySet(),
-                resonances = emptyList(),
                 onAcceptRadio = { },
                 onDenyRadio = { },
-                onStartSidePulse = { },
-                onStartChain = { },
-                onClearSelection = { },
+                onStartSidePulse = {  },
+                onStartChain = {  },
+                onClearSelection = {  },
                 onAttachFile = onAttachFile,
                 isSearchMode = isSearchActive,
                 onSearchToggle = onSearchToggle,
@@ -181,12 +194,11 @@ fun PulseField(
                     .fillMaxWidth()
             )
 
-            // MODULE 4: FLOATING TIPS
             if (childPulses.isEmpty()) {
                 BlukitTip(
                     text = "No replies detected. Reply to start the conversation.",
                     themeColor = themeColor,
-                    onDismiss = { },
+                    onDismiss = {  },
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
             }

@@ -6,24 +6,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.MeshMessage
 import cc.thevar.blukit.domain.model.P2PDevice
 import cc.thevar.blukit.ui.theme.*
 
 /**
  * LIVE FEED FIELD: A flat, real-time stream of every message on the mesh.
- * This view ignores groups to provide an "X-like" discovery experience.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveFeedField(
-    messages: List<MessagePayload>,
+    messages: List<MeshMessage>,
     peers: List<P2PDevice>,
     onBack: () -> Unit,
     onNavigateToPulse: (String) -> Unit
@@ -34,10 +35,15 @@ fun LiveFeedField(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        text = "Live Feed", 
+                        text = "LIVE FEED", 
                         style = MaterialTheme.typography.titleMedium,
                         letterSpacing = 2.sp
                     ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = StealthBlack,
@@ -55,13 +61,13 @@ fun LiveFeedField(
         ) {
             items(messages.reversed(), key = { it.messageId }) { msg ->
                 val sender = peers.find { it.id == msg.senderId || it.persistentId == msg.senderId }
-                AnimatedPulseItem(
+                MessageItem(
                     msg = msg,
                     isSelected = false,
                     senderDevice = sender,
                     pulseCount = 0,
                     isPulsed = false,
-                    isMe = msg.senderId == "YOU",
+                    isMe = false, // Resolve correctly if needed
                     isGrouped = false,
                     isMutual = false,
                     rowId = "live_${msg.messageId}",

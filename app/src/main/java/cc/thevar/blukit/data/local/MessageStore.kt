@@ -1,26 +1,20 @@
 /**
- * BLUKIT DATA: PULSE STORE
+ * BLUKIT DATA: MESSAGE STORE
  *
- * The secure, offline persistence engine for Blukit's mesh energy.
- * Orchestrates the "Unified Pulse Frequency" by managing chronological logs and resonance states.
- * 
- * Features:
- * - Encrypted Binary Logs: Uses CryptoManager to protect local pulse history.
- * - LWW (Last-Write-Wins) CRDT: Conflict-free resolution for shared notes and tasks.
- * - Swarm Logic: Weight-based pulse prioritization for collective resonance.
- * - Pulse Decay: Automated self-cleaning logic for media and inactive crowds.
- * - Resonance Drill-Down: Hierarchical state management for active, archived, and vaulted contexts.
+ * The secure, offline persistence engine for messages on the mesh.
+ * Orchestrates local rooms and chat history.
  */
 package cc.thevar.blukit.data.local
 
 import android.content.Context
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.db.PulseDatabase
+import cc.thevar.blukit.data.local.db.MessageDatabase
 import cc.thevar.blukit.data.local.entities.ContactEntity
 import cc.thevar.blukit.data.local.entities.PeerEntity
-import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.domain.model.Resonance
+import cc.thevar.blukit.domain.model.MeshMessage
+import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.domain.model.RoomEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,32 +33,32 @@ import java.io.File
 /**
  * Manages secure storage and reactive state of all mesh interactions.
  * 
- * @param historyRetentionLimit The maximum number of pulses to keep before triggering eviction.
+ * @param historyRetentionLimit The maximum number of messages to keep before triggering eviction.
  */
-class PulseStore(
+class MessageStore(
     private val context: Context,
     private val cryptoManager: CryptoManager,
     ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
     private val historyRetentionLimit: Int = 1000,
 ) {
     // --- Persistence Anchors ---
-    private val pulsesLogFile = File(context.filesDir, "pulses_log.bin")
-    private val groupsFile = File(context.filesDir, "groups.bin")
+    private val messagesLogFile = File(context.filesDir, "messages_log.bin")
+    private val roomsFile = File(context.filesDir, "rooms.bin")
     private val peersFile = File(context.filesDir, "peers.bin")
     private val contactsFile = File(context.filesDir, "contacts.bin")
 
-    private val database = PulseDatabase(context)
+    private val database = MessageDatabase(context)
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     // --- Reactive State Flows ---
-    private val _messages = MutableStateFlow<List<MessagePayload>>(emptyList())
-    /** The complete chronological life stream of pulses. */
-    val messages: StateFlow<List<MessagePayload>> = _messages.asStateFlow()
+    private val _messages = MutableStateFlow<List<MeshMessage>>(emptyList())
+    /** The complete chronological life stream of messages. */
+    val messages: StateFlow<List<MeshMessage>> = _messages.asStateFlow()
 
-    private val _groups = MutableStateFlow<Map<String, Resonance>>(emptyMap())
+    private val _groups = MutableStateFlow<Map<String, MeshRoom>>(emptyMap())
     
-    /** Public frequencies and active private chains. */
-    val activeGroups: StateFlow<List<Resonance>> = _groups
+    /** Public frequencies and active private channels. */
+    val activeGroups: StateFlow<List<MeshRoom>> = _groups
         .map { groupMap -> groupMap.values.filter { !it.isArchived }.toList() }
         .stateIn(
             scope = scope,
@@ -72,8 +66,8 @@ class PulseStore(
             initialValue = emptyList(),
         )
 
-    /** Crowds that haven't pulsed in 30 days. */
-    val archivedGroups: StateFlow<List<Resonance>> = _groups
+    /** Rooms that haven't pulsed in 30 days. */
+    val archivedGroups: StateFlow<List<MeshRoom>> = _groups
         .map { groupMap -> groupMap.values.filter { it.isArchived && !it.isVaulted }.toList() }
         .stateIn(
             scope = scope,
@@ -81,8 +75,8 @@ class PulseStore(
             initialValue = emptyList(),
         )
 
-    /** Explicitly preserved contexts (Sunk Pulses). */
-    val vaultedGroups: StateFlow<List<Resonance>> = _groups
+    /** Explicitly preserved contexts. */
+    val vaultedGroups: StateFlow<List<MeshRoom>> = _groups
         .map { groupMap -> groupMap.values.filter { it.isVaulted }.toList() }
         .stateIn(
             scope = scope,
@@ -90,7 +84,7 @@ class PulseStore(
             initialValue = emptyList(),
         )
 
-    val groups: StateFlow<List<Resonance>> = _groups
+    val groups: StateFlow<List<MeshRoom>> = _groups
         .map { it.values.toList() }
         .stateIn(
             scope = scope,
@@ -103,25 +97,24 @@ class PulseStore(
 
     init {
         loadData()
-        // Ensure default ties exist immediately (THE CROWD / SILENCE)
-        if (!_groups.value.containsKey(Resonance.ID_GLOBAL)) {
-            _groups.update { it + (Resonance.ID_GLOBAL to Resonance(id = Resonance.ID_GLOBAL, name = "GLOBAL GROUP", scope = Resonance.SCOPE_PUBLIC)) }
+        // Ensure default rooms exist immediately (GLOBAL / SILENCE)
+        if (!_groups.value.containsKey(MeshRoom.ID_GLOBAL)) {
+            _groups.update { it + (MeshRoom.ID_GLOBAL to MeshRoom(id = MeshRoom.ID_GLOBAL, name = "GLOBAL ROOM", scope = MeshRoom.SCOPE_PUBLIC)) }
         }
-        if (!_groups.value.containsKey(Resonance.ID_SILENCE)) {
-            _groups.update { it + (Resonance.ID_SILENCE to Resonance(id = Resonance.ID_SILENCE, name = "SILENCE", scope = Resonance.SCOPE_LOCAL)) }
+        if (!_groups.value.containsKey(MeshRoom.ID_SILENCE)) {
+            _groups.update { it + (MeshRoom.ID_SILENCE to MeshRoom(id = MeshRoom.ID_SILENCE, name = "SILENCE", scope = MeshRoom.SCOPE_LOCAL)) }
         }
         saveData()
         scope.launch {
-            autoArchiveCrowds()
+            autoArchiveRooms()
         }
     }
 
-    /** Interrogates local binary storage and raw SQLite DAG to decrypt the mesh state. */
+    /** Interrogates local binary storage and raw SQLite to decrypt the mesh state. */
     private fun loadData() {
-        // MIGRATION: Move from binary log to SQLite DAG if necessary
-        if (pulsesLogFile.exists()) {
+        if (messagesLogFile.exists()) {
             try {
-                pulsesLogFile.inputStream().use { fis ->
+                messagesLogFile.inputStream().use { fis ->
                     val dis = DataInputStream(fis)
                     while (fis.available() > 0) {
                         val length = dis.readInt()
@@ -129,30 +122,30 @@ class PulseStore(
                         dis.readFully(encrypted)
                         try {
                             val decrypted = cryptoManager.decryptLocal(encrypted)
-                            val message = Json.decodeFromString<MessagePayload>(decrypted.decodeToString())
-                            database.insertPulse(message, encrypted)
+                            val message = Json.decodeFromString<MeshMessage>(decrypted.decodeToString())
+                            database.insertMessage(message, encrypted)
                         } catch (_: Exception) {}
                     }
                 }
-                pulsesLogFile.delete()
+                messagesLogFile.delete()
             } catch (e: Exception) { e.printStackTrace() }
         }
 
         try {
-            val rawPulses = database.getAllRawPulses()
-            val messageMap = mutableMapOf<String, MessagePayload>()
-            rawPulses.forEach { encrypted ->
+            val rawMessages = database.getAllRawMessages()
+            val messageMap = mutableMapOf<String, MeshMessage>()
+            rawMessages.forEach { encrypted ->
                 try {
                     val decrypted = cryptoManager.decryptLocal(encrypted)
-                    val message = Json.decodeFromString<MessagePayload>(decrypted.decodeToString())
+                    val message = Json.decodeFromString<MeshMessage>(decrypted.decodeToString())
                     messageMap[message.messageId] = message
                 } catch (_: Exception) {}
             }
             _messages.value = messageMap.values.asSequence().sortedBy { it.timestamp }.toList()
         } catch (e: Exception) { e.printStackTrace() }
-        if (groupsFile.exists()) {
+        if (roomsFile.exists()) {
             try {
-                val encrypted = groupsFile.readBytes()
+                val encrypted = roomsFile.readBytes()
                 val decrypted = cryptoManager.decryptLocal(encrypted)
                 val json = decrypted.decodeToString()
                 _groups.value = Json.decodeFromString(json)
@@ -182,13 +175,12 @@ class PulseStore(
         }
     }
 
-    /** Persists an encrypted pulse to the SQLite DAG. */
-    private fun savePulseToDb(message: MessagePayload) {
+    private fun saveMessageToDb(message: MeshMessage) {
         scope.launch {
             try {
                 val json = Json.encodeToString(message)
                 val encrypted = cryptoManager.encryptLocal(json.encodeToByteArray())
-                database.insertPulse(message, encrypted)
+                database.insertMessage(message, encrypted)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -198,9 +190,9 @@ class PulseStore(
     private fun saveData() {
         scope.launch {
             try {
-                val groupsJson = Json.encodeToString(_groups.value)
-                val encryptedGroups = cryptoManager.encryptLocal(groupsJson.encodeToByteArray())
-                groupsFile.writeBytes(encryptedGroups)
+                val roomsJson = Json.encodeToString(_groups.value)
+                val encryptedRooms = cryptoManager.encryptLocal(roomsJson.encodeToByteArray())
+                roomsFile.writeBytes(encryptedRooms)
 
                 val peersJson = Json.encodeToString(_peers.value)
                 val encryptedPeers = cryptoManager.encryptLocal(peersJson.encodeToByteArray())
@@ -218,21 +210,20 @@ class PulseStore(
     // --- Message Operations ---
     fun getAllMessages() = messages
 
-    /** Returns raw encrypted pulses since a specific timestamp for differential sync. */
-    fun getRawPulsesSince(timestamp: Long): List<ByteArray> = database.getRawPulsesSince(timestamp)
+    /** Returns raw encrypted messages since a specific timestamp for sync. */
+    fun getRawMessagesSince(timestamp: Long): List<ByteArray> = database.getRawMessagesSince(timestamp)
 
-    /** Returns the latest pulse ID in the local DAG. */
-    fun getLatestPulseId(): String? = database.getLatestPulseId()
+    /** Returns the latest message ID in the local database. */
+    fun getLatestMessageId(): String? = database.getLatestMessageId()
 
     /** 
-     * Incorporates a new pulse into the stream.
-     * Uses LWW-CRDT logic for notes and tasks to ensure deterministic state across the mesh.
-     * Also handles Crowd AI consensus voting to adjust resonance weights.
+     * Incorporates a new message into the stream.
+     * Uses LWW-CRDT logic for shared items to ensure deterministic state across the mesh.
      */
-    fun upsertMessage(message: MessagePayload) {
-        if (message.content.isBlank()) return // Validation: Ignore empty pulses
+    fun upsertMessage(message: MeshMessage) {
+        if (message.content.isBlank()) return
 
-        if (message.type == MessagePayload.TYPE_CONSENSUS_VOTE) {
+        if (message.type == MeshMessage.TYPE_CONSENSUS_VOTE) {
             handleConsensusVote(message)
             return
         }
@@ -243,28 +234,22 @@ class PulseStore(
             if (existingIndex != -1) {
                 val existing = current[existingIndex]
                 
-                // --- GIT-STYLE DAG MERGE ---
-                // If the messageId matches but hashes differ, we have a branch.
-                // In Blukit's decentralized model, we prioritize the one with higher noteVersion 
-                // or later timestamp (LWW).
-                
-                // LWW CRDT for Note & Task Mutation
-                val isMutableType = (message.type == MessagePayload.TYPE_NOTE_UPDATE) || (message.type == MessagePayload.TYPE_ASSIGNMENT_TASK)
+                // LWW CRDT for shared item mutation
+                val isMutableType = (message.type == MeshMessage.TYPE_NOTE_UPDATE) || (message.type == MeshMessage.TYPE_ASSIGNMENT_TASK)
                 
                 if (isMutableType) {
                     if ((message.noteVersion > existing.noteVersion) || 
                         ((message.noteVersion == existing.noteVersion) && (message.timestamp > existing.timestamp))) {
-                        savePulseToDb(message)
+                        saveMessageToDb(message)
                         current.toMutableList().apply { set(existingIndex, message) }
                     } else {
                         current
                     }
                 } else {
-                    // For static pulses (Text/Image), we don't overwrite unless version/timestamp is newer (unlikely for same ID)
                     current
                 }
             } else {
-                savePulseToDb(message)
+                saveMessageToDb(message)
                 (current + message).sortedBy { it.timestamp }
             }
         }
@@ -279,17 +264,17 @@ class PulseStore(
     }
 
     /**
-     * SWARM LOGIC: Processes a consensus vote to adjust the weight of a target pulse.
+     * Social Logic: Processes a consensus vote to adjust the weight of a target message.
      */
-    private fun handleConsensusVote(votePulse: MessagePayload) {
-        val targetPulseId = votePulse.parentMessageId ?: return
-        val weight = try { votePulse.content.toInt() } catch (_: Exception) { 0 }
+    private fun handleConsensusVote(voteMessage: MeshMessage) {
+        val targetMessageId = voteMessage.parentMessageId ?: return
+        val weight = try { voteMessage.content.toInt() } catch (_: Exception) { 0 }
         
         _messages.update { current ->
             current.map { 
-                if (it.messageId == targetPulseId) {
+                if (it.messageId == targetMessageId) {
                     val newWeight = it.resonanceWeight + weight
-                    database.updateWeight(targetPulseId, newWeight)
+                    database.updateWeight(targetMessageId, newWeight)
                     it.copy(resonanceWeight = newWeight)
                 } else it
             }
@@ -297,9 +282,9 @@ class PulseStore(
     }
 
     /**
-     * CROWD CANVAS: Retrieves high-priority pulses for the spatial header.
+     * Retrieves high-priority messages for the room header.
      */
-    fun getHighResonancePulses(groupId: String, limit: Int = 3): StateFlow<List<MessagePayload>> {
+    fun getHighResonanceMessages(groupId: String, limit: Int = 3): StateFlow<List<MeshMessage>> {
         return messages.map { list ->
             list.asSequence()
                 .filter { (it.groupId == groupId) && (it.resonanceWeight > 0) }
@@ -309,36 +294,31 @@ class PulseStore(
         }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
     }
 
-    /** Evicts low-priority pulses once a context exceeds retention limits. */
+    /** Evicts low-priority messages once a context exceeds retention limits. */
     private fun pruneHistory(groupId: String) {
         val group = getGroup(groupId) ?: return
         val currentMessages = _messages.value.filter { it.groupId == groupId }
         
-        // DYNAMIC LIMITS: Pinned and meta-pulses are kept longer
-        val maxLimit = if (group.scope == Resonance.SCOPE_PRIVATE) 2000 else historyRetentionLimit
+        val maxLimit = if (group.scope == MeshRoom.SCOPE_PRIVATE) 2000 else historyRetentionLimit
         
         if (currentMessages.size > maxLimit) {
             val toRemoveCount = currentMessages.size - maxLimit
             
-            // PRIORITY-AWARE EVICTION:
-            // 1. Keep Pinned pulses
-            // 2. Keep Task updates (Assignments)
-            // 3. Keep meta-headers for threads
             val messagesToDelete = currentMessages.asSequence()
-                .filter { it.messageId !in group.pinnedPulseIds }
-                .filter { it.type != MessagePayload.TYPE_ASSIGNMENT_TASK }
+                .filter { it.messageId !in group.pinnedMessageIds }
+                .filter { it.type != MeshMessage.TYPE_ASSIGNMENT_TASK }
                 .filter { !it.isMeta }
                 .sortedBy { it.timestamp }
                 .take(toRemoveCount)
                 .toList()
 
             messagesToDelete.forEach { deleteMessage(it.messageId) }
-            Log.i("PulseStore", "Smarter Eviction for $groupId. Removed ${messagesToDelete.size} low-priority pulses.")
+            Log.i("MessageStore", "Pruned ${messagesToDelete.size} messages in $groupId.")
         }
     }
 
     fun updateMessageStatus(messageId: String, status: Int) {
-        var updated: MessagePayload? = null
+        var updated: MeshMessage? = null
         _messages.update { list ->
             list.map {
                 if (it.messageId == messageId) {
@@ -348,17 +328,17 @@ class PulseStore(
                 } else it
             }
         }
-        updated?.let { savePulseToDb(it) }
+        updated?.let { saveMessageToDb(it) }
     }
 
     fun clearAllMessages() {
         _messages.value = emptyList()
-        if (pulsesLogFile.exists()) pulsesLogFile.delete()
+        if (messagesLogFile.exists()) messagesLogFile.delete()
     }
 
     fun deleteMessage(messageId: String) {
         val message = _messages.value.find { it.messageId == messageId }
-        if (message?.type == MessagePayload.TYPE_IMAGE || message?.type == MessagePayload.TYPE_FILE) {
+        if (message?.type == MeshMessage.TYPE_IMAGE || message?.type == MeshMessage.TYPE_FILE) {
             message.content.let { path ->
                 try {
                     val file = File(path)
@@ -368,19 +348,19 @@ class PulseStore(
                 } catch (_: Exception) {}
             }
         }
-        database.deletePulse(messageId)
+        database.deleteMessage(messageId)
         _messages.update { it.filter { m -> m.messageId != messageId } }
     }
 
-    // --- Vault & Archiving ---
+    // --- Archive ---
 
-    /** Protocols automatically move inactive crowds into a "Sunk Pulse" vault. */
-    fun autoArchiveCrowds() {
+    /** Protocols automatically move inactive rooms into archive. */
+    fun autoArchiveRooms() {
         val now = System.currentTimeMillis()
         _groups.update { current ->
             current.mapValues { (id, group) ->
-                val isDefault = id == Resonance.ID_GLOBAL || id == Resonance.ID_SILENCE
-                if (!isDefault && !group.isArchived && !group.isVaulted && (now - group.lastPulseTimestamp) > Resonance.ARCHIVE_THRESHOLD_MS) {
+                val isDefault = id == MeshRoom.ID_GLOBAL || id == MeshRoom.ID_SILENCE
+                if (!isDefault && !group.isArchived && !group.isVaulted && (now - group.lastMessageTimestamp) > MeshRoom.ARCHIVE_THRESHOLD_MS) {
                     group.copy(isArchived = true)
                 } else {
                     group
@@ -411,33 +391,33 @@ class PulseStore(
     fun restoreFromVault(groupId: String) {
         _groups.update { current ->
             current[groupId]?.let { 
-                current + (groupId to it.copy(isArchived = false, isVaulted = false, lastPulseTimestamp = System.currentTimeMillis()))
+                current + (groupId to it.copy(isArchived = false, isVaulted = false, lastMessageTimestamp = System.currentTimeMillis()))
             } ?: current
         }
         saveData()
     }
 
-    /** Prunes media older than 90 days, exempting Pinned/Senior pulses. */
+    /** Prunes media older than 90 days. */
     fun pruneMedia(thresholdMs: Long) {
         val now = System.currentTimeMillis()
         val allGroups = _groups.value.values
-        val allPinnedPulses = allGroups.asSequence().flatMap { it.pinnedPulseIds }.toSet()
+        val allPinnedMessages = allGroups.asSequence().flatMap { it.pinnedMessageIds }.toSet()
         val vaultedGroupIds = allGroups.asSequence().filter { it.isVaulted }.map { it.id }.toSet()
         val seniorVaultIds = allGroups.asSequence().filter { it.isSeniorVault }.map { it.id }.toSet()
 
         _messages.value.forEach { message ->
             val isFromVaultedGroup = message.groupId in vaultedGroupIds
             val isFromSeniorVault = message.groupId in seniorVaultIds
-            val isPermanentMemory = message.type == MessagePayload.TYPE_MEMORY
+            val isPermanentMemory = message.type == MeshMessage.TYPE_MEMORY
             
-            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedPulses && !isFromVaultedGroup && !isFromSeniorVault && !isPermanentMemory) {
-                if (message.type == MessagePayload.TYPE_IMAGE || message.type == MessagePayload.TYPE_FILE) {
+            if ((now - message.timestamp) > thresholdMs && message.messageId !in allPinnedMessages && !isFromVaultedGroup && !isFromSeniorVault && !isPermanentMemory) {
+                if (message.type == MeshMessage.TYPE_IMAGE || message.type == MeshMessage.TYPE_FILE) {
                     message.content.let { path ->
                         try {
                             val file = File(path)
                             if (file.exists() && file.absolutePath.contains(context.filesDir.absolutePath)) {
                                 file.delete()
-                                Log.i("PulseStore", "Pruned media: ${message.messageId}")
+                                Log.i("MessageStore", "Pruned media: ${message.messageId}")
                             }
                         } catch (_: Exception) {}
                     }
@@ -446,13 +426,13 @@ class PulseStore(
         }
     }
 
-    // --- Group Operations ---
-    fun insertGroup(group: Resonance) {
+    // --- Room Operations ---
+    fun insertGroup(group: MeshRoom) {
         _groups.update { it + (group.id to group) }
         saveData()
     }
 
-    /** Adds a user to a specific crowd or chain membership list. */
+    /** Adds a user to a specific room. */
     fun joinGroup(groupId: String, userId: String) {
         _groups.update { current ->
             current[groupId]?.let { group ->
@@ -463,27 +443,23 @@ class PulseStore(
     }
 
     /**
-     * Verifies if a user has participation rights in a context.
-     * Members of the default root crowd are always permitted.
-     * Public crowds allow read-access to everyone (Lurking).
+     * Verifies if a user has participation rights in a room.
      */
     fun isMember(groupId: String, userId: String): Boolean {
         val group = _groups.value[groupId] ?: return false
-        if (group.scope == Resonance.SCOPE_PUBLIC) return true // Task 4: Allow Lurking
-        return group.isDefaultCrowd || userId in group.allMemberIds
+        if (group.scope == MeshRoom.SCOPE_PUBLIC) return true
+        return group.isDefaultRoom || userId in group.allMemberIds
     }
 
     fun getGroup(id: String) = _groups.value[id]
 
-    /** Orchestrates member partitioning for high-density scalability. */
+    /** Orchestrates member partitioning for scalability. */
     fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
         _groups.update { current ->
             current[groupId]?.let { group ->
-                // LIMIT ENFORCEMENT: Absolute cap on section size
-                val cappedMembers = memberIds.asSequence().take(Resonance.MAX_MEMBERS_PER_SECTION).toSet()
+                val cappedMembers = memberIds.asSequence().take(MeshRoom.MAX_MEMBERS_PER_SECTION).toSet()
                 
                 val updatedGroup = if (cappedMembers.size > group.partitionThreshold) {
-                    // PARTITIONING: Split members into sections for scalability
                     val sectionId = "section_${group.memberSections.size}"
                     val newSections = group.memberSections.toMutableMap()
                     newSections[sectionId] = cappedMembers.take(group.partitionThreshold).toSet()
@@ -506,16 +482,16 @@ class PulseStore(
         saveData()
     }
 
-    fun updateGroupLastPulse(groupId: String, timestamp: Long) {
+    fun updateRoomLastMessage(groupId: String, timestamp: Long) {
         _groups.update { current ->
             current[groupId]?.let { 
-                current + (groupId to it.copy(lastPulseTimestamp = timestamp))
+                current + (groupId to it.copy(lastMessageTimestamp = timestamp))
             } ?: current
         }
         saveData()
     }
 
-    fun addCrowdSchedule(groupId: String, schedule: cc.thevar.blukit.domain.model.CrowdSchedule) {
+    fun addRoomSchedule(groupId: String, schedule: RoomEvent) {
         _groups.update { current ->
             current[groupId]?.let { group ->
                 current + (groupId to group.copy(schedules = group.schedules + schedule))
@@ -524,7 +500,6 @@ class PulseStore(
         saveData()
     }
 
-    // --- Peer Operations ---
     // --- Contact Operations ---
     fun getAllContacts() = _contacts.asStateFlow().map { it.values.toList() }
 

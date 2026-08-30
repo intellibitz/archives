@@ -56,18 +56,18 @@ private val StealthColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = BlukitPrimary,
-    onPrimary = BlukitOnPrimary,
-    primaryContainer = BlukitPrimaryContainer,
-    onPrimaryContainer = BlukitOnPrimaryContainer,
-    secondary = BlukitSecondary,
-    onSecondary = BlukitOnSecondary,
-    secondaryContainer = BlukitSecondaryContainer,
-    onSecondaryContainer = BlukitOnSecondaryContainer,
-    tertiary = BlukitTertiary,
-    onTertiary = BlukitOnTertiary,
-    tertiaryContainer = BlukitTertiaryContainer,
-    onTertiaryContainer = BlukitOnTertiaryContainer
+    primary = BlukitAcademicBlue,
+    onPrimary = Color.White,
+    primaryContainer = BlukitAcademicBlue.copy(alpha = 0.1f),
+    onPrimaryContainer = BlukitAcademicBlue,
+    secondary = BlukitAcademicGold,
+    onSecondary = Color.White,
+    background = BlukitPaper,
+    surface = BlukitPaper,
+    onBackground = BlukitInk,
+    onSurface = BlukitInk,
+    surfaceVariant = Color.White,
+    onSurfaceVariant = BlukitInk.copy(alpha = 0.7f)
 )
 
 @Composable

@@ -1,7 +1,7 @@
 package cc.thevar.blukit.di
 
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.MessageStore
 import cc.thevar.blukit.data.power.SupremePowerManager
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
@@ -26,7 +26,7 @@ import org.koin.dsl.module
 val appModule = module {
     // Infrastructure
     single { CryptoManager() }
-    single { PulseStore(androidContext(), get()) }
+    single { MessageStore(androidContext(), get()) }
     single { RadioStateManager(androidContext()) }
     single { SpreadPermissionManager(androidContext()) }
     single { HapticManager(androidContext()) }
@@ -43,7 +43,7 @@ val appModule = module {
         NearbyP2PController(
             context = androidContext(),
             repository = get(),
-            pulseStore = get(),
+            messageStore = get(),
             hapticManager = get(),
             radioStateManager = get(),
             cryptoManager = get(),

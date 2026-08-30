@@ -19,21 +19,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.MeshMessage
 import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 fun AssignmentItem(
-    assignment: MessagePayload,
+    assignment: MeshMessage,
     onStatusChange: (Int) -> Unit,
     themeColor: Color = StealthPrimary,
     modifier: Modifier = Modifier
 ) {
-    val isCompleted = assignment.taskStatus == MessagePayload.TASK_COMPLETED
-    val isBlocked = assignment.taskStatus == MessagePayload.TASK_BLOCKED
-    val isAbandoned = assignment.taskStatus == MessagePayload.TASK_ABANDONED
+    val isCompleted = assignment.taskStatus == MeshMessage.TASK_COMPLETED
+    val isBlocked = assignment.taskStatus == MeshMessage.TASK_BLOCKED
+    val isAbandoned = assignment.taskStatus == MeshMessage.TASK_ABANDONED
     val sdf = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
 
     Surface(
@@ -67,8 +67,8 @@ fun AssignmentItem(
                     .border(2.dp, if (isBlocked) StealthError else themeColor, CircleShape)
                     .clickable {
                         val nextStatus = when {
-                            isCompleted -> MessagePayload.TASK_PENDING
-                            else -> MessagePayload.TASK_COMPLETED
+                            isCompleted -> MeshMessage.TASK_PENDING
+                            else -> MeshMessage.TASK_COMPLETED
                         }
                         onStatusChange(nextStatus)
                     },
@@ -136,7 +136,7 @@ fun AssignmentItem(
             // Context Menu for Blocked/Abandoned
             Row {
                 if (!isCompleted && !isAbandoned) {
-                    IconButton(onClick = { onStatusChange(if (isBlocked) MessagePayload.TASK_PENDING else MessagePayload.TASK_BLOCKED) }) {
+                    IconButton(onClick = { onStatusChange(if (isBlocked) MeshMessage.TASK_PENDING else MeshMessage.TASK_BLOCKED) }) {
                         Icon(
                             Icons.Rounded.PriorityHigh, 
                             contentDescription = "Block", 

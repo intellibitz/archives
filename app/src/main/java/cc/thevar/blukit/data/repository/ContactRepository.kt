@@ -1,17 +1,17 @@
 package cc.thevar.blukit.data.repository
 
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.MessageStore
 import cc.thevar.blukit.data.local.entities.ContactEntity
 import kotlinx.coroutines.flow.Flow
 
-class ContactRepository(private val pulseStore: PulseStore) {
-    val allContacts: Flow<List<ContactEntity>> = pulseStore.getAllContacts()
+class ContactRepository(private val messageStore: MessageStore) {
+    val allContacts: Flow<List<ContactEntity>> = messageStore.getAllContacts()
 
     fun deleteContact(contact: ContactEntity) {
-        pulseStore.deleteContact(contact.id)
+        messageStore.deleteContact(contact.id)
     }
 
     fun clearAll() {
-        pulseStore.deleteAllContacts()
+        messageStore.deleteAllContacts()
     }
 }

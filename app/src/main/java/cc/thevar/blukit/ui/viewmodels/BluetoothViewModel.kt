@@ -2,30 +2,23 @@
  * BLUKIT VIEWMODEL: BLUETOOTH ORCHESTRATOR
  *
  * The central intelligence hub for Blukit's reactive UDF (Unidirectional Data Flow) architecture.
- * Coordinates between hardware radio states, secure P2P engines, and local resonance storage.
- * 
- * Responsibilities:
- * - Hardware Harmony: Monitoring Bluetooth/Location availability and permissions.
- * - Crowd AI Orchestration: Integrating ambient intelligence for resonance synthesis.
- * - Crowd Awakening: Automatically promoting local pulses to the mesh when radios engage.
- * - Ritual Sentience: Executing scheduled context activations and smart reminders.
- * - Storage Pruning: Orchestrating the "Pulse Decay" protocol for media and history.
- * - Reactive State: Aggregating multiple data sources into a unified `BluetoothUiState`.
+ * Coordinates between hardware radio states, secure P2P engines, and local room storage.
  */
 package cc.thevar.blukit.ui.viewmodels
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.MessageStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
 import cc.thevar.blukit.domain.logic.IntelligenceManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.MeshMessage
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.Resonance
+import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.domain.model.RoomEvent
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
 import cc.thevar.blukit.network.p2p.P2PController
 import cc.thevar.blukit.ui.toUiError
@@ -62,28 +55,28 @@ class BluetoothViewModel(
     private val radioStateManager: RadioStateManager,
     private val repository: IdentityRepository,
     private val permissionManager: SpreadPermissionManager,
-    private val pulseStore: PulseStore,
+    private val messageStore: MessageStore,
     private val connectivityUseCase: ConnectivityUseCase,
     private val intelligenceManager: IntelligenceManager,
 ) : ViewModel() {
 
     private val _selectedDevices = MutableStateFlow<Set<String>>(emptySet())
 
-    private val _currentChainId = MutableStateFlow(Resonance.ID_GLOBAL)
-    /** The currently focused Resonance context (Crowd or Chain ID). */
+    private val _currentChainId = MutableStateFlow(MeshRoom.ID_GLOBAL)
+    /** The currently focused room context. */
     @Suppress("unused")
     val currentChainId = _currentChainId.asStateFlow()
 
-    /** Public frequencies discovered in the local air, excluding current focus. */
-    val discoveredCrowds = p2pController.discoveredCrowds
+    /** Public rooms discovered in the local air, excluding current focus. */
+    val discoveredCrowds = p2pController.discoveredRooms
         .filter { it.id != _currentChainId.value }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
 
-    /** CROWD CANVAS: Reactive flow of high-resonance pulses for the spatial header. */
+    /** MESSAGE CANVAS: Reactive flow of high-resonance messages for the spatial header. */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val highResonancePulses: StateFlow<List<MessagePayload>> = _currentChainId
+    val highResonancePulses: StateFlow<List<MeshMessage>> = _currentChainId
         .flatMapLatest { groupId ->
-            pulseStore.getHighResonancePulses(groupId)
+            messageStore.getHighResonanceMessages(groupId)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -105,11 +98,10 @@ class BluetoothViewModel(
         p2pController.messages
             .onEach { msgs ->
                 if (msgs.isNotEmpty()) {
-                    // PROTOCOL: Collaborative Rituals - Extract schedules from incoming pushes
-                    msgs.filter { it.type == MessagePayload.TYPE_RITUAL_PUSH }.forEach { ritualMsg ->
+                    msgs.filter { it.type == MeshMessage.TYPE_RITUAL_PUSH }.forEach { ritualMsg ->
                         try {
-                            val schedule = kotlinx.serialization.json.Json.decodeFromString<cc.thevar.blukit.domain.model.CrowdSchedule>(ritualMsg.content)
-                            ritualMsg.groupId?.let { gid -> addSchedule(gid, schedule) }
+                            val event = kotlinx.serialization.json.Json.decodeFromString<RoomEvent>(ritualMsg.content)
+                            ritualMsg.groupId?.let { gid -> addSchedule(gid, event) }
                         } catch (e: Exception) {
                             Log.e("BluetoothViewModel", "Failed to decode ritual push: ${e.message}")
                         }
@@ -118,7 +110,7 @@ class BluetoothViewModel(
             }
             .launchIn(viewModelScope)
 
-        // --- Crowd Awakening Protocol ---
+        // --- Room Awakening Protocol ---
         combine(
             radioStateManager.radioStates,
             permissionManager.permissionsGranted,
@@ -130,37 +122,37 @@ class BluetoothViewModel(
         .onEach { promoteSilenceToShout() }
         .launchIn(viewModelScope)
 
-        // --- Ritual Sentience (Schedules) ---
+        // --- Room Events ---
         viewModelScope.launch {
             while (true) {
-                checkCrowdSchedules()
+                checkRoomEvents()
                 delay(1.minutes)
             }
         }
 
-        // --- Storage Pruning & Pulse Decay ---
+        // --- Storage Pruning & History Decay ---
         viewModelScope.launch {
             while (true) {
-                pulseStore.pruneMedia(thresholdMs = 90.days.inWholeMilliseconds) // Protocol: 90-day media decay
-                pulseStore.autoArchiveCrowds() // Protocol: 30-day context archiving
+                messageStore.pruneMedia(thresholdMs = 90.days.inWholeMilliseconds) 
+                messageStore.autoArchiveRooms() 
                 delay(1.days)
             }
         }
 
-        // --- Secure Chain Self-Healing ---
+        // --- Secure Room Self-Healing ---
         @OptIn(FlowPreview::class)
         combine(
-            p2pController.connectedTies,
+            p2pController.connectedGroups,
             p2pController.scannedDevices,
         ) { connected, scanned -> connected to scanned }
             .debounce(2.seconds)
             .onEach { (connected, scanned) ->
-                val currentChain = pulseStore.getGroup(_currentChainId.value)
-                if (currentChain?.scope == Resonance.SCOPE_PRIVATE) {
-                    val missingMembers = currentChain.memberIds - connected - repository.getDeviceId()
+                val currentRoom = messageStore.getGroup(_currentChainId.value)
+                if (currentRoom?.scope == MeshRoom.SCOPE_PRIVATE) {
+                    val missingMembers = currentRoom.memberIds - connected - repository.getDeviceId()
                     missingMembers.forEach { memberId ->
                         scanned.find { (it.id == memberId) || (it.persistentId == memberId) }?.let { device ->
-                            Log.i("BluetoothViewModel", "Auto-Reconnect: Secure Chain needs resonance with $memberId")
+                            Log.i("BluetoothViewModel", "Auto-Reconnect: Room needs resonance with $memberId")
                             connectToDevice(device)
                         }
                     }
@@ -168,26 +160,25 @@ class BluetoothViewModel(
             }.launchIn(viewModelScope)
     }
 
-    /** Evaluates active schedules to awaken Crowds or trigger Smart Reminders. */
-    private fun checkCrowdSchedules() {
+    /** Evaluates active schedules to awaken Rooms or trigger Smart Reminders. */
+    private fun checkRoomEvents() {
         val now = Calendar.getInstance()
         val day = now[Calendar.DAY_OF_WEEK]
         val hour = now[Calendar.HOUR_OF_DAY]
         val minute = now[Calendar.MINUTE]
 
-        val scheduledCrowds = pulseStore.groups.value.filter { it.schedules.isNotEmpty() }
-        scheduledCrowds.forEach { crowd ->
-            crowd.schedules.forEach { s ->
+        val scheduledRooms = messageStore.groups.value.filter { it.schedules.isNotEmpty() }
+        scheduledRooms.forEach { room ->
+            room.schedules.forEach { s ->
                 val isActive = (s.dayOfWeek == day) &&
                         ((hour > s.startHour) || ((hour == s.startHour) && (minute >= s.startMinute))) &&
                         ((hour < s.endHour) || ((hour == s.endHour) && (minute <= s.endMinute)))
 
-                if (isActive && crowd.isArchived) {
-                    restoreFromVault(crowd.id)
-                    Log.i("BluetoothViewModel", "Ritual Awakening: ${crowd.name}")
+                if (isActive && room.isArchived) {
+                    restoreFromVault(room.id)
+                    Log.i("BluetoothViewModel", "Room Awakening: ${room.name}")
                 }
                 
-                // Smart Reminder Logic: Notify user before ritual begins
                 s.reminderLeadTimeMs?.let { leadTime ->
                     val scheduleTime = Calendar.getInstance().apply {
                         set(Calendar.DAY_OF_WEEK, s.dayOfWeek)
@@ -204,32 +195,32 @@ class BluetoothViewModel(
         }
     }
 
-    /** Automatically broadcasts local SILENCE pulses when the mesh radio becomes available. */
+    /** Automatically broadcasts local SILENCE messages when the mesh radio becomes available. */
     private suspend fun promoteSilenceToShout() {
         val myId = repository.getDeviceId()
         val messages = p2pController.messages.value
-        val silentPulses = messages.filter { 
-            it.senderId == myId && it.pulseType == MessagePayload.PULSE_SILENCE 
+        val silentMessages = messages.filter { 
+            it.senderId == myId && it.messageScope == MeshMessage.MESSAGE_SILENCE 
         }
         
-        silentPulses.forEach { pulse ->
-            p2pController.broadcastMessage(pulse.content, MessagePayload.PULSE_SHOUT, pulse.messageId, groupId = Resonance.ID_GLOBAL, groupName = "THE CROWD")
+        silentMessages.forEach { msg ->
+            p2pController.broadcastMessage(msg.content, MeshMessage.MESSAGE_SHOUT, msg.messageId, groupId = MeshRoom.ID_GLOBAL, groupName = "HOME")
         }
     }
 
     // --- State Reducers ---
 
-    private val activityState: Flow<EventActivity> = combine(
+    private val activityState: Flow<MeshActivity> = combine(
         p2pController.isDiscovering,
         p2pController.isAdvertising,
         p2pController.messages,
         p2pController.errors,
     ) { isDiscovering, isAdvertising, messages, error ->
         val now = System.currentTimeMillis()
-        val recentPulses = messages.count { (now - it.timestamp) < 300000 } // last 5 mins
-        val intensity = (recentPulses / 20f).coerceAtMost(1f)
+        val recentMessages = messages.count { (now - it.timestamp) < 300000 } 
+        val intensity = (recentMessages / 20f).coerceAtMost(1f)
 
-        EventActivity(
+        MeshActivity(
             isDiscovering = isDiscovering,
             isAdvertising = isAdvertising,
             energyIntensity = intensity,
@@ -237,7 +228,7 @@ class BluetoothViewModel(
         )
     }
 
-    private val crowdState: Flow<MeshCrowd> = combine(
+    private val crowdState: Flow<NearbyPeers> = combine(
         p2pController.scannedDevices,
         _selectedDevices,
         repository.pulsedPeers,
@@ -258,7 +249,7 @@ class BluetoothViewModel(
         @Suppress("UNCHECKED_CAST")
         val outgoing = flows[5] as Set<P2PDevice>
         
-        MeshCrowd(
+        NearbyPeers(
             scannedDevices = scanned,
             selectedDevices = selected,
             pulsedPeers = pulsed,
@@ -268,14 +259,14 @@ class BluetoothViewModel(
         )
     }
 
-    private val sessionDataState: Flow<PulseSession> = combine(
-        p2pController.connectedTies,
+    private val sessionDataState: Flow<MeshSession> = combine(
+        p2pController.connectedGroups,
         p2pController.messages,
-        pulseStore.activeGroups,
-        pulseStore.archivedGroups,
+        messageStore.activeGroups,
+        messageStore.archivedGroups,
         p2pController.syncProgress,
     ) { ties, messages, groups, archivedGroups, syncProgress ->
-        PulseSession(
+        MeshSession(
             connectedTies = ties,
             messages = messages,
             groups = groups,
@@ -308,9 +299,9 @@ class BluetoothViewModel(
             manualConnectionState != null -> manualConnectionState
             activity.uiError != null -> RadioConnectionState.Error(activity.uiError.message)
             isConnected -> {
-                val pulse = crowd.scannedDevices.find { it.id in session.connectedTies }
+                val peer = crowd.scannedDevices.find { it.id in session.connectedTies }
                     ?: P2PDevice(id = session.connectedTies.firstOrNull() ?: "", name = "?", emoji = "👤")
-                RadioConnectionState.Connected(pulse)
+                RadioConnectionState.Connected(peer)
             }
             activity.isDiscovering || activity.isAdvertising -> RadioConnectionState.Scanning
             else -> RadioConnectionState.Disconnected
@@ -370,57 +361,55 @@ class BluetoothViewModel(
 
     fun clearSelection() { _selectedDevices.value = emptySet() }
 
-    /** Orchestrates context formation for public Crowds or private Chains. */
-    fun startGroupPulse(name: String, members: Set<String>? = null, scope: Int = Resonance.SCOPE_PRIVATE, templateId: String? = null): String {
+    /** Orchestrates context formation for public rooms or private groups. */
+    fun startGroupPulse(name: String, members: Set<String>? = null, scope: Int = MeshRoom.SCOPE_PRIVATE, templateId: String? = null): String {
         if (name.isBlank()) return ""
         
         val targetMembers = members ?: _selectedDevices.value
-        if (scope != Resonance.SCOPE_PUBLIC && targetMembers.isEmpty()) {
+        if (scope != MeshRoom.SCOPE_PUBLIC && targetMembers.isEmpty()) {
             Log.w("BluetoothViewModel", "Cannot start private group with empty member set")
             return ""
         }
 
-        val isPublicAir = scope == Resonance.SCOPE_PUBLIC
+        val isPublicAir = scope == MeshRoom.SCOPE_PUBLIC
         val currentGroup = state.value.session.groups.find { it.id == _currentChainId.value }
-        val groupId = Resonance.generateId(name, scope, currentGroup)
+        val groupId = MeshRoom.generateId(name, scope, currentGroup)
         val parentId = _currentChainId.value
         
         viewModelScope.launch {
-            val existing = pulseStore.getGroup(groupId)
+            val existing = messageStore.getGroup(groupId)
             if (isPublicAir) {
                 if (existing == null) {
-                    val template = cc.thevar.blukit.domain.model.CrowdTemplates.ALL.find { it.id == templateId }
-                    val newGroup = Resonance(
+                    val template = cc.thevar.blukit.domain.model.RoomTemplates.ALL.find { it.id == templateId }
+                    val newRoom = MeshRoom(
                         id = groupId, 
                         name = name, 
-                        scope = Resonance.SCOPE_PUBLIC,
+                        scope = MeshRoom.SCOPE_PUBLIC,
                         parentId = parentId,
                         templateId = templateId,
                         ownerId = repository.getDeviceId()
                     )
-                    pulseStore.insertGroup(newGroup)
+                    messageStore.insertGroup(newRoom)
                     
-                    // Template Logic: Automatically spawn default private chains
-                    template?.defaultChains?.forEach { chainName ->
-                        val chainId = Resonance.generateId(chainName, Resonance.SCOPE_PRIVATE, newGroup)
-                        pulseStore.insertGroup(
-                            Resonance(
+                    template?.defaultChannels?.forEach { channelName ->
+                        val chainId = MeshRoom.generateId(channelName, MeshRoom.SCOPE_PRIVATE, newRoom)
+                        messageStore.insertGroup(
+                            MeshRoom(
                                 id = chainId,
-                                name = chainName,
-                                scope = Resonance.SCOPE_PRIVATE,
+                                name = channelName,
+                                scope = MeshRoom.SCOPE_PRIVATE,
                                 parentId = groupId,
                             )
                         )
                     }
                 } else {
-                    pulseStore.updateGroupLastPulse(groupId, System.currentTimeMillis())
+                    messageStore.updateRoomLastMessage(groupId, System.currentTimeMillis())
                 }
             } else {
-                // Secure Chain: Establishing private radio ties
-                p2pController.startGroupPulse(name, targetMembers, scope, groupId = groupId, parentId = parentId)
+                p2pController.startGroupRoom(name, targetMembers, scope, groupId = groupId, parentId = parentId)
                 delay(100.milliseconds) 
-                pulseStore.getGroup(groupId)?.let { tie ->
-                    pulseStore.insertGroup(tie.copy(parentId = parentId, ownerId = repository.getDeviceId()))
+                messageStore.getGroup(groupId)?.let { tie ->
+                    messageStore.insertGroup(tie.copy(parentId = parentId, ownerId = repository.getDeviceId()))
                 }
             }
         }
@@ -435,7 +424,7 @@ class BluetoothViewModel(
         viewModelScope.launch { p2pController.broadcastIdentityUpdate(oldName) }
     }
 
-    /** Propagates a pulse based on current context (SHOUT/WHISPER/SILENCE). */
+    /** Propagates a message based on current context. */
     fun sendMessage(message: String, groupId: String? = null) {
         if (message.isBlank()) return
         viewModelScope.launch {
@@ -445,35 +434,35 @@ class BluetoothViewModel(
     }
 
     /** Shares media over the mesh. WiFi is prioritized if available. */
-    fun spreadFile(uri: android.net.Uri, pulseType: Int = MessagePayload.PULSE_SILENCE) {
+    fun spreadFile(uri: android.net.Uri, messageScope: Int = MeshMessage.MESSAGE_SILENCE) {
         viewModelScope.launch {
             val activeChainId = _currentChainId.value
-            val activeChain = pulseStore.getGroup(activeChainId)
+            val activeChain = messageStore.getGroup(activeChainId)
 
-            when (pulseType) {
-                MessagePayload.PULSE_SILENCE -> {
-                    p2pController.sendFile(uri, null, MessagePayload.PULSE_SILENCE, groupId = Resonance.ID_SILENCE, groupName = "SILENCE")
+            when (messageScope) {
+                MeshMessage.MESSAGE_SILENCE -> {
+                    p2pController.sendFile(uri, null, MeshMessage.MESSAGE_SILENCE, groupId = MeshRoom.ID_SILENCE, groupName = "SILENCE")
                 }
-                MessagePayload.PULSE_SHOUT -> {
-                    p2pController.sendFile(uri, null, MessagePayload.PULSE_SHOUT, groupId = activeChainId, groupName = activeChain?.name)
+                MeshMessage.MESSAGE_SHOUT -> {
+                    p2pController.sendFile(uri, null, MeshMessage.MESSAGE_SHOUT, groupId = activeChainId, groupName = activeChain?.name)
                 }
-                MessagePayload.PULSE_WHISPER -> {
+                MeshMessage.MESSAGE_WHISPER -> {
                     val targets = state.value.crowd.selectedDevices.ifEmpty { state.value.session.connectedTies }
                     if (targets.isNotEmpty()) {
                         targets.forEach { targetId ->
-                            p2pController.sendFile(uri, targetId, pulseType, groupId = activeChainId, groupName = activeChain?.name)
+                            p2pController.sendFile(uri, targetId, messageScope, groupId = activeChainId, groupName = activeChain?.name)
                         }
                     } else {
-                        p2pController.sendFile(uri, null, pulseType, groupId = activeChainId, groupName = activeChain?.name)
+                        p2pController.sendFile(uri, null, messageScope, groupId = activeChainId, groupName = activeChain?.name)
                     }
                 }
             }
         }
     }
 
-    fun vaultGroup(groupId: String, isVaulted: Boolean) = pulseStore.vaultGroup(groupId, isVaulted)
+    fun vaultGroup(groupId: String, isVaulted: Boolean) = messageStore.vaultGroup(groupId, isVaulted)
 
-    fun seniorVaultGroup(groupId: String, isSeniorVault: Boolean) = pulseStore.seniorVaultGroup(groupId, isSeniorVault)
+    fun seniorVaultGroup(groupId: String, isSeniorVault: Boolean) = messageStore.seniorVaultGroup(groupId, isSeniorVault)
 
     fun updateNote(groupId: String, content: String, messageId: String?, version: Int) {
         viewModelScope.launch { p2pController.sendNoteUpdate(groupId, content, messageId, version) }
@@ -483,9 +472,9 @@ class BluetoothViewModel(
         p2pController.initiateHistorySync(deviceId, sinceTimestamp)
     }
 
-    fun restoreFromVault(groupId: String) = pulseStore.restoreFromVault(groupId)
+    fun restoreFromVault(groupId: String) = messageStore.restoreFromVault(groupId)
 
-    /** Transitions the UI focus to a specific Resonance context. */
+    /** Transitions the UI focus to a specific room context. */
     fun enterChain(chainId: String) {
         _currentChainId.value = chainId
     }
@@ -495,57 +484,57 @@ class BluetoothViewModel(
         p2pController.closeConnection()
     }
 
-    /** Removes a member from a private Chain. */
+    /** Removes a member from a private group. */
     fun removeMemberFromGroup(groupId: String, memberId: String) {
         viewModelScope.launch {
-            val group = pulseStore.getGroup(groupId) ?: return@launch
+            val group = messageStore.getGroup(groupId) ?: return@launch
             val newMembers = group.memberIds - memberId
             p2pController.updateGroupMembers(groupId, newMembers)
-            pulseStore.insertGroup(group.copy(memberIds = newMembers))
+            messageStore.insertGroup(group.copy(memberIds = newMembers))
         }
     }
 
-    /** Adds a new member to an existing private Chain. */
+    /** Adds a new member to an existing private group. */
     fun addMemberToGroup(groupId: String, memberId: String) {
         viewModelScope.launch {
-            val group = pulseStore.getGroup(groupId) ?: return@launch
+            val group = messageStore.getGroup(groupId) ?: return@launch
             val newMembers = group.memberIds + memberId
             p2pController.updateGroupMembers(groupId, newMembers)
-            pulseStore.insertGroup(group.copy(memberIds = newMembers))
+            messageStore.insertGroup(group.copy(memberIds = newMembers))
         }
     }
 
-    /** Assigns a functional role to a member within a Chain context. */
+    /** Assigns a functional role to a member within a room context. */
     fun assignRole(groupId: String, memberId: String, role: String) {
         viewModelScope.launch {
-            val group = pulseStore.getGroup(groupId) ?: return@launch
+            val group = messageStore.getGroup(groupId) ?: return@launch
             val newUserRoles = group.userRoles + (memberId to role)
-            pulseStore.insertGroup(group.copy(userRoles = newUserRoles))
+            messageStore.insertGroup(group.copy(userRoles = newUserRoles))
             Log.i("BluetoothViewModel", "Ritual Role: $role assigned to $memberId in $groupId")
         }
     }
 
-    /** Triggers a swarm consensus vote to adjust pulse resonance. */
-    fun castVote(pulseId: String, weight: Int) {
+    /** Triggers a swarm consensus vote to adjust message resonance. */
+    fun castVote(messageId: String, weight: Int) {
         viewModelScope.launch {
-            intelligenceManager.castConsensusVote(pulseId, _currentChainId.value, weight)
+            intelligenceManager.castConsensusVote(messageId, _currentChainId.value, weight)
         }
     }
 
-    fun addSchedule(groupId: String, schedule: cc.thevar.blukit.domain.model.CrowdSchedule) {
-        viewModelScope.launch { pulseStore.addCrowdSchedule(groupId, schedule) }
+    fun addSchedule(groupId: String, event: RoomEvent) {
+        viewModelScope.launch { messageStore.addRoomSchedule(groupId, event) }
     }
 
-    /** Propagates a Ritual schedule to all members of a Chain. */
-    fun pushRitual(groupId: String, schedule: cc.thevar.blukit.domain.model.CrowdSchedule) {
+    /** Propagates a RoomEvent to all members of a Group. */
+    fun pushRitual(groupId: String, event: RoomEvent) {
         viewModelScope.launch {
-            val content = kotlinx.serialization.json.Json.encodeToString(schedule)
-            val members = pulseStore.getGroup(groupId)?.allMemberIds ?: emptySet()
+            val content = kotlinx.serialization.json.Json.encodeToString(event)
+            val members = messageStore.getGroup(groupId)?.allMemberIds ?: emptySet()
             members.forEach { memberId ->
                 p2pController.sendMessage(
                     content = content,
                     receiverId = memberId,
-                    pulseType = MessagePayload.PULSE_WHISPER,
+                    messageScope = MeshMessage.MESSAGE_WHISPER,
                     groupId = groupId
                 )
             }

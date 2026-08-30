@@ -28,15 +28,15 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import cc.thevar.blukit.MainActivity
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.MessageStore
 import org.koin.core.context.GlobalContext
 
 class BlukitWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            val pulseStore = GlobalContext.get().get<PulseStore>()
-            val messages by pulseStore.messages.collectAsState(initial = emptyList())
+            val messageStore = GlobalContext.get().get<MessageStore>()
+            val messages by messageStore.messages.collectAsState(initial = emptyList())
             val count = messages.size
 
             GlanceTheme {
@@ -49,7 +49,7 @@ class BlukitWidget : GlanceAppWidget() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "SPREAD PULSES",
+                        text = "BLUKIT MESH",
                         style = TextStyle(
                             color = GlanceTheme.colors.primary,
                             fontSize = 12.sp,
@@ -58,7 +58,7 @@ class BlukitWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.height(4.dp))
                     Text(
-                        text = "$count PULSES AROUND",
+                        text = "$count MESSAGES NEARBY",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurface,
                             fontSize = 10.sp
@@ -86,7 +86,7 @@ class BlukitWidget : GlanceAppWidget() {
                         )
                         Spacer(modifier = GlanceModifier.width(8.dp))
                         Text(
-                            text = "BLUKIT:PULSES",
+                            text = "OFFLINE MESH",
                             style = TextStyle(
                                 color = GlanceTheme.colors.primary,
                                 fontSize = 6.sp,

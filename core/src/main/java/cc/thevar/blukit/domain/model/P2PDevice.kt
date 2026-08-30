@@ -25,9 +25,9 @@ data class P2PDevice(
     val signalStrength: Int = 0, // RSSI value in dBm (-100 to 0)
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false,
-    val isTiePending: Boolean = false,
+    val isGroupPending: Boolean = false,
     val medium: ConnectionMedium = ConnectionMedium.LOCATION,
-    val pulseCount: Int = 0,
+    val messageCount: Int = 0,
     val isLowPower: Boolean = false,
     val distanceMm: Int = -1, // WiFi RTT distance if available
     val statusLabel: String? = null, // Temporary status or AI trend projection

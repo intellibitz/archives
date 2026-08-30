@@ -1,7 +1,7 @@
 /**
  * BLUKIT DOMAIN: INTELLIGENCE MANAGER
  *
- * The central orchestration engine for Crowd AI.
+ * The central orchestration engine for Mesh Insights.
  * Handles on-device synthesis, swarm logic consensus, and privacy-preserving analytics.
  */
 package cc.thevar.blukit.domain.logic
@@ -11,10 +11,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.Log
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.MessageStore
 import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.domain.model.intelligence.ResonanceSummary
+import cc.thevar.blukit.domain.model.MeshMessage
+import cc.thevar.blukit.domain.model.intelligence.MeshInsight
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,33 +26,33 @@ import kotlin.time.Duration.Companion.minutes
 
 class IntelligenceManager(
     private val context: Context,
-    private val pulseStore: PulseStore,
+    private val messageStore: MessageStore,
     private val identityRepository: IdentityRepository,
     ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     init {
-        startAmbientSynthesis()
+        startAmbientInsights()
     }
 
     /**
-     * AMBIENT SYNTHESIS: Periodically processes local pulses to generate Resonance Summaries.
-     * This is an on-device, privacy-first implementation of "Crowd AI."
+     * AMBIENT INSIGHTS: Periodically processes local messages to generate Mesh Insights.
+     * This is an on-device, privacy-first implementation of "Mesh AI."
      */
-    private fun startAmbientSynthesis() {
+    private fun startAmbientInsights() {
         scope.launch {
-            pulseStore.activeGroups.collectLatest { groups ->
+            messageStore.activeGroups.collectLatest { groups ->
                 groups.forEach { group ->
                     launch {
-                        processGroupIntelligence(group.id)
+                        processRoomIntelligence(group.id)
                     }
                 }
             }
         }
     }
 
-    private suspend fun processGroupIntelligence(groupId: String) {
+    private suspend fun processRoomIntelligence(groupId: String) {
         while (true) {
             // BATTERY-AWARE SCALING: Adjust synthesis frequency based on energy levels.
             val batteryLevel = getBatteryLevel()
@@ -63,33 +63,33 @@ class IntelligenceManager(
             }
             delay(synthesisDelay)
             
-            val pulses = pulseStore.messages.value.filter { it.groupId == groupId }
-            if (pulses.size < 5) continue
+            val messages = messageStore.messages.value.filter { it.groupId == groupId }
+            if (messages.size < 5) continue
 
-            val summary = generateResonanceSummary(groupId, pulses)
+            val insight = generateMeshInsight(groupId, messages)
             
-            // Broadcast the AI Summary to the mesh as a priority pulse
-            val aiPulse = MessagePayload(
+            // Broadcast the AI Summary to the mesh as a priority message
+            val aiMessage = MeshMessage(
                 messageId = UUID.randomUUID().toString(),
                 senderId = "AI_ORCHESTRATOR",
-                senderName = "CROWD AI",
+                senderName = "ROOM AI",
                 senderEmoji = "🧠",
                 groupId = groupId,
-                content = summary.summary,
+                content = insight.summary,
                 timestamp = System.currentTimeMillis(),
-                type = MessagePayload.TYPE_AI_SUMMARY,
+                type = MeshMessage.TYPE_AI_SUMMARY,
                 isPriority = true,
                 isMeta = true,
             )
-            pulseStore.upsertMessage(aiPulse)
-            Log.i("IntelligenceManager", "Swarm Logic: AI Summary broadcasted for $groupId")
+            messageStore.upsertMessage(aiMessage)
+            Log.i("IntelligenceManager", "Mesh Logic: AI Insight broadcasted for $groupId")
         }
     }
 
     /**
-     * LOCAL SYNTHESIS: Uses a simplified TF-IDF approach and stopword filtering to cluster pulses.
+     * LOCAL SYNTHESIS: Uses a simplified TF-IDF approach and stopword filtering to cluster messages.
      */
-    fun generateResonanceSummary(groupId: String, pulses: List<MessagePayload>): ResonanceSummary {
+    fun generateMeshInsight(groupId: String, messages: List<MeshMessage>): MeshInsight {
         val stopWords = setOf(
             "THE", "AND", "THIS", "THAT", "WITH", "FROM", "THEIR", "THEY", "WHAT", 
             "YOUR", "HAVE", "WERE", "THERE", "ABOUT", "WHICH", "WOULD", "COULD",
@@ -97,7 +97,7 @@ class IntelligenceManager(
             "HELLO", "PULSE", "BLUKIT", "JUST", "WILL", "SOME",
         )
 
-        val words = pulses.asSequence()
+        val words = messages.asSequence()
             .flatMap { it.content.split(Regex("\\s+")) }
             .map { it.uppercase().filter { c -> c.isLetter() } }
             .filter { (it.length > 3) && (it !in stopWords) }
@@ -119,7 +119,7 @@ class IntelligenceManager(
         val negativeWords = setOf("BAD", "SAD", "HATE", "SLOW", "BORING", "NO", "FAIL", "ERR")
         
         var sentimentScore = 0.1f
-        pulses.forEach { p ->
+        messages.forEach { p ->
             val content = p.content.uppercase()
             if (positiveWords.any { content.contains(it) }) sentimentScore += 0.2f
             if (negativeWords.any { content.contains(it) }) sentimentScore -= 0.2f
@@ -128,7 +128,7 @@ class IntelligenceManager(
         sentimentScore = sentimentScore.coerceIn(-1.0f, 1.0f)
 
         // INTENT SYNTHESIS: Identifying Atmospheric Trends
-        val intent = detectAtmosphericTrend(pulses)
+        val intent = detectAtmosphericTrend(messages)
         val trendSummary = intent?.let { " TREND: $it DETECTED." } ?: ""
 
         val intensityLabel = when {
@@ -139,23 +139,23 @@ class IntelligenceManager(
             else -> "STABLE"
         }
 
-        return ResonanceSummary(
+        return MeshInsight(
             groupId = groupId,
-            summary = "SWARM REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
+            summary = "MESH REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
             topKeywords = keywords,
             sentimentScore = sentimentScore,
             derivedTimestamp = System.currentTimeMillis(),
-            pulseCountSampled = pulses.size,
+            messageCountSampled = messages.size,
         )
     }
 
-    fun detectAtmosphericTrend(pulses: List<MessagePayload>): String? {
-        val content = pulses.joinToString(" ") { it.content }.lowercase()
+    fun detectAtmosphericTrend(messages: List<MeshMessage>): String? {
+        val content = messages.joinToString(" ") { it.content }.lowercase()
         return when {
             content.contains("lecture") || content.contains("professor") || content.contains("assignment") || content.contains("exam") || content.contains("study") -> "ACADEMIC RITUAL"
             content.contains("train") || content.contains("metro") || content.contains("station") || content.contains("bus") -> "URBAN TRANSIT"
             content.contains("party") || content.contains("music") || content.contains("dance") || content.contains("concert") -> "SOCIAL SYNERGY"
-            content.contains("food") || content.contains("coffee") || content.contains("cafe") || content.contains("eat") -> "CROWD NOURISHMENT"
+            content.contains("food") || content.contains("coffee") || content.contains("cafe") || content.contains("eat") -> "ROOM NOURISHMENT"
             content.contains("protest") || content.contains("march") || content.contains("rally") -> "COLLECTIVE ACTION"
             else -> null
         }
@@ -169,19 +169,19 @@ class IntelligenceManager(
     }
 
     /**
-     * SWARM CONSENSUS: Triggers a vote pulse for a specific resonance point.
+     * SWARM CONSENSUS: Triggers a vote pulse for a specific message.
      */
-    fun castConsensusVote(pulseId: String, groupId: String, weight: Int) {
-        val votePulse = MessagePayload(
+    fun castConsensusVote(messageId: String, groupId: String, weight: Int) {
+        val voteMessage = MeshMessage(
             messageId = UUID.randomUUID().toString(),
             senderId = identityRepository.getDeviceId(),
             senderName = "YOU",
-            parentMessageId = pulseId,
+            parentMessageId = messageId,
             groupId = groupId,
             content = weight.toString(),
             timestamp = System.currentTimeMillis(),
-            type = MessagePayload.TYPE_CONSENSUS_VOTE,
+            type = MeshMessage.TYPE_CONSENSUS_VOTE,
         )
-        pulseStore.upsertMessage(votePulse)
+        messageStore.upsertMessage(voteMessage)
     }
 }

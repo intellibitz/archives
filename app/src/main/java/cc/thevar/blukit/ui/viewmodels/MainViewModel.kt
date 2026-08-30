@@ -1,14 +1,14 @@
 /**
  * BLUKIT VIEWMODEL: MAIN ORCHESTRATOR
  *
- * Manages high-level app state, user identity, and tactical privacy settings.
- * Bridges the UI layer with the Identity Repository and Pulse Store.
+ * Manages high-level app state, user identity, and social privacy settings.
+ * Bridges the UI layer with the Identity Repository and Message Store.
  */
 package cc.thevar.blukit.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.MessageStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,16 +21,16 @@ import kotlinx.coroutines.launch
  */
 class MainViewModel(
     private val repository: IdentityRepository,
-    private val pulseStore: PulseStore,
+    private val messageStore: MessageStore,
 ) : ViewModel() {
 
-    /** Tactical nickname currently projecting to the mesh. */
+    /** Social nickname currently projecting to the mesh. */
     val nickname: Flow<String?> = repository.nicknameFlow
     /** The emoji avatar projecting the user's visual identity. */
     val emojiAvatar: Flow<String> = repository.emojiAvatar
     /** Stealth Mode: Distinguishes private interactions in Stealth Rose. */
     val isStealthMode: Flow<Boolean> = repository.stealthMode
-    /** Low Power Mode:preserves hardware energy by throttling mesh activity. */
+    /** Low Power Mode: preserves hardware energy by throttling mesh activity. */
     val lowPowerMode: Flow<Boolean> = repository.lowPowerMode
     
     private val _deviceId = MutableStateFlow(repository.getDeviceId())
@@ -70,17 +70,17 @@ class MainViewModel(
         viewModelScope.launch { repository.unblockUser(userId) }
     }
 
-    /** Deletes an atomic pulse unit locally. */
+    /** Deletes an atomic message locally. */
     fun deletePulse(messageId: String) {
-        viewModelScope.launch { pulseStore.deleteMessage(messageId) }
+        viewModelScope.launch { messageStore.deleteMessage(messageId) }
     }
 
-    /** Purges the entire local chronological pulse log. */
+    /** Purges the entire local history. */
     fun clearChatHistory() {
-        viewModelScope.launch { pulseStore.clearAllMessages() }
+        viewModelScope.launch { messageStore.clearAllMessages() }
     }
 
-    /** Tactical identity reset: Clears nickname and emoji. */
+    /** Identity reset: Clears nickname and emoji. */
     fun resetProfile() {
         viewModelScope.launch { repository.resetProfile() }
     }

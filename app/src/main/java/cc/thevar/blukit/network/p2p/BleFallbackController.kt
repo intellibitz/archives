@@ -2,12 +2,12 @@
  * BLUKIT NETWORK: BLE FALLBACK CONTROLLER
  *
  * A native BLE engine used when Google Nearby Connections is unavailable or fails.
- * Implements standard BLE GATT (Generic Attribute Profile) for pulse exchange.
+ * Implements standard BLE GATT (Generic Attribute Profile) for message exchange.
  * 
  * Logic:
  * - Advertising: Local Persona info is shared via ScanRecord service data.
  * - Discovery: Scans for SERVICE_UUID and extracts peer Persona metadata.
- * - Messaging: Writes pulses to the PULSE_CHAR_UUID characteristic on the peer's GATT server.
+ * - Messaging: Writes messages to the MESSAGE_CHAR_UUID characteristic on the peer's GATT server.
  * - Security: Hardware-encrypted ECDH/AES handshakes similar to the primary engine.
  */
 package cc.thevar.blukit.network.p2p
@@ -33,13 +33,13 @@ import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.MessageStore
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.MeshMessage
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.Resonance
+import cc.thevar.blukit.domain.model.MeshRoom
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +69,7 @@ import javax.crypto.SecretKey
 class BleFallbackController(
     private val context: Context,
     private val repository: IdentityRepository,
-    private val pulseStore: PulseStore,
+    private val messageStore: MessageStore,
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -89,8 +89,8 @@ class BleFallbackController(
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedTies = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedTies = _connectedTies.asStateFlow()
+    private val _connectedGroups = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedGroups = _connectedGroups.asStateFlow()
 
     private val _incomingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
     override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
@@ -107,13 +107,13 @@ class BleFallbackController(
     private val _errors = MutableStateFlow<P2PError?>(null)
     override val errors = _errors.asStateFlow()
 
-    private val _discoveredCrowds = MutableSharedFlow<Resonance>(extraBufferCapacity = 5)
-    override val discoveredCrowds = _discoveredCrowds.asSharedFlow()
+    private val _discoveredRooms = MutableSharedFlow<MeshRoom>(extraBufferCapacity = 5)
+    override val discoveredRooms = _discoveredRooms.asSharedFlow()
 
-    override val messages: StateFlow<List<MessagePayload>> = pulseStore.getAllMessages()
+    override val messages: StateFlow<List<MeshMessage>> = messageStore.getAllMessages()
     override val syncProgress: StateFlow<Float?> = MutableStateFlow(null)
 
-    private val pulseKeys = ConcurrentHashMap<String, SecretKey>()
+    private val messageKeys = ConcurrentHashMap<String, SecretKey>()
     private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
     private var gattServer: BluetoothGattServer? = null
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
@@ -122,8 +122,8 @@ class BleFallbackController(
     companion object {
         /** Unique Service UUID for Blukit BLE mesh. */
         private val SERVICE_UUID = UUID.fromString("0000fb01-0000-1000-8000-00805f9b34fb")
-        /** Characteristic UUID for writing encrypted pulses. */
-        private val PULSE_CHAR_UUID = UUID.fromString("0000fb02-0000-1000-8000-00805f9b34fb")
+        /** Characteristic UUID for writing encrypted messages. */
+        private val MESSAGE_CHAR_UUID = UUID.fromString("0000fb02-0000-1000-8000-00805f9b34fb")
         /** Protocol prefix for ECDH handshake packets. */
         private const val HANDSHAKE_PREFIX = 0x01.toByte()
     }
@@ -209,7 +209,7 @@ class BleFallbackController(
             Log.i(tag, "GATT: Disconnected from $address")
             activeGatts.remove(address)
             pendingRadioRequests.remove(address)
-            _connectedTies.update { it - address }
+            _connectedGroups.update { it - address }
             if (activeGatts.isEmpty()) _isConnected.value = false
             updateScannedDevices()
         }
@@ -220,7 +220,7 @@ class BleFallbackController(
         val address = gatt.device.address
         if (status == BluetoothGatt.GATT_SUCCESS) {
             activeGatts[address] = gatt
-            _connectedTies.update { it + address }
+            _connectedGroups.update { it + address }
             _isConnected.value = true
             sendHandshake(address)
         } else {
@@ -234,11 +234,11 @@ class BleFallbackController(
             Log.i(tag, "GATT Server: Connected to ${device.address}")
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
             Log.i(tag, "GATT Server: Disconnected from ${device.address}")
-            pulseKeys.remove(device.address)
+            messageKeys.remove(device.address)
         }
     }
 
-    /** Handles incoming GATT writes (Encrypted Pulses or Handshakes). */
+    /** Handles incoming GATT writes (Encrypted Messages or Handshakes). */
     private fun handleCharacteristicWrite(
         device: BluetoothDevice,
         requestId: Int,
@@ -246,7 +246,7 @@ class BleFallbackController(
         responseNeeded: Boolean,
         value: ByteArray,
     ) {
-        if (characteristic.uuid == PULSE_CHAR_UUID) {
+        if (characteristic.uuid == MESSAGE_CHAR_UUID) {
             if (responseNeeded) {
                 try {
                     gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
@@ -268,9 +268,9 @@ class BleFallbackController(
         try {
             val publicKeyEncoded = data.copyOfRange(1, data.size)
             val keyFactory = KeyFactory.getInstance("EC")
-            val pulsePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
-            val sharedSecret = cryptoManager.deriveSharedSecret(pulsePublicKey)
-            pulseKeys[address] = sharedSecret
+            val messagePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
+            val sharedSecret = cryptoManager.deriveSharedSecret(messagePublicKey)
+            messageKeys[address] = sharedSecret
             Log.i(tag, "SECURE: Radio ready for $address (BLE)")
             updateScannedDevices()
         } catch (e: Exception) {
@@ -279,13 +279,13 @@ class BleFallbackController(
     }
 
     private fun handleMessage(address: String, data: ByteArray) {
-        val secretKey = pulseKeys[address] ?: return
+        val secretKey = messageKeys[address] ?: return
         try {
             val decryptedBytes = cryptoManager.decrypt(data, secretKey)
-            val payload = Json.decodeFromString<MessagePayload>(decryptedBytes.decodeToString())
+            val payload = Json.decodeFromString<MeshMessage>(decryptedBytes.decodeToString())
 
             when (payload.type) {
-                MessagePayload.TYPE_ACK -> handleAck(payload)
+                MeshMessage.TYPE_ACK -> handleAck(payload)
                 else -> {
                     if (isNewMessage(payload.messageId) && (payload.senderId !in repository.blockedUsers.value)) {
                         handleChatMessage(address, payload, secretKey)
@@ -294,52 +294,52 @@ class BleFallbackController(
             }
         } catch (e: Exception) {
             Log.e(tag, "Message decrypt error: ${e.message}")
-            reportError(P2PError.EncryptionError("Failed to decrypt incoming pulse"))
+            reportError(P2PError.EncryptionError("Failed to decrypt incoming message"))
         }
     }
 
-    private fun handleAck(payload: MessagePayload) {
+    private fun handleAck(payload: MeshMessage) {
         internalScope.launch(ioDispatcher) {
-            pulseStore.updateMessageStatus(payload.messageId, MessagePayload.STATUS_DELIVERED)
+            messageStore.updateMessageStatus(payload.messageId, MeshMessage.STATUS_DELIVERED)
         }
     }
 
-    private fun handleChatMessage(address: String, payload: MessagePayload, secretKey: SecretKey) {
+    private fun handleChatMessage(address: String, payload: MeshMessage, secretKey: SecretKey) {
         sendAck(address, payload, secretKey)
         if (payload.receiverId.isNullOrEmpty()) {
             relayMessage(address, payload)
         }
 
         internalScope.launch(ioDispatcher) {
-            // AUTO-DISCOVER RESONANCES
+            // AUTO-DISCOVER ROOMS
             val gid = payload.groupId
             val gName = payload.groupName
             if ((gid != null) && (gName != null)) {
-                val existing = pulseStore.getGroup(gid)
+                val existing = messageStore.getGroup(gid)
                 if (existing == null) {
-                    val scope = when (payload.pulseType) {
-                        MessagePayload.PULSE_SHOUT -> Resonance.SCOPE_PUBLIC
-                        MessagePayload.PULSE_SILENCE -> Resonance.SCOPE_LOCAL
-                        else -> Resonance.SCOPE_PRIVATE
+                    val scope = when (payload.messageScope) {
+                        MeshMessage.MESSAGE_SHOUT -> MeshRoom.SCOPE_PUBLIC
+                        MeshMessage.MESSAGE_SILENCE -> MeshRoom.SCOPE_LOCAL
+                        else -> MeshRoom.SCOPE_PRIVATE
                     }
-                    pulseStore.insertGroup(
-                        Resonance(
+                    messageStore.insertGroup(
+                        MeshRoom(
                             id = gid,
                             name = gName,
                             scope = scope,
-                            parentId = Resonance.ID_GLOBAL,
+                            parentId = MeshRoom.ID_GLOBAL,
                         ),
                     )
                 }
             }
 
-            pulseStore.upsertMessage(payload)
-            hapticManager.triggerPulse(HapticManager.PulseType.MESSAGE)
+            messageStore.upsertMessage(payload)
+            hapticManager.triggerMessage(HapticManager.MessageType.MESSAGE)
         }
     }
 
-    /** Propagates pulses to other connected BLE ties. */
-    private fun relayMessage(sourceAddress: String, payload: MessagePayload) {
+    /** Propagates messages to other connected BLE groups. */
+    private fun relayMessage(sourceAddress: String, payload: MeshMessage) {
         if (payload.hopCount >= 3) return
 
         internalScope.launch(ioDispatcher) {
@@ -347,12 +347,12 @@ class BleFallbackController(
             if (payload.senderId == myId) return@launch
 
             val relayedPayload = payload.copy(hopCount = payload.hopCount + 1)
-            val json = Json.encodeToString(MessagePayload.serializer(), relayedPayload)
+            val json = Json.encodeToString(MeshMessage.serializer(), relayedPayload)
             val bytes = json.encodeToByteArray()
 
             activeGatts.forEach { (address, _) ->
                 if (address != sourceAddress) {
-                    pulseKeys[address]?.let { key ->
+                    messageKeys[address]?.let { key ->
                         try {
                             val encrypted = cryptoManager.encrypt(bytes, key)
                             sendData(address, encrypted)
@@ -365,19 +365,19 @@ class BleFallbackController(
         }
     }
 
-    private fun sendAck(address: String, originalPayload: MessagePayload, secretKey: SecretKey) {
-        val ack = MessagePayload(
+    private fun sendAck(address: String, originalPayload: MeshMessage, secretKey: SecretKey) {
+        val ack = MeshMessage(
             messageId = originalPayload.messageId,
             senderId = repository.getDeviceId(),
             senderName = "",
             content = "",
             timestamp = System.currentTimeMillis(),
-            type = MessagePayload.TYPE_ACK,
+            type = MeshMessage.TYPE_ACK,
             receiverId = originalPayload.senderId,
         )
         internalScope.launch(ioDispatcher) {
             try {
-                val json = Json.encodeToString(MessagePayload.serializer(), ack)
+                val json = Json.encodeToString(MeshMessage.serializer(), ack)
                 val encryptedAck = cryptoManager.encrypt(json.toByteArray(), secretKey)
                 sendData(address, encryptedAck)
             } catch (e: Exception) {
@@ -398,7 +398,7 @@ class BleFallbackController(
     private fun sendData(address: String, data: ByteArray) {
         val gatt = activeGatts[address] ?: return
         val service = gatt.getService(SERVICE_UUID) ?: return
-        val characteristic = service.getCharacteristic(PULSE_CHAR_UUID) ?: return
+        val characteristic = service.getCharacteristic(MESSAGE_CHAR_UUID) ?: return
         
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -468,11 +468,11 @@ class BleFallbackController(
             .build()
 
         // Persona meta: Emoji|Nickname|DeviceID
-        val localPulse = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
+        val localMessage = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
         val data = AdvertiseData.Builder()
             .setIncludeDeviceName(false)
             .addServiceUuid(ParcelUuid(SERVICE_UUID))
-            .addServiceData(ParcelUuid(SERVICE_UUID), localPulse.toByteArray(StandardCharsets.UTF_8))
+            .addServiceData(ParcelUuid(SERVICE_UUID), localMessage.toByteArray(StandardCharsets.UTF_8))
             .build()
 
         try {
@@ -490,7 +490,7 @@ class BleFallbackController(
             gattServer = bluetoothManager?.openGattServer(context, gattServerCallback)
             val service = BluetoothGattService(SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
             val characteristic = BluetoothGattCharacteristic(
-                PULSE_CHAR_UUID,
+                MESSAGE_CHAR_UUID,
                 BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE,
                 BluetoothGattCharacteristic.PERMISSION_WRITE,
             )
@@ -524,7 +524,7 @@ class BleFallbackController(
     override fun acceptRadio(device: P2PDevice) {
         pendingRadioRequests.remove(device.id)
         _incomingRadioRequests.update { it - device }
-        _connectedTies.update { it + device.id }
+        _connectedGroups.update { it + device.id }
         _isConnected.value = true
         updateScannedDevices()
     }
@@ -535,8 +535,8 @@ class BleFallbackController(
         updateScannedDevices()
     }
 
-    override fun joinCrowd(groupId: String) {
-        pulseStore.joinGroup(groupId, repository.getDeviceId())
+    override fun joinRoom(groupId: String) {
+        messageStore.joinGroup(groupId, repository.getDeviceId())
     }
 
     override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
@@ -574,13 +574,13 @@ class BleFallbackController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
+    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MeshMessage? {
         // ENFORCE PARTICIPATION
         groupId?.let { gid ->
-            if (!pulseStore.isMember(gid, repository.getDeviceId())) return null
+            if (!messageStore.isMember(gid, repository.getDeviceId())) return null
         }
 
-        val payload = MessagePayload(
+        val payload = MeshMessage(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
             senderName = repository.getCurrentNickname(),
@@ -590,27 +590,27 @@ class BleFallbackController(
             groupName = groupName,
             content = content,
             timestamp = System.currentTimeMillis(),
-            pulseType = pulseType,
+            messageScope = messageScope,
             type = type,
         )
-        val json = Json.encodeToString(MessagePayload.serializer(), payload)
+        val json = Json.encodeToString(MeshMessage.serializer(), payload)
         val bytes = json.toByteArray()
 
         try {
             if (receiverId != null) {
-                val key = pulseKeys[receiverId] ?: return null
+                val key = messageKeys[receiverId] ?: return null
                 val encrypted = cryptoManager.encrypt(bytes, key)
                 sendData(receiverId, encrypted)
             } else {
                 activeGatts.keys.forEach { target ->
-                    pulseKeys[target]?.let { key ->
+                    messageKeys[target]?.let { key ->
                         try {
                             sendData(target, cryptoManager.encrypt(bytes, key))
                         } catch (_: Exception) {}
                     }
                 }
             }
-            pulseStore.upsertMessage(payload)
+            messageStore.upsertMessage(payload)
             synchronized(messageIdHistory) {
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
@@ -625,8 +625,8 @@ class BleFallbackController(
         _scannedDevices.update { current ->
             current.map { device ->
                 device.copy(
-                    isConnected = device.id in _connectedTies.value,
-                    isTiePending = device.id in pendingRadioRequests,
+                    isConnected = device.id in _connectedGroups.value,
+                    isGroupPending = device.id in pendingRadioRequests,
                 )
             }
         }
@@ -636,40 +636,40 @@ class BleFallbackController(
         internalScope.launch { _errors.emit(error) }
     }
 
-    override suspend fun broadcastMessage(content: String, pulseType: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MessagePayload? {
-        return sendMessage(content, null, pulseType, messageId, groupId, groupName, type)
+    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MeshMessage? {
+        return sendMessage(content, null, messageScope, messageId, groupId, groupName, type)
     }
 
-    override suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload {
+    override suspend fun broadcastIdentityUpdate(oldName: String): MeshMessage {
         // BLE implementation does not yet support identity broadcasts.
-        return MessagePayload(
+        return MeshMessage(
             messageId = "ble-placeholder",
             senderId = "ble",
             senderName = "ble",
             content = oldName,
             timestamp = System.currentTimeMillis(),
-            type = MessagePayload.TYPE_IDENTITY_UPDATE
+            type = MeshMessage.TYPE_IDENTITY_UPDATE
         )
     }
 
-    override suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload? {
+    override suspend fun sendGroupMessage(content: String, groupId: String): MeshMessage? {
         return sendMessage(content, null)?.copy(groupId = groupId)
     }
 
-    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MessagePayload? {
-        return sendMessage(content, null, MessagePayload.PULSE_WHISPER, messageId, groupId, null)?.copy(type = MessagePayload.TYPE_NOTE_UPDATE, noteVersion = version)
+    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MeshMessage? {
+        return sendMessage(content, null, MeshMessage.MESSAGE_WHISPER, messageId, groupId, null)?.copy(type = MeshMessage.TYPE_NOTE_UPDATE, noteVersion = version)
     }
 
-    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, pulseType: Int, groupId: String?, groupName: String?): MessagePayload? {
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): MeshMessage? {
         Log.w(tag, "File sharing not supported on BLE Fallback")
         return null
     }
 
-    override fun startGroupPulse(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
-        val gid = groupId ?: Resonance.generateId(name, type)
+    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+        val gid = groupId ?: MeshRoom.generateId(name, type)
         internalScope.launch(ioDispatcher) {
-            pulseStore.insertGroup(
-                Resonance(
+            messageStore.insertGroup(
+                MeshRoom(
                     id = gid,
                     name = name,
                     memberIds = members + repository.getDeviceId(),
@@ -684,13 +684,13 @@ class BleFallbackController(
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
         internalScope.launch(ioDispatcher) {
-            pulseStore.updateGroupMembers(groupId, memberIds)
+            messageStore.updateGroupMembers(groupId, memberIds)
         }
     }
 
     override fun updateGroupScope(groupId: String, scope: Int) {
         internalScope.launch(ioDispatcher) {
-            pulseStore.updateGroupScope(groupId, scope)
+            messageStore.updateGroupScope(groupId, scope)
         }
     }
 
@@ -708,9 +708,9 @@ class BleFallbackController(
             } catch (_: Exception) {}
         }
         activeGatts.clear()
-        pulseKeys.clear()
+        messageKeys.clear()
         _isConnected.value = false
-        _connectedTies.value = emptySet()
+        _connectedGroups.value = emptySet()
     }
 
     override fun release() {

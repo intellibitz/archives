@@ -52,3 +52,9 @@ const val StealthAlphaMedium = 0.3f
 const val StealthAlphaHigh = 0.6f
 const val StealthAlphaBorder = 0.15f // Minimum visible border alpha
 const val StealthAlphaOverlay = 0.85f
+
+// Academic / Social Mode (Light Theme)
+val BlukitPaper = Color(0xFFF6F1E9) // Soft parchment
+val BlukitInk = Color(0xFF1A1A1A)   // High-contrast ink
+val BlukitAcademicBlue = Color(0xFF005A9E)
+val BlukitAcademicGold = Color(0xFFB8860B)

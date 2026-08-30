@@ -19,29 +19,25 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cc.thevar.blukit.R
-import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.MeshMessage
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.Resonance
-import cc.thevar.blukit.ui.screens.BlukitHumanityStage
-import cc.thevar.blukit.ui.screens.BlukitTacticalHeader
-import cc.thevar.blukit.ui.screens.ChainField
-import cc.thevar.blukit.ui.screens.CrowdRitualGhost
-import cc.thevar.blukit.ui.screens.EventField
-import cc.thevar.blukit.ui.screens.PulsingResonanceTicker
+import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.ui.screens.*
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import cc.thevar.blukit.ui.theme.StealthPrimary
+import cc.thevar.blukit.ui.theme.StealthBlack
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.MeshCrowd
-import cc.thevar.blukit.ui.viewmodels.PulseSession
+import cc.thevar.blukit.ui.viewmodels.NearbyPeers
+import cc.thevar.blukit.ui.viewmodels.MeshSession
 import cc.thevar.blukit.ui.viewmodels.RadioConnectionState
 
 @Preview(name = "Radar - Phone", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewRadarPhone() {
     BlukitTheme {
-        EventField(
+        DiscoveryField(
             state = BluetoothUiState(
-                crowd = MeshCrowd(
+                crowd = NearbyPeers(
                     scannedDevices = listOf(
                         P2PDevice("1", "?"),
                         P2PDevice("2", "?"),
@@ -59,27 +55,27 @@ fun PreviewRadarPhone() {
 @Composable
 fun PreviewChatPhone() {
     BlukitTheme {
-        ChainField(
+        ChannelField(
             state = BluetoothUiState(
-                session = PulseSession(
+                session = MeshSession(
                     messages = listOf(
-                        MessagePayload(
+                        MeshMessage(
                             messageId = "1",
                             senderId = "user1",
                             senderName = "?",
                             receiverId = "me",
                             content = "Hello!",
                             timestamp = 1628610000000,
-                            status = MessagePayload.STATUS_DELIVERED
+                            status = MeshMessage.STATUS_DELIVERED
                         ),
-                        MessagePayload(
+                        MeshMessage(
                             messageId = "2",
                             senderId = "me",
                             senderName = "Me",
                             receiverId = "user1",
                             content = "Hey there!",
                             timestamp = 1628610060000,
-                            status = MessagePayload.STATUS_SENT
+                            status = MeshMessage.STATUS_SENT
                         )
                     ),
                     connectionState = RadioConnectionState.Connected(P2PDevice("user1", "?"))
@@ -87,28 +83,7 @@ fun PreviewChatPhone() {
             ),
             localDeviceId = "me",
             header = { Text("PREVIEW HEADER", color = Color.White) },
-            groupId = "group1",
-        )
-    }
-}
-
-@Preview(name = "Radar - Tablet", device = Devices.TABLET, showBackground = true)
-@Composable
-fun PreviewRadarTablet() {
-    BlukitTheme {
-        EventField(
-            state = BluetoothUiState(
-                crowd = MeshCrowd(
-                    scannedDevices = listOf(
-                        P2PDevice("1", "Pulse 1"),
-                        P2PDevice("2", "Pulse 2"),
-                        P2PDevice("3", "Pulse 3"),
-                        P2PDevice("4", "Pulse 4")
-                    )
-                )
-            ),
-            localDeviceId = "me",
-            header = { Text("PREVIEW HEADER", color = Color.White) }
+            roomId = "group1",
         )
     }
 }
@@ -119,7 +94,7 @@ fun PreviewPlayStoreIcon() {
     Box(
         modifier = Modifier
             .size(512.dp)
-            .background(Color(0xFF0D1017)),
+            .background(StealthBlack),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -142,7 +117,7 @@ fun PreviewFeatureGraphic() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF0D1017)),
+                .background(StealthBlack),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -153,7 +128,7 @@ fun PreviewFeatureGraphic() {
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "DISCOVER THE CROWD",
+                    text = "DISCOVER THE ROOM",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Bold
@@ -163,11 +138,11 @@ fun PreviewFeatureGraphic() {
     }
 }
 
-@Preview(name = "Tactical Header", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Blukit Header", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewTacticalHeader() {
     BlukitTheme {
-        BlukitTacticalHeader(
+        BlukitHeader(
             themeColor = StealthPrimary,
             onAwakenBluetooth = {},
             onAwakenWifi = {},
@@ -178,19 +153,18 @@ fun PreviewTacticalHeader() {
     }
 }
 
-@Preview(name = "Humanity Stage", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Identity Stage", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewHumanityStage() {
     BlukitTheme {
-        Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0D1017))) {
-            BlukitHumanityStage(
-                title = "GLOBAL GROUP",
-                breadcrumbTrail = listOf("DISCOVERY", "GROUP"),
+        Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
+            IdentityStage(
+                title = "GLOBAL ROOM",
+                breadcrumbTrail = listOf("DISCOVERY", "ROOM"),
                 onCrumbClick = {},
-                activeCrowds = emptyList(),
+                activeRooms = emptyList(),
                 onShowTimeline = {},
                 onResetProfile = {},
-                onTitleClick = {},
                 onBack = {},
                 themeColor = StealthPrimary
             )
@@ -198,23 +172,23 @@ fun PreviewHumanityStage() {
     }
 }
 
-@Preview(name = "PulsingResonanceTicker - Headers", device = Devices.PHONE, showBackground = true)
+@Preview(name = "LiveMessageTicker - Headers", device = Devices.PHONE, showBackground = true)
 @Composable
-fun PreviewPulsingResonanceTickerHeaders() {
+fun PreviewLiveMessageTickerHeaders() {
     val me = "me"
     val user1 = "user1"
     val user2 = "user2"
     
     val messages = listOf(
-        MessagePayload("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "GLOBAL GROUP", content = "Public message!", timestamp = System.currentTimeMillis(), pulseType = MessagePayload.PULSE_SHOUT),
-        MessagePayload("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, pulseType = MessagePayload.PULSE_SILENCE),
-        MessagePayload("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private group", timestamp = System.currentTimeMillis() - 2000, pulseType = MessagePayload.PULSE_WHISPER)
+        MeshMessage("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "GLOBAL ROOM", content = "Public message!", timestamp = System.currentTimeMillis(), messageScope = MeshMessage.SCOPE_PUBLIC),
+        MeshMessage("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, messageScope = MeshMessage.MESSAGE_SILENCE),
+        MeshMessage("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private room", timestamp = System.currentTimeMillis() - 2000, messageScope = MeshMessage.SCOPE_PRIVATE)
     )
     
     val groups = listOf(
-        Resonance("air_hub", "GLOBAL GROUP", setOf(user1, me), Resonance.SCOPE_PUBLIC),
-        Resonance("silence", "SILENCE", setOf(me), Resonance.SCOPE_LOCAL),
-        Resonance("tie1", "PARTY", setOf(user2, me, "user3"), Resonance.SCOPE_PRIVATE)
+        MeshRoom("air_hub", "GLOBAL ROOM", setOf(user1, me), MeshRoom.SCOPE_PUBLIC),
+        MeshRoom("silence", "SILENCE", setOf(me), MeshRoom.SCOPE_LOCAL),
+        MeshRoom("tie1", "PARTY", setOf(user2, me, "user3"), MeshRoom.SCOPE_PRIVATE)
     )
     
     val energyList = listOf(
@@ -224,10 +198,10 @@ fun PreviewPulsingResonanceTickerHeaders() {
     )
 
     BlukitTheme(stealthMode = true) {
-        Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0D1017)).padding(16.dp)) {
-            PulsingResonanceTicker(
+        Box(modifier = Modifier.fillMaxSize().background(StealthBlack).padding(16.dp)) {
+            LiveMessageTicker(
                 state = BluetoothUiState(
-                    session = PulseSession(
+                    session = MeshSession(
                         messages = messages,
                         groups = groups
                     )
@@ -242,26 +216,6 @@ fun PreviewPulsingResonanceTickerHeaders() {
                 onDeviceClick = {},
                 onDeviceLongClick = {},
                 reverseLayout = false
-            )
-        }
-    }
-}
-
-@Preview(name = "Group Schedule Ghost", device = Devices.PHONE, showBackground = true)
-@Composable
-fun PreviewCrowdRitualGhost() {
-    BlukitTheme {
-        Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0D1017)), contentAlignment = Alignment.Center) {
-            CrowdRitualGhost(
-                onNameChange = {},
-                onDone = { _ -> },
-                onDismiss = {},
-                nearbyAirs = listOf(
-                    Resonance("1", "GATE 7", emptySet(), Resonance.SCOPE_PUBLIC),
-                    Resonance("2", "CONCERT", emptySet(), Resonance.SCOPE_PUBLIC)
-                ),
-                title = "GROUP SCHEDULE",
-                hint = "NAME THE GROUP"
             )
         }
     }

@@ -5,11 +5,8 @@ import kotlinx.serialization.Serializable
 
 sealed interface Route : NavKey {
     @Serializable
-    data object Event : Route
+    data object Discovery : Route
     
-    @Serializable
-    data object Resonance : Route
-
     @Serializable
     data object Timeline : Route
 
@@ -17,8 +14,8 @@ sealed interface Route : NavKey {
     data object LiveFeed : Route
 
     @Serializable
-    data class GroupField(val groupId: String) : Route
+    data class RoomField(val roomId: String) : Route
 
     @Serializable
-    data class PulseField(val messageId: String) : Route
+    data class MessageField(val messageId: String) : Route
 }

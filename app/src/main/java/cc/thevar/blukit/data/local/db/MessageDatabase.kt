@@ -1,12 +1,11 @@
 /**
- * BLUKIT DATA: PULSE DATABASE
+ * BLUKIT DATA: MESSAGE DATABASE
  *
- * A high-performance, raw SQLite implementation of the Pulse DAG (Directed Acyclic Graph).
- * Avoids bloated ORMs (Room/SQLDelight) to ensure maximum speed and battery optimization.
+ * A high-performance, raw SQLite implementation of the Message history.
  *
  * Logic:
- * - Git-inspired Storage: Each pulse is a "commit" with a parent hash.
- * - Selective Sync: Peers can bridge missing history by traversing the DAG.
+ * - Git-inspired Storage: Each message is an entry with a parent reference.
+ * - Selective Sync: Peers can bridge missing history.
  * - Hardware Encrypted: Payloads are stored as encrypted blobs.
  */
 package cc.thevar.blukit.data.local.db
@@ -15,22 +14,22 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.MeshMessage
 
-class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+class MessageDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_NAME = "pulse_mesh.db"
+        private const val DATABASE_NAME = "message_mesh.db"
         private const val DATABASE_VERSION = 1
-        private const val TAB_PULSES = "pulses"
+        private const val TAB_MESSAGES = "messages"
 
         // Columns
         private const val COL_ID = "_id"
-        private const val COL_PULSE_ID = "pulse_id"
+        private const val COL_MSG_ID = "message_id"
         private const val COL_PARENT_HASH = "parent_hash"
         private const val COL_GROUP_ID = "group_id"
         private const val COL_PAYLOAD = "payload"
-        private const val COL_WEIGHT = "resonance_weight"
+        private const val COL_WEIGHT = "social_weight"
         private const val COL_TIMESTAMP = "timestamp"
         private const val COL_TYPE = "type"
         private const val COL_PRIORITY = "is_priority"
@@ -38,9 +37,9 @@ class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
 
     override fun onCreate(db: SQLiteDatabase) {
         val createTable = """
-            CREATE TABLE $TAB_PULSES (
+            CREATE TABLE $TAB_MESSAGES (
                 $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_PULSE_ID TEXT UNIQUE,
+                $COL_MSG_ID TEXT UNIQUE,
                 $COL_PARENT_HASH TEXT,
                 $COL_GROUP_ID TEXT,
                 $COL_PAYLOAD BLOB,
@@ -51,20 +50,18 @@ class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
             )
         """.trimIndent()
         db.execSQL(createTable)
-        // Index for rapid DAG traversal
-        db.execSQL("CREATE INDEX idx_pulse_group ON $TAB_PULSES ($COL_GROUP_ID)")
-        db.execSQL("CREATE INDEX idx_pulse_timestamp ON $TAB_PULSES ($COL_TIMESTAMP)")
+        db.execSQL("CREATE INDEX idx_msg_group ON $TAB_MESSAGES ($COL_GROUP_ID)")
+        db.execSQL("CREATE INDEX idx_msg_timestamp ON $TAB_MESSAGES ($COL_TIMESTAMP)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // High-performance migration logic would go here
     }
 
-    /** Inserts a pulse into the DAG. Ensures uniqueness via pulse_id. */
-    fun insertPulse(payload: MessagePayload, encryptedBytes: ByteArray) {
+    /** Inserts a message into the database. */
+    fun insertMessage(payload: MeshMessage, encryptedBytes: ByteArray) {
         writableDatabase.use { db ->
             val values = ContentValues().apply {
-                put(COL_PULSE_ID, payload.messageId)
+                put(COL_MSG_ID, payload.messageId)
                 put(COL_PARENT_HASH, payload.parentMessageId)
                 put(COL_GROUP_ID, payload.groupId)
                 put(COL_PAYLOAD, encryptedBytes)
@@ -73,20 +70,18 @@ class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
                 put(COL_TYPE, payload.type)
                 put(COL_PRIORITY, if (payload.isPriority) 1 else 0)
             }
-            db.insertWithOnConflict(TAB_PULSES, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            db.insertWithOnConflict(TAB_MESSAGES, null, values, SQLiteDatabase.CONFLICT_REPLACE)
         }
     }
 
-    /** Returns all raw encrypted pulses for a full memory bridge. */
-    fun getAllRawPulses(): List<ByteArray> {
-        return getRawPulsesSince(0)
+    fun getAllRawMessages(): List<ByteArray> {
+        return getRawMessagesSince(0)
     }
 
-    /** Returns raw encrypted pulses since a specific timestamp. */
-    fun getRawPulsesSince(timestamp: Long): List<ByteArray> {
+    fun getRawMessagesSince(timestamp: Long): List<ByteArray> {
         val list = mutableListOf<ByteArray>()
         readableDatabase.rawQuery(
-            "SELECT $COL_PAYLOAD FROM $TAB_PULSES WHERE $COL_TIMESTAMP > ? ORDER BY $COL_TIMESTAMP ASC",
+            "SELECT $COL_PAYLOAD FROM $TAB_MESSAGES WHERE $COL_TIMESTAMP > ? ORDER BY $COL_TIMESTAMP ASC",
             arrayOf(timestamp.toString())
         ).use { cursor ->
             if (cursor.moveToFirst()) {
@@ -98,10 +93,9 @@ class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
         return list
     }
 
-    /** Returns the latest pulse ID in the local DAG. */
-    fun getLatestPulseId(): String? {
+    fun getLatestMessageId(): String? {
         readableDatabase.rawQuery(
-            "SELECT $COL_PULSE_ID FROM $TAB_PULSES ORDER BY $COL_TIMESTAMP DESC LIMIT 1",
+            "SELECT $COL_MSG_ID FROM $TAB_MESSAGES ORDER BY $COL_TIMESTAMP DESC LIMIT 1",
             null
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.getString(0)
@@ -109,14 +103,14 @@ class PulseDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
         return null
     }
 
-    fun updateWeight(pulseId: String, newWeight: Int) {
+    fun updateWeight(messageId: String, newWeight: Int) {
         writableDatabase.execSQL(
-            "UPDATE $TAB_PULSES SET $COL_WEIGHT = ? WHERE $COL_PULSE_ID = ?",
-            arrayOf(newWeight.toString(), pulseId)
+            "UPDATE $TAB_MESSAGES SET $COL_WEIGHT = ? WHERE $COL_MSG_ID = ?",
+            arrayOf(newWeight.toString(), messageId)
         )
     }
 
-    fun deletePulse(pulseId: String) {
-        writableDatabase.delete(TAB_PULSES, "$COL_PULSE_ID = ?", arrayOf(pulseId))
+    fun deleteMessage(messageId: String) {
+        writableDatabase.delete(TAB_MESSAGES, "$COL_MSG_ID = ?", arrayOf(messageId))
     }
 }

@@ -1,6 +1,6 @@
 package cc.thevar.blukit.data.power
 
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.MessageStore
 import cc.thevar.blukit.domain.power.SupremePowerReport
 import cc.thevar.blukit.network.p2p.P2PController
 import kotlinx.coroutines.CoroutineDispatcher
@@ -25,11 +25,11 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * The Supreme Power: Intelligence Service.
- * Monitors resonances, chains, and provides human-centric insights.
+ * Monitors rooms, groups, and provides human-centric insights.
  */
 class SupremePowerManager(
     private val p2pController: P2PController,
-    private val pulseStore: PulseStore,
+    private val messageStore: MessageStore,
     private val identityRepository: cc.thevar.blukit.data.repository.IdentityRepository,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager? = null,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
@@ -44,7 +44,7 @@ class SupremePowerManager(
 
     // Geofencing coordinates (Campus landmarks)
     private val landmarks = mapOf(
-        "AIR HUB" to (12.9716 to 77.5946),
+        "HOME HUB" to (12.9716 to 77.5946),
         "LIBRARY" to (12.9724 to 77.5937),
     )
 
@@ -60,8 +60,8 @@ class SupremePowerManager(
         scope.launch {
             combine(
                 p2pController.scannedDevices,
-                p2pController.connectedTies,
-                pulseStore.getAllMessages(),
+                p2pController.connectedGroups,
+                messageStore.messages,
                 identityRepository.lowPowerMode,
                 _breezeFlow.onStart { emit("") },
                 _lastLocation
@@ -71,20 +71,20 @@ class SupremePowerManager(
                 @Suppress("UNCHECKED_CAST")
                 val connected = args[1] as Set<String>
                 @Suppress("UNCHECKED_CAST")
-                val messages = args[2] as List<cc.thevar.blukit.domain.model.MessagePayload>
+                val messages = args[2] as List<cc.thevar.blukit.domain.model.MeshMessage>
                 val lowPower = args[3] as Boolean
                 
                 val userCount = scanned.size
                 val radioCount = connected.size
                 val msgCount = messages.size
                 
-                // Logic for Pulse Harmony
-                val pulseHarmony = if (userCount > 0) {
+                // Logic for Mesh Harmony
+                val meshHarmony = if (userCount > 0) {
                     min(1.0f, (radioCount.toFloat() / userCount.toFloat()) + 0.2f)
                 } else 0f
 
                 // AI Insight Generation (Heuristic-based)
-                val insight = generateAiInsight(userCount, radioCount, msgCount, pulseHarmony, lowPower)
+                val insight = generateAiInsight(userCount, radioCount, msgCount, meshHarmony, lowPower)
                 val breeze = args.getOrNull(4) as? String
                 val location = args.getOrNull(5) as? android.location.Location
 
@@ -102,7 +102,7 @@ class SupremePowerManager(
                     userCount = userCount,
                     connectedTiesCount = radioCount,
                     totalMessages = msgCount,
-                    harmony = pulseHarmony,
+                    harmony = meshHarmony,
                     aiInsight = insight,
                     currentBreeze = breeze,
                     lowPowerMode = lowPower,
@@ -118,22 +118,22 @@ class SupremePowerManager(
     }
 
     private fun observeEventsForBreezes() {
-        // Pulse Detected
+        // Person Detected
         p2pController.scannedDevices
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("PULSE PROXIMITY")
+                if (new > old) emitBreeze("PEOPLE PROXIMITY")
             }.launchIn(scope)
 
         // Radio Formed
-        p2pController.connectedTies
+        p2pController.connectedGroups
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("PEOPLE ENERGY")
+                if (new > old) emitBreeze("SOCIAL ENERGY")
             }.launchIn(scope)
 
         // Messages Relayed
@@ -142,7 +142,7 @@ class SupremePowerManager(
                 if (msgs.isNotEmpty()) {
                     val last = msgs.last()
                     if ((System.currentTimeMillis() - last.timestamp) < 1000) {
-                        emitBreeze("PULSE SPREAD")
+                        emitBreeze("MESSAGE SPREAD")
                     }
                 }
             }.launchIn(scope)
@@ -150,7 +150,7 @@ class SupremePowerManager(
 
     private suspend fun emitBreeze(text: String) {
         _breezeFlow.emit(text)
-        hapticManager?.triggerPulse(cc.thevar.blukit.data.system.HapticManager.PulseType.CONNECTION)
+        hapticManager?.triggerMessage(cc.thevar.blukit.data.system.HapticManager.MessageType.CONNECTION)
         delay(5.seconds)
         if (_breezeFlow.replayCache.firstOrNull() == text) {
             _breezeFlow.emit("")
@@ -161,13 +161,13 @@ class SupremePowerManager(
         if (lowPower) return "ENERGY SAVER ACTIVE"
         
         return when {
-            users == 0 -> "MAKE PEOPLE PULSE"
-            users > 15 -> "PULSE PULSE: MESH DENSE"
-            harmony < 0.3f -> "BLUKIT NEARBY: SPREAD PULSES"
-            (users > 10) && (harmony > 0.8f) -> "PULSE PULSE"
-            (radios == 0) && (users > 0) -> "CROWD ENERGY"
-            msgs > 100 -> "PULSE FLOW"
-            else -> "MAKE PEOPLE PULSE"
+            users == 0 -> "CONNECT WITH PEOPLE"
+            users > 15 -> "VIBRANT MESH DETECTED"
+            harmony < 0.3f -> "PEOPLE NEARBY: SAY HELLO"
+            (users > 10) && (harmony > 0.8f) -> "MESH HARMONY"
+            (radios == 0) && (users > 0) -> "SOCIAL ENERGY"
+            msgs > 100 -> "CONVERSATION FLOWING"
+            else -> "SAY HELLO TO THE MESH"
         }
     }
 }

@@ -7,9 +7,9 @@
 package cc.thevar.blukit.network.p2p
 
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.MessagePayload
+import cc.thevar.blukit.domain.model.MeshMessage
 import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.Resonance
+import cc.thevar.blukit.domain.model.MeshRoom
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -38,9 +38,9 @@ interface P2PController {
     val scannedDevices: StateFlow<List<P2PDevice>>
     /** True if at least one secure radio link is active. */
     val isConnected: StateFlow<Boolean>
-    /** Set of persistent identifiers for currently tied peers. */
-    val connectedTies: StateFlow<Set<String>>
-    /** Pending incoming requests to form a private Chain. */
+    /** Set of persistent identifiers for currently connected groups. */
+    val connectedGroups: StateFlow<Set<String>>
+    /** Pending incoming requests to form a private Room. */
     val incomingRadioRequests: StateFlow<Set<P2PDevice>>
     /** Pending outgoing requests waiting for peer acceptance. */
     val outgoingRadioRequests: StateFlow<Set<P2PDevice>>
@@ -50,11 +50,11 @@ interface P2PController {
     val isAdvertising: StateFlow<Boolean>
     /** The last encountered radio or encryption error. */
     val errors: StateFlow<P2PError?>
-    /** The unified life stream of pulses extracted from the mesh. */
-    val messages: StateFlow<List<MessagePayload>>
-    /** Emissions for newly discovered Crowds (public frequencies). */
-    val discoveredCrowds: SharedFlow<Resonance>
-    /** Progress of the differential pulse sync (0.0 to 1.0). */
+    /** The unified life stream of messages extracted from the mesh. */
+    val messages: StateFlow<List<MeshMessage>>
+    /** Emissions for newly discovered Rooms (public frequencies). */
+    val discoveredRooms: SharedFlow<MeshRoom>
+    /** Progress of the differential history sync (0.0 to 1.0). */
     val syncProgress: StateFlow<Float?>
 
     /** Activates the discovery radio to search for nearby Event Personas. */
@@ -73,48 +73,48 @@ interface P2PController {
      */
     fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus>
     
-    /** Requests a private radio tie (Chain formation) with a peer. */
+    /** Requests a private radio group (Room formation) with a peer. */
     fun requestRadio(device: P2PDevice)
     /** Checks if a low-level endpoint is currently connected. */
     fun isNearbyConnected(endpointId: String): Boolean
-    /** Accepts an incoming request to form a private Chain. */
+    /** Accepts an incoming request to form a private Room. */
     fun acceptRadio(device: P2PDevice)
     /** Rejects an incoming request. */
     fun denyRadio(device: P2PDevice)
 
     /**
-     * Joins a discoverable crowd to enable participation (sending pulses).
-     * All users are pre-joined to the default crowd.
+     * Joins a discoverable room to enable participation (sending messages).
+     * All users are pre-joined to the default room.
      */
-    fun joinCrowd(groupId: String)
+    fun joinRoom(groupId: String)
 
     /**
-     * Sends an encrypted pulse to a specific peer or the local crowd.
-     * @return The generated MessagePayload metadata.
+     * Sends an encrypted message to a specific peer or the local room.
+     * @return The generated MeshMessage metadata.
      */
-    suspend fun sendMessage(content: String, receiverId: String? = null, pulseType: Int = MessagePayload.PULSE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
+    suspend fun sendMessage(content: String, receiverId: String? = null, messageScope: Int = MeshMessage.MESSAGE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MeshMessage.TYPE_TEXT): MeshMessage?
 
     /**
-     * Broadcasts a pulse to all available peers in the mesh.
+     * Broadcasts a message to all available peers in the mesh.
      */
-    suspend fun broadcastMessage(content: String, pulseType: Int = MessagePayload.PULSE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MessagePayload.TYPE_TEXT): MessagePayload?
+    suspend fun broadcastMessage(content: String, messageScope: Int = MeshMessage.MESSAGE_SHOUT, messageId: String? = null, groupId: String? = null, groupName: String? = null, type: Int = MeshMessage.TYPE_TEXT): MeshMessage?
 
-    /** Sends a pulse scoped to a specific Resonance (Crowd or Chain). */
-    suspend fun sendGroupMessage(content: String, groupId: String): MessagePayload?
+    /** Sends a message scoped to a specific MeshRoom. */
+    suspend fun sendGroupMessage(content: String, groupId: String): MeshMessage?
 
-    /** Propagates a LWW-versioned note update to a Chain. */
-    suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MessagePayload?
+    /** Propagates a LWW-versioned note update to a Group. */
+    suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MeshMessage?
 
     /** Shares a local file (Image or Memory) over high-speed WiFi radio. */
-    suspend fun sendFile(fileUri: android.net.Uri, receiverId: String? = null, pulseType: Int = MessagePayload.PULSE_SHOUT, groupId: String? = null, groupName: String? = null): MessagePayload?
+    suspend fun sendFile(fileUri: android.net.Uri, receiverId: String? = null, messageScope: Int = MeshMessage.MESSAGE_SHOUT, groupId: String? = null, groupName: String? = null): MeshMessage?
 
     /** Broadcasts a change in the user's Persona (Nickname/Emoji) across the mesh. */
-    suspend fun broadcastIdentityUpdate(oldName: String): MessagePayload
+    suspend fun broadcastIdentityUpdate(oldName: String): MeshMessage
 
-    /** Initializes a new Resonance context. */
-    fun startGroupPulse(name: String, members: Set<String>, type: Int = Resonance.SCOPE_PUBLIC, groupId: String? = null, parentId: String? = null): String
+    /** Initializes a new MeshRoom context. */
+    fun startGroupRoom(name: String, members: Set<String>, type: Int = MeshRoom.SCOPE_PUBLIC, groupId: String? = null, parentId: String? = null): String
 
-    /** Updates the membership of a private Chain. */
+    /** Updates the membership of a private Room. */
     fun updateGroupMembers(groupId: String, memberIds: Set<String>)
 
     /** Dynamically shifts the scoping of a frequency (e.g., WHISPER to SHOUT). */
