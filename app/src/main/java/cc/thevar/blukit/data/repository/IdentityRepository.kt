@@ -28,6 +28,8 @@ interface IdentityRepository {
     val nicknameFlow: StateFlow<String?>
     /** The emoji projecting the user's identity on the Discovery Radar. */
     val emojiAvatar: StateFlow<String>
+    /** The local path to the user's mesh profile picture. */
+    val avatarPathFlow: StateFlow<String?>
     /** Stealth Mode: DISTINGUISHES private chains in Stealth Rose. */
     val stealthMode: StateFlow<Boolean>
     /** Low Power Mode: Throttles radio frequency to preserve hardware energy. */
@@ -42,6 +44,7 @@ interface IdentityRepository {
     fun saveNickname(name: String)
     fun getCurrentNickname(): String
     fun saveEmoji(emoji: String)
+    fun saveAvatarPath(path: String)
     fun toggleStealth(enabled: Boolean)
     fun toggleLowPowerMode(enabled: Boolean)
     /** Toggles a peer's status in the user's secure orbit. */
@@ -94,6 +97,7 @@ class IdentityRepositoryImpl(
     private companion object {
         const val KEY_NICKNAME = "nickname"
         const val KEY_EMOJI = "emoji_avatar"
+        const val KEY_AVATAR_PATH = "avatar_path"
         const val KEY_STEALTH = "stealth_mode"
         const val KEY_LOW_POWER = "low_power_mode"
         const val KEY_DEVICE_ID = "device_id"
@@ -106,6 +110,9 @@ class IdentityRepositoryImpl(
 
     private val _emojiAvatar = MutableStateFlow(getSanitizedEmoji())
     override val emojiAvatar: StateFlow<String> = _emojiAvatar.asStateFlow()
+
+    private val _avatarPath = MutableStateFlow(securePrefs.getString(KEY_AVATAR_PATH, null))
+    override val avatarPathFlow: StateFlow<String?> = _avatarPath.asStateFlow()
 
     private fun getSanitizedEmoji(): String = securePrefs.getString(KEY_EMOJI, null) ?: "👤"
 
@@ -147,6 +154,11 @@ class IdentityRepositoryImpl(
         _emojiAvatar.value = emoji
     }
 
+    override fun saveAvatarPath(path: String) {
+        securePrefs.edit { putString(KEY_AVATAR_PATH, path) }
+        _avatarPath.value = path
+    }
+
     override fun toggleStealth(enabled: Boolean) {
         securePrefs.edit { putBoolean(KEY_STEALTH, enabled) }
         _stealthMode.value = enabled
@@ -175,9 +187,11 @@ class IdentityRepositoryImpl(
         securePrefs.edit {
             remove(KEY_NICKNAME)
             remove(KEY_EMOJI)
+            remove(KEY_AVATAR_PATH)
         }
         _nickname.value = null
         _emojiAvatar.value = "👤"
+        _avatarPath.value = null
     }
 
     override fun togglePulsePeer(deviceId: String) {
@@ -197,6 +211,7 @@ class IdentityRepositoryImpl(
         backupPrefs.edit { clear() }
         _nickname.value = null
         _emojiAvatar.value = "👤"
+        _avatarPath.value = null
         _stealthMode.value = true
         _lowPowerMode.value = true
         _blockedUsers.value = emptySet()

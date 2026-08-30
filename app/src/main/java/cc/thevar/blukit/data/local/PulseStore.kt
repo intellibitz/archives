@@ -465,9 +465,11 @@ class PulseStore(
     /**
      * Verifies if a user has participation rights in a context.
      * Members of the default root crowd are always permitted.
+     * Public crowds allow read-access to everyone (Lurking).
      */
     fun isMember(groupId: String, userId: String): Boolean {
         val group = _groups.value[groupId] ?: return false
+        if (group.scope == Resonance.SCOPE_PUBLIC) return true // Task 4: Allow Lurking
         return group.isDefaultCrowd || userId in group.allMemberIds
     }
 

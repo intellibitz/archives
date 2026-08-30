@@ -63,6 +63,7 @@ fun PulseField(
     localDeviceId: String,
     messageId: String,
     onNavigateToPulse: (String) -> Unit = {},
+    onNavigateToLiveFeed: () -> Unit = {},
     // Hub Callbacks
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
@@ -112,6 +113,7 @@ fun PulseField(
                     onBack = onBack,
                     themeColor = themeColor,
                     userCount = childPulses.size,
+                    onModeChange = { onNavigateToLiveFeed() },
                     trailingContent = {
                         // Tactical Radar Toggles
                         if (onSearchToggle != null) {

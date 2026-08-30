@@ -31,6 +31,7 @@ data class P2PDevice(
     val isLowPower: Boolean = false,
     val distanceMm: Int = -1, // WiFi RTT distance if available
     val statusLabel: String? = null, // Temporary status or AI trend projection
+    val avatarPath: String? = null, // Local path to the mesh profile picture
 ) {
     /**
      * The physical radio medium used for the mesh connection.

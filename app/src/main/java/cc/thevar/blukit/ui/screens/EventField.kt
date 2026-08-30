@@ -67,6 +67,7 @@ fun EventField(
     onAcceptRadio: (P2PDevice) -> Unit = {},
     onDenyRadio: (P2PDevice) -> Unit = {},
     onRestoreCrowd: (String) -> Unit = {},
+    onNavigateToLiveFeed: () -> Unit = {},
     showAirGhost: Boolean = false,
     onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {},
@@ -151,6 +152,8 @@ fun EventField(
                     onBack = onBack,
                     themeColor = StealthPrimary,
                     userCount = state.crowd.scannedDevices.size,
+                    isDiscovery = true,
+                    onModeChange = { onNavigateToLiveFeed() },
                     trailingContent = {
                         // Radar Toggles
                         if (onSearchToggle != null) {

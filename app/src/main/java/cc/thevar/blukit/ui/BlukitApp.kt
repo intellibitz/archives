@@ -82,6 +82,7 @@ import cc.thevar.blukit.ui.screens.ChainField
 import cc.thevar.blukit.ui.screens.ConfirmationDialog
 import cc.thevar.blukit.ui.screens.CrowdField
 import cc.thevar.blukit.ui.screens.EventField
+import cc.thevar.blukit.ui.screens.LiveFeedField
 import cc.thevar.blukit.ui.screens.LocalActivePulseId
 import cc.thevar.blukit.ui.screens.LocalPersonaCoordinates
 import cc.thevar.blukit.ui.screens.LocalUserEmoji
@@ -417,6 +418,7 @@ fun BlukitApp(
                                     onDenyRadio = bluetoothViewModel::denyRadio,
                                     onNavigateToPulse = { backStack.add(Route.PulseField(it)) },
                                     onRestoreCrowd = bluetoothViewModel::restoreFromVault,
+                                    onNavigateToLiveFeed = { backStack.add(Route.LiveFeed) },
                                     isSearchActive = isSearchMode,
                                     showAirGhost = showAirGhost,
                                     onShowAirGhost = { showAirGhost = true },
@@ -456,6 +458,7 @@ fun BlukitApp(
                                         },
                                         onAcceptRadio = bluetoothViewModel::acceptRadio, 
                                         onDenyRadio = bluetoothViewModel::denyRadio,
+                                        onNavigateToLiveFeed = { backStack.add(Route.LiveFeed) },
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
                                         onInputFocusChange = { isInputFocused = it },
@@ -506,6 +509,7 @@ fun BlukitApp(
                                         onSearchToggle = { isSearchMode = !isSearchMode; messageText = "" },
                                         onAcceptRadio = bluetoothViewModel::acceptRadio, 
                                         onDenyRadio = bluetoothViewModel::denyRadio,
+                                        onNavigateToLiveFeed = { backStack.add(Route.LiveFeed) },
                                         onStartSidePulse = { val members = bluetoothState.crowd.selectedDevices; if (members.all { it in bluetoothState.session.connectedTies }) { val gid = bluetoothViewModel.startGroupPulse("WHISPER", members); backStack.add(Route.GroupField(gid)); bluetoothViewModel.enterChain(gid) } },
                                         onClearSelection = bluetoothViewModel::clearSelection,
                                         onInputFocusChange = { isInputFocused = it },
@@ -523,6 +527,7 @@ fun BlukitApp(
                                     header = topBarHeader,
                                     messageId = key.messageId,
                                     onNavigateToPulse = { vid -> backStack.add(Route.PulseField(vid)) },
+                                    onNavigateToLiveFeed = { backStack.add(Route.LiveFeed) },
                                     breadcrumbTrail = breadcrumbTrail,
                                     onCrumbClick = onCrumbClick,
                                     userNickname = nickname ?: "?",
@@ -547,6 +552,14 @@ fun BlukitApp(
                                 TimelineField(
                                     messages = bluetoothState.session.messages,
                                     onBack = { backStack.removeLastOrNull() }
+                                )
+                            }
+                            Route.LiveFeed -> NavEntry(key) {
+                                LiveFeedField(
+                                    messages = bluetoothState.session.messages,
+                                    peers = bluetoothState.crowd.scannedDevices,
+                                    onBack = { backStack.removeLastOrNull() },
+                                    onNavigateToPulse = { backStack.add(Route.PulseField(it)) }
                                 )
                             }
                             else -> NavEntry(key) { Text("Unknown") }

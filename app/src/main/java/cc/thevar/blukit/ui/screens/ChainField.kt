@@ -65,6 +65,7 @@ fun ChainField(
     onClearSelection: () -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
+    onNavigateToLiveFeed: () -> Unit = {},
     onInputFocusChange: (Boolean) -> Unit = {},
     // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
@@ -132,6 +133,7 @@ fun ChainField(
                     userCount = group?.memberIds?.size ?: 0,
                     isVaulted = group?.isVaulted == true,
                     isSeniorVault = group?.isSeniorVault == true,
+                    onModeChange = { onNavigateToLiveFeed() },
                     trailingContent = {
                         // Tactical Radar Toggles
                         if (onSearchToggle != null) {

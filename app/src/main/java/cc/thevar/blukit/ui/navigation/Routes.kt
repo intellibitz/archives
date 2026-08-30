@@ -14,6 +14,9 @@ sealed interface Route : NavKey {
     data object Timeline : Route
 
     @Serializable
+    data object LiveFeed : Route
+
+    @Serializable
     data class GroupField(val groupId: String) : Route
 
     @Serializable

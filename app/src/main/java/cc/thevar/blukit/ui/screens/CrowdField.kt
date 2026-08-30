@@ -82,6 +82,7 @@ fun CrowdField(
     onStartChain: () -> Unit = {},
     onClearSelection: () -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
+    onNavigateToLiveFeed: () -> Unit = {},
     externalFocusedId: String? = null,
     onInputFocusChange: (Boolean) -> Unit = {},
     // Humanity Stage Props
@@ -148,6 +149,7 @@ fun CrowdField(
                     onBack = onBack,
                     themeColor = StealthPrimary,
                     userCount = crowd?.memberIds?.size ?: state.crowd.scannedDevices.size,
+                    onModeChange = { onNavigateToLiveFeed() },
                     trailingContent = {
                         // Tactical Radar Toggles
                         if (onSearchToggle != null) {
