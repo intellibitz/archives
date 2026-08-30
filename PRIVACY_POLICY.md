@@ -1,11 +1,11 @@
-# Privacy Policy for blukit: crowd AI.
+# Privacy Policy for blukit: room AI.
 
 **Effective Date: August 26, 2026**
 
-**blukit** is built for the **Crowd**, not the **Web**. Our vision is a world of total anonymity and local pulses, where communication is a physical phenomenon augmented by **Ambient Intelligence**.
+**blukit** is built for the **Crowd**, not the **Web**. Our vision is a world of total anonymity and local pulses, where communication is a physical phenomenon augmented by **Room AI**.
 
 ## 1. 100% Offline & Zero Cloud
-Blukit operates entirely through peer-to-peer radios (Bluetooth, BLE, and Local WiFi). We have **no servers**, **no cloud databases**, and **no internet relays**. Your communication and **Crowd AI** synthesis never touch the global web. If it's not in the air around you, it doesn't exist for Blukit.
+Blukit operates entirely through peer-to-peer radios (Bluetooth, BLE, and Local WiFi). We have **no servers**, **no cloud databases**, and **no internet relays**. Your communication and **Room AI** synthesis never touch the global web. If it's not in the air around you, it doesn't exist for Blukit.
 
 ## 2. No Data Collection or Telemetry
 We do **not** collect, store, or transmit any data to any outside entity. 
@@ -20,7 +20,7 @@ By design, you can only communicate and share intelligence with people physicall
 - You start as anonymous (**YOU**).
 - You are encouraged to set a local nickname and persona (emoji), which stay **only on your device**.
 - Identity is a projected property; you can change your nickname at any time to break your local trail.
-- **Swarm Logic**: Votes and consensus markers are anonymous and do not leak user identity to the mesh.
+- **Swarm Logic**: Votes and consensus markers are anonymous and do not leak user identity to the rooms.
 
 ## 5. End-to-End Security (**Dynamic Secure Chains**)
 **Whispers** within a **Private Chain** are protected using **SecP256r1 ECDH + AES-256-GCM** encryption and visually resonate in **Stealth Rose** to ensure you know you are pulsing securely within the spectral field.
@@ -30,23 +30,23 @@ By design, you can only communicate and share intelligence with people physicall
 - **Intelligence Layer**: Scoped, on-device AI processes local pulses to provide context-aware insights (**Resonance Summaries**) without decrypting content to unauthorized third parties.
 - **Academic Chains**: Collaborative tasks and assignments are encrypted and shared only within specific Chains.
 - **Nested Context**: Chains and Pulses exist within recursive containers (Crowds, Sub-Crowds, or Parent Pulses), keeping interactions anchored to physical and logical locations.
-- **Crowd Hierarchy**: High-level summaries (**Event, Ties, Pulses**) allow you to browse mesh density with intelligent partitioning for large gatherings.
-- **Crowd Templates & Roles**: Predefined structures (e.g., University) allow for specialized user roles (e.g., Faculty) to manage mesh permissions and visibility without tracking.
+- **Crowd Hierarchy**: High-level summaries (**Event, Ties, Pulses**) allow you to browse room density with intelligent partitioning for large gatherings.
+- **Crowd Templates & Roles**: Predefined structures (e.g., University) allow for specialized user roles (e.g., Faculty) to manage room permissions and visibility without tracking.
 - **Crowd Containment**: The hierarchy enforces that **all Crowds are discoverable** and **all Chains are private**. A Chain must be anchored to a parent Crowd to exist within the crowd spectrum.
 
 ## 6. Public & Shared Crowds
-Blukit follows a **Shared-Public Crowd** principle. Users who "Awaken" a new frequency by naming it become the owner of that specific public event, allowing them to set its **Event Persona**. The default "THE CROWD" has no owners. All public crowds are communal and logically organized by their parent context, ensuring the mesh remains an open and intuitive resource.
+Blukit follows a **Shared-Public Crowd** principle. Users who "Awaken" a new frequency by naming it become the owner of that specific public event, allowing them to set its **Event Persona**. The default "THE CROWD" has no owners. All public crowds are communal and logically organized by their parent context, ensuring the room system remains an open and intuitive resource.
 
-## 7. Ambient Intelligence (Crowd AI)
+## 7. Room AI
 - **Local Synthesis**: Blukit periodically clusters raw pulses into **Resonance Summaries**. This process is 100% on-device.
-- **Swarm Consensus**: The mesh uses **Swarm Logic** to determine high-priority energy points for the **Crowd Canvas**. This is achieved through decentralized voting.
-- **Privacy-Preserving Insights**: Aggregated trends (e.g., "The crowd is Surge stable") are shared to provide collective awareness while preserving individual pulse privacy.
-- **Academic Sentience**: Crowd schedules are used for smart reminders and automatic frequency awakening.
+- **Swarm Consensus**: The rooms system uses **Swarm Logic** to determine high-priority energy points for the **Crowd Canvas**. This is achieved through decentralized voting.
+- **Privacy-Preserving Insights**: Aggregated trends (e.g., "The crowd is Room stable") are shared to provide collective awareness while preserving individual pulse privacy.
+- **Academic Sentience**: Room schedules are used for smart reminders and automatic frequency awakening.
 - **Memory Timeline**: Shared pulses marked as memories are permanently preserved in your local timeline, exempt from the standard decay protocol.
-- **Spectral Tips**: Onboarding nudges and tips are generated entirely locally to help you navigate the mesh without any tracking.
+- **Spectral Tips**: Onboarding nudges and tips are generated entirely locally to help you navigate the rooms without any tracking.
 - **Pulse Decay**: To manage local storage, blukit automatically prunes large media older than 90 days. **Pinned pulses** and **Senior Vaults** are exempt from this process to preserve essential memories forever.
-- **Intelligent Ticker**: The ticker dynamically manages your history, ensuring the "Crowd Vault" remains clean and only relevant pulses are surfaced in the field.
-- **Mesh Relay**: Blukit supports ephemeral 3-hop relaying. Your device may act as a silent carrier for encrypted pulses destined for others nearby. These "hops" are never stored or decrypted by transit devices.
+- **Intelligent Ticker**: The ticker dynamically manages your history, ensuring the "Room Vault" remains clean and only relevant pulses are surfaced in the field.
+- **Room Relay**: Blukit supports ephemeral 3-hop relaying. Your device may act as a silent carrier for encrypted pulses destined for others nearby. These "hops" are never stored or decrypted by transit devices.
 
 ## 8. Ritual Sentience & Collaborative Schedules
 - **Crowd Schedules**: You can schedule recurring rituals locally. This data is never shared unless you explicitly "Push" it to a Chain.

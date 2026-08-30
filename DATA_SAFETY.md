@@ -7,35 +7,35 @@ blukit **never** connects to the internet. All "Pulses" spread directly from pho
 
 | Energy Type | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
-| **Ambient Intelligence** | Only on your phone | Mesh partners | On-device synthesis of **Atmospheric Trends** for collective context. Battery-optimized. |
-| **Swarm Logic (Votes)** | Only on your phone | Mesh partners | Anonymous consensus to prioritize pulses on the **Crowd Canvas**. |
+| **Ambient Intelligence** | Only on your phone | Room partners | On-device synthesis of **Room Trends** for collective context. Battery-optimized. |
+| **Swarm Logic (Votes)** | Only on your phone | Room partners | Anonymous consensus to prioritize pulses on the **Crowd Canvas**. |
 | **Nickname & Roles** | Only on your phone | Nearby people only | Local identification and template-specific permissions. |
 | **Assignments & Tasks** | Only on your phone | Chain members only | Collaborative academic tracking (exempt from decay). |
-| **Chains (Shout/Whisper/Silence)** | Only on your phone | Mesh/Chain partners | To maintain local and shared history. |
+| **Chains (Shout/Whisper/Silence)** | Only on your phone | Room/Chain partners | To maintain local and shared history. |
 | **Memories & Timelines** | Only on your phone | No | Permanent preservation of shared pulses. |
-| **Event, Ties, Pulses** | Only on your phone | Mesh partners | Summarized pulses (**Resonance**) with intelligent partitioning for scale. |
-| **Interoperable Crowds** | Ephemeral only | Mesh partners | Logical bridging across physical containers via **Connection Bridges**. |
-| **Mesh Relay** | Ephemeral only | Mesh partners | Silent carrier hops (max 3) for distant pulses. Never stored on transit devices. |
+| **Event, Ties, Pulses** | Only on your phone | Room partners | Summarized pulses (**Resonance**) with intelligent partitioning for scale. |
+| **Interoperable Crowds** | Ephemeral only | Room partners | Logical bridging across physical containers via **Connection Bridges**. |
+| **Room Relay** | Ephemeral only | Room partners | Silent carrier hops (max 3) for distant pulses. Never stored on transit devices. |
 | **Pulse Sync** | Only on your phone | Trusted devices only | Differential history sync (Groups, Rituals, Tasks) for faster updates. |
 | **Collaborative Rituals** | Only on your phone | Chain members only | Sharing scheduled Crowd/Chain awakening logic with friends. |
-| **Crowd Templates** | Only on your phone | No | Predefined structures (University/Festival/Venue) for rapid mesh deployment. |
+| **Crowd Templates** | Only on your phone | No | Predefined structures (University/Festival/Venue) for rapid room deployment. |
 | **Crowd Schedules** | Only on your phone | No | To automate the "Awakening" of recurring rituals. |
 | **Spectral Tips** | No | No | Onboarding tips and nudges are generated locally and never stored. |
 | **Location** | No | No | Used locally for Geofencing suggestions. Never tracked or shared. |
 
 ## 2. Absolute Proximity Privacy
 - **Absolute Proximity Privacy**: By design, **all Crowds are public and discoverable**, while **all Chains are private and encrypted**. Your data never leaves the physical radio range of your device.
-- **Privacy-Preserving Analytics**: Blukit performs **Local Synthesis** of crowd energy. Only aggregated insights (e.g., "High Resonance around Stage B") are shared as **Crowd AI** metadata. Raw pulse content remains protected by hardware encryption.
+- **Privacy-Preserving Analytics**: Blukit performs **Local Synthesis** of room energy. Only aggregated insights (e.g., "High Resonance around Stage B") are shared as **Room AI** metadata. Raw pulse content remains protected by hardware encryption.
 - **Swarm Logic**: Consensus on the **Crowd Canvas** is achieved via anonymous votes. No voter identity is linked to the priority pulse.
 - **Crowd Boundaries**: If someone isn't in your immediate "Crowd Field," they cannot see your **Shouts**.
 - **Anchored Discovery**: Private Chains must be anchored to a parent Crowd to be surfaced in the crowd hierarchy, ensuring secure interaction layers remain discoverable by trusted circles.
 - **Branded Resonance**: **Whispers** and **Private Chains** resonate in **Stealth Rose** and stay encrypted between you and your trusted circles, nested safely inside a public Crowd.
-- **Media Mesh Isolation**: High-speed media transfers happen over direct encrypted WiFi ties, isolated from the public discovery radios.
+- **Media Room Isolation**: High-speed media transfers happen over direct encrypted WiFi ties, isolated from the public discovery radios.
 
 ## 3. Self-Cleaning Persistence
 - **Pulse Decay (Pruning)**: To keep your device light over a long journey, blukit automatically deletes large media older than 90 days.
 - **Pinned Preservation**: Any pulse you "Pin" to a **Crowd Canvas** is exempt from decay, ensuring your core data and memories are never lost.
-- **Pulse-Git DAG**: Local storage uses a Directed Acyclic Graph to ensure history consistency across the mesh without central coordination.
+- **Pulse-Git DAG**: Local storage uses a Directed Acyclic Graph to ensure history consistency across the rooms without central coordination.
 - **Intelligent Ticker Management**: The ticker automatically clears non-pinned ephemeral pulses after they sink into the **Sunk Pulse** vault, preventing local storage bloat.
 
 

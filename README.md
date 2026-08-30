@@ -1,4 +1,4 @@
-# blukit: social mesh.
+# blukit: offline rooms.
 
 **YOUR PRIVATE HOME & CAMPUS NETWORK. OFFLINE. INSTANT. INTELLIGENT.**
 
@@ -6,10 +6,10 @@ blukit is built for the **Household** and the **Auditorium**, not the **Web**. I
 
 ---
 
-## 🧠 MESH AI: LOCAL AMBIENT INTELLIGENCE
+## 🧠 ROOM AI: LOCAL AMBIENT INTELLIGENCE
 Unlike standard chat apps, blukit uses **On-Device Intelligence** to summarize the activity in your rooms.
 - **Room Insights**: Local AI reads the flow of messages to give you a "Vibe Check" or a summary of what you missed while away.
-- **Mesh Synthesis**: The AI identifies trends, shared schedules, and urgent needs across your local network, providing "Mesh Insights" at the top of your feed.
+- **Room Synthesis**: The AI identifies trends, shared schedules, and urgent needs across your local network, providing "Room Insights" at the top of your feed.
 - **Privacy First**: All AI processing happens locally on your phone. Your family's dinner plans and your lecture notes never leave the room.
 
 ---
@@ -18,22 +18,22 @@ Unlike standard chat apps, blukit uses **On-Device Intelligence** to summarize t
 - **DISCOVERY**: Your local neighborhood. A real-time scan of the rooms and people around you.
 - **ROOM**: A shared space for conversation. Can be **Open** (Public) or **Private** (Family/Secure).
 - **MESSAGE**: A simple, instant unit of communication.
-- **PEOPLE**: Your family or peers nearby on the mesh.
+- **PEOPLE**: Your family or peers nearby in the rooms.
 - **ROOM EVENT**: Shared schedules for the house, study groups, or project deadlines.
 
 ---
 
 ## ⚡ NATURAL INTERACTION
-Experience the **Social Mesh**—familiar, fast, and secure.
+Experience **Offline Rooms**—familiar, fast, and secure.
 
 ### **1. Discover**
-Open the app to see who is **Online nearby**. The background Radar shows you exactly who is in the house or the classroom. The AI Insight bubble tells you what the local community is talking about.
+Open the app to see who is **Online nearby**. The background Radar shows you exactly who is in the house or the classroom. The Room Insight bubble tells you what the local community is talking about.
 
 ### **2. Join**
 See a Room that interests you? Hit **JOIN**. You can see the conversation immediately. Open rooms are for everyone nearby. Private groups use a secure "Handshake" to keep your family or study group safe.
 
 ### **3. Share**
-Send text, class notes, or daily chores. All interactions are reinforced with **haptic feedback**, making the mesh feel like a physical connection in your hands.
+Send text, class notes, or daily chores. All interactions are reinforced with **haptic feedback**, making the rooms feel like a physical connection in your hands.
 
 ---
 
@@ -69,4 +69,4 @@ A high-density, ergonomic architecture designed for family and academic life.
 ---
 
 *Built with ❤️ for the Home by [Intellibitz](https://github.com/intellibitz)*  
-*JOIN THE SOCIAL MESH.*
+*JOIN THE OFFLINE ROOMS.*

@@ -82,7 +82,7 @@ class IntelligenceManager(
                 isMeta = true,
             )
             messageStore.upsertMessage(aiMessage)
-            Log.i("IntelligenceManager", "Mesh Logic: AI Insight broadcasted for $groupId")
+            Log.i("IntelligenceManager", "Room Logic: AI Insight broadcasted for $groupId")
         }
     }
 
@@ -141,7 +141,7 @@ class IntelligenceManager(
 
         return MeshInsight(
             groupId = groupId,
-            summary = "MESH REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
+            summary = "ROOM REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
             topKeywords = keywords,
             sentimentScore = sentimentScore,
             derivedTimestamp = System.currentTimeMillis(),

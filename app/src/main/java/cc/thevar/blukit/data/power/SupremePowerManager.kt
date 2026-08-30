@@ -162,12 +162,12 @@ class SupremePowerManager(
         
         return when {
             users == 0 -> "CONNECT WITH PEOPLE"
-            users > 15 -> "VIBRANT MESH DETECTED"
+            users > 15 -> "VIBRANT ROOM DETECTED"
             harmony < 0.3f -> "PEOPLE NEARBY: SAY HELLO"
-            (users > 10) && (harmony > 0.8f) -> "MESH HARMONY"
+            (users > 10) && (harmony > 0.8f) -> "ROOM HARMONY"
             (radios == 0) && (users > 0) -> "SOCIAL ENERGY"
             msgs > 100 -> "CONVERSATION FLOWING"
-            else -> "SAY HELLO TO THE MESH"
+            else -> "SAY HELLO TO THE ROOM"
         }
     }
 }

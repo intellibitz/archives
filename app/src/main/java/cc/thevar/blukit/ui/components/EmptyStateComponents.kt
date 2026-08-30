@@ -103,7 +103,7 @@ fun MeshSearchingView(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "The air is silent. No one else is using Blukit nearby. Say hello to the mesh to start the first conversation.",
+            text = "The air is silent. No one else is using Blukit nearby. Say hello to the rooms to start the first conversation.",
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,

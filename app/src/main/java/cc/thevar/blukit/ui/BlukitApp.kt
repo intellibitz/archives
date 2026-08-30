@@ -239,7 +239,7 @@ fun BlukitApp(
                 Box(modifier = Modifier.fillMaxSize().zIndex(100f).background(StealthBlack.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Syncing mesh history...", 
+                            text = "Syncing local history...", 
                             style = MaterialTheme.typography.titleMedium,
                             color = StealthAmber
                         )
@@ -541,7 +541,7 @@ fun BlukitApp(
             if (showAirIsStillDialog) {
                 ConfirmationDialog(
                     title = "Spectrum Silent", 
-                    text = "Radios are silent. Awaken Bluetooth or grant permissions to dive into the mesh.", 
+                    text = "Radios are silent. Awaken Bluetooth or grant permissions to dive into the rooms.", 
                     onConfirm = { 
                         showAirIsStillDialog = false
                         if (!permissionState.essentialPermissionsGranted) permissionState.launchMultiplePermissionRequest() 
@@ -555,7 +555,7 @@ fun BlukitApp(
             if (showPrivacyProtocol) {
                 val themeColor = if (currentRoute is Route.RoomField) StealthRose else StealthPrimary
                 BlukitAlert(
-                    title = "Mesh Protocol",
+                    title = "Offline Protocol",
                     text = "Blukit is anonymous-first. 100% offline P2P. Messages stay on your device until you choose to emit them.",
                     confirmLabel = "RESPECT",
                     themeColor = themeColor,
