@@ -1,7 +1,7 @@
 package cc.thevar.blukit.data.repository
 
 import cc.thevar.blukit.data.local.MessageRepository
-import cc.thevar.blukit.data.local.entities.ContactEntity
+import cc.thevar.blukit.domain.model.ContactEntity
 import kotlinx.coroutines.flow.Flow
 
 class ContactRepository(private val messageStore: MessageRepository) {

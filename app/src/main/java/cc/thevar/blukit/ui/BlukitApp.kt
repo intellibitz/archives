@@ -29,6 +29,7 @@ import androidx.navigation3.ui.NavDisplay
 import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Group
+import androidx.paging.compose.collectAsLazyPagingItems
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.components.MessageRippleEffect
 import cc.thevar.blukit.ui.components.BlukitToolbar
@@ -61,6 +62,10 @@ fun BlukitApp(
     val connectionState by connectionViewModel.state.collectAsStateWithLifecycle()
     val trendingMessages by connectionViewModel.trendingMessages.collectAsStateWithLifecycle()
     val harmonyReport by harmonyViewModel.report.collectAsStateWithLifecycle()
+
+    val pagedMessages = connectionViewModel.pagedMessages.collectAsLazyPagingItems()
+    val timelineMessages = connectionViewModel.timelineMessages.collectAsLazyPagingItems()
+    val allMessagesPaging = connectionViewModel.allMessagesPaging.collectAsLazyPagingItems()
 
     val currentRoute by navViewModel.currentRoute.collectAsStateWithLifecycle()
     val backStack = navViewModel.backStack
@@ -243,13 +248,13 @@ fun BlukitApp(
                                     }
                                     is Route.Timeline -> {
                                         TimelineField(
-                                            messages = connectionState.session.messages,
+                                            messages = timelineMessages,
                                             onBack = { navViewModel.popBackStack() }
                                         )
                                     }
                                     is Route.LiveFeed -> {
                                         LiveFeedField(
-                                            messages = connectionState.session.messages,
+                                            messages = allMessagesPaging,
                                             sources = connectionState.crowd.scannedDevices,
                                             onBack = { navViewModel.popBackStack() },
                                             onMessageClick = { navViewModel.navigate(Route.MessageField(it)) }
@@ -263,8 +268,8 @@ fun BlukitApp(
                                             PrivateGroupField(
                                                 state = connectionState,
                                                 localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle().value,
-                                                header = { },
                                                 groupId = entryRoute.roomId,
+                                                pagedMessages = pagedMessages,
                                                 breadcrumbTrail = breadcrumbTrail,
                                                 onCrumbClick = onCrumbClick,
                                                 userNickname = nickname ?: "",
@@ -298,7 +303,8 @@ fun BlukitApp(
                                                 isSearchActive = isSearchActive,
                                                 onSearchToggle = { isSearchActive = !isSearchActive },
                                                 onAcceptRadio = { connectionViewModel.acceptRadio(it) },
-                                                onDenyRadio = { connectionViewModel.denyRadio(it) }
+                                                onDenyRadio = { connectionViewModel.denyRadio(it) },
+                                                header = {}
                                             )
                                         } else {
                                             GroupField(
@@ -306,6 +312,7 @@ fun BlukitApp(
                                                 localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle().value,
                                                 header = { },
                                                 groupId = entryRoute.roomId,
+                                                pagedMessages = pagedMessages,
                                                 breadcrumbTrail = breadcrumbTrail,
                                                 onCrumbClick = onCrumbClick,
                                                 userNickname = nickname ?: "",
@@ -334,11 +341,18 @@ fun BlukitApp(
                                         }
                                     }
                                     is Route.MessageField -> {
+                                        val rootMessage by produceState<Message?>(initialValue = null, entryRoute.messageId) {
+                                            value = connectionViewModel.getMessage(entryRoute.messageId)
+                                        }
+                                        val childMessages = connectionViewModel.getChildMessages(entryRoute.messageId).collectAsLazyPagingItems()
+
                                         var messageText by remember { mutableStateOf("") }
                                         MessageField(
                                             state = connectionState,
                                             localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle().value,
                                             messageId = entryRoute.messageId,
+                                            rootMessage = rootMessage,
+                                            childMessages = childMessages,
                                             header = { },
                                             breadcrumbTrail = breadcrumbTrail,
                                             onCrumbClick = onCrumbClick,
@@ -352,7 +366,7 @@ fun BlukitApp(
                                             messageText = messageText,
                                             onMessageChange = { messageText = it },
                                             onSend = {
-                                                connectionViewModel.sendMessage(messageText, connectionState.session.messages.find { it.messageId == entryRoute.messageId }?.groupId)
+                                                connectionViewModel.sendMessage(messageText, entryRoute.messageId)
                                                 messageText = ""
                                             },
                                             isSearchActive = isSearchActive,

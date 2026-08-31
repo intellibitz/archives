@@ -6,6 +6,8 @@
  */
 package cc.thevar.blukit.domain.model
 
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 import kotlinx.serialization.Serializable
 
 /**
@@ -19,9 +21,10 @@ import kotlinx.serialization.Serializable
  * @property noteVersion LWW (Last-Write-Wins) version for conflict-free shared items.
  * @property hopCount Tracking hops for discovery.
  */
+@Entity(tableName = "messages")
 @Serializable
 data class Message(
-    val messageId: String,
+    @PrimaryKey val messageId: String,
     val senderId: String,
     val senderName: String,
     val senderEmoji: String? = null,

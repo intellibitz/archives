@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.plugin.serialization)
+    alias(libs.plugins.google.devtools.ksp)
 }
 
 android {
@@ -20,4 +21,14 @@ android {
 dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
+    
+    // Room 3.0 (KMP) runtime
+    implementation(libs.androidx.room3.runtime)
+    ksp(libs.androidx.room3.compiler)
+    implementation(libs.androidx.room3.paging)
+
+    implementation(libs.androidx.paging.runtime)
+    
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

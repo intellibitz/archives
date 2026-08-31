@@ -34,11 +34,15 @@ import cc.thevar.blukit.ui.components.MessageHub
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
+
 @Composable
 fun PrivateGroupField(
     state: cc.thevar.blukit.ui.viewmodels.ConnectionUiState,
     localDeviceId: String,
     groupId: String?,
+    pagedMessages: LazyPagingItems<Message>,
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
     onVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
     onSeniorVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
@@ -82,27 +86,6 @@ fun PrivateGroupField(
         state.session.groups.filter { (it.parentId == groupId) && (it.scope != Group.SCOPE_PUBLIC) }
     }
 
-    val connectionList by remember(state.session.messages, groupId, localDeviceId) {
-        derivedStateOf {
-            if (groupId == null) emptyList()
-            else {
-                state.session.messages
-                    .filter { it.groupId == groupId && it.parentMessageId == null }
-                    .sortedBy { it.timestamp }
-                    .map { msg ->
-                        val source = Source(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = Source.ConnectionMedium.BLUETOOTH)
-                        source to msg
-                    }
-            }
-        }
-    }
-
-    val messageCounts = remember(state.session.messages, groupId) {
-        state.session.messages
-            .filter { it.groupId == groupId && it.parentMessageId == null }
-            .groupBy { it.senderId }
-            .mapValues { it.value.size }
-    }
     val memberSet = remember(group, localDeviceId) { (group?.memberIds ?: emptySet()) - localDeviceId }
     val isPrivate = group?.scope == Group.SCOPE_PRIVATE
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
@@ -139,10 +122,10 @@ fun PrivateGroupField(
                     }
                 }
 
-                ConnectionTicker(
+                PagedConnectionTicker(
                     state = state,
-                    connectionList = connectionList,
-                    messageCounts = messageCounts,
+                    pagedMessages = pagedMessages,
+                    messageCounts = emptyMap(),
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = memberSet,
@@ -164,7 +147,7 @@ fun PrivateGroupField(
                         onSend(messageText)
                         messageText = ""
                     },
-                    messageCount = state.session.messages.filter { it.groupId == groupId }.size,
+                    messageCount = pagedMessages.itemCount,
                     incomingRadioRequests = state.crowd.incomingRadioRequests,
                     selectedDevices = state.crowd.selectedDevices,
                     onAcceptRadio = onAcceptRadio,
@@ -184,7 +167,7 @@ fun PrivateGroupField(
             }
 
             AnimatedVisibility(
-                visible = showTip && connectionList.isEmpty() && childGroups.isEmpty(),
+                visible = showTip && pagedMessages.itemCount == 0 && childGroups.isEmpty(),
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
                 modifier = Modifier.align(Alignment.TopCenter)

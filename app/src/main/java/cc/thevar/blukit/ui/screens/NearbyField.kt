@@ -68,10 +68,6 @@ fun NearbyField(
     onDismissAssistantGhost: () -> Unit = {},
 ) {
     val connectionList by viewModel.connectionList.collectAsStateWithLifecycle()
-    
-    val messageCounts = remember(state.session.messages) {
-        state.session.messages.groupBy { it.groupId ?: Group.ID_GLOBAL }.mapValues { it.value.size }
-    }
 
     var groupNameProposal by remember { mutableStateOf("") }
     var showVault by remember { mutableStateOf(false) }
@@ -130,7 +126,7 @@ fun NearbyField(
                     messageText = messageText,
                     onMessageChange = { messageText = it },
                     onSend = { }, 
-                    messageCount = state.session.messages.size,
+                    messageCount = 0,
                     incomingRadioRequests = state.crowd.incomingRadioRequests,
                     selectedDevices = state.crowd.selectedDevices,
                     onAcceptRadio = onAcceptRadio,

@@ -30,6 +30,11 @@ import cc.thevar.blukit.ui.components.BlukitFieldScaffold
 import cc.thevar.blukit.ui.components.MessageHub
 import org.koin.androidx.compose.koinViewModel
 
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
+import androidx.paging.compose.itemContentType
+
 /**
  * THE GROUP FIELD: Focuses on a specific Group.
  */
@@ -39,6 +44,7 @@ fun GroupField(
     localDeviceId: String,
     header: @Composable () -> Unit,
     groupId: String,
+    pagedMessages: LazyPagingItems<Message>,
     highConnectionMessages: List<Message> = emptyList(),
     onVote: (String, Int) -> Unit = { _, _ -> },
     isSearchActive: Boolean = false,
@@ -65,19 +71,10 @@ fun GroupField(
     val group = state.session.groups.find { it.id == groupId }
     val members = state.crowd.scannedDevices.filter { it.id in (group?.allMemberIds ?: emptySet()) || it.persistentId in (group?.allMemberIds ?: emptySet()) }
     
-    val connectionList by remember(state.session.messages, members, groupId) {
-        derivedStateOf {
-            state.session.messages
-                .filter { it.groupId == groupId }
-                .sortedByDescending { it.timestamp }
-                .map { message ->
-                    val source = members.find { it.id == message.senderId || it.persistentId == message.senderId } 
-                        ?: Source(id = message.senderId, name = message.senderName, emoji = message.senderEmoji ?: "👤")
-                    source to message
-                }
-        }
-    }
-
+    // We map the paged messages to Source-Message pairs
+    // In a production app, we'd use paging's mapping functions in the ViewModel/Repository
+    // But for this refactor, we'll use an adapter approach.
+    
     var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
     var messageText by remember { mutableStateOf("") }
 
@@ -91,21 +88,37 @@ fun GroupField(
                     onMessageClick = { onNavigateToMessage(it) }
                 )
 
-                ConnectionTicker(
-                    state = state,
-                    connectionList = connectionList,
-                    messageCounts = emptyMap(),
-                    localDeviceId = localDeviceId,
-                    localNickname = userNickname,
-                    pulsedPeers = emptySet(),
-                    reverseLayout = true,
-                    onMessageClick = { onNavigateToMessage(it) },
-                    onSourceClick = { dev -> onNavigateToMessage(dev.id) },
-                    onSourceLongClick = onSourceLongClick,
+                // ConnectionTicker with paged items
+                LazyColumn(
                     modifier = Modifier.weight(1f),
-                    themeColor = StealthRose,
-                    trend = trend
-                )
+                    reverseLayout = true,
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
+                ) {
+                    items(
+                        count = pagedMessages.itemCount,
+                        key = pagedMessages.itemKey { it.messageId }
+                    ) { index ->
+                        val message = pagedMessages[index]
+                        if (message != null) {
+                            val source = members.find { it.id == message.senderId || it.persistentId == message.senderId } 
+                                ?: Source(id = message.senderId, name = message.senderName, emoji = message.senderEmoji ?: "👤")
+                            
+                            MessageItem(
+                                message = message,
+                                isSelected = source.id in state.crowd.selectedDevices,
+                                senderSource = source,
+                                replyCount = 0,
+                                isPulsed = source.id in state.crowd.pulsedPeers,
+                                isMe = message.senderId == localDeviceId,
+                                isGrouped = true,
+                                isMutual = source.id in state.session.connectedTies,
+                                rowId = source.id,
+                                onMessageClick = { onNavigateToMessage(message.messageId) },
+                                onSourceLongClick = { onSourceLongClick(source) }
+                            )
+                        }
+                    }
+                }
 
                 MessageHub(
                     currentRoute = Route.GroupField(groupId),
@@ -115,7 +128,7 @@ fun GroupField(
                         onSend(messageText)
                         messageText = ""
                     },
-                    messageCount = state.session.messages.count { it.groupId == groupId },
+                    messageCount = pagedMessages.itemCount,
                     incomingRadioRequests = state.crowd.incomingRadioRequests,
                     selectedDevices = state.crowd.selectedDevices,
                     onAcceptRadio = onAcceptRadio,

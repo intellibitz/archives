@@ -53,7 +53,6 @@ data class ConnectionPeers(
 data class ConnectionSession(
     val connectionState: RadioConnectionState = RadioConnectionState.Disconnected,
     val connectedTies: Set<String> = emptySet(),
-    val messages: List<Message> = emptyList(),
     val groups: List<Group> = emptyList(),
     val archivedGroups: List<Group> = emptyList(),
     val syncProgress: Float? = null

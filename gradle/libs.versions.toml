@@ -40,6 +40,9 @@ wearNavigation = "1.6.2"
 desugar_jdk_libs = "2.1.5"
 koin = "4.2.2"
 dependencyAnalysis = "3.19.1"
+room3 = "3.0.2"
+paging3 = "3.5.1"
+ksp = "2.3.10"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -96,11 +99,17 @@ desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", ver
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
+androidx-room3-runtime = { group = "androidx.room3", name = "room3-runtime", version.ref = "room3" }
+androidx-room3-compiler = { group = "androidx.room3", name = "room3-compiler", version.ref = "room3" }
+androidx-room3-paging = { group = "androidx.room3", name = "room3-paging", version.ref = "room3" }
+androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging3" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 jetbrains-kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "jetbrainsKotlinPluginSerialization" }
+google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependencyAnalysis" }

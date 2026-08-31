@@ -34,6 +34,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Group
@@ -134,74 +136,6 @@ fun AssistantReportCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun MessageHub(
-    currentRoute: Route,
-    messageText: String,
-    onMessageChange: (String) -> Unit,
-    onSend: () -> Unit,
-    messageCount: Int,
-    incomingRadioRequests: Set<Source>,
-    selectedDevices: Set<String>,
-    onAcceptRadio: (Source) -> Unit,
-    onDenyRadio: (Source) -> Unit,
-    onStartWhisper: () -> Unit,
-    onStartSubGroup: () -> Unit,
-    onClearSelection: () -> Unit,
-    modifier: Modifier = Modifier,
-    groups: List<Group> = emptyList(),
-    onAttachFile: () -> Unit = {},
-    onSearchToggle: (() -> Unit)? = null,
-    onManage: (() -> Unit)? = null,
-    onNote: (() -> Unit)? = null,
-    onCreatePublicRoom: ((String, String?) -> Unit)? = null,
-    onTask: (() -> Unit)? = null, 
-    isSearchMode: Boolean = false,
-    onFocusChange: (Boolean) -> Unit = {}
-) {
-    val isPrivate = currentRoute is Route.GroupField || currentRoute is Route.Nearby
-    val targetName = if (currentRoute is Route.GroupField) groups.find { it.id == currentRoute.roomId }?.name?.uppercase() else null
-    val themeColor = if (isPrivate) StealthRose else StealthPrimary
-
-    Column(modifier = modifier.zIndex(10f)) {
-        if (incomingRadioRequests.isNotEmpty()) {
-            val request = incomingRadioRequests.first()
-            Surface(
-                color = StealthPrimary.copy(alpha = 0.1f),
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = request.emoji, fontSize = 20.sp)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(text = "Connection from ${request.name}", style = MaterialTheme.typography.bodySmall, color = Color.White, modifier = Modifier.weight(1f))
-                    IconButton(onClick = { onDenyRadio(request) }) { Icon(Icons.Rounded.Close, contentDescription = null, tint = StealthError) }
-                    IconButton(onClick = { onAcceptRadio(request) }) { Icon(Icons.Rounded.Check, contentDescription = null, tint = StealthPrimary) }
-                }
-            }
-        }
-
-        BlukitInput(
-            isReadOnly = false, 
-            isMessageLocked = currentRoute is Route.Nearby,
-            isPrivate = isPrivate, 
-            targetName = targetName, 
-            value = messageText, 
-            onValueChange = onMessageChange, 
-            onSend = onSend, 
-            onAttachFile = onAttachFile, 
-            onManage = onManage,
-            onNote = onNote,
-            onTask = onTask, 
-            messageCount = messageCount, 
-            isSearchActive = isSearchMode,
-            onSearchToggle = onSearchToggle,
-            onFocusChange = onFocusChange,
-            modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
-        )
     }
 }
 
@@ -370,7 +304,7 @@ fun ConnectionTicker(
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                 } else {
-                    val count = if (isGrouped) messageCounts[id] ?: 0 else state.session.messages.count { it.parentMessageId == message?.messageId }
+                    val count = if (isGrouped) messageCounts[id] ?: 0 else 0
                     
                     MessageItem(
                         message = message,
@@ -383,6 +317,119 @@ fun ConnectionTicker(
                         isMutual = source.id in state.session.connectedTies,
                         rowId = id,
                         onMessageClick = { message?.messageId?.let { onMessageClick(it) } ?: onSourceLongClick(source) },
+                        onSourceLongClick = { onSourceLongClick(source) },
+                        topContent = {
+                            if (isGrouped && group != null) {
+                                val members = state.crowd.scannedDevices.filter { it.id in group.allMemberIds || it.persistentId in group.allMemberIds }
+                                GroupMiniRadar(
+                                    group = group,
+                                    members = members,
+                                    themeColor = if (group.scope == Group.SCOPE_PUBLIC) StealthPrimary else StealthRose,
+                                    onSourceClick = onSourceClick,
+                                    onSourceLongClick = onSourceLongClick,
+                                    activeBubbles = activeBubbles,
+                                    modifier = Modifier.height(60.dp).padding(vertical = 4.dp)
+                                )
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PagedConnectionTicker(
+    state: ConnectionUiState,
+    pagedMessages: LazyPagingItems<Message>,
+    messageCounts: Map<String, Int>,
+    localDeviceId: String,
+    pulsedPeers: Set<String>,
+    onMessageClick: (String) -> Unit,
+    onSourceClick: (Source) -> Unit,
+    onSourceLongClick: (Source) -> Unit,
+    modifier: Modifier = Modifier,
+    localNickname: String = "?",
+    activeBubbles: List<BubbleData> = emptyList(),
+    isGrouped: Boolean = true,
+    reverseLayout: Boolean = true,
+    themeColor: Color = StealthPrimary,
+    trend: String? = null,
+    onConnectionSurge: (Float) -> Unit = {}
+) {
+    val listState = rememberLazyListState()
+    val density = LocalDensity.current
+
+    val isScrolling = listState.isScrollInProgress
+    val hasContent = pagedMessages.itemCount > 0
+
+    val relayEvents = remember { mutableStateListOf<RelayEvent>() }
+    val messageRipples = remember { mutableStateListOf<MessageRipple>() }
+    var collectiveConnection by remember { mutableFloatStateOf(0f) }
+
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier.fillMaxSize(), 
+            contentAlignment = Alignment.Center
+        ) {
+            VibeHeatmap(energy = collectiveConnection, themeColor = themeColor, trend = trend)
+            
+            PeerRadarLayer(
+                devices = state.crowd.scannedDevices,
+                onDeviceClick = onSourceClick,
+                onDeviceLongClick = onSourceLongClick,
+                selectedDevices = state.crowd.selectedDevices,
+                pulsedPeers = pulsedPeers,
+                bubbleSenders = remember(activeBubbles) { activeBubbles.asSequence().map { it.senderId }.toSet() },
+                themeColor = themeColor,
+                density = density
+            )
+        }
+
+        val dimmingAlpha by animateFloatAsState(
+            targetValue = if (isScrolling || hasContent) 0.95f else 0f,
+            animationSpec = tween(500),
+            label = "DimmingAlpha"
+        )
+        
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(StealthBlack.copy(alpha = dimmingAlpha))
+        )
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            reverseLayout = reverseLayout,
+            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
+        ) {
+            items(
+                count = pagedMessages.itemCount,
+                key = pagedMessages.itemKey { it.messageId }
+            ) { index ->
+                val message = pagedMessages[index]
+                if (message != null) {
+                    val source = state.crowd.scannedDevices.find { it.id == message.senderId || it.persistentId == message.senderId } 
+                        ?: Source(id = message.senderId, name = message.senderName, emoji = message.senderEmoji ?: "👤")
+                    
+                    val id = source.persistentId ?: source.id
+                    val group = state.session.groups.find { it.id == message.groupId }
+                    
+                    val count = if (isGrouped) messageCounts[id] ?: 0 else 0
+                    
+                    MessageItem(
+                        message = message,
+                        isSelected = source.id in state.crowd.selectedDevices,
+                        senderSource = source,
+                        replyCount = count,
+                        isPulsed = id in pulsedPeers,
+                        isMe = message.senderId == localDeviceId || source.id == localDeviceId,
+                        isGrouped = isGrouped,
+                        isMutual = source.id in state.session.connectedTies,
+                        rowId = id,
+                        onMessageClick = { onMessageClick(message.messageId) },
                         onSourceLongClick = { onSourceLongClick(source) },
                         topContent = {
                             if (isGrouped && group != null) {

@@ -6,6 +6,8 @@
  */
 package cc.thevar.blukit.domain.model
 
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,9 +20,10 @@ import kotlinx.serialization.Serializable
  * @property partitionThreshold Threshold for member partitioning to maintain connection efficiency.
  * @property memberSections Partitioned buckets of members for large-scale Groups (>500 members).
  */
+@Entity(tableName = "groups")
 @Serializable
 data class Group(
-    val id: String,
+    @PrimaryKey val id: String,
     val name: String,
     val memberIds: Set<String> = emptySet(),
     val scope: Int = SCOPE_PUBLIC,

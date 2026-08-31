@@ -5,7 +5,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -21,6 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
@@ -28,23 +29,17 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * THE TIMELINE FIELD: A visual chronological path of existence records.
+ * THE TIMELINE FIELD: A visual chronological path of existence records using Paging.
  */
 @Composable
 fun TimelineField(
-    messages: List<Message>,
+    messages: LazyPagingItems<Message>,
     onBack: () -> Unit
 ) {
-    val ledgerEntries = remember(messages) {
-        val records = messages.filter { it.type == Message.TYPE_MEMORY || it.type == Message.TYPE_IMAGE || it.type == Message.TYPE_AI_SUMMARY }
-            .sortedByDescending { it.timestamp }
-        records
-    }
-    
     val sdf = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
 
     Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
-        if (ledgerEntries.isEmpty()) {
+        if (messages.itemCount == 0) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "NO HISTORY YET", 
@@ -58,11 +53,17 @@ fun TimelineField(
                 contentPadding = PaddingValues(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(ledgerEntries) { entry ->
-                    if (entry.type == Message.TYPE_AI_SUMMARY) {
-                        SynthesisHeader(entry)
-                    } else {
-                        RecordItem(entry, sdf.format(Date(entry.timestamp)))
+                items(
+                    count = messages.itemCount,
+                    key = messages.itemKey { it.messageId }
+                ) { index ->
+                    val entry = messages[index]
+                    if (entry != null) {
+                        if (entry.type == Message.TYPE_AI_SUMMARY) {
+                            SynthesisHeader(entry)
+                        } else {
+                            RecordItem(entry, sdf.format(Date(entry.timestamp)))
+                        }
                     }
                 }
             }

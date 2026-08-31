@@ -33,6 +33,8 @@ import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Group
+import cc.thevar.blukit.domain.protocol.HandshakeProtocol
+import cc.thevar.blukit.domain.security.SecureSessionManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +66,8 @@ class BleConnectionController(
     private val repository: IdentityRepository,
     private val messageRepository: MessageRepository,
     private val hapticManager: HapticManager,
-    private val cryptoManager: CryptoManager = CryptoManager(),
+    private val cryptoManager: CryptoManager,
+    private val sessionManager: SecureSessionManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : ConnectionController {
@@ -106,7 +109,6 @@ class BleConnectionController(
     override val messages: StateFlow<List<Message>> = messageRepository.messages
     override val syncProgress: StateFlow<Float?> = MutableStateFlow(null)
 
-    private val messageKeys = ConcurrentHashMap<String, SecretKey>()
     private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
     private var gattServer: BluetoothGattServer? = null
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
@@ -221,7 +223,7 @@ class BleConnectionController(
             Log.i(tag, "GATT Server: Connected to ${device.address}")
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
             Log.i(tag, "GATT Server: Disconnected from ${device.address}")
-            messageKeys.remove(device.address)
+            sessionManager.terminateSession(device.address)
         }
     }
 
@@ -243,7 +245,7 @@ class BleConnectionController(
     }
 
     private fun handleReceivedData(address: String, data: ByteArray) {
-        if (data.isNotEmpty() && (data[0] == HANDSHAKE_PREFIX)) {
+        if (HandshakeProtocol.isHandshake(data)) {
             handleHandshake(address, data)
         } else {
             handleMessage(address, data)
@@ -251,37 +253,36 @@ class BleConnectionController(
     }
 
     private fun handleHandshake(address: String, data: ByteArray) {
-        try {
-            val publicKeyEncoded = data.copyOfRange(1, data.size)
-            val keyFactory = KeyFactory.getInstance("EC")
-            val messagePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
-            val sharedSecret = cryptoManager.deriveSharedSecret(messagePublicKey)
-            messageKeys[address] = sharedSecret
+        val peerPublicKeyBytes = HandshakeProtocol.parseHandshake(data) ?: return
+        val secretKey = sessionManager.establishSession(address, peerPublicKeyBytes)
+        if (secretKey != null) {
             Log.i(tag, "SECURE: Connection ready for $address (BLE)")
             updateScannedSources()
-        } catch (e: Exception) {
-            Log.e(tag, "Handshake error: ${e.message}")
+        } else {
+            Log.e(tag, "Handshake error")
         }
     }
 
     private fun handleMessage(address: String, data: ByteArray) {
-        val secretKey = messageKeys[address] ?: return
-        try {
-            val decryptedBytes = cryptoManager.decrypt(data, secretKey)
-            val payload = Json.decodeFromString<Message>(decryptedBytes.decodeToString())
+        sessionManager.decryptFromSession(address, data)?.let { decryptedBytes ->
+            try {
+                val payload = Json.decodeFromString<Message>(decryptedBytes.decodeToString())
 
-            when (payload.type) {
-                Message.TYPE_ACK -> handleAck(payload)
-                else -> {
-                    if (isNewMessage(payload.messageId) && (payload.senderId !in repository.blockedUsers.value)) {
-                        handleIncomingMessage(address, payload, secretKey)
+                when (payload.type) {
+                    Message.TYPE_ACK -> handleAck(payload)
+                    else -> {
+                        if (isNewMessage(payload.messageId) && (payload.senderId !in repository.blockedUsers.value)) {
+                            sessionManager.getSessionKey(address)?.let { key ->
+                                handleIncomingMessage(address, payload, key)
+                            }
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                Log.e(tag, "Message decrypt error: ${e.message}")
+                reportError(ConnectionError.EncryptionError("Failed to decrypt incoming Message"))
             }
-        } catch (e: Exception) {
-            Log.e(tag, "Message decrypt error: ${e.message}")
-            reportError(ConnectionError.EncryptionError("Failed to decrypt incoming Message"))
-        }
+        } ?: Log.e(tag, "Decryption failure (BLE)")
     }
 
     private fun handleAck(payload: Message) {
@@ -336,9 +337,8 @@ class BleConnectionController(
 
             activeGatts.forEach { (address, _) ->
                 if (address != sourceAddress) {
-                    messageKeys[address]?.let { key ->
+                    sessionManager.encryptForSession(address, bytes)?.let { encrypted ->
                         try {
-                            val encrypted = cryptoManager.encrypt(bytes, key)
                             sendData(address, encrypted)
                         } catch (_: Exception) {
                             Log.e(tag, "BLE RELAY FAIL to $address")
@@ -362,8 +362,9 @@ class BleConnectionController(
         internalScope.launch(ioDispatcher) {
             try {
                 val json = Json.encodeToString(Message.serializer(), ack)
-                val encryptedAck = cryptoManager.encrypt(json.toByteArray(), secretKey)
-                sendData(address, encryptedAck)
+                sessionManager.encryptForSession(address, json.toByteArray())?.let { encryptedAck ->
+                    sendData(address, encryptedAck)
+                }
             } catch (e: Exception) {
                 Log.e(tag, "Failed to send ACK: ${e.message}")
             }
@@ -538,8 +539,7 @@ class BleConnectionController(
     }
 
     private fun sendHandshake(address: String) {
-        val publicKeyBytes = cryptoManager.getLocalKeyPair().public.encoded
-        val handshakePayload = byteArrayOf(HANDSHAKE_PREFIX) + publicKeyBytes
+        val handshakePayload = HandshakeProtocol.createHandshake(cryptoManager.getLocalKeyPair())
         internalScope.launch(ioDispatcher) {
             sendData(address, handshakePayload)
         }
@@ -568,14 +568,14 @@ class BleConnectionController(
 
         try {
             if (receiverId != null) {
-                val key = messageKeys[receiverId] ?: return null
-                val encrypted = cryptoManager.encrypt(bytes, key)
-                sendData(receiverId, encrypted)
+                sessionManager.encryptForSession(receiverId, bytes)?.let { encrypted ->
+                    sendData(receiverId, encrypted)
+                } ?: return null
             } else {
                 activeGatts.keys.forEach { target ->
-                    messageKeys[target]?.let { key ->
+                    sessionManager.encryptForSession(target, bytes)?.let { encrypted ->
                         try {
-                            sendData(target, cryptoManager.encrypt(bytes, key))
+                            sendData(target, encrypted)
                         } catch (_: Exception) {}
                     }
                 }
@@ -678,7 +678,7 @@ class BleConnectionController(
             } catch (_: Exception) {}
         }
         activeGatts.clear()
-        messageKeys.clear()
+        sessionManager.clearAll()
         _isConnected.value = false
         _connectedGroups.value = emptySet()
     }

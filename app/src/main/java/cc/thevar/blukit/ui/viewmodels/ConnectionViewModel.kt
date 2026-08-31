@@ -13,13 +13,16 @@ import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
-import cc.thevar.blukit.domain.logic.AssistantManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.domain.model.GroupEvent
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
+import cc.thevar.blukit.domain.usecase.ConsensusUseCase
+import cc.thevar.blukit.domain.usecase.RitualUseCase
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import cc.thevar.blukit.network.p2p.ConnectionController
 import cc.thevar.blukit.ui.toUiError
 import kotlinx.coroutines.FlowPreview
@@ -42,8 +45,9 @@ class ConnectionViewModel(
     private val permissionManager: SpreadPermissionManager,
     private val messageRepository: MessageRepository,
     private val connectivityUseCase: ConnectivityUseCase,
-    private val assistantManager: AssistantManager,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager,
+    private val consensusUseCase: ConsensusUseCase,
+    private val ritualUseCase: RitualUseCase,
 ) : ViewModel() {
 
     private val _selectedSources = MutableStateFlow<Set<String>>(emptySet())
@@ -67,6 +71,25 @@ class ConnectionViewModel(
             messageRepository.getHighConnectionMessages(groupId)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** PAGED MESSAGES: Efficient history stream for the current context. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val pagedMessages: Flow<PagingData<Message>> = _currentGroupId
+        .flatMapLatest { groupId ->
+            messageRepository.getMessagesForGroup(groupId)
+        }
+        .cachedIn(viewModelScope)
+
+    val timelineMessages: Flow<PagingData<Message>> = messageRepository.getTimelineMessages()
+        .cachedIn(viewModelScope)
+
+    val allMessagesPaging: Flow<PagingData<Message>> = messageRepository.getAllMessagesPaging()
+        .cachedIn(viewModelScope)
+
+    fun getChildMessages(parentId: String): Flow<PagingData<Message>> = 
+        messageRepository.getChildMessages(parentId).cachedIn(viewModelScope)
+
+    suspend fun getMessage(messageId: String): Message? = messageRepository.getMessage(messageId)
 
     private val harmonyState: Flow<HardwareHarmony> = combine(
         radioStateManager.radioStates,
@@ -129,13 +152,15 @@ class ConnectionViewModel(
         ) { connected, scanned -> connected to scanned }
             .debounce(2.seconds)
             .onEach { (connected, scanned) ->
-                val currentGroup = messageRepository.getGroup(_currentGroupId.value)
-                if (currentGroup?.scope == Group.SCOPE_PRIVATE) {
-                    val missingMembers = currentGroup.memberIds - connected - repository.getDeviceId()
-                    missingMembers.forEach { memberId ->
-                        scanned.find { (it.id == memberId) || (it.persistentId == memberId) }?.let { source ->
-                            Log.i("ConnectionViewModel", "Auto-Reconnect: Group needs connection with $memberId")
-                            connectToSource(source)
+                viewModelScope.launch {
+                    val currentGroup = messageRepository.getGroup(_currentGroupId.value)
+                    if (currentGroup?.scope == Group.SCOPE_PRIVATE) {
+                        val missingMembers = currentGroup.memberIds - connected - repository.getDeviceId()
+                        missingMembers.forEach { memberId ->
+                            scanned.find { (it.id == memberId) || (it.persistentId == memberId) }?.let { source ->
+                                Log.i("ConnectionViewModel", "Auto-Reconnect: Group needs connection with $memberId")
+                                connectToSource(source)
+                            }
                         }
                     }
                 }
@@ -239,14 +264,12 @@ class ConnectionViewModel(
 
     private val sessionDataState: Flow<ConnectionSession> = combine(
         connectionController.connectedGroups,
-        connectionController.messages,
         messageRepository.activeGroups,
         messageRepository.archivedGroups,
         connectionController.syncProgress,
-    ) { ties, messages, groups, archivedGroups, syncProgress ->
+    ) { ties, groups, archivedGroups, syncProgress ->
         ConnectionSession(
             connectedTies = ties,
-            messages = messages,
             groups = groups,
             archivedGroups = archivedGroups,
             syncProgress = syncProgress,
@@ -297,7 +320,6 @@ class ConnectionViewModel(
         state,
         repository.deviceId
     ) { uiState, localDeviceId ->
-        val messages = uiState.session.messages
         val groups = uiState.session.groups
         
         val list = mutableListOf<ConnectionItem>()
@@ -307,7 +329,6 @@ class ConnectionViewModel(
             .sortedByDescending { it.lastMessageTimestamp }
         
         sortedGroups.forEach { group ->
-            val latestMessage = messages.findLast { it.groupId == group.id }
             val headSource = Source(
                 id = group.id, 
                 name = if (group.id == Group.ID_GLOBAL) "Public Hub" else group.name, 
@@ -315,7 +336,7 @@ class ConnectionViewModel(
                 medium = Source.ConnectionMedium.BLUETOOTH, 
                 statusLabel = if (group.trendLabel != null) "Trending: ${group.trendLabel}" else null
             )
-            list.add(ConnectionItem(headSource, latestMessage))
+            list.add(ConnectionItem(headSource, null)) // Placeholder for latest message
         }
 
         // 2. People Nearby (Not in groups)
@@ -415,11 +436,13 @@ class ConnectionViewModel(
             return ""
         }
 
-        val currentGroup = state.value.session.groups.find { it.id == _currentGroupId.value }
-        val groupId = Group.generateId(name, scope, currentGroup)
-        val parentId = _currentGroupId.value
+        val currentGid = _currentGroupId.value
+        val parentId = currentGid
         
         viewModelScope.launch {
+            val currentGroup = messageRepository.getGroup(currentGid)
+            val groupId = Group.generateId(name, scope, currentGroup)
+            
             val existing = messageRepository.getGroup(groupId)
             if (scope == Group.SCOPE_PUBLIC) {
                 if (existing == null) {
@@ -459,7 +482,7 @@ class ConnectionViewModel(
         }
         
         if (members == null) _selectedSources.value = emptySet()
-        return groupId
+        return Group.generateId(name, scope, null) // Temporary, actual ID depends on async repo call
     }
 
     fun denyRadio(device: Source) = connectionController.denyRadio(device)
@@ -580,27 +603,16 @@ class ConnectionViewModel(
     }
 
     fun castVote(messageId: String, weight: Int) {
-        viewModelScope.launch {
-            assistantManager.castConsensusVote(messageId, _currentGroupId.value, weight)
-        }
+        consensusUseCase.castVote(messageId, _currentGroupId.value, weight)
     }
 
     fun addSchedule(groupId: String, event: GroupEvent) {
-        viewModelScope.launch { messageRepository.addGroupSchedule(groupId, event) }
+        messageRepository.addGroupSchedule(groupId, event)
     }
 
     fun pushRitual(groupId: String, event: GroupEvent) {
         viewModelScope.launch {
-            val content = kotlinx.serialization.json.Json.encodeToString(event)
-            val members = messageRepository.getGroup(groupId)?.allMemberIds ?: emptySet()
-            members.forEach { memberId ->
-                connectionController.sendMessage(
-                    content = content,
-                    receiverId = memberId,
-                    messageScope = Message.MESSAGE_WHISPER,
-                    groupId = groupId
-                )
-            }
+            ritualUseCase.pushRitual(groupId, event)
         }
     }
 

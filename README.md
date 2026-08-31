@@ -50,15 +50,16 @@ Clean, ergonomic, and familiar.
 ---
 
 ## 🛠️ ARCHITECTURAL STACK
-1. **100% Offline**: Uses Bluetooth LE and Wi-Fi Aware for direct device-to-device communication.
-2. **Industrial Security**: P-256 ECDH key negotiation + AES-256-GCM hardware encryption.
-3. **Data Integrity**: Deterministic LWW-CRDT engine for seamless multi-device synchronization.
-4. **Resilient Persistence**: Automated encrypted backups distributed across trusted nearby devices.
+1. **Modular Core**: Decoupled protocol logic (Crypto, Handshaking, Models) into a standalone `:core` module for scalability and KMP readiness.
+2. **High-Performance Persistence**: Room 3.0 (KMP) with Paging 3 support for efficient, low-memory history management.
+3. **End-to-End Security**: P-256 ECDH hardware-backed key agreement + AES-256-GCM authenticated encryption.
+4. **Data Integrity**: Deterministic LWW-CRDT resolution for conflict-free multi-device synchronization.
 
 ## 🚀 DEVELOPER SETUP
-1. **Toolchain**: JDK 17+, Android Studio Ladybug+.
-2. **Dependencies**: Koin (DI), Compose Adaptive (Layout), Navigation3.
-3. **Permissions**: Requires Bluetooth and Location (strictly for P2P discovery).
+1. **Toolchain**: JDK 21+, Android Studio Ladybug+.
+2. **Architecture**: Modular MVVM + UDF (Unidirectional Data Flow) with Paging 3 streams.
+3. **Core Dependencies**: Koin (DI), Room 3.0, Paging 3.5, Compose Adaptive.
+4. **Permissions**: Requires Bluetooth and Location (strictly for local device discovery).
 
 ---
 

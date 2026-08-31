@@ -25,6 +25,9 @@ import cc.thevar.blukit.ui.viewmodels.ConnectionUiState
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.components.*
 
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+
 /**
  * MESSAGE FIELD: Granular Message detail.
  */
@@ -33,6 +36,8 @@ fun MessageField(
     state: ConnectionUiState,
     localDeviceId: String,
     messageId: String,
+    rootMessage: Message?,
+    childMessages: LazyPagingItems<Message>,
     onNavigateToMessage: (String) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
     messageText: String = "",
@@ -52,15 +57,6 @@ fun MessageField(
     onBack: (() -> Unit)? = null,
     header: @Composable () -> Unit,
 ) {
-    val rootMessage = remember(messageId, state.session.messages) {
-        state.session.messages.find { it.messageId == messageId }
-    }
-
-    val childMessages = remember(state.session.messages, messageId) {
-        state.session.messages.asSequence().filter { it.parentMessageId == messageId }
-            .sortedBy { it.timestamp }.toList()
-    }
-
     val themeColor = if (rootMessage?.messageScope == Message.MESSAGE_WHISPER) StealthRose else StealthPrimary
 
     BlukitFieldScaffold(
@@ -116,12 +112,9 @@ fun MessageField(
                     }
                 }
 
-                ConnectionTicker(
+                PagedConnectionTicker(
                     state = state,
-                    connectionList = childMessages.map { message -> 
-                        val source = Source(id = message.senderId, name = message.senderName, emoji = message.senderEmoji ?: "👤", medium = Source.ConnectionMedium.BLUETOOTH)
-                        source to message 
-                    },
+                    pagedMessages = childMessages,
                     messageCounts = emptyMap(),
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
@@ -140,7 +133,7 @@ fun MessageField(
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
-                messageCount = childMessages.size,
+                messageCount = childMessages.itemCount,
                 incomingRadioRequests = emptySet(),
                 selectedDevices = emptySet(),
                 onAcceptRadio = { },
@@ -157,7 +150,7 @@ fun MessageField(
                     .fillMaxWidth()
             )
 
-            if (childMessages.isEmpty()) {
+            if (childMessages.itemCount == 0) {
                 BlukitTip(
                     text = "No connection detected. Send a Message to start the ledger.",
                     themeColor = themeColor,

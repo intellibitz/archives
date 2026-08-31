@@ -2,6 +2,8 @@
  * BLUKIT NETWORK: P2P CONNECTION CONTROLLER
  *
  * High-performance connection engine using Google Nearby Connections.
+ * Orchestrates low-level sensing and advertising while delegating session
+ * security to [SecureSessionManager] and handshaking to [HandshakeProtocol].
  * Implements a fully decentralized, hardware-encrypted connection protocol.
  */
 package cc.thevar.blukit.network.p2p
@@ -19,6 +21,8 @@ import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Group
+import cc.thevar.blukit.domain.protocol.HandshakeProtocol
+import cc.thevar.blukit.domain.security.SecureSessionManager
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
@@ -72,6 +76,7 @@ class P2pConnectionController(
     private val hapticManager: HapticManager,
     private val radioStateManager: RadioStateManager,
     private val cryptoManager: CryptoManager,
+    private val sessionManager: SecureSessionManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : ConnectionController {
@@ -116,7 +121,6 @@ class P2pConnectionController(
     // --- Private Connection State ---
     private val activeConnections = Collections.synchronizedSet(mutableSetOf<String>())
     private val pendingRadioRequests = Collections.synchronizedSet(mutableSetOf<String>())
-    private val messageKeys = ConcurrentHashMap<String, SecretKey>()
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
     private val incomingFiles = ConcurrentHashMap<Long, Message>()
     private val aggregateBuffer = ConcurrentHashMap<String, MutableList<Message>>()
@@ -167,7 +171,7 @@ class P2pConnectionController(
 
         override fun onDisconnected(endpointId: String) {
             activeConnections.remove(endpointId)
-            messageKeys.remove(endpointId)
+            sessionManager.terminateSession(endpointId)
             pendingRadioRequests.remove(endpointId)
             _connectedGroups.update { it - endpointId }
             if (activeConnections.isEmpty()) _isConnected.value = false
@@ -308,16 +312,19 @@ class P2pConnectionController(
     }
 
     private fun sendMessageInternal(endpointId: String, payload: Message) {
-        messageKeys[endpointId]?.let { key -> queueMessage(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(Message.serializer(), payload).toByteArray(), key))) }
+        val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
+        sessionManager.encryptForSession(endpointId, bytes)?.let { encrypted ->
+            queueMessage(endpointId, Payload.fromBytes(encrypted))
+        }
     }
 
     private suspend fun getMessageKeyWithRetry(id: String): SecretKey? {
         var a = 0
-        while ((messageKeys[id] == null) && (a < 50)) {
+        while ((sessionManager.getSessionKey(id) == null) && (a < 50)) {
             delay(20.milliseconds)
             a++
         }
-        return messageKeys[id]
+        return sessionManager.getSessionKey(id)
     }
 
     private fun syncMessageHistory(endpointId: String) {
@@ -400,8 +407,8 @@ class P2pConnectionController(
         val targetRid = payload.receiverId
         try {
             if (targetRid != null) { 
-                getMessageKeyWithRetry(targetRid)?.let { key ->
-                    queueMessage(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
+                sessionManager.encryptForSession(targetRid, bytes)?.let { encrypted ->
+                    queueMessage(targetRid, Payload.fromBytes(encrypted)) 
                 } 
             } else { 
                 val targets = if (activeConnections.size > 20) {
@@ -412,8 +419,8 @@ class P2pConnectionController(
                 
                 targets.forEach { target -> 
                     internalScope.launch(ioDispatcher) { 
-                        messageKeys[target]?.let { key -> 
-                            try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} 
+                        sessionManager.encryptForSession(target, bytes)?.let { encrypted ->
+                            try { queueMessage(target, Payload.fromBytes(encrypted)) } catch (_: Exception) {} 
                         } 
                     } 
                 } 
@@ -435,7 +442,13 @@ class P2pConnectionController(
     override suspend fun broadcastIdentityUpdate(oldName: String): Message {
         val payload = Message(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = Message.TYPE_IDENTITY_UPDATE, messageScope = Message.MESSAGE_SHOUT)
         val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
-        activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+        activeConnections.forEach { target -> 
+            internalScope.launch(ioDispatcher) { 
+                sessionManager.encryptForSession(target, bytes)?.let { encrypted ->
+                    try { queueMessage(target, Payload.fromBytes(encrypted)) } catch (_: Exception) {} 
+                } 
+            } 
+        }
         return payload
     }
 
@@ -476,8 +489,20 @@ class P2pConnectionController(
         val payload = Message(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), messageScope = Message.MESSAGE_WHISPER)
         val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
         return try {
-            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueMessage(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
-            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            group.allMemberIds.forEach { memberId -> 
+                internalScope.launch(ioDispatcher) { 
+                    sessionManager.encryptForSession(memberId, bytes)?.let { encrypted ->
+                        try { queueMessage(memberId, Payload.fromBytes(encrypted)) } catch (_: Exception) {} 
+                    } 
+                } 
+            }
+            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> 
+                internalScope.launch(ioDispatcher) { 
+                    sessionManager.encryptForSession(target, bytes)?.let { encrypted ->
+                        try { queueMessage(target, Payload.fromBytes(encrypted)) } catch (_: Exception) {} 
+                    } 
+                } 
+            }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
             messageLedger.upsertMessage(payload); messageLedger.updateGroupLastMessage(groupId, payload.timestamp)
             payload
@@ -500,8 +525,20 @@ class P2pConnectionController(
         )
         val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
         return try {
-            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueMessage(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
-            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            group.allMemberIds.forEach { memberId -> 
+                internalScope.launch(ioDispatcher) { 
+                    sessionManager.encryptForSession(memberId, bytes)?.let { encrypted ->
+                        try { queueMessage(memberId, Payload.fromBytes(encrypted)) } catch (_: Exception) {} 
+                    } 
+                } 
+            }
+            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> 
+                internalScope.launch(ioDispatcher) { 
+                    sessionManager.encryptForSession(target, bytes)?.let { encrypted ->
+                        try { queueMessage(target, Payload.fromBytes(encrypted)) } catch (_: Exception) {} 
+                    } 
+                } 
+            }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
             messageLedger.upsertMessage(payload); messageLedger.updateGroupLastMessage(groupId, payload.timestamp)
             payload
@@ -582,7 +619,7 @@ class P2pConnectionController(
     override fun closeConnection() {
         activeConnections.forEach { connectionsClient.disconnectFromEndpoint(it) }
         activeConnections.clear()
-        messageKeys.clear()
+        sessionManager.clearAll()
         _isConnected.value = false
         _connectedGroups.value = emptySet()
     }
@@ -595,36 +632,30 @@ class P2pConnectionController(
     }
 
     private fun handleReceivedBytes(endpointId: String, bytes: ByteArray) {
-        if (isHandshakePayload(bytes)) {
+        if (HandshakeProtocol.isHandshake(bytes)) {
             handleHandshake(endpointId, bytes)
         } else {
-            messageKeys[endpointId]?.let { key ->
+            sessionManager.decryptFromSession(endpointId, bytes)?.let { decrypted ->
                 try {
-                    val decrypted = cryptoManager.decrypt(bytes, key)
                     val payload = Json.decodeFromString<Message>(decrypted.decodeToString())
-                    handleIncomingPayload(endpointId, payload, key)
+                    sessionManager.getSessionKey(endpointId)?.let { key ->
+                        handleIncomingPayload(endpointId, payload, key)
+                    }
                 } catch (_: Exception) {
-                    Log.e(tag, "Decryption or parsing failure")
+                    Log.e(tag, "Parsing failure")
                 }
-            }
+            } ?: Log.e(tag, "Decryption failure")
         }
     }
 
-    private fun isHandshakePayload(bytes: ByteArray): Boolean = bytes.isNotEmpty() && (bytes[0] == 0x01.toByte())
-
     private fun handleHandshake(endpointId: String, bytes: ByteArray) {
-        try {
-            val peerPublicKeyBytes = bytes.copyOfRange(1, bytes.size)
-            val keyFactory = java.security.KeyFactory.getInstance("EC")
-            val peerPublicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(peerPublicKeyBytes))
-
-            val secretKey = cryptoManager.deriveSharedSecret(peerPublicKey)
-            messageKeys[endpointId] = secretKey
+        val peerPublicKeyBytes = HandshakeProtocol.parseHandshake(bytes) ?: return
+        val secretKey = sessionManager.establishSession(endpointId, peerPublicKeyBytes)
+        if (secretKey != null) {
             Log.i(tag, "SECURE: Connection established with $endpointId")
-            
             syncMessageHistory(endpointId)
             backupRecentRecords(endpointId)
-        } catch (_: Exception) {
+        } else {
             Log.e(tag, "Handshake failed")
         }
     }
@@ -679,9 +710,8 @@ class P2pConnectionController(
             allLocalMessages.find { it.messageId == sinceId }?.timestamp ?: 0L
         }
         
-        val historyToSync = messageLedger.getRawMessagesSince(sinceTimestamp)
-        
         internalScope.launch(ioDispatcher) {
+            val historyToSync = messageLedger.getRawMessagesSince(sinceTimestamp)
             _syncProgress.value = 0.1f
             historyToSync.chunked(5).forEachIndexed { index, chunk ->
                 val chunkPayload = Message(
@@ -742,17 +772,19 @@ class P2pConnectionController(
         val anchorPublicGid = payload.anchoredPublicGroupId ?: return
         val gName = payload.groupName ?: "ANCHORED GROUP"
         
-        if (messageLedger.getGroup(anchoredGid) == null) {
-            messageLedger.insertGroup(
-                Group(
-                    id = anchoredGid,
-                    name = gName,
-                    scope = Group.SCOPE_PRIVATE,
-                    anchoredPublicGroupId = anchorPublicGid,
-                    isMeta = true
+        internalScope.launch(ioDispatcher) {
+            if (messageLedger.getGroup(anchoredGid) == null) {
+                messageLedger.insertGroup(
+                    Group(
+                        id = anchoredGid,
+                        name = gName,
+                        scope = Group.SCOPE_PRIVATE,
+                        anchoredPublicGroupId = anchorPublicGid,
+                        isMeta = true
+                    )
                 )
-            )
-            Log.i(tag, "Assistant Discovery: Anchored group $gName found in $anchorPublicGid")
+                Log.i(tag, "Assistant Discovery: Anchored group $gName found in $anchorPublicGid")
+            }
         }
     }
 
@@ -765,22 +797,24 @@ class P2pConnectionController(
         val gid = payload.groupId
         val gName = payload.groupName
         if ((gid != null) && (gName != null)) {
-            val existing = messageLedger.getGroup(gid)
-            if (existing == null) {
-                val scope = when (payload.messageScope) {
-                    Message.MESSAGE_SHOUT -> Group.SCOPE_PUBLIC
-                    Message.MESSAGE_SILENCE -> Group.SCOPE_LOCAL
-                    else -> Group.SCOPE_PRIVATE
-                }
-                messageLedger.insertGroup(
-                    Group(
-                        id = gid,
-                        name = gName,
-                        scope = scope,
-                        parentId = Group.ID_GLOBAL,
-                        anchoredPublicGroupId = payload.anchoredPublicGroupId
+            internalScope.launch(ioDispatcher) {
+                val existing = messageLedger.getGroup(gid)
+                if (existing == null) {
+                    val scope = when (payload.messageScope) {
+                        Message.MESSAGE_SHOUT -> Group.SCOPE_PUBLIC
+                        Message.MESSAGE_SILENCE -> Group.SCOPE_LOCAL
+                        else -> Group.SCOPE_PRIVATE
+                    }
+                    messageLedger.insertGroup(
+                        Group(
+                            id = gid,
+                            name = gName,
+                            scope = scope,
+                            parentId = Group.ID_GLOBAL,
+                            anchoredPublicGroupId = payload.anchoredPublicGroupId
+                        )
                     )
-                )
+                }
             }
         }
         hapticManager.triggerMessage(HapticManager.MessageType.MESSAGE)
@@ -820,9 +854,9 @@ class P2pConnectionController(
             
             activeConnections.forEach { endpointId ->
                 if (endpointId != sourceEndpointId) {
-                    messageKeys[endpointId]?.let { key ->
+                    sessionManager.encryptForSession(endpointId, bytes)?.let { encrypted ->
                         try {
-                            queueMessage(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
+                            queueMessage(endpointId, Payload.fromBytes(encrypted))
                         } catch (_: Exception) {
                             Log.e(tag, "Relay fail to $endpointId")
                         }
@@ -847,8 +881,7 @@ class P2pConnectionController(
     }
 
     private fun sendHandshake(endpointId: String) {
-        val localPublicKeyBytes = cryptoManager.getLocalKeyPair().public.encoded
-        val handshakePayload = byteArrayOf(0x01.toByte()) + localPublicKeyBytes
+        val handshakePayload = HandshakeProtocol.createHandshake(cryptoManager.getLocalKeyPair())
         connectionsClient.sendPayload(endpointId, Payload.fromBytes(handshakePayload))
     }
 

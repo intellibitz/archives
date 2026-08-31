@@ -31,6 +31,10 @@ import cc.thevar.blukit.ui.viewmodels.ConnectionPeers
 import cc.thevar.blukit.ui.viewmodels.ConnectionSession
 import cc.thevar.blukit.ui.viewmodels.RadioConnectionState
 import cc.thevar.blukit.ui.components.*
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.flowOf
 import cc.thevar.blukit.domain.power.HarmonyReport
 
 @Preview(name = "Nearby - People", device = Devices.PHONE, showBackground = true)
@@ -77,36 +81,41 @@ fun PreviewNearbyPhone() {
 fun PreviewChatPhone() {
     val user1 = Source("user1", "Alice")
     val me = "me"
+    
+    val messages = listOf(
+        Message(
+            messageId = "1",
+            senderId = "user1",
+            senderName = "Alice",
+            receiverId = "me",
+            content = "Hello!",
+            timestamp = 1628610000000,
+            status = Message.STATUS_DELIVERED
+        ),
+        Message(
+            messageId = "2",
+            senderId = "me",
+            senderName = "Me",
+            receiverId = "user1",
+            content = "Hey there!",
+            timestamp = 1628610060000,
+            status = Message.STATUS_SENT
+        )
+    )
+    
+    val pagedMessages = flowOf(PagingData.from(messages)).collectAsLazyPagingItems()
+
     BlukitTheme {
         PrivateGroupField(
             state = ConnectionUiState(
                 session = ConnectionSession(
-                    messages = listOf(
-                        Message(
-                            messageId = "1",
-                            senderId = "user1",
-                            senderName = "Alice",
-                            receiverId = "me",
-                            content = "Hello!",
-                            timestamp = 1628610000000,
-                            status = Message.STATUS_DELIVERED
-                        ),
-                        Message(
-                            messageId = "2",
-                            senderId = "me",
-                            senderName = "Me",
-                            receiverId = "user1",
-                            content = "Hey there!",
-                            timestamp = 1628610060000,
-                            status = Message.STATUS_SENT
-                        )
-                    ),
                     connectionState = RadioConnectionState.Connected(user1)
                 )
             ),
             localDeviceId = me,
             header = { Text("PREVIEW HEADER", color = Color.White) },
             groupId = "group1",
+            pagedMessages = pagedMessages,
             breadcrumbTrail = listOf("NEARBY", "ALICE"),
             onCrumbClick = {},
             userNickname = "ME",
@@ -268,9 +277,9 @@ fun PreviewConnectionTickerHeaders() {
     )
     
     val connectionList = listOf(
-        Pair(Source(user1, "Alice", "👩"), messages[0]),
-        Pair(Source(me, "ME", "👤"), messages[1]),
-        Pair(Source(user2, "Bob", "👨"), messages[2])
+        Pair(Source(user1, "Alice", "👩"), messages[0] as Message?),
+        Pair(Source(me, "ME", "👤"), messages[1] as Message?),
+        Pair(Source(user2, "Bob", "👨"), messages[2] as Message?)
     )
 
     BlukitTheme(stealthMode = true) {
@@ -278,7 +287,6 @@ fun PreviewConnectionTickerHeaders() {
             ConnectionTicker(
                 state = ConnectionUiState(
                     session = ConnectionSession(
-                        messages = messages,
                         groups = groups
                     )
                 ),

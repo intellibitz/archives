@@ -20,9 +20,9 @@ AI Agents working on Blukit must:
 ## Technical Verification
 Contributors must verify changes against the following baseline:
 1. **Device Fleet**: Testing on at least two physical devices (API 26+) is required to verify P2P handshakes and radio stability.
-2. **Architecture**: Ensure new components are integrated into the modular UI structure (`RadarComponents`, `PersonaComponents`, etc.).
-3. **Data Integrity**: Any changes to the message pipeline must respect the LWW-CRDT harmonization logic.
-4. **Performance**: Verify that visual effects do not exceed 10% CPU usage on a mid-range device.
+2. **Architecture**: Ensure new business logic is implemented as a `UseCase` in `:core` and integrated into the `ConnectionViewModel` in `:app`.
+3. **Data Integrity**: Any changes to the message pipeline must respect the LWW-CRDT resolution logic in the Repository layer.
+4. **Performance**: Use Paging 3 for any message list implementation to avoid memory bottlenecks.
 
 ## We Use [Github Flow](https://guides.github.com/introduction/flow/), So All Code Changes Happen Through Pull Requests
 
