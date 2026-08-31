@@ -155,25 +155,21 @@ fun BreadcrumbHub(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConnectionHeader(
-    themeColor: Color,
-    onAwakenBluetooth: () -> Unit,
-    onAwakenWifi: () -> Unit,
-    onGrantPermissions: () -> Unit,
-    onOpenSettings: () -> Unit,
+fun BlukitToolbar(
+    title: String,
     onLogout: () -> Unit,
+    onResetProfile: () -> Unit,
     modifier: Modifier = Modifier,
+    themeColor: Color = StealthPrimary,
+    onBack: (() -> Unit)? = null,
+    connectionStatus: String? = null,
+    trend: String? = null,
     isBluetoothOff: Boolean = false,
     isWifiOff: Boolean = false,
-    isPermissionMissing: Boolean = false,
-    isPermanentlyDenied: Boolean = false,
-    connectionStatus: String? = null,
-    breeze: String? = null,
-    highConnectionMessages: List<Message> = emptyList(),
-    trail: List<String> = emptyList(),
-    onCrumbClick: (Int) -> Unit = {},
-    trend: String? = null
+    onAwakenBluetooth: () -> Unit = {},
+    onAwakenWifi: () -> Unit = {},
 ) {
     val auraColor = when (trend) {
         "ACADEMIC RITUAL" -> AssistantAcademic
@@ -184,147 +180,70 @@ fun ConnectionHeader(
         else -> themeColor
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "HarmonyCycle")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.6f, 
-        targetValue = 1f, 
-        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), 
-        label = "Alpha"
-    )
-
-    val auraGlow by infiniteTransition.animateFloat(
-        initialValue = 0.02f,
-        targetValue = 0.1f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "Aura"
-    )
-    
-    val scanLinePos by infiniteTransition.animateFloat(
-        initialValue = -0.2f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)),
-        label = "ScanLine"
-    )
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(StealthSurface)
-            .border(
-                width = 1.dp,
-                brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                    0.0f to Color.White.copy(alpha = StealthAlphaBorder),
-                    0.5f to auraColor.copy(alpha = auraGlow * 3f),
-                    1.0f to Color.White.copy(alpha = StealthAlphaBorder)
-                ),
-                shape = RoundedCornerShape(28.dp)
-            )
-    ) {
-        // Aura Background
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    androidx.compose.ui.graphics.Brush.radialGradient(
-                        colors = listOf(auraColor.copy(alpha = auraGlow), Color.Transparent),
-                        radius = 400f
-                    )
+    TopAppBar(
+        title = {
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.3f)
-                .matchParentSize()
-                .align(Alignment.CenterStart)
-                .graphicsLayer { translationX = scanLinePos * 1000f }
-                .background(
-                    androidx.compose.ui.graphics.Brush.horizontalGradient(
-                        0.0f to Color.Transparent,
-                        0.5f to themeColor.copy(alpha = 0.05f),
-                        1.0f to Color.Transparent
+                if (connectionStatus != null) {
+                    Text(
+                        text = connectionStatus.lowercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = auraColor.copy(alpha = 0.7f)
                     )
-                )
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(2f)) {
-                Surface(
-                    color = StealthAmber.copy(alpha = StealthAlphaLow),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, StealthAmber.copy(alpha = StealthAlphaMedium)),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = breeze ?: connectionStatus ?: "Connecting...", 
-                            style = MaterialTheme.typography.labelSmall,
-                            color = StealthAmber,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
                 }
             }
-
-            if (highConnectionMessages.isNotEmpty()) {
-                MessageCanvas(
-                    highConnectionMessages = highConnectionMessages,
-                    themeColor = themeColor,
-                    onMessageClick = { /* Handled by parent */ },
-                    modifier = Modifier.weight(1f)
-                )
+        },
+        navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
             }
-
-            IconButton(onClick = onLogout, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    imageVector = Icons.Rounded.Logout, 
-                    contentDescription = "Logout", 
-                    tint = Color.White.copy(alpha = StealthAlphaMedium),
-                    modifier = Modifier.size(20.dp)
-                )
+        },
+        actions = {
+            if (isBluetoothOff || isWifiOff) {
+                IconButton(onClick = { if (isBluetoothOff) onAwakenBluetooth() else onAwakenWifi() }) {
+                    Icon(
+                        imageVector = if (isBluetoothOff) Icons.Rounded.BluetoothDisabled else Icons.Rounded.WifiOff,
+                        contentDescription = "Radio Status",
+                        tint = StealthError
+                    )
+                }
             }
             
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-                if (isPermissionMissing || isBluetoothOff) {
-                    Surface(
-                        color = StealthError.copy(alpha = StealthAlphaLow), 
-                        shape = RoundedCornerShape(8.dp), 
-                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
-                    ) {
-                        Text(
-                            text = when { isPermissionMissing -> if (isPermanentlyDenied) "Setup" else "Grant"; isBluetoothOff -> "Turn On"; else -> "Active" }, 
-                            style = MaterialTheme.typography.labelSmall.copy(color = StealthError), 
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).clickable { 
-                                if (isPermissionMissing) { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() }
-                                else if (isBluetoothOff) onAwakenBluetooth()
-                            }
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                
-                MixedStatusBranding(
-                    isBluetoothOff = isBluetoothOff,
-                    isWifiOff = isWifiOff,
-                    isPermissionMissing = isPermissionMissing,
-                    onAwakenBluetooth = onAwakenBluetooth,
-                    onAwakenWifi = onAwakenWifi
+            var showMenu by remember { mutableStateOf(false) }
+            IconButton(onClick = { showMenu = true }) {
+                Icon(Icons.Rounded.MoreVert, contentDescription = "Options", tint = Color.White)
+            }
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false },
+                modifier = Modifier.background(StealthSurface)
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Profile Settings", color = Color.White) },
+                    onClick = { onResetProfile(); showMenu = false },
+                    leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null, tint = Color.White) }
+                )
+                DropdownMenuItem(
+                    text = { Text("Logout", color = StealthError) },
+                    onClick = { onLogout(); showMenu = false },
+                    leadingIcon = { Icon(Icons.Rounded.Logout, contentDescription = null, tint = StealthError) }
                 )
             }
-        }
-    }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = StealthBlack,
+            titleContentColor = Color.White
+        ),
+        modifier = modifier
+    )
 }
 
 /**
@@ -333,140 +252,30 @@ fun ConnectionHeader(
 @Composable
 fun IdentityStage(
     title: String,
-    breadcrumbTrail: List<String>,
-    onCrumbClick: (Int) -> Unit,
-    activeGroups: List<Group>,
-    onShowTimeline: () -> Unit,
+    onLogout: () -> Unit,
     onResetProfile: () -> Unit,
-    onBack: (() -> Unit)?,
-    themeColor: Color,
     modifier: Modifier = Modifier,
-    userCount: Int? = null,
-    isDiscovery: Boolean = false,
-    isLiveFeedMode: Boolean = false,
-    onModeChange: (Boolean) -> Unit = {},
-    trailingContent: @Composable (RowScope.() -> Unit)? = null,
+    themeColor: Color = StealthPrimary,
+    onBack: (() -> Unit)? = null,
+    connectionStatus: String? = null,
+    trend: String? = null,
+    isBluetoothOff: Boolean = false,
+    isWifiOff: Boolean = false,
+    onAwakenBluetooth: () -> Unit = {},
+    onAwakenWifi: () -> Unit = {},
 ) {
-    var showResetProfileDialog by remember { mutableStateOf(value = false) }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically, 
-            modifier = Modifier.weight(1.8f),
-            horizontalArrangement = Arrangement.Start
-        ) {
-            if (onBack != null) {
-                IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = themeColor, modifier = Modifier.size(22.dp))
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-
-            if (isDiscovery) {
-                val infiniteTransition = rememberInfiniteTransition(label = "ModeGlow")
-                val glowAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.4f,
-                    targetValue = 0.8f,
-                    animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse),
-                    label = "Glow"
-                )
-
-                Surface(
-                    color = Color.White.copy(alpha = StealthAlphaLow),
-                    shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(1.dp, themeColor.copy(alpha = glowAlpha * 0.2f))
-                ) {
-                    Row(modifier = Modifier.padding(2.dp)) {
-                        Surface(
-                            onClick = { onModeChange(false) },
-                            color = if (!isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium * glowAlpha) else Color.Transparent,
-                            shape = RoundedCornerShape(18.dp),
-                            modifier = Modifier.height(36.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
-                                Text(
-                                    text = "Groups", 
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (!isLiveFeedMode) StealthOnPrimary else Color.White.copy(alpha = StealthAlphaHigh)
-                                )
-                            }
-                        }
-                        Surface(
-                            onClick = { onModeChange(true) },
-                            color = if (isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium * glowAlpha) else Color.Transparent,
-                            shape = RoundedCornerShape(18.dp),
-                            modifier = Modifier.height(36.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
-                                Text(
-                                    text = "Live", 
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (isLiveFeedMode) StealthOnPrimary else Color.White.copy(alpha = StealthAlphaHigh)
-                                )
-                            }
-                        }
-                    }
-                }
-            } else if (breadcrumbTrail.isNotEmpty()) {
-                BreadcrumbHub(trail = breadcrumbTrail, onCrumbClick = onCrumbClick)
-            } else {
-                Text(
-                    text = title, 
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically, 
-            horizontalArrangement = Arrangement.End, 
-            modifier = Modifier.weight(1f)
-        ) {
-            if (trailingContent != null) {
-                trailingContent()
-            }
-
-            if (userCount != null) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onShowTimeline() }) {
-                    Icon(imageVector = Icons.Rounded.Layers, contentDescription = "History", tint = themeColor, modifier = Modifier.size(20.dp))
-                    Text(text = "HISTORY", style = MaterialTheme.typography.labelSmall, color = themeColor.copy(alpha = StealthAlphaHigh))
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-            
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { showResetProfileDialog = true }) {
-                Icon(imageVector = Icons.Rounded.AccountCircle, contentDescription = "Profile", tint = Color.White.copy(alpha = StealthAlphaHigh), modifier = Modifier.size(20.dp))
-                Text(text = "PROFILE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = StealthAlphaMedium))
-            }
-        }
-    }
-
-    if (showResetProfileDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetProfileDialog = false },
-            containerColor = StealthSurface,
-            title = { Text("Reset Tactical Persona?", style = MaterialTheme.typography.titleMedium, color = Color.White) },
-            text = { Text("This will clear your nickname and emoji avatar locally. Your device anchor remains.", color = Color.White.copy(alpha = 0.7f)) },
-            confirmButton = {
-                TextButton(onClick = { onResetProfile(); showResetProfileDialog = false }) {
-                    Text("RESET", color = StealthError)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showResetProfileDialog = false }) {
-                    Text("CANCEL", color = Color.White.copy(alpha = 0.4f))
-                }
-            }
-        )
-    }
+    BlukitToolbar(
+        title = title,
+        onLogout = onLogout,
+        onResetProfile = onResetProfile,
+        modifier = modifier,
+        themeColor = themeColor,
+        onBack = onBack,
+        connectionStatus = connectionStatus,
+        trend = trend,
+        isBluetoothOff = isBluetoothOff,
+        isWifiOff = isWifiOff,
+        onAwakenBluetooth = onAwakenBluetooth,
+        onAwakenWifi = onAwakenWifi
+    )
 }

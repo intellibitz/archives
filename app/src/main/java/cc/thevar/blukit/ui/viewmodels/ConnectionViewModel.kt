@@ -292,45 +292,41 @@ class ConnectionViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ConnectionUiState())
 
-    /** THE CONNECTION LIST: Pre-sorted and filtered list of Sources and Group heads for the Nearby Field. */
+    /** THE CONNECTION LIST: Pre-sorted list of active Groups and People for the Nearby Field. */
     val connectionList: StateFlow<List<ConnectionItem>> = combine(
         state,
         repository.deviceId
     ) { uiState, localDeviceId ->
-        val activeGroups = uiState.session.groups.filter { it.scope == Group.SCOPE_PUBLIC }
         val messages = uiState.session.messages
+        val groups = uiState.session.groups
         
         val list = mutableListOf<ConnectionItem>()
-        val pinned = activeGroups.filter { it.isPinned }.sortedByDescending { it.lastMessageTimestamp }
-        val others = activeGroups.filter { !it.isPinned }.sortedBy { it.lastMessageTimestamp }
-        val sortedGroups: List<Group> = others + pinned 
+        
+        // 1. Active Groups (Sorted by last message)
+        val sortedGroups = groups.filter { it.scope == Group.SCOPE_PUBLIC }
+            .sortedByDescending { it.lastMessageTimestamp }
         
         sortedGroups.forEach { group ->
-            val latestSynthesis = messages.findLast { 
-                (it.groupId == group.id) && (it.type == Message.TYPE_AI_SUMMARY)
-            }
-            val groupMessages = messages.asSequence().filter { 
-                (it.groupId == group.id || (group.id == Group.ID_GLOBAL && it.groupId == null)) && (it.senderId != localDeviceId)
-            }.sortedBy { it.timestamp }.toList().takeLast(3)
-            
-            groupMessages.forEach { message ->
-                val source = Source(
-                    id = message.senderId, 
-                    name = message.senderName, 
-                    emoji = message.senderEmoji ?: "👤", 
-                    medium = Source.ConnectionMedium.BLUETOOTH
-                )
-                list.add(ConnectionItem(source, message))
-            }
+            val latestMessage = messages.findLast { it.groupId == group.id }
             val headSource = Source(
                 id = group.id, 
-                name = if (group.id == Group.ID_GLOBAL) "Global Connection" else group.name, 
-                emoji = group.projectionEmoji ?: "✨", 
+                name = if (group.id == Group.ID_GLOBAL) "Public Hub" else group.name, 
+                emoji = group.projectionEmoji ?: "💬", 
                 medium = Source.ConnectionMedium.BLUETOOTH, 
-                statusLabel = latestSynthesis?.content
+                statusLabel = if (group.trendLabel != null) "Trending: ${group.trendLabel}" else null
             )
-            list.add(ConnectionItem(headSource, null))
+            list.add(ConnectionItem(headSource, latestMessage))
         }
+
+        // 2. People Nearby (Not in groups)
+        val people = uiState.crowd.scannedDevices.filter { source ->
+            groups.none { it.memberIds.contains(source.id) || it.allMemberIds.contains(source.id) }
+        }
+        
+        people.forEach { source ->
+            list.add(ConnectionItem(source, null))
+        }
+
         list
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

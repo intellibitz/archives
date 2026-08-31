@@ -23,7 +23,11 @@ import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.viewmodels.ConnectionUiState
 import cc.thevar.blukit.ui.viewmodels.ConnectionViewModel
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.components.*
+import cc.thevar.blukit.ui.components.BlukitToolbar
+import cc.thevar.blukit.ui.components.MessageCanvas
+import cc.thevar.blukit.ui.components.MessageActionMenu
+import cc.thevar.blukit.ui.components.BlukitFieldScaffold
+import cc.thevar.blukit.ui.components.MessageHub
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -85,26 +89,14 @@ fun GroupField(
         header = header,
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
-                IdentityStage(
-                    title = group?.name ?: "GROUP",
-                    breadcrumbTrail = breadcrumbTrail,
-                    onCrumbClick = onCrumbClick,
-                    activeGroups = state.session.groups,
-                    onShowTimeline = onShowTimeline,
+                BlukitToolbar(
+                    title = group?.name ?: "Group",
+                    onLogout = onResetProfile, // Reusing onResetProfile for now or logout
                     onResetProfile = onResetProfile,
                     onBack = onBack,
                     themeColor = StealthRose,
-                    userCount = members.size,
-                    onModeChange = { onNavigateToLiveFeed() },
-                    trailingContent = {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconButton(onClick = onSearchToggle, modifier = Modifier.size(28.dp)) {
-                                Icon(imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People, contentDescription = "Toggle Search", tint = if (isSearchActive) StealthAmber else StealthRose, modifier = Modifier.size(20.dp))
-                            }
-                            Text(text = if (isSearchActive) "SEARCH" else "PEOPLE", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthRose).copy(alpha = StealthAlphaHigh))
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                    }
+                    connectionStatus = if (members.isNotEmpty()) "${members.size} online" else "Waiting for connections",
+                    trend = trend
                 )
 
                 MessageCanvas(

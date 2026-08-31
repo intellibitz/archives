@@ -137,9 +137,6 @@ fun AssistantReportCard(
     }
 }
 
-/**
- * MESSAGE HUB: The primary interaction point at the bottom of the field.
- */
 @Composable
 fun MessageHub(
     currentRoute: Route,
@@ -173,149 +170,43 @@ fun MessageHub(
     val targetName = if (currentRoute is Route.GroupField) groups.find { it.id == currentRoute.roomId }?.name?.uppercase() else null
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
 
-    BlukitWidget(
-        themeColor = themeColor,
-        header = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                AnimatedVisibility(
-                    visible = selectedDevices.isNotEmpty(), 
-                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom), 
-                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(bottom = 12.dp)
-                            .background(StealthBlack.copy(alpha = 0.8f), RoundedCornerShape(20.dp))
-                            .border(1.dp, themeColor.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
-                            .padding(horizontal = 8.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Button(
-                            onClick = onStartWhisper, 
-                            colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black), 
-                            shape = RoundedCornerShape(20.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                        ) { 
-                            Text("PRIVATE", style = MaterialTheme.typography.labelLarge) 
-                        }
-                        Button(
-                            onClick = onStartSubGroup, 
-                            colors = ButtonDefaults.buttonColors(containerColor = StealthRose, contentColor = Color.White), 
-                            shape = RoundedCornerShape(20.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                        ) { 
-                            Text("NEW GROUP", style = MaterialTheme.typography.labelLarge) 
-                        }
-                        IconButton(
-                            onClick = onClearSelection, 
-                            modifier = Modifier.size(32.dp).background(Color.White.copy(alpha = 0.1f), CircleShape)
-                        ) { 
-                            Icon(Icons.Rounded.Close, tint = Color.White, contentDescription = "Cancel", modifier = Modifier.size(16.dp)) 
-                        }
-                    }
-                }
-                
-                val showGroupBanner = isSearchMode && messageText.isNotBlank() && onCreatePublicRoom != null
-                AnimatedVisibility(
-                    visible = showGroupBanner, 
-                    enter = fadeIn() + slideInVertically { it / 2 },
-                    exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
-                ) {
-                    Button(
-                        onClick = { onCreatePublicRoom?.invoke(messageText, null) },
-                        colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.padding(bottom = 12.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
-                    ) {
-                        Icon(Icons.Rounded.Grain, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "START GROUP: $messageText", 
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-                }
-
-                if (incomingRadioRequests.isNotEmpty()) {
-                    val request = incomingRadioRequests.first()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .background(StealthPrimary.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-                            .padding(12.dp)
-                            .testTag("IncomingRequestRow"),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = request.emoji, fontSize = 20.sp)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "INCOMING CONNECTION REQUEST", 
-                                style = MaterialTheme.typography.labelSmall, 
-                                color = StealthPrimary
-                            )
-                            Text(
-                                text = (request.name ?: "UNKNOWN").uppercase(), 
-                                style = MaterialTheme.typography.bodySmall, 
-                                color = Color.White
-                            )
-                        }
-                        Row {
-                            IconButton(
-                                onClick = { onDenyRadio(request) },
-                                modifier = Modifier.testTag("DenyRequestButton")
-                            ) { 
-                                Icon(Icons.Rounded.Close, contentDescription = "Deny", tint = StealthError) 
-                            }
-                            IconButton(
-                                onClick = { onAcceptRadio(request) },
-                                modifier = Modifier.testTag("AcceptRequestButton")
-                            ) { 
-                                Icon(Icons.Rounded.Check, contentDescription = "Accept", tint = StealthPrimary) 
-                            }
-                        }
-                    }
+    Column(modifier = modifier.zIndex(10f)) {
+        if (incomingRadioRequests.isNotEmpty()) {
+            val request = incomingRadioRequests.first()
+            Surface(
+                color = StealthPrimary.copy(alpha = 0.1f),
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = request.emoji, fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(text = "Connection from ${request.name}", style = MaterialTheme.typography.bodySmall, color = Color.White, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { onDenyRadio(request) }) { Icon(Icons.Rounded.Close, contentDescription = null, tint = StealthError) }
+                    IconButton(onClick = { onAcceptRadio(request) }) { Icon(Icons.Rounded.Check, contentDescription = null, tint = StealthPrimary) }
                 }
             }
-        },
-        entries = {
-            val isMessageLocked = currentRoute is Route.Nearby
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    EnvironmentToggle(label = "STEALTH", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
-                }
+        }
 
-                BlukitInput(
-                    isReadOnly = false, 
-                    isMessageLocked = isMessageLocked,
-                    isPrivate = isPrivate, 
-                    targetName = targetName, 
-                    value = messageText, 
-                    onValueChange = onMessageChange, 
-                    onSend = onSend, 
-                    onAttachFile = onAttachFile, 
-                    onManage = onManage,
-                    onNote = onNote,
-                    onTask = onTask, 
-                    messageCount = messageCount, 
-                    isSearchActive = isSearchMode,
-                    onSearchToggle = onSearchToggle,
-                    onFocusChange = onFocusChange,
-                    modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
-                )
-            }
-        },
-        modifier = modifier.zIndex(10f)
-    )
+        BlukitInput(
+            isReadOnly = false, 
+            isMessageLocked = currentRoute is Route.Nearby,
+            isPrivate = isPrivate, 
+            targetName = targetName, 
+            value = messageText, 
+            onValueChange = onMessageChange, 
+            onSend = onSend, 
+            onAttachFile = onAttachFile, 
+            onManage = onManage,
+            onNote = onNote,
+            onTask = onTask, 
+            messageCount = messageCount, 
+            isSearchActive = isSearchMode,
+            onSearchToggle = onSearchToggle,
+            onFocusChange = onFocusChange,
+            modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
+        )
+    }
 }
 
 @Composable
@@ -518,9 +409,6 @@ fun ConnectionTicker(
     }
 }
 
-/**
- * MESSAGE ITEM: A single message entry in the feed.
- */
 @Composable
 fun MessageItem(
     message: Message?,
@@ -536,102 +424,59 @@ fun MessageItem(
     onSourceLongClick: () -> Unit,
     topContent: @Composable (() -> Unit)? = null
 ) {
-    val coordinates = LocalPersonaCoordinates.current
     val timestamp = message?.let { SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(Date(it.timestamp)) } ?: ""
-    val themeColor = if (isMutual) StealthRose else if (isPulsed) StealthPrimary else Color.White
-    val signatureSource = senderSource ?: Source(id = message?.senderId ?: "", name = message?.senderName ?: "SOURCE", emoji = message?.senderEmoji ?: "👤", medium = Source.ConnectionMedium.BLUETOOTH)
-    val isSynthesis = message?.isMeta == true
-    val isEntry = isGrouped && message != null
+    val bubbleColor = if (isMe) StealthPrimary.copy(alpha = 0.15f) else StealthSurface
+    val alignment = if (isMe) Alignment.End else Alignment.Start
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .combinedClickable(onClick = onMessageClick, onLongClick = onSourceLongClick)
-            .background(if (isSelected) Color.White.copy(alpha = StealthAlphaLow) else Color.Transparent)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalAlignment = alignment
     ) {
-        if (topContent != null) {
-            Box(modifier = Modifier.padding(start = 48.dp, bottom = 8.dp)) {
-                topContent()
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .padding(start = 0.dp)
-                    .width(20.dp)
-                    .height(44.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isEntry) {
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .fillMaxHeight()
-                            .background(themeColor.copy(alpha = 0.15f))
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .background(themeColor.copy(alpha = 0.3f), CircleShape)
-                            .border(1.dp, themeColor.copy(alpha = 0.5f), CircleShape)
-                    )
-                }
-                
-                Box(
-                    modifier = Modifier
-                        .onGloballyPositioned { 
-                            val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                            val current: PersonaConnectionPoints = coordinates[rowId] ?: PersonaConnectionPoints()
-                            coordinates[rowId] = current.copy(ticker = it.positionInRoot() + center) 
-                        }
-                        .size(1.dp)
-                )
-            }
-
-            if (timestamp.isNotEmpty()) {
-                Text(
-                    text = timestamp, 
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.4f), 
-                    modifier = Modifier.padding(start = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            PersonaSignature(
-                device = signatureSource,
-                isPulsed = isPulsed,
-                isSelected = isSelected,
-                isPeerPulsed = false,
-                size = 32.dp,
-                onClick = onMessageClick,
-                onLongClick = onSourceLongClick,
-                modifier = Modifier.onGloballyPositioned { 
-                    val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                    val current: PersonaConnectionPoints = coordinates[rowId] ?: PersonaConnectionPoints()
-                    coordinates[rowId] = current.copy(uph = it.positionInRoot() + center) 
-                }
+        if (!isMe && !isGrouped && message != null) {
+            Text(
+                text = message.senderName,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.5f),
+                modifier = Modifier.padding(start = 12.dp, bottom = 2.dp)
             )
+        }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-            ) {
-                MessageContent(message = message, themeColor = themeColor)
-            }
-
-            if (isMutual) { 
-                Icon(imageVector = Icons.Rounded.Flare, contentDescription = null, tint = StealthRose.copy(alpha = 0.5f), modifier = Modifier.size(14.dp)) 
-                Spacer(modifier = Modifier.width(8.dp))
+        Surface(
+            color = bubbleColor,
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = if (isMe) 16.dp else 4.dp,
+                bottomEnd = if (isMe) 4.dp else 16.dp
+            ),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f)),
+            onClick = onMessageClick,
+            modifier = Modifier
+                .widthIn(max = 300.dp)
+                .combinedClickable(
+                    onClick = onMessageClick,
+                    onLongClick = onSourceLongClick
+                )
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                MessageContent(message = message, themeColor = if (isMe) StealthPrimary else StealthRose)
+                
+                Row(
+                    modifier = Modifier.align(Alignment.End).padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = timestamp,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        color = Color.White.copy(alpha = 0.3f)
+                    )
+                    if (isMe && message?.status == Message.STATUS_DELIVERED) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(Icons.Rounded.DoneAll, contentDescription = null, tint = StealthPrimary, modifier = Modifier.size(12.dp))
+                    }
+                }
             }
         }
     }

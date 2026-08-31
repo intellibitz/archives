@@ -28,7 +28,9 @@ import cc.thevar.blukit.domain.model.GroupEvent
 import cc.thevar.blukit.ui.components.MessageRecordCreator
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.components.*
+import cc.thevar.blukit.ui.components.BlukitToolbar
+import cc.thevar.blukit.ui.components.BlukitFieldScaffold
+import cc.thevar.blukit.ui.components.MessageHub
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -120,40 +122,14 @@ fun PrivateGroupField(
         header = header,
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
-                IdentityStage(
-                    title = group?.name ?: "GROUP",
-                    breadcrumbTrail = breadcrumbTrail,
-                    onCrumbClick = onCrumbClick,
-                    activeGroups = activeGroups,
-                    onShowTimeline = onShowTimeline,
+                BlukitToolbar(
+                    title = group?.name ?: "Group",
+                    onLogout = onResetProfile,
                     onResetProfile = onResetProfile,
                     onBack = onBack,
                     themeColor = themeColor,
-                    userCount = group?.memberIds?.size ?: 0,
-                    onModeChange = { onNavigateToLiveFeed() },
-                    trailingContent = {
-                        if (onSearchToggle != null) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                IconButton(
-                                    onClick = onSearchToggle,
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People,
-                                        contentDescription = "Toggle Search",
-                                        tint = if (isSearchActive) StealthAmber else themeColor,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                                Text(
-                                    text = if (isSearchActive) "SEARCH" else "PEOPLE",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                    }
+                    connectionStatus = if (memberSet.isNotEmpty()) "${memberSet.size + 1} people" else "Just you",
+                    trend = trend
                 )
 
                 if (childGroups.isNotEmpty()) {

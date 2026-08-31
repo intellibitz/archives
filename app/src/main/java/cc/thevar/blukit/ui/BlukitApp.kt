@@ -31,7 +31,7 @@ import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.components.MessageRippleEffect
-import cc.thevar.blukit.ui.components.ConnectionHeader
+import cc.thevar.blukit.ui.components.BlukitToolbar
 import cc.thevar.blukit.ui.components.MessageHub
 import cc.thevar.blukit.ui.screens.*
 import cc.thevar.blukit.ui.theme.*
@@ -154,27 +154,20 @@ fun BlukitApp(
                             }
                         )
                     } else {
-                        ConnectionHeader(
-                            themeColor = if (currentRoute is Route.GroupField) StealthRose else StealthPrimary,
-                            onAwakenBluetooth = { connectionViewModel.refreshRadios() },
-                            onAwakenWifi = { /* WiFi logic */ },
-                            onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
-                            onOpenSettings = {
-                                context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = Uri.fromParts("package", context.packageName, null)
-                                })
-                            },
+                        BlukitToolbar(
+                            title = if (currentRoute is Route.GroupField) {
+                                connectionState.session.groups.find { it.id == (currentRoute as Route.GroupField).roomId }?.name ?: "Group"
+                            } else "Blukit",
                             onLogout = { viewModel.logout() },
+                            onResetProfile = { viewModel.resetProfile() },
+                            themeColor = if (currentRoute is Route.GroupField) StealthRose else StealthPrimary,
+                            onBack = if (navViewModel.backStack.size > 1) { { navViewModel.popBackStack() } } else null,
+                            connectionStatus = harmonyReport.synthesis,
+                            trend = harmonyReport.trendLabel,
                             isBluetoothOff = !connectionState.harmony.isBluetoothEnabled,
                             isWifiOff = !connectionState.harmony.isWifiEnabled,
-                            isPermissionMissing = !permissionState.essentialPermissionsGranted,
-                            isPermanentlyDenied = isPermanentlyDenied,
-                            connectionStatus = harmonyReport.synthesis,
-                            breeze = harmonyReport.currentBreeze,
-                            trend = harmonyReport.trendLabel,
-                            highConnectionMessages = trendingMessages,
-                            trail = breadcrumbTrail,
-                            onCrumbClick = onCrumbClick
+                            onAwakenBluetooth = { connectionViewModel.refreshRadios() },
+                            onAwakenWifi = { /* WiFi logic */ }
                         )
                     }
                     

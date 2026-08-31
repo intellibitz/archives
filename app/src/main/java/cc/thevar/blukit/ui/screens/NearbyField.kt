@@ -8,6 +8,8 @@ package cc.thevar.blukit.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -105,20 +107,44 @@ fun NearbyField(
                 )
 
                 if (state.crowd.scannedDevices.isNotEmpty()) {
-                    ConnectionTicker(
-                        state = state,
-                        connectionList = connectionList.map { it.source to it.latestMessage },
-                        messageCounts = messageCounts,
-                        localDeviceId = localDeviceId,
-                        localNickname = userNickname,
-                        pulsedPeers = pulsedPeers,
-                        onMessageClick = { id -> if (state.session.groups.any { it.id == id }) onNavigateToGroup(id) else onNavigateToMessage(id) },
-                        onSourceClick = { onNavigateToMessage(it.id) },
-                        onSourceLongClick = onSourceLongClick,
+                    LazyColumn(
                         modifier = Modifier.weight(1f),
-                        reverseLayout = false,
-                        trend = harmonyReport?.trendLabel
-                    )
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item {
+                            TickerSectionHeader(title = "NEARBY GROUPS", color = StealthPrimary)
+                        }
+                        
+                        val publicGroups = state.session.groups.filter { it.scope == Group.SCOPE_PUBLIC }
+                        items(publicGroups) { group ->
+                            GroupSummary(
+                                title = group.name,
+                                subtitle = "Public Group",
+                                icon = Icons.Rounded.Public,
+                                themeColor = StealthPrimary,
+                                count = group.memberIds.size,
+                                lastUpdate = "Active",
+                                onClick = { onNavigateToGroup(group.id) }
+                            )
+                        }
+
+                        item {
+                            TickerSectionHeader(title = "PEOPLE NEARBY", color = StealthRose)
+                        }
+
+                        items(state.crowd.scannedDevices) { source ->
+                            GroupSummary(
+                                title = source.name ?: "Unknown",
+                                subtitle = "Available to connect",
+                                icon = Icons.Rounded.Person,
+                                themeColor = StealthRose,
+                                count = -1,
+                                lastUpdate = "Nearby",
+                                onClick = { onNavigateToMessage(source.id) }
+                            )
+                        }
+                    }
                 } else {
                     ConnectionNearbyView(onSignalPresence = { onShowAssistantGhost() }, modifier = Modifier.weight(1f))
                 }
