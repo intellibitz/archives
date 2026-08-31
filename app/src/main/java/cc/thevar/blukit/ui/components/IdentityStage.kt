@@ -85,7 +85,7 @@ fun SphereTicker(title: String, modifier: Modifier = Modifier, spheres: List<Sph
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(6.dp).background(StealthPrimary.copy(alpha = alpha), CircleShape))
                 Spacer(modifier = Modifier.width(8.dp))
-                val spheresLabel = if (spheres.isEmpty()) "nearby Sources" else "${spheres.size} Spheres active"
+                val spheresLabel = if (spheres.isEmpty()) "nearby people" else "${spheres.size} Groups active"
                 Text(
                     text = spheresLabel, 
                     style = MaterialTheme.typography.labelSmall,
@@ -327,7 +327,7 @@ fun ResonanceHeader(
                         modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
                     ) {
                         Text(
-                            text = when { isPermissionMissing -> if (isPermanentlyDenied) "Setup" else "Grant"; isBluetoothOff -> "Awake"; else -> "Active" }, 
+                            text = when { isPermissionMissing -> if (isPermanentlyDenied) "Setup" else "Grant"; isBluetoothOff -> "Turn On"; else -> "Active" }, 
                             style = MaterialTheme.typography.labelSmall.copy(color = StealthError), 
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).clickable { 
                                 if (isPermissionMissing) { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() }
@@ -415,7 +415,7 @@ fun IdentityStage(
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "Spheres", 
+                                    text = "Groups", 
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (!isLiveFeedMode) StealthOnPrimary else Color.White.copy(alpha = StealthAlphaHigh)
                                 )
@@ -429,7 +429,7 @@ fun IdentityStage(
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "Stream", 
+                                    text = "Live", 
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (isLiveFeedMode) StealthOnPrimary else Color.White.copy(alpha = StealthAlphaHigh)
                                 )
@@ -461,8 +461,8 @@ fun IdentityStage(
 
             if (userCount != null) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onShowTimeline() }) {
-                    Icon(imageVector = Icons.Rounded.Layers, contentDescription = "Ledger", tint = themeColor, modifier = Modifier.size(20.dp))
-                    Text(text = "LEDGER", style = MaterialTheme.typography.labelSmall, color = themeColor.copy(alpha = StealthAlphaHigh))
+                    Icon(imageVector = Icons.Rounded.Layers, contentDescription = "History", tint = themeColor, modifier = Modifier.size(20.dp))
+                    Text(text = "HISTORY", style = MaterialTheme.typography.labelSmall, color = themeColor.copy(alpha = StealthAlphaHigh))
                 }
                 Spacer(modifier = Modifier.width(16.dp))
             }

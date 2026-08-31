@@ -85,7 +85,7 @@ fun SphereField(
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = sphere?.name ?: "SPHERE",
+                    title = sphere?.name ?: "GROUP",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeRooms = state.session.groups,
@@ -100,7 +100,7 @@ fun SphereField(
                             IconButton(onClick = onSearchToggle, modifier = Modifier.size(28.dp)) {
                                 Icon(imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People, contentDescription = "Toggle Search", tint = if (isSearchActive) StealthAmber else StealthRose, modifier = Modifier.size(20.dp))
                             }
-                            Text(text = if (isSearchActive) "SEARCH" else "SOURCES", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthRose).copy(alpha = StealthAlphaHigh))
+                            Text(text = if (isSearchActive) "SEARCH" else "PEOPLE", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthRose).copy(alpha = StealthAlphaHigh))
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                     }
@@ -111,21 +111,6 @@ fun SphereField(
                     themeColor = StealthRose,
                     onEchoClick = { onNavigateToPulse(it) }
                 )
-
-                val airReport = state.session.messages.findLast { 
-                    it.groupId == sphereId && it.type == Echo.TYPE_AI_SUMMARY 
-                }
-                val minedTasks = state.session.messages.filter {
-                    it.groupId == sphereId && it.type == Echo.TYPE_ASSIGNMENT_TASK && it.senderId == "ATMOSPHERE_MINER"
-                }.map { it.content.removePrefix("NEW TASK DETECTED: ") }.take(3)
-
-                if (airReport != null) {
-                    AirSynthesisCard(
-                        report = airReport.content,
-                        trend = airReport.trendLabel,
-                        tasks = minedTasks
-                    )
-                }
 
                 ResonanceTicker(
                     state = state,

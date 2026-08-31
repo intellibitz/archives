@@ -44,6 +44,9 @@ data class Sphere(
     val userRoles: Map<String, String> = emptyMap(), // Map of userId to role name
     val anchoredPublicSphereId: String? = null, // ID of the public sphere this private one is anchored to
     val encryptedGroupKey: String? = null, // Group shared secret for multi-user private resonance
+    val trendLabel: String? = null, // Silent AIR trend detection
+    val resonanceSummary: String? = null, // Silent AIR synthesis summary
+    val extractedTasks: Set<String> = emptySet(), // Tasks mined by AIR
 ) {
     /**
      * Resolves all unique member IDs across flat list and partitioned sections.

@@ -72,37 +72,18 @@ class AtmosphereManager(
 
             val synthesis = generateSynthesis(groupId, echoes, extractedTasks)
             
-            val aiEcho = Echo(
-                messageId = UUID.randomUUID().toString(),
-                senderId = "ATMOSPHERE_ORCHESTRATOR",
-                senderName = "THE ATMOSPHERE",
-                senderEmoji = "🧠",
-                groupId = groupId,
-                content = synthesis.summary,
-                trendLabel = synthesis.trendLabel,
-                timestamp = System.currentTimeMillis(),
-                type = Echo.TYPE_AI_SUMMARY,
-                isPriority = true,
-                isMeta = true,
-            )
-            echoLedger.upsertEcho(aiEcho)
-            
-            // If tasks were mined, inject them as system echoes
-            extractedTasks.forEach { task ->
-                val taskEcho = Echo(
-                    messageId = UUID.randomUUID().toString(),
-                    senderId = "ATMOSPHERE_MINER",
-                    senderName = "AIR MINER",
-                    senderEmoji = "⚒️",
-                    groupId = groupId,
-                    content = "NEW TASK DETECTED: $task",
-                    timestamp = System.currentTimeMillis(),
-                    type = Echo.TYPE_ASSIGNMENT_TASK,
-                    isMeta = true
+            // SILENT AIR: Instead of broadcasting an Echo, we update the Sphere metadata
+            echoLedger.getSphere(groupId)?.let { sphere ->
+                echoLedger.insertSphere(
+                    sphere.copy(
+                        trendLabel = synthesis.trendLabel,
+                        resonanceSummary = synthesis.summary,
+                        extractedTasks = extractedTasks.toSet()
+                    )
                 )
-                echoLedger.upsertEcho(taskEcho)
             }
-            Log.i("AtmosphereManager", "Sphere Resonance: Synthesis broadcasted for $groupId")
+            
+            Log.i("AtmosphereManager", "Sphere Resonance: Synthesis updated silently for $groupId")
         }
     }
 

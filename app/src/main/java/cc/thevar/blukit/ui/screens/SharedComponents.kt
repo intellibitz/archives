@@ -362,7 +362,7 @@ fun ResonanceHeader(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = when { isPermissionMissing -> if (isPermanentlyDenied) "Setup" else "Grant"; isBluetoothOff -> "Awake"; else -> "Active" }, 
+                            text = when { isPermissionMissing -> if (isPermanentlyDenied) "Setup" else "Grant"; isBluetoothOff -> "Turn On"; else -> "Active" }, 
                             style = MaterialTheme.typography.labelSmall.copy(color = StealthError), 
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).clickable { 
                                 if (isPermissionMissing) { if (isPermanentlyDenied) onOpenSettings() else onGrantPermissions() }
@@ -456,7 +456,7 @@ fun IdentityStage(
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "Feed", 
+                                    text = "Live", 
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (isLiveFeedMode) StealthOnPrimary else Color.White.copy(alpha = StealthAlphaHigh)
                                 )

@@ -48,21 +48,21 @@ class BluetoothViewModel(
 
     private val _selectedSources = MutableStateFlow<Set<String>>(emptySet())
 
-    private val _resonanceTrigger = kotlinx.coroutines.flow.MutableSharedFlow<Pair<String, Boolean>>()
-    val resonanceTrigger = _resonanceTrigger.asSharedFlow()
+    private val _messageTrigger = kotlinx.coroutines.flow.MutableSharedFlow<Pair<String, Boolean>>()
+    val messageTrigger = _messageTrigger.asSharedFlow()
 
-    private val _currentSphereId = MutableStateFlow(Sphere.ID_GLOBAL)
-    /** The currently focused Sphere context. */
-    val currentChainId = _currentSphereId.asStateFlow()
+    private val _currentGroupId = MutableStateFlow(Sphere.ID_GLOBAL)
+    /** The currently focused Group context. */
+    val currentGroupId = _currentGroupId.asStateFlow()
 
-    /** Public Spheres sensed in the local air, excluding current focus. */
-    val discoveredCrowds = resonanceController.discoveredRooms
-        .filter { it.id != _currentSphereId.value }
+    /** Public Groups sensed in the local air, excluding current focus. */
+    val discoveredGroups = resonanceController.discoveredRooms
+        .filter { it.id != _currentGroupId.value }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
 
-    /** ECHO CANVAS: Reactive flow of high-resonance Echoes for the header. */
+    /** MESSAGE CANVAS: Reactive flow of trending Messages for the header. */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val highResonancePulses: StateFlow<List<Echo>> = _currentSphereId
+    val trendingMessages: StateFlow<List<Echo>> = _currentGroupId
         .flatMapLatest { groupId ->
             echoLedger.getHighResonanceEchoes(groupId)
         }
@@ -129,7 +129,7 @@ class BluetoothViewModel(
         ) { connected, scanned -> connected to scanned }
             .debounce(2.seconds)
             .onEach { (connected, scanned) ->
-                val currentSphere = echoLedger.getSphere(_currentSphereId.value)
+                val currentSphere = echoLedger.getSphere(_currentGroupId.value)
                 if (currentSphere?.scope == Sphere.SCOPE_PRIVATE) {
                     val missingMembers = currentSphere.memberIds - connected - repository.getDeviceId()
                     missingMembers.forEach { memberId ->
@@ -365,7 +365,40 @@ class BluetoothViewModel(
         }
     }
 
-    fun requestWhisper(device: Source) = connectToSource(device)
+    fun requestWhisper(device: Source, onAnchoredCreated: ((String) -> Unit)? = null) {
+        viewModelScope.launch {
+            val currentGid = _currentGroupId.value
+            val currentSphere = echoLedger.getSphere(currentGid)
+            
+            if (currentSphere?.scope == Sphere.SCOPE_PUBLIC && currentGid != Sphere.ID_SILENCE) {
+                val anchoredGid = getOrCreateAnchoredGroup(
+                    name = "Chat with ${device.name}", 
+                    targetId = device.id, 
+                    anchoredPublicId = currentGid
+                )
+                enterGroup(anchoredGid)
+                onAnchoredCreated?.invoke(anchoredGid)
+            } else {
+                connectToSource(device)
+            }
+        }
+    }
+
+    private suspend fun getOrCreateAnchoredGroup(name: String, targetId: String, anchoredPublicId: String): String {
+        val existing = echoLedger.spheres.value.find { 
+            it.scope == Sphere.SCOPE_PRIVATE && 
+            it.anchoredPublicSphereId == anchoredPublicId && 
+            (it.memberIds.contains(targetId) || it.allMemberIds.contains(targetId))
+        }
+        if (existing != null) return existing.id
+        
+        return startSphereResonance(
+            name = name, 
+            members = setOf(targetId), 
+            scope = Sphere.SCOPE_PRIVATE, 
+            anchoredPublicSphereId = anchoredPublicId
+        )
+    }
 
     fun acceptRadio(device: Source) = resonanceController.acceptRadio(device)
 
@@ -377,18 +410,18 @@ class BluetoothViewModel(
 
     fun clearSelection() { _selectedSources.value = emptySet() }
 
-    fun startSphereResonance(name: String, members: Set<String>? = null, scope: Int = Sphere.SCOPE_PRIVATE, templateId: String? = null): String {
+    fun startSphereResonance(name: String, members: Set<String>? = null, scope: Int = Sphere.SCOPE_PRIVATE, templateId: String? = null, anchoredPublicSphereId: String? = null): String {
         if (name.isBlank()) return ""
         
         val targetMembers = members ?: _selectedSources.value
         if (scope != Sphere.SCOPE_PUBLIC && targetMembers.isEmpty()) {
-            Log.w("BluetoothViewModel", "Cannot start private Sphere with empty Source set")
+            Log.w("BluetoothViewModel", "Cannot start private Group with empty Source set")
             return ""
         }
 
-        val currentSphere = state.value.session.groups.find { it.id == _currentSphereId.value }
+        val currentSphere = state.value.session.groups.find { it.id == _currentGroupId.value }
         val groupId = Sphere.generateId(name, scope, currentSphere)
-        val parentId = _currentSphereId.value
+        val parentId = _currentGroupId.value
         
         viewModelScope.launch {
             val existing = echoLedger.getSphere(groupId)
@@ -401,7 +434,8 @@ class BluetoothViewModel(
                         scope = Sphere.SCOPE_PUBLIC,
                         parentId = parentId,
                         templateId = templateId,
-                        ownerId = repository.getDeviceId()
+                        ownerId = repository.getDeviceId(),
+                        anchoredPublicSphereId = anchoredPublicSphereId
                     )
                     echoLedger.insertSphere(newSphere)
                     
@@ -420,10 +454,10 @@ class BluetoothViewModel(
                     echoLedger.updateSphereLastEcho(groupId, System.currentTimeMillis())
                 }
             } else {
-                resonanceController.startGroupRoom(name, targetMembers, scope, groupId = groupId, parentId = parentId)
+                resonanceController.startGroupRoom(name, targetMembers, scope, groupId = groupId, parentId = parentId, anchoredPublicSphereId = anchoredPublicSphereId)
                 delay(100.milliseconds) 
                 echoLedger.getSphere(groupId)?.let { tie ->
-                    echoLedger.insertSphere(tie.copy(parentId = parentId, ownerId = repository.getDeviceId()))
+                    echoLedger.insertSphere(tie.copy(parentId = parentId, ownerId = repository.getDeviceId(), anchoredPublicSphereId = anchoredPublicSphereId))
                 }
             }
         }
@@ -441,18 +475,18 @@ class BluetoothViewModel(
     fun echo(message: String, groupId: String? = null) {
         if (message.isBlank()) return
         viewModelScope.launch {
-            val targetGid = groupId ?: _currentSphereId.value
+            val targetGid = groupId ?: _currentGroupId.value
             val echo = resonanceController.sendGroupMessage(message, targetGid)
             if (echo != null) {
                 hapticManager.triggerMessage(cc.thevar.blukit.data.system.HapticManager.MessageType.RESONATE)
-                _resonanceTrigger.emit(targetGid to (echo.messageScope == Echo.MESSAGE_WHISPER))
+                _messageTrigger.emit(targetGid to (echo.messageScope == Echo.MESSAGE_WHISPER))
             }
         }
     }
 
     fun echoFile(uri: android.net.Uri, messageScope: Int = Echo.MESSAGE_SILENCE) {
         viewModelScope.launch {
-            val activeSphereId = _currentSphereId.value
+            val activeSphereId = _currentGroupId.value
             val activeSphere = echoLedger.getSphere(activeSphereId)
 
             when (messageScope) {
@@ -514,8 +548,8 @@ class BluetoothViewModel(
 
     fun restoreFromVault(groupId: String) = echoLedger.restoreFromVault(groupId)
 
-    fun enterSphere(chainId: String) {
-        _currentSphereId.value = chainId
+    fun enterGroup(groupId: String) {
+        _currentGroupId.value = groupId
     }
 
     fun disconnect() {
@@ -551,7 +585,7 @@ class BluetoothViewModel(
 
     fun castVote(messageId: String, weight: Int) {
         viewModelScope.launch {
-            atmosphereManager.castConsensusVote(messageId, _currentSphereId.value, weight)
+            atmosphereManager.castConsensusVote(messageId, _currentGroupId.value, weight)
         }
     }
 

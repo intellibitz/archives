@@ -73,18 +73,13 @@ fun SensingField(
     var showVault by remember { mutableStateOf(false) }
     var messageText by remember { mutableStateOf("") }
 
-    val globalSynthesis = remember(state.session.messages) {
-        state.session.messages.findLast { 
-            (it.groupId == Sphere.ID_GLOBAL || it.groupId == null) && (it.type == Echo.TYPE_AI_SUMMARY) 
-        }
-    }
 
     BlukitFieldScaffold(
         header = header,
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = "SENSING",
+                    title = "NEARBY",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeRooms = state.session.groups,
@@ -101,7 +96,7 @@ fun SensingField(
                                 IconButton(onClick = onSearchToggle, modifier = Modifier.size(28.dp)) {
                                     Icon(imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People, contentDescription = "Toggle Search", tint = if (isSearchActive) StealthAmber else StealthPrimary, modifier = Modifier.size(20.dp))
                                 }
-                                Text(text = if (isSearchActive) "SEARCH" else "SOURCES", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = StealthAlphaHigh))
+                                Text(text = if (isSearchActive) "SEARCH" else "PEOPLE", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = StealthAlphaHigh))
                             }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
@@ -109,19 +104,6 @@ fun SensingField(
                 )
 
                 if (state.crowd.scannedDevices.isNotEmpty()) {
-                    globalSynthesis?.let { synthesis ->
-                        BlukitWidget(header = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(14.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(text = "Sphere Synthesis", style = MaterialTheme.typography.labelSmall, color = StealthAmber)
-                                }
-                            },
-                            entries = { Text(text = synthesis.content, color = Color.White, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(12.dp)) },
-                            themeColor = StealthAmber, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        )
-                    }
-
                     ResonanceTicker(
                         state = state,
                         resonanceList = resonanceList.map { it.source to it.latestEcho },

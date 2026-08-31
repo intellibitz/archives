@@ -59,13 +59,13 @@ fun BlukitApp(
     val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
-    val trendingMessages by bluetoothViewModel.highResonancePulses.collectAsStateWithLifecycle()
+    val trendingMessages by bluetoothViewModel.trendingMessages.collectAsStateWithLifecycle()
     val harmonyReport by harmonyViewModel.report.collectAsStateWithLifecycle()
 
     val currentRoute by navViewModel.currentRoute.collectAsStateWithLifecycle()
     val backStack = navViewModel.backStack
 
-    var focusedSphereId by remember { mutableStateOf<String?>(null) }
+    var focusedGroupId by remember { mutableStateOf<String?>(null) }
     var sourceForOptions by remember { mutableStateOf<Source?>(null) }
     var showMemberManagement by remember { mutableStateOf(false) }
     var isSearchActive by remember { mutableStateOf(false) }
@@ -80,18 +80,18 @@ fun BlukitApp(
     ) {
         val breadcrumbTrail = navViewModel.getBreadcrumbTrail(
             sessionGroups = bluetoothState.session.groups,
-            focusedSourceId = focusedSphereId,
+            focusedSourceId = focusedGroupId,
             scannedDevices = bluetoothState.crowd.scannedDevices
         )
 
     val onCrumbClick: (Int) -> Unit = { index ->
         navViewModel.navigateToCrumb(index)
-        focusedSphereId = null
+        focusedGroupId = null
     }
 
     var activeRipple by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     LaunchedEffect(Unit) {
-        bluetoothViewModel.resonanceTrigger.collect { trigger ->
+        bluetoothViewModel.messageTrigger.collect { trigger ->
             activeRipple = trigger
         }
     }
@@ -126,9 +126,9 @@ fun BlukitApp(
         navigationSuiteItems = {
             if (nickname != null) {
                 listOf(
-                    Triple(Route.Sensing, "Discovery", Icons.Rounded.Radar),
-                    Triple(Route.LiveFeed, "Feed", Icons.Rounded.Stream),
-                    Triple(Route.Timeline, "History", Icons.Rounded.History),
+                    Triple(Route.Sensing, "Nearby", Icons.Rounded.Radar),
+                    Triple(Route.LiveFeed, "Live", Icons.Rounded.Stream),
+                    Triple(Route.Timeline, "Messages", Icons.Rounded.History),
                 ).forEach { (route, label, icon) ->
                     item(
                         selected = currentRoute::class == route::class,
@@ -253,9 +253,7 @@ fun BlukitApp(
                                     }
                                     is Route.SphereField -> {
                                         val sphere = bluetoothState.session.groups.find { it.id == entryRoute.roomId }
-                                        val sphereTrend = bluetoothState.session.messages.findLast { 
-                                            it.groupId == entryRoute.roomId && it.type == Echo.TYPE_AI_SUMMARY 
-                                        }?.trendLabel
+                                        val sphereTrend = bluetoothState.session.groups.find { it.id == entryRoute.roomId }?.trendLabel
 
                                         if (sphere?.scope == Sphere.SCOPE_PRIVATE) {
                                             PrivateSphereField(
@@ -286,7 +284,9 @@ fun BlukitApp(
                                                 onStartSidePulse = { 
                                                     val selectedIds = bluetoothState.crowd.selectedDevices
                                                     val source = bluetoothState.crowd.scannedDevices.find { it.id in selectedIds }
-                                                    if (source != null) bluetoothViewModel.requestWhisper(source)
+                                                    if (source != null) bluetoothViewModel.requestWhisper(source) { gid ->
+                                                        navViewModel.navigate(Route.SphereField(gid))
+                                                    }
                                                 },
                                                 onStartChain = { bluetoothViewModel.startSphereResonance("SUB SPHERE") },
                                                 onClearSelection = { bluetoothViewModel.clearSelection() },
@@ -319,7 +319,9 @@ fun BlukitApp(
                                                 onStartSidePulse = { 
                                                     val selectedIds = bluetoothState.crowd.selectedDevices
                                                     val source = bluetoothState.crowd.scannedDevices.find { it.id in selectedIds }
-                                                    if (source != null) bluetoothViewModel.requestWhisper(source)
+                                                    if (source != null) bluetoothViewModel.requestWhisper(source) { gid ->
+                                                        navViewModel.navigate(Route.SphereField(gid))
+                                                    }
                                                 },
                                                 onStartChain = { bluetoothViewModel.startSphereResonance("NEW SPHERE") },
                                                 onClearSelection = { bluetoothViewModel.clearSelection() },
@@ -381,7 +383,7 @@ fun BlukitApp(
                         isRequesting = bluetoothState.crowd.incomingRadioRequests.contains(source),
                         activeGroupId = sphereId,
                         isAlreadyInActiveGroup = isAlreadyInGroup,
-                        onEcho = { bluetoothViewModel.requestWhisper(source); sourceForOptions = null },
+                        onEcho = { bluetoothViewModel.requestWhisper(source) { gid -> navViewModel.navigate(Route.SphereField(gid)) }; sourceForOptions = null },
                         onAccept = { bluetoothViewModel.acceptRadio(source); sourceForOptions = null },
                         onDeny = { bluetoothViewModel.denyRadio(source); sourceForOptions = null },
                         onDisconnect = { sourceForOptions = null },

@@ -120,7 +120,7 @@ fun PrivateSphereField(
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = sphere?.name ?: "SPHERE",
+                    title = sphere?.name ?: "GROUP",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeRooms = activeSpheres,
@@ -145,7 +145,7 @@ fun PrivateSphereField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SEARCH" else "SOURCES",
+                                    text = if (isSearchActive) "SEARCH" else "PEOPLE",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
                                 )
@@ -156,7 +156,7 @@ fun PrivateSphereField(
                 )
 
                 if (childSpheres.isNotEmpty()) {
-                    TickerSectionHeader(title = "PRIVATE SPHERES", color = themeColor)
+                    TickerSectionHeader(title = "PRIVATE GROUPS", color = themeColor)
                     LazyRow(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -164,7 +164,7 @@ fun PrivateSphereField(
                         items(childSpheres) { tie ->
                             SphereSummary(
                                 title = tie.name,
-                                subtitle = "SUB-SPHERE",
+                                subtitle = "SUB-GROUP",
                                 icon = Icons.Rounded.Hearing,
                                 themeColor = StealthRose,
                                 count = tie.memberIds.size,
@@ -231,7 +231,7 @@ fun PrivateSphereField(
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 BlukitTip(
-                    text = "THIS SPHERE IS SILENT. RESONATE TO START THE LEDGER.",
+                    text = "THIS GROUP IS SILENT. SEND A MESSAGE TO START.",
                     themeColor = themeColor,
                     onDismiss = { showTip = false }
                 )
@@ -278,10 +278,10 @@ fun PrivateSphereField(
             containerColor = StealthBlack,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White,
-            title = { Text("MANAGE SPHERE", style = MaterialTheme.typography.titleMedium) },
+            title = { Text("MANAGE GROUP", style = MaterialTheme.typography.titleMedium) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("SOURCES", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
+                    Text("PEOPLE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
                     sphere.memberIds.forEach { memberId ->
                         val member = state.crowd.scannedDevices.find { it.id == memberId || it.persistentId == memberId }
                         val currentRole = sphere.userRoles[memberId]
@@ -327,7 +327,7 @@ fun PrivateSphereField(
                     }
                     HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("SPHERE ARCHIVE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
+                        Text("GROUP ARCHIVE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
                         Switch(
                             checked = sphere.isVaulted,
                             onCheckedChange = { onVaultSphere(sphere.id, it) },

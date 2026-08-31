@@ -93,7 +93,7 @@ fun ResonanceSensingView(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "SENSING FOR SOURCES...",
+            text = "LOOKING FOR PEOPLE...",
             style = MaterialTheme.typography.titleMedium,
             color = StealthPrimary,
             letterSpacing = 2.sp
@@ -102,7 +102,7 @@ fun ResonanceSensingView(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "The air is silent. No other Sources are nearby. Own your Echo to start the first record in the air.",
+            text = "No one is nearby yet. Start a conversation to be seen.",
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -123,7 +123,7 @@ fun ResonanceSensingView(
             Icon(Icons.Rounded.GraphicEq, contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "RESONATE",
+                text = "START A GROUP",
                 style = MaterialTheme.typography.labelLarge
             )
         }

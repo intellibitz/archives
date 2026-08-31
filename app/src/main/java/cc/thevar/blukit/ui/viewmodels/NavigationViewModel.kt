@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 class NavigationViewModel : ViewModel() {
-    private val _backStack = mutableStateListOf<Route>(Route.Sensing)
+    private val _backStack = mutableStateListOf<Route>(Route.SphereField(Sphere.ID_GLOBAL))
     val backStack: List<Route> = _backStack
 
-    private val _currentRoute = MutableStateFlow<Route>(Route.Sensing)
+    private val _currentRoute = MutableStateFlow<Route>(Route.SphereField(Sphere.ID_GLOBAL))
     val currentRoute: StateFlow<Route> = _currentRoute.asStateFlow()
 
     fun navigate(route: Route, resetStack: Boolean = false) {
@@ -47,7 +47,7 @@ class NavigationViewModel : ViewModel() {
         val trail = mutableListOf<String>()
         _backStack.forEach { route ->
             when (route) {
-                is Route.Sensing -> trail.add("SENSING")
+                is Route.Sensing -> trail.add("NEARBY")
                 is Route.SphereField -> {
                     val sphere = sessionGroups.find { it.id == route.roomId }
                     if (sphere != null) {
@@ -58,10 +58,10 @@ class NavigationViewModel : ViewModel() {
                         }
                         trail.add(sphere.name)
                     } else {
-                        trail.add("SPHERE")
+                        trail.add("GROUP")
                     }
                 }
-                else -> trail.add("BLUKIT")
+                else -> trail.add("CHAT")
             }
         }
         
