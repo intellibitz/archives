@@ -142,6 +142,33 @@ fun SphereField(
                     themeColor = StealthRose,
                     trend = trend
                 )
+
+                EchoHub(
+                    currentRoute = Route.SphereField(sphereId),
+                    messageText = messageText,
+                    onMessageChange = { messageText = it },
+                    onSend = { 
+                        onSend(messageText)
+                        messageText = ""
+                    },
+                    messageCount = state.session.messages.count { it.groupId == sphereId },
+                    incomingRadioRequests = state.crowd.incomingRadioRequests,
+                    selectedDevices = state.crowd.selectedDevices,
+                    onAcceptRadio = onAcceptRadio,
+                    onDenyRadio = onDenyRadio,
+                    onStartSidePulse = onStartSidePulse,
+                    onStartChain = onStartChain, 
+                    onClearSelection = onClearSelection,
+                    onAttachFile = { },
+                    isSearchMode = isSearchActive,
+                    onSearchToggle = onSearchToggle,
+                    onFocusChange = onInputFocusChange,
+                    isStealthMode = isStealthMode,
+                    lowPowerMode = lowPowerMode,
+                    onToggleStealth = onToggleStealth,
+                    onToggleLowPower = onToggleLowPower,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             if (selectedEchoForMenu != null) {
@@ -155,33 +182,6 @@ fun SphereField(
                     onVote = { weight -> onVote(selectedEchoForMenu!!.messageId, weight) }
                 )
             }
-
-            EchoHub(
-                currentRoute = Route.SphereField(sphereId),
-                messageText = messageText,
-                onMessageChange = { messageText = it },
-                onSend = { 
-                    onSend(messageText)
-                    messageText = ""
-                },
-                messageCount = state.session.messages.count { it.groupId == sphereId },
-                incomingRadioRequests = state.crowd.incomingRadioRequests,
-                selectedDevices = state.crowd.selectedDevices,
-                onAcceptRadio = onAcceptRadio,
-                onDenyRadio = onDenyRadio,
-                onStartSidePulse = onStartSidePulse,
-                onStartChain = onStartChain, 
-                onClearSelection = onClearSelection,
-                onAttachFile = { },
-                isSearchMode = isSearchActive,
-                onSearchToggle = onSearchToggle,
-                onFocusChange = onInputFocusChange,
-                isStealthMode = isStealthMode,
-                lowPowerMode = lowPowerMode,
-                onToggleStealth = onToggleStealth,
-                onToggleLowPower = onToggleLowPower,
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-            )
         }
     )
 }

@@ -66,7 +66,7 @@ fun ResonanceTicker(
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(bottom = 120.dp, top = 16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp, top = 16.dp),
         reverseLayout = reverseLayout,
         verticalArrangement = if (reverseLayout) Arrangement.Bottom else Arrangement.Top
     ) {

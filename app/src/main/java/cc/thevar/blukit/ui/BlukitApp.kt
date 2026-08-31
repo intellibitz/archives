@@ -70,11 +70,19 @@ fun BlukitApp(
     var showMemberManagement by remember { mutableStateOf(false) }
     var isSearchActive by remember { mutableStateOf(false) }
     
-    val breadcrumbTrail = navViewModel.getBreadcrumbTrail(
-        sessionGroups = bluetoothState.session.groups,
-        focusedSourceId = focusedSphereId,
-        scannedDevices = bluetoothState.crowd.scannedDevices
-    )
+    val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
+    val activeEchoId = remember { mutableStateOf<String?>(null) }
+
+    CompositionLocalProvider(
+        LocalPersonaCoordinates provides personaCoordinates,
+        LocalActiveEchoId provides activeEchoId,
+        LocalUserEmoji provides (emojiAvatar ?: "👤")
+    ) {
+        val breadcrumbTrail = navViewModel.getBreadcrumbTrail(
+            sessionGroups = bluetoothState.session.groups,
+            focusedSourceId = focusedSphereId,
+            scannedDevices = bluetoothState.crowd.scannedDevices
+        )
 
     val onCrumbClick: (Int) -> Unit = { index ->
         navViewModel.navigateToCrumb(index)
@@ -397,4 +405,5 @@ fun BlukitApp(
             onFinished = { activeRipple = null }
         )
     }
+}
 }

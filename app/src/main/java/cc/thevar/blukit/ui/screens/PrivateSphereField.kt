@@ -192,39 +192,37 @@ fun PrivateSphereField(
                     themeColor = themeColor,
                     trend = trend
                 )
-            }
 
-            EchoHub(
-                currentRoute = Route.SphereField(sphereId ?: ""),
-                messageText = messageText,
-                onMessageChange = { messageText = it },
-                onSend = { 
-                    onSend(messageText)
-                    messageText = ""
-                },
-                messageCount = state.session.messages.filter { it.groupId == sphereId }.size,
-                incomingRadioRequests = state.crowd.incomingRadioRequests,
-                selectedDevices = state.crowd.selectedDevices,
-                onAcceptRadio = onAcceptRadio,
-                onDenyRadio = onDenyRadio,
-                onStartSidePulse = onStartSidePulse,
-                onStartChain = onStartChain, 
-                onClearSelection = onClearSelection,
-                onAttachFile = { },
-                isSearchMode = isSearchActive,
-                onSearchToggle = onSearchToggle,
-                onManage = onShowManagement,
-                onNote = { showRecordEditor = true; activeRecord = null },
-                onTask = { showRecordCreator = true },
-                onFocusChange = onInputFocusChange,
-                isStealthMode = isStealthMode,
-                lowPowerMode = lowPowerMode,
-                onToggleStealth = onToggleStealth,
-                onToggleLowPower = onToggleLowPower,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-            )
+                EchoHub(
+                    currentRoute = Route.SphereField(sphereId ?: ""),
+                    messageText = messageText,
+                    onMessageChange = { messageText = it },
+                    onSend = { 
+                        onSend(messageText)
+                        messageText = ""
+                    },
+                    messageCount = state.session.messages.filter { it.groupId == sphereId }.size,
+                    incomingRadioRequests = state.crowd.incomingRadioRequests,
+                    selectedDevices = state.crowd.selectedDevices,
+                    onAcceptRadio = onAcceptRadio,
+                    onDenyRadio = onDenyRadio,
+                    onStartSidePulse = onStartSidePulse,
+                    onStartChain = onStartChain, 
+                    onClearSelection = onClearSelection,
+                    onAttachFile = { },
+                    isSearchMode = isSearchActive,
+                    onSearchToggle = onSearchToggle,
+                    onManage = onShowManagement,
+                    onNote = { showRecordEditor = true; activeRecord = null },
+                    onTask = { showRecordCreator = true },
+                    onFocusChange = onInputFocusChange,
+                    isStealthMode = isStealthMode,
+                    lowPowerMode = lowPowerMode,
+                    onToggleStealth = onToggleStealth,
+                    onToggleLowPower = onToggleLowPower,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             AnimatedVisibility(
                 visible = showTip && resonanceList.isEmpty() && childSpheres.isEmpty(),

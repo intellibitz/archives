@@ -977,7 +977,7 @@ fun ResonanceTicker(
             state = listState,
             modifier = Modifier.fillMaxSize(),
             reverseLayout = reverseLayout,
-            contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
         ) {
             items(resonanceList, key = { it.second?.messageId ?: it.first.id }) { (source, echo) ->
                 val id = source.persistentId ?: source.id

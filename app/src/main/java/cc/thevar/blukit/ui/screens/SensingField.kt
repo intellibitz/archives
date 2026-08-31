@@ -137,30 +137,30 @@ fun SensingField(
                         trend = harmonyReport?.trendLabel
                     )
                 } else {
-                    ResonanceSensingView(onSignalPresence = { onShowAirGhost() })
+                    ResonanceSensingView(onSignalPresence = { onShowAirGhost() }, modifier = Modifier.weight(1f))
                 }
-            }
 
-            EchoHub(
-                currentRoute = Route.Sensing,
-                messageText = messageText,
-                onMessageChange = { messageText = it },
-                onSend = { }, 
-                messageCount = state.session.messages.size,
-                incomingRadioRequests = state.crowd.incomingRadioRequests,
-                selectedDevices = state.crowd.selectedDevices,
-                onAcceptRadio = onAcceptRadio,
-                onDenyRadio = onDenyRadio,
-                onStartSidePulse = onStartSidePulse,
-                onStartChain = onStartChain, 
-                onClearSelection = onClearSelection,
-                onAttachFile = { },
-                isSearchMode = isSearchActive,
-                onSearchToggle = onSearchToggle,
-                onCreatePublicRoom = onCreatePublicRoom,
-                onFocusChange = { },
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-            )
+                EchoHub(
+                    currentRoute = Route.Sensing,
+                    messageText = messageText,
+                    onMessageChange = { messageText = it },
+                    onSend = { }, 
+                    messageCount = state.session.messages.size,
+                    incomingRadioRequests = state.crowd.incomingRadioRequests,
+                    selectedDevices = state.crowd.selectedDevices,
+                    onAcceptRadio = onAcceptRadio,
+                    onDenyRadio = onDenyRadio,
+                    onStartSidePulse = onStartSidePulse,
+                    onStartChain = onStartChain, 
+                    onClearSelection = onClearSelection,
+                    onAttachFile = { },
+                    isSearchMode = isSearchActive,
+                    onSearchToggle = onSearchToggle,
+                    onCreatePublicRoom = onCreatePublicRoom,
+                    onFocusChange = { },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     )
 
