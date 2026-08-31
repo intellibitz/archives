@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 class NavigationViewModel : ViewModel() {
-    private val _backStack = mutableStateListOf<Route>(Route.GroupField(Group.ID_GLOBAL))
+    private val _backStack = mutableStateListOf<Route>(Route.Nearby)
     val backStack: List<Route> = _backStack
 
-    private val _currentRoute = MutableStateFlow<Route>(Route.GroupField(Group.ID_GLOBAL))
+    private val _currentRoute = MutableStateFlow<Route>(Route.Nearby)
     val currentRoute: StateFlow<Route> = _currentRoute.asStateFlow()
 
     fun navigate(route: Route, resetStack: Boolean = false) {

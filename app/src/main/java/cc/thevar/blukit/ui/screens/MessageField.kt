@@ -69,14 +69,6 @@ fun MessageField(
         header = header,
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
-                IdentityStage(
-                    title = "MESSAGE",
-                    onLogout = { /* Handle logout */ },
-                    onResetProfile = onResetProfile,
-                    onBack = onBack,
-                    themeColor = themeColor,
-                )
-
                 rootMessage?.let {
                     Surface(
                         color = StealthSurface,

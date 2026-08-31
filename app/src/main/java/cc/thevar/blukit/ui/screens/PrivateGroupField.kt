@@ -118,16 +118,6 @@ fun PrivateGroupField(
         header = header,
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
-                BlukitToolbar(
-                    title = group?.name ?: "Group",
-                    onLogout = onResetProfile,
-                    onResetProfile = onResetProfile,
-                    onBack = onBack,
-                    themeColor = themeColor,
-                    connectionStatus = if (memberSet.isNotEmpty()) "${memberSet.size + 1} people" else "Just you",
-                    trend = trend
-                )
-
                 if (childGroups.isNotEmpty()) {
                     TickerSectionHeader(title = "PRIVATE GROUPS", color = themeColor)
                     LazyRow(

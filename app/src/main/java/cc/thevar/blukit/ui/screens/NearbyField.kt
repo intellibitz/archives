@@ -82,16 +82,6 @@ fun NearbyField(
         header = header,
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
-                IdentityStage(
-                    title = "NEARBY",
-                    onLogout = { /* Handle logout */ },
-                    onResetProfile = onResetProfile,
-                    onBack = onBack,
-                    themeColor = StealthPrimary,
-                    connectionStatus = harmonyReport?.synthesis,
-                    trend = harmonyReport?.trendLabel
-                )
-
                 if (state.crowd.scannedDevices.isNotEmpty()) {
                     LazyColumn(
                         modifier = Modifier.weight(1f),

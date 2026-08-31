@@ -85,16 +85,6 @@ fun GroupField(
         header = header,
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
-                BlukitToolbar(
-                    title = group?.name ?: "Group",
-                    onLogout = onResetProfile, // Reusing onResetProfile for now or logout
-                    onResetProfile = onResetProfile,
-                    onBack = onBack,
-                    themeColor = StealthRose,
-                    connectionStatus = if (members.isNotEmpty()) "${members.size} online" else "Waiting for connections",
-                    trend = trend
-                )
-
                 MessageCanvas(
                     highConnectionMessages = highConnectionMessages,
                     themeColor = StealthRose,

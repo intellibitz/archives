@@ -152,15 +152,30 @@ fun BlukitApp(
                             }
                         )
                     } else {
+                        val currentTitle = when (val route = currentRoute) {
+                            is Route.Nearby -> "NEARBY"
+                            is Route.GroupField -> connectionState.session.groups.find { it.id == route.roomId }?.name ?: "GROUP"
+                            is Route.LiveFeed -> "LIVE FEED"
+                            is Route.Timeline -> "HISTORY"
+                            is Route.MessageField -> "CHAT"
+                            else -> "BLUKIT"
+                        }
+
+                        val currentStatus = if (currentRoute is Route.GroupField) {
+                            val group = connectionState.session.groups.find { it.id == (currentRoute as Route.GroupField).roomId }
+                            val members = connectionState.crowd.scannedDevices.filter { it.id in (group?.allMemberIds ?: emptySet()) || it.persistentId in (group?.allMemberIds ?: emptySet()) }
+                            if (members.isNotEmpty()) "${members.size} online" else "Waiting for connections"
+                        } else {
+                            harmonyReport.synthesis
+                        }
+
                         BlukitToolbar(
-                            title = if (currentRoute is Route.GroupField) {
-                                connectionState.session.groups.find { it.id == (currentRoute as Route.GroupField).roomId }?.name ?: "Group"
-                            } else "Blukit",
+                            title = currentTitle,
                             onLogout = { viewModel.logout() },
                             onResetProfile = { viewModel.resetProfile() },
                             themeColor = if (currentRoute is Route.GroupField) StealthRose else StealthPrimary,
                             onBack = if (navViewModel.backStack.size > 1) { { navViewModel.popBackStack() } } else null,
-                            connectionStatus = harmonyReport.synthesis,
+                            connectionStatus = currentStatus,
                             trend = harmonyReport.trendLabel,
                             isBluetoothOff = !connectionState.harmony.isBluetoothEnabled,
                             isWifiOff = !connectionState.harmony.isWifiEnabled,

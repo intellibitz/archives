@@ -30,7 +30,6 @@ import java.util.Locale
 /**
  * THE TIMELINE FIELD: A visual chronological path of existence records.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineField(
     messages: List<Message>,
@@ -44,29 +43,7 @@ fun TimelineField(
     
     val sdf = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
 
-    Scaffold(
-        containerColor = StealthBlack,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        text = "MESSAGE HISTORY", 
-                        style = MaterialTheme.typography.titleMedium,
-                        letterSpacing = 2.sp
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = StealthBlack,
-                    titleContentColor = Color.White
-                )
-            )
-        }
-    ) { padding ->
+    Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
         if (ledgerEntries.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -77,7 +54,7 @@ fun TimelineField(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {

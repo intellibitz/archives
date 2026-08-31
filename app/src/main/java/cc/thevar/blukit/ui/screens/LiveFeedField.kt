@@ -1,6 +1,8 @@
 package cc.thevar.blukit.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,7 +24,6 @@ import cc.thevar.blukit.ui.components.*
 /**
  * LIVE FEED FIELD: A real-time stream of every Message in the field.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveFeedField(
     messages: List<Message>,
@@ -30,33 +31,9 @@ fun LiveFeedField(
     onBack: () -> Unit,
     onMessageClick: (String) -> Unit
 ) {
-    Scaffold(
-        containerColor = StealthBlack,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        text = "LIVE FEED", 
-                        style = MaterialTheme.typography.titleMedium,
-                        letterSpacing = 2.sp
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = StealthBlack,
-                    titleContentColor = Color.White
-                )
-            )
-        }
-    ) { padding ->
+    Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 80.dp, top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
