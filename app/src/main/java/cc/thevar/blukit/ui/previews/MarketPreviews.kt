@@ -33,9 +33,9 @@ import cc.thevar.blukit.ui.viewmodels.RadioConnectionState
 import cc.thevar.blukit.ui.components.*
 import cc.thevar.blukit.domain.power.HarmonyReport
 
-@Preview(name = "Radar - Phone", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Nearby - People", device = Devices.PHONE, showBackground = true)
 @Composable
-fun PreviewRadarPhone() {
+fun PreviewNearbyPhone() {
     BlukitTheme {
         NearbyField(
             state = ConnectionUiState(
