@@ -107,10 +107,25 @@ fun SphereField(
                 )
 
                 EchoCanvas(
-                    highResonanceEchoes = highResonanceMessages,
+                    trendingMessages = highResonanceMessages,
                     themeColor = StealthRose,
                     onEchoClick = { onNavigateToPulse(it) }
                 )
+
+                val airReport = state.session.messages.findLast { 
+                    it.groupId == sphereId && it.type == Echo.TYPE_AI_SUMMARY 
+                }
+                val minedTasks = state.session.messages.filter {
+                    it.groupId == sphereId && it.type == Echo.TYPE_ASSIGNMENT_TASK && it.senderId == "ATMOSPHERE_MINER"
+                }.map { it.content.removePrefix("NEW TASK DETECTED: ") }.take(3)
+
+                if (airReport != null) {
+                    AirSynthesisCard(
+                        report = airReport.content,
+                        trend = airReport.trendLabel,
+                        tasks = minedTasks
+                    )
+                }
 
                 ResonanceTicker(
                     state = state,

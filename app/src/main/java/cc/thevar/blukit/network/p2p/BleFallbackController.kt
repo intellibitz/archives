@@ -634,7 +634,7 @@ class BleFallbackController(
         return null
     }
 
-    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?, anchoredPublicSphereId: String?): String {
         val gid = groupId ?: Sphere.generateId(name, type)
         internalScope.launch(ioDispatcher) {
             echoLedger.insertSphere(
@@ -644,7 +644,8 @@ class BleFallbackController(
                     memberIds = members + repository.getDeviceId(),
                     scope = type,
                     parentId = parentId,
-                    ownerId = repository.getDeviceId()
+                    ownerId = repository.getDeviceId(),
+                    anchoredPublicSphereId = anchoredPublicSphereId
                 )
             )
         }

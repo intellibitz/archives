@@ -303,7 +303,7 @@ fun BlukitApp(
                                                 userNickname = nickname ?: "",
                                                 onShowTimeline = { navViewModel.navigate(Route.Timeline) },
                                                 onResetProfile = { bluetoothViewModel.resetProfile() },
-                                                highResonanceMessages = highResonanceEchoes,
+                                                highResonanceMessages = trendingMessages,
                                                 onBack = { navViewModel.popBackStack() },
                                                 onNavigateToPulse = { navViewModel.navigate(Route.EchoField(it)) },
                                                 onSourceLongClick = { sourceForOptions = it },
