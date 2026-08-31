@@ -1,39 +1,39 @@
 # Blukit: Data Safety Protocol
 
-**Blukit is 100% offline, private, and secured by proximity.**
+**Blukit is 100% offline, private, and secured by physical proximity.**
 
 ## 1. Zero Cloud Dependency
-Blukit **never** connects to the internet. All **Messages** travel directly from phone to phone using peer-to-peer radios. All intelligence is processed locally.
+Blukit **never** connects to the internet. All **Messages** travel directly from phone to phone using peer-to-peer radios. There are no central servers to hack, leak, or monitor your data.
 
 | Data Type | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
-| **AI Synthesis** | Only on your phone | Group partners | Local analysis of trends to provide context without manual sorting. |
+| **Assistant Logic** | Only on your phone | Group partners | Local analysis of trends to provide context and "mood" tints. |
 | **Document Mining** | Only on your phone | No | Extraction of tasks from shared files for local productivity. |
-| **Consensus (Votes)** | Only on your phone | Group partners | Anonymous voting to prioritize important information. |
-| **Identity & Roles** | Only on your phone | Nearby People only | Local identification and group permissions. |
-| **Shared Records** | Only on your phone | Group members only | Collaborative notes and shared items. |
-| **Messages** | Only on your phone | Group partners | To maintain private and shared communication history. |
-| **History** | Only on your phone | No | Permanent local storage of your conversations. |
-| **History Sync** | Only on your phone | Trusted peers only | Automatic synchronization to ensure your history is up to date. |
-| **Geofencing** | No | No | Used locally for location-based suggestions. Never tracked. |
+| **Consensus Votes** | Only on your phone | Group partners | Anonymous voting to prioritize important information within a group. |
+| **User Identity** | Only on your phone | Nearby People only | Local nicknames and avatars for peer identification. |
+| **Shared Notes** | Only on your phone | Group members only | Collaborative records and shared items. |
+| **Messages** | Only on your phone | Group partners | Private and shared communication history. |
+| **History** | Only on your phone | No | Permanent local storage of your personal conversations. |
+| **Sync Data** | Only on your phone | Trusted peers only | Automatic differential sync to keep group history consistent. |
+| **Location Data** | No | No | Used locally for P2P discovery. Never tracked, stored, or shared. |
 
 ## 2. Privacy by Proximity
-- **Local Network**: All public groups are discoverable within radio range.
-- **Encrypted Private Chats**: Private conversations are end-to-end encrypted. Your data never leaves your physical proximity.
-- **Stealth Mode**: Hide your presence while still being able to monitor the local feed.
-- **User Governance**: Block any user to instantly stop all communication and discovery from them.
+- **Physical Sandbox**: Your data can only travel as far as your device's radio range (Bluetooth/Wi-Fi). 
+- **Encrypted Chats**: All non-public conversations are end-to-end encrypted. Even if someone intercepts the radio signal, they cannot read the content.
+- **Stealth Mode**: Allows you to monitor the local feed while remaining invisible to others nearby.
+- **Blocking**: Block any user to instantly stop all communication and discovery from them.
 
-## 3. Storage & Persistence
-- **Automatic Pruning**: Blukit automatically deletes large media older than 90 days to save space.
-- **Permanent Pins**: Important messages can be pinned to prevent automatic deletion.
-- **Encrypted Backups**: Recent messages are automatically and securely mirrored to trusted nearby devices for recovery if you lose your data.
+## 3. Persistence & Recovery
+- **Auto-Cleaning**: Blukit automatically prunes large media older than 90 days to maintain device storage.
+- **Permanent Pins**: Secure important messages from being auto-deleted by pinning them.
+- **Encrypted Backups**: Your most recent messages are automatically mirrored in encrypted fragments to trusted nearby devices, allowing for recovery if your device is lost or wiped.
 
-## 4. Hardware Encryption
-**All private communication is end-to-end encrypted.**
+## 4. Hardware-Grade Encryption
+**All private communication is end-to-end encrypted at the hardware level.**
 
-- **Encryption Standards**: AES-256-GCM for payloads and P-256 ECDH for key negotiation.
-- **Hardware Anchored**: Cryptographic keys are generated and stored in the Android Keystore (StrongBox/TEE).
-- **Ownership**: You own your data. There are no central accounts or servers.
+- **Standards**: AES-256-GCM for payloads and P-256 ECDH for secure key exchange.
+- **Hardware Anchored**: Cryptographic keys are generated and stored within the device's secure enclave (StrongBox/TEE).
+- **Ownership**: There are no central accounts. You own the hardware, you own the keys, you own the data.
 
 ---
-**Protocol Updated**: August 31, 2026
+**Protocol Updated**: September 1, 2026

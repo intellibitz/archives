@@ -71,38 +71,10 @@ fun MessageField(
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
                     title = "MESSAGE",
-                    breadcrumbTrail = breadcrumbTrail,
-                    onCrumbClick = onCrumbClick,
-                    activeGroups = activeGroups,
-                    onShowTimeline = onShowTimeline,
+                    onLogout = { /* Handle logout */ },
                     onResetProfile = onResetProfile,
                     onBack = onBack,
                     themeColor = themeColor,
-                    userCount = childMessages.size,
-                    onModeChange = { onNavigateToLiveFeed() },
-                    trailingContent = {
-                        if (onSearchToggle != null) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                IconButton(
-                                    onClick = onSearchToggle,
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People,
-                                        contentDescription = "Toggle Search",
-                                        tint = if (isSearchActive) StealthAmber else themeColor,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                                Text(
-                                    text = if (isSearchActive) "SEARCH" else "SOURCES",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                    }
                 )
 
                 rootMessage?.let {

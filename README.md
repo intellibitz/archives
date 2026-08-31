@@ -1,65 +1,64 @@
-# Blukit: Private Offline Chat
+# Blukit: Natural Offline Chat
 
-**OFFLINE P2P MESSAGING. INSTANT. SECURE.**
+**PRIVATE P2P MESSAGING. INSTANT. LOCAL.**
 
-Blukit is a 100% offline, peer-to-peer messaging app that lets you communicate with people nearby—without using the internet. It transforms your phone into a secure data node, preserving your messages in a private local database.
-
----
-
-## 🤖 AI ASSISTANT: ON-DEVICE INTELLIGENCE
-Blukit uses on-device AI to help you manage your conversations silently.
-- **Document Mining**: Automatically extracts tasks and summaries from shared files (PDF, Text, JSON) without internet.
-- **Contextual Awareness**: Local analysis groups your messages to provide clarity and automated task detection.
-- **Privacy**: All AI processing happens locally. Your data never leaves your device.
+Blukit is a standard, easy-to-use chat app with a powerful secret: it operates 100% offline. No servers, no cloud, no internet required. Just open the app and start chatting with people in your immediate physical proximity.
 
 ---
 
-## 🏛️ TERMINOLOGY
-- **NEARBY**: Your local network state. A real-time view of People and Groups around you.
-- **GROUPS**: Shared spaces for messages and collaboration.
-- **PRIVATE CHATS**: Encrypted one-on-one or small group conversations.
-- **LIVE FEED**: A real-time, 100% offline stream of activity in your physical proximity.
-- **MESSAGE**: A unit of communication, stored securely on your device.
-- **HISTORY**: Your private, chronological record of all interactions.
+## 🤖 AI ASSISTANT: SILENT INTELLIGENCE
+Blukit features an on-device AI Assistant that helps you manage information without being intrusive.
+- **Silent Context**: The Assistant analyzes conversation trends to subtly adjust UI themes, providing a visual "mood" for your groups.
+- **Task Detection**: Automatically identifies actionable items and tasks from your messages and shared documents.
+- **Private Processing**: All intelligence is generated locally on your hardware. Your data never leaves your device.
+
+---
+
+## 🏛️ SIMPLE TERMINOLOGY
+- **PUBLIC HUB**: The default landing space where everyone nearby can communicate instantly.
+- **PEOPLE**: A simple list of users currently within your radio range.
+- **GROUPS**: Shared spaces for collaboration and community messaging.
+- **PRIVATE CHATS**: Secure, end-to-end encrypted conversations between individuals or small groups.
+- **HISTORY**: Your private, chronological record of all messages and shared files.
 
 ---
 
 ## ⚡ KEY INTERACTIONS
-Simple and intuitive messaging.
+Messaging as it should be—simple and private.
 
-### **1. Discover**
-Open the app to see who is nearby. Connect instantly to start chatting with people in your immediate physical range.
+### **1. Open & Chat**
+By default, you land in the **Public Hub**. Send a message instantly to whoever is nearby. No setup, no accounts, no waiting.
 
-### **2. Message**
-Join a Group or start a Private Chat. Messages are delivered directly from phone to phone using Bluetooth and Wi-Fi.
+### **2. Connect Locally**
+Check the **Nearby** tab to see people in your immediate range. Tap a name to start a private, secure conversation that remains "anchored" to your current context.
 
-### **3. Secure**
-Every message is encrypted. Blukit ensures your data is private, with end-to-end encryption for all non-public interactions.
+### **3. Stay Private**
+Every private interaction is encrypted at the hardware level. Blukit ensures your data remains yours, visible only to the intended recipients.
 
 ---
 
 ## 📱 USER INTERFACE
-Clean, ergonomic, and efficient.
+Clean, ergonomic, and familiar.
 
-- **Adaptive Scaffolding**: The interface adapts dynamically across Phones, Tablets, and Foldables.
-- **Dark Mode**: Optimized for OLED displays to maximize power efficiency.
-- **Haptic Feedback**: Subtle physical cues reinforce successful connections and message delivery.
-- **Group Management**: Easily manage members and roles in your private groups.
+- **Natural Chat Experience**: Standard message bubbles, intuitive navigation, and an elegant toolbar focus on the conversation, not the technology.
+- **Adaptive Design**: The interface scales perfectly across Phones, Tablets, and Foldables.
+- **OLED Optimized**: A true-black interface designed for maximum privacy and power efficiency.
+- **Silent Feedback**: Subtle haptics reinforce successful connections and message delivery.
 
 ---
 
 ## 🛠️ ARCHITECTURAL STACK
-1. **100% Offline**: Zero cloud dependencies. Uses Bluetooth LE and Wi-Fi Aware.
-2. **Security**: P-256 ECDH for key exchange + AES-256-GCM for encryption.
-3. **Data Engine**: Deterministic LWW-CRDT for seamless offline synchronization.
-4. **Persistence**: Peer-to-peer redundancy for encrypted fragments.
+1. **100% Offline**: Uses Bluetooth LE and Wi-Fi Aware for direct device-to-device communication.
+2. **Industrial Security**: P-256 ECDH key negotiation + AES-256-GCM hardware encryption.
+3. **Data Integrity**: Deterministic LWW-CRDT engine for seamless multi-device synchronization.
+4. **Resilient Persistence**: Automated encrypted backups distributed across trusted nearby devices.
 
 ## 🚀 DEVELOPER SETUP
 1. **Toolchain**: JDK 17+, Android Studio Ladybug+.
 2. **Dependencies**: Koin (DI), Compose Adaptive (Layout), Navigation3.
-3. **Permissions**: Requires Bluetooth and Location (for P2P discovery).
+3. **Permissions**: Requires Bluetooth and Location (strictly for P2P discovery).
 
 ---
 
 *Intellibitz*  
-*PRIVATE COMMUNICATION.*
+*PRIVATE COMMUNICATION. OWNED BY YOU.*

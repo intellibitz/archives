@@ -193,17 +193,16 @@ fun PreviewFeatureGraphic() {
     }
 }
 
-@Preview(name = "Connection Header", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Blukit Toolbar", device = Devices.PHONE, showBackground = true)
 @Composable
-fun PreviewTacticalHeader() {
+fun PreviewBlukitToolbar() {
     BlukitTheme {
-        ConnectionHeader(
+        BlukitToolbar(
+            title = "Public Hub",
+            onLogout = {},
+            onResetProfile = {},
             themeColor = StealthPrimary,
-            onAwakenBluetooth = {},
-            onAwakenWifi = {},
-            onGrantPermissions = {},
-            onOpenSettings = {},
-            onLogout = {}
+            connectionStatus = "3 online"
         )
     }
 }
@@ -215,10 +214,7 @@ fun PreviewHumanityStage() {
         Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
             IdentityStage(
                 title = "GLOBAL GROUP",
-                breadcrumbTrail = listOf("NEARBY", "GROUP"),
-                onCrumbClick = {},
-                activeGroups = emptyList(),
-                onShowTimeline = {},
+                onLogout = {},
                 onResetProfile = {},
                 onBack = {},
                 themeColor = StealthPrimary

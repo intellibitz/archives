@@ -1,28 +1,28 @@
-# Privacy Policy for Blukit: Private Communication
+# Privacy Policy for Blukit: Natural Privacy
 
-**Blukit** is built for individual privacy and autonomy. We believe your data belongs to you, not to a service provider.
+**Blukit** is built for individual autonomy. We believe privacy isn't a "feature"—it's the foundation of human interaction.
 
 ## 1. 100% Offline by Design
-Blukit operates entirely through peer-to-peer radios (Bluetooth and Wi-Fi). We have **no servers**, **no cloud storage**, and **no access to your data**. Your messages and files exist only on your device and the devices of people you choose to communicate with.
+Blukit operates entirely through direct device-to-device radios. We have **no servers**, **no cloud storage**, and **no access to your data**. Your messages, files, and identity markers exist only on your device and the devices of people you choose to communicate with.
 
 ## 2. Local-Only Intelligence
-- **On-Device AI**: All analysis and processing happen entirely on your phone. No data is ever sent to a cloud for "training" or processing.
-- **No Tracking**: We do not track your location, your identity, or your interactions.
+- **On-Device AI**: All processing happens on your device. We do not use your data for "AI Training" or any remote processing.
+- **No Tracking**: We do not track your location, your behavior, or your identity. Your digital footprint is limited to the physical space you occupy.
 
-## 3. End-to-End Security
-Private conversations are protected using industrial-grade encryption. Keys are negotiated locally over the air and never leave your phone's secure hardware.
+## 3. Industrial Security
+All private interactions are protected by industrial-grade encryption. Keys are negotiated locally over the air and never leave your phone's secure hardware.
 
-## 4. Definitions
-- **User**: You are the owner of your device and data.
+## 4. Simplified Definitions
+- **User**: The absolute owner of their device and data.
 - **Message**: A unit of communication sent or received.
-- **History**: Your local, permanent record of messages.
-- **Connection**: A secure link between two or more devices.
+- **History**: Your local, permanent, and private record.
+- **Connection**: A secure, temporary link between devices.
 
-## 5. Your Rights
-In Blukit, you have absolute control:
-- **Deletion**: Deleting a message removes it permanently from your history.
-- **Reset**: Logging out or resetting your profile destroys all local keys and data.
-- **Stealth**: Use Stealth Mode to stay invisible to others nearby.
+## 5. Your Absolute Rights
+In Blukit, you have total control:
+- **Deletion**: Deleting a message removes it permanently from your local storage.
+- **Hard Reset**: Resetting your profile destroys all local keys and data instantly.
+- **Stealth**: Use Stealth Mode to stay invisible to others nearby while remaining active in the local network.
 
 ---
 *PRIVATE. LOCAL. INSTANT.*

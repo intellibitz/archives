@@ -83,27 +83,12 @@ fun NearbyField(
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
                     title = "NEARBY",
-                    breadcrumbTrail = breadcrumbTrail,
-                    onCrumbClick = onCrumbClick,
-                    activeGroups = state.session.groups,
-                    onShowTimeline = onShowTimeline,
+                    onLogout = { /* Handle logout */ },
                     onResetProfile = onResetProfile,
                     onBack = onBack,
                     themeColor = StealthPrimary,
-                    userCount = state.crowd.scannedDevices.size,
-                    isDiscovery = true,
-                    onModeChange = { onNavigateToLiveFeed() },
-                    trailingContent = {
-                        if (onSearchToggle != null) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                IconButton(onClick = onSearchToggle, modifier = Modifier.size(28.dp)) {
-                                    Icon(imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People, contentDescription = "Toggle Search", tint = if (isSearchActive) StealthAmber else StealthPrimary, modifier = Modifier.size(20.dp))
-                                }
-                                Text(text = if (isSearchActive) "SEARCH" else "PEOPLE", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = StealthAlphaHigh))
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                    }
+                    connectionStatus = harmonyReport?.synthesis,
+                    trend = harmonyReport?.trendLabel
                 )
 
                 if (state.crowd.scannedDevices.isNotEmpty()) {
