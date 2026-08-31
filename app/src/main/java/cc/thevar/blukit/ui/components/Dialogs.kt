@@ -32,12 +32,12 @@ fun MessageActionMenu(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!isMe) {
-                    MenuActionItem(Icons.Rounded.Campaign, "Broadcast", StealthAmber, onClick = { onBroadcast(); onDismiss() })
-                    MenuActionItem(Icons.Rounded.Shield, "Verify (Consensus)", StealthPrimary, onClick = { onVote(1); onDismiss() })
+                    MenuActionItem(Icons.Rounded.Campaign, "Share to All", StealthAmber, onClick = { onBroadcast(); onDismiss() })
+                    MenuActionItem(Icons.Rounded.Shield, "Check Authenticity", StealthPrimary, onClick = { onVote(1); onDismiss() })
                 }
-                MenuActionItem(Icons.Rounded.Hearing, "Private Message", StealthRose, onClick = { onInvite(); onDismiss() })
+                MenuActionItem(Icons.Rounded.Hearing, "Start Private Chat", StealthRose, onClick = { onInvite(); onDismiss() })
                 if (isMe) {
-                    MenuActionItem(Icons.Rounded.Delete, "Purge Record", StealthError, onClick = { onDelete(); onDismiss() })
+                    MenuActionItem(Icons.Rounded.Delete, "Delete Message", StealthError, onClick = { onDelete(); onDismiss() })
                 }
             }
         },

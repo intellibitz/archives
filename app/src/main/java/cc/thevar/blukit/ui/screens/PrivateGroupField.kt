@@ -69,10 +69,6 @@ fun PrivateGroupField(
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
-    isStealthMode: Boolean = false,
-    lowPowerMode: Boolean = false,
-    onToggleStealth: (Boolean) -> Unit = {},
-    onToggleLowPower: (Boolean) -> Unit = {},
     trend: String? = null,
     header: @Composable () -> Unit,
 ) {
@@ -193,10 +189,6 @@ fun PrivateGroupField(
                     onNote = { showRecordEditor = true; activeRecord = null },
                     onTask = { showRecordCreator = true },
                     onFocusChange = onInputFocusChange,
-                    isStealthMode = isStealthMode,
-                    lowPowerMode = lowPowerMode,
-                    onToggleStealth = onToggleStealth,
-                    onToggleLowPower = onToggleLowPower,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

@@ -65,11 +65,7 @@ fun MessageHub(
     onCreatePublicRoom: ((String, String?) -> Unit)? = null,
     onTask: (() -> Unit)? = null, 
     isSearchMode: Boolean = false,
-    onFocusChange: (Boolean) -> Unit = {},
-    isStealthMode: Boolean = false,
-    lowPowerMode: Boolean = false,
-    onToggleStealth: (Boolean) -> Unit = {},
-    onToggleLowPower: (Boolean) -> Unit = {}
+    onFocusChange: (Boolean) -> Unit = {}
 ) {
     val isPrivate = currentRoute is Route.GroupField || currentRoute is Route.Nearby
     val targetName = if (currentRoute is Route.GroupField) groups.find { it.id == currentRoute.roomId }?.name else null
@@ -103,14 +99,6 @@ fun MessageHub(
         entries = {
             val isMessageLocked = currentRoute is Route.Nearby
             Column(modifier = Modifier.fillMaxWidth()) {
-                EnvironmentControls(
-                    isStealthMode = isStealthMode,
-                    isLowPowerMode = lowPowerMode,
-                    onToggleStealth = onToggleStealth,
-                    onToggleLowPower = onToggleLowPower,
-                    themeColor = themeColor
-                )
-
                 BlukitInput(
                     isReadOnly = false, 
                     isMessageLocked = isMessageLocked,
@@ -271,63 +259,6 @@ fun IncomingRequestBanner(
 }
 
 /**
- * Controls for toggling Stealth and Eco (low power) modes.
- */
-@Composable
-fun EnvironmentControls(
-    isStealthMode: Boolean,
-    isLowPowerMode: Boolean,
-    onToggleStealth: (Boolean) -> Unit,
-    onToggleLowPower: (Boolean) -> Unit,
-    themeColor: Color
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        EnvironmentToggle(label = "Stealth", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
-        Spacer(modifier = Modifier.width(16.dp))
-        EnvironmentToggle(label = "Eco", checked = isLowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
-    }
-}
-
-/**
- * Reusable environment toggle button.
- */
-@Composable
-fun EnvironmentToggle(
-    label: String, 
-    checked: Boolean, 
-    onCheckedChange: (Boolean) -> Unit, 
-    themeColor: Color = StealthPrimary
-) {
-    Surface(
-        onClick = { onCheckedChange(!checked) },
-        color = if (checked) themeColor.copy(alpha = 0.15f) else StealthSurface,
-        shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (checked) themeColor.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f))
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(if (checked) themeColor else Color.White.copy(alpha = 0.2f), CircleShape)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = label, 
-                style = MaterialTheme.typography.labelSmall,
-                color = if (checked) Color.White else Color.White.copy(alpha = 0.4f)
-            )
-        }
-    }
-}
-
-/**
  * Standard text input for the social hub with specialized actions.
  */
 @Composable
@@ -381,10 +312,10 @@ fun BlukitInput(
                             if (value.isEmpty()) {
                                 Text(
                                     text = when {
-                                        isSearchActive -> "Search records..."
-                                        isMessageLocked -> "Nearby connection active"
-                                        targetName != null -> "Connect in $targetName..."
-                                        else -> "Send a Message..."
+                                        isSearchActive -> "Search chat..."
+                                        isMessageLocked -> "Connected to nearby people"
+                                        targetName != null -> "Chat in $targetName..."
+                                        else -> "Say something..."
                                     },
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Color.White.copy(alpha = 0.3f)

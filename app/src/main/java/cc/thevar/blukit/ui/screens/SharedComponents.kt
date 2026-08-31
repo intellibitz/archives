@@ -160,11 +160,7 @@ fun MessageHub(
     onCreatePublicRoom: ((String, String?) -> Unit)? = null,
     onTask: (() -> Unit)? = null, 
     isSearchMode: Boolean = false,
-    onFocusChange: (Boolean) -> Unit = {},
-    isStealthMode: Boolean = false,
-    lowPowerMode: Boolean = false,
-    onToggleStealth: (Boolean) -> Unit = {},
-    onToggleLowPower: (Boolean) -> Unit = {}
+    onFocusChange: (Boolean) -> Unit = {}
 ) {
     val isPrivate = currentRoute is Route.GroupField || currentRoute is Route.Nearby
     val targetName = if (currentRoute is Route.GroupField) groups.find { it.id == currentRoute.roomId }?.name?.uppercase() else null
@@ -479,78 +475,6 @@ fun MessageItem(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun EnvironmentToggle(
-    label: String, 
-    checked: Boolean, 
-    onCheckedChange: (Boolean) -> Unit, 
-    themeColor: Color = StealthPrimary
-) {
-    val indicatorAlpha by animateFloatAsState(
-        targetValue = if (checked) 1f else 0.3f,
-        animationSpec = tween(500),
-        label = "IndicatorAlpha"
-    )
-    
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (checked) 0.6f else 0f,
-        animationSpec = tween(500),
-        label = "IndicatorGlow"
-    )
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically, 
-        modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-            .graphicsLayer { alpha = indicatorAlpha }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(if (checked) themeColor else Color.White.copy(alpha = 0.1f))
-                .border(
-                    width = 1.dp, 
-                    color = if (checked) themeColor.copy(alpha = glowAlpha) else Color.Transparent, 
-                    shape = CircleShape
-                )
-        )
-        
-        Spacer(modifier = Modifier.width(6.6.dp))
-        
-        Text(
-            text = label, 
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 11.sp, 
-                fontWeight = FontWeight.Black, 
-                color = if (checked) Color.White else Color.White.copy(alpha = 0.6f), 
-                letterSpacing = 1.sp
-            )
-        )
-    }
-}
-
-@Composable
-fun EnvironmentToggleRow(
-    isStealthMode: Boolean,
-    onToggleStealth: (Boolean) -> Unit,
-    lowPowerMode: Boolean,
-    onToggleLowPower: (Boolean) -> Unit,
-    themeColor: Color
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        EnvironmentToggle(label = "STEALTH", checked = isStealthMode, onCheckedChange = onToggleStealth, themeColor = themeColor)
-        Spacer(modifier = Modifier.width(16.dp))
-        EnvironmentToggle(label = "ECO", checked = lowPowerMode, onCheckedChange = onToggleLowPower, themeColor = themeColor)
     }
 }
 

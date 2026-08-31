@@ -57,8 +57,6 @@ fun BlukitApp(
     
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emojiAvatar by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
-    val isStealthMode by viewModel.isStealthMode.collectAsStateWithLifecycle(initialValue = false)
-    val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     
     val connectionState by connectionViewModel.state.collectAsStateWithLifecycle()
     val trendingMessages by connectionViewModel.trendingMessages.collectAsStateWithLifecycle()
@@ -281,10 +279,6 @@ fun BlukitApp(
                                                 },
                                                 onStartSubGroup = { connectionViewModel.startGroupConnection("SUB GROUP") },
                                                 onClearSelection = { connectionViewModel.clearSelection() },
-                                                isStealthMode = isStealthMode,
-                                                lowPowerMode = lowPowerMode,
-                                                onToggleStealth = { viewModel.toggleStealth(it) },
-                                                onToggleLowPower = { viewModel.toggleLowPowerMode(it) },
                                                 trend = groupTrend,
                                                 isSearchActive = isSearchActive,
                                                 onSearchToggle = { isSearchActive = !isSearchActive },
@@ -316,10 +310,6 @@ fun BlukitApp(
                                                 },
                                                 onStartSubGroup = { connectionViewModel.startGroupConnection("NEW GROUP") },
                                                 onClearSelection = { connectionViewModel.clearSelection() },
-                                                isStealthMode = isStealthMode,
-                                                lowPowerMode = lowPowerMode,
-                                                onToggleStealth = { viewModel.toggleStealth(it) },
-                                                onToggleLowPower = { viewModel.toggleLowPowerMode(it) },
                                                 trend = groupTrend,
                                                 isSearchActive = isSearchActive,
                                                 onSearchToggle = { isSearchActive = !isSearchActive },
@@ -392,7 +382,7 @@ fun BlukitApp(
         }
     }
 
-    activeRipple?.let { (groupId, isPrivate) ->
+    activeRipple?.let { (_, isPrivate) ->
         MessageRippleEffect(
             isPrivate = isPrivate,
             onFinished = { activeRipple = null }

@@ -60,10 +60,6 @@ fun GroupField(
     onStartSubGroup: () -> Unit = {},
     onClearSelection: () -> Unit = {},
     onInputFocusChange: (Boolean) -> Unit = {},
-    isStealthMode: Boolean = false,
-    lowPowerMode: Boolean = false,
-    onToggleStealth: (Boolean) -> Unit = {},
-    onToggleLowPower: (Boolean) -> Unit = {},
     trend: String? = null
 ) {
     val group = state.session.groups.find { it.id == groupId }
@@ -141,10 +137,6 @@ fun GroupField(
                     isSearchMode = isSearchActive,
                     onSearchToggle = onSearchToggle,
                     onFocusChange = onInputFocusChange,
-                    isStealthMode = isStealthMode,
-                    lowPowerMode = lowPowerMode,
-                    onToggleStealth = onToggleStealth,
-                    onToggleLowPower = onToggleLowPower,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

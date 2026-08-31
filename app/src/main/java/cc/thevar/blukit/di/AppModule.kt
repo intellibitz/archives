@@ -10,6 +10,7 @@ import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
 import cc.thevar.blukit.domain.logic.AssistantManager
+import cc.thevar.blukit.domain.logic.AutonomousManager
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
 import cc.thevar.blukit.network.p2p.P2pConnectionController
 import cc.thevar.blukit.network.p2p.ConnectionController
@@ -56,6 +57,7 @@ val appModule = module {
     single { HarmonyManager(get(), get(), get(), get()) }
     single { ConnectivityUseCase(get(), get(), get(), get()) }
     single(createdAtStart = true) { AssistantManager(androidContext(), get(), get()) }
+    single(createdAtStart = true) { AutonomousManager(androidContext(), get(), get()) }
     
     // ViewModels
     viewModelOf(::MainViewModel)
