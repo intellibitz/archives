@@ -113,6 +113,7 @@ fun SphereField(
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = emptySet(),
+                    reverseLayout = true,
                     onEchoClick = { onNavigateToPulse(it) },
                     onSourceClick = { dev -> onNavigateToPulse(dev.id) },
                     onSourceLongClick = onSourceLongClick,

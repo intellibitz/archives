@@ -178,6 +178,7 @@ fun PrivateSphereField(
                     localNickname = userNickname,
                     pulsedPeers = memberSet,
                     isGrouped = false,
+                    reverseLayout = true,
                     onEchoClick = { onNavigateToPulse(it) },
                     onSourceClick = { dev -> onNavigateToPulse(dev.id) },
                     onSourceLongClick = onSourceLongClick,

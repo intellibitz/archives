@@ -159,6 +159,7 @@ fun SensingField(
                         onSourceClick = { onNavigateToPulse(it.id) },
                         onSourceLongClick = onSourceLongClick,
                         modifier = Modifier.weight(1f),
+                        reverseLayout = false,
                         trend = harmonyReport?.trendLabel
                     )
                 } else {

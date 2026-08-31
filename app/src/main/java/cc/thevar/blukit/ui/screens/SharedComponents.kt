@@ -308,7 +308,7 @@ fun ResonanceHeader(
         // Aura Background
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .background(
                     androidx.compose.ui.graphics.Brush.radialGradient(
                         colors = listOf(auraColor.copy(alpha = auraGlow), Color.Transparent),
