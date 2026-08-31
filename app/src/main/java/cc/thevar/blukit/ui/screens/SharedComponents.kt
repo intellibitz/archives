@@ -1,5 +1,5 @@
 /**
- * BLUKIT SHARED UI COMPONENTS
+ * BLUKIT UI COMPONENTS
  */
 package cc.thevar.blukit.ui.screens
 
@@ -88,9 +88,6 @@ fun MixedStatusBranding(
  */
 @Composable
 fun SphereTicker(title: String, modifier: Modifier = Modifier, spheres: List<Sphere> = emptyList()) {
-    val infiniteTransition = rememberInfiniteTransition(label = "SphereTicker")
-    val alpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 0.7f, animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
-    
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
         Column(horizontalAlignment = Alignment.Start) {
             Text(
@@ -99,9 +96,9 @@ fun SphereTicker(title: String, modifier: Modifier = Modifier, spheres: List<Sph
                 color = Color.White
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(6.dp).background(StealthPrimary.copy(alpha = alpha), CircleShape))
+                Box(modifier = Modifier.size(6.dp).background(StealthPrimary.copy(alpha = 0.5f), CircleShape))
                 Spacer(modifier = Modifier.width(8.dp))
-                val spheresLabel = if (spheres.isEmpty()) "nearby Sources" else "${spheres.size} Spheres active"
+                val spheresLabel = if (spheres.isEmpty()) "nearby peers" else "${spheres.size} groups active"
                 Text(
                     text = spheresLabel, 
                     style = MaterialTheme.typography.labelSmall,
@@ -117,7 +114,7 @@ fun SphereTicker(title: String, modifier: Modifier = Modifier, spheres: List<Sph
  */
 @Composable
 fun EchoCanvas(
-    highResonanceEchoes: List<Echo>,
+    trendingMessages: List<Echo>,
     themeColor: Color,
     onEchoClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -129,15 +126,7 @@ fun EchoCanvas(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        highResonanceEchoes.forEach { echo ->
-            val infiniteTransition = rememberInfiniteTransition(label = "CanvasGlow")
-            val glowScale by infiniteTransition.animateFloat(
-                initialValue = 1f,
-                targetValue = 1.15f,
-                animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-                label = "Echo"
-            )
-
+        trendingMessages.forEach { echo ->
             Surface(
                 onClick = { onEchoClick(echo.messageId) },
                 color = StealthBlack.copy(alpha = StealthAlphaHigh),
@@ -146,10 +135,6 @@ fun EchoCanvas(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .size(36.dp)
-                    .graphicsLayer {
-                        scaleX = glowScale
-                        scaleY = glowScale
-                    }
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(text = echo.senderEmoji ?: "🔥", fontSize = 16.sp)
@@ -207,9 +192,9 @@ fun ResonanceHeader(
     isWifiOff: Boolean = false,
     isPermissionMissing: Boolean = false,
     isPermanentlyDenied: Boolean = false,
-    resonanceStatus: String? = null,
+    connectionStatus: String? = null,
     breeze: String? = null,
-    highResonanceMessages: List<Echo> = emptyList(),
+    trendingMessages: List<Echo> = emptyList(),
     trail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     trend: String? = null
@@ -223,28 +208,6 @@ fun ResonanceHeader(
         else -> themeColor
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "HarmonyCycle")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.6f, 
-        targetValue = 1f, 
-        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), 
-        label = "Alpha"
-    )
-
-    val auraGlow by infiniteTransition.animateFloat(
-        initialValue = 0.02f,
-        targetValue = 0.1f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "Aura"
-    )
-    
-    val scanLinePos by infiniteTransition.animateFloat(
-        initialValue = -0.2f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)),
-        label = "ScanLine"
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -254,40 +217,10 @@ fun ResonanceHeader(
             .background(StealthSurface)
             .border(
                 width = 1.dp,
-                brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                    0.0f to Color.White.copy(alpha = StealthAlphaBorder),
-                    0.5f to auraColor.copy(alpha = auraGlow * 3f),
-                    1.0f to Color.White.copy(alpha = StealthAlphaBorder)
-                ),
+                color = MaterialTheme.colorScheme.outlineVariant,
                 shape = RoundedCornerShape(28.dp)
             )
     ) {
-        // Aura Background
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    androidx.compose.ui.graphics.Brush.radialGradient(
-                        colors = listOf(auraColor.copy(alpha = auraGlow), Color.Transparent),
-                        radius = 400f
-                    )
-                )
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.3f)
-                .matchParentSize()
-                .align(Alignment.CenterStart)
-                .graphicsLayer { translationX = scanLinePos * 1000f }
-                .background(
-                    androidx.compose.ui.graphics.Brush.horizontalGradient(
-                        0.0f to Color.Transparent,
-                        0.5f to themeColor.copy(alpha = 0.05f),
-                        1.0f to Color.Transparent
-                    )
-                )
-        )
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -307,7 +240,7 @@ fun ResonanceHeader(
                         Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = breeze ?: resonanceStatus ?: "Resonating...", 
+                            text = breeze ?: connectionStatus ?: "Active", 
                             style = MaterialTheme.typography.labelSmall,
                             color = StealthAmber,
                             maxLines = 1,
@@ -317,9 +250,9 @@ fun ResonanceHeader(
                 }
             }
 
-            if (highResonanceMessages.isNotEmpty()) {
+            if (trendingMessages.isNotEmpty()) {
                 EchoCanvas(
-                    highResonanceEchoes = highResonanceMessages,
+                    trendingMessages = trendingMessages,
                     themeColor = themeColor,
                     onEchoClick = { /* Handled by parent */ },
                     modifier = Modifier.weight(1f)
@@ -339,8 +272,7 @@ fun ResonanceHeader(
                 if (isPermissionMissing || isBluetoothOff) {
                     Surface(
                         color = StealthError.copy(alpha = StealthAlphaLow), 
-                        shape = RoundedCornerShape(8.dp), 
-                        modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                        shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
                             text = when { isPermissionMissing -> if (isPermanentlyDenied) "Setup" else "Grant"; isBluetoothOff -> "Awake"; else -> "Active" }, 
@@ -409,29 +341,21 @@ fun IdentityStage(
             }
 
             if (isDiscovery) {
-                val infiniteTransition = rememberInfiniteTransition(label = "ModeGlow")
-                val glowAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.4f,
-                    targetValue = 0.8f,
-                    animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse),
-                    label = "Glow"
-                )
-
                 Surface(
                     color = Color.White.copy(alpha = StealthAlphaLow),
                     shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(1.dp, themeColor.copy(alpha = glowAlpha * 0.2f))
+                    border = BorderStroke(1.dp, themeColor.copy(alpha = 0.1f))
                 ) {
                     Row(modifier = Modifier.padding(2.dp)) {
                         Surface(
                             onClick = { onModeChange(false) },
-                            color = if (!isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium * glowAlpha) else Color.Transparent,
+                            color = if (!isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "SPHERES", 
+                                    text = "Groups", 
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (!isLiveFeedMode) StealthOnPrimary else Color.White.copy(alpha = StealthAlphaHigh)
                                 )
@@ -439,13 +363,13 @@ fun IdentityStage(
                         }
                         Surface(
                             onClick = { onModeChange(true) },
-                            color = if (isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium * glowAlpha) else Color.Transparent,
+                            color = if (isLiveFeedMode) themeColor.copy(alpha = StealthAlphaMedium) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "STREAM", 
+                                    text = "Feed", 
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (isLiveFeedMode) StealthOnPrimary else Color.White.copy(alpha = StealthAlphaHigh)
                                 )
@@ -487,7 +411,7 @@ fun IdentityStage(
                     Icon(Icons.Rounded.Timeline, contentDescription = "History", tint = themeColor, modifier = Modifier.size(20.dp))
                 }
                 Text(
-                    text = "LEDGER", 
+                    text = "History", 
                     style = MaterialTheme.typography.labelSmall,
                     color = themeColor.copy(alpha = StealthAlphaHigh)
                 )
@@ -506,7 +430,7 @@ fun IdentityStage(
                     )
                 }
                 Text(
-                    text = "AIR", 
+                    text = "Feed", 
                     style = MaterialTheme.typography.labelSmall,
                     color = (if (isLiveFeedMode) StealthRose else themeColor).copy(alpha = StealthAlphaHigh)
                 )
@@ -756,14 +680,6 @@ fun BlukitWidget(
     themeColor: Color = StealthPrimary,
     showGlow: Boolean = true
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "WidgetGlow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.05f, 
-        targetValue = 0.15f, 
-        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "Glow"
-    )
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -786,7 +702,7 @@ fun BlukitWidget(
             border = BorderStroke(1.dp, Color.White.copy(alpha = StealthAlphaBorder)),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Box(modifier = Modifier.background(if (showGlow) themeColor.copy(alpha = glowAlpha) else Color.Transparent)) {
+            Box(modifier = Modifier.background(if (showGlow) themeColor.copy(alpha = 0.05f) else Color.Transparent)) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1134,13 +1050,6 @@ fun EchoItem(
     val isSynthesis = echo?.isMeta == true
     val isEntry = isGrouped && echo != null
 
-    val infiniteTransition = rememberInfiniteTransition(label = "EchoEntry")
-    val dotAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f, targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = LinearOutSlowInEasing), RepeatMode.Reverse),
-        label = "DotAlpha"
-    )
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1176,8 +1085,8 @@ fun EchoItem(
                     Box(
                         modifier = Modifier
                             .size(6.dp)
-                            .background(themeColor.copy(alpha = 0.3f * dotAlpha), CircleShape)
-                            .border(1.dp, themeColor.copy(alpha = 0.6f * dotAlpha), CircleShape)
+                            .background(themeColor.copy(alpha = 0.3f), CircleShape)
+                            .border(1.dp, themeColor.copy(alpha = 0.5f), CircleShape)
                     )
                 }
                 
@@ -1441,14 +1350,6 @@ fun BlukitTip(
     modifier: Modifier = Modifier,
     themeColor: Color = StealthAmber
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "TipGlow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.2f, 
-        targetValue = 0.5f, 
-        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "GlowAlpha"
-    )
-
     Surface(
         modifier = modifier
             .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -1456,7 +1357,7 @@ fun BlukitTip(
             .graphicsLayer { alpha = 0.98f },
         color = StealthSurface,
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, themeColor.copy(alpha = glowAlpha))
+        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.2f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp), 
@@ -1569,18 +1470,8 @@ fun SphereSummary(
     underIconContent: @Composable (ColumnScope.() -> Unit)? = null,
     aiTrend: String? = null
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "PluralGlow")
-    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.05f, 
-        targetValue = 0.15f, 
-        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "Glow"
-    )
-
     Surface(
         onClick = { 
-            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
             onClick() 
         },
         color = StealthSurface,
@@ -1591,7 +1482,7 @@ fun SphereSummary(
             .padding(horizontal = 12.dp, vertical = 6.dp), 
         tonalElevation = 8.dp
     ) {
-        Box(modifier = Modifier.background(themeColor.copy(alpha = glowAlpha))) {
+        Box(modifier = Modifier.background(themeColor.copy(alpha = 0.05f))) {
             Column {
                 if (topContent != null) {
                     Box(modifier = Modifier.padding(top = 8.dp)) {
@@ -1651,7 +1542,7 @@ fun SphereSummary(
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = aiTrend.uppercase(),
+                                            text = aiTrend,
                                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                                             color = StealthAmber
                                         )
@@ -1675,7 +1566,6 @@ fun SphereSummary(
                         if (showJoin) {
                             Button(
                                 onClick = { 
-                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                                     onClick() 
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = themeColor),
@@ -1683,7 +1573,7 @@ fun SphereSummary(
                                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
                             ) {
                                 Text(
-                                    text = "JOIN",
+                                    text = "Join",
                                     style = MaterialTheme.typography.labelLarge,
                                     color = StealthOnPrimary
                                 )
@@ -1818,56 +1708,22 @@ fun BlukitInput(
     
     var isFocused by remember { mutableStateOf(value = false) }
     
-    val infiniteTransition = rememberInfiniteTransition(label = "InputNudge")
-    
-    val nudgeGlow by infiniteTransition.animateFloat(
-        initialValue = 0.05f, 
-        targetValue = if (value.isEmpty() && !isFocused) 0.2f else 0.05f, 
-        animationSpec = infiniteRepeatable(tween(3000, easing = LinearOutSlowInEasing), RepeatMode.Reverse),
-        label = "NudgeGlow"
-    )
-
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (isFocused) 0.8f else nudgeGlow,
-        animationSpec = tween(500),
-        label = "InputGlow"
-    )
-
     val actualPlaceholder = when { 
-        isSearchActive -> "Search Sources or records..."
-        isPulseLocked -> "Resonate: Pick a Sphere..."
+        isSearchActive -> "Search peers or records..."
+        isPulseLocked -> "Select a group..."
         placeholder != null -> placeholder 
-        isReadOnly -> "INTERCEPTED" 
-        isPrivate && targetName != null -> "Echo to $targetName..."
-        isPrivate -> "Send a secure Echo..."
-        else -> listOf(
-            "What's the vibe now?",
-            "Record this ritual...",
-            "Resonate with the air...",
-            "Capture this moment..."
-        ).random()
+        isReadOnly -> "Locked" 
+        isPrivate && targetName != null -> "Message to $targetName..."
+        isPrivate -> "Send a secure message..."
+        else -> "What's happening?"
     }
     
     Column(modifier = modifier) {
-        val animOffset by infiniteTransition.animateFloat(
-            initialValue = -1f, 
-            targetValue = 2f, 
-            animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)), 
-            label = "SeparatorAnim"
-        )
-        
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(
-                    androidx.compose.ui.graphics.Brush.horizontalGradient(
-                        0.0f to Color.Transparent,
-                        animOffset to themeColor.copy(alpha = glowAlpha),
-                        animOffset + 0.2f to themeColor.copy(alpha = glowAlpha * 1.5f),
-                        animOffset + 0.4f to Color.Transparent,
-                    )
-                )
+                .background(themeColor.copy(alpha = if (isFocused) 0.3f else 0.1f))
         )
 
         Box(
@@ -1883,7 +1739,7 @@ fun BlukitInput(
                     .background(Color.White.copy(alpha = 0.03f + (if(isFocused) 0.05f else 0f)), RoundedCornerShape(28.dp))
                     .border(
                         width = 1.dp, 
-                        color = themeColor.copy(alpha = glowAlpha * 0.5f),
+                        color = themeColor.copy(alpha = if (isFocused) 0.4f else 0.1f),
                         shape = RoundedCornerShape(28.dp)
                     )
                     .padding(horizontal = 12.dp, vertical = 8.dp),
@@ -2064,8 +1920,8 @@ fun ResonanceNav(
         NavigationBarItem(
             selected = currentRoute is Route.Sensing,
             onClick = { onNav(Route.Sensing) },
-            icon = { Icon(Icons.Rounded.Radar, contentDescription = "Sensing") },
-            label = { Text("Sensing") },
+            icon = { Icon(Icons.Rounded.Radar, contentDescription = "Discovery") },
+            label = { Text("Discovery") },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = StealthPrimary,
                 selectedTextColor = StealthPrimary,
@@ -2078,7 +1934,7 @@ fun ResonanceNav(
             selected = currentRoute is Route.LiveFeed,
             onClick = { onNav(Route.LiveFeed) },
             icon = { Icon(Icons.Rounded.Stream, contentDescription = "Stream") },
-            label = { Text("Air") },
+            label = { Text("Feed") },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = StealthRose,
                 selectedTextColor = StealthRose,
@@ -2090,8 +1946,8 @@ fun ResonanceNav(
         NavigationBarItem(
             selected = currentRoute is Route.Timeline,
             onClick = { onNav(Route.Timeline) },
-            icon = { Icon(Icons.Rounded.Timeline, contentDescription = "Ledger") },
-            label = { Text("Ledger") },
+            icon = { Icon(Icons.Rounded.Timeline, contentDescription = "History") },
+            label = { Text("History") },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = StealthAmber,
                 selectedTextColor = StealthAmber,
@@ -2121,13 +1977,13 @@ fun PermissionRequiredField(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "RESONANCE REQUIRES RADIOS",
+            text = "CONNECTION REQUIRES RADIOS",
             style = MaterialTheme.typography.titleMedium,
             color = Color.White
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "To sensing nearby Sources and Spheres, Blukit needs permission to use Bluetooth and Location.",
+            text = "To find nearby peers and groups, Blukit needs permission to use Bluetooth and Location.",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
@@ -2154,7 +2010,7 @@ fun IdentityEchoInput(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth().padding(24.dp)
     ) {
-        Text(text = "CLAIM YOUR IDENTITY", style = MaterialTheme.typography.labelSmall, color = StealthAmber)
+        Text(text = "SET YOUR IDENTITY", style = MaterialTheme.typography.labelSmall, color = StealthAmber)
         Spacer(modifier = Modifier.height(16.dp))
         WelcomeGhost(
             nickname = name,

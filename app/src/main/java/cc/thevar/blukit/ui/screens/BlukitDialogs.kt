@@ -41,14 +41,6 @@ fun BlukitAlert(
     dismissLabel: String = "CANCEL",
     themeColor: Color = StealthPrimary
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "AlertGlow")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1.0f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(tween(1000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "PulseScale"
-    )
-
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = StealthSurface,
@@ -65,7 +57,7 @@ fun BlukitAlert(
                     Surface(
                         shape = CircleShape,
                         color = themeColor.copy(alpha = StealthAlphaLow),
-                        modifier = Modifier.size(48.dp * pulseScale)
+                        modifier = Modifier.size(48.dp)
                     ) {}
                     Icon(
                         imageVector = Icons.Rounded.NotificationsActive, 

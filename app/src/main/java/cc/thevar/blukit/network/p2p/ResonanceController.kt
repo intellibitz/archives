@@ -103,7 +103,7 @@ interface ResonanceController {
     suspend fun broadcastIdentityUpdate(oldName: String): Echo
 
     /** Initializes a new Sphere context. */
-    fun startGroupRoom(name: String, members: Set<String>, type: Int = Sphere.SCOPE_PUBLIC, groupId: String? = null, parentId: String? = null): String
+    fun startGroupRoom(name: String, members: Set<String>, type: Int = Sphere.SCOPE_PUBLIC, groupId: String? = null, parentId: String? = null, anchoredPublicSphereId: String? = null): String
 
     /** Updates the membership of a private Sphere. */
     fun updateGroupMembers(groupId: String, memberIds: Set<String>)

@@ -360,6 +360,8 @@ class NearbyResonanceController(
     }
 
     override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? {
+        val sphere = groupId?.let { echoLedger.getSphere(it) }
+        
         groupId?.let { gid ->
             if (!echoLedger.isMember(gid, repository.getDeviceId())) {
                 Log.w(tag, "Resonance Denied: Source not a member of $gid")
@@ -380,6 +382,7 @@ class NearbyResonanceController(
             messageScope = messageScope,
             type = type,
             hopCount = 0,
+            anchoredPublicSphereId = sphere?.anchoredPublicSphereId
         )
 
         if (!payload.isPriority && receiverId == null && activeConnections.size > 5) {
@@ -505,7 +508,7 @@ class NearbyResonanceController(
         } catch (_: Exception) { null }
     }
 
-    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
+    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?, anchoredPublicSphereId: String?): String {
         val gid = groupId ?: Sphere.generateId(name, type)
         internalScope.launch(ioDispatcher) { 
             echoLedger.insertSphere(
@@ -515,11 +518,33 @@ class NearbyResonanceController(
                     memberIds = members + repository.getDeviceId(),
                     scope = type,
                     parentId = parentId,
-                    ownerId = repository.getDeviceId()
+                    ownerId = repository.getDeviceId(),
+                    anchoredPublicSphereId = anchoredPublicSphereId
                 )
             ) 
+            
+            // If this is an anchored group, advertise it to the public sphere
+            if (anchoredPublicSphereId != null) {
+                broadcastAnchorAdvertisement(gid, name, anchoredPublicSphereId)
+            }
         }
         return gid
+    }
+
+    private suspend fun broadcastAnchorAdvertisement(anchoredGid: String, name: String, anchorPublicGid: String) {
+        val advertisement = Echo(
+            messageId = UUID.randomUUID().toString(),
+            senderId = repository.getDeviceId(),
+            senderName = repository.getCurrentNickname(),
+            groupId = anchoredGid,
+            groupName = name,
+            content = "PRIVATE SPHERE AVAILABLE",
+            timestamp = System.currentTimeMillis(),
+            type = Echo.TYPE_ANCHOR_ADVERTISEMENT,
+            messageScope = Echo.MESSAGE_SHOUT,
+            anchoredPublicSphereId = anchorPublicGid
+        )
+        dispatchEcho(advertisement)
     }
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
@@ -613,6 +638,7 @@ class NearbyResonanceController(
             Echo.TYPE_RESYNC_REQUEST -> handleSyncRequest(endpointId, payload, secretKey)
             Echo.TYPE_RESYNC_CHUNK -> handleSyncChunk(payload)
             Echo.TYPE_RESYNC_COMPLETE -> handleSyncComplete(endpointId, payload)
+            Echo.TYPE_ANCHOR_ADVERTISEMENT -> handleAnchorAdvertisement(payload)
             else -> handleEcho(endpointId, payload, secretKey)
         }
     }
@@ -711,6 +737,25 @@ class NearbyResonanceController(
         }
     }
 
+    private fun handleAnchorAdvertisement(payload: Echo) {
+        val anchoredGid = payload.groupId ?: return
+        val anchorPublicGid = payload.anchoredPublicSphereId ?: return
+        val gName = payload.groupName ?: "ANCHORED SPHERE"
+        
+        if (echoLedger.getSphere(anchoredGid) == null) {
+            echoLedger.insertSphere(
+                Sphere(
+                    id = anchoredGid,
+                    name = gName,
+                    scope = Sphere.SCOPE_PRIVATE,
+                    anchoredPublicSphereId = anchorPublicGid,
+                    isMeta = true
+                )
+            )
+            Log.i(tag, "AIR Discovery: Anchored sphere $gName found in $anchorPublicGid")
+        }
+    }
+
     private fun handleEcho(endpointId: String, payload: Echo, secretKey: SecretKey) {
         if (isSpam(payload)) return
         sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
@@ -727,7 +772,15 @@ class NearbyResonanceController(
                     Echo.MESSAGE_SILENCE -> Sphere.SCOPE_LOCAL
                     else -> Sphere.SCOPE_PRIVATE
                 }
-                echoLedger.insertSphere(Sphere(id = gid, name = gName, scope = scope, parentId = Sphere.ID_GLOBAL))
+                echoLedger.insertSphere(
+                    Sphere(
+                        id = gid,
+                        name = gName,
+                        scope = scope,
+                        parentId = Sphere.ID_GLOBAL,
+                        anchoredPublicSphereId = payload.anchoredPublicSphereId
+                    )
+                )
             }
         }
         hapticManager.triggerMessage(HapticManager.MessageType.MESSAGE)

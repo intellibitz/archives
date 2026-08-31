@@ -31,6 +31,7 @@ class AtmosphereManager(
     ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
+    private val documentMiner = DocumentMiner(context)
 
     init {
         startAmbientAtmosphere()
@@ -62,9 +63,14 @@ class AtmosphereManager(
             delay(synthesisDelay)
             
             val echoes = echoLedger.echoes.value.filter { it.groupId == groupId }
-            if (echoes.size < 5) continue
+            if (echoes.isEmpty()) continue
 
-            val synthesis = generateSynthesis(groupId, echoes)
+            // Mine documents in this sphere
+            val documentEchoes = echoes.filter { it.type == Echo.TYPE_FILE }
+            val minedInsights = documentEchoes.map { documentMiner.mineFile(it) }
+            val extractedTasks = minedInsights.flatMap { it.tasks }.distinct()
+
+            val synthesis = generateSynthesis(groupId, echoes, extractedTasks)
             
             val aiEcho = Echo(
                 messageId = UUID.randomUUID().toString(),
@@ -80,6 +86,22 @@ class AtmosphereManager(
                 isMeta = true,
             )
             echoLedger.upsertEcho(aiEcho)
+            
+            // If tasks were mined, inject them as system echoes
+            extractedTasks.forEach { task ->
+                val taskEcho = Echo(
+                    messageId = UUID.randomUUID().toString(),
+                    senderId = "ATMOSPHERE_MINER",
+                    senderName = "AIR MINER",
+                    senderEmoji = "⚒️",
+                    groupId = groupId,
+                    content = "NEW TASK DETECTED: $task",
+                    timestamp = System.currentTimeMillis(),
+                    type = Echo.TYPE_ASSIGNMENT_TASK,
+                    isMeta = true
+                )
+                echoLedger.upsertEcho(taskEcho)
+            }
             Log.i("AtmosphereManager", "Sphere Resonance: Synthesis broadcasted for $groupId")
         }
     }
@@ -87,7 +109,7 @@ class AtmosphereManager(
     /**
      * LOCAL SYNTHESIS: Uses a simplified TF-IDF approach and stopword filtering to cluster Echoes.
      */
-    fun generateSynthesis(groupId: String, echoes: List<Echo>): Synthesis {
+    fun generateSynthesis(groupId: String, echoes: List<Echo>, minedTasks: List<String> = emptyList()): Synthesis {
         val stopWords = setOf(
             "THE", "AND", "THIS", "THAT", "WITH", "FROM", "THEIR", "THEY", "WHAT", 
             "YOUR", "HAVE", "WERE", "THERE", "ABOUT", "WHICH", "WOULD", "COULD",
@@ -122,6 +144,7 @@ class AtmosphereManager(
 
         val intent = detectAtmosphericTrend(echoes)
         val trendSummary = intent?.let { " TREND: $it DETECTED." } ?: ""
+        val taskSummary = if (minedTasks.isNotEmpty()) " MINED ${minedTasks.size} TASKS." else ""
 
         val intensityLabel = when {
             sentimentScore > 0.6 -> "VIBRANT"
@@ -133,7 +156,7 @@ class AtmosphereManager(
 
         return Synthesis(
             groupId = groupId,
-            summary = "SPHERE REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
+            summary = "AIR REPORT: $mainTopic RESONANCE ACTIVE.$trendSummary$taskSummary ENERGY IS $intensityLabel.",
             trendLabel = intent,
             topKeywords = keywords,
             sentimentScore = sentimentScore,

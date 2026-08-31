@@ -59,7 +59,7 @@ fun BlukitApp(
     val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
-    val highResonanceEchoes by bluetoothViewModel.highResonancePulses.collectAsStateWithLifecycle()
+    val trendingMessages by bluetoothViewModel.highResonancePulses.collectAsStateWithLifecycle()
     val harmonyReport by harmonyViewModel.report.collectAsStateWithLifecycle()
 
     val currentRoute by navViewModel.currentRoute.collectAsStateWithLifecycle()
@@ -118,9 +118,9 @@ fun BlukitApp(
         navigationSuiteItems = {
             if (nickname != null) {
                 listOf(
-                    Triple(Route.Sensing, "Sensing", Icons.Rounded.Radar),
-                    Triple(Route.LiveFeed, "Live", Icons.Rounded.Stream),
-                    Triple(Route.Timeline, "Records", Icons.Rounded.History),
+                    Triple(Route.Sensing, "Discovery", Icons.Rounded.Radar),
+                    Triple(Route.LiveFeed, "Feed", Icons.Rounded.Stream),
+                    Triple(Route.Timeline, "History", Icons.Rounded.History),
                 ).forEach { (route, label, icon) ->
                     item(
                         selected = currentRoute::class == route::class,
@@ -163,10 +163,10 @@ fun BlukitApp(
                             isWifiOff = !bluetoothState.harmony.isWifiEnabled,
                             isPermissionMissing = !permissionState.essentialPermissionsGranted,
                             isPermanentlyDenied = isPermanentlyDenied,
-                            resonanceStatus = harmonyReport.synthesis,
+                            connectionStatus = harmonyReport.synthesis,
                             breeze = harmonyReport.currentBreeze,
                             trend = harmonyReport.trendLabel,
-                            highResonanceMessages = highResonanceEchoes,
+                            trendingMessages = trendingMessages,
                             trail = breadcrumbTrail,
                             onCrumbClick = onCrumbClick
                         )

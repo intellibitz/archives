@@ -40,26 +40,15 @@ internal fun VibeHeatmap(energy: Float, themeColor: Color, trend: String? = null
         else -> themeColor
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "HeatmapPulse")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Pulse"
-    )
-
     androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
         val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
-        val radius = size.minDimension * 0.8f * pulseScale
+        val radius = size.minDimension * 0.8f
         
         drawCircle(
             brush = androidx.compose.ui.graphics.Brush.radialGradient(
                 colors = listOf(
-                    atmosphereColor.copy(alpha = 0.2f * energy),
-                    atmosphereColor.copy(alpha = 0.08f * energy),
+                    atmosphereColor.copy(alpha = 0.15f * energy),
+                    atmosphereColor.copy(alpha = 0.05f * energy),
                     androidx.compose.ui.graphics.Color.Transparent
                 ),
                 center = center,

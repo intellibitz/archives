@@ -54,3 +54,21 @@ data class EchoRipple(
     val startTime: Long,
     val color: Color
 )
+
+/**
+ * AIR INTELLIGENCE MODELS
+ */
+data class AirSynthesisHighlight(
+    val title: String,
+    val summary: String,
+    val intensity: Float, // 0.0 to 1.0 for UI animation
+    val activeTasks: List<String> = emptyList(),
+    val topKeywords: List<String> = emptyList()
+)
+
+data class MinedDocumentHighlight(
+    val fileName: String,
+    val previewSnippet: String,
+    val extractedEntities: List<String>,
+    val timestamp: Long
+)

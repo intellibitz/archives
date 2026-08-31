@@ -94,7 +94,6 @@ fun BlukitTheme(
         content = {
             if (stealthMode) {
                 Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
-                    BlukitAir()
                     content()
                 }
             } else {
@@ -102,37 +101,4 @@ fun BlukitTheme(
             }
         }
     )
-}
-
-/**
- * Global "Blukit Air": Suble shimmering grain to make every pixel feel the pulse.
- */
-@Composable
-fun BlukitAir() {
-    val infiniteTransition = rememberInfiniteTransition(label = "Air")
-    val shimmer by infiniteTransition.animateFloat(
-        initialValue = 0.1f,
-        targetValue = 0.3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Shimmer"
-    )
-
-    val dots = remember {
-        List(150) {
-            Offset(Random.nextFloat(), Random.nextFloat())
-        }
-    }
-
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        dots.forEach { dot ->
-            drawCircle(
-                color = StealthPrimary.copy(alpha = shimmer * 0.1f),
-                radius = 1f,
-                center = Offset(dot.x * size.width, dot.y * size.height)
-            )
-        }
-    }
 }

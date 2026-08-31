@@ -48,30 +48,19 @@ fun EnergyTrails(
     color: Color = StealthPrimary,
     proximity: Float = 0f
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "EnergyTrails")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(if (proximity > 0.7f) 2000 else 6000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "Rotation"
-    )
-
     androidx.compose.foundation.Canvas(modifier = modifier) {
         val center = Offset(size.width / 2f, size.height / 2f)
         val radius = size.minDimension / 2.2f
 
         repeat(count) { i ->
-            val angle = (rotation + i * (360f / count)) % 360f
+            val angle = (i * (360f / count)) % 360f
             val rad = Math.toRadians(angle.toDouble())
             val x = (center.x + Math.cos(rad) * radius).toFloat()
             val y = (center.y + Math.sin(rad) * radius).toFloat()
 
             drawCircle(
-                color = color.copy(alpha = 0.4f),
-                radius = 1.5.dp.toPx(),
+                color = color.copy(alpha = 0.3f),
+                radius = 1.dp.toPx(),
                 center = Offset(x, y)
             )
         }
@@ -79,6 +68,9 @@ fun EnergyTrails(
 }
 
 @OptIn(ExperimentalFoundationApi::class)
+/**
+ * PEER SIGNATURE: High-fidelity visual identity for peers.
+ */
 @Composable
 fun PersonaSignature(
     device: Source, 
@@ -95,20 +87,8 @@ fun PersonaSignature(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "NodeAnim")
     val isProjected = projectionEmoji != null
-    val basePulse = if (isProjected) 1.6f else 1.15f
-    val pulseScale by if (isStatic) { 
-        remember { mutableFloatStateOf(1.0f) }
-    } else { 
-        val targetPulse = if (isHighlighted) 1.5f else if ((isPulsed || isPeerPulsed)) 1.25f else basePulse
-        infiniteTransition.animateFloat(
-            initialValue = 1.0f, 
-            targetValue = targetPulse + (device.proximityFactor * 0.1f), 
-            animationSpec = infiniteRepeatable(tween(if (isHighlighted) 500 else 2000 + (device.proximityFactor * 1000).toInt(), easing = FastOutSlowInEasing), RepeatMode.Reverse), 
-            label = "Pulse",
-        ) 
-    }
+    val pulseScale = 1.0f
     
     val personaThemeColor = themeColor ?: when {
         isHighlighted -> StealthAmber
@@ -228,6 +208,9 @@ fun PersonaSignature(
     }
 }
 
+/**
+ * GROUP SIGNATURE: Visual identity for groups.
+ */
 @Composable
 fun SphereSignature(
     device: Source, 
@@ -239,11 +222,10 @@ fun SphereSignature(
     title: String? = null
 ) {
     val themeColor = if (isPulsed) StealthRose else StealthPrimary
-    val infiniteTransition = rememberInfiniteTransition(label = "SpherePulse")
-    val pulse by infiniteTransition.animateFloat(initialValue = 1.0f, targetValue = 1.2f, animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "Pulse")
+    val pulse = 1.0f
     
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(size * 1.5f)) {
-        Surface(shape = CircleShape, color = themeColor.copy(alpha = 0.05f * pulse), modifier = Modifier.size(size * pulse)) {}
+        Surface(shape = CircleShape, color = themeColor.copy(alpha = 0.05f), modifier = Modifier.size(size)) {}
         Surface(
             modifier = Modifier.size(size), 
             shape = CircleShape, 
@@ -281,6 +263,9 @@ fun SphereSignature(
     }
 }
 
+/**
+ * ONBOARDING OVERLAY: Interface for initial profile setup.
+ */
 @Composable
 fun WelcomeGhost(
     nickname: String,
@@ -293,19 +278,6 @@ fun WelcomeGhost(
 ) {
     val focusRequester = remember { FocusRequester() }
     val emojis = listOf("👤", "👻", "📡", "🛸", "🪐", "🌟", "⚡", "🔥", "💧", "🧬", "🧿", "💎")
-    val infiniteTransition = rememberInfiniteTransition(label = "GhostAnim")
-    val glowAlphaState = infiniteTransition.animateFloat(
-        initialValue = 0.3f, targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "Glow"
-    )
-    val pulseScaleState = infiniteTransition.animateFloat(
-        initialValue = 1.0f, targetValue = 1.15f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "Pulse"
-    )
-    val glowAlpha = glowAlphaState.value
-    val pulseScale = pulseScaleState.value
 
     val coordinates = LocalPersonaCoordinates.current
 
@@ -336,16 +308,12 @@ fun WelcomeGhost(
                     val current = coordinates["ONBOARDING"] ?: PersonaConnectionPoints()
                     coordinates["ONBOARDING"] = current.copy(field = it.positionInRoot() + center)
                 }
-                .graphicsLayer {
-                    scaleX = pulseScale
-                    scaleY = pulseScale
-                }
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(120.dp)) {
                 Surface(
                     shape = CircleShape,
-                    color = StealthAmber.copy(alpha = 0.15f * glowAlpha),
-                    border = BorderStroke(2.dp, StealthAmber.copy(alpha = 0.5f * glowAlpha)),
+                    color = StealthAmber.copy(alpha = 0.1f),
+                    border = BorderStroke(2.dp, StealthAmber.copy(alpha = 0.3f)),
                     modifier = Modifier.fillMaxSize()
                 ) {}
                 
@@ -468,6 +436,9 @@ fun WelcomeGhost(
     }
 }
 
+/**
+ * GROUP CREATION OVERLAY: Interface for naming and templating new groups.
+ */
 @Composable
 fun SphereRitualGhost(
     onNameChange: (String) -> Unit,
@@ -482,19 +453,6 @@ fun SphereRitualGhost(
     var sphereName by remember { mutableStateOf("") }
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
     val focusRequester = remember { FocusRequester() }
-    val infiniteTransition = rememberInfiniteTransition(label = "RitualAnim")
-    val glowAlphaState = infiniteTransition.animateFloat(
-        initialValue = 0.3f, targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "Glow"
-    )
-    val pulseScaleState = infiniteTransition.animateFloat(
-        initialValue = 1.0f, targetValue = 1.1f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "Pulse"
-    )
-    val glowAlpha = glowAlphaState.value
-    val pulseScale = pulseScaleState.value
 
     val coordinates = LocalPersonaCoordinates.current
 
@@ -525,16 +483,12 @@ fun SphereRitualGhost(
                     val current = coordinates["SPHERE_RITUAL"] ?: PersonaConnectionPoints()
                     coordinates["SPHERE_RITUAL"] = current.copy(field = it.positionInRoot() + center)
                 }
-                .graphicsLayer {
-                    scaleX = pulseScale
-                    scaleY = pulseScale
-                }
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(120.dp)) {
                 Surface(
                     shape = CircleShape,
-                    color = StealthPrimary.copy(alpha = 0.15f * glowAlpha),
-                    border = BorderStroke(2.dp, StealthPrimary.copy(alpha = 0.5f * glowAlpha)),
+                    color = StealthPrimary.copy(alpha = 0.1f),
+                    border = BorderStroke(2.dp, StealthPrimary.copy(alpha = 0.3f)),
                     modifier = Modifier.fillMaxSize()
                 ) {}
                 
@@ -688,24 +642,15 @@ data class GhostEchoData(
     val sourceId: String? = null
 )
 
+/**
+ * MESSAGE OVERLAY: Immersive view for trending or important messages.
+ */
 @Composable
 fun EchoGhost(
     data: GhostEchoData,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "GhostPulseAnim")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f, targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "Glow"
-    )
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1.0f, targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "Pulse"
-    )
-
     val coordinates = LocalPersonaCoordinates.current
 
     DisposableEffect(Unit) {
@@ -732,16 +677,12 @@ fun EchoGhost(
         )
 
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.graphicsLayer { 
-                scaleX = pulseScale
-                scaleY = pulseScale
-            }
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Surface(
                 shape = CircleShape,
                 color = StealthBlack,
-                border = BorderStroke(2.dp, data.themeColor.copy(alpha = glowAlpha)),
+                border = BorderStroke(2.dp, data.themeColor.copy(alpha = 0.5f)),
                 modifier = Modifier.size(120.dp),
                 tonalElevation = 12.dp
             ) {

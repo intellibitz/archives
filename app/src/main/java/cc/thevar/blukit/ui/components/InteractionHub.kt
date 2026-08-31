@@ -174,7 +174,7 @@ fun SelectionInteractionHeader(
                 shape = RoundedCornerShape(20.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) { 
-                Text("New Sphere", style = MaterialTheme.typography.labelLarge) 
+                Text("New Group", style = MaterialTheme.typography.labelLarge) 
             }
             IconButton(
                 onClick = onClearSelection, 
@@ -211,7 +211,7 @@ fun SearchActionBanner(
             Icon(Icons.Rounded.Grain, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = "Start Sphere: $messageText", 
+                text = "Start Group: $messageText", 
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -242,7 +242,7 @@ fun IncomingRequestBanner(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Incoming Resonance Request", 
+                    text = "Incoming Connection Request", 
                     style = MaterialTheme.typography.labelSmall, 
                     color = StealthPrimary
                 )
@@ -436,7 +436,7 @@ fun BlukitInput(
                     
                     if (pulseCount > 0) {
                         Text(
-                            text = "$pulseCount Echoes",
+                            text = "$pulseCount Messages",
                             style = MaterialTheme.typography.labelSmall,
                             color = (if (isPrivate) StealthRose else StealthPrimary).copy(alpha = 0.6f)
                         )

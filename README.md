@@ -6,16 +6,19 @@ Blukit is a 100% offline, peer-to-peer ecosystem that lets you log your activiti
 
 ---
 
-## 🌬️ ON-DEVICE ANALYSIS
-Unlike standard chat apps, Blukit uses on-device intelligence to process your records.
-- **Message Grouping**: Local analysis groups the messages in your Groups to provide clarity, adjusting UI colors based on context.
-- **Activity Trends**: The system identifies frequent activities, trends (Academic, Social, Transit), and priorities across your local network.
+## 🌬️ AIR: AMBIENT INTELLIGENT RESONANCE
+Unlike standard chat apps, Blukit uses on-device **AIR** to process your records.
+- **Document Mining**: Automatically extracts tasks, entities, and summaries from shared files (PDF, Text, JSON) without internet.
+- **Sphere Synthesis**: Local analysis groups the messages in your Groups to provide clarity, adjusting UI colors based on context.
+- **Actionable Insights**: The system identifies frequent activities, trends (Academic, Social, Transit), and automatically injects detected tasks into the resonance field.
 - **Privacy**: All processing happens locally. Your records never leave your device.
 
 ---
 
 ## 🏛️ TECHNICAL LEXICON
+- **AIR**: Ambient Intelligent Resonance. The local synth engine for offline intelligence.
 - **DISCOVERY**: Your local network state. A real-time awareness of the Peers and Groups around you.
+- **ANCHORED GROUPS**: Private sub-groups linked to a public Sphere, discoverable only by authorized peers via anchor advertisements.
 - **LOCAL FEED**: The Message Stream. A real-time, 100% offline feed of messages in your physical proximity.
 - **GROUP**: A shared space for messages and records.
 - **MESSAGE**: A permanent unit of data. A record of an event.

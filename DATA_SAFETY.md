@@ -7,7 +7,8 @@ Blukit **never** connects to the internet. All **Echoes** resonate directly from
 
 | Energy Type | Stored? | Shared? | Why? |
 | :--- | :--- | :--- | :--- |
-| **The Atmosphere** | Only on your phone | Sphere partners | On-device synthesis of **Sphere Trends** to provide context and atmospheric color. |
+| **AIR Synthesis** | Only on your phone | Sphere partners | On-device synthesis of **Sphere Trends** to provide context and atmospheric color. |
+| **Document Mining** | Only on your phone | No | Extraction of tasks and entities from shared files to provide local automation. |
 | **Consensus (Votes)** | Only on your phone | Sphere partners | Anonymous consensus to adjust resonance weight on the **Resonance Canvas**. |
 | **Persona & Roles** | Only on your phone | Nearby Sources only | Local identification and Sphere-specific permissions. |
 | **Shared Records** | Only on your phone | Sphere members only | Collaborative life tracking (exempt from decay). |
@@ -23,7 +24,7 @@ Blukit **never** connects to the internet. All **Echoes** resonate directly from
 - **AIR Offline Stream**: The **AIR** stream is a real-time visualization of proximity data. It is 100% ephemeral and 100% offline; no data from the stream is ever cached outside the local Ledger or transmitted to any external network.
 - **Atmospheric Synthesis**: Blukit performs **Local Synthesis** of Sphere energy. Only aggregated insights (e.g., "Academic Ritual Detected") are shared. Raw Echo content remains protected by hardware encryption.
 - **Resonance Consensus**: Consensus is achieved via anonymous votes. No voter identity is linked to the priority Echo.
-- **Anchored Sensing**: Private Spheres must be anchored to a parent Sphere to be discoverable by trusted Sources.
+- **Anchored Sensing**: Private Spheres can be anchored to a parent Sphere. These are discoverable via **Anchor Advertisements** (`TYPE_ANCHOR_ADVERTISEMENT`), allowing authorized Sources to sense and join private sub-contexts without manual invites.
 - **Branded Resonance**: **Whispers** resonate in **Stealth Rose** and stay encrypted between you and your trusted circles.
 - **Source Governance**: You can block any Source to instantly halt all resonance and discovery from them. Private Spheres allow for granular member removal and role management.
 

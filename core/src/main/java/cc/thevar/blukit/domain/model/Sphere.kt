@@ -42,6 +42,8 @@ data class Sphere(
     val templateId: String? = null,
     val ownerId: String? = null,
     val userRoles: Map<String, String> = emptyMap(), // Map of userId to role name
+    val anchoredPublicSphereId: String? = null, // ID of the public sphere this private one is anchored to
+    val encryptedGroupKey: String? = null, // Group shared secret for multi-user private resonance
 ) {
     /**
      * Resolves all unique member IDs across flat list and partitioned sections.
@@ -51,6 +53,9 @@ data class Sphere(
 
     /** True if this is the root collective sphere that all Sources are pre-joined to. */
     val isDefaultSphere: Boolean get() = id == ID_GLOBAL
+
+    /** True if this group is anchored to a public resonance context. */
+    val isAnchored: Boolean get() = anchoredPublicSphereId != null
 
     companion object {
         // --- Scoping Levels (Resonance Aliases) ---

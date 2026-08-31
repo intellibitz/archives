@@ -34,13 +34,6 @@ fun StatusIcon(
     onColor: Color = StealthPrimary,
     onClick: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "StatusAnim")
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "Alpha"
-    )
     IconButton(onClick = onClick, modifier = Modifier.size(size)) {
         Icon(
             imageVector = icon,
@@ -49,7 +42,7 @@ fun StatusIcon(
                 isPermissionMissing || !isOn && !forceWarning -> Color.Red
                 forceWarning || isWeak -> Color.Yellow
                 else -> onColor
-            }.copy(alpha = if (!isOn || isWeak || forceWarning) alpha else 1f),
+            }.copy(alpha = if (!isOn || isWeak || forceWarning) 0.6f else 1f),
             modifier = Modifier.size(size * 0.65f)
         )
     }

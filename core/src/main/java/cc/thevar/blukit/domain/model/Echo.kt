@@ -48,6 +48,7 @@ data class Echo(
     val taskStatus: Int = 0,
     val resonanceWeight: Int = 0, // Social priority weight
     val anchoredCount: Int = 0, // Number of peers holding this record
+    val anchoredPublicSphereId: String? = null, // Anchor reference for private sub-groups
 ) {
     companion object {
         // --- Core Echo Types ---
@@ -73,6 +74,7 @@ data class Echo(
         // --- Intelligence ---
         const val TYPE_AI_SUMMARY = 17
         const val TYPE_CONSENSUS_VOTE = 18
+        const val TYPE_ANCHOR_ADVERTISEMENT = 19
 
         // --- Status ---
         const val TASK_PENDING = 0
