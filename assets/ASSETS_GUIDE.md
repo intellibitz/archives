@@ -17,6 +17,7 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
     -   `PreviewTacticalHeader`: The low-profile Row 0 resonance controls (Eco, Stealth, Radios).
     -   `PreviewHumanityStage`: The Row 1 navigation and identity anchor, now situated in the Sensing Header.
     -   `PreviewSphereRitualGhost`: The **Resonance Ghost** interaction model for naming Spheres and selecting **Templates**.
+    -   `PreviewSourceOptionsMenu`: The granular control menu for managing **Sources** (Block, Unblock, Add to Sphere).
 4.  Use the **"Copy Image"** or **"Screenshot"** icon in the preview header to save the high-resolution render.
 
 ## 🎨 Asset Specifications

@@ -172,9 +172,33 @@ fun PreviewHumanityStage() {
     }
 }
 
+@Preview(name = "Source Options Menu", device = Devices.PHONE, showBackground = true)
+@Composable
+fun PreviewSourceOptionsMenu() {
+    BlukitTheme {
+        Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
+            SourceOptionsMenu(
+                device = Source("1", "Alice", "👩"),
+                isTied = true,
+                isBlocked = false,
+                isRequesting = false,
+                onEcho = {},
+                onAccept = {},
+                onDeny = {},
+                onDisconnect = {},
+                onSelect = {},
+                onIdentify = {},
+                onBlock = {},
+                onUnblock = {},
+                onDismiss = {}
+            )
+        }
+    }
+}
+
 @Preview(name = "ResonanceTicker - Headers", device = Devices.PHONE, showBackground = true)
 @Composable
-fun PreviewLiveMessageTickerHeaders() {
+fun PreviewResonanceTickerHeaders() {
     val me = "me"
     val user1 = "user1"
     val user2 = "user2"

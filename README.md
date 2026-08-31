@@ -43,6 +43,8 @@ A high-density, ergonomic architecture designed for life.
 - **Sovereign UX**: Immersive visual effects like **Vibe Heatmaps** and **Echo Ripples** make the air feel physical.
 - **Stealth Mode**: A deep-black interface for private resonance.
 - **High Resonance**: Multi-stage haptic feedback that reinforces every interaction.
+- **Source Management**: Long-press any Source to block, identify, or initiate a private whisper.
+- **Sphere Governance**: Fully manage members, assign roles, and control archive status in private spheres.
 
 ---
 

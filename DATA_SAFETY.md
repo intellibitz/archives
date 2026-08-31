@@ -24,10 +24,12 @@ Blukit **never** connects to the internet. All **Echoes** resonate directly from
 - **Resonance Consensus**: Consensus is achieved via anonymous votes. No voter identity is linked to the priority Echo.
 - **Anchored Sensing**: Private Spheres must be anchored to a parent Sphere to be discoverable by trusted Sources.
 - **Branded Resonance**: **Whispers** resonate in **Stealth Rose** and stay encrypted between you and your trusted circles.
+- **Source Governance**: You can block any Source to instantly halt all resonance and discovery from them. Private Spheres allow for granular member removal and role management.
 
 ## 3. Self-Cleaning Persistence
 - **Echo Decay (Pruning)**: To keep your device light, Blukit automatically deletes large media older than 90 days.
 - **Pinned Preservation**: Any Echo you "Pin" to a **Resonance Canvas** is exempt from decay.
+- **Senior Archive**: Private Spheres can be promoted to "Senior Archive" status, making all contained Echoes exempt from any automated decay or pruning protocols.
 - **Ledger-Sync**: Local storage uses a deterministic log (LWW-CRDT) to ensure consistency across the field.
 - **Black Box Anchoring**: Records show an **Anchored Status** visualizing how many nearby Sources are currently "Carrying" your data safely.
 

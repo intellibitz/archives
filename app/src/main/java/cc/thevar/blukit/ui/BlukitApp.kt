@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.components.EchoRippleEffect
@@ -84,6 +85,8 @@ fun BlukitApp(
     val currentRoute = backStack.lastOrNull()
 
     var focusedSphereId by remember { mutableStateOf<String?>(null) }
+    var sourceForOptions by remember { mutableStateOf<Source?>(null) }
+    var showMemberManagement by remember { mutableStateOf(false) }
     
     val breadcrumbTrail = remember(backStack.size, bluetoothState, focusedSphereId) {
         val trail = mutableListOf<String>()
@@ -208,8 +211,16 @@ fun BlukitApp(
                                         header = { },
                                         onNavigateToGroup = { gid -> backStack.add(Route.SphereField(gid)) },
                                         onNavigateToPulse = { eid -> backStack.add(Route.EchoField(eid)) },
+                                        onSourceLongClick = { sourceForOptions = it },
                                         onAcceptRadio = { bluetoothViewModel.acceptRadio(it) },
                                         onDenyRadio = { bluetoothViewModel.denyRadio(it) },
+                                        onStartSidePulse = { 
+                                            val selectedIds = bluetoothState.crowd.selectedDevices
+                                            val source = bluetoothState.crowd.scannedDevices.find { it.id in selectedIds }
+                                            if (source != null) bluetoothViewModel.requestWhisper(source)
+                                        },
+                                        onStartChain = { bluetoothViewModel.startSphereResonance("NEW SPHERE") },
+                                        onClearSelection = { bluetoothViewModel.clearSelection() },
                                         onCreatePublicRoom = { name, tid -> bluetoothViewModel.startSphereResonance(name, scope = Sphere.SCOPE_PUBLIC, templateId = tid) }
                                     )
                                 }
@@ -241,10 +252,25 @@ fun BlukitApp(
                                             sphereId = entryRoute.roomId,
                                             onBack = { backStack.removeLast() },
                                             onNavigateToPulse = { backStack.add(Route.EchoField(it)) },
+                                            onNavigateToSphere = { gid -> backStack.add(Route.SphereField(gid)) },
+                                            onSourceLongClick = { sourceForOptions = it },
                                             onSend = { content -> bluetoothViewModel.echo(content, entryRoute.roomId) },
                                             onUpdateRecord = { gid, content, mid, v -> bluetoothViewModel.updateNote(gid, content, mid, v) },
                                             onVaultSphere = { gid, v -> bluetoothViewModel.vaultSphere(gid, v) },
                                             onSeniorVaultSphere = { gid, v -> bluetoothViewModel.seniorVaultSphere(gid, v) },
+                                            onRemoveMember = { gid, mid -> bluetoothViewModel.removeMemberFromSphere(gid, mid) },
+                                            onAssignRole = { gid, mid, role -> bluetoothViewModel.assignRole(gid, mid, role) },
+                                            onPushRitual = { gid, event -> bluetoothViewModel.pushRitual(gid, event) },
+                                            showMemberManagement = showMemberManagement,
+                                            onShowManagement = { showMemberManagement = true },
+                                            onDismissManagement = { showMemberManagement = false },
+                                            onStartSidePulse = { 
+                                                val selectedIds = bluetoothState.crowd.selectedDevices
+                                                val source = bluetoothState.crowd.scannedDevices.find { it.id in selectedIds }
+                                                if (source != null) bluetoothViewModel.requestWhisper(source)
+                                            },
+                                            onStartChain = { bluetoothViewModel.startSphereResonance("SUB SPHERE") },
+                                            onClearSelection = { bluetoothViewModel.clearSelection() },
                                             trend = sphereTrend
                                         )
                                     } else {
@@ -256,7 +282,15 @@ fun BlukitApp(
                                             highResonanceMessages = highResonanceEchoes,
                                             onBack = { backStack.removeLast() },
                                             onNavigateToPulse = { backStack.add(Route.EchoField(it)) },
+                                            onSourceLongClick = { sourceForOptions = it },
                                             onSend = { content -> bluetoothViewModel.echo(content, entryRoute.roomId) },
+                                            onStartSidePulse = { 
+                                                val selectedIds = bluetoothState.crowd.selectedDevices
+                                                val source = bluetoothState.crowd.scannedDevices.find { it.id in selectedIds }
+                                                if (source != null) bluetoothViewModel.requestWhisper(source)
+                                            },
+                                            onStartChain = { bluetoothViewModel.startSphereResonance("NEW SPHERE") },
+                                            onClearSelection = { bluetoothViewModel.clearSelection() },
                                             trend = sphereTrend
                                         )
                                     }
@@ -274,6 +308,35 @@ fun BlukitApp(
                             }
                         }
                     }
+                }
+
+                sourceForOptions?.let { source ->
+                    val sphereId = (currentRoute as? Route.SphereField)?.roomId
+                    val isAlreadyInGroup = if (sphereId != null) {
+                        val sphere = bluetoothState.session.groups.find { it.id == sphereId }
+                        source.id in (sphere?.allMemberIds ?: emptySet()) || source.persistentId in (sphere?.allMemberIds ?: emptySet())
+                    } else false
+
+                    SourceOptionsMenu(
+                        device = source,
+                        isTied = bluetoothState.session.groups.any { it.memberIds.contains(source.id) || it.memberIds.contains(source.persistentId) },
+                        isBlocked = bluetoothState.crowd.blockedUsers.contains(source.persistentId ?: source.id),
+                        isRequesting = bluetoothState.crowd.incomingRadioRequests.contains(source),
+                        activeGroupId = sphereId,
+                        isAlreadyInActiveGroup = isAlreadyInGroup,
+                        onEcho = { bluetoothViewModel.requestWhisper(source); sourceForOptions = null },
+                        onAccept = { bluetoothViewModel.acceptRadio(source); sourceForOptions = null },
+                        onDeny = { bluetoothViewModel.denyRadio(source); sourceForOptions = null },
+                        onDisconnect = { sourceForOptions = null },
+                        onSelect = { bluetoothViewModel.toggleSourceSelection(source.id); sourceForOptions = null },
+                        onIdentify = { sourceForOptions = null },
+                        onBlock = { viewModel.blockUser(source.persistentId ?: source.id); sourceForOptions = null },
+                        onUnblock = { viewModel.unblockUser(source.persistentId ?: source.id); sourceForOptions = null },
+                        onSync = { sphereId?.let { bluetoothViewModel.initiateHistorySync(it) }; sourceForOptions = null },
+                        onAddToGroup = { gid -> bluetoothViewModel.addMemberToSphere(gid, source.id); sourceForOptions = null },
+                        onRemoveFromGroup = { gid -> bluetoothViewModel.removeMemberFromSphere(gid, source.id); sourceForOptions = null },
+                        onDismiss = { sourceForOptions = null }
+                    )
                 }
             }
         }
