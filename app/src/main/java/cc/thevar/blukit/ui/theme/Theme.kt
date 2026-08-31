@@ -52,7 +52,8 @@ private val StealthColorScheme = darkColorScheme(
     onSurface = Color.White,
     error = StealthError,
     surfaceVariant = StealthSurfaceVariant,
-    onSurfaceVariant = Color.White.copy(alpha = 0.7f)
+    onSurfaceVariant = Color.White.copy(alpha = 0.7f),
+    outlineVariant = StealthOutlineVariant
 )
 
 private val LightColorScheme = lightColorScheme(

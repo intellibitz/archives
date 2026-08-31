@@ -38,6 +38,8 @@ interface IdentityRepository {
     val blockedUsers: StateFlow<Set<String>>
     /** Set of identifiers for peers with active secure ties. */
     val pulsedPeers: StateFlow<Set<String>>
+    /** The permanent anonymous hardware anchor. */
+    val deviceId: StateFlow<String>
 
     /** Retrieves or generates a permanent anonymous hardware anchor. */
     fun getDeviceId(): String
@@ -131,6 +133,9 @@ class IdentityRepositoryImpl(
         securePrefs.getStringSet(KEY_PULSED_PEERS, emptySet()) ?: emptySet()
     )
     override val pulsedPeers: StateFlow<Set<String>> = _pulsedPeers.asStateFlow()
+
+    private val _deviceId = MutableStateFlow(getDeviceId())
+    override val deviceId: StateFlow<String> = _deviceId.asStateFlow()
 
     override fun getDeviceId(): String {
         val existingId = securePrefs.getString(KEY_DEVICE_ID, null)

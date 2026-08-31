@@ -83,18 +83,27 @@ fun PrivateSphereField(
         state.session.groups.filter { (it.parentId == sphereId) && (it.scope != Sphere.SCOPE_PUBLIC) }
     }
 
-    val echoesData = remember(state.session.messages, sphereId, localDeviceId) {
-        if (sphereId == null) {
-            Triple(emptyList(), emptyMap(), false)
-        } else {
-            val baseEchoes = state.session.messages.filter { it.groupId == sphereId && it.parentMessageId == null }
-            val counts = baseEchoes.groupBy { it.senderId }.mapValues { it.value.size }
-            val sorted = baseEchoes.sortedBy { it.timestamp }
-            Triple(sorted, counts, false)
+    val resonanceList by remember(state.session.messages, sphereId, localDeviceId) {
+        derivedStateOf {
+            if (sphereId == null) emptyList()
+            else {
+                state.session.messages
+                    .filter { it.groupId == sphereId && it.parentMessageId == null }
+                    .sortedBy { it.timestamp }
+                    .map { msg ->
+                        val source = Source(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = Source.ResonanceMedium.BLUETOOTH)
+                        source to msg
+                    }
+            }
         }
     }
 
-    val (chatEchoes, echoCounts, _) = echoesData
+    val echoCounts = remember(state.session.messages, sphereId) {
+        state.session.messages
+            .filter { it.groupId == sphereId && it.parentMessageId == null }
+            .groupBy { it.senderId }
+            .mapValues { it.value.size }
+    }
     val memberSet = remember(sphere, localDeviceId) { (sphere?.memberIds ?: emptySet()) - localDeviceId }
     val isPrivate = sphere?.scope == Sphere.SCOPE_PRIVATE
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
@@ -169,10 +178,7 @@ fun PrivateSphereField(
 
                 ResonanceTicker(
                     state = state,
-                    resonanceList = chatEchoes.map { msg -> 
-                        val source = Source(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = Source.ResonanceMedium.BLUETOOTH)
-                        source to msg 
-                    },
+                    resonanceList = resonanceList,
                     echoCounts = echoCounts,
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
@@ -221,7 +227,7 @@ fun PrivateSphereField(
             )
 
             AnimatedVisibility(
-                visible = showTip && chatEchoes.isEmpty() && childSpheres.isEmpty(),
+                visible = showTip && resonanceList.isEmpty() && childSpheres.isEmpty(),
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
                 modifier = Modifier.align(Alignment.TopCenter)

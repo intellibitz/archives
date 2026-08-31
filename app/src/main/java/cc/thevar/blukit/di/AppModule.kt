@@ -16,6 +16,7 @@ import cc.thevar.blukit.network.p2p.ResonanceController
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
 import cc.thevar.blukit.ui.viewmodels.HarmonyViewModel
+import cc.thevar.blukit.ui.viewmodels.NavigationViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -60,4 +61,5 @@ val appModule = module {
     viewModelOf(::MainViewModel)
     viewModelOf(::BluetoothViewModel)
     viewModelOf(::HarmonyViewModel)
+    viewModelOf(::NavigationViewModel)
 }

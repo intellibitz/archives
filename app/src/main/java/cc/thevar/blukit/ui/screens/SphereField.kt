@@ -15,12 +15,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cc.thevar.blukit.domain.model.Echo
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
+import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
 import cc.thevar.blukit.ui.navigation.Route
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * THE SPHERE FIELD: Focuses on a specific Sphere.
@@ -61,14 +64,17 @@ fun SphereField(
     val sphere = state.session.groups.find { it.id == sphereId }
     val members = state.crowd.scannedDevices.filter { it.id in (sphere?.allMemberIds ?: emptySet()) || it.persistentId in (sphere?.allMemberIds ?: emptySet()) }
     
-    val roomMessages = state.session.messages.filter { it.groupId == sphereId }.sortedByDescending { it.timestamp }
-    val resonanceList = remember(roomMessages, members) {
-        val list = mutableListOf<Pair<Source, Echo?>>()
-        roomMessages.forEach { echo ->
-            val source = members.find { it.id == echo.senderId || it.persistentId == echo.senderId } ?: Source(id = echo.senderId, name = echo.senderName, emoji = echo.senderEmoji ?: "👤")
-            list.add(source to echo)
+    val resonanceList by remember(state.session.messages, members, sphereId) {
+        derivedStateOf {
+            state.session.messages
+                .filter { it.groupId == sphereId }
+                .sortedByDescending { it.timestamp }
+                .map { echo ->
+                    val source = members.find { it.id == echo.senderId || it.persistentId == echo.senderId } 
+                        ?: Source(id = echo.senderId, name = echo.senderName, emoji = echo.senderEmoji ?: "👤")
+                    source to echo
+                }
         }
-        list
     }
 
     var selectedEchoForMenu by remember { mutableStateOf<Echo?>(null) }
@@ -143,7 +149,7 @@ fun SphereField(
                     onSend(messageText)
                     messageText = ""
                 },
-                messageCount = roomMessages.size,
+                messageCount = state.session.messages.count { it.groupId == sphereId },
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
                 onAcceptRadio = onAcceptRadio,

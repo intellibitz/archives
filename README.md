@@ -1,61 +1,67 @@
-# Blukit: Sovereign Life Record
+# Blukit: Offline Life Logger
 
-**YOUR LIFE, RECORDED IN YOUR AIR. OFFLINE. INSTANT. SOVEREIGN.**
+**OFFLINE P2P DATA LOGGING. INSTANT. LOCAL.**
 
-Blukit is a 100% offline, peer-to-peer ecosystem that lets you record your life and resonate with your inner circles—without a single byte touching the internet. It transforms your phone into a sovereign vessel, preserving your existence in a permanent ledger.
-
----
-
-## 🌬️ THE ATMOSPHERE: LOCAL AMBIENT INTELLIGENCE
-Unlike standard chat apps, Blukit uses **The Atmosphere**—on-device intelligence that understands the flow of your records.
-- **Sphere Synthesis**: Local AI synthesizes the Echoes in your Spheres to provide clarity and meaning, shifting the very colors of your air.
-- **Atmospheric Trends**: The AI identifies shared rituals, trends (Academic, Social, Transit), and priorities across your local resonance field.
-- **Absolute Privacy**: All synthesis happens locally. Your life records never leave your air.
+Blukit is a 100% offline, peer-to-peer ecosystem that lets you log your activities and interact with your local groups—without using the internet. It transforms your phone into a local data store, preserving your records in an immutable database.
 
 ---
 
-## 🏛️ THE SOVEREIGN LEXICON
-- **SENSING**: Your local resonance field. A real-time awareness of the Sources and Spheres around you.
-- **AIR**: The Resonance Stream. A real-time, 100% offline feed of every Echo vibrating in your physical proximity.
-- **SPHERE**: A shared space for resonance and records.
-- **ECHO**: A permanent unit of existence. A record of what happened.
-- **SOURCE**: The origin of an Echo. You and those near you.
-- **THE LEDGER**: Your unchangeable, chronological history, grouped by synthesis.
+## 🌬️ ON-DEVICE ANALYSIS
+Unlike standard chat apps, Blukit uses on-device intelligence to process your records.
+- **Message Grouping**: Local analysis groups the messages in your Groups to provide clarity, adjusting UI colors based on context.
+- **Activity Trends**: The system identifies frequent activities, trends (Academic, Social, Transit), and priorities across your local network.
+- **Privacy**: All processing happens locally. Your records never leave your device.
 
 ---
 
-## ⚡ RESONANCE
-Experience **Sovereign Records**—familiar, fast, and secure.
+## 🏛️ TECHNICAL LEXICON
+- **DISCOVERY**: Your local network state. A real-time awareness of the Peers and Groups around you.
+- **LOCAL FEED**: The Message Stream. A real-time, 100% offline feed of messages in your physical proximity.
+- **GROUP**: A shared space for messages and records.
+- **MESSAGE**: A permanent unit of data. A record of an event.
+- **PEER**: The origin of a message. You and those near you.
+- **HISTORY**: Your immutable, chronological record. Data is harmonized using LWW-CRDT logic.
 
-### **1. Sense**
-Open the app to sense who is nearby. The **Sensing Radar** shows Sources with animated **Energy Trails**. The **Synthesis Aura** glow tells you the vibe of the local field.
+---
 
-### **2. Resonate**
-Enter a Sphere that matters. Tap **RESONATE** to capture a thought or ritual. Feel the haptic heartbeat as your Echo ripples across the field. Monitor the **AIR** stream to see the immediate pulse of the mesh.
+## ⚡ INTERACTIONS
+Log records quickly and securely.
+
+### **1. Discover**
+Open the app to see who is nearby. The discovery screen shows peers with visual connection indicators. The background status glow indicates the activity level of the local network.
+
+### **2. Message**
+Enter a Group. Tap the input to log a thought or activity. Haptic feedback reinforces the interaction as your message is sent to the local network. Monitor the feed to see real-time mesh activity.
 
 ### **3. Preserve**
-Every Echo is a record. Blukit ensures your existence is preserved in **The Ledger**, automatically anchored and carried by nearby Sources for absolute safety.
+Every message is a record. Blukit ensures your data is preserved in history, automatically replicated to nearby peers for redundancy.
 
 ---
 
-## 📱 THE HARMONY INTERFACE
-A high-density, ergonomic architecture designed for life.
+## 📱 USER INTERFACE
+A compact, ergonomic design.
 
-- **Sovereign UX**: Immersive visual effects like **Vibe Heatmaps** and **Echo Ripples** make the air feel physical.
-- **Stealth Mode**: A deep-black interface for private resonance.
-- **High Resonance**: Multi-stage haptic feedback that reinforces every interaction.
-- **Source Management**: Long-press any Source to block, identify, or initiate a private whisper.
-- **Sphere Governance**: Fully manage members, assign roles, and control archive status in private spheres.
-
----
-
-## 🛠️ ARCHITECTURAL SUPREMACY
-1. **100% Offline**: Zero cloud. Zero servers. Zero tracking.
-2. **Hardware Encrypted**: P-256 ECDH + AES-256-GCM security anchored in the TEE.
-3. **The Ledger**: A deterministic database (LWW-CRDT) that harmonizes records seamlessly.
-4. **Black Box Persistence**: Critical records are automatically carried by trusted peers, ensuring your ledger survives device loss.
+- **Interface Design**: Immersive visual effects like Activity Heatmaps and visual feedback make the network state visible.
+- **Adaptive Scaffolding**: Powered by `NavigationSuiteScaffold`, the interface adapts dynamically across Phones (Bottom Bar), Tablets (Nav Rail), and Foldables.
+- **Dark Mode (OLED)**: An absolute-black (#030507) interface with high-contrast borders for maximum power efficiency and visual clarity.
+- **Haptic Feedback**: Multi-stage haptic feedback and consistent typography reinforce interactions.
+- **Peer Management**: Long-press any Peer to block, identify, or initiate a private message.
+- **Group Management**: Fully manage members, assign roles, and control archive status in private groups.
 
 ---
 
-*Built with ❤️ for the Planet by Intellibitz*  
-*OWN YOUR ECHO.*
+## 🛠️ ARCHITECTURAL STACK
+1. **100% Offline**: Zero cloud dependencies. Uses Bluetooth LE and Wi-Fi Aware for discovery.
+2. **Security**: P-256 ECDH for key exchange + AES-256-GCM for payload encryption. Anchored in Android StrongBox/TEE.
+3. **Data Engine**: Deterministic LWW-CRDT database for seamless multi-master synchronization.
+4. **Persistence**: Peer-to-peer redundancy. Encrypted fragments are distributed to trusted peers to prevent data loss.
+
+## 🚀 DEVELOPER SETUP
+1. **Toolchain**: JDK 17+, Android Studio Ladybug+.
+2. **Dependencies**: Koin (DI), Compose Adaptive (Layout), Navigation3.
+3. **Permissions**: Requires `BLUETOOTH_SCAN`, `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT`, and `ACCESS_FINE_LOCATION`.
+
+---
+
+*Intellibitz*  
+*OWN YOUR DATA.*

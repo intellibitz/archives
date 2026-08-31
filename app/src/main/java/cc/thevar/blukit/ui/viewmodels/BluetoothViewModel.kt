@@ -24,23 +24,7 @@ import cc.thevar.blukit.network.p2p.ResonanceController
 import cc.thevar.blukit.ui.toUiError
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import kotlin.time.Duration.Companion.days
@@ -308,6 +292,48 @@ class BluetoothViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BluetoothUiState())
 
+    /** THE RESONANCE LIST: Pre-sorted and filtered list of Sources and Sphere heads for the Sensing Field. */
+    val resonanceList: StateFlow<List<ResonanceItem>> = combine(
+        state,
+        repository.deviceId
+    ) { uiState, localDeviceId ->
+        val activeSpheres = uiState.session.groups.filter { it.scope == Sphere.SCOPE_PUBLIC }
+        val messages = uiState.session.messages
+        
+        val list = mutableListOf<ResonanceItem>()
+        val pinned = activeSpheres.filter { it.isPinned }.sortedByDescending { it.lastMessageTimestamp }
+        val others = activeSpheres.filter { !it.isPinned }.sortedBy { it.lastMessageTimestamp }
+        val sortedSpheres = others + pinned 
+        
+        sortedSpheres.forEach { sphere ->
+            val latestSynthesis = messages.findLast { 
+                (it.groupId == sphere.id) && (it.type == Echo.TYPE_AI_SUMMARY)
+            }
+            val sphereMessages = messages.asSequence().filter { 
+                (it.groupId == sphere.id || (sphere.id == Sphere.ID_GLOBAL && it.groupId == null)) && (it.senderId != localDeviceId)
+            }.sortedBy { it.timestamp }.toList().takeLast(3)
+            
+            sphereMessages.forEach { echo ->
+                val source = Source(
+                    id = echo.senderId, 
+                    name = echo.senderName, 
+                    emoji = echo.senderEmoji ?: "👤", 
+                    medium = Source.ResonanceMedium.BLUETOOTH
+                )
+                list.add(ResonanceItem(source, echo))
+            }
+            val headSource = Source(
+                id = sphere.id, 
+                name = if (sphere.id == Sphere.ID_GLOBAL) "Global Resonance" else sphere.name, 
+                emoji = sphere.projectionEmoji ?: "✨", 
+                medium = Source.ResonanceMedium.BLUETOOTH, 
+                statusLabel = latestSynthesis?.content
+            )
+            list.add(ResonanceItem(headSource, null))
+        }
+        list
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun refreshRadios() {
         radioStateManager.triggerRefresh()
         permissionManager.refresh()
@@ -451,6 +477,30 @@ class BluetoothViewModel(
     }
 
     fun vaultSphere(groupId: String, isVaulted: Boolean) = echoLedger.vaultSphere(groupId, isVaulted)
+
+    fun blockUser(persistentId: String) {
+        viewModelScope.launch {
+            repository.blockUser(persistentId)
+        }
+    }
+
+    fun unblockUser(persistentId: String) {
+        viewModelScope.launch {
+            repository.unblockUser(persistentId)
+        }
+    }
+
+    fun resetProfile() {
+        viewModelScope.launch {
+            repository.resetProfile()
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            repository.logout()
+        }
+    }
 
     fun seniorVaultSphere(groupId: String, isSeniorVault: Boolean) = echoLedger.seniorVaultSphere(groupId, isSeniorVault)
 

@@ -16,13 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cc.thevar.blukit.domain.model.Echo
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.components.ResonanceSensingView
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
+import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
 import cc.thevar.blukit.ui.navigation.Route
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * THE SENSING FIELD: The master feed for finding Spheres and Sources.
@@ -32,6 +35,7 @@ fun SensingField(
     state: BluetoothUiState,
     localDeviceId: String,
     header: @Composable () -> Unit,
+    viewModel: BluetoothViewModel = koinViewModel(),
     pulsedPeers: Set<String> = emptySet(),
     onIdentifyUser: (String) -> Unit = {},
     breadcrumbTrail: List<String> = emptyList(),
@@ -59,40 +63,10 @@ fun SensingField(
     onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {},
 ) {
-    val activeSpheres = state.session.groups.filter { it.scope == Sphere.SCOPE_PUBLIC }
+    val resonanceList by viewModel.resonanceList.collectAsStateWithLifecycle()
     
-    val echoesData = remember(state.session.messages, activeSpheres) {
-        val groupedBySphere = state.session.messages.groupBy { it.groupId ?: Sphere.ID_GLOBAL }
-        val counts = groupedBySphere.mapValues { it.value.size }
-        val filtered = groupedBySphere.map { it.value.maxBy { msg -> msg.timestamp } }
-        val sorted = filtered.sortedByDescending { it.timestamp }
-        Triple(sorted, counts, false)
-    }
-
-    val (_, echoCounts, _) = echoesData
-
-    val combinedResonance = remember(activeSpheres, state.session.messages) {
-        val list = mutableListOf<Pair<Source, Echo?>>()
-        val pinned = activeSpheres.filter { it.isPinned }.sortedByDescending { it.lastMessageTimestamp }
-        val others = activeSpheres.filter { !it.isPinned }.sortedBy { it.lastMessageTimestamp }
-        val sortedSpheres = others + pinned 
-        
-        sortedSpheres.forEach { sphere ->
-            val latestSynthesis = state.session.messages.findLast { 
-                (it.groupId == sphere.id) && (it.type == Echo.TYPE_AI_SUMMARY)
-            }
-            val sphereMessages = state.session.messages.asSequence().filter { 
-                (it.groupId == sphere.id || (sphere.id == Sphere.ID_GLOBAL && it.groupId == null)) && (it.senderId != localDeviceId)
-            }.sortedBy { it.timestamp }.toList().takeLast(3)
-            
-            sphereMessages.forEach { echo ->
-                val source = Source(id = echo.senderId, name = echo.senderName, emoji = echo.senderEmoji ?: "👤", medium = Source.ResonanceMedium.BLUETOOTH)
-                list.add(source to echo)
-            }
-            val headSource = Source(id = sphere.id, name = if (sphere.id == Sphere.ID_GLOBAL) "Global Resonance" else sphere.name, emoji = sphere.projectionEmoji ?: "✨", medium = Source.ResonanceMedium.BLUETOOTH, statusLabel = latestSynthesis?.content)
-            list.add(headSource to null)
-        }
-        list
+    val echoCounts = remember(state.session.messages) {
+        state.session.messages.groupBy { it.groupId ?: Sphere.ID_GLOBAL }.mapValues { it.value.size }
     }
 
     var sphereNameProposal by remember { mutableStateOf("") }
@@ -150,7 +124,7 @@ fun SensingField(
 
                     ResonanceTicker(
                         state = state,
-                        resonanceList = combinedResonance,
+                        resonanceList = resonanceList.map { it.source to it.latestEcho },
                         echoCounts = echoCounts,
                         localDeviceId = localDeviceId,
                         localNickname = userNickname,

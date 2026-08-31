@@ -33,25 +33,26 @@ val BlukitDarkTertiaryContainer = Color(0xFF523F5F)
 val BlukitDarkOnTertiaryContainer = Color(0xFFF2DAFF)
 
 // Blukit OLED Stealth Design System (Mandated by AGENTS.md)
-val StealthBlack = Color(0xFF0D1017) // Base OLED-friendly deep grey
+val StealthBlack = Color(0xFF030507) // Even deeper black for absolute OLED zero
 val StealthAmber = Color(0xFFFFB300) // High-contrast Amber
 val StealthRose = Color(0xFFFF4081)  // Rose accent
-val StealthSurface = Color(0xFF161B22) // Surface container
-val StealthSurfaceVariant = Color(0xFF21262D) // Lighter surface for contrast
+val StealthSurface = Color(0xFF12171E) // Sharper separation from background
+val StealthSurfaceVariant = Color(0xFF1E242C) // Layered depth
+val StealthOutlineVariant = Color(0xFF2D333B) // High-contrast border/outline
 
 val StealthPrimary = StealthAmber
 val StealthOnPrimary = Color(0xFF000000)
 val StealthSecondary = StealthRose
 val StealthOnSecondary = Color(0xFFFFFFFF)
-val StealthError = Color(0xFFFF1744)
-val StealthGray = Color(0xFF8B949E) // Muted text/icons
+val StealthError = Color(0xFFFF3D00) // More vibrant error red
+val StealthGray = Color(0xFF9BA4AD) // Lighter muted text (was 0xFF8B949E)
 
 // Blukit Design Tokens: Alpha
-const val StealthAlphaLow = 0.1f
-const val StealthAlphaMedium = 0.3f
-const val StealthAlphaHigh = 0.6f
-const val StealthAlphaBorder = 0.15f // Minimum visible border alpha
-const val StealthAlphaOverlay = 0.85f
+const val StealthAlphaLow = 0.15f // Increased from 0.1
+const val StealthAlphaMedium = 0.4f // Increased from 0.3
+const val StealthAlphaHigh = 0.7f // Increased from 0.6
+const val StealthAlphaBorder = 0.25f // Increased from 0.15 for visibility
+const val StealthAlphaOverlay = 0.9f
 
 // Academic / Social Mode (Light Theme)
 val BlukitPaper = Color(0xFFF6F1E9) // Soft parchment
