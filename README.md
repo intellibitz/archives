@@ -16,6 +16,7 @@ Unlike standard chat apps, Blukit uses **The Atmosphere**—on-device intelligen
 
 ## 🏛️ THE SOVEREIGN LEXICON
 - **SENSING**: Your local resonance field. A real-time awareness of the Sources and Spheres around you.
+- **AIR**: The Resonance Stream. A real-time, 100% offline feed of every Echo vibrating in your physical proximity.
 - **SPHERE**: A shared space for resonance and records.
 - **ECHO**: A permanent unit of existence. A record of what happened.
 - **SOURCE**: The origin of an Echo. You and those near you.
@@ -30,7 +31,7 @@ Experience **Sovereign Records**—familiar, fast, and secure.
 Open the app to sense who is nearby. The **Sensing Radar** shows Sources with animated **Energy Trails**. The **Synthesis Aura** glow tells you the vibe of the local field.
 
 ### **2. Resonate**
-Enter a Sphere that matters. Tap **RESONATE** to capture a thought or ritual. Feel the haptic heartbeat as your Echo ripples across the field.
+Enter a Sphere that matters. Tap **RESONATE** to capture a thought or ritual. Feel the haptic heartbeat as your Echo ripples across the field. Monitor the **AIR** stream to see the immediate pulse of the mesh.
 
 ### **3. Preserve**
 Every Echo is a record. Blukit ensures your existence is preserved in **The Ledger**, automatically anchored and carried by nearby Sources for absolute safety.

@@ -20,6 +20,7 @@ Blukit **never** connects to the internet. All **Echoes** resonate directly from
 
 ## 2. Absolute Proximity Privacy
 - **Absolute Proximity Privacy**: By design, **all Spheres are public and discoverable**, while **all Private Spheres are encrypted**. Your data never leaves the physical radio range of your device.
+- **AIR Offline Stream**: The **AIR** stream is a real-time visualization of proximity data. It is 100% ephemeral and 100% offline; no data from the stream is ever cached outside the local Ledger or transmitted to any external network.
 - **Atmospheric Synthesis**: Blukit performs **Local Synthesis** of Sphere energy. Only aggregated insights (e.g., "Academic Ritual Detected") are shared. Raw Echo content remains protected by hardware encryption.
 - **Resonance Consensus**: Consensus is achieved via anonymous votes. No voter identity is linked to the priority Echo.
 - **Anchored Sensing**: Private Spheres must be anchored to a parent Sphere to be discoverable by trusted Sources.
