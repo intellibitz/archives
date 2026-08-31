@@ -1,7 +1,7 @@
 /**
- * BLUKIT SPHERE FIELD
+ * BLUKIT GROUP FIELD
  *
- * A high-resonance field for specific Sphere contexts.
+ * A high-connection field for specific Group contexts.
  */
 package cc.thevar.blukit.ui.screens
 
@@ -16,29 +16,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.theme.*
-import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
+import cc.thevar.blukit.ui.viewmodels.ConnectionUiState
+import cc.thevar.blukit.ui.viewmodels.ConnectionViewModel
 import cc.thevar.blukit.ui.navigation.Route
+import cc.thevar.blukit.ui.components.*
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * THE SPHERE FIELD: Focuses on a specific Sphere.
+ * THE GROUP FIELD: Focuses on a specific Group.
  */
 @Composable
-fun SphereField(
-    state: BluetoothUiState,
+fun GroupField(
+    state: ConnectionUiState,
     localDeviceId: String,
     header: @Composable () -> Unit,
-    sphereId: String,
-    highResonanceMessages: List<Echo> = emptyList(),
+    groupId: String,
+    highConnectionMessages: List<Message> = emptyList(),
     onVote: (String, Int) -> Unit = { _, _ -> },
     isSearchActive: Boolean = false,
     onSearchToggle: () -> Unit = {},
-    onNavigateToPulse: (String) -> Unit = {},
+    onNavigateToMessage: (String) -> Unit = {},
     onSourceLongClick: (Source) -> Unit = {},
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
@@ -51,8 +52,8 @@ fun SphereField(
     onAcceptRadio: (Source) -> Unit = {},
     onDenyRadio: (Source) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
-    onStartSidePulse: () -> Unit = {},
-    onStartChain: () -> Unit = {},
+    onStartWhisper: () -> Unit = {},
+    onStartSubGroup: () -> Unit = {},
     onClearSelection: () -> Unit = {},
     onInputFocusChange: (Boolean) -> Unit = {},
     isStealthMode: Boolean = false,
@@ -61,23 +62,23 @@ fun SphereField(
     onToggleLowPower: (Boolean) -> Unit = {},
     trend: String? = null
 ) {
-    val sphere = state.session.groups.find { it.id == sphereId }
-    val members = state.crowd.scannedDevices.filter { it.id in (sphere?.allMemberIds ?: emptySet()) || it.persistentId in (sphere?.allMemberIds ?: emptySet()) }
+    val group = state.session.groups.find { it.id == groupId }
+    val members = state.crowd.scannedDevices.filter { it.id in (group?.allMemberIds ?: emptySet()) || it.persistentId in (group?.allMemberIds ?: emptySet()) }
     
-    val resonanceList by remember(state.session.messages, members, sphereId) {
+    val connectionList by remember(state.session.messages, members, groupId) {
         derivedStateOf {
             state.session.messages
-                .filter { it.groupId == sphereId }
+                .filter { it.groupId == groupId }
                 .sortedByDescending { it.timestamp }
-                .map { echo ->
-                    val source = members.find { it.id == echo.senderId || it.persistentId == echo.senderId } 
-                        ?: Source(id = echo.senderId, name = echo.senderName, emoji = echo.senderEmoji ?: "👤")
-                    source to echo
+                .map { message ->
+                    val source = members.find { it.id == message.senderId || it.persistentId == message.senderId } 
+                        ?: Source(id = message.senderId, name = message.senderName, emoji = message.senderEmoji ?: "👤")
+                    source to message
                 }
         }
     }
 
-    var selectedEchoForMenu by remember { mutableStateOf<Echo?>(null) }
+    var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
     var messageText by remember { mutableStateOf("") }
 
     BlukitFieldScaffold(
@@ -85,10 +86,10 @@ fun SphereField(
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = sphere?.name ?: "GROUP",
+                    title = group?.name ?: "GROUP",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    activeRooms = state.session.groups,
+                    activeGroups = state.session.groups,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onBack = onBack,
@@ -106,43 +107,43 @@ fun SphereField(
                     }
                 )
 
-                EchoCanvas(
-                    trendingMessages = highResonanceMessages,
+                MessageCanvas(
+                    highConnectionMessages = highConnectionMessages,
                     themeColor = StealthRose,
-                    onEchoClick = { onNavigateToPulse(it) }
+                    onMessageClick = { onNavigateToMessage(it) }
                 )
 
-                ResonanceTicker(
+                ConnectionTicker(
                     state = state,
-                    resonanceList = resonanceList,
-                    echoCounts = emptyMap(),
+                    connectionList = connectionList,
+                    messageCounts = emptyMap(),
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = emptySet(),
                     reverseLayout = true,
-                    onEchoClick = { onNavigateToPulse(it) },
-                    onSourceClick = { dev -> onNavigateToPulse(dev.id) },
+                    onMessageClick = { onNavigateToMessage(it) },
+                    onSourceClick = { dev -> onNavigateToMessage(dev.id) },
                     onSourceLongClick = onSourceLongClick,
                     modifier = Modifier.weight(1f),
                     themeColor = StealthRose,
                     trend = trend
                 )
 
-                EchoHub(
-                    currentRoute = Route.SphereField(sphereId),
+                MessageHub(
+                    currentRoute = Route.GroupField(groupId),
                     messageText = messageText,
                     onMessageChange = { messageText = it },
                     onSend = { 
                         onSend(messageText)
                         messageText = ""
                     },
-                    messageCount = state.session.messages.count { it.groupId == sphereId },
+                    messageCount = state.session.messages.count { it.groupId == groupId },
                     incomingRadioRequests = state.crowd.incomingRadioRequests,
                     selectedDevices = state.crowd.selectedDevices,
                     onAcceptRadio = onAcceptRadio,
                     onDenyRadio = onDenyRadio,
-                    onStartSidePulse = onStartSidePulse,
-                    onStartChain = onStartChain, 
+                    onStartWhisper = onStartWhisper,
+                    onStartSubGroup = onStartSubGroup, 
                     onClearSelection = onClearSelection,
                     onAttachFile = { },
                     isSearchMode = isSearchActive,
@@ -156,15 +157,15 @@ fun SphereField(
                 )
             }
 
-            if (selectedEchoForMenu != null) {
-                EchoActionMenu(
-                    echo = selectedEchoForMenu!!,
-                    isMe = selectedEchoForMenu!!.senderId == localDeviceId,
-                    onInvite = { onStartSidePulse() },
+            if (selectedMessageForMenu != null) {
+                MessageActionMenu(
+                    message = selectedMessageForMenu!!,
+                    isMe = selectedMessageForMenu!!.senderId == localDeviceId,
+                    onInvite = { onStartWhisper() },
                     onDelete = { },
-                    onDismiss = { selectedEchoForMenu = null },
+                    onDismiss = { selectedMessageForMenu = null },
                     onBroadcast = { },
-                    onVote = { weight -> onVote(selectedEchoForMenu!!.messageId, weight) }
+                    onVote = { weight -> onVote(selectedMessageForMenu!!.messageId, weight) }
                 )
             }
         }

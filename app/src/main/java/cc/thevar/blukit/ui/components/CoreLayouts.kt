@@ -51,7 +51,7 @@ fun BlukitWidget(
 }
 
 /**
- * FIELD SCAFFOLD: The primary layout structure for resonance screens.
+ * FIELD SCAFFOLD: The primary layout structure for connection screens.
  */
 @Composable
 fun BlukitFieldScaffold(

@@ -8,7 +8,7 @@ package cc.thevar.blukit.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
  */
 class MainViewModel(
     private val repository: IdentityRepository,
-    private val echoLedger: EchoLedger,
+    private val messageLedger: MessageRepository,
 ) : ViewModel() {
 
     /** Social nickname currently projecting to the mesh. */
@@ -70,14 +70,14 @@ class MainViewModel(
         viewModelScope.launch { repository.unblockUser(userId) }
     }
 
-    /** Deletes an atomic Echo locally. */
-    fun deleteEcho(messageId: String) {
-        viewModelScope.launch { echoLedger.deleteEcho(messageId) }
+    /** Deletes an atomic Message locally. */
+    fun deleteMessage(messageId: String) {
+        viewModelScope.launch { messageLedger.deleteMessage(messageId) }
     }
 
     /** Purges the entire local existence history. */
-    fun clearEchoHistory() {
-        viewModelScope.launch { echoLedger.clearAllEchoes() }
+    fun clearMessageHistory() {
+        viewModelScope.launch { messageLedger.clearAllMessages() }
     }
 
     /** Identity reset: Clears nickname and emoji. */

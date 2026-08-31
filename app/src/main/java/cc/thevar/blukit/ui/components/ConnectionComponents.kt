@@ -23,20 +23,20 @@ import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.ui.theme.*
 
 @Composable
-fun ResonanceSensingView(
+fun ConnectionNearbyView(
     modifier: Modifier = Modifier,
     onSignalPresence: () -> Unit = {}
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "Sensing")
+    val infiniteTransition = rememberInfiniteTransition(label = "Nearby")
     
-    val sensingProgress by infiniteTransition.animateFloat(
+    val nearbyProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(3000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "SensingProgress"
+        label = "NearbyProgress"
     )
 
     val glowAlpha by infiniteTransition.animateFloat(
@@ -62,7 +62,7 @@ fun ResonanceSensingView(
                 val baseRadius = size.width / 4f
                 
                 repeat(3) { i ->
-                    val progress = (sensingProgress + i / 3f) % 1f
+                    val progress = (nearbyProgress + i / 3f) % 1f
                     drawCircle(
                         color = StealthPrimary.copy(alpha = (1f - progress) * 0.3f),
                         radius = baseRadius + progress * baseRadius * 2,

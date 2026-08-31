@@ -1,8 +1,8 @@
 package cc.thevar.blukit.data.power
 
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.domain.power.HarmonyReport
-import cc.thevar.blukit.network.p2p.ResonanceController
+import cc.thevar.blukit.network.p2p.ConnectionController
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,11 +25,11 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * The Harmony Service.
- * Monitors Spheres, Sources, and provides human-centric Synthesis.
+ * Monitors Groups, Sources, and provides human-centric Synthesis.
  */
 class HarmonyManager(
-    private val resonanceController: ResonanceController,
-    private val echoLedger: EchoLedger,
+    private val connectionController: ConnectionController,
+    private val messageLedger: MessageRepository,
     private val identityRepository: cc.thevar.blukit.data.repository.IdentityRepository,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager? = null,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
@@ -59,9 +59,9 @@ class HarmonyManager(
     private fun startHarmonyGathering() {
         scope.launch {
             combine(
-                resonanceController.scannedDevices,
-                resonanceController.connectedGroups,
-                echoLedger.echoes,
+                connectionController.scannedDevices,
+                connectionController.connectedGroups,
+                messageLedger.messages,
                 identityRepository.lowPowerMode,
                 _breezeFlow.onStart { emit("") },
                 _lastLocation
@@ -71,19 +71,19 @@ class HarmonyManager(
                 @Suppress("UNCHECKED_CAST")
                 val connected = args[1] as Set<String>
                 @Suppress("UNCHECKED_CAST")
-                val echoes = args[2] as List<cc.thevar.blukit.domain.model.Echo>
+                val messages = args[2] as List<cc.thevar.blukit.domain.model.Message>
                 val lowPower = args[3] as Boolean
                 
                 val userCount = scanned.size
-                val resonanceCount = connected.size
-                val echoCount = echoes.size
+                val connectionCount = connected.size
+                val messageCount = messages.size
                 
                 val meshHarmony = if (userCount > 0) {
-                    min(1.0f, (resonanceCount.toFloat() / userCount.toFloat()) + 0.2f)
+                    min(1.0f, (connectionCount.toFloat() / userCount.toFloat()) + 0.2f)
                 } else 0f
 
-                val synthesis = generateSynthesis(userCount, resonanceCount, echoCount, meshHarmony, lowPower)
-                val latestSynthesis = echoes.findLast { it.type == cc.thevar.blukit.domain.model.Echo.TYPE_AI_SUMMARY }
+                val synthesis = generateSynthesis(userCount, connectionCount, messageCount, meshHarmony, lowPower)
+                val latestSynthesis = messages.findLast { it.type == cc.thevar.blukit.domain.model.Message.TYPE_AI_SUMMARY }
                 val trend = latestSynthesis?.trendLabel
                 
                 val breeze = args.getOrNull(4) as? String
@@ -101,14 +101,14 @@ class HarmonyManager(
 
                 HarmonyReport(
                     userCount = userCount,
-                    connectedTiesCount = resonanceCount,
-                    totalMessages = echoCount,
+                    connectedTiesCount = connectionCount,
+                    totalMessages = messageCount,
                     harmony = meshHarmony,
                     synthesis = synthesis,
                     trendLabel = trend,
                     currentBreeze = breeze,
                     lowPowerMode = lowPower,
-                    suggestedAirs = suggestions,
+                    suggestedGroups = suggestions,
                     lastLocation = locationLabel
                 )
             }.collect {
@@ -121,7 +121,7 @@ class HarmonyManager(
 
     private fun observeEventsForBreezes() {
         // Source Detected
-        resonanceController.scannedDevices
+        connectionController.scannedDevices
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
@@ -129,22 +129,22 @@ class HarmonyManager(
                 if (new > old) emitBreeze("SOURCE PROXIMITY")
             }.launchIn(scope)
 
-        // Resonance Formed
-        resonanceController.connectedGroups
+        // Connection Formed
+        connectionController.connectedGroups
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("RESONANCE ENERGY")
+                if (new > old) emitBreeze("CONNECTION ENERGY")
             }.launchIn(scope)
 
-        // Echoes Relayed
-        resonanceController.messages
+        // Messages Relayed
+        connectionController.messages
             .onEach { msgs ->
                 if (msgs.isNotEmpty()) {
                     val last = msgs.last()
                     if ((System.currentTimeMillis() - last.timestamp) < 1000) {
-                        emitBreeze("ECHO SPREAD")
+                        emitBreeze("MESSAGE SPREAD")
                     }
                 }
             }.launchIn(scope)
@@ -159,17 +159,17 @@ class HarmonyManager(
         }
     }
 
-    private fun generateSynthesis(users: Int, resonances: Int, echoes: Int, harmony: Float, lowPower: Boolean): String {
+    private fun generateSynthesis(users: Int, connections: Int, messages: Int, harmony: Float, lowPower: Boolean): String {
         if (lowPower) return "ENERGY SAVER ACTIVE"
         
         return when {
             users == 0 -> "RECORD YOUR LIFE"
-            users > 15 -> "VIBRANT SPHERE DETECTED"
-            harmony < 0.3f -> "SOURCES NEARBY: RESONATE"
-            (users > 10) && (harmony > 0.8f) -> "SPHERE HARMONY"
-            (resonances == 0) && (users > 0) -> "RESONANCE ENERGY"
-            echoes > 100 -> "ECHOES FLOWING"
-            else -> "YOUR LIFE, RESONATING"
+            users > 15 -> "VIBRANT GROUP DETECTED"
+            harmony < 0.3f -> "SOURCES NEARBY: CONNECT"
+            (users > 10) && (harmony > 0.8f) -> "GROUP HARMONY"
+            (connections == 0) && (users > 0) -> "CONNECTION ENERGY"
+            messages > 100 -> "MESSAGES FLOWING"
+            else -> "YOUR LIFE, CONNECTING"
         }
     }
 }

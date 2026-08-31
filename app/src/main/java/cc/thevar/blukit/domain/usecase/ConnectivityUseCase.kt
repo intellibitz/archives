@@ -5,7 +5,7 @@ import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.network.p2p.ResonanceController
+import cc.thevar.blukit.network.p2p.ConnectionController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.onEach
  * and multi-stage connection handshakes.
  */
 class ConnectivityUseCase(
-    private val resonanceController: ResonanceController,
+    private val connectionController: ConnectionController,
     private val radioStateManager: RadioStateManager,
     private val permissionManager: SpreadPermissionManager,
     private val scope: CoroutineScope
@@ -44,13 +44,13 @@ class ConnectivityUseCase(
             .distinctUntilChanged()
             .onEach { isHealthy ->
                 if (isHealthy) {
-                    Log.d("BlukitResonance", "USECASE: Harmony achieved. Awakening the resonance.")
-                    resonanceController.startDiscovery()
-                    resonanceController.startAdvertising()
+                    Log.d("BlukitConnection", "USECASE: Harmony achieved. Awakening the connection.")
+                    connectionController.startDiscovery()
+                    connectionController.startAdvertising()
                 } else {
-                    Log.w("BlukitResonance", "USECASE: Harmony lost. Resonance is still.")
-                    resonanceController.stopDiscovery()
-                    resonanceController.stopAdvertising()
+                    Log.w("BlukitConnection", "USECASE: Harmony lost. Connection is still.")
+                    connectionController.stopDiscovery()
+                    connectionController.stopAdvertising()
                 }
             }
             .launchIn(scope)
@@ -59,29 +59,29 @@ class ConnectivityUseCase(
     /**
      * Executes the multi-stage connection flow:
      * 1. Check if already connected.
-     * 2. Check if Nearby connected (if so, request Radio).
-     * 3. If not connected, initiate Nearby connection, then request Radio.
+     * 2. Check if Nearby connected (if so, request Group).
+     * 3. If not connected, initiate Nearby connection, then request Group.
      */
     fun connectToSource(device: Source, currentlyConnectedRadios: Set<String>) {
         if (currentlyConnectedRadios.contains(device.id)) return
         
-        if (resonanceController.isNearbyConnected(device.id)) {
-             Log.d("BlukitResonance", "USECASE: Nearby connected but no resonance. Requesting Resonance.")
-             resonanceController.requestRadio(device)
+        if (connectionController.isNearbyConnected(device.id)) {
+             Log.d("BlukitConnection", "USECASE: Nearby connected but no connection. Requesting Connection.")
+             connectionController.requestRadio(device)
              return
         }
 
         _manualConnectionStatus.value = ConnectionStatus.Connecting
-        resonanceController.connectToDevice(device)
+        connectionController.connectToDevice(device)
             .onEach { status ->
                 when (status) {
                     is ConnectionStatus.Connected -> {
-                        Log.d("BlukitResonance", "USECASE: Connected level Nearby. Requesting Resonance.")
+                        Log.d("BlukitConnection", "USECASE: Connected level Nearby. Requesting Connection.")
                         _manualConnectionStatus.value = null
-                        resonanceController.requestRadio(device)
+                        connectionController.requestRadio(device)
                     }
                     is ConnectionStatus.Error -> {
-                        Log.e("BlukitResonance", "USECASE: Connection error: ${status.message}")
+                        Log.e("BlukitConnection", "USECASE: Connection error: ${status.message}")
                         _manualConnectionStatus.value = status
                     }
                     else -> {

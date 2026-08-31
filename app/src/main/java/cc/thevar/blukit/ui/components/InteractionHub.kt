@@ -21,29 +21,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.screens.BlukitWidget
+import cc.thevar.blukit.ui.components.BlukitWidget
 import cc.thevar.blukit.ui.theme.*
 
 /**
- * ECHO HUB: The primary interaction point at the bottom of the field.
+ * MESSAGE HUB: The primary interaction point at the bottom of the field.
  *
  * @param currentRoute The active navigation destination (determines theme and context).
- * @param messageText The current content of the Echo input field.
+ * @param messageText The current content of the Message input field.
  * @param onMessageChange Callback for text input updates.
- * @param onSend Triggered to release a new Echo into the field.
- * @param messageCount The number of recent Echoes detected in the current context.
- * @param incomingRadioRequests Set of Sources currently requesting a resonance handshake.
+ * @param onSend Triggered to release a new Message into the field.
+ * @param messageCount The number of recent Messages detected in the current context.
+ * @param incomingRadioRequests Set of Sources currently requesting a connection handshake.
  * @param selectedDevices Set of Source IDs selected for group actions.
- * @param onAcceptRadio Accept an incoming resonance request.
- * @param onDenyRadio Decline an incoming resonance request.
- * @param onStartSidePulse Initiate a private one-on-one "Whisper" session.
- * @param onStartChain Create a new linked Sphere context (Sub-Sphere).
+ * @param onAcceptRadio Accept an incoming connection request.
+ * @param onDenyRadio Decline an incoming connection request.
+ * @param onStartWhisper Initiate a private one-on-one "Whisper" session.
+ * @param onStartSubGroup Create a new linked Group context (Sub-Group).
  * @param onClearSelection Deselect all Sources.
  */
 @Composable
-fun EchoHub(
+fun MessageHub(
     currentRoute: Route,
     messageText: String,
     onMessageChange: (String) -> Unit,
@@ -53,11 +53,11 @@ fun EchoHub(
     selectedDevices: Set<String>,
     onAcceptRadio: (Source) -> Unit,
     onDenyRadio: (Source) -> Unit,
-    onStartSidePulse: () -> Unit,
-    onStartChain: () -> Unit,
+    onStartWhisper: () -> Unit,
+    onStartSubGroup: () -> Unit,
     onClearSelection: () -> Unit,
     modifier: Modifier = Modifier,
-    spheres: List<Sphere> = emptyList(),
+    groups: List<Group> = emptyList(),
     onAttachFile: () -> Unit = {},
     onSearchToggle: (() -> Unit)? = null,
     onManage: (() -> Unit)? = null,
@@ -71,8 +71,8 @@ fun EchoHub(
     onToggleStealth: (Boolean) -> Unit = {},
     onToggleLowPower: (Boolean) -> Unit = {}
 ) {
-    val isPrivate = currentRoute is Route.SphereField || currentRoute is Route.Sensing
-    val targetName = if (currentRoute is Route.SphereField) spheres.find { it.id == currentRoute.roomId }?.name else null
+    val isPrivate = currentRoute is Route.GroupField || currentRoute is Route.Nearby
+    val targetName = if (currentRoute is Route.GroupField) groups.find { it.id == currentRoute.roomId }?.name else null
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
 
     BlukitWidget(
@@ -82,8 +82,8 @@ fun EchoHub(
                 SelectionInteractionHeader(
                     selectedCount = selectedDevices.size,
                     themeColor = themeColor,
-                    onStartSidePulse = onStartSidePulse,
-                    onStartChain = onStartChain,
+                    onStartWhisper = onStartWhisper,
+                    onStartSubGroup = onStartSubGroup,
                     onClearSelection = onClearSelection
                 )
                 
@@ -101,7 +101,7 @@ fun EchoHub(
             }
         },
         entries = {
-            val isEchoLocked = currentRoute is Route.Sensing
+            val isMessageLocked = currentRoute is Route.Nearby
             Column(modifier = Modifier.fillMaxWidth()) {
                 EnvironmentControls(
                     isStealthMode = isStealthMode,
@@ -113,7 +113,7 @@ fun EchoHub(
 
                 BlukitInput(
                     isReadOnly = false, 
-                    isPulseLocked = isEchoLocked,
+                    isMessageLocked = isMessageLocked,
                     isPrivate = isPrivate, 
                     targetName = targetName, 
                     value = messageText, 
@@ -123,7 +123,7 @@ fun EchoHub(
                     onManage = onManage,
                     onNote = onNote,
                     onTask = onTask, 
-                    pulseCount = messageCount, 
+                    messageCount = messageCount, 
                     isSearchActive = isSearchMode,
                     onSearchToggle = onSearchToggle,
                     onFocusChange = onFocusChange,
@@ -142,8 +142,8 @@ fun EchoHub(
 fun SelectionInteractionHeader(
     selectedCount: Int,
     themeColor: Color,
-    onStartSidePulse: () -> Unit,
-    onStartChain: () -> Unit,
+    onStartWhisper: () -> Unit,
+    onStartSubGroup: () -> Unit,
     onClearSelection: () -> Unit
 ) {
     AnimatedVisibility(
@@ -161,7 +161,7 @@ fun SelectionInteractionHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                onClick = onStartSidePulse, 
+                onClick = onStartWhisper, 
                 colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black), 
                 shape = RoundedCornerShape(20.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
@@ -169,7 +169,7 @@ fun SelectionInteractionHeader(
                 Text("Private", style = MaterialTheme.typography.labelLarge) 
             }
             Button(
-                onClick = onStartChain, 
+                onClick = onStartSubGroup, 
                 colors = ButtonDefaults.buttonColors(containerColor = StealthRose, contentColor = Color.White), 
                 shape = RoundedCornerShape(20.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
@@ -187,7 +187,7 @@ fun SelectionInteractionHeader(
 }
 
 /**
- * Action banner for creating a new public Sphere based on search query.
+ * Action banner for creating a new public Group based on search query.
  */
 @Composable
 fun SearchActionBanner(
@@ -195,9 +195,9 @@ fun SearchActionBanner(
     messageText: String,
     onCreatePublicRoom: ((String, String?) -> Unit)?
 ) {
-    val showAirBanner = isSearchMode && messageText.isNotBlank() && onCreatePublicRoom != null
+    val showGroupBanner = isSearchMode && messageText.isNotBlank() && onCreatePublicRoom != null
     AnimatedVisibility(
-        visible = showAirBanner, 
+        visible = showGroupBanner, 
         enter = fadeIn() + slideInVertically { it / 2 },
         exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
     ) {
@@ -219,7 +219,7 @@ fun SearchActionBanner(
 }
 
 /**
- * Banner notifying the user of incoming radio resonance requests.
+ * Banner notifying the user of incoming radio connection requests.
  */
 @Composable
 fun IncomingRequestBanner(
@@ -319,7 +319,7 @@ fun EnvironmentToggle(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = label, // Removed ALL-CAPS
+                text = label, 
                 style = MaterialTheme.typography.labelSmall,
                 color = if (checked) Color.White else Color.White.copy(alpha = 0.4f)
             )
@@ -333,7 +333,7 @@ fun EnvironmentToggle(
 @Composable
 fun BlukitInput(
     isReadOnly: Boolean,
-    isPulseLocked: Boolean,
+    isMessageLocked: Boolean,
     isPrivate: Boolean,
     targetName: String?,
     value: String,
@@ -343,13 +343,12 @@ fun BlukitInput(
     onManage: (() -> Unit)?,
     onNote: (() -> Unit)?,
     onTask: (() -> Unit)?,
-    pulseCount: Int,
+    messageCount: Int,
     isSearchActive: Boolean,
     onSearchToggle: (() -> Unit)?,
     onFocusChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // BlukitInput implementation remains largely the same but with casing improvements
     Surface(
         color = StealthSurface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -372,6 +371,7 @@ fun BlukitInput(
                     androidx.compose.foundation.text.BasicTextField(
                         value = value,
                         onValueChange = onValueChange,
+                        enabled = !isMessageLocked,
                         modifier = Modifier
                             .fillMaxWidth()
                             .onFocusChanged { onFocusChange(it.isFocused) },
@@ -382,8 +382,9 @@ fun BlukitInput(
                                 Text(
                                     text = when {
                                         isSearchActive -> "Search records..."
-                                        targetName != null -> "Resonate in $targetName..."
-                                        else -> "Release an Echo..."
+                                        isMessageLocked -> "Nearby connection active"
+                                        targetName != null -> "Connect in $targetName..."
+                                        else -> "Send a Message..."
                                     },
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Color.White.copy(alpha = 0.3f)
@@ -394,7 +395,7 @@ fun BlukitInput(
                     )
                 }
 
-                if (value.isNotBlank() && !isReadOnly) {
+                if (value.isNotBlank() && !isReadOnly && !isMessageLocked) {
                     IconButton(
                         onClick = onSend,
                         colors = IconButtonDefaults.iconButtonColors(
@@ -434,9 +435,9 @@ fun BlukitInput(
                     
                     Spacer(modifier = Modifier.weight(1f))
                     
-                    if (pulseCount > 0) {
+                    if (messageCount > 0) {
                         Text(
-                            text = "$pulseCount Messages",
+                            text = "$messageCount Messages",
                             style = MaterialTheme.typography.labelSmall,
                             color = (if (isPrivate) StealthRose else StealthPrimary).copy(alpha = 0.6f)
                         )

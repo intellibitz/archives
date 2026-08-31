@@ -2,7 +2,7 @@
  * BLUKIT CORE DOMAIN: SOURCE
  *
  * The atomic identity of a peer in the mesh.
- * Represents a physical hardware anchor within the Resonance Field.
+ * Represents a physical hardware anchor within the Connection Field.
  */
 package cc.thevar.blukit.domain.model
 
@@ -11,11 +11,11 @@ package cc.thevar.blukit.domain.model
  *
  * @property id The unique hardware or session identifier for this Source.
  * @property name The display name set by the Source (Persona).
- * @property emoji The visual identity projecting this Source on the Sensing Radar.
+ * @property emoji The visual identity projecting this Source on the Nearby Radar.
  * @property persistentId A stable identifier for cross-session recognition.
  * @property signalStrength The raw RSSI value in dBm.
- * @property isConnected True if a secure resonance link is currently active.
- * @property medium The primary resonance technology used.
+ * @property isConnected True if a secure connection link is currently active.
+ * @property medium The primary connection technology used.
  */
 data class Source(
     val id: String,
@@ -26,7 +26,7 @@ data class Source(
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false,
     val isGroupPending: Boolean = false,
-    val medium: ResonanceMedium = ResonanceMedium.LOCATION,
+    val medium: ConnectionMedium = ConnectionMedium.LOCATION,
     val messageCount: Int = 0,
     val isLowPower: Boolean = false,
     val distanceMm: Int = -1, // WiFi RTT distance if available
@@ -34,9 +34,9 @@ data class Source(
     val avatarPath: String? = null, // Local path to the profile picture
 ) {
     /**
-     * The physical resonance medium used for the mesh connection.
+     * The physical connection medium used for the mesh connection.
      */
-    enum class ResonanceMedium {
+    enum class ConnectionMedium {
         /** Low-energy, short-range discovery and heartbeats. */
         BLUETOOTH,
         /** High-speed data and media synchronization. */

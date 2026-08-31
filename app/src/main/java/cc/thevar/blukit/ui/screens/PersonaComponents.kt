@@ -38,8 +38,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.theme.*
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun EnergyTrails(
@@ -55,8 +57,8 @@ fun EnergyTrails(
         repeat(count) { i ->
             val angle = (i * (360f / count)) % 360f
             val rad = Math.toRadians(angle.toDouble())
-            val x = (center.x + Math.cos(rad) * radius).toFloat()
-            val y = (center.y + Math.sin(rad) * radius).toFloat()
+            val x = (center.x + cos(rad) * radius).toFloat()
+            val y = (center.y + sin(rad) * radius).toFloat()
 
             drawCircle(
                 color = color.copy(alpha = 0.3f),
@@ -154,10 +156,9 @@ fun PersonaSignature(
                             Text(text = emojiToShow, fontSize = (size.value / 2).sp)
                         } else {
                             val mediumIcon = when (device.medium) { 
-                                Source.ResonanceMedium.BLUETOOTH -> Icons.Rounded.Bluetooth
-                                Source.ResonanceMedium.WIFI -> Icons.Rounded.Wifi
-                                Source.ResonanceMedium.LOCATION -> Icons.Rounded.LocationOn 
-                                else -> Icons.Rounded.Bluetooth
+                                Source.ConnectionMedium.BLUETOOTH -> Icons.Rounded.Bluetooth
+                                Source.ConnectionMedium.WIFI -> Icons.Rounded.Wifi
+                                Source.ConnectionMedium.LOCATION -> Icons.Rounded.LocationOn 
                             }
                             val iconSize = (size.value / 2.5f).dp
                             val icon = if (isMe) Icons.Rounded.Face else if (device.isConnecting || device.isGroupPending) Icons.Rounded.Sync else if (isSelected) Icons.Rounded.CheckCircle else mediumIcon
@@ -209,10 +210,10 @@ fun PersonaSignature(
 }
 
 /**
- * GROUP SIGNATURE: Visual identity for groups.
+ * GROUP SIGNATURE: Visual identity for Groups.
  */
 @Composable
-fun SphereSignature(
+fun GroupSignature(
     device: Source, 
     memberCount: Int, 
     isPulsed: Boolean, 
@@ -222,7 +223,6 @@ fun SphereSignature(
     title: String? = null
 ) {
     val themeColor = if (isPulsed) StealthRose else StealthPrimary
-    val pulse = 1.0f
     
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(size * 1.5f)) {
         Surface(shape = CircleShape, color = themeColor.copy(alpha = 0.05f), modifier = Modifier.size(size)) {}
@@ -365,7 +365,7 @@ fun WelcomeGhost(
                     modifier = Modifier.padding(24.dp)
                 ) {
                     Text(
-                        text = "Welcome Source", // Removed ALL-CAPS
+                        text = "Welcome Source", 
                         style = MaterialTheme.typography.labelSmall, 
                         color = StealthAmber
                     )
@@ -382,7 +382,7 @@ fun WelcomeGhost(
                         decorationBox = { innerTextField ->
                             if (nickname.isEmpty()) {
                                 Text(
-                                    text = "Who are you?", // Removed ALL-CAPS
+                                    text = "Who are you?", 
                                     style = MaterialTheme.typography.headlineSmall,
                                     color = Color.White.copy(alpha = 0.2f), 
                                     textAlign = TextAlign.Center,
@@ -396,7 +396,7 @@ fun WelcomeGhost(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = "Blukit is your sovereign life record. No internet required. Your records stay strictly inside your air.",
+                        text = "Blukit is your sovereign life record. No internet required. Your records stay strictly inside your connection.",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.5f),
                         textAlign = TextAlign.Center,
@@ -411,7 +411,7 @@ fun WelcomeGhost(
                             modifier = Modifier.weight(1f).height(48.dp)
                         ) {
                             Text(
-                                text = "Lurk", // Removed ALL-CAPS
+                                text = "Lurk", 
                                 style = MaterialTheme.typography.labelLarge,
                                 color = Color.White.copy(alpha = 0.4f)
                             )
@@ -425,7 +425,7 @@ fun WelcomeGhost(
                             modifier = Modifier.weight(1.5f).height(48.dp)
                         ) {
                             Text(
-                                text = "Own it", // Removed ALL-CAPS
+                                text = "Own it", 
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -437,20 +437,20 @@ fun WelcomeGhost(
 }
 
 /**
- * GROUP CREATION OVERLAY: Interface for naming and templating new groups.
+ * GROUP CREATION OVERLAY: Interface for naming and templating new Groups.
  */
 @Composable
-fun SphereRitualGhost(
+fun GroupRitualGhost(
     onNameChange: (String) -> Unit,
     onDone: (String?) -> Unit, 
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    nearbyAirs: List<Sphere> = emptyList(),
-    onJoinAir: (String) -> Unit = {},
-    title: String = "Start a Sphere", // Removed ALL-CAPS
-    hint: String = "Name your Sphere" // Removed ALL-CAPS
+    nearbyGroups: List<Group> = emptyList(),
+    onJoinGroup: (String) -> Unit = {},
+    title: String = "Start a Group", 
+    hint: String = "Name your Group" 
 ) {
-    var sphereName by remember { mutableStateOf("") }
+    var groupName by remember { mutableStateOf("") }
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
     val focusRequester = remember { FocusRequester() }
 
@@ -462,7 +462,7 @@ fun SphereRitualGhost(
     
     DisposableEffect(Unit) {
         onDispose {
-            coordinates.remove("SPHERE_RITUAL")
+            coordinates.remove("GROUP_RITUAL")
         }
     }
 
@@ -480,8 +480,8 @@ fun SphereRitualGhost(
             modifier = Modifier
                 .onGloballyPositioned { 
                     val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                    val current = coordinates["SPHERE_RITUAL"] ?: PersonaConnectionPoints()
-                    coordinates["SPHERE_RITUAL"] = current.copy(field = it.positionInRoot() + center)
+                    val current = coordinates["GROUP_RITUAL"] ?: PersonaConnectionPoints()
+                    coordinates["GROUP_RITUAL"] = current.copy(field = it.positionInRoot() + center)
                 }
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(120.dp)) {
@@ -530,15 +530,15 @@ fun SphereRitualGhost(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     androidx.compose.foundation.text.BasicTextField(
-                        value = sphereName,
-                        onValueChange = { sphereName = it; onNameChange(it) },
+                        value = groupName,
+                        onValueChange = { groupName = it; onNameChange(it) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester),
                         textStyle = MaterialTheme.typography.headlineSmall.copy(color = Color.White, textAlign = TextAlign.Center),
                         cursorBrush = androidx.compose.ui.graphics.SolidColor(StealthPrimary),
                         decorationBox = { innerTextField ->
-                            if (sphereName.isEmpty()) {
+                            if (groupName.isEmpty()) {
                                 Text(
                                     text = hint, 
                                     style = MaterialTheme.typography.headlineSmall,
@@ -579,24 +579,24 @@ fun SphereRitualGhost(
                         }
                     }
 
-                    if (nearbyAirs.isNotEmpty()) {
+                    if (nearbyGroups.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
-                            text = "Nearby Spheres", 
+                            text = "Nearby Groups", 
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.4f)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            nearbyAirs.take(3).forEach { air ->
+                            nearbyGroups.take(3).forEach { group ->
                                 Surface(
-                                    onClick = { onJoinAir(air.id) },
+                                    onClick = { onJoinGroup(group.id) },
                                     color = StealthPrimary.copy(alpha = StealthAlphaLow),
                                     shape = RoundedCornerShape(12.dp),
                                     border = BorderStroke(1.dp, StealthPrimary.copy(alpha = StealthAlphaMedium))
                                 ) {
                                     Text(
-                                        text = air.name, 
+                                        text = group.name, 
                                         style = MaterialTheme.typography.labelSmall,
                                         color = StealthPrimary,
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -610,13 +610,13 @@ fun SphereRitualGhost(
                     
                     Button(
                         onClick = { onDone(selectedTemplateId) },
-                        enabled = sphereName.isNotBlank(),
+                        enabled = groupName.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(containerColor = StealthPrimary, contentColor = Color.Black),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
                         Text(
-                            text = "Create", // Removed ALL-CAPS
+                            text = "Create", 
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
@@ -633,7 +633,7 @@ data class GhostAction(
     val onClick: () -> Unit
 )
 
-data class GhostEchoData(
+data class GhostMessageData(
     val emoji: String,
     val title: String,
     val subtitle: String? = null,
@@ -646,8 +646,8 @@ data class GhostEchoData(
  * MESSAGE OVERLAY: Immersive view for trending or important messages.
  */
 @Composable
-fun EchoGhost(
-    data: GhostEchoData,
+fun MessageGhost(
+    data: GhostMessageData,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -655,7 +655,7 @@ fun EchoGhost(
 
     DisposableEffect(Unit) {
         onDispose {
-            coordinates.remove("GHOST_ECHO")
+            coordinates.remove("GHOST_MESSAGE")
             coordinates.remove("GHOST_SOURCE_ID")
         }
     }
@@ -671,7 +671,7 @@ fun EchoGhost(
             modifier = Modifier
                 .onGloballyPositioned { 
                     val center = Offset(it.size.width / 2f, it.size.height / 2f)
-                    coordinates["GHOST_ECHO"] = PersonaConnectionPoints(field = it.positionInRoot() + center)
+                    coordinates["GHOST_MESSAGE"] = PersonaConnectionPoints(field = it.positionInRoot() + center)
                 }
                 .size(1.dp)
         )
@@ -721,8 +721,8 @@ fun EchoGhost(
             data.actions.forEachIndexed { index, action ->
                 val angle = (index * (360f / data.actions.size)) - 90f
                 val radius = 130.dp
-                val x = (kotlin.math.cos(Math.toRadians(angle.toDouble())) * radius.value).dp
-                val y = (kotlin.math.sin(Math.toRadians(angle.toDouble())) * radius.value).dp
+                val x = (cos(Math.toRadians(angle.toDouble())) * radius.value).dp
+                val y = (sin(Math.toRadians(angle.toDouble())) * radius.value).dp
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,

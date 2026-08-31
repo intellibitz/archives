@@ -28,15 +28,15 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import cc.thevar.blukit.MainActivity
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import org.koin.core.context.GlobalContext
 
 class BlukitWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            val messageStore = GlobalContext.get().get<EchoLedger>()
-            val messages by messageStore.echoes.collectAsState(initial = emptyList())
+            val messageStore = GlobalContext.get().get<MessageRepository>()
+            val messages by messageStore.messages.collectAsState(initial = emptyList())
             val count = messages.size
 
             GlanceTheme {
@@ -49,7 +49,7 @@ class BlukitWidget : GlanceAppWidget() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "BLUKIT MESH",
+                        text = "BLUKIT CHAT",
                         style = TextStyle(
                             color = GlanceTheme.colors.primary,
                             fontSize = 12.sp,
@@ -86,7 +86,7 @@ class BlukitWidget : GlanceAppWidget() {
                         )
                         Spacer(modifier = GlanceModifier.width(8.dp))
                         Text(
-                            text = "OFFLINE MESH",
+                            text = "OFFLINE CHAT",
                             style = TextStyle(
                                 color = GlanceTheme.colors.primary,
                                 fontSize = 6.sp,

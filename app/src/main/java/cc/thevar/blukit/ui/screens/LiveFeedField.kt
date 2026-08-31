@@ -14,20 +14,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.ui.theme.*
+import cc.thevar.blukit.ui.components.*
 
 /**
- * RESONANCE STREAM FIELD: A real-time stream of every Echo in the field.
+ * LIVE FEED FIELD: A real-time stream of every Message in the field.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveFeedField(
-    echoes: List<Echo>,
+    messages: List<Message>,
     sources: List<Source>,
     onBack: () -> Unit,
-    onEchoClick: (String) -> Unit
+    onMessageClick: (String) -> Unit
 ) {
     Scaffold(
         containerColor = StealthBlack,
@@ -35,7 +36,7 @@ fun LiveFeedField(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        text = "RESONANCE STREAM", 
+                        text = "LIVE FEED", 
                         style = MaterialTheme.typography.titleMedium,
                         letterSpacing = 2.sp
                     ) 
@@ -59,10 +60,10 @@ fun LiveFeedField(
             contentPadding = PaddingValues(bottom = 80.dp, top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            items(echoes.reversed(), key = { it.messageId }) { echo ->
-                val source = sources.find { it.id == echo.senderId || it.persistentId == echo.senderId }
-                EchoItem(
-                    echo = echo,
+            items(messages.reversed(), key = { it.messageId }) { message ->
+                val source = sources.find { it.id == message.senderId || it.persistentId == message.senderId }
+                MessageItem(
+                    message = message,
                     isSelected = false,
                     senderSource = source,
                     replyCount = 0,
@@ -70,8 +71,8 @@ fun LiveFeedField(
                     isMe = false,
                     isGrouped = false,
                     isMutual = false,
-                    rowId = "live_${echo.messageId}",
-                    onEchoClick = { onEchoClick(echo.messageId) },
+                    rowId = "live_${message.messageId}",
+                    onMessageClick = { onMessageClick(message.messageId) },
                     onSourceLongClick = {}
                 )
             }

@@ -23,8 +23,8 @@ data class PersonaConnectionPoints(
 val LocalPersonaCoordinates: ProvidableCompositionLocal<SnapshotStateMap<String, PersonaConnectionPoints>> =
     compositionLocalOf { error("No PersonaCoordinates provided") }
 
-val LocalActiveEchoId: ProvidableCompositionLocal<MutableState<String?>> =
-    compositionLocalOf { error("No ActiveEchoId provided") }
+val LocalActiveMessageId: ProvidableCompositionLocal<MutableState<String?>> =
+    compositionLocalOf { error("No ActiveMessageId provided") }
 
 val LocalUserEmoji: ProvidableCompositionLocal<String> =
     androidx.compose.runtime.staticCompositionLocalOf { "👤" }
@@ -48,7 +48,7 @@ data class RelayEvent(
 /**
  * Animated rings signaling network activity.
  */
-data class EchoRipple(
+data class MessageRipple(
     val id: String,
     val center: Offset,
     val startTime: Long,
@@ -56,9 +56,9 @@ data class EchoRipple(
 )
 
 /**
- * AIR INTELLIGENCE MODELS
+ * ASSISTANT INTELLIGENCE MODELS
  */
-data class AirSynthesisHighlight(
+data class AssistantReportHighlight(
     val title: String,
     val summary: String,
     val intensity: Float, // 0.0 to 1.0 for UI animation

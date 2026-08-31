@@ -1,6 +1,6 @@
 package cc.thevar.blukit.ui
 
-import cc.thevar.blukit.network.p2p.ResonanceError
+import cc.thevar.blukit.network.p2p.ConnectionError
 
 /**
  * Represents a user-facing error within the Blukit experience.
@@ -15,8 +15,8 @@ sealed class UiError(val message: String) {
 /**
  * Mapper to convert P2P-level errors to UI-facing errors.
  */
-fun ResonanceError.toUiError(): UiError = when (this) {
-    is ResonanceError.EncryptionError -> UiError.SecureChannelFailed("Security breach: $message")
-    is ResonanceError.SensingError, is ResonanceError.AdvertisingError -> UiError.RadiosStill("The air waves are quiet: $message")
-    is ResonanceError.ConnectionError -> UiError.ProximityError("Could not bridge tie: $message")
+fun ConnectionError.toUiError(): UiError = when (this) {
+    is ConnectionError.EncryptionError -> UiError.SecureChannelFailed("Security error: $message")
+    is ConnectionError.NearbyError, is ConnectionError.AdvertisingError -> UiError.RadiosStill("Communication offline: $message")
+    is ConnectionError.LinkError -> UiError.ProximityError("Could not establish connection: $message")
 }

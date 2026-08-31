@@ -1,7 +1,7 @@
 package cc.thevar.blukit.di
 
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.data.power.HarmonyManager
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
@@ -9,11 +9,11 @@ import cc.thevar.blukit.data.repository.IdentityRepositoryImpl
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
-import cc.thevar.blukit.domain.logic.AtmosphereManager
+import cc.thevar.blukit.domain.logic.AssistantManager
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
-import cc.thevar.blukit.network.p2p.NearbyResonanceController
-import cc.thevar.blukit.network.p2p.ResonanceController
-import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
+import cc.thevar.blukit.network.p2p.P2pConnectionController
+import cc.thevar.blukit.network.p2p.ConnectionController
+import cc.thevar.blukit.ui.viewmodels.ConnectionViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
 import cc.thevar.blukit.ui.viewmodels.HarmonyViewModel
 import cc.thevar.blukit.ui.viewmodels.NavigationViewModel
@@ -27,7 +27,7 @@ import org.koin.dsl.module
 val appModule = module {
     // Infrastructure
     single { CryptoManager() }
-    single { EchoLedger(androidContext(), get()) }
+    single { MessageRepository(androidContext(), get()) }
     single { RadioStateManager(androidContext()) }
     single { SpreadPermissionManager(androidContext()) }
     single { HapticManager(androidContext()) }
@@ -40,11 +40,11 @@ val appModule = module {
     single { ContactRepository(get()) }
     
     // Controllers
-    single<ResonanceController> { 
-        NearbyResonanceController(
+    single<ConnectionController> { 
+        P2pConnectionController(
             context = androidContext(),
             repository = get(),
-            echoLedger = get(),
+            messageLedger = get(),
             hapticManager = get(),
             radioStateManager = get(),
             cryptoManager = get(),
@@ -55,11 +55,11 @@ val appModule = module {
     // Use Cases & Managers
     single { HarmonyManager(get(), get(), get(), get()) }
     single { ConnectivityUseCase(get(), get(), get(), get()) }
-    single(createdAtStart = true) { AtmosphereManager(androidContext(), get(), get()) }
+    single(createdAtStart = true) { AssistantManager(androidContext(), get(), get()) }
     
     // ViewModels
     viewModelOf(::MainViewModel)
-    viewModelOf(::BluetoothViewModel)
+    viewModelOf(::ConnectionViewModel)
     viewModelOf(::HarmonyViewModel)
     viewModelOf(::NavigationViewModel)
 }

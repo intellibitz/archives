@@ -1,8 +1,8 @@
 /**
- * BLUKIT SENSING FIELD
+ * BLUKIT NEARBY FIELD
  *
- * The root entry point of the resonance field (Landing).
- * Provides a view of all nearby Spheres and Sources.
+ * The root entry point of the connection field (Landing).
+ * Provides a view of all nearby Groups and Sources.
  */
 package cc.thevar.blukit.ui.screens
 
@@ -17,25 +17,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.theme.*
-import cc.thevar.blukit.ui.components.ResonanceSensingView
-import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
+import cc.thevar.blukit.ui.components.ConnectionNearbyView
+import cc.thevar.blukit.ui.viewmodels.ConnectionUiState
+import cc.thevar.blukit.ui.viewmodels.ConnectionViewModel
 import cc.thevar.blukit.ui.navigation.Route
+import cc.thevar.blukit.ui.components.*
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * THE SENSING FIELD: The master feed for finding Spheres and Sources.
+ * THE NEARBY FIELD: The master feed for finding Groups and Sources.
  */
 @Composable
-fun SensingField(
-    state: BluetoothUiState,
+fun NearbyField(
+    state: ConnectionUiState,
     localDeviceId: String,
     header: @Composable () -> Unit,
-    viewModel: BluetoothViewModel = koinViewModel(),
+    viewModel: ConnectionViewModel = koinViewModel(),
     pulsedPeers: Set<String> = emptySet(),
     onIdentifyUser: (String) -> Unit = {},
     breadcrumbTrail: List<String> = emptyList(),
@@ -50,26 +51,26 @@ fun SensingField(
     isSearchActive: Boolean = false,
     onCreatePublicRoom: ((String, String?) -> Unit)? = null,
     onNavigateToGroup: (String) -> Unit = {},
-    onNavigateToPulse: (String) -> Unit = {},
+    onNavigateToMessage: (String) -> Unit = {},
     onSourceLongClick: (Source) -> Unit = {},
     onAcceptRadio: (Source) -> Unit = {},
     onDenyRadio: (Source) -> Unit = {},
     onRestoreCrowd: (String) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
-    onStartSidePulse: () -> Unit = {},
-    onStartChain: () -> Unit = {},
+    onStartWhisper: () -> Unit = {},
+    onStartSubGroup: () -> Unit = {},
     onClearSelection: () -> Unit = {},
-    showAirGhost: Boolean = false,
-    onShowAirGhost: () -> Unit = {},
-    onDismissAirGhost: () -> Unit = {},
+    showAssistantGhost: Boolean = false,
+    onShowAssistantGhost: () -> Unit = {},
+    onDismissAssistantGhost: () -> Unit = {},
 ) {
-    val resonanceList by viewModel.resonanceList.collectAsStateWithLifecycle()
+    val connectionList by viewModel.connectionList.collectAsStateWithLifecycle()
     
-    val echoCounts = remember(state.session.messages) {
-        state.session.messages.groupBy { it.groupId ?: Sphere.ID_GLOBAL }.mapValues { it.value.size }
+    val messageCounts = remember(state.session.messages) {
+        state.session.messages.groupBy { it.groupId ?: Group.ID_GLOBAL }.mapValues { it.value.size }
     }
 
-    var sphereNameProposal by remember { mutableStateOf("") }
+    var groupNameProposal by remember { mutableStateOf("") }
     var showVault by remember { mutableStateOf(false) }
     var messageText by remember { mutableStateOf("") }
 
@@ -82,7 +83,7 @@ fun SensingField(
                     title = "NEARBY",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    activeRooms = state.session.groups,
+                    activeGroups = state.session.groups,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onBack = onBack,
@@ -104,26 +105,26 @@ fun SensingField(
                 )
 
                 if (state.crowd.scannedDevices.isNotEmpty()) {
-                    ResonanceTicker(
+                    ConnectionTicker(
                         state = state,
-                        resonanceList = resonanceList.map { it.source to it.latestEcho },
-                        echoCounts = echoCounts,
+                        connectionList = connectionList.map { it.source to it.latestMessage },
+                        messageCounts = messageCounts,
                         localDeviceId = localDeviceId,
                         localNickname = userNickname,
                         pulsedPeers = pulsedPeers,
-                        onEchoClick = { id -> if (state.session.groups.any { it.id == id }) onNavigateToGroup(id) else onNavigateToPulse(id) },
-                        onSourceClick = { onNavigateToPulse(it.id) },
+                        onMessageClick = { id -> if (state.session.groups.any { it.id == id }) onNavigateToGroup(id) else onNavigateToMessage(id) },
+                        onSourceClick = { onNavigateToMessage(it.id) },
                         onSourceLongClick = onSourceLongClick,
                         modifier = Modifier.weight(1f),
                         reverseLayout = false,
                         trend = harmonyReport?.trendLabel
                     )
                 } else {
-                    ResonanceSensingView(onSignalPresence = { onShowAirGhost() }, modifier = Modifier.weight(1f))
+                    ConnectionNearbyView(onSignalPresence = { onShowAssistantGhost() }, modifier = Modifier.weight(1f))
                 }
 
-                EchoHub(
-                    currentRoute = Route.Sensing,
+                MessageHub(
+                    currentRoute = Route.Nearby,
                     messageText = messageText,
                     onMessageChange = { messageText = it },
                     onSend = { }, 
@@ -132,8 +133,8 @@ fun SensingField(
                     selectedDevices = state.crowd.selectedDevices,
                     onAcceptRadio = onAcceptRadio,
                     onDenyRadio = onDenyRadio,
-                    onStartSidePulse = onStartSidePulse,
-                    onStartChain = onStartChain, 
+                    onStartWhisper = onStartWhisper,
+                    onStartSubGroup = onStartSubGroup, 
                     onClearSelection = onClearSelection,
                     onAttachFile = { },
                     isSearchMode = isSearchActive,
@@ -146,20 +147,20 @@ fun SensingField(
         }
     )
 
-    if (showAirGhost) {
-        SphereRitualGhost(
-            onNameChange = { sphereNameProposal = it },
+    if (showAssistantGhost) {
+        GroupRitualGhost(
+            onNameChange = { groupNameProposal = it },
             onDone = { templateId ->
-                onCreatePublicRoom?.invoke(sphereNameProposal, templateId)
-                onDismissAirGhost()
+                onCreatePublicRoom?.invoke(groupNameProposal, templateId)
+                onDismissAssistantGhost()
             },
-            onDismiss = onDismissAirGhost,
-            nearbyAirs = state.session.groups.filter { it.scope == Sphere.SCOPE_PUBLIC && it.id != Sphere.ID_GLOBAL },
-            onJoinAir = { gid -> onNavigateToGroup(gid); onDismissAirGhost() }
+            onDismiss = onDismissAssistantGhost,
+            nearbyGroups = state.session.groups.filter { it.scope == Group.SCOPE_PUBLIC && it.id != Group.ID_GLOBAL },
+            onJoinGroup = { gid -> onNavigateToGroup(gid); onDismissAssistantGhost() }
         )
     }
 
     if (showVault) {
-        SunkRecordVault(archivedSpheres = state.session.archivedGroups, onRestore = onRestoreCrowd, onDismiss = { showVault = false })
+        SunkRecordVault(archivedGroups = state.session.archivedGroups, onRestore = onRestoreCrowd, onDismiss = { showVault = false })
     }
 }

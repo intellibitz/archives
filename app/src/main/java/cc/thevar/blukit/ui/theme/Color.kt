@@ -61,8 +61,8 @@ val BlukitAcademicBlue = Color(0xFF005A9E)
 val BlukitAcademicGold = Color(0xFFB8860B)
 
 // Atmospheric Trends
-val AtmosphereAcademic = Color(0xFF9575CD) // Soft Violet
-val AtmosphereTransit = Color(0xFF64B5F6)  // Soft Blue
-val AtmosphereSocial = Color(0xFFFF80AB)   // Soft Rose
-val AtmosphereFood = Color(0xFF81C784)     // Soft Green
-val AtmosphereAction = Color(0xFFE57373)   // Soft Red
+val AssistantAcademic = Color(0xFF9575CD) // Soft Violet
+val AssistantTransit = Color(0xFF64B5F6)  // Soft Blue
+val AssistantSocial = Color(0xFFFF80AB)   // Soft Rose
+val AssistantFood = Color(0xFF81C784)     // Soft Green
+val AssistantAction = Color(0xFFE57373)   // Soft Red

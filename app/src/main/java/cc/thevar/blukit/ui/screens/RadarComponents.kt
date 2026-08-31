@@ -2,7 +2,7 @@
  * BLUKIT RADAR COMPONENTS
  *
  * This module handles spatial intelligence visualizations, including the 
- * Peer Radar and Vibe Heatmaps.
+ * Peer Radar and Connection Heatmaps.
  */
 package cc.thevar.blukit.ui.screens
 
@@ -23,8 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.theme.*
+import cc.thevar.blukit.ui.components.*
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -32,11 +33,11 @@ import kotlin.math.sin
 @Composable
 internal fun VibeHeatmap(energy: Float, themeColor: Color, trend: String? = null) {
     val atmosphereColor = when (trend) {
-        "ACADEMIC RITUAL" -> AtmosphereAcademic
-        "URBAN TRANSIT" -> AtmosphereTransit
-        "SOCIAL SYNERGY" -> AtmosphereSocial
-        "ROOM NOURISHMENT" -> AtmosphereFood
-        "COLLECTIVE ACTION" -> AtmosphereAction
+        "ACADEMIC RITUAL" -> AssistantAcademic
+        "URBAN TRANSIT" -> AssistantTransit
+        "SOCIAL SYNERGY" -> AssistantSocial
+        "ROOM NOURISHMENT" -> AssistantFood
+        "COLLECTIVE ACTION" -> AssistantAction
         else -> themeColor
     }
 
@@ -67,8 +68,8 @@ internal fun VibeHeatmap(energy: Float, themeColor: Color, trend: String? = null
  * @param onDeviceClick Triggered when a Source node is tapped.
  * @param onDeviceLongClick Triggered when a Source node is long-pressed (opens options).
  * @param selectedDevices Set of IDs currently selected for multi-action.
- * @param pulsedPeers Set of IDs that are currently emitting resonance energy.
- * @param bubbleSenders Set of IDs that have sent recent messages (Echoes).
+ * @param pulsedPeers Set of IDs that are currently emitting connection energy.
+ * @param bubbleSenders Set of IDs that have sent recent messages.
  * @param themeColor The atmospheric color base for the radar.
  * @param density Screen density for pixel-to-dp calculations.
  */
@@ -99,10 +100,10 @@ fun PeerRadarLayer(
             
             val proximity = device.proximityFactor
             val radiusValue = (1f - proximity) * maxRadiusPx + with(density) { 60.dp.toPx() }
-            val angle = (index.toDouble() / devices.size.coerceAtLeast(1)) * 2 * Math.PI
+            val angle = (index.toDouble() / devices.size.coerceAtLeast(1)) * 2 * PI
             
-            val offsetX = (radiusValue * Math.cos(angle)).toFloat()
-            val offsetY = (radiusValue * Math.sin(angle)).toFloat()
+            val offsetX = (radiusValue * cos(angle)).toFloat()
+            val offsetY = (radiusValue * sin(angle)).toFloat()
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -126,15 +127,15 @@ fun PeerRadarLayer(
 }
 
 /**
- * MINI PEER VIEW: A lightweight view for a specific group context.
+ * MINI PEER VIEW: A lightweight view for a specific Group context.
  */
 @Composable
-fun SphereMiniRadar(
-    sphere: Sphere,
+fun GroupMiniRadar(
+    group: Group,
     members: List<Source>,
     modifier: Modifier = Modifier,
     themeColor: Color = StealthPrimary,
-    isDefaultSphere: Boolean = false,
+    isDefaultGroup: Boolean = false,
     onSourceClick: (Source) -> Unit = {},
     onSourceLongClick: (Source) -> Unit = {},
     activeBubbles: List<BubbleData> = emptyList()
@@ -147,7 +148,7 @@ fun SphereMiniRadar(
             .height(90.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (isDefaultSphere) {
+        if (isDefaultGroup) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -201,12 +202,12 @@ fun SphereMiniRadar(
                 }
             }
         } else {
-            val owner = members.find { it.id == sphere.ownerId || it.persistentId == sphere.ownerId }
-            val centerEmoji = owner?.emoji ?: sphere.projectionEmoji ?: "⚡"
+            val owner = members.find { it.id == group.ownerId || it.persistentId == group.ownerId }
+            val centerEmoji = owner?.emoji ?: group.projectionEmoji ?: "⚡"
 
             Box(modifier = Modifier.zIndex(2f)) {
                 PersonaSignature(
-                    device = Source(id = "OWNER", name = owner?.name ?: sphere.name, emoji = centerEmoji),
+                    device = Source(id = "OWNER", name = owner?.name ?: group.name, emoji = centerEmoji),
                     isPulsed = owner?.let { bubbleSenders.contains(it.id) || bubbleSenders.contains(it.persistentId) } ?: false,
                     isSelected = false,
                     isPeerPulsed = false,
@@ -218,7 +219,7 @@ fun SphereMiniRadar(
                 )
             }
 
-            val others = members.filter { it.id != sphere.ownerId && it.persistentId != sphere.ownerId }
+            val others = members.filter { it.id != group.ownerId && it.persistentId != group.ownerId }
             others.take(8).forEachIndexed { index, device ->
                 val radius = 48f 
                 val angle = (index.toDouble() / others.size.coerceAtLeast(1)) * 2 * PI

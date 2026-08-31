@@ -21,23 +21,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * THE LEDGER FIELD: A visual chronological path of existence records.
+ * THE TIMELINE FIELD: A visual chronological path of existence records.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineField(
-    echoes: List<Echo>,
+    messages: List<Message>,
     onBack: () -> Unit
 ) {
-    val ledgerEntries = remember(echoes) {
-        val records = echoes.filter { it.type == Echo.TYPE_MEMORY || it.type == Echo.TYPE_IMAGE || it.type == Echo.TYPE_AI_SUMMARY }
+    val ledgerEntries = remember(messages) {
+        val records = messages.filter { it.type == Message.TYPE_MEMORY || it.type == Message.TYPE_IMAGE || it.type == Message.TYPE_AI_SUMMARY }
             .sortedByDescending { it.timestamp }
         records
     }
@@ -50,7 +50,7 @@ fun TimelineField(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        text = "THE LEDGER", 
+                        text = "MESSAGE HISTORY", 
                         style = MaterialTheme.typography.titleMedium,
                         letterSpacing = 2.sp
                     ) 
@@ -70,7 +70,7 @@ fun TimelineField(
         if (ledgerEntries.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "THE LEDGER IS EMPTY", 
+                    text = "NO HISTORY YET", 
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.4f)
                 )
@@ -82,7 +82,7 @@ fun TimelineField(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(ledgerEntries) { entry ->
-                    if (entry.type == Echo.TYPE_AI_SUMMARY) {
+                    if (entry.type == Message.TYPE_AI_SUMMARY) {
                         SynthesisHeader(entry)
                     } else {
                         RecordItem(entry, sdf.format(Date(entry.timestamp)))
@@ -94,20 +94,20 @@ fun TimelineField(
 }
 
 @Composable
-private fun SynthesisHeader(echo: Echo) {
+private fun SynthesisHeader(message: Message) {
     Surface(
-        color = AtmosphereSocial.copy(alpha = 0.1f),
+        color = AssistantSocial.copy(alpha = 0.1f),
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, AtmosphereSocial.copy(alpha = 0.3f)),
+        border = BorderStroke(1.dp, AssistantSocial.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = AtmosphereSocial, modifier = Modifier.size(16.dp))
+            Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = AssistantSocial, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = echo.content.uppercase(),
+                text = message.content.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
-                color = AtmosphereSocial,
+                color = AssistantSocial,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 1.sp
             )
@@ -116,7 +116,7 @@ private fun SynthesisHeader(echo: Echo) {
 }
 
 @Composable
-private fun RecordItem(record: Echo, dateStr: String) {
+private fun RecordItem(record: Message, dateStr: String) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(60.dp)) {
             Text(text = record.senderEmoji ?: "👤", fontSize = 24.sp)
@@ -155,7 +155,7 @@ private fun RecordItem(record: Echo, dateStr: String) {
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(6.6.dp))
             Surface(
                 color = StealthSurface,
                 shape = RoundedCornerShape(16.dp),

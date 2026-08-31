@@ -2,7 +2,7 @@ package cc.thevar.blukit.data.local
 
 import android.content.Context
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import io.mockk.every
 import io.mockk.mockk
 import java.io.File
@@ -15,83 +15,83 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class EchoLedgerTest {
+class MessageRepositoryTest {
 
     private val context = mockk<Context>(relaxed = true)
     private val cryptoManager = mockk<CryptoManager>(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var echoLedger: EchoLedger
+    private lateinit var messageRepository: MessageRepository
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         val filesDir = File("build/tmp/test").apply { mkdirs() }
         every { context.filesDir } returns filesDir
-        echoLedger = EchoLedger(context, cryptoManager, testDispatcher)
+        messageRepository = MessageRepository(context, cryptoManager, testDispatcher)
     }
 
     @Test
-    fun `upsertEcho resolves record updates using LWW-CRDT`() {
+    fun `upsertMessage resolves record updates using LWW-CRDT`() {
         val recordId = "task_123"
-        val initialEcho = Echo(
+        val initialMessage = Message(
             messageId = recordId,
             senderId = "user1",
             senderName = "User 1",
             content = "Initial Task",
             timestamp = 1000L,
-            type = Echo.TYPE_ASSIGNMENT_TASK,
+            type = Message.TYPE_ASSIGNMENT_TASK,
             noteVersion = 1,
-            taskStatus = Echo.TASK_PENDING
+            taskStatus = Message.TASK_PENDING
         )
 
-        echoLedger.upsertEcho(initialEcho)
-        assertEquals(1, echoLedger.echoes.value.size)
-        assertEquals(Echo.TASK_PENDING, echoLedger.echoes.value.first().taskStatus)
+        messageRepository.upsertMessage(initialMessage)
+        assertEquals(1, messageRepository.echoes.value.size)
+        assertEquals(Message.TASK_PENDING, messageRepository.echoes.value.first().taskStatus)
 
         // Concurrent update from another Source with higher version
-        val updatedEcho = initialEcho.copy(
+        val updatedMessage = initialMessage.copy(
             content = "Updated Task",
             timestamp = 1100L,
             noteVersion = 2,
-            taskStatus = Echo.TASK_COMPLETED
+            taskStatus = Message.TASK_COMPLETED
         )
 
-        echoLedger.upsertEcho(updatedEcho)
-        assertEquals(1, echoLedger.echoes.value.size)
-        assertEquals("Updated Task", echoLedger.echoes.value.first().content)
-        assertEquals(Echo.TASK_COMPLETED, echoLedger.echoes.value.first().taskStatus)
+        messageRepository.upsertMessage(updatedMessage)
+        assertEquals(1, messageRepository.echoes.value.size)
+        assertEquals("Updated Task", messageRepository.echoes.value.first().content)
+        assertEquals(Message.TASK_COMPLETED, messageRepository.echoes.value.first().taskStatus)
 
         // Outdated update should be ignored
-        val outdatedEcho = initialEcho.copy(
+        val outdatedMessage = initialMessage.copy(
             content = "Old Task",
             timestamp = 900L,
             noteVersion = 1,
-            taskStatus = Echo.TASK_PENDING
+            taskStatus = Message.TASK_PENDING
         )
 
-        echoLedger.upsertEcho(outdatedEcho)
-        assertEquals(1, echoLedger.echoes.value.size)
-        assertEquals("Updated Task", echoLedger.echoes.value.first().content)
+        messageRepository.upsertMessage(outdatedMessage)
+        assertEquals(1, messageRepository.echoes.value.size)
+        assertEquals("Updated Task", messageRepository.echoes.value.first().content)
     }
 
     @Test
-    fun `upsertEcho sorts echoes by timestamp`() {
-        val p1 = createEcho("First", 1000L)
-        val p2 = createEcho("Second", 500L)
-        val p3 = createEcho("Third", 1500L)
+    fun `upsertMessage sorts echoes by timestamp`() {
+        val p1 = createMessage("First", 1000L)
+        val p2 = createMessage("Second", 500L)
+        val p3 = createMessage("Third", 1500L)
 
-        echoLedger.upsertEcho(p1)
-        echoLedger.upsertEcho(p2)
-        echoLedger.upsertEcho(p3)
+        messageRepository.upsertMessage(p1)
+        messageRepository.upsertMessage(p2)
+        messageRepository.upsertMessage(p3)
 
-        val echoes = echoLedger.echoes.value
+        val echoes = messageRepository.echoes.value
         assertEquals(3, echoes.size)
         assertEquals("Second", echoes[0].content)
         assertEquals("First", echoes[1].content)
         assertEquals("Third", echoes[2].content)
     }
 
-    private fun createEcho(content: String, timestamp: Long) = Echo(
+    private fun createMessage(content: String, timestamp: Long) = Message(
         messageId = java.util.UUID.randomUUID().toString(),
         senderId = "sender",
         senderName = "Sender",

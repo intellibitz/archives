@@ -1,26 +1,26 @@
 /**
- * BLUKIT VIEWMODEL: RESONANCE ORCHESTRATOR
+ * BLUKIT VIEWMODEL: CONNECTION ORCHESTRATOR
  *
  * The central intelligence hub for Blukit's reactive UDF (Unidirectional Data Flow) architecture.
- * Coordinates between hardware radio states, secure Resonance engines, and Echo Ledger.
+ * Coordinates between hardware radio states, secure Connection engines, and Message Ledger.
  */
 package cc.thevar.blukit.ui.viewmodels
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
-import cc.thevar.blukit.domain.logic.AtmosphereManager
+import cc.thevar.blukit.domain.logic.AssistantManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
-import cc.thevar.blukit.domain.model.SphereEvent
+import cc.thevar.blukit.domain.model.Group
+import cc.thevar.blukit.domain.model.GroupEvent
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
-import cc.thevar.blukit.network.p2p.ResonanceController
+import cc.thevar.blukit.network.p2p.ConnectionController
 import cc.thevar.blukit.ui.toUiError
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -33,16 +33,16 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Manages resonance connectivity, Sphere orchestration, and interaction hub states.
+ * Manages connection connectivity, Group orchestration, and interaction hub states.
  */
-class BluetoothViewModel(
-    private val resonanceController: ResonanceController,
+class ConnectionViewModel(
+    private val connectionController: ConnectionController,
     private val radioStateManager: RadioStateManager,
     private val repository: IdentityRepository,
     private val permissionManager: SpreadPermissionManager,
-    private val echoLedger: EchoLedger,
+    private val messageRepository: MessageRepository,
     private val connectivityUseCase: ConnectivityUseCase,
-    private val atmosphereManager: AtmosphereManager,
+    private val assistantManager: AssistantManager,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager,
 ) : ViewModel() {
 
@@ -51,20 +51,20 @@ class BluetoothViewModel(
     private val _messageTrigger = kotlinx.coroutines.flow.MutableSharedFlow<Pair<String, Boolean>>()
     val messageTrigger = _messageTrigger.asSharedFlow()
 
-    private val _currentGroupId = MutableStateFlow(Sphere.ID_GLOBAL)
+    private val _currentGroupId = MutableStateFlow(Group.ID_GLOBAL)
     /** The currently focused Group context. */
     val currentGroupId = _currentGroupId.asStateFlow()
 
-    /** Public Groups sensed in the local air, excluding current focus. */
-    val discoveredGroups = resonanceController.discoveredRooms
+    /** Public Groups sensed in the local connection environment, excluding current focus. */
+    val discoveredGroups = connectionController.discoveredGroups
         .filter { it.id != _currentGroupId.value }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
 
     /** MESSAGE CANVAS: Reactive flow of trending Messages for the header. */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val trendingMessages: StateFlow<List<Echo>> = _currentGroupId
+    val trendingMessages: StateFlow<List<Message>> = _currentGroupId
         .flatMapLatest { groupId ->
-            echoLedger.getHighResonanceEchoes(groupId)
+            messageRepository.getHighConnectionMessages(groupId)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -81,15 +81,15 @@ class BluetoothViewModel(
     }
 
     init {
-        resonanceController.messages
+        connectionController.messages
             .onEach { msgs ->
                 if (msgs.isNotEmpty()) {
-                    msgs.filter { it.type == Echo.TYPE_RITUAL_PUSH }.forEach { ritualMsg ->
+                    msgs.filter { it.type == Message.TYPE_RITUAL_PUSH }.forEach { ritualMsg ->
                         try {
-                            val event = kotlinx.serialization.json.Json.decodeFromString<SphereEvent>(ritualMsg.content)
+                            val event = kotlinx.serialization.json.Json.decodeFromString<GroupEvent>(ritualMsg.content)
                             ritualMsg.groupId?.let { gid -> addSchedule(gid, event) }
                         } catch (e: Exception) {
-                            Log.e("BluetoothViewModel", "Failed to decode ritual push: ${e.message}")
+                            Log.e("ConnectionViewModel", "Failed to decode ritual push: ${e.message}")
                         }
                     }
                 }
@@ -109,32 +109,32 @@ class BluetoothViewModel(
 
         viewModelScope.launch {
             while (true) {
-                checkSphereEvents()
+                checkGroupEvents()
                 delay(1.minutes)
             }
         }
 
         viewModelScope.launch {
             while (true) {
-                echoLedger.pruneMedia(thresholdMs = 90.days.inWholeMilliseconds) 
-                echoLedger.autoArchiveSpheres() 
+                messageRepository.pruneMedia(thresholdMs = 90.days.inWholeMilliseconds) 
+                messageRepository.autoArchiveGroups() 
                 delay(1.days)
             }
         }
 
         @OptIn(FlowPreview::class)
         combine(
-            resonanceController.connectedGroups,
-            resonanceController.scannedDevices,
+            connectionController.connectedGroups,
+            connectionController.scannedDevices,
         ) { connected, scanned -> connected to scanned }
             .debounce(2.seconds)
             .onEach { (connected, scanned) ->
-                val currentSphere = echoLedger.getSphere(_currentGroupId.value)
-                if (currentSphere?.scope == Sphere.SCOPE_PRIVATE) {
-                    val missingMembers = currentSphere.memberIds - connected - repository.getDeviceId()
+                val currentGroup = messageRepository.getGroup(_currentGroupId.value)
+                if (currentGroup?.scope == Group.SCOPE_PRIVATE) {
+                    val missingMembers = currentGroup.memberIds - connected - repository.getDeviceId()
                     missingMembers.forEach { memberId ->
                         scanned.find { (it.id == memberId) || (it.persistentId == memberId) }?.let { source ->
-                            Log.i("BluetoothViewModel", "Auto-Reconnect: Sphere needs resonance with $memberId")
+                            Log.i("ConnectionViewModel", "Auto-Reconnect: Group needs connection with $memberId")
                             connectToSource(source)
                         }
                     }
@@ -142,22 +142,22 @@ class BluetoothViewModel(
             }.launchIn(viewModelScope)
     }
 
-    private fun checkSphereEvents() {
+    private fun checkGroupEvents() {
         val now = Calendar.getInstance()
         val day = now[Calendar.DAY_OF_WEEK]
         val hour = now[Calendar.HOUR_OF_DAY]
         val minute = now[Calendar.MINUTE]
 
-        val scheduledSpheres = echoLedger.spheres.value.filter { it.schedules.isNotEmpty() }
-        scheduledSpheres.forEach { sphere ->
-            sphere.schedules.forEach { s ->
+        val scheduledGroups = messageRepository.groups.value.filter { it.schedules.isNotEmpty() }
+        scheduledGroups.forEach { group ->
+            group.schedules.forEach { s ->
                 val isActive = (s.dayOfWeek == day) &&
                         ((hour > s.startHour) || ((hour == s.startHour) && (minute >= s.startMinute))) &&
                         ((hour < s.endHour) || ((hour == s.endHour) && (minute <= s.endMinute)))
 
-                if (isActive && sphere.isArchived) {
-                    restoreFromVault(sphere.id)
-                    Log.i("BluetoothViewModel", "Sphere Awakening: ${sphere.name}")
+                if (isActive && group.isArchived) {
+                    restoreFromVault(group.id)
+                    Log.i("ConnectionViewModel", "Group Awakening: ${group.name}")
                 }
                 
                 s.reminderLeadTimeMs?.let { leadTime ->
@@ -169,7 +169,7 @@ class BluetoothViewModel(
                     
                     val nowMs = System.currentTimeMillis()
                     if ((scheduleTime - nowMs) in (leadTime - 60000)..leadTime) {
-                        Log.i("BluetoothViewModel", "SMART REMINDER: ${s.title ?: "Event"} starting in ${leadTime / 60000} mins")
+                        Log.i("ConnectionViewModel", "SMART REMINDER: ${s.title ?: "Event"} starting in ${leadTime / 60000} mins")
                     }
                 }
             }
@@ -178,27 +178,27 @@ class BluetoothViewModel(
 
     private suspend fun promoteSilenceToShout() {
         val myId = repository.getDeviceId()
-        val echoes = resonanceController.messages.value
-        val silentEchoes = echoes.filter { 
-            it.senderId == myId && it.messageScope == Echo.MESSAGE_SILENCE 
+        val messages = connectionController.messages.value
+        val silentMessages = messages.filter { 
+            it.senderId == myId && it.messageScope == Message.MESSAGE_SILENCE 
         }
         
-        silentEchoes.forEach { msg ->
-            resonanceController.broadcastMessage(msg.content, Echo.MESSAGE_SHOUT, msg.messageId, groupId = Sphere.ID_GLOBAL, groupName = "HOME")
+        silentMessages.forEach { msg ->
+            connectionController.broadcastMessage(msg.content, Message.MESSAGE_SHOUT, msg.messageId, groupId = Group.ID_GLOBAL, groupName = "HOME")
         }
     }
 
-    private val activityState: Flow<MeshActivity> = combine(
-        resonanceController.isDiscovering,
-        resonanceController.isAdvertising,
-        resonanceController.messages,
-        resonanceController.errors,
-    ) { isDiscovering, isAdvertising, echoes, error ->
+    private val activityState: Flow<ConnectionActivity> = combine(
+        connectionController.isDiscovering,
+        connectionController.isAdvertising,
+        connectionController.messages,
+        connectionController.errors,
+    ) { isDiscovering, isAdvertising, messages, error ->
         val now = System.currentTimeMillis()
-        val recentEchoes = echoes.count { (now - it.timestamp) < 300000 } 
-        val intensity = (recentEchoes / 20f).coerceAtMost(1f)
+        val recentMessages = messages.count { (now - it.timestamp) < 300000 } 
+        val intensity = (recentMessages / 20f).coerceAtMost(1f)
 
-        MeshActivity(
+        ConnectionActivity(
             isDiscovering = isDiscovering,
             isAdvertising = isAdvertising,
             energyIntensity = intensity,
@@ -206,13 +206,13 @@ class BluetoothViewModel(
         )
     }
 
-    private val crowdState: Flow<NearbyPeers> = combine(
-        resonanceController.scannedDevices,
+    private val crowdState: Flow<ConnectionPeers> = combine(
+        connectionController.scannedDevices,
         _selectedSources,
         repository.pulsedPeers,
         repository.blockedUsers,
-        resonanceController.incomingRadioRequests,
-        resonanceController.outgoingRadioRequests,
+        connectionController.incomingRadioRequests,
+        connectionController.outgoingRadioRequests,
     ) { flows ->
         @Suppress("UNCHECKED_CAST")
         val scanned = flows[0] as List<Source>
@@ -227,7 +227,7 @@ class BluetoothViewModel(
         @Suppress("UNCHECKED_CAST")
         val outgoing = flows[5] as Set<Source>
         
-        NearbyPeers(
+        ConnectionPeers(
             scannedDevices = scanned,
             selectedDevices = selected,
             pulsedPeers = pulsed,
@@ -237,31 +237,31 @@ class BluetoothViewModel(
         )
     }
 
-    private val sessionDataState: Flow<MeshSession> = combine(
-        resonanceController.connectedGroups,
-        resonanceController.messages,
-        echoLedger.activeSpheres,
-        echoLedger.archivedSpheres,
-        resonanceController.syncProgress,
-    ) { ties, echoes, spheres, archivedSpheres, syncProgress ->
-        MeshSession(
+    private val sessionDataState: Flow<ConnectionSession> = combine(
+        connectionController.connectedGroups,
+        connectionController.messages,
+        messageRepository.activeGroups,
+        messageRepository.archivedGroups,
+        connectionController.syncProgress,
+    ) { ties, messages, groups, archivedGroups, syncProgress ->
+        ConnectionSession(
             connectedTies = ties,
-            messages = echoes,
-            groups = spheres,
-            archivedGroups = archivedSpheres,
+            messages = messages,
+            groups = groups,
+            archivedGroups = archivedGroups,
             syncProgress = syncProgress,
         )
     }
 
-    val state: StateFlow<BluetoothUiState> = combine(
+    val state: StateFlow<ConnectionUiState> = combine(
         harmonyState,
         activityState,
         crowdState,
         sessionDataState,
         combine(
-            resonanceController.isConnected,
+            connectionController.isConnected,
             connectivityUseCase.manualConnectionStatus,
-            resonanceController.errors,
+            connectionController.errors,
         ) { isConnected, manualStatus, rawError -> Triple(isConnected, manualStatus, rawError) }
     ) { harmony, activity, crowd, session, sessionExtras ->
         val (isConnected, manualStatus, _) = sessionExtras
@@ -284,52 +284,52 @@ class BluetoothViewModel(
             else -> RadioConnectionState.Disconnected
         }
 
-        BluetoothUiState(
+        ConnectionUiState(
             harmony = harmony,
             activity = activity,
             crowd = crowd,
             session = session.copy(connectionState = connectionState),
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BluetoothUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ConnectionUiState())
 
-    /** THE RESONANCE LIST: Pre-sorted and filtered list of Sources and Sphere heads for the Sensing Field. */
-    val resonanceList: StateFlow<List<ResonanceItem>> = combine(
+    /** THE CONNECTION LIST: Pre-sorted and filtered list of Sources and Group heads for the Nearby Field. */
+    val connectionList: StateFlow<List<ConnectionItem>> = combine(
         state,
         repository.deviceId
     ) { uiState, localDeviceId ->
-        val activeSpheres = uiState.session.groups.filter { it.scope == Sphere.SCOPE_PUBLIC }
+        val activeGroups = uiState.session.groups.filter { it.scope == Group.SCOPE_PUBLIC }
         val messages = uiState.session.messages
         
-        val list = mutableListOf<ResonanceItem>()
-        val pinned = activeSpheres.filter { it.isPinned }.sortedByDescending { it.lastMessageTimestamp }
-        val others = activeSpheres.filter { !it.isPinned }.sortedBy { it.lastMessageTimestamp }
-        val sortedSpheres = others + pinned 
+        val list = mutableListOf<ConnectionItem>()
+        val pinned = activeGroups.filter { it.isPinned }.sortedByDescending { it.lastMessageTimestamp }
+        val others = activeGroups.filter { !it.isPinned }.sortedBy { it.lastMessageTimestamp }
+        val sortedGroups: List<Group> = others + pinned 
         
-        sortedSpheres.forEach { sphere ->
+        sortedGroups.forEach { group ->
             val latestSynthesis = messages.findLast { 
-                (it.groupId == sphere.id) && (it.type == Echo.TYPE_AI_SUMMARY)
+                (it.groupId == group.id) && (it.type == Message.TYPE_AI_SUMMARY)
             }
-            val sphereMessages = messages.asSequence().filter { 
-                (it.groupId == sphere.id || (sphere.id == Sphere.ID_GLOBAL && it.groupId == null)) && (it.senderId != localDeviceId)
+            val groupMessages = messages.asSequence().filter { 
+                (it.groupId == group.id || (group.id == Group.ID_GLOBAL && it.groupId == null)) && (it.senderId != localDeviceId)
             }.sortedBy { it.timestamp }.toList().takeLast(3)
             
-            sphereMessages.forEach { echo ->
+            groupMessages.forEach { message ->
                 val source = Source(
-                    id = echo.senderId, 
-                    name = echo.senderName, 
-                    emoji = echo.senderEmoji ?: "👤", 
-                    medium = Source.ResonanceMedium.BLUETOOTH
+                    id = message.senderId, 
+                    name = message.senderName, 
+                    emoji = message.senderEmoji ?: "👤", 
+                    medium = Source.ConnectionMedium.BLUETOOTH
                 )
-                list.add(ResonanceItem(source, echo))
+                list.add(ConnectionItem(source, message))
             }
             val headSource = Source(
-                id = sphere.id, 
-                name = if (sphere.id == Sphere.ID_GLOBAL) "Global Resonance" else sphere.name, 
-                emoji = sphere.projectionEmoji ?: "✨", 
-                medium = Source.ResonanceMedium.BLUETOOTH, 
+                id = group.id, 
+                name = if (group.id == Group.ID_GLOBAL) "Global Connection" else group.name, 
+                emoji = group.projectionEmoji ?: "✨", 
+                medium = Source.ConnectionMedium.BLUETOOTH, 
                 statusLabel = latestSynthesis?.content
             )
-            list.add(ResonanceItem(headSource, null))
+            list.add(ConnectionItem(headSource, null))
         }
         list
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -345,7 +345,7 @@ class BluetoothViewModel(
             var success = false
             while (!success && currentTry < retryCount) {
                 currentTry++
-                Log.i("BluetoothViewModel", "Resonance attempt $currentTry for ${device.name}")
+                Log.i("ConnectionViewModel", "Connection attempt $currentTry for ${device.name}")
                 
                 connectivityUseCase.connectToSource(device, state.value.session.connectedTies)
                 
@@ -354,9 +354,9 @@ class BluetoothViewModel(
                 
                 if (status is ConnectionStatus.Connected) {
                     success = true
-                    Log.i("BluetoothViewModel", "Resonated with ${device.name}")
+                    Log.i("ConnectionViewModel", "Connected with ${device.name}")
                 } else if (status is ConnectionStatus.Error) {
-                    Log.e("BluetoothViewModel", "Attempt $currentTry failed: ${status.message}")
+                    Log.e("ConnectionViewModel", "Attempt $currentTry failed: ${status.message}")
                     if (currentTry < retryCount) {
                         delay((2000L * currentTry).milliseconds) 
                     }
@@ -368,9 +368,9 @@ class BluetoothViewModel(
     fun requestWhisper(device: Source, onAnchoredCreated: ((String) -> Unit)? = null) {
         viewModelScope.launch {
             val currentGid = _currentGroupId.value
-            val currentSphere = echoLedger.getSphere(currentGid)
+            val currentGroup = messageRepository.getGroup(currentGid)
             
-            if (currentSphere?.scope == Sphere.SCOPE_PUBLIC && currentGid != Sphere.ID_SILENCE) {
+            if (currentGroup?.scope == Group.SCOPE_PUBLIC && currentGid != Group.ID_SILENCE) {
                 val anchoredGid = getOrCreateAnchoredGroup(
                     name = "Chat with ${device.name}", 
                     targetId = device.id, 
@@ -385,22 +385,22 @@ class BluetoothViewModel(
     }
 
     private suspend fun getOrCreateAnchoredGroup(name: String, targetId: String, anchoredPublicId: String): String {
-        val existing = echoLedger.spheres.value.find { 
-            it.scope == Sphere.SCOPE_PRIVATE && 
-            it.anchoredPublicSphereId == anchoredPublicId && 
+        val existing = messageRepository.groups.value.find { 
+            it.scope == Group.SCOPE_PRIVATE && 
+            it.anchoredPublicGroupId == anchoredPublicId && 
             (it.memberIds.contains(targetId) || it.allMemberIds.contains(targetId))
         }
         if (existing != null) return existing.id
         
-        return startSphereResonance(
+        return startGroupConnection(
             name = name, 
             members = setOf(targetId), 
-            scope = Sphere.SCOPE_PRIVATE, 
-            anchoredPublicSphereId = anchoredPublicId
+            scope = Group.SCOPE_PRIVATE, 
+            anchoredPublicGroupId = anchoredPublicId
         )
     }
 
-    fun acceptRadio(device: Source) = resonanceController.acceptRadio(device)
+    fun acceptRadio(device: Source) = connectionController.acceptRadio(device)
 
     fun toggleSourceSelection(deviceId: String) {
         _selectedSources.update { 
@@ -410,54 +410,54 @@ class BluetoothViewModel(
 
     fun clearSelection() { _selectedSources.value = emptySet() }
 
-    fun startSphereResonance(name: String, members: Set<String>? = null, scope: Int = Sphere.SCOPE_PRIVATE, templateId: String? = null, anchoredPublicSphereId: String? = null): String {
+    fun startGroupConnection(name: String, members: Set<String>? = null, scope: Int = Group.SCOPE_PRIVATE, templateId: String? = null, anchoredPublicGroupId: String? = null): String {
         if (name.isBlank()) return ""
         
         val targetMembers = members ?: _selectedSources.value
-        if (scope != Sphere.SCOPE_PUBLIC && targetMembers.isEmpty()) {
-            Log.w("BluetoothViewModel", "Cannot start private Group with empty Source set")
+        if (scope != Group.SCOPE_PUBLIC && targetMembers.isEmpty()) {
+            Log.w("ConnectionViewModel", "Cannot start private Group with empty Source set")
             return ""
         }
 
-        val currentSphere = state.value.session.groups.find { it.id == _currentGroupId.value }
-        val groupId = Sphere.generateId(name, scope, currentSphere)
+        val currentGroup = state.value.session.groups.find { it.id == _currentGroupId.value }
+        val groupId = Group.generateId(name, scope, currentGroup)
         val parentId = _currentGroupId.value
         
         viewModelScope.launch {
-            val existing = echoLedger.getSphere(groupId)
-            if (scope == Sphere.SCOPE_PUBLIC) {
+            val existing = messageRepository.getGroup(groupId)
+            if (scope == Group.SCOPE_PUBLIC) {
                 if (existing == null) {
                     val template = cc.thevar.blukit.domain.model.RoomTemplates.ALL.find { it.id == templateId }
-                    val newSphere = Sphere(
+                    val newGroup = Group(
                         id = groupId, 
                         name = name, 
-                        scope = Sphere.SCOPE_PUBLIC,
+                        scope = Group.SCOPE_PUBLIC,
                         parentId = parentId,
                         templateId = templateId,
                         ownerId = repository.getDeviceId(),
-                        anchoredPublicSphereId = anchoredPublicSphereId
+                        anchoredPublicGroupId = anchoredPublicGroupId
                     )
-                    echoLedger.insertSphere(newSphere)
+                    messageRepository.insertGroup(newGroup)
                     
                     template?.defaultChannels?.forEach { channelName ->
-                        val chainId = Sphere.generateId(channelName, Sphere.SCOPE_PRIVATE, newSphere)
-                        echoLedger.insertSphere(
-                            Sphere(
+                        val chainId = Group.generateId(channelName, Group.SCOPE_PRIVATE, newGroup)
+                        messageRepository.insertGroup(
+                            Group(
                                 id = chainId,
                                 name = channelName,
-                                scope = Sphere.SCOPE_PRIVATE,
+                                scope = Group.SCOPE_PRIVATE,
                                 parentId = groupId,
                             )
                         )
                     }
                 } else {
-                    echoLedger.updateSphereLastEcho(groupId, System.currentTimeMillis())
+                    messageRepository.updateGroupLastMessage(groupId, System.currentTimeMillis())
                 }
             } else {
-                resonanceController.startGroupRoom(name, targetMembers, scope, groupId = groupId, parentId = parentId, anchoredPublicSphereId = anchoredPublicSphereId)
+                connectionController.startGroupRoom(name, targetMembers, scope, groupId = groupId, parentId = parentId, anchoredPublicGroupId = anchoredPublicGroupId)
                 delay(100.milliseconds) 
-                echoLedger.getSphere(groupId)?.let { tie ->
-                    echoLedger.insertSphere(tie.copy(parentId = parentId, ownerId = repository.getDeviceId(), anchoredPublicSphereId = anchoredPublicSphereId))
+                messageRepository.getGroup(groupId)?.let { tie ->
+                    messageRepository.insertGroup(tie.copy(parentId = parentId, ownerId = repository.getDeviceId(), anchoredPublicGroupId = anchoredPublicGroupId))
                 }
             }
         }
@@ -466,51 +466,51 @@ class BluetoothViewModel(
         return groupId
     }
 
-    fun denyRadio(device: Source) = resonanceController.denyRadio(device)
+    fun denyRadio(device: Source) = connectionController.denyRadio(device)
 
     fun broadcastIdentityUpdate(oldName: String) {
-        viewModelScope.launch { resonanceController.broadcastIdentityUpdate(oldName) }
+        viewModelScope.launch { connectionController.broadcastIdentityUpdate(oldName) }
     }
 
-    fun echo(message: String, groupId: String? = null) {
-        if (message.isBlank()) return
+    fun sendMessage(messageContent: String, groupId: String? = null) {
+        if (messageContent.isBlank()) return
         viewModelScope.launch {
             val targetGid = groupId ?: _currentGroupId.value
-            val echo = resonanceController.sendGroupMessage(message, targetGid)
-            if (echo != null) {
-                hapticManager.triggerMessage(cc.thevar.blukit.data.system.HapticManager.MessageType.RESONATE)
-                _messageTrigger.emit(targetGid to (echo.messageScope == Echo.MESSAGE_WHISPER))
+            val message = connectionController.sendGroupMessage(messageContent, targetGid)
+            if (message != null) {
+                hapticManager.triggerMessage(cc.thevar.blukit.data.system.HapticManager.MessageType.CONNECTION)
+                _messageTrigger.emit(targetGid to (message.messageScope == Message.MESSAGE_WHISPER))
             }
         }
     }
 
-    fun echoFile(uri: android.net.Uri, messageScope: Int = Echo.MESSAGE_SILENCE) {
+    fun sendFile(uri: android.net.Uri, messageScope: Int = Message.MESSAGE_SILENCE) {
         viewModelScope.launch {
-            val activeSphereId = _currentGroupId.value
-            val activeSphere = echoLedger.getSphere(activeSphereId)
+            val activeGroupId = _currentGroupId.value
+            val activeGroup = messageRepository.getGroup(activeGroupId)
 
             when (messageScope) {
-                Echo.MESSAGE_SILENCE -> {
-                    resonanceController.sendFile(uri, null, Echo.MESSAGE_SILENCE, groupId = Sphere.ID_SILENCE, groupName = "SILENCE")
+                Message.MESSAGE_SILENCE -> {
+                    connectionController.sendFile(uri, null, Message.MESSAGE_SILENCE, groupId = Group.ID_SILENCE, groupName = "SILENCE")
                 }
-                Echo.MESSAGE_SHOUT -> {
-                    resonanceController.sendFile(uri, null, Echo.MESSAGE_SHOUT, groupId = activeSphereId, groupName = activeSphere?.name)
+                Message.MESSAGE_SHOUT -> {
+                    connectionController.sendFile(uri, null, Message.MESSAGE_SHOUT, groupId = activeGroupId, groupName = activeGroup?.name)
                 }
-                Echo.MESSAGE_WHISPER -> {
+                Message.MESSAGE_WHISPER -> {
                     val targets = state.value.crowd.selectedDevices.ifEmpty { state.value.session.connectedTies }
                     if (targets.isNotEmpty()) {
                         targets.forEach { targetId ->
-                            resonanceController.sendFile(uri, targetId, messageScope, groupId = activeSphereId, groupName = activeSphere?.name)
+                            connectionController.sendFile(uri, targetId, messageScope, groupId = activeGroupId, groupName = activeGroup?.name)
                         }
                     } else {
-                        resonanceController.sendFile(uri, null, messageScope, groupId = activeSphereId, groupName = activeSphere?.name)
+                        connectionController.sendFile(uri, null, messageScope, groupId = activeGroupId, groupName = activeGroup?.name)
                     }
                 }
             }
         }
     }
 
-    fun vaultSphere(groupId: String, isVaulted: Boolean) = echoLedger.vaultSphere(groupId, isVaulted)
+    fun vaultGroup(groupId: String, isVaulted: Boolean) = messageRepository.vaultGroup(groupId, isVaulted)
 
     fun blockUser(persistentId: String) {
         viewModelScope.launch {
@@ -536,77 +536,77 @@ class BluetoothViewModel(
         }
     }
 
-    fun seniorVaultSphere(groupId: String, isSeniorVault: Boolean) = echoLedger.seniorVaultSphere(groupId, isSeniorVault)
+    fun seniorVaultGroup(groupId: String, isSeniorVault: Boolean) = messageRepository.seniorVaultGroup(groupId, isSeniorVault)
 
     fun updateNote(groupId: String, content: String, messageId: String?, version: Int) {
-        viewModelScope.launch { resonanceController.sendNoteUpdate(groupId, content, messageId, version) }
+        viewModelScope.launch { connectionController.sendNoteUpdate(groupId, content, messageId, version) }
     }
 
     fun initiateHistorySync(deviceId: String, sinceTimestamp: Long? = null) {
-        resonanceController.initiateHistorySync(deviceId, sinceTimestamp)
+        connectionController.initiateHistorySync(deviceId, sinceTimestamp)
     }
 
-    fun restoreFromVault(groupId: String) = echoLedger.restoreFromVault(groupId)
+    fun restoreFromVault(groupId: String) = messageRepository.restoreFromVault(groupId)
 
     fun enterGroup(groupId: String) {
         _currentGroupId.value = groupId
     }
 
     fun disconnect() {
-        resonanceController.closeConnection()
+        connectionController.closeConnection()
     }
 
-    fun removeMemberFromSphere(groupId: String, memberId: String) {
+    fun removeMemberFromGroup(groupId: String, memberId: String) {
         viewModelScope.launch {
-            val sphere = echoLedger.getSphere(groupId) ?: return@launch
-            val newMembers = sphere.memberIds - memberId
-            resonanceController.updateGroupMembers(groupId, newMembers)
-            echoLedger.insertSphere(sphere.copy(memberIds = newMembers))
+            val group = messageRepository.getGroup(groupId) ?: return@launch
+            val newMembers = group.memberIds - memberId
+            connectionController.updateGroupMembers(groupId, newMembers)
+            messageRepository.insertGroup(group.copy(memberIds = newMembers))
         }
     }
 
-    fun addMemberToSphere(groupId: String, memberId: String) {
+    fun addMemberToGroup(groupId: String, memberId: String) {
         viewModelScope.launch {
-            val sphere = echoLedger.getSphere(groupId) ?: return@launch
-            val newMembers = sphere.memberIds + memberId
-            resonanceController.updateGroupMembers(groupId, newMembers)
-            echoLedger.insertSphere(sphere.copy(memberIds = newMembers))
+            val group = messageRepository.getGroup(groupId) ?: return@launch
+            val newMembers = group.memberIds + memberId
+            connectionController.updateGroupMembers(groupId, newMembers)
+            messageRepository.insertGroup(group.copy(memberIds = newMembers))
         }
     }
 
     fun assignRole(groupId: String, memberId: String, role: String) {
         viewModelScope.launch {
-            val sphere = echoLedger.getSphere(groupId) ?: return@launch
-            val newUserRoles = sphere.userRoles + (memberId to role)
-            echoLedger.insertSphere(sphere.copy(userRoles = newUserRoles))
-            Log.i("BluetoothViewModel", "Ritual Role: $role assigned to $memberId in $groupId")
+            val group = messageRepository.getGroup(groupId) ?: return@launch
+            val newUserRoles = group.userRoles + (memberId to role)
+            messageRepository.insertGroup(group.copy(userRoles = newUserRoles))
+            Log.i("ConnectionViewModel", "Role: $role assigned to $memberId in $groupId")
         }
     }
 
     fun castVote(messageId: String, weight: Int) {
         viewModelScope.launch {
-            atmosphereManager.castConsensusVote(messageId, _currentGroupId.value, weight)
+            assistantManager.castConsensusVote(messageId, _currentGroupId.value, weight)
         }
     }
 
-    fun addSchedule(groupId: String, event: SphereEvent) {
-        viewModelScope.launch { echoLedger.addSphereSchedule(groupId, event) }
+    fun addSchedule(groupId: String, event: GroupEvent) {
+        viewModelScope.launch { messageRepository.addGroupSchedule(groupId, event) }
     }
 
-    fun pushRitual(groupId: String, event: SphereEvent) {
+    fun pushRitual(groupId: String, event: GroupEvent) {
         viewModelScope.launch {
             val content = kotlinx.serialization.json.Json.encodeToString(event)
-            val members = echoLedger.getSphere(groupId)?.allMemberIds ?: emptySet()
+            val members = messageRepository.getGroup(groupId)?.allMemberIds ?: emptySet()
             members.forEach { memberId ->
-                resonanceController.sendMessage(
+                connectionController.sendMessage(
                     content = content,
                     receiverId = memberId,
-                    messageScope = Echo.MESSAGE_WHISPER,
+                    messageScope = Message.MESSAGE_WHISPER,
                     groupId = groupId
                 )
             }
         }
     }
 
-    override fun onCleared() { resonanceController.release() }
+    override fun onCleared() { connectionController.release() }
 }

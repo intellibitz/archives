@@ -7,7 +7,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 val Typography = Typography(
-    // Major Headline: Field/Screen titles (e.g., Sensing)
+    // Major Headline: Field/Screen titles (e.g., Nearby)
     headlineSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.ExtraBold, // Relaxed from Black

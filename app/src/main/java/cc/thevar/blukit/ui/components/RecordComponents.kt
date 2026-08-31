@@ -19,21 +19,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun EchoRecordItem(
-    record: Echo,
+fun MessageRecordItem(
+    record: Message,
     onStatusChange: (Int) -> Unit,
     themeColor: Color = StealthPrimary,
     modifier: Modifier = Modifier
 ) {
-    val isCompleted = record.taskStatus == Echo.TASK_COMPLETED
-    val isBlocked = record.taskStatus == Echo.TASK_BLOCKED
-    val isAbandoned = record.taskStatus == Echo.TASK_ABANDONED
+    val isCompleted = record.taskStatus == Message.TASK_COMPLETED
+    val isBlocked = record.taskStatus == Message.TASK_BLOCKED
+    val isAbandoned = record.taskStatus == Message.TASK_ABANDONED
     val sdf = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
 
     Surface(
@@ -66,8 +66,8 @@ fun EchoRecordItem(
                     .border(2.dp, if (isBlocked) StealthError else themeColor, CircleShape)
                     .clickable {
                         val nextStatus = when {
-                            isCompleted -> Echo.TASK_PENDING
-                            else -> Echo.TASK_COMPLETED
+                            isCompleted -> Message.TASK_PENDING
+                            else -> Message.TASK_COMPLETED
                         }
                         onStatusChange(nextStatus)
                     },
@@ -134,7 +134,7 @@ fun EchoRecordItem(
 
             Row {
                 if (!isCompleted && !isAbandoned) {
-                    IconButton(onClick = { onStatusChange(if (isBlocked) Echo.TASK_PENDING else Echo.TASK_BLOCKED) }) {
+                    IconButton(onClick = { onStatusChange(if (isBlocked) Message.TASK_PENDING else Message.TASK_BLOCKED) }) {
                         Icon(
                             Icons.Rounded.PriorityHigh, 
                             contentDescription = "Priority", 
@@ -149,7 +149,7 @@ fun EchoRecordItem(
 }
 
 @Composable
-fun EchoRecordCreator(
+fun MessageRecordCreator(
     onRecordCreated: (String, Long?) -> Unit,
     themeColor: Color = StealthPrimary,
     onDismiss: () -> Unit
@@ -220,7 +220,7 @@ fun EchoRecordCreator(
                 modifier = Modifier.height(44.dp)
             ) {
                 Text(
-                    text = "RESONATE", 
+                    text = "CONNECT", 
                     style = MaterialTheme.typography.labelLarge,
                     color = StealthOnPrimary
                 )

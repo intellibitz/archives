@@ -1,7 +1,7 @@
 /**
- * BLUKIT DOMAIN: ATMOSPHERE MANAGER
+ * BLUKIT DOMAIN: ASSISTANT MANAGER
  *
- * The central orchestration engine for Sphere Synthesis.
+ * The central orchestration engine for Group Synthesis.
  * Handles on-device synthesis, swarm logic consensus, and privacy-preserving analytics.
  */
 package cc.thevar.blukit.domain.logic
@@ -11,9 +11,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.Log
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.intelligence.Synthesis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,9 +24,9 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
-class AtmosphereManager(
+class AssistantManager(
     private val context: Context,
-    private val echoLedger: EchoLedger,
+    private val messageRepository: MessageRepository,
     private val identityRepository: IdentityRepository,
     ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
@@ -34,25 +34,25 @@ class AtmosphereManager(
     private val documentMiner = DocumentMiner(context)
 
     init {
-        startAmbientAtmosphere()
+        startAmbientAssistant()
     }
 
     /**
-     * AMBIENT ATMOSPHERE: Periodically processes local Echoes to generate Synthesis.
+     * AMBIENT ASSISTANT: Periodically processes local Messages to generate Synthesis.
      */
-    private fun startAmbientAtmosphere() {
+    private fun startAmbientAssistant() {
         scope.launch {
-            echoLedger.activeSpheres.collectLatest { spheres ->
-                spheres.forEach { sphere ->
+            messageRepository.activeGroups.collectLatest { groups ->
+                groups.forEach { group ->
                     launch {
-                        processSphereAtmosphere(sphere.id)
+                        processGroupAssistant(group.id)
                     }
                 }
             }
         }
     }
 
-    private suspend fun processSphereAtmosphere(groupId: String) {
+    private suspend fun processGroupAssistant(groupId: String) {
         while (true) {
             val batteryLevel = getBatteryLevel()
             val synthesisDelay = when {
@@ -62,35 +62,35 @@ class AtmosphereManager(
             }
             delay(synthesisDelay)
             
-            val echoes = echoLedger.echoes.value.filter { it.groupId == groupId }
-            if (echoes.isEmpty()) continue
+            val messages = messageRepository.messages.value.filter { it.groupId == groupId }
+            if (messages.isEmpty()) continue
 
-            // Mine documents in this sphere
-            val documentEchoes = echoes.filter { it.type == Echo.TYPE_FILE }
-            val minedInsights = documentEchoes.map { documentMiner.mineFile(it) }
+            // Mine documents in this group
+            val documentMessages = messages.filter { it.type == Message.TYPE_FILE }
+            val minedInsights = documentMessages.map { documentMiner.mineFile(it) }
             val extractedTasks = minedInsights.flatMap { it.tasks }.distinct()
 
-            val synthesis = generateSynthesis(groupId, echoes, extractedTasks)
+            val synthesis = generateSynthesis(groupId, messages, extractedTasks)
             
-            // SILENT AIR: Instead of broadcasting an Echo, we update the Sphere metadata
-            echoLedger.getSphere(groupId)?.let { sphere ->
-                echoLedger.insertSphere(
-                    sphere.copy(
+            // Assistant: Instead of broadcasting a Message, we update the Group metadata
+            messageRepository.getGroup(groupId)?.let { group ->
+                messageRepository.insertGroup(
+                    group.copy(
                         trendLabel = synthesis.trendLabel,
-                        resonanceSummary = synthesis.summary,
+                        connectionSummary = synthesis.summary,
                         extractedTasks = extractedTasks.toSet()
                     )
                 )
             }
             
-            Log.i("AtmosphereManager", "Sphere Resonance: Synthesis updated silently for $groupId")
+            Log.i("AssistantManager", "Group Connection: Synthesis updated silently for $groupId")
         }
     }
 
     /**
-     * LOCAL SYNTHESIS: Uses a simplified TF-IDF approach and stopword filtering to cluster Echoes.
+     * LOCAL SYNTHESIS: Uses a simplified TF-IDF approach and stopword filtering to cluster Messages.
      */
-    fun generateSynthesis(groupId: String, echoes: List<Echo>, minedTasks: List<String> = emptyList()): Synthesis {
+    fun generateSynthesis(groupId: String, messages: List<Message>, minedTasks: List<String> = emptyList()): Synthesis {
         val stopWords = setOf(
             "THE", "AND", "THIS", "THAT", "WITH", "FROM", "THEIR", "THEY", "WHAT", 
             "YOUR", "HAVE", "WERE", "THERE", "ABOUT", "WHICH", "WOULD", "COULD",
@@ -98,7 +98,7 @@ class AtmosphereManager(
             "HELLO", "PULSE", "BLUKIT", "JUST", "WILL", "SOME",
         )
 
-        val words = echoes.asSequence()
+        val words = messages.asSequence()
             .flatMap { it.content.split(Regex("\\s+")) }
             .map { it.uppercase().filter { c -> c.isLetter() } }
             .filter { (it.length > 3) && (it !in stopWords) }
@@ -115,7 +115,7 @@ class AtmosphereManager(
         val mainTopic = keywords.firstOrNull() ?: "GENERAL ACTIVITY"
         
         var sentimentScore = 0.1f
-        echoes.forEach { p ->
+        messages.forEach { p ->
             val content = p.content.uppercase()
             if (setOf("GOOD", "GREAT", "AMAZING", "LOVE", "PARTY", "FUN", "YES", "COOL", "WOW").any { content.contains(it) }) sentimentScore += 0.2f
             if (setOf("BAD", "SAD", "HATE", "SLOW", "BORING", "NO", "FAIL", "ERR").any { content.contains(it) }) sentimentScore -= 0.2f
@@ -123,7 +123,7 @@ class AtmosphereManager(
         }
         sentimentScore = sentimentScore.coerceIn(-1.0f, 1.0f)
 
-        val intent = detectAtmosphericTrend(echoes)
+        val intent = detectConnectionTrend(messages)
         val trendSummary = intent?.let { " TREND: $it DETECTED." } ?: ""
         val taskSummary = if (minedTasks.isNotEmpty()) " MINED ${minedTasks.size} TASKS." else ""
 
@@ -137,23 +137,23 @@ class AtmosphereManager(
 
         return Synthesis(
             groupId = groupId,
-            summary = "AIR REPORT: $mainTopic RESONANCE ACTIVE.$trendSummary$taskSummary ENERGY IS $intensityLabel.",
+            summary = "Assistant Report: $mainTopic CONNECTION ACTIVE.$trendSummary$taskSummary ENERGY IS $intensityLabel.",
             trendLabel = intent,
             topKeywords = keywords,
             sentimentScore = sentimentScore,
             derivedTimestamp = System.currentTimeMillis(),
-            messageCountSampled = echoes.size,
+            messageCountSampled = messages.size,
         )
     }
 
-    fun detectAtmosphericTrend(echoes: List<Echo>): String? {
-        val content = echoes.joinToString(" ") { it.content }.lowercase()
+    fun detectConnectionTrend(messages: List<Message>): String? {
+        val content = messages.joinToString(" ") { it.content }.lowercase()
         return when {
-            content.contains("lecture") || content.contains("professor") || content.contains("assignment") || content.contains("exam") || content.contains("study") -> "ACADEMIC RITUAL"
-            content.contains("train") || content.contains("metro") || content.contains("station") || content.contains("bus") -> "URBAN TRANSIT"
-            content.contains("party") || content.contains("music") || content.contains("dance") || content.contains("concert") -> "SOCIAL SYNERGY"
-            content.contains("food") || content.contains("coffee") || content.contains("cafe") || content.contains("eat") -> "ROOM NOURISHMENT"
-            content.contains("protest") || content.contains("march") || content.contains("rally") -> "COLLECTIVE ACTION"
+            content.contains("lecture") || content.contains("professor") || content.contains("assignment") || content.contains("exam") || content.contains("study") -> "ACADEMIC"
+            content.contains("train") || content.contains("metro") || content.contains("station") || content.contains("bus") -> "TRANSIT"
+            content.contains("party") || content.contains("music") || content.contains("dance") || content.contains("concert") -> "SOCIAL"
+            content.contains("food") || content.contains("coffee") || content.contains("cafe") || content.contains("eat") -> "DINING"
+            content.contains("protest") || content.contains("march") || content.contains("rally") -> "ACTION"
             else -> null
         }
     }
@@ -166,10 +166,10 @@ class AtmosphereManager(
     }
 
     /**
-     * SWARM CONSENSUS: Triggers a vote pulse for a specific Echo.
+     * SWARM CONSENSUS: Triggers a vote pulse for a specific Message.
      */
     fun castConsensusVote(messageId: String, groupId: String, weight: Int) {
-        val voteEcho = Echo(
+        val voteMessage = Message(
             messageId = UUID.randomUUID().toString(),
             senderId = identityRepository.getDeviceId(),
             senderName = "YOU",
@@ -177,8 +177,8 @@ class AtmosphereManager(
             groupId = groupId,
             content = weight.toString(),
             timestamp = System.currentTimeMillis(),
-            type = Echo.TYPE_CONSENSUS_VOTE,
+            type = Message.TYPE_CONSENSUS_VOTE,
         )
-        echoLedger.upsertEcho(voteEcho)
+        messageRepository.upsertMessage(voteMessage)
     }
 }

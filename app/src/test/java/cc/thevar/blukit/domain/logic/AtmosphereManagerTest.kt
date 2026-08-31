@@ -1,33 +1,33 @@
 package cc.thevar.blukit.domain.logic
 
 import android.content.Context
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class AtmosphereManagerTest {
+class AssistantManagerTest {
 
     private val context = mockk<Context>(relaxed = true)
-    private val echoLedger = mockk<EchoLedger>(relaxed = true)
+    private val messageRepository = mockk<MessageRepository>(relaxed = true)
     private val identityRepository = mockk<IdentityRepository>(relaxed = true)
-    private lateinit var atmosphereManager: AtmosphereManager
+    private lateinit var atmosphereManager: AssistantManager
 
     @Before
     fun setup() {
-        atmosphereManager = AtmosphereManager(context, echoLedger, identityRepository)
+        atmosphereManager = AssistantManager(context, messageRepository, identityRepository)
     }
 
     @Test
     fun `generateSynthesis filters stopwords and extracts top keywords`() {
         val echoes = listOf(
-            createEcho("Hello world this is a test Echo"),
-            createEcho("Hello amazing world of blukit"),
-            createEcho("Amazing blukit resonance is amazing")
+            createMessage("Hello world this is a test Message"),
+            createMessage("Hello amazing world of blukit"),
+            createMessage("Amazing blukit resonance is amazing")
         )
 
         val synthesis = atmosphereManager.generateSynthesis("test_group", echoes)
@@ -40,9 +40,9 @@ class AtmosphereManagerTest {
     @Test
     fun `detectAtmosphericTrend identifies Academic Ritual`() {
         val echoes = listOf(
-            createEcho("I have a lecture today"),
-            createEcho("Submission for the assignment is due"),
-            createEcho("The professor was great")
+            createMessage("I have a lecture today"),
+            createMessage("Submission for the assignment is due"),
+            createMessage("The professor was great")
         )
 
         val trend = atmosphereManager.detectAtmosphericTrend(echoes)
@@ -52,9 +52,9 @@ class AtmosphereManagerTest {
     @Test
     fun `sentiment score reflects positive and negative keywords`() {
         val echoes = listOf(
-            createEcho("This is amazing and great!"),
-            createEcho("I love it!"),
-            createEcho("Wow!")
+            createMessage("This is amazing and great!"),
+            createMessage("I love it!"),
+            createMessage("Wow!")
         )
 
         val synthesis = atmosphereManager.generateSynthesis("test_group", echoes)
@@ -62,7 +62,7 @@ class AtmosphereManagerTest {
         assertTrue("Summary should reflect vibrant energy. Found: ${synthesis.summary}", synthesis.summary.contains("VIBRANT"))
     }
 
-    private fun createEcho(content: String) = Echo(
+    private fun createMessage(content: String) = Message(
         messageId = "test_id",
         senderId = "sender",
         senderName = "Sender",

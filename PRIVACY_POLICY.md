@@ -1,28 +1,28 @@
-# Privacy Policy for Blukit: Sovereign Life Record
+# Privacy Policy for Blukit: Private Communication
 
-**Blukit** is built for the **Sovereign**, not the **Web**. Our vision is a world of total autonomy where your life records stay in your hands.
+**Blukit** is built for individual privacy and autonomy. We believe your data belongs to you, not to a service provider.
 
 ## 1. 100% Offline by Design
-Blukit operates entirely through peer-to-peer radios (Bluetooth, BLE, and Local WiFi). We have **no servers**, **no cloud storage**, and **no way to access your data**. Your Echoes and Records exist only on your device and the devices of the Sources you choose to resonate with.
+Blukit operates entirely through peer-to-peer radios (Bluetooth and Wi-Fi). We have **no servers**, **no cloud storage**, and **no access to your data**. Your messages and files exist only on your device and the devices of people you choose to communicate with.
 
 ## 2. Local-Only Intelligence
-- **Privacy-Preserving AI**: All synthesis and intelligence generation happen entirely on your device using "The Atmosphere." No data is ever uploaded for processing.
-- **Zero Tracking**: We do not track your location, your identity, or your interactions. Your "Persona" is temporary and exists only within your local air.
+- **On-Device AI**: All analysis and processing happen entirely on your phone. No data is ever sent to a cloud for "training" or processing.
+- **No Tracking**: We do not track your location, your identity, or your interactions.
 
 ## 3. End-to-End Security
-Everything shared in a Private Sphere is protected using **SecP256r1 ECDH + AES-256-GCM** encryption. Keys are negotiated locally over the air and never leave your hardware's Secure Element.
+Private conversations are protected using industrial-grade encryption. Keys are negotiated locally over the air and never leave your phone's secure hardware.
 
-## 4. Terminology of Privacy
-- **Source**: You are the origin of your data.
-- **Echo**: Your data is a record of your existence.
-- **The Ledger**: Your data is preserved in a permanent, local history.
-- **Resonance**: Your data is shared only with those in physical proximity.
+## 4. Definitions
+- **User**: You are the owner of your device and data.
+- **Message**: A unit of communication sent or received.
+- **History**: Your local, permanent record of messages.
+- **Connection**: A secure link between two or more devices.
 
 ## 5. Your Rights
 In Blukit, you have absolute control:
-- **Deletion**: Deleting an Echo removes it from your Ledger.
-- **Logout**: Logging out performs a full cryptographic reset, destroying all local keys and identity markers.
-- **Stealth**: Use Stealth Mode to further obscure your presence in the field.
+- **Deletion**: Deleting a message removes it permanently from your history.
+- **Reset**: Logging out or resetting your profile destroys all local keys and data.
+- **Stealth**: Use Stealth Mode to stay invisible to others nearby.
 
 ---
-*JOIN THE RESONANCE.*
+*PRIVATE. LOCAL. INSTANT.*

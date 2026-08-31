@@ -1,11 +1,11 @@
 package cc.thevar.blukit.ui.viewmodels
 
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 
 /**
- * Represents the UI state for resonance within the field.
+ * Represents the UI state for connection within the field.
  */
 sealed interface RadioConnectionState {
     data object Disconnected : RadioConnectionState
@@ -16,7 +16,7 @@ sealed interface RadioConnectionState {
 }
 
 /**
- * Hardware status for resonance radios.
+ * Hardware status for connection radios.
  */
 data class HardwareHarmony(
     val isBluetoothEnabled: Boolean = false,
@@ -26,9 +26,9 @@ data class HardwareHarmony(
 )
 
 /**
- * Active resonance operations and errors.
+ * Active connection operations and errors.
  */
-data class MeshActivity(
+data class ConnectionActivity(
     val isDiscovering: Boolean = false,
     val isAdvertising: Boolean = false,
     val energyIntensity: Float = 0f,
@@ -38,7 +38,7 @@ data class MeshActivity(
 /**
  * Nearby Sources and social relationships.
  */
-data class NearbyPeers(
+data class ConnectionPeers(
     val scannedDevices: List<Source> = emptyList(),
     val selectedDevices: Set<String> = emptySet(),
     val pulsedPeers: Set<String> = emptySet(),
@@ -48,20 +48,20 @@ data class NearbyPeers(
 )
 
 /**
- * Active resonance session, Spheres, and The Ledger.
+ * Active connection session, Groups, and The Ledger.
  */
-data class MeshSession(
+data class ConnectionSession(
     val connectionState: RadioConnectionState = RadioConnectionState.Disconnected,
     val connectedTies: Set<String> = emptySet(),
-    val messages: List<Echo> = emptyList(),
-    val groups: List<Sphere> = emptyList(),
-    val archivedGroups: List<Sphere> = emptyList(),
+    val messages: List<Message> = emptyList(),
+    val groups: List<Group> = emptyList(),
+    val archivedGroups: List<Group> = emptyList(),
     val syncProgress: Float? = null
 )
 
-data class BluetoothUiState(
+data class ConnectionUiState(
     val harmony: HardwareHarmony = HardwareHarmony(),
-    val activity: MeshActivity = MeshActivity(),
-    val crowd: NearbyPeers = NearbyPeers(),
-    val session: MeshSession = MeshSession()
+    val activity: ConnectionActivity = ConnectionActivity(),
+    val crowd: ConnectionPeers = ConnectionPeers(),
+    val session: ConnectionSession = ConnectionSession()
 )

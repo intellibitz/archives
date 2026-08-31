@@ -26,14 +26,16 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.components.EchoRippleEffect
+import cc.thevar.blukit.ui.components.MessageRippleEffect
+import cc.thevar.blukit.ui.components.ConnectionHeader
+import cc.thevar.blukit.ui.components.MessageHub
 import cc.thevar.blukit.ui.screens.*
 import cc.thevar.blukit.ui.theme.*
-import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
+import cc.thevar.blukit.ui.viewmodels.ConnectionViewModel
 import cc.thevar.blukit.ui.viewmodels.HarmonyViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
 import cc.thevar.blukit.ui.viewmodels.NavigationViewModel
@@ -49,7 +51,7 @@ fun BlukitApp(
     val permissionManager: cc.thevar.blukit.data.system.SpreadPermissionManager = koinInject()
     
     val viewModel: MainViewModel = koinViewModel()
-    val bluetoothViewModel: BluetoothViewModel = koinViewModel()
+    val connectionViewModel: ConnectionViewModel = koinViewModel()
     val harmonyViewModel: HarmonyViewModel = koinViewModel()
     val navViewModel: NavigationViewModel = koinViewModel()
     
@@ -58,54 +60,52 @@ fun BlukitApp(
     val isStealthMode by viewModel.isStealthMode.collectAsStateWithLifecycle(initialValue = false)
     val lowPowerMode by viewModel.lowPowerMode.collectAsStateWithLifecycle(initialValue = false)
     
-    val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
-    val trendingMessages by bluetoothViewModel.trendingMessages.collectAsStateWithLifecycle()
+    val connectionState by connectionViewModel.state.collectAsStateWithLifecycle()
+    val trendingMessages by connectionViewModel.trendingMessages.collectAsStateWithLifecycle()
     val harmonyReport by harmonyViewModel.report.collectAsStateWithLifecycle()
 
     val currentRoute by navViewModel.currentRoute.collectAsStateWithLifecycle()
     val backStack = navViewModel.backStack
 
-    var focusedGroupId by remember { mutableStateOf<String?>(null) }
     var sourceForOptions by remember { mutableStateOf<Source?>(null) }
     var showMemberManagement by remember { mutableStateOf(false) }
     var isSearchActive by remember { mutableStateOf(false) }
     
     val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
-    val activeEchoId = remember { mutableStateOf<String?>(null) }
+    val activeMessageId = remember { mutableStateOf<String?>(null) }
 
     CompositionLocalProvider(
         LocalPersonaCoordinates provides personaCoordinates,
-        LocalActiveEchoId provides activeEchoId,
+        LocalActiveMessageId provides activeMessageId,
         LocalUserEmoji provides (emojiAvatar ?: "👤")
     ) {
         val breadcrumbTrail = navViewModel.getBreadcrumbTrail(
-            sessionGroups = bluetoothState.session.groups,
-            focusedSourceId = focusedGroupId,
-            scannedDevices = bluetoothState.crowd.scannedDevices
+            sessionGroups = connectionState.session.groups,
+            focusedSourceId = null,
+            scannedDevices = connectionState.crowd.scannedDevices
         )
 
     val onCrumbClick: (Int) -> Unit = { index ->
         navViewModel.navigateToCrumb(index)
-        focusedGroupId = null
     }
 
     var activeRipple by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     LaunchedEffect(Unit) {
-        bluetoothViewModel.messageTrigger.collect { trigger ->
+        connectionViewModel.messageTrigger.collect { trigger ->
             activeRipple = trigger
         }
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(bluetoothState.activity.uiError) { 
-        bluetoothState.activity.uiError?.let { snackbarHostState.showSnackbar(it.message.uppercase()) } 
+    LaunchedEffect(connectionState.activity.uiError) { 
+        connectionState.activity.uiError?.let { snackbarHostState.showSnackbar(it.message.uppercase()) } 
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                bluetoothViewModel.refreshRadios()
+                connectionViewModel.refreshRadios()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -119,14 +119,12 @@ fun BlukitApp(
         essentialPermissions = permissionManager.essentialPermissions,
     )
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
-
-    val navSuiteType = NavigationSuiteType.None // Placeholder, usually determined by window size class
     
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             if (nickname != null) {
                 listOf(
-                    Triple(Route.Sensing, "Nearby", Icons.Rounded.Radar),
+                    Triple(Route.Nearby, "Nearby", Icons.Rounded.Radar),
                     Triple(Route.LiveFeed, "Live", Icons.Rounded.Stream),
                     Triple(Route.Timeline, "Messages", Icons.Rounded.History),
                 ).forEach { (route, label, icon) ->
@@ -149,17 +147,17 @@ fun BlukitApp(
             topBar = {
                 Column {
                     if (nickname == null) {
-                        IdentityEchoInput(
+                        IdentityInput(
                             onSave = { name, emoji -> 
                                 viewModel.saveNickname(name)
                                 viewModel.saveEmoji(emoji)
                             }
                         )
                     } else {
-                        ResonanceHeader(
-                            themeColor = if (currentRoute is Route.SphereField) StealthRose else StealthPrimary,
-                            onAwakenBluetooth = { bluetoothViewModel.refreshRadios() },
-                            onAwakenWifi = { /* WiFi logic if any */ },
+                        ConnectionHeader(
+                            themeColor = if (currentRoute is Route.GroupField) StealthRose else StealthPrimary,
+                            onAwakenBluetooth = { connectionViewModel.refreshRadios() },
+                            onAwakenWifi = { /* WiFi logic */ },
                             onGrantPermissions = { permissionState.launchMultiplePermissionRequest() },
                             onOpenSettings = {
                                 context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -167,20 +165,20 @@ fun BlukitApp(
                                 })
                             },
                             onLogout = { viewModel.logout() },
-                            isBluetoothOff = !bluetoothState.harmony.isBluetoothEnabled,
-                            isWifiOff = !bluetoothState.harmony.isWifiEnabled,
+                            isBluetoothOff = !connectionState.harmony.isBluetoothEnabled,
+                            isWifiOff = !connectionState.harmony.isWifiEnabled,
                             isPermissionMissing = !permissionState.essentialPermissionsGranted,
                             isPermanentlyDenied = isPermanentlyDenied,
                             connectionStatus = harmonyReport.synthesis,
                             breeze = harmonyReport.currentBreeze,
                             trend = harmonyReport.trendLabel,
-                            trendingMessages = trendingMessages,
+                            highConnectionMessages = trendingMessages,
                             trail = breadcrumbTrail,
                             onCrumbClick = onCrumbClick
                         )
                     }
                     
-                    SyncProgressIndicator(progress = bluetoothState.session.syncProgress)
+                    SyncProgressIndicator(progress = connectionState.session.syncProgress)
                 }
             }
         ) { innerPadding ->
@@ -207,9 +205,9 @@ fun BlukitApp(
                         ) { entryRoute ->
                             NavEntry(entryRoute) {
                                 when (entryRoute) {
-                                    is Route.Sensing -> {
-                                        SensingField(
-                                            state = bluetoothState,
+                                    is Route.Nearby -> {
+                                        NearbyField(
+                                            state = connectionState,
                                             localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle().value,
                                             header = { },
                                             breadcrumbTrail = breadcrumbTrail,
@@ -217,146 +215,146 @@ fun BlukitApp(
                                             userNickname = nickname ?: "",
                                             harmonyReport = harmonyReport,
                                             onShowTimeline = { navViewModel.navigate(Route.Timeline) },
-                                            onResetProfile = { bluetoothViewModel.resetProfile() },
-                                            onNavigateToGroup = { gid -> navViewModel.navigate(Route.SphereField(gid)) },
-                                            onNavigateToPulse = { eid -> navViewModel.navigate(Route.EchoField(eid)) },
+                                            onResetProfile = { connectionViewModel.resetProfile() },
+                                            onNavigateToGroup = { gid -> navViewModel.navigate(Route.GroupField(gid)) },
+                                            onNavigateToMessage = { eid -> navViewModel.navigate(Route.MessageField(eid)) },
                                             onSourceLongClick = { sourceForOptions = it },
-                                            onAcceptRadio = { bluetoothViewModel.acceptRadio(it) },
-                                            onDenyRadio = { bluetoothViewModel.denyRadio(it) },
-                                            onRestoreCrowd = { bluetoothViewModel.restoreFromVault(it) },
+                                            onAcceptRadio = { connectionViewModel.acceptRadio(it) },
+                                            onDenyRadio = { connectionViewModel.denyRadio(it) },
+                                            onRestoreCrowd = { connectionViewModel.restoreFromVault(it) },
                                             onNavigateToLiveFeed = { navViewModel.navigate(Route.LiveFeed) },
                                             onSearchToggle = { isSearchActive = !isSearchActive },
                                             isSearchActive = isSearchActive,
-                                            onStartSidePulse = { 
-                                                val selectedIds = bluetoothState.crowd.selectedDevices
-                                                val source = bluetoothState.crowd.scannedDevices.find { it.id in selectedIds }
-                                                if (source != null) bluetoothViewModel.requestWhisper(source)
+                                            onStartWhisper = { 
+                                                val selectedIds = connectionState.crowd.selectedDevices
+                                                val source = connectionState.crowd.scannedDevices.find { it.id in selectedIds }
+                                                if (source != null) connectionViewModel.requestWhisper(source)
                                             },
-                                            onStartChain = { bluetoothViewModel.startSphereResonance("NEW SPHERE") },
-                                            onClearSelection = { bluetoothViewModel.clearSelection() },
-                                            onCreatePublicRoom = { name, tid -> bluetoothViewModel.startSphereResonance(name, scope = Sphere.SCOPE_PUBLIC, templateId = tid) }
+                                            onStartSubGroup = { connectionViewModel.startGroupConnection("NEW GROUP") },
+                                            onClearSelection = { connectionViewModel.clearSelection() },
+                                            onCreatePublicRoom = { name, tid -> connectionViewModel.startGroupConnection(name, scope = Group.SCOPE_PUBLIC, templateId = tid) }
                                         )
                                     }
                                     is Route.Timeline -> {
                                         TimelineField(
-                                            echoes = bluetoothState.session.messages,
+                                            messages = connectionState.session.messages,
                                             onBack = { navViewModel.popBackStack() }
                                         )
                                     }
                                     is Route.LiveFeed -> {
                                         LiveFeedField(
-                                            echoes = bluetoothState.session.messages,
-                                            sources = bluetoothState.crowd.scannedDevices,
+                                            messages = connectionState.session.messages,
+                                            sources = connectionState.crowd.scannedDevices,
                                             onBack = { navViewModel.popBackStack() },
-                                            onEchoClick = { navViewModel.navigate(Route.EchoField(it)) }
+                                            onMessageClick = { navViewModel.navigate(Route.MessageField(it)) }
                                         )
                                     }
-                                    is Route.SphereField -> {
-                                        val sphere = bluetoothState.session.groups.find { it.id == entryRoute.roomId }
-                                        val sphereTrend = bluetoothState.session.groups.find { it.id == entryRoute.roomId }?.trendLabel
+                                    is Route.GroupField -> {
+                                        val group = connectionState.session.groups.find { it.id == entryRoute.roomId }
+                                        val groupTrend = group?.trendLabel
 
-                                        if (sphere?.scope == Sphere.SCOPE_PRIVATE) {
-                                            PrivateSphereField(
-                                                state = bluetoothState,
+                                        if (group?.scope == Group.SCOPE_PRIVATE) {
+                                            PrivateGroupField(
+                                                state = connectionState,
                                                 localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle().value,
                                                 header = { },
-                                                sphereId = entryRoute.roomId,
+                                                groupId = entryRoute.roomId,
                                                 breadcrumbTrail = breadcrumbTrail,
                                                 onCrumbClick = onCrumbClick,
                                                 userNickname = nickname ?: "",
-                                                activeSpheres = bluetoothState.session.groups,
+                                                activeGroups = connectionState.session.groups,
                                                 onShowTimeline = { navViewModel.navigate(Route.Timeline) },
-                                                onResetProfile = { bluetoothViewModel.resetProfile() },
+                                                onResetProfile = { connectionViewModel.resetProfile() },
                                                 onBack = { navViewModel.popBackStack() },
-                                                onNavigateToPulse = { navViewModel.navigate(Route.EchoField(it)) },
-                                                onNavigateToSphere = { gid -> navViewModel.navigate(Route.SphereField(gid)) },
+                                                onNavigateToMessage = { navViewModel.navigate(Route.MessageField(it)) },
+                                                onNavigateToGroup = { gid -> navViewModel.navigate(Route.GroupField(gid)) },
                                                 onSourceLongClick = { sourceForOptions = it },
-                                                onSend = { content -> bluetoothViewModel.echo(content, entryRoute.roomId) },
-                                                onUpdateRecord = { gid, content, mid, v -> bluetoothViewModel.updateNote(gid, content, mid, v) },
-                                                onVaultSphere = { gid, v -> bluetoothViewModel.vaultSphere(gid, v) },
-                                                onSeniorVaultSphere = { gid, v -> bluetoothViewModel.seniorVaultSphere(gid, v) },
-                                                onRemoveMember = { gid, mid -> bluetoothViewModel.removeMemberFromSphere(gid, mid) },
-                                                onAssignRole = { gid, mid, role -> bluetoothViewModel.assignRole(gid, mid, role) },
-                                                onPushRitual = { gid, event -> bluetoothViewModel.pushRitual(gid, event) },
+                                                onSend = { content -> connectionViewModel.sendMessage(content, entryRoute.roomId) },
+                                                onUpdateRecord = { gid, content, mid, v -> connectionViewModel.updateNote(gid, content, mid, v) },
+                                                onVaultGroup = { gid, v -> connectionViewModel.vaultGroup(gid, v) },
+                                                onSeniorVaultGroup = { gid, v -> connectionViewModel.seniorVaultGroup(gid, v) },
+                                                onRemoveMember = { gid, mid -> connectionViewModel.removeMemberFromGroup(gid, mid) },
+                                                onAssignRole = { gid, mid, role -> connectionViewModel.assignRole(gid, mid, role) },
+                                                onPushRitual = { gid, event -> connectionViewModel.pushRitual(gid, event) },
                                                 showMemberManagement = showMemberManagement,
                                                 onShowManagement = { showMemberManagement = true },
                                                 onDismissManagement = { showMemberManagement = false },
-                                                onStartSidePulse = { 
-                                                    val selectedIds = bluetoothState.crowd.selectedDevices
-                                                    val source = bluetoothState.crowd.scannedDevices.find { it.id in selectedIds }
-                                                    if (source != null) bluetoothViewModel.requestWhisper(source) { gid ->
-                                                        navViewModel.navigate(Route.SphereField(gid))
+                                                onStartWhisper = { 
+                                                    val selectedIds = connectionState.crowd.selectedDevices
+                                                    val source = connectionState.crowd.scannedDevices.find { it.id in selectedIds }
+                                                    if (source != null) connectionViewModel.requestWhisper(source) { gid ->
+                                                        navViewModel.navigate(Route.GroupField(gid))
                                                     }
                                                 },
-                                                onStartChain = { bluetoothViewModel.startSphereResonance("SUB SPHERE") },
-                                                onClearSelection = { bluetoothViewModel.clearSelection() },
+                                                onStartSubGroup = { connectionViewModel.startGroupConnection("SUB GROUP") },
+                                                onClearSelection = { connectionViewModel.clearSelection() },
                                                 isStealthMode = isStealthMode,
                                                 lowPowerMode = lowPowerMode,
                                                 onToggleStealth = { viewModel.toggleStealth(it) },
                                                 onToggleLowPower = { viewModel.toggleLowPowerMode(it) },
-                                                trend = sphereTrend,
+                                                trend = groupTrend,
                                                 isSearchActive = isSearchActive,
                                                 onSearchToggle = { isSearchActive = !isSearchActive },
-                                                onAcceptRadio = { bluetoothViewModel.acceptRadio(it) },
-                                                onDenyRadio = { bluetoothViewModel.denyRadio(it) }
+                                                onAcceptRadio = { connectionViewModel.acceptRadio(it) },
+                                                onDenyRadio = { connectionViewModel.denyRadio(it) }
                                             )
                                         } else {
-                                            SphereField(
-                                                state = bluetoothState,
+                                            GroupField(
+                                                state = connectionState,
                                                 localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle().value,
                                                 header = { },
-                                                sphereId = entryRoute.roomId,
+                                                groupId = entryRoute.roomId,
                                                 breadcrumbTrail = breadcrumbTrail,
                                                 onCrumbClick = onCrumbClick,
                                                 userNickname = nickname ?: "",
                                                 onShowTimeline = { navViewModel.navigate(Route.Timeline) },
-                                                onResetProfile = { bluetoothViewModel.resetProfile() },
-                                                highResonanceMessages = trendingMessages,
+                                                onResetProfile = { connectionViewModel.resetProfile() },
+                                                highConnectionMessages = trendingMessages,
                                                 onBack = { navViewModel.popBackStack() },
-                                                onNavigateToPulse = { navViewModel.navigate(Route.EchoField(it)) },
+                                                onNavigateToMessage = { navViewModel.navigate(Route.MessageField(it)) },
                                                 onSourceLongClick = { sourceForOptions = it },
-                                                onSend = { content -> bluetoothViewModel.echo(content, entryRoute.roomId) },
-                                                onStartSidePulse = { 
-                                                    val selectedIds = bluetoothState.crowd.selectedDevices
-                                                    val source = bluetoothState.crowd.scannedDevices.find { it.id in selectedIds }
-                                                    if (source != null) bluetoothViewModel.requestWhisper(source) { gid ->
-                                                        navViewModel.navigate(Route.SphereField(gid))
+                                                onSend = { content -> connectionViewModel.sendMessage(content, entryRoute.roomId) },
+                                                onStartWhisper = { 
+                                                    val selectedIds = connectionState.crowd.selectedDevices
+                                                    val source = connectionState.crowd.scannedDevices.find { it.id in selectedIds }
+                                                    if (source != null) connectionViewModel.requestWhisper(source) { gid ->
+                                                        navViewModel.navigate(Route.GroupField(gid))
                                                     }
                                                 },
-                                                onStartChain = { bluetoothViewModel.startSphereResonance("NEW SPHERE") },
-                                                onClearSelection = { bluetoothViewModel.clearSelection() },
+                                                onStartSubGroup = { connectionViewModel.startGroupConnection("NEW GROUP") },
+                                                onClearSelection = { connectionViewModel.clearSelection() },
                                                 isStealthMode = isStealthMode,
                                                 lowPowerMode = lowPowerMode,
                                                 onToggleStealth = { viewModel.toggleStealth(it) },
                                                 onToggleLowPower = { viewModel.toggleLowPowerMode(it) },
-                                                trend = sphereTrend,
+                                                trend = groupTrend,
                                                 isSearchActive = isSearchActive,
                                                 onSearchToggle = { isSearchActive = !isSearchActive },
-                                                onAcceptRadio = { bluetoothViewModel.acceptRadio(it) },
-                                                onDenyRadio = { bluetoothViewModel.denyRadio(it) }
+                                                onAcceptRadio = { connectionViewModel.acceptRadio(it) },
+                                                onDenyRadio = { connectionViewModel.denyRadio(it) }
                                             )
                                         }
                                     }
-                                    is Route.EchoField -> {
+                                    is Route.MessageField -> {
                                         var messageText by remember { mutableStateOf("") }
-                                        EchoField(
-                                            state = bluetoothState,
+                                        MessageField(
+                                            state = connectionState,
                                             localDeviceId = viewModel.deviceId.collectAsStateWithLifecycle().value,
                                             messageId = entryRoute.messageId,
                                             header = { },
                                             breadcrumbTrail = breadcrumbTrail,
                                             onCrumbClick = onCrumbClick,
                                             userNickname = nickname ?: "",
-                                            activeCrowds = bluetoothState.session.groups,
+                                            activeGroups = connectionState.session.groups,
                                             onShowTimeline = { navViewModel.navigate(Route.Timeline) },
-                                            onResetProfile = { bluetoothViewModel.resetProfile() },
+                                            onResetProfile = { connectionViewModel.resetProfile() },
                                             onBack = { navViewModel.popBackStack() },
-                                            onNavigateToPulse = { navViewModel.navigate(Route.EchoField(it)) },
+                                            onNavigateToMessage = { navViewModel.navigate(Route.MessageField(it)) },
                                             onNavigateToLiveFeed = { navViewModel.navigate(Route.LiveFeed) },
                                             messageText = messageText,
                                             onMessageChange = { messageText = it },
                                             onSend = {
-                                                bluetoothViewModel.echo(messageText, bluetoothState.session.messages.find { it.messageId == entryRoute.messageId }?.groupId)
+                                                connectionViewModel.sendMessage(messageText, connectionState.session.messages.find { it.messageId == entryRoute.messageId }?.groupId)
                                                 messageText = ""
                                             },
                                             isSearchActive = isSearchActive,
@@ -370,30 +368,30 @@ fun BlukitApp(
                 }
 
                 sourceForOptions?.let { source ->
-                    val sphereId = (currentRoute as? Route.SphereField)?.roomId
-                    val isAlreadyInGroup = if (sphereId != null) {
-                        val sphere = bluetoothState.session.groups.find { it.id == sphereId }
-                        source.id in (sphere?.allMemberIds ?: emptySet()) || source.persistentId in (sphere?.allMemberIds ?: emptySet())
+                    val groupId = (currentRoute as? Route.GroupField)?.roomId
+                    val isAlreadyInGroup = if (groupId != null) {
+                        val group = connectionState.session.groups.find { it.id == groupId }
+                        source.id in (group?.allMemberIds ?: emptySet()) || source.persistentId in (group?.allMemberIds ?: emptySet())
                     } else false
 
                     SourceOptionsMenu(
                         device = source,
-                        isTied = bluetoothState.session.groups.any { it.memberIds.contains(source.id) || it.memberIds.contains(source.persistentId) },
-                        isBlocked = bluetoothState.crowd.blockedUsers.contains(source.persistentId ?: source.id),
-                        isRequesting = bluetoothState.crowd.incomingRadioRequests.contains(source),
-                        activeGroupId = sphereId,
+                        isTied = connectionState.session.groups.any { it.memberIds.contains(source.id) || it.memberIds.contains(source.persistentId) },
+                        isBlocked = connectionState.crowd.blockedUsers.contains(source.persistentId ?: source.id),
+                        isRequesting = connectionState.crowd.incomingRadioRequests.contains(source),
+                        activeGroupId = groupId,
                         isAlreadyInActiveGroup = isAlreadyInGroup,
-                        onEcho = { bluetoothViewModel.requestWhisper(source) { gid -> navViewModel.navigate(Route.SphereField(gid)) }; sourceForOptions = null },
-                        onAccept = { bluetoothViewModel.acceptRadio(source); sourceForOptions = null },
-                        onDeny = { bluetoothViewModel.denyRadio(source); sourceForOptions = null },
+                        onMessage = { connectionViewModel.requestWhisper(source) { gid -> navViewModel.navigate(Route.GroupField(gid)) }; sourceForOptions = null },
+                        onAccept = { connectionViewModel.acceptRadio(source); sourceForOptions = null },
+                        onDeny = { connectionViewModel.denyRadio(source); sourceForOptions = null },
                         onDisconnect = { sourceForOptions = null },
-                        onSelect = { bluetoothViewModel.toggleSourceSelection(source.id); sourceForOptions = null },
+                        onSelect = { connectionViewModel.toggleSourceSelection(source.id); sourceForOptions = null },
                         onIdentify = { sourceForOptions = null },
-                        onBlock = { bluetoothViewModel.blockUser(source.persistentId ?: source.id); sourceForOptions = null },
-                        onUnblock = { bluetoothViewModel.unblockUser(source.persistentId ?: source.id); sourceForOptions = null },
-                        onSync = { sphereId?.let { bluetoothViewModel.initiateHistorySync(it) }; sourceForOptions = null },
-                        onAddToGroup = { gid -> bluetoothViewModel.addMemberToSphere(gid, source.id); sourceForOptions = null },
-                        onRemoveFromGroup = { gid -> bluetoothViewModel.removeMemberFromSphere(gid, source.id); sourceForOptions = null },
+                        onBlock = { connectionViewModel.blockUser(source.persistentId ?: source.id); sourceForOptions = null },
+                        onUnblock = { connectionViewModel.unblockUser(source.persistentId ?: source.id); sourceForOptions = null },
+                        onSync = { groupId?.let { connectionViewModel.initiateHistorySync(it) }; sourceForOptions = null },
+                        onAddToGroup = { gid: String -> connectionViewModel.addMemberToGroup(gid, source.id); sourceForOptions = null },
+                        onRemoveFromGroup = { gid: String -> connectionViewModel.removeMemberFromGroup(gid, source.id); sourceForOptions = null },
                         onDismiss = { sourceForOptions = null }
                     )
                 }
@@ -402,7 +400,7 @@ fun BlukitApp(
     }
 
     activeRipple?.let { (groupId, isPrivate) ->
-        EchoRippleEffect(
+        MessageRippleEffect(
             isPrivate = isPrivate,
             onFinished = { activeRipple = null }
         )

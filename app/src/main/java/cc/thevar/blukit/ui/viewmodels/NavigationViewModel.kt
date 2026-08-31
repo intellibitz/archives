@@ -2,7 +2,7 @@ package cc.thevar.blukit.ui.viewmodels
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.navigation.Route
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 class NavigationViewModel : ViewModel() {
-    private val _backStack = mutableStateListOf<Route>(Route.SphereField(Sphere.ID_GLOBAL))
+    private val _backStack = mutableStateListOf<Route>(Route.GroupField(Group.ID_GLOBAL))
     val backStack: List<Route> = _backStack
 
-    private val _currentRoute = MutableStateFlow<Route>(Route.SphereField(Sphere.ID_GLOBAL))
+    private val _currentRoute = MutableStateFlow<Route>(Route.GroupField(Group.ID_GLOBAL))
     val currentRoute: StateFlow<Route> = _currentRoute.asStateFlow()
 
     fun navigate(route: Route, resetStack: Boolean = false) {
@@ -43,20 +43,20 @@ class NavigationViewModel : ViewModel() {
         }
     }
 
-    fun getBreadcrumbTrail(sessionGroups: List<Sphere>, focusedSourceId: String?, scannedDevices: List<cc.thevar.blukit.domain.model.Source>): List<String> {
+    fun getBreadcrumbTrail(sessionGroups: List<Group>, focusedSourceId: String?, scannedDevices: List<cc.thevar.blukit.domain.model.Source>): List<String> {
         val trail = mutableListOf<String>()
         _backStack.forEach { route ->
             when (route) {
-                is Route.Sensing -> trail.add("NEARBY")
-                is Route.SphereField -> {
-                    val sphere = sessionGroups.find { it.id == route.roomId }
-                    if (sphere != null) {
-                        sphere.parentId?.let { pid ->
+                is Route.Nearby -> trail.add("NEARBY")
+                is Route.GroupField -> {
+                    val group = sessionGroups.find { it.id == route.roomId }
+                    if (group != null) {
+                        group.parentId?.let { pid ->
                             val parent = sessionGroups.find { it.id == pid }
                             val parentName = parent?.name ?: "HOME"
                             if (trail.lastOrNull() != parentName) trail.add(parentName)
                         }
-                        trail.add(sphere.name)
+                        trail.add(group.name)
                     } else {
                         trail.add("GROUP")
                     }
@@ -65,7 +65,7 @@ class NavigationViewModel : ViewModel() {
             }
         }
         
-        if (focusedSourceId != null && _currentRoute.value is Route.SphereField) {
+        if (focusedSourceId != null && _currentRoute.value is Route.GroupField) {
             val device = scannedDevices.find { (it.persistentId == focusedSourceId) || (it.id == focusedSourceId) }
             trail.add(device?.name ?: "Source")
         }

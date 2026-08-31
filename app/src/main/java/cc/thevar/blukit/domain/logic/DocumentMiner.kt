@@ -8,7 +8,7 @@ package cc.thevar.blukit.domain.logic
 
 import android.content.Context
 import android.util.Log
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import java.io.File
 import java.util.regex.Pattern
 
@@ -22,10 +22,10 @@ class DocumentMiner(private val context: Context) {
     )
 
     /**
-     * Mines a file Echo for intelligence.
+     * Mines a file Message for intelligence.
      */
-    fun mineFile(echo: Echo): MinedData {
-        if (echo.type != Echo.TYPE_FILE && echo.type != Echo.TYPE_IMAGE) return MinedData()
+    fun mineFile(echo: Message): MinedData {
+        if (echo.type != Message.TYPE_FILE && echo.type != Message.TYPE_IMAGE) return MinedData()
         
         val filePath = echo.content
         val file = File(filePath)

@@ -1,9 +1,9 @@
 package cc.thevar.blukit.ui.viewmodels
 
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
 
-data class ResonanceItem(
+data class ConnectionItem(
     val source: Source,
-    val latestEcho: Echo? = null
+    val latestMessage: Message? = null
 )

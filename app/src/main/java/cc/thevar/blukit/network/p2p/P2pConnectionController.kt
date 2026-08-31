@@ -1,8 +1,8 @@
 /**
- * BLUKIT NETWORK: NEARBY RESONANCE CONTROLLER
+ * BLUKIT NETWORK: P2P CONNECTION CONTROLLER
  *
- * High-performance resonance engine using Google Nearby Connections.
- * Implements a fully decentralized, hardware-encrypted resonance protocol.
+ * High-performance connection engine using Google Nearby Connections.
+ * Implements a fully decentralized, hardware-encrypted connection protocol.
  */
 package cc.thevar.blukit.network.p2p
 
@@ -11,14 +11,14 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
@@ -63,33 +63,33 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * The primary resonance engine utilizing Google's Nearby Connections API.
+ * The primary connection engine utilizing Google's Nearby Connections API.
  */
-class NearbyResonanceController(
+class P2pConnectionController(
     private val context: Context,
     private val repository: IdentityRepository,
-    private val echoLedger: EchoLedger,
+    private val messageLedger: MessageRepository,
     private val hapticManager: HapticManager,
     private val radioStateManager: RadioStateManager,
     private val cryptoManager: CryptoManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
-) : ResonanceController {
+) : ConnectionController {
 
-    private val tag = "ResonanceController"
-    private val serviceId = "cc.thevar.blukit.RESONANCE_SERVICE"
+    private val tag = "ConnectionController"
+    private val serviceId = "cc.thevar.blukit.CONNECTION_SERVICE"
     private val connectionsClient: ConnectionsClient = Nearby.getConnectionsClient(context)
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
-    // --- ResonanceController State Implementation ---
+    // --- ConnectionController State Implementation ---
     private val _scannedSources = MutableStateFlow<List<Source>>(emptyList())
     override val scannedDevices = _scannedSources.asStateFlow()
 
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedSpheres = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedGroups = _connectedSpheres.asStateFlow()
+    private val _connectedGroups = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedGroups = _connectedGroups.asStateFlow()
 
     private val _incomingRadioRequests = MutableStateFlow<Set<Source>>(emptySet())
     override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
@@ -97,29 +97,29 @@ class NearbyResonanceController(
     private val _outgoingRadioRequests = MutableStateFlow<Set<Source>>(emptySet())
     override val outgoingRadioRequests = _outgoingRadioRequests.asStateFlow()
 
-    private val _isSensing = MutableStateFlow(false)
-    override val isDiscovering = _isSensing.asStateFlow()
+    private val _isNearbyNearby = MutableStateFlow(false)
+    override val isDiscovering = _isNearbyNearby.asStateFlow()
 
     private val _isAdvertising = MutableStateFlow(false)
     override val isAdvertising = _isAdvertising.asStateFlow()
 
-    private val _resonanceErrors = MutableStateFlow<ResonanceError?>(null)
-    override val errors = _resonanceErrors.asStateFlow()
+    private val _connectionErrors = MutableStateFlow<ConnectionError?>(null)
+    override val errors = _connectionErrors.asStateFlow()
 
-    private val _discoveredSpheres = MutableSharedFlow<Sphere>(extraBufferCapacity = 5)
-    override val discoveredRooms = _discoveredSpheres.asSharedFlow()
+    private val _discoveredGroups = MutableSharedFlow<Group>(extraBufferCapacity = 5)
+    override val discoveredGroups = _discoveredGroups.asSharedFlow()
 
-    override val messages: StateFlow<List<Echo>> = echoLedger.echoes
+    override val messages: StateFlow<List<Message>> = messageLedger.messages
     override val syncProgress: StateFlow<Float?> get() = _syncProgress.asStateFlow()
     private val _syncProgress = MutableStateFlow<Float?>(null)
 
-    // --- Private Resonance State ---
+    // --- Private Connection State ---
     private val activeConnections = Collections.synchronizedSet(mutableSetOf<String>())
     private val pendingRadioRequests = Collections.synchronizedSet(mutableSetOf<String>())
     private val messageKeys = ConcurrentHashMap<String, SecretKey>()
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
-    private val incomingFiles = ConcurrentHashMap<Long, Echo>()
-    private val aggregateBuffer = ConcurrentHashMap<String, MutableList<Echo>>()
+    private val incomingFiles = ConcurrentHashMap<Long, Message>()
+    private val aggregateBuffer = ConcurrentHashMap<String, MutableList<Message>>()
     private val outgoingQueues = ConcurrentHashMap<String, kotlinx.coroutines.channels.Channel<Payload>>()
     private val _connectionUpdates = MutableSharedFlow<Pair<String, ConnectionStatus>>(extraBufferCapacity = 20)
 
@@ -128,7 +128,7 @@ class NearbyResonanceController(
             when (payload.type) {
                 Payload.Type.BYTES -> handleReceivedBytes(endpointId, payload.asBytes()!!)
                 Payload.Type.FILE -> {
-                    incomingFiles[payload.id] = Echo(
+                    incomingFiles[payload.id] = Message(
                         messageId = "pending_${payload.id}",
                         senderId = endpointId,
                         senderName = "PENDING",
@@ -144,7 +144,7 @@ class NearbyResonanceController(
             if (update.status == PayloadTransferUpdate.Status.SUCCESS) {
                 val payloadId = update.payloadId
                 Log.d(tag, "Payload SUCCESS: $payloadId")
-                incomingFiles[payloadId]?.let { finalizeFileEcho(payloadId, it) }
+                incomingFiles[payloadId]?.let { finalizeFileMessage(payloadId, it) }
             }
         }
     }
@@ -169,7 +169,7 @@ class NearbyResonanceController(
             activeConnections.remove(endpointId)
             messageKeys.remove(endpointId)
             pendingRadioRequests.remove(endpointId)
-            _connectedSpheres.update { it - endpointId }
+            _connectedGroups.update { it - endpointId }
             if (activeConnections.isEmpty()) _isConnected.value = false
             updateScannedSources()
             internalScope.launch { _connectionUpdates.emit(endpointId to ConnectionStatus.ConnectionLost()) }
@@ -184,7 +184,7 @@ class NearbyResonanceController(
             
             val messageDeviceId = parts[2]
             val myDeviceId = repository.getDeviceId()
-            val peerMedium = if (parts.size >= 4) { when (parts[3]) { "W" -> Source.ResonanceMedium.WIFI; "B" -> Source.ResonanceMedium.BLUETOOTH; else -> Source.ResonanceMedium.LOCATION } } else Source.ResonanceMedium.LOCATION
+            val peerMedium = if (parts.size >= 4) { when (parts[3]) { "W" -> Source.ConnectionMedium.WIFI; "B" -> Source.ConnectionMedium.BLUETOOTH; else -> Source.ConnectionMedium.LOCATION } } else Source.ConnectionMedium.LOCATION
             val peerMessageCount = parts.getOrNull(4)?.toIntOrNull() ?: 0
             val peerIsLowPower = parts.getOrNull(5) == "P"
             val newSource = Source(id = endpointId, name = parts[1].ifBlank { "?" }, emoji = parts[0], persistentId = messageDeviceId, medium = peerMedium, messageCount = peerMessageCount, isLowPower = peerIsLowPower)
@@ -200,11 +200,11 @@ class NearbyResonanceController(
     }
 
     override fun startDiscovery() {
-        if (_isSensing.value) return
-        _isSensing.value = true
+        if (_isNearbyNearby.value) return
+        _isNearbyNearby.value = true
 
         internalScope.launch(ioDispatcher) {
-            while (_isSensing.value) {
+            while (_isNearbyNearby.value) {
                 val peerCount = _scannedSources.value.size
                 val scanDuration = if (peerCount > 10) 10.seconds else 30.seconds
                 val idleDuration = if (peerCount > 10) 30.seconds else 5.seconds
@@ -212,12 +212,12 @@ class NearbyResonanceController(
                 val options = DiscoveryOptions.Builder().setStrategy(getStrategy()).build()
                 connectionsClient.startDiscovery(serviceId, discoveryCallback, options)
                     .addOnFailureListener { e ->
-                        Log.e(tag, "Sensing failed to start: ${e.message}")
-                        _resonanceErrors.value = ResonanceError.SensingError(e.message ?: "Failed to start sensing")
+                        Log.e(tag, "Nearby sensing failed to start: ${e.message}")
+                        _connectionErrors.value = ConnectionError.NearbyError(e.message ?: "Failed to start nearby sensing")
                     }
 
                 delay(scanDuration)
-                if (_isSensing.value) {
+                if (_isNearbyNearby.value) {
                     connectionsClient.stopDiscovery()
                     delay(idleDuration)
                 }
@@ -226,7 +226,7 @@ class NearbyResonanceController(
     }
 
     override fun stopDiscovery() {
-        _isSensing.value = false
+        _isNearbyNearby.value = false
         connectionsClient.stopDiscovery()
     }
 
@@ -242,7 +242,7 @@ class NearbyResonanceController(
                 connectionsClient.startAdvertising(name, serviceId, connectionLifecycleCallback, options)
                     .addOnFailureListener { e -> 
                         Log.e(tag, "Advertising failure: ${e.message}. Retrying in 5s...")
-                        _resonanceErrors.value = ResonanceError.AdvertisingError(e.message ?: "Failed to start advertising")
+                        _connectionErrors.value = ConnectionError.AdvertisingError(e.message ?: "Failed to start advertising")
                     }
                 
                 delay(1.minutes) 
@@ -276,21 +276,21 @@ class NearbyResonanceController(
         _outgoingRadioRequests.update { it + device }
         updateScannedSources()
         internalScope.launch(ioDispatcher) {
-            sendMessageInternal(device.id, Echo(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_REQUEST", timestamp = System.currentTimeMillis(), type = Echo.TYPE_GROUP_REQUEST))
+            sendMessageInternal(device.id, Message(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_REQUEST", timestamp = System.currentTimeMillis(), type = Message.TYPE_GROUP_REQUEST))
         }
     }
 
     override fun acceptRadio(device: Source) {
         _incomingRadioRequests.update { it - device }
         pendingRadioRequests.remove(device.id)
-        _connectedSpheres.update { it + device.id }
+        _connectedGroups.update { it + device.id }
         _isConnected.value = true
         _outgoingRadioRequests.update { current ->
             current.asSequence().filter { it.id != device.id }.toSet()
         }
         updateScannedSources()
         internalScope.launch(ioDispatcher) {
-            sendMessageInternal(device.id, Echo(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_ACCEPT", timestamp = System.currentTimeMillis(), type = Echo.TYPE_GROUP_ACCEPT))
+            sendMessageInternal(device.id, Message(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_ACCEPT", timestamp = System.currentTimeMillis(), type = Message.TYPE_GROUP_ACCEPT))
         }
     }
 
@@ -303,15 +303,15 @@ class NearbyResonanceController(
         updateScannedSources()
     }
 
-    override fun joinRoom(groupId: String) {
-        echoLedger.joinSphere(groupId, repository.getDeviceId())
+    override fun joinGroup(groupId: String) {
+        messageLedger.joinGroup(groupId, repository.getDeviceId())
     }
 
-    private fun sendMessageInternal(endpointId: String, payload: Echo) {
-        messageKeys[endpointId]?.let { key -> queueEcho(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(Echo.serializer(), payload).toByteArray(), key))) }
+    private fun sendMessageInternal(endpointId: String, payload: Message) {
+        messageKeys[endpointId]?.let { key -> queueMessage(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(Message.serializer(), payload).toByteArray(), key))) }
     }
 
-    private suspend fun getEchoKeyWithRetry(id: String): SecretKey? {
+    private suspend fun getMessageKeyWithRetry(id: String): SecretKey? {
         var a = 0
         while ((messageKeys[id] == null) && (a < 50)) {
             delay(20.milliseconds)
@@ -320,56 +320,56 @@ class NearbyResonanceController(
         return messageKeys[id]
     }
 
-    private fun syncEchoHistory(endpointId: String) {
+    private fun syncMessageHistory(endpointId: String) {
         internalScope.launch(ioDispatcher) {
-            val key = getEchoKeyWithRetry(endpointId) ?: return@launch
-            val latestEchoId = echoLedger.getLatestEchoId()
-            val request = Echo(
+            val key = getMessageKeyWithRetry(endpointId) ?: return@launch
+            val latestMessageId = messageLedger.getLatestMessageId()
+            val request = Message(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = "SYNC_BOOTSTRAP",
-                content = latestEchoId ?: "0",
+                content = latestMessageId ?: "0",
                 timestamp = System.currentTimeMillis(),
-                type = Echo.TYPE_RESYNC_REQUEST
+                type = Message.TYPE_RESYNC_REQUEST
             )
             sendMessageInternal(endpointId, request, key)
-            Log.i(tag, "Differential Sync: Bootstrapping resonance with $endpointId from $latestEchoId")
+            Log.i(tag, "Differential Sync: Bootstrapping connection with $endpointId from $latestMessageId")
         }
     }
 
     private fun backupRecentRecords(endpointId: String) {
         internalScope.launch(ioDispatcher) {
-            val key = getEchoKeyWithRetry(endpointId) ?: return@launch
-            val recentRecords = echoLedger.echoes.value
-                .filter { it.type == Echo.TYPE_MEMORY || it.type == Echo.TYPE_IMAGE }
+            val key = getMessageKeyWithRetry(endpointId) ?: return@launch
+            val recentRecords = messageLedger.messages.value
+                .filter { it.type == Message.TYPE_MEMORY || it.type == Message.TYPE_IMAGE }
                 .takeLast(10)
             
             if (recentRecords.isEmpty()) return@launch
             
-            val backupPayload = Echo(
+            val backupPayload = Message(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = "BACKUP_ORCHESTRATOR",
                 content = Json.encodeToString(recentRecords),
                 timestamp = System.currentTimeMillis(),
-                type = Echo.TYPE_RESYNC_CHUNK,
+                type = Message.TYPE_RESYNC_CHUNK,
             )
             sendMessageInternal(endpointId, backupPayload, key)
-            Log.i(tag, "Black Box: Resonance backup emitted to $endpointId")
+            Log.i(tag, "Black Box: Connection backup emitted to $endpointId")
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? {
-        val sphere = groupId?.let { echoLedger.getSphere(it) }
+    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Message? {
+        val group = groupId?.let { messageLedger.getGroup(it) }
         
         groupId?.let { gid ->
-            if (!echoLedger.isMember(gid, repository.getDeviceId())) {
-                Log.w(tag, "Resonance Denied: Source not a member of $gid")
+            if (!messageLedger.isMember(gid, repository.getDeviceId())) {
+                Log.w(tag, "Connection Denied: Source not a member of $gid")
                 return null
             }
         }
 
-        val payload = Echo(
+        val payload = Message(
             messageId = messageId ?: UUID.randomUUID().toString(), 
             senderId = repository.getDeviceId(), 
             senderName = repository.getCurrentNickname(), 
@@ -382,7 +382,7 @@ class NearbyResonanceController(
             messageScope = messageScope,
             type = type,
             hopCount = 0,
-            anchoredPublicSphereId = sphere?.anchoredPublicSphereId
+            anchoredPublicGroupId = group?.anchoredPublicGroupId
         )
 
         if (!payload.isPriority && receiverId == null && activeConnections.size > 5) {
@@ -392,16 +392,16 @@ class NearbyResonanceController(
             }
         }
 
-        return dispatchEcho(payload)
+        return dispatchMessage(payload)
     }
 
-    private suspend fun dispatchEcho(payload: Echo): Echo? {
-        val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
+    private suspend fun dispatchMessage(payload: Message): Message? {
+        val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
         val targetRid = payload.receiverId
         try {
             if (targetRid != null) { 
-                getEchoKeyWithRetry(targetRid)?.let { key ->
-                    queueEcho(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
+                getMessageKeyWithRetry(targetRid)?.let { key ->
+                    queueMessage(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
                 } 
             } else { 
                 val targets = if (activeConnections.size > 20) {
@@ -413,7 +413,7 @@ class NearbyResonanceController(
                 targets.forEach { target -> 
                     internalScope.launch(ioDispatcher) { 
                         messageKeys[target]?.let { key -> 
-                            try { queueEcho(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} 
+                            try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} 
                         } 
                     } 
                 } 
@@ -422,24 +422,24 @@ class NearbyResonanceController(
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 500) messageIdHistory.removeAt(0)
             }
-            echoLedger.upsertEcho(payload)
+            messageLedger.upsertMessage(payload)
             return payload
         } catch (_: Exception) {
             return null
         }
     }
 
-    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? = 
+    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Message? = 
         sendMessage(content, null, messageScope, messageId, groupId, groupName, type)
 
-    override suspend fun broadcastIdentityUpdate(oldName: String): Echo {
-        val payload = Echo(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = Echo.TYPE_IDENTITY_UPDATE, messageScope = Echo.MESSAGE_SHOUT)
-        val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
-        activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueEcho(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+    override suspend fun broadcastIdentityUpdate(oldName: String): Message {
+        val payload = Message(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = Message.TYPE_IDENTITY_UPDATE, messageScope = Message.MESSAGE_SHOUT)
+        val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
+        activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
         return payload
     }
 
-    override suspend fun sendFile(fileUri: Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): Echo? {
+    override suspend fun sendFile(fileUri: Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): Message? {
         val fileName = getFileName(fileUri)
         val fileSize = getFileSize(fileUri)
         val mimeType = context.contentResolver.getType(fileUri)
@@ -447,12 +447,12 @@ class NearbyResonanceController(
         return try {
             val pfd = context.contentResolver.openFileDescriptor(fileUri, "r") ?: return null
             val filePayload = Payload.fromFile(pfd)
-            val payload = Echo(messageId = messageId, senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, receiverId = receiverId, groupId = groupId, groupName = groupName, content = if (mimeType?.startsWith("image/") == true) fileUri.toString() else "[FILE] $fileName", timestamp = System.currentTimeMillis(), type = if (mimeType?.startsWith("image/") == true) Echo.TYPE_IMAGE else Echo.TYPE_FILE, messageScope = messageScope, fileId = filePayload.id, fileName = fileName, fileSize = fileSize, mimeType = mimeType)
+            val payload = Message(messageId = messageId, senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, receiverId = receiverId, groupId = groupId, groupName = groupName, content = if (mimeType?.startsWith("image/") == true) fileUri.toString() else "[FILE] $fileName", timestamp = System.currentTimeMillis(), type = if (mimeType?.startsWith("image/") == true) Message.TYPE_IMAGE else Message.TYPE_FILE, messageScope = messageScope, fileId = filePayload.id, fileName = fileName, fileSize = fileSize, mimeType = mimeType)
             internalScope.launch(ioDispatcher) {
                 if (receiverId != null) { sendMessageInternal(receiverId, payload); connectionsClient.sendPayload(receiverId, filePayload) }
                 else { activeConnections.forEach { target -> internalScope.launch { sendMessageInternal(target, payload); connectionsClient.sendPayload(target, filePayload) } } }
             }
-            echoLedger.upsertEcho(payload)
+            messageLedger.upsertMessage(payload)
             payload
         } catch (_: Exception) {
             null
@@ -471,22 +471,22 @@ class NearbyResonanceController(
         return size
     }
 
-    override suspend fun sendGroupMessage(content: String, groupId: String): Echo? {
-        val sphere = echoLedger.getSphere(groupId) ?: return null
-        val payload = Echo(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), messageScope = Echo.MESSAGE_WHISPER)
-        val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
+    override suspend fun sendGroupMessage(content: String, groupId: String): Message? {
+        val group = messageLedger.getGroup(groupId) ?: return null
+        val payload = Message(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), messageScope = Message.MESSAGE_WHISPER)
+        val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
         return try {
-            sphere.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueEcho(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
-            activeConnections.filter { it !in sphere.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueEcho(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueMessage(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
-            echoLedger.upsertEcho(payload); echoLedger.updateSphereLastEcho(groupId, payload.timestamp)
+            messageLedger.upsertMessage(payload); messageLedger.updateGroupLastMessage(groupId, payload.timestamp)
             payload
         } catch (_: Exception) { null }
     }
 
-    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): Echo? {
-        val sphere = echoLedger.getSphere(groupId) ?: return null
-        val payload = Echo(
+    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): Message? {
+        val group = messageLedger.getGroup(groupId) ?: return null
+        val payload = Message(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
             senderName = repository.getCurrentNickname(),
@@ -494,88 +494,88 @@ class NearbyResonanceController(
             groupId = groupId,
             content = content,
             timestamp = System.currentTimeMillis(),
-            type = Echo.TYPE_NOTE_UPDATE,
+            type = Message.TYPE_NOTE_UPDATE,
             noteVersion = version,
-            messageScope = Echo.MESSAGE_WHISPER,
+            messageScope = Message.MESSAGE_WHISPER,
         )
-        val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
+        val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
         return try {
-            sphere.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueEcho(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
-            activeConnections.filter { it !in sphere.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueEcho(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueMessage(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
-            echoLedger.upsertEcho(payload); echoLedger.updateSphereLastEcho(groupId, payload.timestamp)
+            messageLedger.upsertMessage(payload); messageLedger.updateGroupLastMessage(groupId, payload.timestamp)
             payload
         } catch (_: Exception) { null }
     }
 
-    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?, anchoredPublicSphereId: String?): String {
-        val gid = groupId ?: Sphere.generateId(name, type)
+    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?, anchoredPublicGroupId: String?): String {
+        val gid = groupId ?: Group.generateId(name, type)
         internalScope.launch(ioDispatcher) { 
-            echoLedger.insertSphere(
-                Sphere(
+            messageLedger.insertGroup(
+                Group(
                     id = gid,
                     name = name,
                     memberIds = members + repository.getDeviceId(),
                     scope = type,
                     parentId = parentId,
                     ownerId = repository.getDeviceId(),
-                    anchoredPublicSphereId = anchoredPublicSphereId
+                    anchoredPublicGroupId = anchoredPublicGroupId
                 )
             ) 
             
-            // If this is an anchored group, advertise it to the public sphere
-            if (anchoredPublicSphereId != null) {
-                broadcastAnchorAdvertisement(gid, name, anchoredPublicSphereId)
+            // If this is an anchored group, advertise it to the public group
+            if (anchoredPublicGroupId != null) {
+                broadcastAnchorAdvertisement(gid, name, anchoredPublicGroupId)
             }
         }
         return gid
     }
 
     private suspend fun broadcastAnchorAdvertisement(anchoredGid: String, name: String, anchorPublicGid: String) {
-        val advertisement = Echo(
+        val advertisement = Message(
             messageId = UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
             senderName = repository.getCurrentNickname(),
             groupId = anchoredGid,
             groupName = name,
-            content = "PRIVATE SPHERE AVAILABLE",
+            content = "PRIVATE GROUP AVAILABLE",
             timestamp = System.currentTimeMillis(),
-            type = Echo.TYPE_ANCHOR_ADVERTISEMENT,
-            messageScope = Echo.MESSAGE_SHOUT,
-            anchoredPublicSphereId = anchorPublicGid
+            type = Message.TYPE_ANCHOR_ADVERTISEMENT,
+            messageScope = Message.MESSAGE_SHOUT,
+            anchoredPublicGroupId = anchorPublicGid
         )
-        dispatchEcho(advertisement)
+        dispatchMessage(advertisement)
     }
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
-        internalScope.launch(ioDispatcher) { echoLedger.updateSphereMembers(groupId, memberIds) }
+        internalScope.launch(ioDispatcher) { messageLedger.updateGroupMembers(groupId, memberIds) }
     }
 
     override fun updateGroupScope(groupId: String, scope: Int) {
-        internalScope.launch(ioDispatcher) { echoLedger.updateSphereScope(groupId, scope) }
+        internalScope.launch(ioDispatcher) { messageLedger.updateGroupScope(groupId, scope) }
     }
 
     override fun initiateHistorySync(endpointId: String, sinceTimestamp: Long?) {
         internalScope.launch(ioDispatcher) {
-            val key = getEchoKeyWithRetry(endpointId) ?: return@launch
-            val request = Echo(
+            val key = getMessageKeyWithRetry(endpointId) ?: return@launch
+            val request = Message(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = "SYNC_REQUEST",
                 content = sinceTimestamp?.toString() ?: "0",
                 timestamp = System.currentTimeMillis(),
-                type = Echo.TYPE_RESYNC_REQUEST
+                type = Message.TYPE_RESYNC_REQUEST
             )
             sendMessageInternal(endpointId, request, key)
         }
     }
 
-    private fun sendMessageInternal(endpointId: String, payload: Echo, key: SecretKey) {
+    private fun sendMessageInternal(endpointId: String, payload: Message, key: SecretKey) {
         try {
-            val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
-            queueEcho(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
+            val bytes = Json.encodeToString(Message.serializer(), payload).toByteArray()
+            queueMessage(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
         } catch (_: Exception) {
-            Log.e(tag, "Failed to send Echo to $endpointId")
+            Log.e(tag, "Failed to send Message to $endpointId")
         }
     }
 
@@ -584,7 +584,7 @@ class NearbyResonanceController(
         activeConnections.clear()
         messageKeys.clear()
         _isConnected.value = false
-        _connectedSpheres.value = emptySet()
+        _connectedGroups.value = emptySet()
     }
 
     override fun release() {
@@ -601,7 +601,7 @@ class NearbyResonanceController(
             messageKeys[endpointId]?.let { key ->
                 try {
                     val decrypted = cryptoManager.decrypt(bytes, key)
-                    val payload = Json.decodeFromString<Echo>(decrypted.decodeToString())
+                    val payload = Json.decodeFromString<Message>(decrypted.decodeToString())
                     handleIncomingPayload(endpointId, payload, key)
                 } catch (_: Exception) {
                     Log.e(tag, "Decryption or parsing failure")
@@ -620,43 +620,43 @@ class NearbyResonanceController(
 
             val secretKey = cryptoManager.deriveSharedSecret(peerPublicKey)
             messageKeys[endpointId] = secretKey
-            Log.i(tag, "SECURE: Resonance established with $endpointId")
+            Log.i(tag, "SECURE: Connection established with $endpointId")
             
-            syncEchoHistory(endpointId)
+            syncMessageHistory(endpointId)
             backupRecentRecords(endpointId)
         } catch (_: Exception) {
             Log.e(tag, "Handshake failed")
         }
     }
 
-    private fun handleIncomingPayload(endpointId: String, payload: Echo, secretKey: SecretKey) {
+    private fun handleIncomingPayload(endpointId: String, payload: Message, secretKey: SecretKey) {
         when (payload.type) {
-            Echo.TYPE_ACK -> handleAck(payload)
-            Echo.TYPE_IDENTITY_UPDATE -> handleIdentityUpdate(endpointId, payload, secretKey)
-            Echo.TYPE_GROUP_REQUEST -> handleGroupRequest(endpointId, payload)
-            Echo.TYPE_GROUP_ACCEPT -> handleGroupAccept(endpointId)
-            Echo.TYPE_RESYNC_REQUEST -> handleSyncRequest(endpointId, payload, secretKey)
-            Echo.TYPE_RESYNC_CHUNK -> handleSyncChunk(payload)
-            Echo.TYPE_RESYNC_COMPLETE -> handleSyncComplete(endpointId, payload)
-            Echo.TYPE_ANCHOR_ADVERTISEMENT -> handleAnchorAdvertisement(payload)
-            else -> handleEcho(endpointId, payload, secretKey)
+            Message.TYPE_ACK -> handleAck(payload)
+            Message.TYPE_IDENTITY_UPDATE -> handleIdentityUpdate(endpointId, payload, secretKey)
+            Message.TYPE_GROUP_REQUEST -> handleGroupRequest(endpointId, payload)
+            Message.TYPE_GROUP_ACCEPT -> handleGroupAccept(endpointId)
+            Message.TYPE_RESYNC_REQUEST -> handleSyncRequest(endpointId, payload, secretKey)
+            Message.TYPE_RESYNC_CHUNK -> handleSyncChunk(payload)
+            Message.TYPE_RESYNC_COMPLETE -> handleSyncComplete(endpointId, payload)
+            Message.TYPE_ANCHOR_ADVERTISEMENT -> handleAnchorAdvertisement(payload)
+            else -> handleMessage(endpointId, payload, secretKey)
         }
     }
 
-    private fun handleAck(payload: Echo) {
+    private fun handleAck(payload: Message) {
         internalScope.launch(ioDispatcher) {
-            echoLedger.updateEchoStatus(payload.messageId, Echo.STATUS_DELIVERED)
+            messageLedger.updateMessageStatus(payload.messageId, Message.STATUS_DELIVERED)
         }
     }
 
-    private fun handleIdentityUpdate(endpointId: String, payload: Echo, secretKey: SecretKey) {
+    private fun handleIdentityUpdate(endpointId: String, payload: Message, secretKey: SecretKey) {
         _scannedSources.update { current -> current.map { if ((it.persistentId == payload.senderId) || (it.id == endpointId)) it.copy(name = payload.senderName, emoji = payload.senderEmoji ?: it.emoji) else it } }
-        saveIncomingEcho(payload)
+        saveIncomingMessage(payload)
         sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
-        relayEcho(endpointId, payload)
+        relayMessage(endpointId, payload)
     }
 
-    private fun handleGroupRequest(endpointId: String, payload: Echo) {
+    private fun handleGroupRequest(endpointId: String, payload: Message) {
         val source = _scannedSources.value.find { it.id == endpointId } ?: Source(id = endpointId, name = payload.senderName, emoji = payload.senderEmoji ?: "👤")
         _incomingRadioRequests.update { it + source }
         hapticManager.triggerMessage(HapticManager.MessageType.CONNECTION)
@@ -667,42 +667,42 @@ class NearbyResonanceController(
         _outgoingRadioRequests.update { current ->
             current.asSequence().filter { it.id != endpointId }.toSet()
         }
-        _connectedSpheres.update { it + endpointId }
+        _connectedGroups.update { it + endpointId }
         _isConnected.value = true
         updateScannedSources()
     }
 
-    private fun handleSyncRequest(endpointId: String, payload: Echo, secretKey: SecretKey) {
+    private fun handleSyncRequest(endpointId: String, payload: Message, secretKey: SecretKey) {
         val sinceId = payload.content
-        val allLocalEchoes = echoLedger.echoes.value
+        val allLocalMessages = messageLedger.messages.value
         val sinceTimestamp = if (sinceId == "0") 0L else {
-            allLocalEchoes.find { it.messageId == sinceId }?.timestamp ?: 0L
+            allLocalMessages.find { it.messageId == sinceId }?.timestamp ?: 0L
         }
         
-        val historyToSync = echoLedger.getRawEchoesSince(sinceTimestamp)
+        val historyToSync = messageLedger.getRawMessagesSince(sinceTimestamp)
         
         internalScope.launch(ioDispatcher) {
             _syncProgress.value = 0.1f
             historyToSync.chunked(5).forEachIndexed { index, chunk ->
-                val chunkPayload = Echo(
+                val chunkPayload = Message(
                     messageId = UUID.randomUUID().toString(),
                     senderId = repository.getDeviceId(),
                     senderName = "SYNC_CHUNK",
                     content = Json.encodeToString(chunk.map { it.decodeToString() }),
                     timestamp = System.currentTimeMillis(),
-                    type = Echo.TYPE_RESYNC_CHUNK,
+                    type = Message.TYPE_RESYNC_CHUNK,
                 )
                 sendMessageInternal(endpointId, chunkPayload, secretKey)
                 _syncProgress.value = 0.1f + ((index.toFloat() / (historyToSync.size / 5f + 1)) * 0.8f)
             }
             
-            val complete = Echo(
+            val complete = Message(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = "SYNC",
                 content = "COMPLETE",
                 timestamp = System.currentTimeMillis(),
-                type = Echo.TYPE_RESYNC_COMPLETE,
+                type = Message.TYPE_RESYNC_COMPLETE,
             )
             sendMessageInternal(endpointId, complete, secretKey)
             _syncProgress.value = 1.0f
@@ -711,16 +711,16 @@ class NearbyResonanceController(
         }
     }
 
-    private fun handleSyncChunk(payload: Echo) {
+    private fun handleSyncChunk(payload: Message) {
         try {
             val encryptedMessages = Json.decodeFromString<List<String>>(payload.content)
             encryptedMessages.forEach { encryptedStr ->
                 try {
                     val encryptedBytes = encryptedStr.toByteArray()
                     val decrypted = cryptoManager.decryptLocal(encryptedBytes)
-                    val echo = Json.decodeFromString<Echo>(decrypted.decodeToString())
-                    if (isNewEcho(echo.messageId)) {
-                        echoLedger.upsertEcho(echo)
+                    val message = Json.decodeFromString<Message>(decrypted.decodeToString())
+                    if (isNewMessage(message.messageId)) {
+                        messageLedger.upsertMessage(message)
                     }
                 } catch (_: Exception) {}
             }
@@ -729,7 +729,7 @@ class NearbyResonanceController(
         }
     }
 
-    private fun handleSyncComplete(endpointId: String, payload: Echo) {
+    private fun handleSyncComplete(endpointId: String, payload: Message) {
         _syncProgress.value = 1.0f
         internalScope.launch {
             delay(1.seconds)
@@ -737,48 +737,48 @@ class NearbyResonanceController(
         }
     }
 
-    private fun handleAnchorAdvertisement(payload: Echo) {
+    private fun handleAnchorAdvertisement(payload: Message) {
         val anchoredGid = payload.groupId ?: return
-        val anchorPublicGid = payload.anchoredPublicSphereId ?: return
-        val gName = payload.groupName ?: "ANCHORED SPHERE"
+        val anchorPublicGid = payload.anchoredPublicGroupId ?: return
+        val gName = payload.groupName ?: "ANCHORED GROUP"
         
-        if (echoLedger.getSphere(anchoredGid) == null) {
-            echoLedger.insertSphere(
-                Sphere(
+        if (messageLedger.getGroup(anchoredGid) == null) {
+            messageLedger.insertGroup(
+                Group(
                     id = anchoredGid,
                     name = gName,
-                    scope = Sphere.SCOPE_PRIVATE,
-                    anchoredPublicSphereId = anchorPublicGid,
+                    scope = Group.SCOPE_PRIVATE,
+                    anchoredPublicGroupId = anchorPublicGid,
                     isMeta = true
                 )
             )
-            Log.i(tag, "AIR Discovery: Anchored sphere $gName found in $anchorPublicGid")
+            Log.i(tag, "Assistant Discovery: Anchored group $gName found in $anchorPublicGid")
         }
     }
 
-    private fun handleEcho(endpointId: String, payload: Echo, secretKey: SecretKey) {
+    private fun handleMessage(endpointId: String, payload: Message, secretKey: SecretKey) {
         if (isSpam(payload)) return
         sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
-        if (payload.receiverId.isNullOrEmpty()) relayEcho(endpointId, payload)
-        saveIncomingEcho(payload)
+        if (payload.receiverId.isNullOrEmpty()) relayMessage(endpointId, payload)
+        saveIncomingMessage(payload)
         
         val gid = payload.groupId
         val gName = payload.groupName
         if ((gid != null) && (gName != null)) {
-            val existing = echoLedger.getSphere(gid)
+            val existing = messageLedger.getGroup(gid)
             if (existing == null) {
                 val scope = when (payload.messageScope) {
-                    Echo.MESSAGE_SHOUT -> Sphere.SCOPE_PUBLIC
-                    Echo.MESSAGE_SILENCE -> Sphere.SCOPE_LOCAL
-                    else -> Sphere.SCOPE_PRIVATE
+                    Message.MESSAGE_SHOUT -> Group.SCOPE_PUBLIC
+                    Message.MESSAGE_SILENCE -> Group.SCOPE_LOCAL
+                    else -> Group.SCOPE_PRIVATE
                 }
-                echoLedger.insertSphere(
-                    Sphere(
+                messageLedger.insertGroup(
+                    Group(
                         id = gid,
                         name = gName,
                         scope = scope,
-                        parentId = Sphere.ID_GLOBAL,
-                        anchoredPublicSphereId = payload.anchoredPublicSphereId
+                        parentId = Group.ID_GLOBAL,
+                        anchoredPublicGroupId = payload.anchoredPublicGroupId
                     )
                 )
             }
@@ -786,43 +786,43 @@ class NearbyResonanceController(
         hapticManager.triggerMessage(HapticManager.MessageType.MESSAGE)
     }
 
-    private fun saveIncomingEcho(payload: Echo) {
-        if (isNewEcho(payload.messageId)) {
-            echoLedger.upsertEcho(payload)
+    private fun saveIncomingMessage(payload: Message) {
+        if (isNewMessage(payload.messageId)) {
+            messageLedger.upsertMessage(payload)
         } else {
-            echoLedger.incrementAnchoredCount(payload.messageId)
+            messageLedger.incrementAnchoredCount(payload.messageId)
         }
     }
 
     private fun sendAck(endpointId: String, messageId: String, receiverId: String, secretKey: SecretKey) {
-        val ack = Echo(
+        val ack = Message(
             messageId = messageId,
             senderId = repository.getDeviceId(),
             senderName = "ACK",
             content = "",
             timestamp = System.currentTimeMillis(),
-            type = Echo.TYPE_ACK,
+            type = Message.TYPE_ACK,
             receiverId = receiverId
         )
         sendMessageInternal(endpointId, ack, secretKey)
     }
 
-    private fun relayEcho(sourceEndpointId: String, payload: Echo) {
+    private fun relayMessage(sourceEndpointId: String, payload: Message) {
         if (payload.hopCount >= 3) return
         
         internalScope.launch(ioDispatcher) {
             val myId = repository.getDeviceId()
             if (payload.senderId == myId) return@launch
             
-            val relayedEcho = payload.copy(hopCount = payload.hopCount + 1)
-            val json = Json.encodeToString(Echo.serializer(), relayedEcho)
+            val relayedMessage = payload.copy(hopCount = payload.hopCount + 1)
+            val json = Json.encodeToString(Message.serializer(), relayedMessage)
             val bytes = json.encodeToByteArray()
             
             activeConnections.forEach { endpointId ->
                 if (endpointId != sourceEndpointId) {
                     messageKeys[endpointId]?.let { key ->
                         try {
-                            queueEcho(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
+                            queueMessage(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
                         } catch (_: Exception) {
                             Log.e(tag, "Relay fail to $endpointId")
                         }
@@ -832,7 +832,7 @@ class NearbyResonanceController(
         }
     }
 
-    private fun isNewEcho(messageId: String): Boolean = synchronized(messageIdHistory) {
+    private fun isNewMessage(messageId: String): Boolean = synchronized(messageIdHistory) {
         if (messageIdHistory.contains(messageId)) false else {
             messageIdHistory.add(messageId)
             if (messageIdHistory.size > 500) messageIdHistory.removeAt(0)
@@ -840,9 +840,9 @@ class NearbyResonanceController(
         }
     }
 
-    private fun isSpam(payload: Echo): Boolean {
+    private fun isSpam(payload: Message): Boolean {
         val now = System.currentTimeMillis()
-        val recentFromSender = echoLedger.echoes.value.count { it.senderId == payload.senderId && (now - it.timestamp) < 10000 }
+        val recentFromSender = messageLedger.messages.value.count { it.senderId == payload.senderId && (now - it.timestamp) < 10000 }
         return recentFromSender > 5
     }
 
@@ -852,7 +852,7 @@ class NearbyResonanceController(
         connectionsClient.sendPayload(endpointId, Payload.fromBytes(handshakePayload))
     }
 
-    private fun queueEcho(endpointId: String, payload: Payload) {
+    private fun queueMessage(endpointId: String, payload: Payload) {
         val queue = outgoingQueues[endpointId] ?: run {
             val newQueue = kotlinx.coroutines.channels.Channel<Payload>(kotlinx.coroutines.channels.Channel.UNLIMITED)
             val existing = outgoingQueues.putIfAbsent(endpointId, newQueue)
@@ -911,7 +911,7 @@ class NearbyResonanceController(
         return "$b$w$p"
     }
 
-    private fun finalizeFileEcho(payloadId: Long, partial: Echo) {
-        echoLedger.upsertEcho(partial.copy(messageId = "file_$payloadId", content = "FILE_RECEIVED"))
+    private fun finalizeFileMessage(payloadId: Long, partial: Message) {
+        messageLedger.upsertMessage(partial.copy(messageId = "file_$payloadId", content = "FILE_RECEIVED"))
     }
 }

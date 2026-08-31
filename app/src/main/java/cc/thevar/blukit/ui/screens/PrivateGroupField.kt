@@ -1,7 +1,7 @@
 /**
- * BLUKIT PRIVATE SPHERE FIELD
+ * BLUKIT PRIVATE GROUP FIELD
  *
- * Private/Secure Sphere view for families and focused groups.
+ * Private/Secure Group view for families and focused groups.
  */
 package cc.thevar.blukit.ui.screens
 
@@ -21,27 +21,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
-import cc.thevar.blukit.domain.model.SphereEvent
-import cc.thevar.blukit.ui.components.EchoRecordCreator
+import cc.thevar.blukit.domain.model.Group
+import cc.thevar.blukit.domain.model.GroupEvent
+import cc.thevar.blukit.ui.components.MessageRecordCreator
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.navigation.Route
+import cc.thevar.blukit.ui.components.*
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun PrivateSphereField(
-    state: cc.thevar.blukit.ui.viewmodels.BluetoothUiState,
+fun PrivateGroupField(
+    state: cc.thevar.blukit.ui.viewmodels.ConnectionUiState,
     localDeviceId: String,
-    sphereId: String?,
+    groupId: String?,
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
-    onVaultSphere: (String, Boolean) -> Unit = { _, _ -> },
-    onSeniorVaultSphere: (String, Boolean) -> Unit = { _, _ -> },
+    onVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
+    onSeniorVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
     onAssignRole: (String, String, String) -> Unit = { _, _, _ -> },
     onUpdateRecord: (String, String, String?, Int) -> Unit = { _, _, _, _ -> },
-    onPushRitual: (String, SphereEvent) -> Unit = { _, _ -> },
+    onPushRitual: (String, GroupEvent) -> Unit = { _, _ -> },
     showMemberManagement: Boolean = false,
     onShowManagement: () -> Unit = {},
     onDismissManagement: () -> Unit = {},
@@ -50,18 +51,18 @@ fun PrivateSphereField(
     onSearchToggle: (() -> Unit)? = null,
     onAcceptRadio: (Source) -> Unit = {},
     onDenyRadio: (Source) -> Unit = {},
-    onStartSidePulse: () -> Unit = {},
-    onStartChain: () -> Unit = {},
+    onStartWhisper: () -> Unit = {},
+    onStartSubGroup: () -> Unit = {},
     onClearSelection: () -> Unit = {},
-    onNavigateToSphere: (String) -> Unit = {},
-    onNavigateToPulse: (String) -> Unit = {},
+    onNavigateToGroup: (String) -> Unit = {},
+    onNavigateToMessage: (String) -> Unit = {},
     onSourceLongClick: (Source) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
     onInputFocusChange: (Boolean) -> Unit = {},
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    activeSpheres: List<Sphere> = emptyList(),
+    activeGroups: List<Group> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
@@ -75,41 +76,41 @@ fun PrivateSphereField(
 ) {
     var showTip by remember { mutableStateOf(value = true) }
     
-    val sphere = remember(sphereId, state.session.groups) {
-        state.session.groups.find { it.id == sphereId }
+    val group = remember(groupId, state.session.groups) {
+        state.session.groups.find { it.id == groupId }
     }
 
-    val childSpheres = remember(state.session.groups, sphereId) {
-        state.session.groups.filter { (it.parentId == sphereId) && (it.scope != Sphere.SCOPE_PUBLIC) }
+    val childGroups = remember(state.session.groups, groupId) {
+        state.session.groups.filter { (it.parentId == groupId) && (it.scope != Group.SCOPE_PUBLIC) }
     }
 
-    val resonanceList by remember(state.session.messages, sphereId, localDeviceId) {
+    val connectionList by remember(state.session.messages, groupId, localDeviceId) {
         derivedStateOf {
-            if (sphereId == null) emptyList()
+            if (groupId == null) emptyList()
             else {
                 state.session.messages
-                    .filter { it.groupId == sphereId && it.parentMessageId == null }
+                    .filter { it.groupId == groupId && it.parentMessageId == null }
                     .sortedBy { it.timestamp }
                     .map { msg ->
-                        val source = Source(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = Source.ResonanceMedium.BLUETOOTH)
+                        val source = Source(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = Source.ConnectionMedium.BLUETOOTH)
                         source to msg
                     }
             }
         }
     }
 
-    val echoCounts = remember(state.session.messages, sphereId) {
+    val messageCounts = remember(state.session.messages, groupId) {
         state.session.messages
-            .filter { it.groupId == sphereId && it.parentMessageId == null }
+            .filter { it.groupId == groupId && it.parentMessageId == null }
             .groupBy { it.senderId }
             .mapValues { it.value.size }
     }
-    val memberSet = remember(sphere, localDeviceId) { (sphere?.memberIds ?: emptySet()) - localDeviceId }
-    val isPrivate = sphere?.scope == Sphere.SCOPE_PRIVATE
+    val memberSet = remember(group, localDeviceId) { (group?.memberIds ?: emptySet()) - localDeviceId }
+    val isPrivate = group?.scope == Group.SCOPE_PRIVATE
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
 
     var showRecordEditor by remember { mutableStateOf(value = false) }
-    var activeRecord by remember { mutableStateOf<Echo?>(null) }
+    var activeRecord by remember { mutableStateOf<Message?>(null) }
     var showRecordCreator by remember { mutableStateOf(false) }
     var messageText by remember { mutableStateOf("") }
 
@@ -120,15 +121,15 @@ fun PrivateSphereField(
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = sphere?.name ?: "GROUP",
+                    title = group?.name ?: "GROUP",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    activeRooms = activeSpheres,
+                    activeGroups = activeGroups,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onBack = onBack,
                     themeColor = themeColor,
-                    userCount = sphere?.memberIds?.size ?: 0,
+                    userCount = group?.memberIds?.size ?: 0,
                     onModeChange = { onNavigateToLiveFeed() },
                     trailingContent = {
                         if (onSearchToggle != null) {
@@ -155,59 +156,59 @@ fun PrivateSphereField(
                     }
                 )
 
-                if (childSpheres.isNotEmpty()) {
+                if (childGroups.isNotEmpty()) {
                     TickerSectionHeader(title = "PRIVATE GROUPS", color = themeColor)
                     LazyRow(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(childSpheres) { tie ->
-                            SphereSummary(
+                        items(childGroups) { tie ->
+                            GroupSummary(
                                 title = tie.name,
                                 subtitle = "SUB-GROUP",
                                 icon = Icons.Rounded.Hearing,
                                 themeColor = StealthRose,
                                 count = tie.memberIds.size,
                                 lastUpdate = "ACTIVE",
-                                onClick = { onNavigateToSphere(tie.id) },
+                                onClick = { onNavigateToGroup(tie.id) },
                                 modifier = Modifier.width(280.dp)
                             )
                         }
                     }
                 }
 
-                ResonanceTicker(
+                ConnectionTicker(
                     state = state,
-                    resonanceList = resonanceList,
-                    echoCounts = echoCounts,
+                    connectionList = connectionList,
+                    messageCounts = messageCounts,
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = memberSet,
                     isGrouped = false,
                     reverseLayout = true,
-                    onEchoClick = { onNavigateToPulse(it) },
-                    onSourceClick = { dev -> onNavigateToPulse(dev.id) },
+                    onMessageClick = { onNavigateToMessage(it) },
+                    onSourceClick = { dev -> onNavigateToMessage(dev.id) },
                     onSourceLongClick = onSourceLongClick,
                     modifier = Modifier.weight(1f),
                     themeColor = themeColor,
                     trend = trend
                 )
 
-                EchoHub(
-                    currentRoute = Route.SphereField(sphereId ?: ""),
+                MessageHub(
+                    currentRoute = Route.GroupField(groupId ?: ""),
                     messageText = messageText,
                     onMessageChange = { messageText = it },
                     onSend = { 
                         onSend(messageText)
                         messageText = ""
                     },
-                    messageCount = state.session.messages.filter { it.groupId == sphereId }.size,
+                    messageCount = state.session.messages.filter { it.groupId == groupId }.size,
                     incomingRadioRequests = state.crowd.incomingRadioRequests,
                     selectedDevices = state.crowd.selectedDevices,
                     onAcceptRadio = onAcceptRadio,
                     onDenyRadio = onDenyRadio,
-                    onStartSidePulse = onStartSidePulse,
-                    onStartChain = onStartChain, 
+                    onStartWhisper = onStartWhisper,
+                    onStartSubGroup = onStartSubGroup, 
                     onClearSelection = onClearSelection,
                     onAttachFile = { },
                     isSearchMode = isSearchActive,
@@ -225,7 +226,7 @@ fun PrivateSphereField(
             }
 
             AnimatedVisibility(
-                visible = showTip && resonanceList.isEmpty() && childSpheres.isEmpty(),
+                visible = showTip && connectionList.isEmpty() && childGroups.isEmpty(),
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
                 modifier = Modifier.align(Alignment.TopCenter)
@@ -239,11 +240,11 @@ fun PrivateSphereField(
         }
     )
 
-    if (showRecordEditor && sphere != null) {
+    if (showRecordEditor && group != null) {
         RecordEditor(
             record = activeRecord,
             onSave = { content ->
-                onUpdateRecord(sphere.id, content, activeRecord?.messageId, (activeRecord?.noteVersion ?: 0) + 1)
+                onUpdateRecord(group.id, content, activeRecord?.messageId, (activeRecord?.noteVersion ?: 0) + 1)
                 showRecordEditor = false
                 activeRecord = null
             },
@@ -254,7 +255,7 @@ fun PrivateSphereField(
         )
     }
 
-    if (showRecordCreator && sphere != null) {
+    if (showRecordCreator && group != null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -262,7 +263,7 @@ fun PrivateSphereField(
                 .clickable { showRecordCreator = false },
             contentAlignment = Alignment.Center
         ) {
-            EchoRecordCreator(
+            MessageRecordCreator(
                 onRecordCreated = { content, _ ->
                     onSend(content)
                 },
@@ -272,7 +273,7 @@ fun PrivateSphereField(
         }
     }
 
-    if (showMemberManagement && sphere != null) {
+    if (showMemberManagement && group != null) {
         AlertDialog(
             onDismissRequest = onDismissManagement,
             containerColor = StealthBlack,
@@ -282,9 +283,9 @@ fun PrivateSphereField(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("PEOPLE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
-                    sphere.memberIds.forEach { memberId ->
+                    group.memberIds.forEach { memberId ->
                         val member = state.crowd.scannedDevices.find { it.id == memberId || it.persistentId == memberId }
-                        val currentRole = sphere.userRoles[memberId]
+                        val currentRole = group.userRoles[memberId]
                         
                         Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -296,19 +297,19 @@ fun PrivateSphereField(
                                     style = MaterialTheme.typography.bodyLarge
                                 )
                                 if (memberId != localDeviceId) {
-                                    IconButton(onClick = { onRemoveMember(sphere.id, memberId) }) {
+                                    IconButton(onClick = { onRemoveMember(group.id, memberId) }) {
                                         Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Remove", tint = StealthError.copy(alpha = 0.6f))
                                     }
                                 }
                             }
                             
-                            val template = cc.thevar.blukit.domain.model.RoomTemplates.ALL.find { it.id == sphere.templateId }
+                            val template = cc.thevar.blukit.domain.model.RoomTemplates.ALL.find { it.id == group.templateId }
                             if (template != null && template.roles.isNotEmpty()) {
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(start = 24.dp)) {
                                     items(template.roles) { role ->
                                         val isAssigned = currentRole == role
                                         Surface(
-                                            onClick = { onAssignRole(sphere.id, memberId, role) }, 
+                                            onClick = { onAssignRole(group.id, memberId, role) }, 
                                             color = if (isAssigned) StealthPrimary.copy(alpha = StealthAlphaLow) else Color.White.copy(alpha = 0.05f),
                                             shape = RoundedCornerShape(8.dp),
                                             border = BorderStroke(1.dp, if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.1f))
@@ -329,8 +330,8 @@ fun PrivateSphereField(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Text("GROUP ARCHIVE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
                         Switch(
-                            checked = sphere.isVaulted,
-                            onCheckedChange = { onVaultSphere(sphere.id, it) },
+                            checked = group.isVaulted,
+                            onCheckedChange = { onVaultGroup(group.id, it) },
                             colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary, checkedTrackColor = StealthPrimary.copy(alpha = 0.3f))
                         )
                     }
@@ -340,16 +341,16 @@ fun PrivateSphereField(
                             Text("EXEMPT FROM ALL DECAY", fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f))
                         }
                         Switch(
-                            checked = sphere.isSeniorVault,
-                            onCheckedChange = { onSeniorVaultSphere(sphere.id, it) },
+                            checked = group.isSeniorVault,
+                            onCheckedChange = { onSeniorVaultGroup(group.id, it) },
                             colors = SwitchDefaults.colors(checkedThumbColor = StealthRose, checkedTrackColor = StealthRose.copy(alpha = 0.3f))
                         )
                     }
-                    if (sphere.schedules.isNotEmpty()) {
+                    if (group.schedules.isNotEmpty()) {
                         HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("SHARE EVENTS", style = MaterialTheme.typography.labelSmall, color = StealthPrimary.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
-                            IconButton(onClick = { sphere.schedules.firstOrNull()?.let { onPushRitual(sphere.id, it) } }) {
+                            IconButton(onClick = { group.schedules.firstOrNull()?.let { onPushRitual(group.id, it) } }) {
                                 Icon(Icons.Rounded.IosShare, contentDescription = "Push", tint = StealthPrimary, modifier = Modifier.size(16.dp))
                             }
                         }
@@ -363,7 +364,7 @@ fun PrivateSphereField(
 
 @Composable
 fun RecordEditor(
-    record: Echo?,
+    record: Message?,
     onSave: (String) -> Unit,
     onDismiss: () -> Unit
 ) {

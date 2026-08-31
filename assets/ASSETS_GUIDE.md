@@ -10,14 +10,14 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 1.  Open `MarketPreviews.kt` in Android Studio.
 2.  Switch to the **Design** or **Split** view.
 3.  Locate the following previews:
-    -   `PreviewRadarPhone`: The main **Sensing Radar** showing the full-screen **Resonance Stream** overlaid on the atmospheric **Resonance Field**. Features animated **Energy Trails** around Sources and the AI-driven **Vibe Heatmap**. Includes the top **Synthesis Aura** glowing with the Sphere's current trend.
-    -   `PreviewChatPhone`: The **Sphere Field** and **Private Sphere** interface showing **Resonance** headers with **Interactive Mini Radars**, high-density "JOIN" affordances, and Source counts.
+    -   `PreviewRadarPhone`: The main **Nearby Radar** showing the full-screen **Connection Stream** overlaid on the atmospheric **Connection Field**. Features animated **Energy Trails** around Sources and the AI-driven **Vibe Heatmap**. Includes the top **Synthesis Aura** glowing with the Group's current trend.
+    -   `PreviewChatPhone`: The **Group Field** and **Private Group** interface showing **Connection** headers with **Interactive Mini Radars**, high-density "JOIN" affordances, and Source counts.
     -   `PreviewTimelineField`: The **Ledger** view showing shared **Records** grouped by **Synthesis Events** (e.g., "Study Session", "Social Hour") and the "Anchored" persistence indicators.
-    -   `PreviewEchoField`: The granular breakdown of a specific **Echo** into its constituent units.
+    -   `PreviewMessageField`: The granular breakdown of a specific **Message** into its constituent units.
     -   `PreviewTacticalHeader`: The low-profile Row 0 resonance controls (Eco, Stealth, Radios).
-    -   `PreviewHumanityStage`: The Row 1 navigation and identity anchor, now situated in the Sensing Header.
-    -   `PreviewSphereRitualGhost`: The **Resonance Ghost** interaction model for naming Spheres and selecting **Templates**.
-    -   `PreviewSourceOptionsMenu`: The granular control menu for managing **Sources** (Block, Unblock, Add to Sphere).
+    -   `PreviewHumanityStage`: The Row 1 navigation and identity anchor, now situated in the Nearby Header.
+    -   `PreviewGroupRitualGhost`: The **Connection Ghost** interaction model for naming Groups and selecting **Templates**.
+    -   `PreviewSourceOptionsMenu`: The granular control menu for managing **Sources** (Block, Unblock, Add to Group).
 4.  Use the **"Copy Image"** or **"Screenshot"** icon in the preview header to save the high-resolution render.
 
 ## 🎨 Asset Specifications
@@ -29,4 +29,4 @@ I have established a dedicated preview file at `app/src/main/java/cc/thevar/bluk
 | **Phone Screenshots** | 1080 x 1920+ px | Capture from `PreviewRadarPhone`, `PreviewChatPhone`, and `PreviewTimelineField`. |
 
 ## 🚀 Pro Tip
-For the **Feature Graphic**, use a dark background (#000000) with **Stealth Rose** (#FF4081) and **Amber** (#FFB300) gradients to reflect the **Rose Resonance** and the shifting atmospheric colors of the field.
+For the **Feature Graphic**, use a dark background (#000000) with **Stealth Rose** (#FF4081) and **Amber** (#FFB300) gradients to reflect the **Rose Connection** and the shifting atmospheric colors of the field.

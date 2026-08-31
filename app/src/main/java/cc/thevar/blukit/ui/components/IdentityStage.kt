@@ -21,12 +21,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.Echo
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Message
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.theme.*
+import cc.thevar.blukit.ui.screens.StatusIcon
 
 /**
- * Provides a composite view of system resonance statuses.
+ * Provides a composite view of system connection statuses.
  */
 @Composable
 fun MixedStatusBranding(
@@ -43,36 +44,12 @@ fun MixedStatusBranding(
     }
 }
 
-@Composable
-fun StatusIcon(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    isOn: Boolean,
-    isWeak: Boolean,
-    isPermissionMissing: Boolean,
-    onClick: () -> Unit,
-    onColor: Color
-) {
-    IconButton(onClick = onClick, modifier = Modifier.size(32.dp)) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = when {
-                isPermissionMissing -> StealthError.copy(alpha = StealthAlphaMedium)
-                isOn -> onColor
-                isWeak -> onColor.copy(alpha = StealthAlphaMedium)
-                else -> Color.White.copy(alpha = StealthAlphaLow)
-            },
-            modifier = Modifier.size(18.dp)
-        )
-    }
-}
-
 /**
- * A minimalist real-time counter of active Spheres within the current field context.
+ * A minimalist real-time counter of active Groups within the current field context.
  */
 @Composable
-fun SphereTicker(title: String, modifier: Modifier = Modifier, spheres: List<Sphere> = emptyList()) {
-    val infiniteTransition = rememberInfiniteTransition(label = "SphereTicker")
+fun GroupTicker(title: String, modifier: Modifier = Modifier, groups: List<Group> = emptyList()) {
+    val infiniteTransition = rememberInfiniteTransition(label = "GroupTicker")
     val alpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 0.7f, animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse), label = "Alpha")
     
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
@@ -85,9 +62,9 @@ fun SphereTicker(title: String, modifier: Modifier = Modifier, spheres: List<Sph
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(6.dp).background(StealthPrimary.copy(alpha = alpha), CircleShape))
                 Spacer(modifier = Modifier.width(8.dp))
-                val spheresLabel = if (spheres.isEmpty()) "nearby people" else "${spheres.size} Groups active"
+                val groupsLabel = if (groups.isEmpty()) "nearby people" else "${groups.size} Groups active"
                 Text(
-                    text = spheresLabel, 
+                    text = groupsLabel, 
                     style = MaterialTheme.typography.labelSmall,
                     color = StealthPrimary.copy(alpha = StealthAlphaHigh)
                 )
@@ -97,13 +74,13 @@ fun SphereTicker(title: String, modifier: Modifier = Modifier, spheres: List<Sph
 }
 
 /**
- * ECHO CANVAS: The spatial intelligence header for high-resonance Echoes.
+ * MESSAGE CANVAS: The spatial intelligence header for high-connection Messages.
  */
 @Composable
-fun EchoCanvas(
-    highResonanceEchoes: List<Echo>,
+fun MessageCanvas(
+    highConnectionMessages: List<Message>,
     themeColor: Color,
-    onEchoClick: (String) -> Unit,
+    onMessageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -113,17 +90,17 @@ fun EchoCanvas(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        highResonanceEchoes.forEach { echo ->
+        highConnectionMessages.forEach { message ->
             val infiniteTransition = rememberInfiniteTransition(label = "CanvasGlow")
             val glowScale by infiniteTransition.animateFloat(
                 initialValue = 1f,
                 targetValue = 1.15f,
                 animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-                label = "Echo"
+                label = "Message"
             )
 
             Surface(
-                onClick = { onEchoClick(echo.messageId) },
+                onClick = { onMessageClick(message.messageId) },
                 color = StealthBlack.copy(alpha = StealthAlphaHigh),
                 shape = CircleShape,
                 border = BorderStroke(1.dp, themeColor.copy(alpha = StealthAlphaHigh)),
@@ -136,7 +113,7 @@ fun EchoCanvas(
                     }
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(text = echo.senderEmoji ?: "🔥", fontSize = 16.sp)
+                    Text(text = message.senderEmoji ?: "🔥", fontSize = 16.sp)
                 }
             }
         }
@@ -159,7 +136,7 @@ fun BreadcrumbHub(
     ) {
         trail.forEachIndexed { index, crumb ->
             Text(
-                text = crumb, // Removed .uppercase()
+                text = crumb, 
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = (if (index == (trail.size - 1)) FontWeight.Black else FontWeight.Bold),
                     color = (if (index == (trail.size - 1)) Color.White else Color.White.copy(alpha = StealthAlphaHigh)),
@@ -179,7 +156,7 @@ fun BreadcrumbHub(
 }
 
 @Composable
-fun ResonanceHeader(
+fun ConnectionHeader(
     themeColor: Color,
     onAwakenBluetooth: () -> Unit,
     onAwakenWifi: () -> Unit,
@@ -191,19 +168,19 @@ fun ResonanceHeader(
     isWifiOff: Boolean = false,
     isPermissionMissing: Boolean = false,
     isPermanentlyDenied: Boolean = false,
-    resonanceStatus: String? = null,
+    connectionStatus: String? = null,
     breeze: String? = null,
-    highResonanceMessages: List<Echo> = emptyList(),
+    highConnectionMessages: List<Message> = emptyList(),
     trail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     trend: String? = null
 ) {
     val auraColor = when (trend) {
-        "ACADEMIC RITUAL" -> AtmosphereAcademic
-        "URBAN TRANSIT" -> AtmosphereTransit
-        "SOCIAL SYNERGY" -> AtmosphereSocial
-        "ROOM NOURISHMENT" -> AtmosphereFood
-        "COLLECTIVE ACTION" -> AtmosphereAction
+        "ACADEMIC RITUAL" -> AssistantAcademic
+        "URBAN TRANSIT" -> AssistantTransit
+        "SOCIAL SYNERGY" -> AssistantSocial
+        "ROOM NOURISHMENT" -> AssistantFood
+        "COLLECTIVE ACTION" -> AssistantAction
         else -> themeColor
     }
 
@@ -291,7 +268,7 @@ fun ResonanceHeader(
                         Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = breeze ?: resonanceStatus ?: "Resonating...", 
+                            text = breeze ?: connectionStatus ?: "Connecting...", 
                             style = MaterialTheme.typography.labelSmall,
                             color = StealthAmber,
                             maxLines = 1,
@@ -301,11 +278,11 @@ fun ResonanceHeader(
                 }
             }
 
-            if (highResonanceMessages.isNotEmpty()) {
-                EchoCanvas(
-                    highResonanceEchoes = highResonanceMessages,
+            if (highConnectionMessages.isNotEmpty()) {
+                MessageCanvas(
+                    highConnectionMessages = highConnectionMessages,
                     themeColor = themeColor,
-                    onEchoClick = { /* Handled by parent */ },
+                    onMessageClick = { /* Handled by parent */ },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -358,7 +335,7 @@ fun IdentityStage(
     title: String,
     breadcrumbTrail: List<String>,
     onCrumbClick: (Int) -> Unit,
-    activeRooms: List<Sphere>,
+    activeGroups: List<Group>,
     onShowTimeline: () -> Unit,
     onResetProfile: () -> Unit,
     onBack: (() -> Unit)?,

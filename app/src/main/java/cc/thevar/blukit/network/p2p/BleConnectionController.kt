@@ -1,7 +1,7 @@
 /**
- * BLUKIT NETWORK: BLE FALLBACK CONTROLLER
+ * BLUKIT NETWORK: BLE CONNECTION CONTROLLER
  *
- * A native BLE engine used when Google Nearby Connections is unavailable or fails.
+ * A native BLE engine used when standard P2P connections are unavailable.
  */
 package cc.thevar.blukit.network.p2p
 
@@ -26,13 +26,13 @@ import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.data.local.MessageRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,15 +59,15 @@ import javax.crypto.SecretKey
 /**
  * Native BLE engine for tactical fallback.
  */
-class BleFallbackController(
+class BleConnectionController(
     private val context: Context,
     private val repository: IdentityRepository,
-    private val echoLedger: EchoLedger,
+    private val messageRepository: MessageRepository,
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
-) : ResonanceController {
+) : ConnectionController {
 
     private val tag = "BlukitBLE"
     private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
@@ -75,15 +75,15 @@ class BleFallbackController(
 
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
-    // --- ResonanceController State Implementation ---
+    // --- ConnectionController State Implementation ---
     private val _scannedSources = MutableStateFlow<List<Source>>(emptyList())
     override val scannedDevices = _scannedSources.asStateFlow()
 
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedSpheres = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedGroups = _connectedSpheres.asStateFlow()
+    private val _connectedGroups = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedGroups = _connectedGroups.asStateFlow()
 
     private val _incomingRadioRequests = MutableStateFlow<Set<Source>>(emptySet())
     override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
@@ -91,19 +91,19 @@ class BleFallbackController(
     private val _outgoingRadioRequests = MutableStateFlow<Set<Source>>(emptySet())
     override val outgoingRadioRequests = _outgoingRadioRequests.asStateFlow()
 
-    private val _isSensing = MutableStateFlow(value = false)
-    override val isDiscovering = _isSensing.asStateFlow()
+    private val _isNearby = MutableStateFlow(value = false)
+    override val isDiscovering = _isNearby.asStateFlow()
 
     private val _isAdvertising = MutableStateFlow(value = false)
     override val isAdvertising = _isAdvertising.asStateFlow()
 
-    private val _resonanceErrors = MutableStateFlow<ResonanceError?>(null)
-    override val errors = _resonanceErrors.asStateFlow()
+    private val _connectionErrors = MutableStateFlow<ConnectionError?>(null)
+    override val errors = _connectionErrors.asStateFlow()
 
-    private val _discoveredSpheres = MutableSharedFlow<Sphere>(extraBufferCapacity = 5)
-    override val discoveredRooms = _discoveredSpheres.asSharedFlow()
+    private val _discoveredGroups = MutableSharedFlow<Group>(extraBufferCapacity = 5)
+    override val discoveredGroups = _discoveredGroups.asSharedFlow()
 
-    override val messages: StateFlow<List<Echo>> = echoLedger.echoes
+    override val messages: StateFlow<List<Message>> = messageRepository.messages
     override val syncProgress: StateFlow<Float?> = MutableStateFlow(null)
 
     private val messageKeys = ConcurrentHashMap<String, SecretKey>()
@@ -140,8 +140,8 @@ class BleFallbackController(
         }
 
         override fun onScanFailed(errorCode: Int) {
-            Log.e(tag, "Sensing failed: $errorCode")
-            _isSensing.value = false
+            Log.e(tag, "Nearby failed: $errorCode")
+            _isNearby.value = false
         }
     }
 
@@ -191,13 +191,13 @@ class BleFallbackController(
             try {
                 gatt.discoverServices()
             } catch (_: SecurityException) {
-                reportError(ResonanceError.ConnectionError("Permission Denied for Service Discovery"))
+                reportError(ConnectionError.LinkError("Permission Denied for Service Discovery"))
             }
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
             Log.i(tag, "GATT: Disconnected from $address")
             activeGatts.remove(address)
             pendingRadioRequests.remove(address)
-            _connectedSpheres.update { it - address }
+            _connectedGroups.update { it - address }
             if (activeGatts.isEmpty()) _isConnected.value = false
             updateScannedSources()
         }
@@ -207,12 +207,12 @@ class BleFallbackController(
         val address = gatt.device.address
         if (status == BluetoothGatt.GATT_SUCCESS) {
             activeGatts[address] = gatt
-            _connectedSpheres.update { it + address }
+            _connectedGroups.update { it + address }
             _isConnected.value = true
             sendHandshake(address)
         } else {
             Log.e(tag, "Service discovery failed with status: $status")
-            reportError(ResonanceError.ConnectionError("Service discovery failed"))
+            reportError(ConnectionError.LinkError("Service discovery failed"))
         }
     }
 
@@ -246,7 +246,7 @@ class BleFallbackController(
         if (data.isNotEmpty() && (data[0] == HANDSHAKE_PREFIX)) {
             handleHandshake(address, data)
         } else {
-            handleEcho(address, data)
+            handleMessage(address, data)
         }
     }
 
@@ -257,73 +257,73 @@ class BleFallbackController(
             val messagePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
             val sharedSecret = cryptoManager.deriveSharedSecret(messagePublicKey)
             messageKeys[address] = sharedSecret
-            Log.i(tag, "SECURE: Resonance ready for $address (BLE)")
+            Log.i(tag, "SECURE: Connection ready for $address (BLE)")
             updateScannedSources()
         } catch (e: Exception) {
             Log.e(tag, "Handshake error: ${e.message}")
         }
     }
 
-    private fun handleEcho(address: String, data: ByteArray) {
+    private fun handleMessage(address: String, data: ByteArray) {
         val secretKey = messageKeys[address] ?: return
         try {
             val decryptedBytes = cryptoManager.decrypt(data, secretKey)
-            val payload = Json.decodeFromString<Echo>(decryptedBytes.decodeToString())
+            val payload = Json.decodeFromString<Message>(decryptedBytes.decodeToString())
 
             when (payload.type) {
-                Echo.TYPE_ACK -> handleAck(payload)
+                Message.TYPE_ACK -> handleAck(payload)
                 else -> {
-                    if (isNewEcho(payload.messageId) && (payload.senderId !in repository.blockedUsers.value)) {
-                        handleResonanceEcho(address, payload, secretKey)
+                    if (isNewMessage(payload.messageId) && (payload.senderId !in repository.blockedUsers.value)) {
+                        handleIncomingMessage(address, payload, secretKey)
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.e(tag, "Echo decrypt error: ${e.message}")
-            reportError(ResonanceError.EncryptionError("Failed to decrypt incoming Echo"))
+            Log.e(tag, "Message decrypt error: ${e.message}")
+            reportError(ConnectionError.EncryptionError("Failed to decrypt incoming Message"))
         }
     }
 
-    private fun handleAck(payload: Echo) {
+    private fun handleAck(payload: Message) {
         internalScope.launch(ioDispatcher) {
-            echoLedger.updateEchoStatus(payload.messageId, Echo.STATUS_DELIVERED)
+            messageRepository.updateMessageStatus(payload.messageId, Message.STATUS_DELIVERED)
         }
     }
 
-    private fun handleResonanceEcho(address: String, payload: Echo, secretKey: SecretKey) {
+    private fun handleIncomingMessage(address: String, payload: Message, secretKey: SecretKey) {
         sendAck(address, payload, secretKey)
         if (payload.receiverId.isNullOrEmpty()) {
-            relayEcho(address, payload)
+            relayMessage(address, payload)
         }
 
         internalScope.launch(ioDispatcher) {
             val gid = payload.groupId
             val gName = payload.groupName
             if ((gid != null) && (gName != null)) {
-                val existing = echoLedger.getSphere(gid)
+                val existing = messageRepository.getGroup(gid)
                 if (existing == null) {
                     val scope = when (payload.messageScope) {
-                        Echo.MESSAGE_SHOUT -> Sphere.SCOPE_PUBLIC
-                        Echo.MESSAGE_SILENCE -> Sphere.SCOPE_LOCAL
-                        else -> Sphere.SCOPE_PRIVATE
+                        Message.MESSAGE_SHOUT -> Group.SCOPE_PUBLIC
+                        Message.MESSAGE_SILENCE -> Group.SCOPE_LOCAL
+                        else -> Group.SCOPE_PRIVATE
                     }
-                    echoLedger.insertSphere(
-                        Sphere(
+                    messageRepository.insertGroup(
+                        Group(
                             id = gid,
                             name = gName,
                             scope = scope,
-                            parentId = Sphere.ID_GLOBAL,
+                            parentId = Group.ID_GLOBAL,
                         ),
                     )
                 }
             }
 
-            echoLedger.upsertEcho(payload)
+            messageRepository.upsertMessage(payload)
             hapticManager.triggerMessage(HapticManager.MessageType.MESSAGE)
         }
     }
 
-    private fun relayEcho(sourceAddress: String, payload: Echo) {
+    private fun relayMessage(sourceAddress: String, payload: Message) {
         if (payload.hopCount >= 3) return
 
         internalScope.launch(ioDispatcher) {
@@ -331,7 +331,7 @@ class BleFallbackController(
             if (payload.senderId == myId) return@launch
 
             val relayedPayload = payload.copy(hopCount = payload.hopCount + 1)
-            val json = Json.encodeToString(Echo.serializer(), relayedPayload)
+            val json = Json.encodeToString(Message.serializer(), relayedPayload)
             val bytes = json.encodeToByteArray()
 
             activeGatts.forEach { (address, _) ->
@@ -349,19 +349,19 @@ class BleFallbackController(
         }
     }
 
-    private fun sendAck(address: String, originalPayload: Echo, secretKey: SecretKey) {
-        val ack = Echo(
+    private fun sendAck(address: String, originalPayload: Message, secretKey: SecretKey) {
+        val ack = Message(
             messageId = originalPayload.messageId,
             senderId = repository.getDeviceId(),
             senderName = "",
             content = "",
             timestamp = System.currentTimeMillis(),
-            type = Echo.TYPE_ACK,
+            type = Message.TYPE_ACK,
             receiverId = originalPayload.senderId,
         )
         internalScope.launch(ioDispatcher) {
             try {
-                val json = Json.encodeToString(Echo.serializer(), ack)
+                val json = Json.encodeToString(Message.serializer(), ack)
                 val encryptedAck = cryptoManager.encrypt(json.toByteArray(), secretKey)
                 sendData(address, encryptedAck)
             } catch (e: Exception) {
@@ -370,7 +370,7 @@ class BleFallbackController(
         }
     }
 
-    private fun isNewEcho(id: String): Boolean = synchronized(messageIdHistory) {
+    private fun isNewMessage(id: String): Boolean = synchronized(messageIdHistory) {
         if (messageIdHistory.contains(id)) false else {
             messageIdHistory.add(id)
             if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
@@ -399,11 +399,11 @@ class BleFallbackController(
 
     override fun startDiscovery() {
         if ((adapter == null) || !adapter.isEnabled) {
-            reportError(ResonanceError.SensingError("Bluetooth Disabled"))
+            reportError(ConnectionError.NearbyError("Bluetooth Disabled"))
             return
         }
         val scanner = adapter.bluetoothLeScanner ?: return
-        _isSensing.value = true
+        _isNearby.value = true
         
         val filter = ScanFilter.Builder()
             .setServiceUuid(ParcelUuid(SERVICE_UUID))
@@ -416,14 +416,14 @@ class BleFallbackController(
         try {
             scanner.startScan(listOf(filter), settings, scanCallback)
         } catch (_: SecurityException) {
-            reportError(ResonanceError.SensingError("Permission Denied"))
-            _isSensing.value = false
+            reportError(ConnectionError.NearbyError("Permission Denied"))
+            _isNearby.value = false
         }
     }
 
     override fun stopDiscovery() {
-        if (!_isSensing.value) return
-        _isSensing.value = false
+        if (!_isNearby.value) return
+        _isNearby.value = false
         try {
             adapter?.bluetoothLeScanner?.stopScan(scanCallback)
         } catch (e: SecurityException) {
@@ -434,7 +434,7 @@ class BleFallbackController(
 
     override fun startAdvertising() {
         if ((adapter == null) || (!adapter.isEnabled)) {
-            reportError(ResonanceError.AdvertisingError("Bluetooth Disabled"))
+            reportError(ConnectionError.AdvertisingError("Bluetooth Disabled"))
             return
         }
         val advertiser = adapter.bluetoothLeAdvertiser ?: return
@@ -459,7 +459,7 @@ class BleFallbackController(
             advertiser.startAdvertising(settings, data, advertiseCallback)
             startGattServer()
         } catch (_: SecurityException) {
-            reportError(ResonanceError.AdvertisingError("Permission Denied"))
+            reportError(ConnectionError.AdvertisingError("Permission Denied"))
             _isAdvertising.value = false
         }
     }
@@ -477,7 +477,7 @@ class BleFallbackController(
             gattServer?.addService(service)
         } catch (e: SecurityException) {
             Log.e(tag, "GATT Server start fail: ${e.message}")
-            reportError(ResonanceError.AdvertisingError("Permission Denied for GATT Server"))
+            reportError(ConnectionError.AdvertisingError("Permission Denied for GATT Server"))
         }
     }
 
@@ -502,7 +502,7 @@ class BleFallbackController(
     override fun isNearbyConnected(endpointId: String): Boolean = false
     override fun acceptRadio(device: Source) {
         pendingRadioRequests.remove(device.id)
-        _connectedSpheres.update { it + device.id }
+        _connectedGroups.update { it + device.id }
         _isConnected.value = true
         updateScannedSources()
     }
@@ -512,8 +512,8 @@ class BleFallbackController(
         updateScannedSources()
     }
 
-    override fun joinRoom(groupId: String) {
-        echoLedger.joinSphere(groupId, repository.getDeviceId())
+    override fun joinGroup(groupId: String) {
+        messageRepository.joinGroup(groupId, repository.getDeviceId())
     }
 
     override fun connectToDevice(device: Source): SharedFlow<ConnectionStatus> {
@@ -531,7 +531,7 @@ class BleFallbackController(
         } catch (e: SecurityException) {
             Log.e("BleFallback", "Permission Denied: ${e.message}")
             flow.tryEmit(ConnectionStatus.Error("Permission Denied"))
-            reportError(ResonanceError.ConnectionError("Permission Denied"))
+            reportError(ConnectionError.LinkError("Permission Denied"))
         }
 
         return flow.asSharedFlow()
@@ -545,12 +545,12 @@ class BleFallbackController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? {
+    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Message? {
         groupId?.let { gid ->
-            if (!echoLedger.isMember(gid, repository.getDeviceId())) return null
+            if (!messageRepository.isMember(gid, repository.getDeviceId())) return null
         }
 
-        val payload = Echo(
+        val payload = Message(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
             senderName = repository.getCurrentNickname(),
@@ -563,7 +563,7 @@ class BleFallbackController(
             messageScope = messageScope,
             type = type,
         )
-        val json = Json.encodeToString(Echo.serializer(), payload)
+        val json = Json.encodeToString(Message.serializer(), payload)
         val bytes = json.toByteArray()
 
         try {
@@ -580,7 +580,7 @@ class BleFallbackController(
                     }
                 }
             }
-            echoLedger.upsertEcho(payload)
+            messageRepository.upsertMessage(payload)
             synchronized(messageIdHistory) {
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
@@ -595,57 +595,57 @@ class BleFallbackController(
         _scannedSources.update { current ->
             current.map { device ->
                 device.copy(
-                    isConnected = device.id in _connectedSpheres.value,
+                    isConnected = device.id in _connectedGroups.value,
                     isGroupPending = device.id in pendingRadioRequests,
                 )
             }
         }
     }
 
-    private fun reportError(error: ResonanceError) {
-        internalScope.launch { _resonanceErrors.emit(error) }
+    private fun reportError(error: ConnectionError) {
+        internalScope.launch { _connectionErrors.emit(error) }
     }
 
-    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? {
+    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Message? {
         return sendMessage(content, null, messageScope, messageId, groupId, groupName, type)
     }
 
-    override suspend fun broadcastIdentityUpdate(oldName: String): Echo {
-        return Echo(
+    override suspend fun broadcastIdentityUpdate(oldName: String): Message {
+        return Message(
             messageId = "ble-placeholder",
             senderId = "ble",
             senderName = "ble",
             content = oldName,
             timestamp = System.currentTimeMillis(),
-            type = Echo.TYPE_IDENTITY_UPDATE
+            type = Message.TYPE_IDENTITY_UPDATE
         )
     }
 
-    override suspend fun sendGroupMessage(content: String, groupId: String): Echo? {
+    override suspend fun sendGroupMessage(content: String, groupId: String): Message? {
         return sendMessage(content, null)?.copy(groupId = groupId)
     }
 
-    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): Echo? {
-        return sendMessage(content, null, Echo.MESSAGE_WHISPER, messageId, groupId, null)?.copy(type = Echo.TYPE_NOTE_UPDATE, noteVersion = version)
+    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): Message? {
+        return sendMessage(content, null, Message.MESSAGE_WHISPER, messageId, groupId, null)?.copy(type = Message.TYPE_NOTE_UPDATE, noteVersion = version)
     }
 
-    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): Echo? {
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): Message? {
         Log.w(tag, "File sharing not supported on BLE Fallback")
         return null
     }
 
-    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?, anchoredPublicSphereId: String?): String {
-        val gid = groupId ?: Sphere.generateId(name, type)
+    override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?, anchoredPublicGroupId: String?): String {
+        val gid = groupId ?: Group.generateId(name, type)
         internalScope.launch(ioDispatcher) {
-            echoLedger.insertSphere(
-                Sphere(
+            messageRepository.insertGroup(
+                Group(
                     id = gid,
                     name = name,
                     memberIds = members + repository.getDeviceId(),
                     scope = type,
                     parentId = parentId,
                     ownerId = repository.getDeviceId(),
-                    anchoredPublicSphereId = anchoredPublicSphereId
+                    anchoredPublicGroupId = anchoredPublicGroupId
                 )
             )
         }
@@ -654,13 +654,13 @@ class BleFallbackController(
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
         internalScope.launch(ioDispatcher) {
-            echoLedger.updateSphereMembers(groupId, memberIds)
+            messageRepository.updateGroupMembers(groupId, memberIds)
         }
     }
 
     override fun updateGroupScope(groupId: String, scope: Int) {
         internalScope.launch(ioDispatcher) {
-            echoLedger.updateSphereScope(groupId, scope)
+            messageRepository.updateGroupScope(groupId, scope)
         }
     }
 
@@ -680,7 +680,7 @@ class BleFallbackController(
         activeGatts.clear()
         messageKeys.clear()
         _isConnected.value = false
-        _connectedSpheres.value = emptySet()
+        _connectedGroups.value = emptySet()
     }
 
     override fun release() {

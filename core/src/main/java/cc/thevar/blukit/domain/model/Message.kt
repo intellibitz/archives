@@ -1,26 +1,26 @@
 /**
- * BLUKIT CORE DOMAIN: ECHO
+ * BLUKIT CORE DOMAIN: MESSAGE
  *
  * The atomic unit of communication in the mesh.
- * Contains all necessary metadata for local resonance.
+ * Contains all necessary metadata for local connection.
  */
 package cc.thevar.blukit.domain.model
 
 import kotlinx.serialization.Serializable
 
 /**
- * Data packet representing a single Echo or shared item.
+ * Data packet representing a single Message or shared item.
  * 
- * @property messageId Unique UUID for deduplication across local resonance links.
+ * @property messageId Unique UUID for deduplication across local connection links.
  * @property senderId Hardware ID of the originating Source.
- * @property content The core Echo (Text, JSON, or file reference).
+ * @property content The core Message (Text, JSON, or file reference).
  * @property timestamp Epoch time of creation for chronological ordering.
  * @property messageScope Scoping: SHOUT (Public), WHISPER (Private), or SILENCE (Device).
  * @property noteVersion LWW (Last-Write-Wins) version for conflict-free shared items.
  * @property hopCount Tracking hops for discovery.
  */
 @Serializable
-data class Echo(
+data class Message(
     val messageId: String,
     val senderId: String,
     val senderName: String,
@@ -46,12 +46,12 @@ data class Echo(
     val dueDate: Long? = null,
     val assigneeId: String? = null,
     val taskStatus: Int = 0,
-    val resonanceWeight: Int = 0, // Social priority weight
+    val connectionWeight: Int = 0, // Social priority weight
     val anchoredCount: Int = 0, // Number of peers holding this record
-    val anchoredPublicSphereId: String? = null, // Anchor reference for private sub-groups
+    val anchoredPublicGroupId: String? = null, // Anchor reference for private sub-groups
 ) {
     companion object {
-        // --- Core Echo Types ---
+        // --- Core Message Types ---
         const val TYPE_TEXT = 1
         const val TYPE_IMAGE = 2
         const val TYPE_ACK = 3
@@ -82,7 +82,7 @@ data class Echo(
         const val TASK_BLOCKED = 2
         const val TASK_ABANDONED = 3
 
-        // --- Social Scoping (Resonance levels) ---
+        // --- Social Scoping (Connection levels) ---
         const val MESSAGE_SHOUT = 0
         const val MESSAGE_WHISPER = 1
         const val MESSAGE_SILENCE = 3

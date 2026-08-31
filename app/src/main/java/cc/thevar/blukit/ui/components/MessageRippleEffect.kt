@@ -14,7 +14,7 @@ import cc.thevar.blukit.ui.theme.StealthRose
 import kotlinx.coroutines.delay
 
 @Composable
-fun EchoRippleEffect(
+fun MessageRippleEffect(
     isPrivate: Boolean = false,
     onFinished: () -> Unit
 ) {
@@ -30,7 +30,7 @@ fun EchoRippleEffect(
     }
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val center = Offset(size.width / 2f, size.height * 0.85f) // Near the EchoHub
+        val center = Offset(size.width / 2f, size.height * 0.85f) // Near the InteractionHub
         val maxRadius = size.maxDimension
 
         drawCircle(

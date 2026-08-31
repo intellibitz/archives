@@ -19,34 +19,55 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cc.thevar.blukit.R
-import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
-import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.screens.*
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import cc.thevar.blukit.ui.theme.StealthPrimary
 import cc.thevar.blukit.ui.theme.StealthBlack
-import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
-import cc.thevar.blukit.ui.viewmodels.NearbyPeers
-import cc.thevar.blukit.ui.viewmodels.MeshSession
+import cc.thevar.blukit.ui.viewmodels.ConnectionUiState
+import cc.thevar.blukit.ui.viewmodels.ConnectionPeers
+import cc.thevar.blukit.ui.viewmodels.ConnectionSession
 import cc.thevar.blukit.ui.viewmodels.RadioConnectionState
+import cc.thevar.blukit.ui.components.*
+import cc.thevar.blukit.domain.power.HarmonyReport
 
 @Preview(name = "Radar - Phone", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewRadarPhone() {
     BlukitTheme {
-        SensingField(
-            state = BluetoothUiState(
-                crowd = NearbyPeers(
+        NearbyField(
+            state = ConnectionUiState(
+                crowd = ConnectionPeers(
                     scannedDevices = listOf(
-                        Source("1", "?"),
-                        Source("2", "?"),
-                        Source("3", "?")
+                        Source("1", "Alice"),
+                        Source("2", "Bob"),
+                        Source("3", "Charlie")
                     )
                 )
             ),
             localDeviceId = "me",
-            header = { Text("PREVIEW HEADER", color = Color.White) }
+            header = { Text("PREVIEW HEADER", color = Color.White) },
+            breadcrumbTrail = listOf("NEARBY"),
+            onCrumbClick = {},
+            userNickname = "ME",
+            harmonyReport = HarmonyReport(),
+            onShowTimeline = {},
+            onResetProfile = {},
+            onNavigateToGroup = {},
+            onNavigateToMessage = {},
+            onSourceLongClick = {},
+            onAcceptRadio = {},
+            onDenyRadio = {},
+            onRestoreCrowd = {},
+            onNavigateToLiveFeed = {},
+            onSearchToggle = {},
+            isSearchActive = false,
+            onStartWhisper = {},
+            onStartSubGroup = {},
+            onClearSelection = {},
+            onCreatePublicRoom = { _, _ -> }
         )
     }
 }
@@ -54,36 +75,70 @@ fun PreviewRadarPhone() {
 @Preview(name = "Chat - Phone", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewChatPhone() {
+    val user1 = Source("user1", "Alice")
+    val me = "me"
     BlukitTheme {
-        PrivateSphereField(
-            state = BluetoothUiState(
-                session = MeshSession(
+        PrivateGroupField(
+            state = ConnectionUiState(
+                session = ConnectionSession(
                     messages = listOf(
-                        Echo(
+                        Message(
                             messageId = "1",
                             senderId = "user1",
-                            senderName = "?",
+                            senderName = "Alice",
                             receiverId = "me",
                             content = "Hello!",
                             timestamp = 1628610000000,
-                            status = Echo.STATUS_DELIVERED
+                            status = Message.STATUS_DELIVERED
                         ),
-                        Echo(
+                        Message(
                             messageId = "2",
                             senderId = "me",
                             senderName = "Me",
                             receiverId = "user1",
                             content = "Hey there!",
                             timestamp = 1628610060000,
-                            status = Echo.STATUS_SENT
+                            status = Message.STATUS_SENT
                         )
                     ),
-                    connectionState = RadioConnectionState.Connected(Source("user1", "?"))
+                    connectionState = RadioConnectionState.Connected(user1)
                 )
             ),
-            localDeviceId = "me",
+            localDeviceId = me,
             header = { Text("PREVIEW HEADER", color = Color.White) },
-            sphereId = "group1",
+            groupId = "group1",
+            breadcrumbTrail = listOf("NEARBY", "ALICE"),
+            onCrumbClick = {},
+            userNickname = "ME",
+            activeGroups = emptyList(),
+            onShowTimeline = {},
+            onResetProfile = {},
+            onBack = {},
+            onNavigateToMessage = {},
+            onNavigateToGroup = {},
+            onSourceLongClick = {},
+            onSend = {},
+            onUpdateRecord = { _, _, _, _ -> },
+            onVaultGroup = { _, _ -> },
+            onSeniorVaultGroup = { _, _ -> },
+            onRemoveMember = { _, _ -> },
+            onAssignRole = { _, _, _ -> },
+            onPushRitual = { _, _ -> },
+            showMemberManagement = false,
+            onShowManagement = {},
+            onDismissManagement = {},
+            onStartWhisper = {},
+            onStartSubGroup = {},
+            onClearSelection = {},
+            isStealthMode = false,
+            lowPowerMode = false,
+            onToggleStealth = {},
+            onToggleLowPower = {},
+            trend = null,
+            isSearchActive = false,
+            onSearchToggle = {},
+            onAcceptRadio = {},
+            onDenyRadio = {}
         )
     }
 }
@@ -128,7 +183,7 @@ fun PreviewFeatureGraphic() {
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "OWN YOUR ECHO",
+                    text = "OWN YOUR DATA",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Bold
@@ -138,11 +193,11 @@ fun PreviewFeatureGraphic() {
     }
 }
 
-@Preview(name = "Resonance Header", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Connection Header", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewTacticalHeader() {
     BlukitTheme {
-        ResonanceHeader(
+        ConnectionHeader(
             themeColor = StealthPrimary,
             onAwakenBluetooth = {},
             onAwakenWifi = {},
@@ -159,10 +214,10 @@ fun PreviewHumanityStage() {
     BlukitTheme {
         Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
             IdentityStage(
-                title = "GLOBAL SPHERE",
-                breadcrumbTrail = listOf("SENSING", "SPHERE"),
+                title = "GLOBAL GROUP",
+                breadcrumbTrail = listOf("NEARBY", "GROUP"),
                 onCrumbClick = {},
-                activeRooms = emptyList(),
+                activeGroups = emptyList(),
                 onShowTimeline = {},
                 onResetProfile = {},
                 onBack = {},
@@ -182,7 +237,7 @@ fun PreviewSourceOptionsMenu() {
                 isTied = true,
                 isBlocked = false,
                 isRequesting = false,
-                onEcho = {},
+                onMessage = {},
                 onAccept = {},
                 onDeny = {},
                 onDisconnect = {},
@@ -196,47 +251,47 @@ fun PreviewSourceOptionsMenu() {
     }
 }
 
-@Preview(name = "ResonanceTicker - Headers", device = Devices.PHONE, showBackground = true)
+@Preview(name = "ConnectionTicker - Headers", device = Devices.PHONE, showBackground = true)
 @Composable
-fun PreviewResonanceTickerHeaders() {
+fun PreviewConnectionTickerHeaders() {
     val me = "me"
     val user1 = "user1"
     val user2 = "user2"
     
-    val echoes = listOf(
-        Echo("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "GLOBAL SPHERE", content = "Public record!", timestamp = System.currentTimeMillis(), messageScope = Echo.SCOPE_PUBLIC),
-        Echo("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, messageScope = Echo.MESSAGE_SILENCE),
-        Echo("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private record", timestamp = System.currentTimeMillis() - 2000, messageScope = Echo.MESSAGE_WHISPER)
+    val messages = listOf(
+        Message("1", user1, "Alice", "👩", groupId = "connection_hub", groupName = "GLOBAL GROUP", content = "Public record!", timestamp = System.currentTimeMillis(), messageScope = Message.SCOPE_PUBLIC),
+        Message("2", me, "ME", "👤", groupId = "local_hub", groupName = "LOCAL", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, messageScope = Message.MESSAGE_SILENCE),
+        Message("3", user2, "Bob", "👨", groupId = "group1", groupName = "PARTY", content = "Private record", timestamp = System.currentTimeMillis() - 2000, messageScope = Message.MESSAGE_WHISPER)
     )
     
-    val spheres = listOf(
-        Sphere("air_hub", "GLOBAL SPHERE", setOf(user1, me), Sphere.SCOPE_PUBLIC),
-        Sphere("silence", "SILENCE", setOf(me), Sphere.SCOPE_LOCAL),
-        Sphere("tie1", "PARTY", setOf(user2, me, "user3"), Sphere.SCOPE_PRIVATE)
+    val groups = listOf(
+        Group("connection_hub", "GLOBAL GROUP", setOf(user1, me), Group.SCOPE_PUBLIC),
+        Group("local_hub", "LOCAL", setOf(me), Group.SCOPE_LOCAL),
+        Group("group1", "PARTY", setOf(user2, me, "user3"), Group.SCOPE_PRIVATE)
     )
     
-    val resonanceList = listOf(
-        Pair(Source(user1, "Alice", "👩"), echoes[0]),
-        Pair(Source(me, "ME", "👤"), echoes[1]),
-        Pair(Source(user2, "Bob", "👨"), echoes[2])
+    val connectionList = listOf(
+        Pair(Source(user1, "Alice", "👩"), messages[0]),
+        Pair(Source(me, "ME", "👤"), messages[1]),
+        Pair(Source(user2, "Bob", "👨"), messages[2])
     )
 
     BlukitTheme(stealthMode = true) {
         Box(modifier = Modifier.fillMaxSize().background(StealthBlack).padding(16.dp)) {
-            ResonanceTicker(
-                state = BluetoothUiState(
-                    session = MeshSession(
-                        messages = echoes,
-                        groups = spheres
+            ConnectionTicker(
+                state = ConnectionUiState(
+                    session = ConnectionSession(
+                        messages = messages,
+                        groups = groups
                     )
                 ),
-                resonanceList = resonanceList,
-                echoCounts = mapOf(user1 to 1, me to 1, user2 to 5),
+                connectionList = connectionList,
+                messageCounts = mapOf(user1 to 1, me to 1, user2 to 5),
                 localDeviceId = me,
                 localNickname = "ME",
                 pulsedPeers = emptySet(),
                 isGrouped = true,
-                onEchoClick = {},
+                onMessageClick = {},
                 onSourceClick = {},
                 onSourceLongClick = {},
                 reverseLayout = false
