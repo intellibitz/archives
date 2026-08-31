@@ -17,23 +17,23 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.MeshMessage
+import cc.thevar.blukit.domain.model.Echo
 import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * TIMELINE FIELD: A visual chronological path of mesh memories.
+ * THE LEDGER FIELD: A visual chronological path of existence records.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineField(
-    messages: List<MeshMessage>,
+    echoes: List<Echo>,
     onBack: () -> Unit
 ) {
-    val memories = remember(messages) {
-        messages.filter { it.type == MeshMessage.TYPE_MEMORY || it.type == MeshMessage.TYPE_IMAGE }
+    val records = remember(echoes) {
+        echoes.filter { it.type == Echo.TYPE_MEMORY || it.type == Echo.TYPE_IMAGE }
             .sortedBy { it.timestamp }
     }
     
@@ -45,7 +45,7 @@ fun TimelineField(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        text = "HISTORY", 
+                        text = "THE LEDGER", 
                         style = MaterialTheme.typography.titleMedium,
                         letterSpacing = 2.sp
                     ) 
@@ -62,10 +62,10 @@ fun TimelineField(
             )
         }
     ) { padding ->
-        if (memories.isEmpty()) {
+        if (records.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "No saved memories found", 
+                    text = "No saved records found", 
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.4f)
                 )
@@ -76,8 +76,8 @@ fun TimelineField(
                 contentPadding = PaddingValues(24.dp),
                 verticalArrangement = Arrangement.spacedBy(32.dp)
             ) {
-                items(memories) { memory ->
-                    MemoryItem(memory, sdf.format(Date(memory.timestamp)))
+                items(records) { record ->
+                    RecordItem(record, sdf.format(Date(record.timestamp)))
                 }
             }
         }
@@ -85,10 +85,10 @@ fun TimelineField(
 }
 
 @Composable
-private fun MemoryItem(memory: MeshMessage, dateStr: String) {
+private fun RecordItem(record: Echo, dateStr: String) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(60.dp)) {
-            Text(text = memory.senderEmoji ?: "👤", fontSize = 24.sp)
+            Text(text = record.senderEmoji ?: "👤", fontSize = 24.sp)
             Spacer(modifier = Modifier.height(8.dp))
             Canvas(modifier = Modifier.height(100.dp).width(2.dp)) {
                 drawLine(
@@ -116,13 +116,13 @@ private fun MemoryItem(memory: MeshMessage, dateStr: String) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = memory.content, 
+                        text = record.content, 
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "from ${memory.senderName}", 
+                        text = "from ${record.senderName}", 
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.5f)
                     )

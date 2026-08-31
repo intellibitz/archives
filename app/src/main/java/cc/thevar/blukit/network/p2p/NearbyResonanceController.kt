@@ -1,14 +1,8 @@
 /**
- * BLUKIT NETWORK: NEARBY P2P CONTROLLER
+ * BLUKIT NETWORK: NEARBY RESONANCE CONTROLLER
  *
- * High-performance P2P engine using Google Nearby Connections.
- * Implements a fully decentralized, hardware-encrypted mesh protocol.
- * 
- * Logic:
- * - Discovery & Advertising: Symmetrical radio states for rapid peer detection.
- * - Secure Handshake: ECDH key exchange with AES-GCM pulse encryption.
- * - Differential Sync: Merkle-tree inspired history bridging for offline persistence.
- * - Selective Broadcasting: Tactical relay logic to prevent mesh congestion.
+ * High-performance resonance engine using Google Nearby Connections.
+ * Implements a fully decentralized, hardware-encrypted resonance protocol.
  */
 package cc.thevar.blukit.network.p2p
 
@@ -17,14 +11,14 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.MessageStore
+import cc.thevar.blukit.data.local.EchoLedger
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.domain.model.Sphere
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
@@ -69,78 +63,72 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * The primary P2P engine utilizing Google's Nearby Connections API.
+ * The primary resonance engine utilizing Google's Nearby Connections API.
  */
-class NearbyP2PController(
+class NearbyResonanceController(
     private val context: Context,
     private val repository: IdentityRepository,
-    private val messageStore: MessageStore,
+    private val echoLedger: EchoLedger,
     private val hapticManager: HapticManager,
     private val radioStateManager: RadioStateManager,
     private val cryptoManager: CryptoManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
-) : P2PController {
+) : ResonanceController {
 
-    private val tag = "NearbyController"
-    private val serviceId = "cc.thevar.blukit.MESSAGE_SERVICE"
+    private val tag = "ResonanceController"
+    private val serviceId = "cc.thevar.blukit.RESONANCE_SERVICE"
     private val connectionsClient: ConnectionsClient = Nearby.getConnectionsClient(context)
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
-    // --- P2PController State Implementation ---
-    private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
-    override val scannedDevices = _scannedDevices.asStateFlow()
+    // --- ResonanceController State Implementation ---
+    private val _scannedSources = MutableStateFlow<List<Source>>(emptyList())
+    override val scannedDevices = _scannedSources.asStateFlow()
 
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedGroups = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedGroups = _connectedGroups.asStateFlow()
+    private val _connectedSpheres = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedGroups = _connectedSpheres.asStateFlow()
 
-    private val _incomingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    private val _incomingRadioRequests = MutableStateFlow<Set<Source>>(emptySet())
     override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
 
-    private val _outgoingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    private val _outgoingRadioRequests = MutableStateFlow<Set<Source>>(emptySet())
     override val outgoingRadioRequests = _outgoingRadioRequests.asStateFlow()
 
-    private val _isDiscovering = MutableStateFlow(false)
-    override val isDiscovering = _isDiscovering.asStateFlow()
+    private val _isSensing = MutableStateFlow(false)
+    override val isDiscovering = _isSensing.asStateFlow()
 
     private val _isAdvertising = MutableStateFlow(false)
     override val isAdvertising = _isAdvertising.asStateFlow()
 
-    private val _errors = MutableStateFlow<P2PError?>(null)
-    override val errors = _errors.asStateFlow()
+    private val _resonanceErrors = MutableStateFlow<ResonanceError?>(null)
+    override val errors = _resonanceErrors.asStateFlow()
 
-    private val _discoveredRooms = MutableSharedFlow<MeshRoom>(extraBufferCapacity = 5)
-    override val discoveredRooms = _discoveredRooms.asSharedFlow()
+    private val _discoveredSpheres = MutableSharedFlow<Sphere>(extraBufferCapacity = 5)
+    override val discoveredRooms = _discoveredSpheres.asSharedFlow()
 
-    override val messages: StateFlow<List<MeshMessage>> = messageStore.messages
+    override val messages: StateFlow<List<Echo>> = echoLedger.echoes
     override val syncProgress: StateFlow<Float?> get() = _syncProgress.asStateFlow()
     private val _syncProgress = MutableStateFlow<Float?>(null)
 
-    // --- Private Mesh State ---
+    // --- Private Resonance State ---
     private val activeConnections = Collections.synchronizedSet(mutableSetOf<String>())
     private val pendingRadioRequests = Collections.synchronizedSet(mutableSetOf<String>())
     private val messageKeys = ConcurrentHashMap<String, SecretKey>()
     private val messageIdHistory = Collections.synchronizedList(LinkedList<String>())
-    private val incomingFiles = ConcurrentHashMap<Long, MeshMessage>()
-    private val aggregateBuffer = ConcurrentHashMap<String, MutableList<MeshMessage>>()
+    private val incomingFiles = ConcurrentHashMap<Long, Echo>()
+    private val aggregateBuffer = ConcurrentHashMap<String, MutableList<Echo>>()
     private val outgoingQueues = ConcurrentHashMap<String, kotlinx.coroutines.channels.Channel<Payload>>()
     private val _connectionUpdates = MutableSharedFlow<Pair<String, ConnectionStatus>>(extraBufferCapacity = 20)
 
-    /**
-     * Internal callback for handling incoming Nearby Connection payloads.
-     * Manages raw bytes and incoming file stream registration.
-     */
     private val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
             when (payload.type) {
                 Payload.Type.BYTES -> handleReceivedBytes(endpointId, payload.asBytes()!!)
                 Payload.Type.FILE -> {
-                    // Pre-register file payload ID for successful transfer assembly.
-                    // The actual file contents are processed once the transfer is SUCCESS.
-                    incomingFiles[payload.id] = MeshMessage(
+                    incomingFiles[payload.id] = Echo(
                         messageId = "pending_${payload.id}",
                         senderId = endpointId,
                         senderName = "PENDING",
@@ -156,20 +144,13 @@ class NearbyP2PController(
             if (update.status == PayloadTransferUpdate.Status.SUCCESS) {
                 val payloadId = update.payloadId
                 Log.d(tag, "Payload SUCCESS: $payloadId")
-                // Once the file is fully transferred, finalize it into the MessageStore.
-                incomingFiles[payloadId]?.let { finalizeFileMessage(payloadId, it) }
+                incomingFiles[payloadId]?.let { finalizeFileEcho(payloadId, it) }
             }
         }
     }
 
-    /**
-     * Manages the lifecycle of a radio connection.
-     * Implements automated handshake triggering and state synchronization upon link establishment.
-     */
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
-            // SECURITY: Automated acceptance based on ECDH handshake verification.
-            // All connections are accepted at the radio level and filtered at the encryption level.
             connectionsClient.acceptConnection(endpointId, payloadCallback)
         }
 
@@ -177,7 +158,6 @@ class NearbyP2PController(
             if (result.status.isSuccess) {
                 activeConnections.add(endpointId)
                 internalScope.launch { _connectionUpdates.emit(endpointId to ConnectionStatus.Connected) }
-                // CRITICAL: Trigger the ECDH handshake as soon as the radio link is established.
                 sendHandshake(endpointId)
             } else {
                 internalScope.launch { _connectionUpdates.emit(endpointId to ConnectionStatus.Error(result.status.statusMessage ?: "Link Refused")) }
@@ -189,10 +169,9 @@ class NearbyP2PController(
             activeConnections.remove(endpointId)
             messageKeys.remove(endpointId)
             pendingRadioRequests.remove(endpointId)
-            _connectedGroups.update { it - endpointId }
+            _connectedSpheres.update { it - endpointId }
             if (activeConnections.isEmpty()) _isConnected.value = false
-            updateScannedDevices()
-            // Emit ConnectionLost to notify UI and domain layers of the severed link.
+            updateScannedSources()
             internalScope.launch { _connectionUpdates.emit(endpointId to ConnectionStatus.ConnectionLost()) }
         }
     }
@@ -205,42 +184,40 @@ class NearbyP2PController(
             
             val messageDeviceId = parts[2]
             val myDeviceId = repository.getDeviceId()
-            val peerMedium = if (parts.size >= 4) { when (parts[3]) { "W" -> P2PDevice.ConnectionMedium.WIFI; "B" -> P2PDevice.ConnectionMedium.BLUETOOTH; else -> P2PDevice.ConnectionMedium.LOCATION } } else P2PDevice.ConnectionMedium.LOCATION
+            val peerMedium = if (parts.size >= 4) { when (parts[3]) { "W" -> Source.ResonanceMedium.WIFI; "B" -> Source.ResonanceMedium.BLUETOOTH; else -> Source.ResonanceMedium.LOCATION } } else Source.ResonanceMedium.LOCATION
             val peerMessageCount = parts.getOrNull(4)?.toIntOrNull() ?: 0
             val peerIsLowPower = parts.getOrNull(5) == "P"
-            val newDevice = P2PDevice(id = endpointId, name = parts[1].ifBlank { "?" }, emoji = parts[0], persistentId = messageDeviceId, medium = peerMedium, messageCount = peerMessageCount, isLowPower = peerIsLowPower)
-            _scannedDevices.update { current -> current.filter { d -> d.id != endpointId } + newDevice }
-            // Deterministic connection: prevent race conditions where both devices request at once
+            val newSource = Source(id = endpointId, name = parts[1].ifBlank { "?" }, emoji = parts[0], persistentId = messageDeviceId, medium = peerMedium, messageCount = peerMessageCount, isLowPower = peerIsLowPower)
+            _scannedSources.update { current -> current.filter { d -> d.id != endpointId } + newSource }
+            
             if ((myDeviceId < messageDeviceId) && !activeConnections.contains(endpointId)) {
                 val localName = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|$myDeviceId|${getRadioFlag()}"
                 val options = ConnectionOptions.Builder().build()
                 connectionsClient.requestConnection(localName, endpointId, connectionLifecycleCallback, options)
             }
         }
-        override fun onEndpointLost(endpointId: String) { _scannedDevices.update { current -> current.filter { d -> d.id != endpointId } } }
+        override fun onEndpointLost(endpointId: String) { _scannedSources.update { current -> current.filter { d -> d.id != endpointId } } }
     }
 
     override fun startDiscovery() {
-        if (_isDiscovering.value) return
-        _isDiscovering.value = true
+        if (_isSensing.value) return
+        _isSensing.value = true
 
         internalScope.launch(ioDispatcher) {
-            while (_isDiscovering.value) {
-                // ADAPTIVE DISCOVERY: Scale radio activity based on room density.
-                // If many peers are found, discovery slows down to preserve battery.
-                val peerCount = _scannedDevices.value.size
+            while (_isSensing.value) {
+                val peerCount = _scannedSources.value.size
                 val scanDuration = if (peerCount > 10) 10.seconds else 30.seconds
                 val idleDuration = if (peerCount > 10) 30.seconds else 5.seconds
 
                 val options = DiscoveryOptions.Builder().setStrategy(getStrategy()).build()
                 connectionsClient.startDiscovery(serviceId, discoveryCallback, options)
                     .addOnFailureListener { e ->
-                        Log.e(tag, "Discovery failed to start: ${e.message}")
-                        _errors.value = P2PError.DiscoveryError(e.message ?: "Failed to start discovery")
+                        Log.e(tag, "Sensing failed to start: ${e.message}")
+                        _resonanceErrors.value = ResonanceError.SensingError(e.message ?: "Failed to start sensing")
                     }
 
                 delay(scanDuration)
-                if (_isDiscovering.value) {
+                if (_isSensing.value) {
                     connectionsClient.stopDiscovery()
                     delay(idleDuration)
                 }
@@ -249,9 +226,8 @@ class NearbyP2PController(
     }
 
     override fun stopDiscovery() {
+        _isSensing.value = false
         connectionsClient.stopDiscovery()
-        _isDiscovering.value = false
-        _scannedDevices.value = emptyList()
     }
 
     override fun startAdvertising() {
@@ -266,10 +242,9 @@ class NearbyP2PController(
                 connectionsClient.startAdvertising(name, serviceId, connectionLifecycleCallback, options)
                     .addOnFailureListener { e -> 
                         Log.e(tag, "Advertising failure: ${e.message}. Retrying in 5s...")
-                        _errors.value = P2PError.AdvertisingError(e.message ?: "Failed to start advertising")
+                        _resonanceErrors.value = ResonanceError.AdvertisingError(e.message ?: "Failed to start advertising")
                     }
                 
-                // Stability: Periodic restart to refresh radio state or name updates
                 delay(1.minutes) 
                 if (_isAdvertising.value) connectionsClient.stopAdvertising()
             }
@@ -281,7 +256,7 @@ class NearbyP2PController(
         _isAdvertising.value = false
     }
 
-    override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
+    override fun connectToDevice(device: Source): SharedFlow<ConnectionStatus> {
         val flow = MutableSharedFlow<ConnectionStatus>(replay = 1)
         internalScope.launch(ioDispatcher) {
             flow.emit(ConnectionStatus.Connecting)
@@ -296,49 +271,47 @@ class NearbyP2PController(
 
     override fun isNearbyConnected(endpointId: String): Boolean = activeConnections.contains(endpointId)
 
-    override fun requestRadio(device: P2PDevice) {
+    override fun requestRadio(device: Source) {
         pendingRadioRequests.add(device.id)
         _outgoingRadioRequests.update { it + device }
-        updateScannedDevices()
+        updateScannedSources()
         internalScope.launch(ioDispatcher) {
-            sendMessageInternal(device.id, MeshMessage(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_REQUEST", timestamp = System.currentTimeMillis(), type = MeshMessage.TYPE_GROUP_REQUEST))
+            sendMessageInternal(device.id, Echo(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_REQUEST", timestamp = System.currentTimeMillis(), type = Echo.TYPE_GROUP_REQUEST))
         }
     }
 
-    override fun acceptRadio(device: P2PDevice) {
+    override fun acceptRadio(device: Source) {
         _incomingRadioRequests.update { it - device }
         pendingRadioRequests.remove(device.id)
-        _connectedGroups.update { it + device.id }
+        _connectedSpheres.update { it + device.id }
         _isConnected.value = true
         _outgoingRadioRequests.update { current ->
             current.asSequence().filter { it.id != device.id }.toSet()
         }
-        updateScannedDevices()
+        updateScannedSources()
         internalScope.launch(ioDispatcher) {
-            sendMessageInternal(device.id, MeshMessage(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_ACCEPT", timestamp = System.currentTimeMillis(), type = MeshMessage.TYPE_GROUP_ACCEPT))
+            sendMessageInternal(device.id, Echo(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = "RADIO_ACCEPT", timestamp = System.currentTimeMillis(), type = Echo.TYPE_GROUP_ACCEPT))
         }
     }
 
-    override fun denyRadio(device: P2PDevice) {
+    override fun denyRadio(device: Source) {
         pendingRadioRequests.remove(device.id)
         _incomingRadioRequests.update { it - device }
         _outgoingRadioRequests.update { current ->
             current.asSequence().filter { it.id != device.id }.toSet()
         }
-        updateScannedDevices()
+        updateScannedSources()
     }
 
     override fun joinRoom(groupId: String) {
-        messageStore.joinGroup(groupId, repository.getDeviceId())
+        echoLedger.joinSphere(groupId, repository.getDeviceId())
     }
 
-
-    private fun sendMessageInternal(endpointId: String, payload: MeshMessage) {
-        messageKeys[endpointId]?.let { key -> queueMessage(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(MeshMessage.serializer(), payload).toByteArray(), key))) }
+    private fun sendMessageInternal(endpointId: String, payload: Echo) {
+        messageKeys[endpointId]?.let { key -> queueEcho(endpointId, Payload.fromBytes(cryptoManager.encrypt(Json.encodeToString(Echo.serializer(), payload).toByteArray(), key))) }
     }
 
-    private suspend fun getMessageKeyWithRetry(id: String): SecretKey? {
-        // Optimized retry: faster polling for secure key readiness
+    private suspend fun getEchoKeyWithRetry(id: String): SecretKey? {
         var a = 0
         while ((messageKeys[id] == null) && (a < 50)) {
             delay(20.milliseconds)
@@ -347,35 +320,32 @@ class NearbyP2PController(
         return messageKeys[id]
     }
 
-    private fun syncMessageHistory(endpointId: String) {
+    private fun syncEchoHistory(endpointId: String) {
         internalScope.launch(ioDispatcher) {
-            val key = getMessageKeyWithRetry(endpointId) ?: return@launch
-            
-            // DIFFERENTIAL SYNC: Request missing messages since our latest local message.
-            val latestMessageId = messageStore.getLatestMessageId()
-            val request = MeshMessage(
+            val key = getEchoKeyWithRetry(endpointId) ?: return@launch
+            val latestEchoId = echoLedger.getLatestEchoId()
+            val request = Echo(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = "SYNC_BOOTSTRAP",
-                content = latestMessageId ?: "0",
+                content = latestEchoId ?: "0",
                 timestamp = System.currentTimeMillis(),
-                type = MeshMessage.TYPE_RESYNC_REQUEST
+                type = Echo.TYPE_RESYNC_REQUEST
             )
             sendMessageInternal(endpointId, request, key)
-            Log.i(tag, "Differential Sync: Bootstrapping mesh with $endpointId from $latestMessageId")
+            Log.i(tag, "Differential Sync: Bootstrapping resonance with $endpointId from $latestEchoId")
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MeshMessage? {
-        // ENFORCE PARTICIPATION: Users must join a room to participate (except for the root room).
+    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? {
         groupId?.let { gid ->
-            if (!messageStore.isMember(gid, repository.getDeviceId())) {
-                Log.w(tag, "Participation Denied: User not a member of $gid")
+            if (!echoLedger.isMember(gid, repository.getDeviceId())) {
+                Log.w(tag, "Resonance Denied: Source not a member of $gid")
                 return null
             }
         }
 
-        val payload = MeshMessage(
+        val payload = Echo(
             messageId = messageId ?: UUID.randomUUID().toString(), 
             senderId = repository.getDeviceId(), 
             senderName = repository.getCurrentNickname(), 
@@ -390,7 +360,6 @@ class NearbyP2PController(
             hopCount = 0,
         )
 
-        // PERFORMANCE: Batch processing with aggregation for non-priority room messages
         if (!payload.isPriority && receiverId == null && activeConnections.size > 5) {
             groupId?.let { gid ->
                 aggregateBuffer.getOrPut(gid) { mutableListOf() }.add(payload)
@@ -398,25 +367,18 @@ class NearbyP2PController(
             }
         }
 
-        return dispatchMessage(payload)
+        return dispatchEcho(payload)
     }
 
-    /**
-     * Encrypts and transmits a payload to a target or via mesh relay.
-     * Uses Selective Broadcasting to manage radio energy in high-density rooms.
-     */
-    private suspend fun dispatchMessage(payload: MeshMessage): MeshMessage? {
-        val bytes = Json.encodeToString(MeshMessage.serializer(), payload).toByteArray()
+    private suspend fun dispatchEcho(payload: Echo): Echo? {
+        val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
         val targetRid = payload.receiverId
         try {
             if (targetRid != null) { 
-                // Unicast: Direct transmission to a specific peer.
-                getMessageKeyWithRetry(targetRid)?.let { key ->
-                    queueMessage(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
+                getEchoKeyWithRetry(targetRid)?.let { key ->
+                    queueEcho(targetRid, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) 
                 } 
             } else { 
-                // Broadcast: Scoped transmission across the mesh.
-                // SELECTIVE BROADCASTING: Prioritize anchor nodes in large rooms to prevent broadcast storms.
                 val targets = if (activeConnections.size > 20) {
                     activeConnections.shuffled().take(10) 
                 } else {
@@ -426,35 +388,33 @@ class NearbyP2PController(
                 targets.forEach { target -> 
                     internalScope.launch(ioDispatcher) { 
                         messageKeys[target]?.let { key -> 
-                            try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} 
+                            try { queueEcho(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} 
                         } 
                     } 
                 } 
             }
-            // Add to history to prevent echo/duplicate processing.
             synchronized(messageIdHistory) {
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 500) messageIdHistory.removeAt(0)
             }
-            // Commit to local secure storage.
-            messageStore.upsertMessage(payload)
+            echoLedger.upsertEcho(payload)
             return payload
         } catch (_: Exception) {
             return null
         }
     }
 
-    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MeshMessage? = 
+    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? = 
         sendMessage(content, null, messageScope, messageId, groupId, groupName, type)
 
-    override suspend fun broadcastIdentityUpdate(oldName: String): MeshMessage {
-        val payload = MeshMessage(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = MeshMessage.TYPE_IDENTITY_UPDATE, messageScope = MeshMessage.MESSAGE_SHOUT)
-        val bytes = Json.encodeToString(MeshMessage.serializer(), payload).toByteArray()
-        activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+    override suspend fun broadcastIdentityUpdate(oldName: String): Echo {
+        val payload = Echo(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, content = oldName, timestamp = System.currentTimeMillis(), type = Echo.TYPE_IDENTITY_UPDATE, messageScope = Echo.MESSAGE_SHOUT)
+        val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
+        activeConnections.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueEcho(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
         return payload
     }
 
-    override suspend fun sendFile(fileUri: Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): MeshMessage? {
+    override suspend fun sendFile(fileUri: Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): Echo? {
         val fileName = getFileName(fileUri)
         val fileSize = getFileSize(fileUri)
         val mimeType = context.contentResolver.getType(fileUri)
@@ -462,12 +422,12 @@ class NearbyP2PController(
         return try {
             val pfd = context.contentResolver.openFileDescriptor(fileUri, "r") ?: return null
             val filePayload = Payload.fromFile(pfd)
-            val payload = MeshMessage(messageId = messageId, senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, receiverId = receiverId, groupId = groupId, groupName = groupName, content = if (mimeType?.startsWith("image/") == true) fileUri.toString() else "[FILE] $fileName", timestamp = System.currentTimeMillis(), type = if (mimeType?.startsWith("image/") == true) MeshMessage.TYPE_IMAGE else MeshMessage.TYPE_FILE, messageScope = messageScope, fileId = filePayload.id, fileName = fileName, fileSize = fileSize, mimeType = mimeType)
+            val payload = Echo(messageId = messageId, senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, receiverId = receiverId, groupId = groupId, groupName = groupName, content = if (mimeType?.startsWith("image/") == true) fileUri.toString() else "[FILE] $fileName", timestamp = System.currentTimeMillis(), type = if (mimeType?.startsWith("image/") == true) Echo.TYPE_IMAGE else Echo.TYPE_FILE, messageScope = messageScope, fileId = filePayload.id, fileName = fileName, fileSize = fileSize, mimeType = mimeType)
             internalScope.launch(ioDispatcher) {
                 if (receiverId != null) { sendMessageInternal(receiverId, payload); connectionsClient.sendPayload(receiverId, filePayload) }
                 else { activeConnections.forEach { target -> internalScope.launch { sendMessageInternal(target, payload); connectionsClient.sendPayload(target, filePayload) } } }
             }
-            messageStore.upsertMessage(payload)
+            echoLedger.upsertEcho(payload)
             payload
         } catch (_: Exception) {
             null
@@ -486,22 +446,22 @@ class NearbyP2PController(
         return size
     }
 
-    override suspend fun sendGroupMessage(content: String, groupId: String): MeshMessage? {
-        val group = messageStore.getGroup(groupId) ?: return null
-        val payload = MeshMessage(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), messageScope = MeshMessage.MESSAGE_WHISPER)
-        val bytes = Json.encodeToString(MeshMessage.serializer(), payload).toByteArray()
+    override suspend fun sendGroupMessage(content: String, groupId: String): Echo? {
+        val sphere = echoLedger.getSphere(groupId) ?: return null
+        val payload = Echo(messageId = UUID.randomUUID().toString(), senderId = repository.getDeviceId(), senderName = repository.getCurrentNickname(), senderEmoji = repository.emojiAvatar.value, groupId = groupId, content = content, timestamp = System.currentTimeMillis(), messageScope = Echo.MESSAGE_WHISPER)
+        val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
         return try {
-            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueMessage(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
-            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            sphere.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueEcho(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            activeConnections.filter { it !in sphere.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueEcho(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
-            messageStore.upsertMessage(payload); messageStore.updateRoomLastMessage(groupId, payload.timestamp)
+            echoLedger.upsertEcho(payload); echoLedger.updateSphereLastEcho(groupId, payload.timestamp)
             payload
         } catch (_: Exception) { null }
     }
 
-    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MeshMessage? {
-        val group = messageStore.getGroup(groupId) ?: return null
-        val payload = MeshMessage(
+    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): Echo? {
+        val sphere = echoLedger.getSphere(groupId) ?: return null
+        val payload = Echo(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
             senderName = repository.getCurrentNickname(),
@@ -509,31 +469,31 @@ class NearbyP2PController(
             groupId = groupId,
             content = content,
             timestamp = System.currentTimeMillis(),
-            type = MeshMessage.TYPE_NOTE_UPDATE,
+            type = Echo.TYPE_NOTE_UPDATE,
             noteVersion = version,
-            messageScope = MeshMessage.MESSAGE_WHISPER,
+            messageScope = Echo.MESSAGE_WHISPER,
         )
-        val bytes = Json.encodeToString(MeshMessage.serializer(), payload).toByteArray()
+        val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
         return try {
-            group.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueMessage(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
-            activeConnections.filter { it !in group.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueMessage(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            sphere.allMemberIds.forEach { memberId -> internalScope.launch(ioDispatcher) { messageKeys[memberId]?.let { key -> try { queueEcho(memberId, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
+            activeConnections.filter { it !in sphere.allMemberIds }.forEach { target -> internalScope.launch(ioDispatcher) { messageKeys[target]?.let { key -> try { queueEcho(target, Payload.fromBytes(cryptoManager.encrypt(bytes, key))) } catch (_: Exception) {} } } }
             synchronized(messageIdHistory) { messageIdHistory.add(payload.messageId); if (messageIdHistory.size > 500) messageIdHistory.removeAt(0) }
-            messageStore.upsertMessage(payload); messageStore.updateRoomLastMessage(groupId, payload.timestamp)
+            echoLedger.upsertEcho(payload); echoLedger.updateSphereLastEcho(groupId, payload.timestamp)
             payload
         } catch (_: Exception) { null }
     }
 
     override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
-        val gid = groupId ?: MeshRoom.generateId(name, type)
+        val gid = groupId ?: Sphere.generateId(name, type)
         internalScope.launch(ioDispatcher) { 
-            messageStore.insertGroup(
-                MeshRoom(
+            echoLedger.insertSphere(
+                Sphere(
                     id = gid,
                     name = name,
                     memberIds = members + repository.getDeviceId(),
                     scope = type,
                     parentId = parentId,
-                    ownerId = repository.getDeviceId() // Set the creating user as owner
+                    ownerId = repository.getDeviceId()
                 )
             ) 
         }
@@ -541,34 +501,34 @@ class NearbyP2PController(
     }
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
-        internalScope.launch(ioDispatcher) { messageStore.updateGroupMembers(groupId, memberIds) }
+        internalScope.launch(ioDispatcher) { echoLedger.updateSphereMembers(groupId, memberIds) }
     }
 
     override fun updateGroupScope(groupId: String, scope: Int) {
-        internalScope.launch(ioDispatcher) { messageStore.updateGroupScope(groupId, scope) }
+        internalScope.launch(ioDispatcher) { echoLedger.updateSphereScope(groupId, scope) }
     }
 
     override fun initiateHistorySync(endpointId: String, sinceTimestamp: Long?) {
         internalScope.launch(ioDispatcher) {
-            val key = getMessageKeyWithRetry(endpointId) ?: return@launch
-            val request = MeshMessage(
+            val key = getEchoKeyWithRetry(endpointId) ?: return@launch
+            val request = Echo(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = "SYNC_REQUEST",
                 content = sinceTimestamp?.toString() ?: "0",
                 timestamp = System.currentTimeMillis(),
-                type = MeshMessage.TYPE_RESYNC_REQUEST
+                type = Echo.TYPE_RESYNC_REQUEST
             )
             sendMessageInternal(endpointId, request, key)
         }
     }
 
-    private fun sendMessageInternal(endpointId: String, payload: MeshMessage, key: SecretKey) {
+    private fun sendMessageInternal(endpointId: String, payload: Echo, key: SecretKey) {
         try {
-            val bytes = Json.encodeToString(MeshMessage.serializer(), payload).toByteArray()
-            queueMessage(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
+            val bytes = Json.encodeToString(Echo.serializer(), payload).toByteArray()
+            queueEcho(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
         } catch (_: Exception) {
-            Log.e(tag, "Failed to send payload to $endpointId")
+            Log.e(tag, "Failed to send Echo to $endpointId")
         }
     }
 
@@ -577,7 +537,7 @@ class NearbyP2PController(
         activeConnections.clear()
         messageKeys.clear()
         _isConnected.value = false
-        _connectedGroups.value = emptySet()
+        _connectedSpheres.value = emptySet()
     }
 
     override fun release() {
@@ -594,7 +554,7 @@ class NearbyP2PController(
             messageKeys[endpointId]?.let { key ->
                 try {
                     val decrypted = cryptoManager.decrypt(bytes, key)
-                    val payload = Json.decodeFromString<MeshMessage>(decrypted.decodeToString())
+                    val payload = Json.decodeFromString<Echo>(decrypted.decodeToString())
                     handleIncomingPayload(endpointId, payload, key)
                 } catch (_: Exception) {
                     Log.e(tag, "Decryption or parsing failure")
@@ -605,58 +565,51 @@ class NearbyP2PController(
 
     private fun isHandshakePayload(bytes: ByteArray): Boolean = bytes.isNotEmpty() && (bytes[0] == 0x01.toByte())
 
-    /**
-     * Initiates the secure cryptographic handshake with a peer.
-     * Derives a shared secret using ECDH and HKDF for AES-256-GCM encryption.
-     */
     private fun handleHandshake(endpointId: String, bytes: ByteArray) {
         try {
             val peerPublicKeyBytes = bytes.copyOfRange(1, bytes.size)
             val keyFactory = java.security.KeyFactory.getInstance("EC")
             val peerPublicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(peerPublicKeyBytes))
 
-            // Generate shared secret key for AES-GCM message encryption.
             val secretKey = cryptoManager.deriveSharedSecret(peerPublicKey)
             messageKeys[endpointId] = secretKey
-            Log.i(tag, "SECURE: Radio link established with $endpointId")
+            Log.i(tag, "SECURE: Resonance established with $endpointId")
             
-            // AUTOMATED HISTORY BRIDGING: Sync messages upon successful secure link creation.
-            // This ensures missing messages are bridged as soon as the peers are in range.
-            syncMessageHistory(endpointId)
+            syncEchoHistory(endpointId)
         } catch (_: Exception) {
-            Log.e(tag, "Handshake handle failed")
+            Log.e(tag, "Handshake failed")
         }
     }
 
-    private fun handleIncomingPayload(endpointId: String, payload: MeshMessage, secretKey: SecretKey) {
+    private fun handleIncomingPayload(endpointId: String, payload: Echo, secretKey: SecretKey) {
         when (payload.type) {
-            MeshMessage.TYPE_ACK -> handleAck(payload)
-            MeshMessage.TYPE_IDENTITY_UPDATE -> handleIdentityUpdate(endpointId, payload, secretKey)
-            MeshMessage.TYPE_GROUP_REQUEST -> handleGroupRequest(endpointId, payload)
-            MeshMessage.TYPE_GROUP_ACCEPT -> handleGroupAccept(endpointId)
-            MeshMessage.TYPE_RESYNC_REQUEST -> handleSyncRequest(endpointId, payload, secretKey)
-            MeshMessage.TYPE_RESYNC_CHUNK -> handleSyncChunk(payload)
-            MeshMessage.TYPE_RESYNC_COMPLETE -> handleSyncComplete(endpointId, payload)
-            else -> handleChatMessage(endpointId, payload, secretKey)
+            Echo.TYPE_ACK -> handleAck(payload)
+            Echo.TYPE_IDENTITY_UPDATE -> handleIdentityUpdate(endpointId, payload, secretKey)
+            Echo.TYPE_GROUP_REQUEST -> handleGroupRequest(endpointId, payload)
+            Echo.TYPE_GROUP_ACCEPT -> handleGroupAccept(endpointId)
+            Echo.TYPE_RESYNC_REQUEST -> handleSyncRequest(endpointId, payload, secretKey)
+            Echo.TYPE_RESYNC_CHUNK -> handleSyncChunk(payload)
+            Echo.TYPE_RESYNC_COMPLETE -> handleSyncComplete(endpointId, payload)
+            else -> handleEcho(endpointId, payload, secretKey)
         }
     }
 
-    private fun handleAck(payload: MeshMessage) {
+    private fun handleAck(payload: Echo) {
         internalScope.launch(ioDispatcher) {
-            messageStore.updateMessageStatus(payload.messageId, MeshMessage.STATUS_DELIVERED)
+            echoLedger.updateEchoStatus(payload.messageId, Echo.STATUS_DELIVERED)
         }
     }
 
-    private fun handleIdentityUpdate(endpointId: String, payload: MeshMessage, secretKey: SecretKey) {
-        _scannedDevices.update { current -> current.map { if ((it.persistentId == payload.senderId) || (it.id == endpointId)) it.copy(name = payload.senderName, emoji = payload.senderEmoji ?: it.emoji) else it } }
-        saveIncomingMessage(payload)
+    private fun handleIdentityUpdate(endpointId: String, payload: Echo, secretKey: SecretKey) {
+        _scannedSources.update { current -> current.map { if ((it.persistentId == payload.senderId) || (it.id == endpointId)) it.copy(name = payload.senderName, emoji = payload.senderEmoji ?: it.emoji) else it } }
+        saveIncomingEcho(payload)
         sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
-        relayMessage(endpointId, payload)
+        relayEcho(endpointId, payload)
     }
 
-    private fun handleGroupRequest(endpointId: String, payload: MeshMessage) {
-        val device = _scannedDevices.value.find { it.id == endpointId } ?: P2PDevice(id = endpointId, name = payload.senderName, emoji = payload.senderEmoji ?: "👤")
-        _incomingRadioRequests.update { it + device }
+    private fun handleGroupRequest(endpointId: String, payload: Echo) {
+        val source = _scannedSources.value.find { it.id == endpointId } ?: Source(id = endpointId, name = payload.senderName, emoji = payload.senderEmoji ?: "👤")
+        _incomingRadioRequests.update { it + source }
         hapticManager.triggerMessage(HapticManager.MessageType.CONNECTION)
     }
 
@@ -665,47 +618,42 @@ class NearbyP2PController(
         _outgoingRadioRequests.update { current ->
             current.asSequence().filter { it.id != endpointId }.toSet()
         }
-        _connectedGroups.update { it + endpointId }
+        _connectedSpheres.update { it + endpointId }
         _isConnected.value = true
-        updateScannedDevices()
+        updateScannedSources()
     }
 
-    private fun handleSyncRequest(endpointId: String, payload: MeshMessage, secretKey: SecretKey) {
+    private fun handleSyncRequest(endpointId: String, payload: Echo, secretKey: SecretKey) {
         val sinceId = payload.content
-        val allLocalMessages = messageStore.messages.value
-        
-        // Find the timestamp of the requested message ID to start differential sync
+        val allLocalEchoes = echoLedger.echoes.value
         val sinceTimestamp = if (sinceId == "0") 0L else {
-            allLocalMessages.find { it.messageId == sinceId }?.timestamp ?: 0L
+            allLocalEchoes.find { it.messageId == sinceId }?.timestamp ?: 0L
         }
         
-        val historyToSync = messageStore.getRawMessagesSince(sinceTimestamp)
+        val historyToSync = echoLedger.getRawEchoesSince(sinceTimestamp)
         
         internalScope.launch(ioDispatcher) {
             _syncProgress.value = 0.1f
             historyToSync.chunked(5).forEachIndexed { index, chunk ->
-                val chunkPayload = MeshMessage(
+                val chunkPayload = Echo(
                     messageId = UUID.randomUUID().toString(),
                     senderId = repository.getDeviceId(),
                     senderName = "SYNC_CHUNK",
-                    content = Json.encodeToString(chunk.map { it.decodeToString() }), // Simple encoding for the chunk
+                    content = Json.encodeToString(chunk.map { it.decodeToString() }),
                     timestamp = System.currentTimeMillis(),
-                    type = MeshMessage.TYPE_RESYNC_CHUNK,
+                    type = Echo.TYPE_RESYNC_CHUNK,
                 )
-                
-                // We send the raw encrypted bytes wrapped in a SYNC_CHUNK payload
-                // The receiver will decrypt the SYNC_CHUNK, then decrypt each message inside it.
                 sendMessageInternal(endpointId, chunkPayload, secretKey)
                 _syncProgress.value = 0.1f + ((index.toFloat() / (historyToSync.size / 5f + 1)) * 0.8f)
             }
             
-            val complete = MeshMessage(
+            val complete = Echo(
                 messageId = UUID.randomUUID().toString(),
                 senderId = repository.getDeviceId(),
                 senderName = "SYNC",
                 content = "COMPLETE",
                 timestamp = System.currentTimeMillis(),
-                type = MeshMessage.TYPE_RESYNC_COMPLETE,
+                type = Echo.TYPE_RESYNC_COMPLETE,
             )
             sendMessageInternal(endpointId, complete, secretKey)
             _syncProgress.value = 1.0f
@@ -714,20 +662,16 @@ class NearbyP2PController(
         }
     }
 
-    private fun handleSyncChunk(payload: MeshMessage) {
+    private fun handleSyncChunk(payload: Echo) {
         try {
-            // Content is a JSON array of Base64 or raw strings of encrypted messages
             val encryptedMessages = Json.decodeFromString<List<String>>(payload.content)
             encryptedMessages.forEach { encryptedStr ->
-                // Note: The MessageStore.upsertMessage handles decryption/parsing when loading from DB,
-                // but here we are receiving raw encrypted messages that we need to store.
-                // We'll decrypt them first to verify and then upsert.
                 try {
-                    val encryptedBytes = encryptedStr.toByteArray() // Simplified
+                    val encryptedBytes = encryptedStr.toByteArray()
                     val decrypted = cryptoManager.decryptLocal(encryptedBytes)
-                    val message = Json.decodeFromString<MeshMessage>(decrypted.decodeToString())
-                    if (isNewMessage(message.messageId)) {
-                        messageStore.upsertMessage(message)
+                    val echo = Json.decodeFromString<Echo>(decrypted.decodeToString())
+                    if (isNewEcho(echo.messageId)) {
+                        echoLedger.upsertEcho(echo)
                     }
                 } catch (_: Exception) {}
             }
@@ -736,7 +680,7 @@ class NearbyP2PController(
         }
     }
 
-    private fun handleSyncComplete(endpointId: String, payload: MeshMessage) {
+    private fun handleSyncComplete(endpointId: String, payload: Echo) {
         _syncProgress.value = 1.0f
         internalScope.launch {
             delay(1.seconds)
@@ -744,64 +688,63 @@ class NearbyP2PController(
         }
     }
 
-    private fun handleChatMessage(endpointId: String, payload: MeshMessage, secretKey: SecretKey) {
+    private fun handleEcho(endpointId: String, payload: Echo, secretKey: SecretKey) {
         if (isSpam(payload)) return
         sendAck(endpointId, payload.messageId, payload.senderId, secretKey)
-        if (payload.receiverId.isNullOrEmpty()) relayMessage(endpointId, payload)
-        saveIncomingMessage(payload)
+        if (payload.receiverId.isNullOrEmpty()) relayEcho(endpointId, payload)
+        saveIncomingEcho(payload)
         
-        // AUTO-DISCOVER MESH ROOMS
         val gid = payload.groupId
         val gName = payload.groupName
         if ((gid != null) && (gName != null)) {
-            val existing = messageStore.getGroup(gid)
+            val existing = echoLedger.getSphere(gid)
             if (existing == null) {
                 val scope = when (payload.messageScope) {
-                    MeshMessage.MESSAGE_SHOUT -> MeshRoom.SCOPE_PUBLIC
-                    MeshMessage.MESSAGE_SILENCE -> MeshRoom.SCOPE_LOCAL
-                    else -> MeshRoom.SCOPE_PRIVATE
+                    Echo.MESSAGE_SHOUT -> Sphere.SCOPE_PUBLIC
+                    Echo.MESSAGE_SILENCE -> Sphere.SCOPE_LOCAL
+                    else -> Sphere.SCOPE_PRIVATE
                 }
-                messageStore.insertGroup(MeshRoom(id = gid, name = gName, scope = scope, parentId = MeshRoom.ID_GLOBAL))
+                echoLedger.insertSphere(Sphere(id = gid, name = gName, scope = scope, parentId = Sphere.ID_GLOBAL))
             }
         }
         hapticManager.triggerMessage(HapticManager.MessageType.MESSAGE)
     }
 
-    private fun saveIncomingMessage(payload: MeshMessage) {
-        if (isNewMessage(payload.messageId)) {
-            messageStore.upsertMessage(payload)
+    private fun saveIncomingEcho(payload: Echo) {
+        if (isNewEcho(payload.messageId)) {
+            echoLedger.upsertEcho(payload)
         }
     }
 
     private fun sendAck(endpointId: String, messageId: String, receiverId: String, secretKey: SecretKey) {
-        val ack = MeshMessage(
+        val ack = Echo(
             messageId = messageId,
             senderId = repository.getDeviceId(),
             senderName = "ACK",
             content = "",
             timestamp = System.currentTimeMillis(),
-            type = MeshMessage.TYPE_ACK,
+            type = Echo.TYPE_ACK,
             receiverId = receiverId
         )
         sendMessageInternal(endpointId, ack, secretKey)
     }
 
-    private fun relayMessage(sourceEndpointId: String, payload: MeshMessage) {
+    private fun relayEcho(sourceEndpointId: String, payload: Echo) {
         if (payload.hopCount >= 3) return
         
         internalScope.launch(ioDispatcher) {
             val myId = repository.getDeviceId()
             if (payload.senderId == myId) return@launch
             
-            val relayedMessage = payload.copy(hopCount = payload.hopCount + 1)
-            val json = Json.encodeToString(MeshMessage.serializer(), relayedMessage)
+            val relayedEcho = payload.copy(hopCount = payload.hopCount + 1)
+            val json = Json.encodeToString(Echo.serializer(), relayedEcho)
             val bytes = json.encodeToByteArray()
             
             activeConnections.forEach { endpointId ->
                 if (endpointId != sourceEndpointId) {
                     messageKeys[endpointId]?.let { key ->
                         try {
-                            queueMessage(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
+                            queueEcho(endpointId, Payload.fromBytes(cryptoManager.encrypt(bytes, key)))
                         } catch (_: Exception) {
                             Log.e(tag, "Relay fail to $endpointId")
                         }
@@ -811,7 +754,7 @@ class NearbyP2PController(
         }
     }
 
-    private fun isNewMessage(messageId: String): Boolean = synchronized(messageIdHistory) {
+    private fun isNewEcho(messageId: String): Boolean = synchronized(messageIdHistory) {
         if (messageIdHistory.contains(messageId)) false else {
             messageIdHistory.add(messageId)
             if (messageIdHistory.size > 500) messageIdHistory.removeAt(0)
@@ -819,10 +762,9 @@ class NearbyP2PController(
         }
     }
 
-    private fun isSpam(payload: MeshMessage): Boolean {
-        // Simple rate limiting: max 5 messages per 10 seconds from same peer
+    private fun isSpam(payload: Echo): Boolean {
         val now = System.currentTimeMillis()
-        val recentFromSender = messageStore.messages.value.count { it.senderId == payload.senderId && (now - it.timestamp) < 10000 }
+        val recentFromSender = echoLedger.echoes.value.count { it.senderId == payload.senderId && (now - it.timestamp) < 10000 }
         return recentFromSender > 5
     }
 
@@ -832,7 +774,7 @@ class NearbyP2PController(
         connectionsClient.sendPayload(endpointId, Payload.fromBytes(handshakePayload))
     }
 
-    private fun queueMessage(endpointId: String, payload: Payload) {
+    private fun queueEcho(endpointId: String, payload: Payload) {
         val queue = outgoingQueues[endpointId] ?: run {
             val newQueue = kotlinx.coroutines.channels.Channel<Payload>(kotlinx.coroutines.channels.Channel.UNLIMITED)
             val existing = outgoingQueues.putIfAbsent(endpointId, newQueue)
@@ -871,12 +813,12 @@ class NearbyP2PController(
         }
     }
 
-    private fun updateScannedDevices() {
-        _scannedDevices.update { current ->
-            current.map { device ->
-                device.copy(
-                    isConnected = device.id in activeConnections,
-                    isGroupPending = device.id in pendingRadioRequests
+    private fun updateScannedSources() {
+        _scannedSources.update { current ->
+            current.map { source ->
+                source.copy(
+                    isConnected = source.id in activeConnections,
+                    isGroupPending = source.id in pendingRadioRequests
                 )
             }
         }
@@ -891,8 +833,7 @@ class NearbyP2PController(
         return "$b$w$p"
     }
 
-    private fun finalizeFileMessage(payloadId: Long, partial: MeshMessage) {
-        // In real implementation, moves file from internal Nearby storage to Blukit storage
-        messageStore.upsertMessage(partial.copy(messageId = "file_$payloadId", content = "FILE_RECEIVED"))
+    private fun finalizeFileEcho(payloadId: Long, partial: Echo) {
+        echoLedger.upsertEcho(partial.copy(messageId = "file_$payloadId", content = "FILE_RECEIVED"))
     }
 }

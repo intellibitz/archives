@@ -1,7 +1,7 @@
 /**
- * BLUKIT ROOM FIELD
+ * BLUKIT SPHERE FIELD
  *
- * A high-resonance field for specific mesh room contexts.
+ * A high-resonance field for specific Sphere contexts.
  */
 package cc.thevar.blukit.ui.screens
 
@@ -15,23 +15,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.navigation.Route
 
 /**
- * THE ROOM FIELD: Focuses on a specific Room (formerly Crowd).
+ * THE SPHERE FIELD: Focuses on a specific Sphere.
  */
 @Composable
-fun RoomField(
+fun SphereField(
     state: BluetoothUiState,
     localDeviceId: String,
     header: @Composable () -> Unit,
-    roomId: String,
-    highResonanceMessages: List<MeshMessage> = emptyList(),
+    sphereId: String,
+    highResonanceMessages: List<Echo> = emptyList(),
     onVote: (String, Int) -> Unit = { _, _ -> },
     isSearchActive: Boolean = false,
     onSearchToggle: () -> Unit = {},
@@ -43,11 +43,9 @@ fun RoomField(
     onResetProfile: () -> Unit = {},
     onBack: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
-    messageText: String = "",
-    onMessageChange: (String) -> Unit = {},
-    onSend: () -> Unit = {},
-    onAcceptRadio: (P2PDevice) -> Unit = {},
-    onDenyRadio: (P2PDevice) -> Unit = {},
+    onSend: (String) -> Unit = {},
+    onAcceptRadio: (Source) -> Unit = {},
+    onDenyRadio: (Source) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
     onStartSidePulse: () -> Unit = {},
     onClearSelection: () -> Unit = {},
@@ -57,27 +55,28 @@ fun RoomField(
     onToggleStealth: (Boolean) -> Unit = {},
     onToggleLowPower: (Boolean) -> Unit = {}
 ) {
-    val room = state.session.groups.find { it.id == roomId }
-    val members = state.crowd.scannedDevices.filter { it.id in (room?.allMemberIds ?: emptySet()) || it.persistentId in (room?.allMemberIds ?: emptySet()) }
+    val sphere = state.session.groups.find { it.id == sphereId }
+    val members = state.crowd.scannedDevices.filter { it.id in (sphere?.allMemberIds ?: emptySet()) || it.persistentId in (sphere?.allMemberIds ?: emptySet()) }
     
-    val roomMessages = state.session.messages.filter { it.groupId == roomId }.sortedByDescending { it.timestamp }
-    val energyList = remember(roomMessages, members) {
-        val list = mutableListOf<Pair<P2PDevice, MeshMessage?>>()
-        roomMessages.forEach { msg ->
-            val dev = members.find { it.id == msg.senderId || it.persistentId == msg.senderId } ?: P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤")
-            list.add(dev to msg)
+    val roomMessages = state.session.messages.filter { it.groupId == sphereId }.sortedByDescending { it.timestamp }
+    val resonanceList = remember(roomMessages, members) {
+        val list = mutableListOf<Pair<Source, Echo?>>()
+        roomMessages.forEach { echo ->
+            val source = members.find { it.id == echo.senderId || it.persistentId == echo.senderId } ?: Source(id = echo.senderId, name = echo.senderName, emoji = echo.senderEmoji ?: "👤")
+            list.add(source to echo)
         }
         list
     }
 
-    var selectedPulseForMenu by remember { mutableStateOf<MeshMessage?>(null) }
+    var selectedEchoForMenu by remember { mutableStateOf<Echo?>(null) }
+    var messageText by remember { mutableStateOf("") }
 
     BlukitFieldScaffold(
         header = header,
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = room?.name ?: "ROOM",
+                    title = sphere?.name ?: "SPHERE",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeRooms = state.session.groups,
@@ -92,50 +91,53 @@ fun RoomField(
                             IconButton(onClick = onSearchToggle, modifier = Modifier.size(28.dp)) {
                                 Icon(imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People, contentDescription = "Toggle Search", tint = if (isSearchActive) StealthAmber else StealthRose, modifier = Modifier.size(20.dp))
                             }
-                            Text(text = if (isSearchActive) "SEARCH" else "PEOPLE", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthRose).copy(alpha = StealthAlphaHigh))
+                            Text(text = if (isSearchActive) "SEARCH" else "SOURCES", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthRose).copy(alpha = StealthAlphaHigh))
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                     }
                 )
 
-                MessageCanvas(
-                    highResonanceMessages = highResonanceMessages,
+                EchoCanvas(
+                    highResonanceEchoes = highResonanceMessages,
                     themeColor = StealthRose,
-                    onPulseClick = { onNavigateToPulse(it) }
+                    onEchoClick = { onNavigateToPulse(it) }
                 )
 
-                LiveMessageTicker(
+                ResonanceTicker(
                     state = state,
-                    energyList = energyList,
-                    pulseCounts = emptyMap(),
+                    resonanceList = resonanceList,
+                    echoCounts = emptyMap(),
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = emptySet(),
-                    onPulseClick = { onNavigateToPulse(it) },
-                    onDeviceClick = { dev -> onNavigateToPulse(dev.id) },
-                    onDeviceLongClick = { },
+                    onEchoClick = { onNavigateToPulse(it) },
+                    onSourceClick = { dev -> onNavigateToPulse(dev.id) },
+                    onSourceLongClick = { },
                     modifier = Modifier.weight(1f),
                     themeColor = StealthRose
                 )
             }
 
-            if (selectedPulseForMenu != null) {
-                MessageActionMenu(
-                    pulse = selectedPulseForMenu!!,
-                    isMe = selectedPulseForMenu!!.senderId == localDeviceId,
+            if (selectedEchoForMenu != null) {
+                EchoActionMenu(
+                    echo = selectedEchoForMenu!!,
+                    isMe = selectedEchoForMenu!!.senderId == localDeviceId,
                     onInvite = { onStartSidePulse() },
                     onDelete = { },
-                    onDismiss = { selectedPulseForMenu = null },
+                    onDismiss = { selectedEchoForMenu = null },
                     onBroadcast = { },
-                    onVote = { weight -> onVote(selectedPulseForMenu!!.messageId, weight) }
+                    onVote = { weight -> onVote(selectedEchoForMenu!!.messageId, weight) }
                 )
             }
 
-            MessageHub(
-                currentRoute = Route.RoomField(roomId),
+            EchoHub(
+                currentRoute = Route.SphereField(sphereId),
                 messageText = messageText,
-                onMessageChange = onMessageChange,
-                onSend = onSend,
+                onMessageChange = { messageText = it },
+                onSend = { 
+                    onSend(messageText)
+                    messageText = ""
+                },
                 messageCount = roomMessages.size,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,

@@ -1,6 +1,6 @@
 # Contributing to Blukit
 
-We love your input! Blukit is built for the **Crowd**, not the **Web**. We are building a future where communication is physical, local, and anonymous. We want to make contributing as easy and transparent as possible, whether it's:
+We love your input! Blukit is built for the **Sovereign**, not the **Web**. We are building a future where communication is physical, local, and preserved in your own air. We want to make contributing as easy and transparent as possible, whether it's:
 
 - Reporting a bug
 - Discussing the current state of the code
@@ -8,11 +8,11 @@ We love your input! Blukit is built for the **Crowd**, not the **Web**. We are b
 - Proposing new features
 - Becoming a maintainer
 
-## Design Philosophy: The Spectral Field
-Blukit follows a **Spectral Design System**. All UI components should:
+## Design Philosophy: The Resonance Field
+Blukit follows a **Sovereign Design System**. All UI components should:
 - Use **Stealth Primary** (#00E5FF) and **Stealth Rose** (#FF4081) as the core energies.
-- Favor crowd glows and pulsing animations over static borders.
-- Replace standard system dialogs with **Pulse Ghosts** or **Blukit Alerts**.
+- Favor resonance glows and pulsing animations over static borders.
+- Replace standard system dialogs with **Resonance Ghosts** or **Blukit Alerts**.
 - Maintain an anonymous-first, haptic-ready, and high-density UX.
 
 ## We Use [Github Flow](https://guides.github.com/introduction/flow/), So All Code Changes Happen Through Pull Requests
@@ -22,8 +22,8 @@ Pull requests are the best way to propose changes to the codebase. We actively w
 1. Fork the repo and create your branch from `main`.
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation.
-4. **Verification**: Always verify changes against a physical device fleet (e.g., Pixel, OnePlus, Redmi, Moto) to ensure mesh stability and radio handshake performance.
-5. **Hierarchy & Templates**: Ensure all new interaction layers (Chains) are anchored to a parent Crowd context. When adding new **Crowd Templates**, verify they correctly spawn their default child chains.
+4. **Verification**: Always verify changes against a physical device fleet (e.g., Pixel, OnePlus, Redmi, Moto) to ensure resonance stability and radio handshake performance.
+5. **Hierarchy & Templates**: Ensure all new interaction layers (Private Spheres) are anchored to a parent Sphere context. When adding new **Sphere Templates**, verify they correctly spawn their default child spheres.
 6. Ensure the test suite passes (including security unit tests and instrumented flows).
 7. Make sure your code lints.
 8. Issue that pull request!

@@ -4,8 +4,8 @@ import android.util.Log
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.SpreadPermissionManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.network.p2p.P2PController
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.network.p2p.ResonanceController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.onEach
  * and multi-stage connection handshakes.
  */
 class ConnectivityUseCase(
-    private val p2pController: P2PController,
+    private val resonanceController: ResonanceController,
     private val radioStateManager: RadioStateManager,
     private val permissionManager: SpreadPermissionManager,
     private val scope: CoroutineScope
@@ -44,13 +44,13 @@ class ConnectivityUseCase(
             .distinctUntilChanged()
             .onEach { isHealthy ->
                 if (isHealthy) {
-                    Log.d("BlukitP2P", "USECASE: Harmony achieved. Awakening the radios.")
-                    p2pController.startDiscovery()
-                    p2pController.startAdvertising()
+                    Log.d("BlukitResonance", "USECASE: Harmony achieved. Awakening the resonance.")
+                    resonanceController.startDiscovery()
+                    resonanceController.startAdvertising()
                 } else {
-                    Log.w("BlukitP2P", "USECASE: Harmony lost. Radios are still.")
-                    p2pController.stopDiscovery()
-                    p2pController.stopAdvertising()
+                    Log.w("BlukitResonance", "USECASE: Harmony lost. Resonance is still.")
+                    resonanceController.stopDiscovery()
+                    resonanceController.stopAdvertising()
                 }
             }
             .launchIn(scope)
@@ -62,26 +62,26 @@ class ConnectivityUseCase(
      * 2. Check if Nearby connected (if so, request Radio).
      * 3. If not connected, initiate Nearby connection, then request Radio.
      */
-    fun connectToDevice(device: P2PDevice, currentlyConnectedRadios: Set<String>) {
+    fun connectToSource(device: Source, currentlyConnectedRadios: Set<String>) {
         if (currentlyConnectedRadios.contains(device.id)) return
         
-        if (p2pController.isNearbyConnected(device.id)) {
-             Log.d("BlukitP2P", "USECASE: Nearby connected but no radio. Requesting Radio.")
-             p2pController.requestRadio(device)
+        if (resonanceController.isNearbyConnected(device.id)) {
+             Log.d("BlukitResonance", "USECASE: Nearby connected but no resonance. Requesting Resonance.")
+             resonanceController.requestRadio(device)
              return
         }
 
         _manualConnectionStatus.value = ConnectionStatus.Connecting
-        p2pController.connectToDevice(device)
+        resonanceController.connectToDevice(device)
             .onEach { status ->
                 when (status) {
                     is ConnectionStatus.Connected -> {
-                        Log.d("BlukitP2P", "USECASE: Connected level Nearby. Requesting Radio.")
+                        Log.d("BlukitResonance", "USECASE: Connected level Nearby. Requesting Resonance.")
                         _manualConnectionStatus.value = null
-                        p2pController.requestRadio(device)
+                        resonanceController.requestRadio(device)
                     }
                     is ConnectionStatus.Error -> {
-                        Log.e("BlukitP2P", "USECASE: Connection error: ${status.message}")
+                        Log.e("BlukitResonance", "USECASE: Connection error: ${status.message}")
                         _manualConnectionStatus.value = status
                     }
                     else -> {

@@ -23,20 +23,20 @@ import androidx.compose.ui.unit.sp
 import cc.thevar.blukit.ui.theme.*
 
 @Composable
-fun MeshSearchingView(
+fun ResonanceSensingView(
     modifier: Modifier = Modifier,
     onSignalPresence: () -> Unit = {}
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "Searching")
+    val infiniteTransition = rememberInfiniteTransition(label = "Sensing")
     
-    val searchProgress by infiniteTransition.animateFloat(
+    val sensingProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(3000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "SearchProgress"
+        label = "SensingProgress"
     )
 
     val glowAlpha by infiniteTransition.animateFloat(
@@ -57,13 +57,12 @@ fun MeshSearchingView(
         verticalArrangement = Arrangement.Center
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(200.dp)) {
-            // Animated Radar Rings
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val center = Offset(size.width / 2f, size.height / 2f)
                 val baseRadius = size.width / 4f
                 
                 repeat(3) { i ->
-                    val progress = (searchProgress + i / 3f) % 1f
+                    val progress = (sensingProgress + i / 3f) % 1f
                     drawCircle(
                         color = StealthPrimary.copy(alpha = (1f - progress) * 0.3f),
                         radius = baseRadius + progress * baseRadius * 2,
@@ -94,7 +93,7 @@ fun MeshSearchingView(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "LOOKING FOR PEOPLE...",
+            text = "SENSING FOR SOURCES...",
             style = MaterialTheme.typography.titleMedium,
             color = StealthPrimary,
             letterSpacing = 2.sp
@@ -103,7 +102,7 @@ fun MeshSearchingView(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "The air is silent. No one else is using Blukit nearby. Say hello to the rooms to start the first conversation.",
+            text = "The air is silent. No other Sources are nearby. Own your Echo to start the first record in the air.",
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -124,7 +123,7 @@ fun MeshSearchingView(
             Icon(Icons.Rounded.GraphicEq, contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "SAY HELLO",
+                text = "RESONATE",
                 style = MaterialTheme.typography.labelLarge
             )
         }

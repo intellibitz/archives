@@ -1,7 +1,7 @@
 /**
- * BLUKIT MESSAGE FIELD
+ * BLUKIT ECHO FIELD
  *
- * The ultimate granular view of a single interaction.
+ * The granular view of a single Echo interaction.
  */
 package cc.thevar.blukit.ui.screens
 
@@ -17,24 +17,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.navigation.Route
 
 /**
- * MESSAGE FIELD: Granular message detail.
+ * ECHO FIELD: Granular Echo detail.
  */
 @Composable
-fun MessageField(
+fun EchoField(
     state: BluetoothUiState,
     localDeviceId: String,
     messageId: String,
     onNavigateToPulse: (String) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
-    // Hub Callbacks
     messageText: String = "",
     onMessageChange: (String) -> Unit = {},
     onSend: () -> Unit = {},
@@ -42,27 +41,26 @@ fun MessageField(
     onSearchToggle: (() -> Unit)? = null,
     onAttachFile: () -> Unit = {},
     onInputFocusChange: (Boolean) -> Unit = {},
-    // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    activeCrowds: List<MeshRoom> = emptyList(),
+    activeCrowds: List<Sphere> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
     header: @Composable () -> Unit,
 ) {
-    val rootPulse = remember(messageId, state.session.messages) {
+    val rootEcho = remember(messageId, state.session.messages) {
         state.session.messages.find { it.messageId == messageId }
     }
 
-    val childPulses = remember(state.session.messages, messageId) {
+    val childEchoes = remember(state.session.messages, messageId) {
         state.session.messages.asSequence().filter { it.parentMessageId == messageId }
             .sortedBy { it.timestamp }.toList()
     }
 
-    val themeColor = if (rootPulse?.messageScope == MeshMessage.SCOPE_PRIVATE) StealthRose else StealthPrimary
+    val themeColor = if (rootEcho?.messageScope == Echo.MESSAGE_WHISPER) StealthRose else StealthPrimary
 
     BlukitFieldScaffold(
         themeColor = themeColor,
@@ -71,7 +69,7 @@ fun MessageField(
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = "MESSAGE",
+                    title = "ECHO",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
                     activeRooms = activeCrowds,
@@ -79,7 +77,7 @@ fun MessageField(
                     onResetProfile = onResetProfile,
                     onBack = onBack,
                     themeColor = themeColor,
-                    userCount = childPulses.size,
+                    userCount = childEchoes.size,
                     onModeChange = { onNavigateToLiveFeed() },
                     trailingContent = {
                         if (onSearchToggle != null) {
@@ -96,7 +94,7 @@ fun MessageField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SEARCH" else "PEOPLE",
+                                    text = if (isSearchActive) "SEARCH" else "SOURCES",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
                                 )
@@ -106,7 +104,7 @@ fun MessageField(
                     }
                 )
 
-                rootPulse?.let {
+                rootEcho?.let {
                     Surface(
                         color = StealthSurface,
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -115,9 +113,9 @@ fun MessageField(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             val headerLabel = when (it.type) {
-                                MeshMessage.TYPE_FILE -> "Shared File"
-                                MeshMessage.TYPE_NOTE_UPDATE -> "Shared Note"
-                                else -> "Topic"
+                                Echo.TYPE_FILE -> "Shared File"
+                                Echo.TYPE_NOTE_UPDATE -> "Shared Record"
+                                else -> "Synthesis"
                             }
                             Text(
                                 text = headerLabel,
@@ -126,7 +124,7 @@ fun MessageField(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             
-                            if (it.type == MeshMessage.TYPE_FILE) {
+                            if (it.type == Echo.TYPE_FILE) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Rounded.Description, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
                                     Spacer(modifier = Modifier.width(12.dp))
@@ -145,7 +143,7 @@ fun MessageField(
                             
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Shared by ${it.senderName}",
+                                text = "Resonated by ${it.senderName}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White.copy(alpha = 0.4f)
                             )
@@ -155,9 +153,9 @@ fun MessageField(
 
                 LiveMessageTicker(
                     state = state,
-                    energyList = childPulses.map { msg -> 
-                        val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                        dev to msg 
+                    energyList = childEchoes.map { echo -> 
+                        val source = Source(id = echo.senderId, name = echo.senderName, emoji = echo.senderEmoji ?: "👤", medium = Source.ResonanceMedium.BLUETOOTH)
+                        source to echo 
                     },
                     pulseCounts = emptyMap(),
                     localDeviceId = localDeviceId,
@@ -173,11 +171,11 @@ fun MessageField(
             }
 
             MessageHub(
-                currentRoute = Route.MessageField(messageId),
+                currentRoute = Route.EchoField(messageId),
                 messageText = messageText,
                 onMessageChange = onMessageChange,
                 onSend = onSend,
-                messageCount = childPulses.size,
+                messageCount = childEchoes.size,
                 incomingRadioRequests = emptySet(),
                 selectedDevices = emptySet(),
                 onAcceptRadio = { },
@@ -194,9 +192,9 @@ fun MessageField(
                     .fillMaxWidth()
             )
 
-            if (childPulses.isEmpty()) {
+            if (childEchoes.isEmpty()) {
                 BlukitTip(
-                    text = "No replies detected. Reply to start the conversation.",
+                    text = "No resonance detected. Echo to start the ledger.",
                     themeColor = themeColor,
                     onDismiss = {  },
                     modifier = Modifier.align(Alignment.TopCenter)

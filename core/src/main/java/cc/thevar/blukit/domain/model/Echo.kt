@@ -1,26 +1,26 @@
 /**
- * BLUKIT CORE DOMAIN: MESH MESSAGE
+ * BLUKIT CORE DOMAIN: ECHO
  *
  * The atomic unit of communication in the mesh.
- * Contains all necessary metadata for local social propagation.
+ * Contains all necessary metadata for local resonance.
  */
 package cc.thevar.blukit.domain.model
 
 import kotlinx.serialization.Serializable
 
 /**
- * Data packet representing a single chat message or shared item.
+ * Data packet representing a single Echo or shared item.
  * 
- * @property messageId Unique UUID for deduplication across local phone links.
- * @property senderId Hardware ID of the originating peer.
- * @property content The core message (Text, JSON, or file reference).
+ * @property messageId Unique UUID for deduplication across local resonance links.
+ * @property senderId Hardware ID of the originating Source.
+ * @property content The core Echo (Text, JSON, or file reference).
  * @property timestamp Epoch time of creation for chronological ordering.
- * @property messageScope Scoping: OPEN (Public), SECURE (Private), or LOCAL (Device).
+ * @property messageScope Scoping: SHOUT (Public), WHISPER (Private), or SILENCE (Device).
  * @property noteVersion LWW (Last-Write-Wins) version for conflict-free shared items.
- * @property hopCount Tracking hops for mesh discovery.
+ * @property hopCount Tracking hops for discovery.
  */
 @Serializable
-data class MeshMessage(
+data class Echo(
     val messageId: String,
     val senderId: String,
     val senderName: String,
@@ -48,7 +48,7 @@ data class MeshMessage(
     val resonanceWeight: Int = 0, // Social priority weight
 ) {
     companion object {
-        // --- Core Message Types ---
+        // --- Core Echo Types ---
         const val TYPE_TEXT = 1
         const val TYPE_IMAGE = 2
         const val TYPE_ACK = 3
@@ -78,7 +78,7 @@ data class MeshMessage(
         const val TASK_BLOCKED = 2
         const val TASK_ABANDONED = 3
 
-        // --- Social Scoping ---
+        // --- Social Scoping (Resonance levels) ---
         const val MESSAGE_SHOUT = 0
         const val MESSAGE_WHISPER = 1
         const val MESSAGE_SILENCE = 3

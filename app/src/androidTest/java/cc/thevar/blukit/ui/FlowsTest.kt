@@ -11,25 +11,25 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
-import cc.thevar.blukit.data.local.PulseStore
+import cc.thevar.blukit.data.local.EchoLedger
 import cc.thevar.blukit.data.repository.ContactRepository
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.data.system.RadioStates
 import cc.thevar.blukit.data.system.SpreadPermissionManager
-import cc.thevar.blukit.domain.model.MessagePayload
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.Resonance
-import cc.thevar.blukit.domain.power.SupremePowerReport
-import cc.thevar.blukit.domain.logic.IntelligenceManager
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.power.HarmonyReport
+import cc.thevar.blukit.domain.logic.AtmosphereManager
 import cc.thevar.blukit.domain.usecase.ConnectivityUseCase
-import cc.thevar.blukit.network.p2p.P2PController
-import cc.thevar.blukit.network.p2p.P2PError
+import cc.thevar.blukit.network.p2p.ResonanceController
+import cc.thevar.blukit.network.p2p.ResonanceError
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
-import cc.thevar.blukit.ui.viewmodels.SupremePowerViewModel
+import cc.thevar.blukit.ui.viewmodels.HarmonyViewModel
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -57,52 +57,50 @@ class FlowsTest : KoinTest {
 
     private val repository: IdentityRepository = mockk(relaxed = true)
     private val contactRepository: ContactRepository = mockk(relaxed = true)
-    private val pulseStore: PulseStore = mockk(relaxed = true)
+    private val echoLedger: EchoLedger = mockk(relaxed = true)
     private val radioStateManager: RadioStateManager = mockk(relaxed = true)
-    private val p2pController: P2PController = mockk(relaxed = true)
-    private val supremePowerManager: cc.thevar.blukit.data.power.SupremePowerManager = mockk(relaxed = true)
+    private val resonanceController: ResonanceController = mockk(relaxed = true)
+    private val harmonyManager: cc.thevar.blukit.data.power.HarmonyManager = mockk(relaxed = true)
     private val permissionManager: SpreadPermissionManager = mockk(relaxed = true)
     private val connectivityUseCase: ConnectivityUseCase = mockk(relaxed = true)
     private val hapticManager: HapticManager = mockk(relaxed = true)
-    private val intelligenceManager: IntelligenceManager = mockk(relaxed = true)
+    private val atmosphereManager: AtmosphereManager = mockk(relaxed = true)
 
     private val radioStatesFlow = MutableStateFlow(RadioStates(isBluetoothEnabled = true, isLocationEnabled = true, isWifiEnabled = true))
-    private val scannedDevicesFlow = MutableStateFlow<List<P2PDevice>>(emptyList())
+    private val scannedSourcesFlow = MutableStateFlow<List<Source>>(emptyList())
     private val connectedRadiosFlow = MutableStateFlow<Set<String>>(emptySet())
-    private val incomingRequestsFlow = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    private val incomingRequestsFlow = MutableStateFlow<Set<Source>>(emptySet())
     private val isConnectedFlow = MutableStateFlow(false)
-    private val messagesFlow = MutableStateFlow<List<MessagePayload>>(emptyList())
+    private val echoesFlow = MutableStateFlow<List<Echo>>(emptyList())
     private val isAdvertisingFlow = MutableStateFlow(false)
-    private val errorsFlow = MutableStateFlow<P2PError?>(null)
-    private val reportFlow = MutableStateFlow(SupremePowerReport())
-    private val groupsFlow = MutableStateFlow<List<Resonance>>(emptyList())
+    private val errorsFlow = MutableStateFlow<ResonanceError?>(null)
+    private val reportFlow = MutableStateFlow(HarmonyReport())
+    private val spheresFlow = MutableStateFlow<List<Sphere>>(emptyList())
     private val permissionsGrantedFlow = MutableStateFlow(true)
 
     private val testModule = module {
         single(createdAtStart = true) { repository }
         single(createdAtStart = true) { contactRepository }
-        single(createdAtStart = true) { pulseStore }
+        single(createdAtStart = true) { echoLedger }
         single(createdAtStart = true) { radioStateManager }
-        single(createdAtStart = true) { p2pController }
-        single(createdAtStart = true) { supremePowerManager }
+        single(createdAtStart = true) { resonanceController }
+        single(createdAtStart = true) { harmonyManager }
         single(createdAtStart = true) { permissionManager }
         single(createdAtStart = true) { connectivityUseCase }
         single(createdAtStart = true) { hapticManager }
-        single(createdAtStart = true) { intelligenceManager }
+        single(createdAtStart = true) { atmosphereManager }
 
         viewModelOf(::MainViewModel)
         viewModelOf(::BluetoothViewModel)
-        viewModelOf(::SupremePowerViewModel)
+        viewModelOf(::HarmonyViewModel)
     }
 
     @Before
     fun setUp() {
-        // Ensure clean state by stopping Koin if it's already running
         if (GlobalContext.getOrNull() != null) {
             stopKoin()
         }
 
-        // Setup stubs BEFORE starting Koin to ensure ViewModels get the mocks
         every { repository.nicknameFlow } returns MutableStateFlow("pulse")
         every { repository.emojiAvatar } returns MutableStateFlow("👤")
         every { repository.stealthMode } returns MutableStateFlow(false)
@@ -112,22 +110,22 @@ class FlowsTest : KoinTest {
         every { repository.getDeviceId() } returns "test-id"
         every { repository.getCurrentNickname() } returns "pulse"
 
-        every { p2pController.scannedDevices } returns scannedDevicesFlow
-        every { p2pController.connectedTies } returns connectedRadiosFlow
-        every { p2pController.incomingRadioRequests } returns incomingRequestsFlow
-        every { p2pController.outgoingRadioRequests } returns MutableStateFlow(emptySet())
-        every { p2pController.isDiscovering } returns MutableStateFlow(true)
-        every { p2pController.errors } returns errorsFlow
-        every { p2pController.isConnected } returns isConnectedFlow
-        every { p2pController.messages } returns messagesFlow
-        every { p2pController.isAdvertising } returns isAdvertisingFlow
-        every { p2pController.discoveredCrowds } returns MutableSharedFlow<Resonance>()
-        every { p2pController.syncProgress } returns MutableStateFlow(null)
+        every { resonanceController.scannedDevices } returns scannedSourcesFlow
+        every { resonanceController.connectedGroups } returns connectedRadiosFlow
+        every { resonanceController.incomingRadioRequests } returns incomingRequestsFlow
+        every { resonanceController.outgoingRadioRequests } returns MutableStateFlow(emptySet())
+        every { resonanceController.isDiscovering } returns MutableStateFlow(true)
+        every { resonanceController.errors } returns errorsFlow
+        every { resonanceController.isConnected } returns isConnectedFlow
+        every { resonanceController.messages } returns echoesFlow
+        every { resonanceController.isAdvertising } returns isAdvertisingFlow
+        every { resonanceController.discoveredRooms } returns MutableSharedFlow<Sphere>()
+        every { resonanceController.syncProgress } returns MutableStateFlow(null)
         
-        coEvery { p2pController.sendMessage(any(), any(), any(), any(), any(), any(), any()) } answers {
+        coEvery { resonanceController.sendMessage(any(), any(), any(), any(), any(), any(), any()) } answers {
             val content = firstArg<String>()
             val receiver = secondArg<String?>()
-            val newMsg = MessagePayload(
+            val newEcho = Echo(
                 messageId = UUID.randomUUID().toString(),
                 senderId = "test-id",
                 senderName = "pulse",
@@ -135,23 +133,23 @@ class FlowsTest : KoinTest {
                 timestamp = System.currentTimeMillis(),
                 receiverId = receiver
             )
-            messagesFlow.value = messagesFlow.value + newMsg
-            newMsg
+            echoesFlow.value = echoesFlow.value + newEcho
+            newEcho
         }
 
         every { radioStateManager.radioStates } returns radioStatesFlow
-        every { supremePowerManager.report } returns reportFlow
+        every { harmonyManager.report } returns reportFlow
         
-        every { pulseStore.groups } returns groupsFlow
-        every { pulseStore.activeGroups } returns groupsFlow
-        every { pulseStore.archivedGroups } returns MutableStateFlow(emptyList())
-        every { pulseStore.vaultedGroups } returns MutableStateFlow(emptyList())
-        every { pulseStore.messages } returns messagesFlow
-        every { pulseStore.getAllMessages() } returns messagesFlow
-        coEvery { pulseStore.getGroup(any()) } returns null
-        every { pulseStore.autoArchiveCrowds() } returns Unit
-        coEvery { pulseStore.pruneMedia(any()) } returns Unit
-        coEvery { pulseStore.updateGroupLastPulse(any(), any()) } returns Unit
+        every { echoLedger.spheres } returns spheresFlow
+        every { echoLedger.activeSpheres } returns spheresFlow
+        every { echoLedger.archivedSpheres } returns MutableStateFlow(emptyList())
+        every { echoLedger.vaultedSpheres } returns MutableStateFlow(emptyList())
+        every { echoLedger.echoes } returns echoesFlow
+        every { echoLedger.getAllEchoes() } returns echoesFlow
+        coEvery { echoLedger.getSphere(any()) } returns null
+        every { echoLedger.autoArchiveSpheres() } returns Unit
+        coEvery { echoLedger.pruneMedia(any()) } returns Unit
+        coEvery { echoLedger.updateSphereLastEcho(any(), any()) } returns Unit
 
         every { permissionManager.requiredPermissions } returns listOf(android.Manifest.permission.BLUETOOTH_SCAN)
         every { permissionManager.essentialPermissions } returns listOf(android.Manifest.permission.BLUETOOTH_SCAN)
@@ -181,21 +179,18 @@ class FlowsTest : KoinTest {
 
     @Test
     fun testHarmonyCheck() {
-        // Update state BEFORE starting app
         radioStatesFlow.value = RadioStates(isBluetoothEnabled = false, isLocationEnabled = true, isWifiEnabled = true)
         
         startApp()
         
-        composeTestRule.waitUntilAtLeastOneExists(hasText("AWAKEN", ignoreCase = true, substring = true), 20000)
-        composeTestRule.onAllNodesWithText("AWAKEN", ignoreCase = true, substring = true, useUnmergedTree = true).onFirst().performClick()
+        composeTestRule.waitUntilAtLeastOneExists(hasText("AWAKE", ignoreCase = true, substring = true), 20000)
+        composeTestRule.onAllNodesWithText("AWAKE", ignoreCase = true, substring = true, useUnmergedTree = true).onFirst().performClick()
     }
 
     private fun startApp() {
         composeTestRule.setContent {
             BlukitTheme {
-                BlukitApp(
-                    onEnterPip = {}
-                )
+                BlukitApp()
             }
         }
         composeTestRule.waitForIdle()

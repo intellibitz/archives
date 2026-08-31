@@ -1,7 +1,7 @@
 /**
- * BLUKIT DOMAIN: INTELLIGENCE MANAGER
+ * BLUKIT DOMAIN: ATMOSPHERE MANAGER
  *
- * The central orchestration engine for Mesh Insights.
+ * The central orchestration engine for Sphere Synthesis.
  * Handles on-device synthesis, swarm logic consensus, and privacy-preserving analytics.
  */
 package cc.thevar.blukit.domain.logic
@@ -11,10 +11,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.Log
-import cc.thevar.blukit.data.local.MessageStore
+import cc.thevar.blukit.data.local.EchoLedger
 import cc.thevar.blukit.data.repository.IdentityRepository
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.intelligence.MeshInsight
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.intelligence.Synthesis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,37 +24,35 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
-class IntelligenceManager(
+class AtmosphereManager(
     private val context: Context,
-    private val messageStore: MessageStore,
+    private val echoLedger: EchoLedger,
     private val identityRepository: IdentityRepository,
     ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     init {
-        startAmbientInsights()
+        startAmbientAtmosphere()
     }
 
     /**
-     * AMBIENT INSIGHTS: Periodically processes local messages to generate Mesh Insights.
-     * This is an on-device, privacy-first implementation of "Mesh AI."
+     * AMBIENT ATMOSPHERE: Periodically processes local Echoes to generate Synthesis.
      */
-    private fun startAmbientInsights() {
+    private fun startAmbientAtmosphere() {
         scope.launch {
-            messageStore.activeGroups.collectLatest { groups ->
-                groups.forEach { group ->
+            echoLedger.activeSpheres.collectLatest { spheres ->
+                spheres.forEach { sphere ->
                     launch {
-                        processRoomIntelligence(group.id)
+                        processSphereAtmosphere(sphere.id)
                     }
                 }
             }
         }
     }
 
-    private suspend fun processRoomIntelligence(groupId: String) {
+    private suspend fun processSphereAtmosphere(groupId: String) {
         while (true) {
-            // BATTERY-AWARE SCALING: Adjust synthesis frequency based on energy levels.
             val batteryLevel = getBatteryLevel()
             val synthesisDelay = when {
                 batteryLevel < 15 -> 10.minutes
@@ -63,33 +61,32 @@ class IntelligenceManager(
             }
             delay(synthesisDelay)
             
-            val messages = messageStore.messages.value.filter { it.groupId == groupId }
-            if (messages.size < 5) continue
+            val echoes = echoLedger.echoes.value.filter { it.groupId == groupId }
+            if (echoes.size < 5) continue
 
-            val insight = generateMeshInsight(groupId, messages)
+            val synthesis = generateSynthesis(groupId, echoes)
             
-            // Broadcast the AI Summary to the mesh as a priority message
-            val aiMessage = MeshMessage(
+            val aiEcho = Echo(
                 messageId = UUID.randomUUID().toString(),
-                senderId = "AI_ORCHESTRATOR",
-                senderName = "ROOM AI",
+                senderId = "ATMOSPHERE_ORCHESTRATOR",
+                senderName = "THE ATMOSPHERE",
                 senderEmoji = "🧠",
                 groupId = groupId,
-                content = insight.summary,
+                content = synthesis.summary,
                 timestamp = System.currentTimeMillis(),
-                type = MeshMessage.TYPE_AI_SUMMARY,
+                type = Echo.TYPE_AI_SUMMARY,
                 isPriority = true,
                 isMeta = true,
             )
-            messageStore.upsertMessage(aiMessage)
-            Log.i("IntelligenceManager", "Room Logic: AI Insight broadcasted for $groupId")
+            echoLedger.upsertEcho(aiEcho)
+            Log.i("AtmosphereManager", "Sphere Resonance: Synthesis broadcasted for $groupId")
         }
     }
 
     /**
-     * LOCAL SYNTHESIS: Uses a simplified TF-IDF approach and stopword filtering to cluster messages.
+     * LOCAL SYNTHESIS: Uses a simplified TF-IDF approach and stopword filtering to cluster Echoes.
      */
-    fun generateMeshInsight(groupId: String, messages: List<MeshMessage>): MeshInsight {
+    fun generateSynthesis(groupId: String, echoes: List<Echo>): Synthesis {
         val stopWords = setOf(
             "THE", "AND", "THIS", "THAT", "WITH", "FROM", "THEIR", "THEY", "WHAT", 
             "YOUR", "HAVE", "WERE", "THERE", "ABOUT", "WHICH", "WOULD", "COULD",
@@ -97,13 +94,12 @@ class IntelligenceManager(
             "HELLO", "PULSE", "BLUKIT", "JUST", "WILL", "SOME",
         )
 
-        val words = messages.asSequence()
+        val words = echoes.asSequence()
             .flatMap { it.content.split(Regex("\\s+")) }
             .map { it.uppercase().filter { c -> c.isLetter() } }
             .filter { (it.length > 3) && (it !in stopWords) }
             .toList()
 
-        // Simplified TF-IDF: Frequency within this group weighted against a global heuristic
         val keywords = words.groupingBy { it }
             .eachCount()
             .asSequence()
@@ -114,21 +110,16 @@ class IntelligenceManager(
 
         val mainTopic = keywords.firstOrNull() ?: "GENERAL ACTIVITY"
         
-        // Sentiment Lexicon Heuristics
-        val positiveWords = setOf("GOOD", "GREAT", "AMAZING", "LOVE", "PARTY", "FUN", "YES", "COOL", "WOW")
-        val negativeWords = setOf("BAD", "SAD", "HATE", "SLOW", "BORING", "NO", "FAIL", "ERR")
-        
         var sentimentScore = 0.1f
-        messages.forEach { p ->
+        echoes.forEach { p ->
             val content = p.content.uppercase()
-            if (positiveWords.any { content.contains(it) }) sentimentScore += 0.2f
-            if (negativeWords.any { content.contains(it) }) sentimentScore -= 0.2f
+            if (setOf("GOOD", "GREAT", "AMAZING", "LOVE", "PARTY", "FUN", "YES", "COOL", "WOW").any { content.contains(it) }) sentimentScore += 0.2f
+            if (setOf("BAD", "SAD", "HATE", "SLOW", "BORING", "NO", "FAIL", "ERR").any { content.contains(it) }) sentimentScore -= 0.2f
             if (content.contains("!")) sentimentScore += 0.1f
         }
         sentimentScore = sentimentScore.coerceIn(-1.0f, 1.0f)
 
-        // INTENT SYNTHESIS: Identifying Atmospheric Trends
-        val intent = detectAtmosphericTrend(messages)
+        val intent = detectAtmosphericTrend(echoes)
         val trendSummary = intent?.let { " TREND: $it DETECTED." } ?: ""
 
         val intensityLabel = when {
@@ -139,18 +130,18 @@ class IntelligenceManager(
             else -> "STABLE"
         }
 
-        return MeshInsight(
+        return Synthesis(
             groupId = groupId,
-            summary = "ROOM REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
+            summary = "SPHERE REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
             topKeywords = keywords,
             sentimentScore = sentimentScore,
             derivedTimestamp = System.currentTimeMillis(),
-            messageCountSampled = messages.size,
+            messageCountSampled = echoes.size,
         )
     }
 
-    fun detectAtmosphericTrend(messages: List<MeshMessage>): String? {
-        val content = messages.joinToString(" ") { it.content }.lowercase()
+    fun detectAtmosphericTrend(echoes: List<Echo>): String? {
+        val content = echoes.joinToString(" ") { it.content }.lowercase()
         return when {
             content.contains("lecture") || content.contains("professor") || content.contains("assignment") || content.contains("exam") || content.contains("study") -> "ACADEMIC RITUAL"
             content.contains("train") || content.contains("metro") || content.contains("station") || content.contains("bus") -> "URBAN TRANSIT"
@@ -169,10 +160,10 @@ class IntelligenceManager(
     }
 
     /**
-     * SWARM CONSENSUS: Triggers a vote pulse for a specific message.
+     * SWARM CONSENSUS: Triggers a vote pulse for a specific Echo.
      */
     fun castConsensusVote(messageId: String, groupId: String, weight: Int) {
-        val voteMessage = MeshMessage(
+        val voteEcho = Echo(
             messageId = UUID.randomUUID().toString(),
             senderId = identityRepository.getDeviceId(),
             senderName = "YOU",
@@ -180,8 +171,8 @@ class IntelligenceManager(
             groupId = groupId,
             content = weight.toString(),
             timestamp = System.currentTimeMillis(),
-            type = MeshMessage.TYPE_CONSENSUS_VOTE,
+            type = Echo.TYPE_CONSENSUS_VOTE,
         )
-        messageStore.upsertMessage(voteMessage)
+        echoLedger.upsertEcho(voteEcho)
     }
 }

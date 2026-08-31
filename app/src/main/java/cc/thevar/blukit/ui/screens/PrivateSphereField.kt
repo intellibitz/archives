@@ -1,7 +1,7 @@
 /**
- * BLUKIT CHANNEL FIELD
+ * BLUKIT PRIVATE SPHERE FIELD
  *
- * Private/Secure room view for families and study groups.
+ * Private/Secure Sphere view for families and focused groups.
  */
 package cc.thevar.blukit.ui.screens
 
@@ -21,50 +21,45 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.MeshRoom
-import cc.thevar.blukit.domain.model.RoomEvent
-import cc.thevar.blukit.ui.components.AssignmentCreator
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.domain.model.Sphere
+import cc.thevar.blukit.domain.model.SphereEvent
+import cc.thevar.blukit.ui.components.EchoRecordCreator
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.navigation.Route
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun ChannelField(
+fun PrivateSphereField(
     state: cc.thevar.blukit.ui.viewmodels.BluetoothUiState,
     localDeviceId: String,
-    roomId: String?,
+    sphereId: String?,
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
-    onVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
-    onSeniorVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
+    onVaultSphere: (String, Boolean) -> Unit = { _, _ -> },
+    onSeniorVaultSphere: (String, Boolean) -> Unit = { _, _ -> },
     onAssignRole: (String, String, String) -> Unit = { _, _, _ -> },
-    onUpdateNote: (String, String, String?, Int) -> Unit = { _, _, _, _ -> },
-    onPushRitual: (String, RoomEvent) -> Unit = { _, _ -> },
+    onUpdateRecord: (String, String, String?, Int) -> Unit = { _, _, _, _ -> },
+    onPushRitual: (String, SphereEvent) -> Unit = { _, _ -> },
     showMemberManagement: Boolean = false,
     onShowManagement: () -> Unit = {},
     onDismissManagement: () -> Unit = {},
-    // Hub Callbacks
-    messageText: String = "",
-    onMessageChange: (String) -> Unit = {},
-    onSend: () -> Unit = {},
+    onSend: (String) -> Unit = {},
     isSearchActive: Boolean = false,
     onSearchToggle: (() -> Unit)? = null,
-    onAcceptRadio: (P2PDevice) -> Unit = {},
-    onDenyRadio: (P2PDevice) -> Unit = {},
+    onAcceptRadio: (Source) -> Unit = {},
+    onDenyRadio: (Source) -> Unit = {},
     onStartSidePulse: () -> Unit = {},
-    onSendMessage: (String, String?) -> Unit = { _, _ -> },
     onClearSelection: () -> Unit = {},
-    onNavigateToGroup: (String) -> Unit = {},
+    onNavigateToSphere: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
     onInputFocusChange: (Boolean) -> Unit = {},
-    // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    activeCrowds: List<MeshRoom> = emptyList(),
+    activeSpheres: List<Sphere> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
@@ -77,33 +72,34 @@ fun ChannelField(
 ) {
     var showTip by remember { mutableStateOf(value = true) }
     
-    val room = remember(roomId, state.session.groups) {
-        state.session.groups.find { it.id == roomId }
+    val sphere = remember(sphereId, state.session.groups) {
+        state.session.groups.find { it.id == sphereId }
     }
 
-    val childChannels = remember(state.session.groups, roomId) {
-        state.session.groups.filter { (it.parentId == roomId) && (it.scope != MeshRoom.SCOPE_PUBLIC) }
+    val childSpheres = remember(state.session.groups, sphereId) {
+        state.session.groups.filter { (it.parentId == sphereId) && (it.scope != Sphere.SCOPE_PUBLIC) }
     }
 
-    val pulsesData = remember(state.session.messages, roomId, localDeviceId) {
-        if (roomId == null) {
+    val echoesData = remember(state.session.messages, sphereId, localDeviceId) {
+        if (sphereId == null) {
             Triple(emptyList(), emptyMap(), false)
         } else {
-            val basePulses = state.session.messages.filter { it.groupId == roomId && it.parentMessageId == null }
-            val counts = basePulses.groupBy { it.senderId }.mapValues { it.value.size }
-            val sorted = basePulses.sortedBy { it.timestamp }
+            val baseEchoes = state.session.messages.filter { it.groupId == sphereId && it.parentMessageId == null }
+            val counts = baseEchoes.groupBy { it.senderId }.mapValues { it.value.size }
+            val sorted = baseEchoes.sortedBy { it.timestamp }
             Triple(sorted, counts, false)
         }
     }
 
-    val (chatPulses, pulseCounts, _) = pulsesData
-    val memberSet = remember(room, localDeviceId) { (room?.memberIds ?: emptySet()) - localDeviceId }
-    val isPrivate = room?.scope == MeshRoom.SCOPE_PRIVATE
+    val (chatEchoes, echoCounts, _) = echoesData
+    val memberSet = remember(sphere, localDeviceId) { (sphere?.memberIds ?: emptySet()) - localDeviceId }
+    val isPrivate = sphere?.scope == Sphere.SCOPE_PRIVATE
     val themeColor = if (isPrivate) StealthRose else StealthPrimary
 
-    var showNoteEditor by remember { mutableStateOf(value = false) }
-    var activeNote by remember { mutableStateOf<MeshMessage?>(null) }
-    var showAssignmentCreator by remember { mutableStateOf(false) }
+    var showRecordEditor by remember { mutableStateOf(value = false) }
+    var activeRecord by remember { mutableStateOf<Echo?>(null) }
+    var showRecordCreator by remember { mutableStateOf(false) }
+    var messageText by remember { mutableStateOf("") }
 
     BlukitFieldScaffold(
         themeColor = themeColor,
@@ -112,15 +108,15 @@ fun ChannelField(
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = room?.name ?: "CHANNEL",
+                    title = sphere?.name ?: "SPHERE",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    activeRooms = activeCrowds,
+                    activeRooms = activeSpheres,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onBack = onBack,
                     themeColor = themeColor,
-                    userCount = room?.memberIds?.size ?: 0,
+                    userCount = sphere?.memberIds?.size ?: 0,
                     onModeChange = { onNavigateToLiveFeed() },
                     trailingContent = {
                         if (onSearchToggle != null) {
@@ -137,7 +133,7 @@ fun ChannelField(
                                     )
                                 }
                                 Text(
-                                    text = if (isSearchActive) "SEARCH" else "PEOPLE",
+                                    text = if (isSearchActive) "SEARCH" else "SOURCES",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = (if (isSearchActive) StealthAmber else themeColor).copy(alpha = StealthAlphaHigh),
                                 )
@@ -147,52 +143,55 @@ fun ChannelField(
                     }
                 )
 
-                if (childChannels.isNotEmpty()) {
-                    TickerSectionHeader(title = "PRIVATE ROOMS", color = themeColor)
+                if (childSpheres.isNotEmpty()) {
+                    TickerSectionHeader(title = "PRIVATE SPHERES", color = themeColor)
                     LazyRow(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(childChannels) { tie ->
-                            RoomSummary(
+                        items(childSpheres) { tie ->
+                            SphereSummary(
                                 title = tie.name,
-                                subtitle = "SUB-GROUP",
+                                subtitle = "SUB-SPHERE",
                                 icon = Icons.Rounded.Hearing,
                                 themeColor = StealthRose,
                                 count = tie.memberIds.size,
                                 lastUpdate = "ACTIVE",
-                                onClick = { onNavigateToGroup(tie.id) },
+                                onClick = { onNavigateToSphere(tie.id) },
                                 modifier = Modifier.width(280.dp)
                             )
                         }
                     }
                 }
 
-                LiveMessageTicker(
+                ResonanceTicker(
                     state = state,
-                    energyList = chatPulses.map { msg -> 
-                        val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                        dev to msg 
+                    resonanceList = chatEchoes.map { msg -> 
+                        val source = Source(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = Source.ResonanceMedium.BLUETOOTH)
+                        source to msg 
                     },
-                    pulseCounts = pulseCounts,
+                    echoCounts = echoCounts,
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = memberSet,
                     isGrouped = false,
-                    onPulseClick = { onNavigateToPulse(it) },
-                    onDeviceClick = { dev -> onNavigateToPulse(dev.id) },
-                    onDeviceLongClick = { },
+                    onEchoClick = { onNavigateToPulse(it) },
+                    onSourceClick = { dev -> onNavigateToPulse(dev.id) },
+                    onSourceLongClick = { },
                     modifier = Modifier.weight(1f),
                     themeColor = themeColor
                 )
             }
 
-            MessageHub(
-                currentRoute = Route.RoomField(roomId ?: ""),
+            EchoHub(
+                currentRoute = Route.SphereField(sphereId ?: ""),
                 messageText = messageText,
-                onMessageChange = onMessageChange,
-                onSend = onSend,
-                messageCount = state.session.messages.filter { it.groupId == roomId }.size,
+                onMessageChange = { messageText = it },
+                onSend = { 
+                    onSend(messageText)
+                    messageText = ""
+                },
+                messageCount = state.session.messages.filter { it.groupId == sphereId }.size,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
                 selectedDevices = state.crowd.selectedDevices,
                 onAcceptRadio = onAcceptRadio,
@@ -204,8 +203,8 @@ fun ChannelField(
                 isSearchMode = isSearchActive,
                 onSearchToggle = onSearchToggle,
                 onManage = onShowManagement,
-                onNote = { showNoteEditor = true; activeNote = null },
-                onTask = { showAssignmentCreator = true },
+                onNote = { showRecordEditor = true; activeRecord = null },
+                onTask = { showRecordCreator = true },
                 onFocusChange = onInputFocusChange,
                 isStealthMode = isStealthMode,
                 lowPowerMode = lowPowerMode,
@@ -217,13 +216,13 @@ fun ChannelField(
             )
 
             AnimatedVisibility(
-                visible = showTip && chatPulses.isEmpty() && childChannels.isEmpty(),
+                visible = showTip && chatEchoes.isEmpty() && childSpheres.isEmpty(),
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 BlukitTip(
-                    text = "THIS ROOM IS SILENT. START A CONVERSATION TO COLLABORATE.",
+                    text = "THIS SPHERE IS SILENT. RESONATE TO START THE LEDGER.",
                     themeColor = themeColor,
                     onDismiss = { showTip = false }
                 )
@@ -231,52 +230,52 @@ fun ChannelField(
         }
     )
 
-    if (showNoteEditor && room != null) {
-        NoteEditor(
-            note = activeNote,
+    if (showRecordEditor && sphere != null) {
+        RecordEditor(
+            record = activeRecord,
             onSave = { content ->
-                onUpdateNote(room.id, content, activeNote?.messageId, (activeNote?.noteVersion ?: 0) + 1)
-                showNoteEditor = false
-                activeNote = null
+                onUpdateRecord(sphere.id, content, activeRecord?.messageId, (activeRecord?.noteVersion ?: 0) + 1)
+                showRecordEditor = false
+                activeRecord = null
             },
             onDismiss = {
-                showNoteEditor = false
-                activeNote = null
+                showRecordEditor = false
+                activeRecord = null
             }
         )
     }
 
-    if (showAssignmentCreator && room != null) {
+    if (showRecordCreator && sphere != null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(StealthBlack.copy(alpha = 0.8f))
-                .clickable { showAssignmentCreator = false },
+                .clickable { showRecordCreator = false },
             contentAlignment = Alignment.Center
         ) {
-            AssignmentCreator(
-                onAssignmentCreated = { content, _ ->
-                    onSendMessage(content, room.id)
+            EchoRecordCreator(
+                onRecordCreated = { content, _ ->
+                    onSend(content)
                 },
                 themeColor = themeColor,
-                onDismiss = { showAssignmentCreator = false }
+                onDismiss = { showRecordCreator = false }
             )
         }
     }
 
-    if (showMemberManagement && room != null) {
+    if (showMemberManagement && sphere != null) {
         AlertDialog(
             onDismissRequest = onDismissManagement,
             containerColor = StealthBlack,
             titleContentColor = StealthPrimary,
             textContentColor = Color.White,
-            title = { Text("MANAGE ROOM", style = MaterialTheme.typography.titleMedium) },
+            title = { Text("MANAGE SPHERE", style = MaterialTheme.typography.titleMedium) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("PEOPLE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
-                    room.memberIds.forEach { memberId ->
+                    Text("SOURCES", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.4f))
+                    sphere.memberIds.forEach { memberId ->
                         val member = state.crowd.scannedDevices.find { it.id == memberId || it.persistentId == memberId }
-                        val currentRole = room.userRoles[memberId]
+                        val currentRole = sphere.userRoles[memberId]
                         
                         Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -288,19 +287,19 @@ fun ChannelField(
                                     style = MaterialTheme.typography.bodyLarge
                                 )
                                 if (memberId != localDeviceId) {
-                                    IconButton(onClick = { onRemoveMember(room.id, memberId) }) {
+                                    IconButton(onClick = { onRemoveMember(sphere.id, memberId) }) {
                                         Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Remove", tint = StealthError.copy(alpha = 0.6f))
                                     }
                                 }
                             }
                             
-                            val template = cc.thevar.blukit.domain.model.RoomTemplates.ALL.find { it.id == room.templateId }
+                            val template = cc.thevar.blukit.domain.model.RoomTemplates.ALL.find { it.id == sphere.templateId }
                             if (template != null && template.roles.isNotEmpty()) {
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(start = 24.dp)) {
                                     items(template.roles) { role ->
                                         val isAssigned = currentRole == role
                                         Surface(
-                                            onClick = { onAssignRole(room.id, memberId, role) }, 
+                                            onClick = { onAssignRole(sphere.id, memberId, role) }, 
                                             color = if (isAssigned) StealthPrimary.copy(alpha = StealthAlphaLow) else Color.White.copy(alpha = 0.05f),
                                             shape = RoundedCornerShape(8.dp),
                                             border = BorderStroke(1.dp, if (isAssigned) StealthPrimary else Color.White.copy(alpha = 0.1f))
@@ -319,10 +318,10 @@ fun ChannelField(
                     }
                     HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("ROOM ARCHIVE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
+                        Text("SPHERE ARCHIVE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
                         Switch(
-                            checked = room.isVaulted,
-                            onCheckedChange = { onVaultGroup(room.id, it) },
+                            checked = sphere.isVaulted,
+                            onCheckedChange = { onVaultSphere(sphere.id, it) },
                             colors = SwitchDefaults.colors(checkedThumbColor = StealthPrimary, checkedTrackColor = StealthPrimary.copy(alpha = 0.3f))
                         )
                     }
@@ -332,16 +331,16 @@ fun ChannelField(
                             Text("EXEMPT FROM ALL DECAY", fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f))
                         }
                         Switch(
-                            checked = room.isSeniorVault,
-                            onCheckedChange = { onSeniorVaultGroup(room.id, it) },
+                            checked = sphere.isSeniorVault,
+                            onCheckedChange = { onSeniorVaultSphere(sphere.id, it) },
                             colors = SwitchDefaults.colors(checkedThumbColor = StealthRose, checkedTrackColor = StealthRose.copy(alpha = 0.3f))
                         )
                     }
-                    if (room.schedules.isNotEmpty()) {
+                    if (sphere.schedules.isNotEmpty()) {
                         HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("SHARE EVENTS", style = MaterialTheme.typography.labelSmall, color = StealthPrimary.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
-                            IconButton(onClick = { room.schedules.firstOrNull()?.let { onPushRitual(room.id, it) } }) {
+                            IconButton(onClick = { sphere.schedules.firstOrNull()?.let { onPushRitual(sphere.id, it) } }) {
                                 Icon(Icons.Rounded.IosShare, contentDescription = "Push", tint = StealthPrimary, modifier = Modifier.size(16.dp))
                             }
                         }
@@ -354,17 +353,17 @@ fun ChannelField(
 }
 
 @Composable
-fun NoteEditor(
-    note: MeshMessage?,
+fun RecordEditor(
+    record: Echo?,
     onSave: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var text by remember { mutableStateOf(note?.content ?: "") }
+    var text by remember { mutableStateOf(record?.content ?: "") }
     
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = StealthBlack,
-        title = { Text(if (note == null) "NEW NOTE" else "EDIT NOTE", style = MaterialTheme.typography.titleMedium, color = StealthRose) },
+        title = { Text(if (record == null) "NEW RECORD" else "EDIT RECORD", style = MaterialTheme.typography.titleMedium, color = StealthRose) },
         text = {
             OutlinedTextField(
                 value = text,

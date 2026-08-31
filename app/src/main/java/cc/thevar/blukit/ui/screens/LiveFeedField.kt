@@ -14,20 +14,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.P2PDevice
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.ui.theme.*
 
 /**
- * LIVE FEED FIELD: A flat, real-time stream of every message on the mesh.
+ * RESONANCE STREAM FIELD: A real-time stream of every Echo in the field.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveFeedField(
-    messages: List<MeshMessage>,
-    peers: List<P2PDevice>,
+    echoes: List<Echo>,
+    sources: List<Source>,
     onBack: () -> Unit,
-    onNavigateToPulse: (String) -> Unit
+    onEchoClick: (String) -> Unit
 ) {
     Scaffold(
         containerColor = StealthBlack,
@@ -35,7 +35,7 @@ fun LiveFeedField(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        text = "LIVE FEED", 
+                        text = "RESONANCE STREAM", 
                         style = MaterialTheme.typography.titleMedium,
                         letterSpacing = 2.sp
                     ) 
@@ -59,19 +59,19 @@ fun LiveFeedField(
             contentPadding = PaddingValues(bottom = 80.dp, top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            items(messages.reversed(), key = { it.messageId }) { msg ->
-                val sender = peers.find { it.id == msg.senderId || it.persistentId == msg.senderId }
+            items(echoes.reversed(), key = { it.messageId }) { echo ->
+                val source = sources.find { it.id == echo.senderId || it.persistentId == echo.senderId }
                 MessageItem(
-                    msg = msg,
+                    msg = echo,
                     isSelected = false,
-                    senderDevice = sender,
+                    senderDevice = source,
                     pulseCount = 0,
                     isPulsed = false,
-                    isMe = false, // Resolve correctly if needed
+                    isMe = false,
                     isGrouped = false,
                     isMutual = false,
-                    rowId = "live_${msg.messageId}",
-                    onPulseClick = { onNavigateToPulse(msg.messageId) },
+                    rowId = "live_${echo.messageId}",
+                    onPulseClick = { onEchoClick(echo.messageId) },
                     onDeviceLongClick = {}
                 )
             }

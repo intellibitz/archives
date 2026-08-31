@@ -19,9 +19,9 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cc.thevar.blukit.R
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.screens.*
 import cc.thevar.blukit.ui.theme.BlukitTheme
 import cc.thevar.blukit.ui.theme.StealthPrimary
@@ -35,13 +35,13 @@ import cc.thevar.blukit.ui.viewmodels.RadioConnectionState
 @Composable
 fun PreviewRadarPhone() {
     BlukitTheme {
-        DiscoveryField(
+        SensingField(
             state = BluetoothUiState(
                 crowd = NearbyPeers(
                     scannedDevices = listOf(
-                        P2PDevice("1", "?"),
-                        P2PDevice("2", "?"),
-                        P2PDevice("3", "?")
+                        Source("1", "?"),
+                        Source("2", "?"),
+                        Source("3", "?")
                     )
                 )
             ),
@@ -55,35 +55,35 @@ fun PreviewRadarPhone() {
 @Composable
 fun PreviewChatPhone() {
     BlukitTheme {
-        ChannelField(
+        PrivateSphereField(
             state = BluetoothUiState(
                 session = MeshSession(
                     messages = listOf(
-                        MeshMessage(
+                        Echo(
                             messageId = "1",
                             senderId = "user1",
                             senderName = "?",
                             receiverId = "me",
                             content = "Hello!",
                             timestamp = 1628610000000,
-                            status = MeshMessage.STATUS_DELIVERED
+                            status = Echo.STATUS_DELIVERED
                         ),
-                        MeshMessage(
+                        Echo(
                             messageId = "2",
                             senderId = "me",
                             senderName = "Me",
                             receiverId = "user1",
                             content = "Hey there!",
                             timestamp = 1628610060000,
-                            status = MeshMessage.STATUS_SENT
+                            status = Echo.STATUS_SENT
                         )
                     ),
-                    connectionState = RadioConnectionState.Connected(P2PDevice("user1", "?"))
+                    connectionState = RadioConnectionState.Connected(Source("user1", "?"))
                 )
             ),
             localDeviceId = "me",
             header = { Text("PREVIEW HEADER", color = Color.White) },
-            roomId = "group1",
+            sphereId = "group1",
         )
     }
 }
@@ -128,7 +128,7 @@ fun PreviewFeatureGraphic() {
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "DISCOVER THE ROOM",
+                    text = "OWN YOUR ECHO",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Bold
@@ -138,17 +138,17 @@ fun PreviewFeatureGraphic() {
     }
 }
 
-@Preview(name = "Blukit Header", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Resonance Header", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewTacticalHeader() {
     BlukitTheme {
-        BlukitHeader(
+        ResonanceHeader(
             themeColor = StealthPrimary,
             onAwakenBluetooth = {},
             onAwakenWifi = {},
             onGrantPermissions = {},
             onOpenSettings = {},
-            onShowPrivacy = {}
+            onLogout = {}
         )
     }
 }
@@ -159,8 +159,8 @@ fun PreviewHumanityStage() {
     BlukitTheme {
         Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
             IdentityStage(
-                title = "GLOBAL ROOM",
-                breadcrumbTrail = listOf("DISCOVERY", "ROOM"),
+                title = "GLOBAL SPHERE",
+                breadcrumbTrail = listOf("SENSING", "SPHERE"),
                 onCrumbClick = {},
                 activeRooms = emptyList(),
                 onShowTimeline = {},
@@ -172,49 +172,49 @@ fun PreviewHumanityStage() {
     }
 }
 
-@Preview(name = "LiveMessageTicker - Headers", device = Devices.PHONE, showBackground = true)
+@Preview(name = "ResonanceTicker - Headers", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewLiveMessageTickerHeaders() {
     val me = "me"
     val user1 = "user1"
     val user2 = "user2"
     
-    val messages = listOf(
-        MeshMessage("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "GLOBAL ROOM", content = "Public message!", timestamp = System.currentTimeMillis(), messageScope = MeshMessage.SCOPE_PUBLIC),
-        MeshMessage("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, messageScope = MeshMessage.MESSAGE_SILENCE),
-        MeshMessage("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private room", timestamp = System.currentTimeMillis() - 2000, messageScope = MeshMessage.SCOPE_PRIVATE)
+    val echoes = listOf(
+        Echo("1", user1, "Alice", "👩", groupId = "air_hub", groupName = "GLOBAL SPHERE", content = "Public record!", timestamp = System.currentTimeMillis(), messageScope = Echo.SCOPE_PUBLIC),
+        Echo("2", me, "ME", "👤", groupId = "silence", groupName = "SILENCE", content = "Local trace", timestamp = System.currentTimeMillis() - 1000, messageScope = Echo.MESSAGE_SILENCE),
+        Echo("3", user2, "Bob", "👨", groupId = "tie1", groupName = "PARTY", content = "Private record", timestamp = System.currentTimeMillis() - 2000, messageScope = Echo.MESSAGE_WHISPER)
     )
     
-    val groups = listOf(
-        MeshRoom("air_hub", "GLOBAL ROOM", setOf(user1, me), MeshRoom.SCOPE_PUBLIC),
-        MeshRoom("silence", "SILENCE", setOf(me), MeshRoom.SCOPE_LOCAL),
-        MeshRoom("tie1", "PARTY", setOf(user2, me, "user3"), MeshRoom.SCOPE_PRIVATE)
+    val spheres = listOf(
+        Sphere("air_hub", "GLOBAL SPHERE", setOf(user1, me), Sphere.SCOPE_PUBLIC),
+        Sphere("silence", "SILENCE", setOf(me), Sphere.SCOPE_LOCAL),
+        Sphere("tie1", "PARTY", setOf(user2, me, "user3"), Sphere.SCOPE_PRIVATE)
     )
     
-    val energyList = listOf(
-        Pair(P2PDevice(user1, "Alice", "👩"), messages[0]),
-        Pair(P2PDevice(me, "ME", "👤"), messages[1]),
-        Pair(P2PDevice(user2, "Bob", "👨"), messages[2])
+    val resonanceList = listOf(
+        Pair(Source(user1, "Alice", "👩"), echoes[0]),
+        Pair(Source(me, "ME", "👤"), echoes[1]),
+        Pair(Source(user2, "Bob", "👨"), echoes[2])
     )
 
     BlukitTheme(stealthMode = true) {
         Box(modifier = Modifier.fillMaxSize().background(StealthBlack).padding(16.dp)) {
-            LiveMessageTicker(
+            ResonanceTicker(
                 state = BluetoothUiState(
                     session = MeshSession(
-                        messages = messages,
-                        groups = groups
+                        messages = echoes,
+                        groups = spheres
                     )
                 ),
-                energyList = energyList,
-                pulseCounts = mapOf(user1 to 1, me to 1, user2 to 5),
+                resonanceList = resonanceList,
+                echoCounts = mapOf(user1 to 1, me to 1, user2 to 5),
                 localDeviceId = me,
                 localNickname = "ME",
                 pulsedPeers = emptySet(),
                 isGrouped = true,
-                onPulseClick = {},
-                onDeviceClick = {},
-                onDeviceLongClick = {},
+                onEchoClick = {},
+                onSourceClick = {},
+                onSourceLongClick = {},
                 reverseLayout = false
             )
         }

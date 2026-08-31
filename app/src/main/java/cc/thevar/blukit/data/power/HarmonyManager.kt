@@ -1,8 +1,8 @@
 package cc.thevar.blukit.data.power
 
-import cc.thevar.blukit.data.local.MessageStore
-import cc.thevar.blukit.domain.power.SupremePowerReport
-import cc.thevar.blukit.network.p2p.P2PController
+import cc.thevar.blukit.data.local.EchoLedger
+import cc.thevar.blukit.domain.power.HarmonyReport
+import cc.thevar.blukit.network.p2p.ResonanceController
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,20 +24,20 @@ import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * The Supreme Power: Intelligence Service.
- * Monitors rooms, groups, and provides human-centric insights.
+ * The Harmony Service.
+ * Monitors Spheres, Sources, and provides human-centric Synthesis.
  */
-class SupremePowerManager(
-    private val p2pController: P2PController,
-    private val messageStore: MessageStore,
+class HarmonyManager(
+    private val resonanceController: ResonanceController,
+    private val echoLedger: EchoLedger,
     private val identityRepository: cc.thevar.blukit.data.repository.IdentityRepository,
     private val hapticManager: cc.thevar.blukit.data.system.HapticManager? = null,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
-    private val _report = MutableStateFlow(SupremePowerReport())
-    val report: StateFlow<SupremePowerReport> = _report.asStateFlow()
+    private val _report = MutableStateFlow(HarmonyReport())
+    val report: StateFlow<HarmonyReport> = _report.asStateFlow()
 
     private val _breezeFlow = MutableSharedFlow<String>(replay = 1)
     private val _lastLocation = MutableStateFlow<android.location.Location?>(null)
@@ -49,42 +49,40 @@ class SupremePowerManager(
     )
 
     init {
-        startIntelligenceGathering()
+        startHarmonyGathering()
     }
 
     fun updateLocation(location: android.location.Location) {
         _lastLocation.value = location
     }
 
-    private fun startIntelligenceGathering() {
+    private fun startHarmonyGathering() {
         scope.launch {
             combine(
-                p2pController.scannedDevices,
-                p2pController.connectedGroups,
-                messageStore.messages,
+                resonanceController.scannedDevices,
+                resonanceController.connectedGroups,
+                echoLedger.echoes,
                 identityRepository.lowPowerMode,
                 _breezeFlow.onStart { emit("") },
                 _lastLocation
             ) { args: Array<Any?> ->
                 @Suppress("UNCHECKED_CAST")
-                val scanned = args[0] as List<cc.thevar.blukit.domain.model.P2PDevice>
+                val scanned = args[0] as List<cc.thevar.blukit.domain.model.Source>
                 @Suppress("UNCHECKED_CAST")
                 val connected = args[1] as Set<String>
                 @Suppress("UNCHECKED_CAST")
-                val messages = args[2] as List<cc.thevar.blukit.domain.model.MeshMessage>
+                val echoes = args[2] as List<cc.thevar.blukit.domain.model.Echo>
                 val lowPower = args[3] as Boolean
                 
                 val userCount = scanned.size
-                val radioCount = connected.size
-                val msgCount = messages.size
+                val resonanceCount = connected.size
+                val echoCount = echoes.size
                 
-                // Logic for Mesh Harmony
                 val meshHarmony = if (userCount > 0) {
-                    min(1.0f, (radioCount.toFloat() / userCount.toFloat()) + 0.2f)
+                    min(1.0f, (resonanceCount.toFloat() / userCount.toFloat()) + 0.2f)
                 } else 0f
 
-                // AI Insight Generation (Heuristic-based)
-                val insight = generateAiInsight(userCount, radioCount, msgCount, meshHarmony, lowPower)
+                val synthesis = generateSynthesis(userCount, resonanceCount, echoCount, meshHarmony, lowPower)
                 val breeze = args.getOrNull(4) as? String
                 val location = args.getOrNull(5) as? android.location.Location
 
@@ -98,12 +96,12 @@ class SupremePowerManager(
 
                 val locationLabel = suggestions.firstOrNull() ?: if (location != null) "NEARBY" else null
 
-                SupremePowerReport(
+                HarmonyReport(
                     userCount = userCount,
-                    connectedTiesCount = radioCount,
-                    totalMessages = msgCount,
+                    connectedTiesCount = resonanceCount,
+                    totalMessages = echoCount,
                     harmony = meshHarmony,
-                    aiInsight = insight,
+                    synthesis = synthesis,
                     currentBreeze = breeze,
                     lowPowerMode = lowPower,
                     suggestedAirs = suggestions,
@@ -118,31 +116,31 @@ class SupremePowerManager(
     }
 
     private fun observeEventsForBreezes() {
-        // Person Detected
-        p2pController.scannedDevices
+        // Source Detected
+        resonanceController.scannedDevices
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("PEOPLE PROXIMITY")
+                if (new > old) emitBreeze("SOURCE PROXIMITY")
             }.launchIn(scope)
 
-        // Radio Formed
-        p2pController.connectedGroups
+        // Resonance Formed
+        resonanceController.connectedGroups
             .map { it.size }
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("SOCIAL ENERGY")
+                if (new > old) emitBreeze("RESONANCE ENERGY")
             }.launchIn(scope)
 
-        // Messages Relayed
-        p2pController.messages
+        // Echoes Relayed
+        resonanceController.messages
             .onEach { msgs ->
                 if (msgs.isNotEmpty()) {
                     val last = msgs.last()
                     if ((System.currentTimeMillis() - last.timestamp) < 1000) {
-                        emitBreeze("MESSAGE SPREAD")
+                        emitBreeze("ECHO SPREAD")
                     }
                 }
             }.launchIn(scope)
@@ -157,17 +155,17 @@ class SupremePowerManager(
         }
     }
 
-    private fun generateAiInsight(users: Int, radios: Int, msgs: Int, harmony: Float, lowPower: Boolean): String {
+    private fun generateSynthesis(users: Int, resonances: Int, echoes: Int, harmony: Float, lowPower: Boolean): String {
         if (lowPower) return "ENERGY SAVER ACTIVE"
         
         return when {
-            users == 0 -> "CONNECT WITH PEOPLE"
-            users > 15 -> "VIBRANT ROOM DETECTED"
-            harmony < 0.3f -> "PEOPLE NEARBY: SAY HELLO"
-            (users > 10) && (harmony > 0.8f) -> "ROOM HARMONY"
-            (radios == 0) && (users > 0) -> "SOCIAL ENERGY"
-            msgs > 100 -> "CONVERSATION FLOWING"
-            else -> "SAY HELLO TO THE ROOM"
+            users == 0 -> "RECORD YOUR LIFE"
+            users > 15 -> "VIBRANT SPHERE DETECTED"
+            harmony < 0.3f -> "SOURCES NEARBY: RESONATE"
+            (users > 10) && (harmony > 0.8f) -> "SPHERE HARMONY"
+            (resonances == 0) && (users > 0) -> "RESONANCE ENERGY"
+            echoes > 100 -> "ECHOES FLOWING"
+            else -> "YOUR LIFE, RESONATING"
         }
     }
 }

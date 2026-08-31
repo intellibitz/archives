@@ -19,21 +19,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cc.thevar.blukit.domain.model.MeshMessage
+import cc.thevar.blukit.domain.model.Echo
 import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun AssignmentItem(
-    assignment: MeshMessage,
+fun EchoRecordItem(
+    record: Echo,
     onStatusChange: (Int) -> Unit,
     themeColor: Color = StealthPrimary,
     modifier: Modifier = Modifier
 ) {
-    val isCompleted = assignment.taskStatus == MeshMessage.TASK_COMPLETED
-    val isBlocked = assignment.taskStatus == MeshMessage.TASK_BLOCKED
-    val isAbandoned = assignment.taskStatus == MeshMessage.TASK_ABANDONED
+    val isCompleted = record.taskStatus == Echo.TASK_COMPLETED
+    val isBlocked = record.taskStatus == Echo.TASK_BLOCKED
+    val isAbandoned = record.taskStatus == Echo.TASK_ABANDONED
     val sdf = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
 
     Surface(
@@ -54,7 +54,6 @@ fun AssignmentItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Task Toggle
             Box(
                 modifier = Modifier
                     .size(28.dp)
@@ -67,8 +66,8 @@ fun AssignmentItem(
                     .border(2.dp, if (isBlocked) StealthError else themeColor, CircleShape)
                     .clickable {
                         val nextStatus = when {
-                            isCompleted -> MeshMessage.TASK_PENDING
-                            else -> MeshMessage.TASK_COMPLETED
+                            isCompleted -> Echo.TASK_PENDING
+                            else -> Echo.TASK_COMPLETED
                         }
                         onStatusChange(nextStatus)
                     },
@@ -95,7 +94,7 @@ fun AssignmentItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = assignment.content, // Removed uppercase
+                    text = record.content, 
                     style = MaterialTheme.typography.bodyLarge,
                     color = when {
                         isCompleted -> StealthGray
@@ -107,10 +106,10 @@ fun AssignmentItem(
                 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
                     val statusText = when {
-                        isBlocked -> "Blocked"
-                        isAbandoned -> "Abandoned"
-                        isCompleted -> "Completed"
-                        else -> "Due: ${assignment.dueDate?.let { sdf.format(Date(it)) } ?: "Open Ended"}"
+                        isBlocked -> "Preserved (Blocked)"
+                        isAbandoned -> "Discarded"
+                        isCompleted -> "Archived"
+                        else -> "Record: ${record.dueDate?.let { sdf.format(Date(it)) } ?: "Permanent"}"
                     }
                     val statusColor = when {
                         isBlocked -> StealthError
@@ -133,29 +132,14 @@ fun AssignmentItem(
                 }
             }
 
-            // Context Menu for Blocked/Abandoned
             Row {
                 if (!isCompleted && !isAbandoned) {
-                    IconButton(onClick = { onStatusChange(if (isBlocked) MeshMessage.TASK_PENDING else MeshMessage.TASK_BLOCKED) }) {
+                    IconButton(onClick = { onStatusChange(if (isBlocked) Echo.TASK_PENDING else Echo.TASK_BLOCKED) }) {
                         Icon(
                             Icons.Rounded.PriorityHigh, 
-                            contentDescription = "Block", 
+                            contentDescription = "Priority", 
                             tint = if (isBlocked) StealthError else Color.White.copy(alpha = 0.2f),
                             modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-                if (assignment.assigneeId != null) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterVertically)
-                            .background(StealthAmber.copy(alpha = StealthAlphaLow), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "Assigned",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = StealthAmber
                         )
                     }
                 }
@@ -165,8 +149,8 @@ fun AssignmentItem(
 }
 
 @Composable
-fun AssignmentCreator(
-    onAssignmentCreated: (String, Long?) -> Unit,
+fun EchoRecordCreator(
+    onRecordCreated: (String, Long?) -> Unit,
     themeColor: Color = StealthPrimary,
     onDismiss: () -> Unit
 ) {
@@ -178,11 +162,11 @@ fun AssignmentCreator(
             .fillMaxWidth()
             .background(StealthBlack)
             .padding(16.dp)
-            .border(1.dp, themeColor.copy(alpha = StealthAlphaBorder), RoundedCornerShape(28.dp)) // Standardized
+            .border(1.dp, themeColor.copy(alpha = StealthAlphaBorder), RoundedCornerShape(28.dp))
             .padding(24.dp)
     ) {
         Text(
-            text = "New Task",
+            text = "New Shared Record",
             style = MaterialTheme.typography.titleMedium,
             color = themeColor
         )
@@ -202,7 +186,7 @@ fun AssignmentCreator(
             ),
             placeholder = { 
                 Text(
-                    text = "Describe the task...", 
+                    text = "Describe the record...", 
                     style = MaterialTheme.typography.bodyLarge,
                     color = StealthGray
                 ) 
@@ -216,7 +200,7 @@ fun AssignmentCreator(
                 Icon(Icons.Rounded.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp), tint = themeColor)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Set Due Date", 
+                    text = "Set Timestamp", 
                     style = MaterialTheme.typography.labelLarge,
                     color = themeColor
                 )
@@ -227,7 +211,7 @@ fun AssignmentCreator(
             Button(
                 onClick = { 
                     if (text.isNotBlank()) {
-                        onAssignmentCreated(text, selectedDate)
+                        onRecordCreated(text, selectedDate)
                         onDismiss()
                     }
                 },
@@ -236,7 +220,7 @@ fun AssignmentCreator(
                 modifier = Modifier.height(44.dp)
             ) {
                 Text(
-                    text = "CREATE", 
+                    text = "RESONATE", 
                     style = MaterialTheme.typography.labelLarge,
                     color = StealthOnPrimary
                 )

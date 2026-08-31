@@ -2,13 +2,6 @@
  * BLUKIT NETWORK: BLE FALLBACK CONTROLLER
  *
  * A native BLE engine used when Google Nearby Connections is unavailable or fails.
- * Implements standard BLE GATT (Generic Attribute Profile) for message exchange.
- * 
- * Logic:
- * - Advertising: Local Persona info is shared via ScanRecord service data.
- * - Discovery: Scans for SERVICE_UUID and extracts peer Persona metadata.
- * - Messaging: Writes messages to the MESSAGE_CHAR_UUID characteristic on the peer's GATT server.
- * - Security: Hardware-encrypted ECDH/AES handshakes similar to the primary engine.
  */
 package cc.thevar.blukit.network.p2p
 
@@ -33,13 +26,13 @@ import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import cc.thevar.blukit.data.crypto.CryptoManager
-import cc.thevar.blukit.data.local.MessageStore
+import cc.thevar.blukit.data.local.EchoLedger
 import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.domain.model.ConnectionStatus
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.domain.model.Sphere
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,12 +62,12 @@ import javax.crypto.SecretKey
 class BleFallbackController(
     private val context: Context,
     private val repository: IdentityRepository,
-    private val messageStore: MessageStore,
+    private val echoLedger: EchoLedger,
     private val hapticManager: HapticManager,
     private val cryptoManager: CryptoManager = CryptoManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
-) : P2PController {
+) : ResonanceController {
 
     private val tag = "BlukitBLE"
     private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
@@ -82,35 +75,35 @@ class BleFallbackController(
 
     private val internalScope = CoroutineScope(SupervisorJob() + mainDispatcher)
 
-    // --- P2PController State Implementation ---
-    private val _scannedDevices = MutableStateFlow<List<P2PDevice>>(emptyList())
-    override val scannedDevices = _scannedDevices.asStateFlow()
+    // --- ResonanceController State Implementation ---
+    private val _scannedSources = MutableStateFlow<List<Source>>(emptyList())
+    override val scannedDevices = _scannedSources.asStateFlow()
 
     private val _isConnected = MutableStateFlow(value = false)
     override val isConnected = _isConnected.asStateFlow()
 
-    private val _connectedGroups = MutableStateFlow<Set<String>>(emptySet())
-    override val connectedGroups = _connectedGroups.asStateFlow()
+    private val _connectedSpheres = MutableStateFlow<Set<String>>(emptySet())
+    override val connectedGroups = _connectedSpheres.asStateFlow()
 
-    private val _incomingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    private val _incomingRadioRequests = MutableStateFlow<Set<Source>>(emptySet())
     override val incomingRadioRequests = _incomingRadioRequests.asStateFlow()
 
-    private val _outgoingRadioRequests = MutableStateFlow<Set<P2PDevice>>(emptySet())
+    private val _outgoingRadioRequests = MutableStateFlow<Set<Source>>(emptySet())
     override val outgoingRadioRequests = _outgoingRadioRequests.asStateFlow()
 
-    private val _isDiscovering = MutableStateFlow(value = false)
-    override val isDiscovering = _isDiscovering.asStateFlow()
+    private val _isSensing = MutableStateFlow(value = false)
+    override val isDiscovering = _isSensing.asStateFlow()
 
     private val _isAdvertising = MutableStateFlow(value = false)
     override val isAdvertising = _isAdvertising.asStateFlow()
 
-    private val _errors = MutableStateFlow<P2PError?>(null)
-    override val errors = _errors.asStateFlow()
+    private val _resonanceErrors = MutableStateFlow<ResonanceError?>(null)
+    override val errors = _resonanceErrors.asStateFlow()
 
-    private val _discoveredRooms = MutableSharedFlow<MeshRoom>(extraBufferCapacity = 5)
-    override val discoveredRooms = _discoveredRooms.asSharedFlow()
+    private val _discoveredSpheres = MutableSharedFlow<Sphere>(extraBufferCapacity = 5)
+    override val discoveredRooms = _discoveredSpheres.asSharedFlow()
 
-    override val messages: StateFlow<List<MeshMessage>> = messageStore.getAllMessages()
+    override val messages: StateFlow<List<Echo>> = echoLedger.echoes
     override val syncProgress: StateFlow<Float?> = MutableStateFlow(null)
 
     private val messageKeys = ConcurrentHashMap<String, SecretKey>()
@@ -120,11 +113,8 @@ class BleFallbackController(
     private val pendingRadioRequests = Collections.synchronizedSet(mutableSetOf<String>())
 
     companion object {
-        /** Unique Service UUID for Blukit BLE mesh. */
         private val SERVICE_UUID = UUID.fromString("0000fb01-0000-1000-8000-00805f9b34fb")
-        /** Characteristic UUID for writing encrypted messages. */
         private val MESSAGE_CHAR_UUID = UUID.fromString("0000fb02-0000-1000-8000-00805f9b34fb")
-        /** Protocol prefix for ECDH handshake packets. */
         private const val HANDSHAKE_PREFIX = 0x01.toByte()
     }
 
@@ -134,25 +124,24 @@ class BleFallbackController(
             val scanRecord = result.scanRecord ?: return
             val serviceData = scanRecord.serviceData[ParcelUuid(SERVICE_UUID)] ?: return
             
-            // Extract peer Persona from service data (Nickname|Emoji|ID)
             val info = String(serviceData, StandardCharsets.UTF_8)
             val parts = info.split("|", limit = 3)
             if (parts.size < 3) return
 
-            val newDevice = P2PDevice(
+            val newSource = Source(
                 id = device.address,
                 name = parts[1],
                 emoji = parts[0],
                 signalStrength = result.rssi,
             )
-            _scannedDevices.update { current ->
-                current.filter { it.id != device.address } + newDevice
+            _scannedSources.update { current ->
+                current.filter { it.id != device.address } + newSource
             }
         }
 
         override fun onScanFailed(errorCode: Int) {
-            Log.e(tag, "Scan failed: $errorCode")
-            _isDiscovering.value = false
+            Log.e(tag, "Sensing failed: $errorCode")
+            _isSensing.value = false
         }
     }
 
@@ -195,7 +184,6 @@ class BleFallbackController(
         }
     }
 
-    /** Manages the client-side GATT connection lifecycle. */
     private fun handleGattConnectionChange(gatt: BluetoothGatt, newState: Int) {
         val address = gatt.device.address
         if (newState == BluetoothProfile.STATE_CONNECTED) {
@@ -203,29 +191,28 @@ class BleFallbackController(
             try {
                 gatt.discoverServices()
             } catch (_: SecurityException) {
-                reportError(P2PError.ConnectionError("Permission Denied for Service Discovery"))
+                reportError(ResonanceError.ConnectionError("Permission Denied for Service Discovery"))
             }
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
             Log.i(tag, "GATT: Disconnected from $address")
             activeGatts.remove(address)
             pendingRadioRequests.remove(address)
-            _connectedGroups.update { it - address }
+            _connectedSpheres.update { it - address }
             if (activeGatts.isEmpty()) _isConnected.value = false
-            updateScannedDevices()
+            updateScannedSources()
         }
     }
 
-    /** Triggers secure handshake once Blukit service is discovered on peer. */
     private fun handleGattServicesDiscovered(gatt: BluetoothGatt, status: Int) {
         val address = gatt.device.address
         if (status == BluetoothGatt.GATT_SUCCESS) {
             activeGatts[address] = gatt
-            _connectedGroups.update { it + address }
+            _connectedSpheres.update { it + address }
             _isConnected.value = true
             sendHandshake(address)
         } else {
             Log.e(tag, "Service discovery failed with status: $status")
-            reportError(P2PError.ConnectionError("Service discovery failed"))
+            reportError(ResonanceError.ConnectionError("Service discovery failed"))
         }
     }
 
@@ -238,7 +225,6 @@ class BleFallbackController(
         }
     }
 
-    /** Handles incoming GATT writes (Encrypted Messages or Handshakes). */
     private fun handleCharacteristicWrite(
         device: BluetoothDevice,
         requestId: Int,
@@ -260,7 +246,7 @@ class BleFallbackController(
         if (data.isNotEmpty() && (data[0] == HANDSHAKE_PREFIX)) {
             handleHandshake(address, data)
         } else {
-            handleMessage(address, data)
+            handleEcho(address, data)
         }
     }
 
@@ -271,75 +257,73 @@ class BleFallbackController(
             val messagePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyEncoded))
             val sharedSecret = cryptoManager.deriveSharedSecret(messagePublicKey)
             messageKeys[address] = sharedSecret
-            Log.i(tag, "SECURE: Radio ready for $address (BLE)")
-            updateScannedDevices()
+            Log.i(tag, "SECURE: Resonance ready for $address (BLE)")
+            updateScannedSources()
         } catch (e: Exception) {
             Log.e(tag, "Handshake error: ${e.message}")
         }
     }
 
-    private fun handleMessage(address: String, data: ByteArray) {
+    private fun handleEcho(address: String, data: ByteArray) {
         val secretKey = messageKeys[address] ?: return
         try {
             val decryptedBytes = cryptoManager.decrypt(data, secretKey)
-            val payload = Json.decodeFromString<MeshMessage>(decryptedBytes.decodeToString())
+            val payload = Json.decodeFromString<Echo>(decryptedBytes.decodeToString())
 
             when (payload.type) {
-                MeshMessage.TYPE_ACK -> handleAck(payload)
+                Echo.TYPE_ACK -> handleAck(payload)
                 else -> {
-                    if (isNewMessage(payload.messageId) && (payload.senderId !in repository.blockedUsers.value)) {
-                        handleChatMessage(address, payload, secretKey)
+                    if (isNewEcho(payload.messageId) && (payload.senderId !in repository.blockedUsers.value)) {
+                        handleResonanceEcho(address, payload, secretKey)
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.e(tag, "Message decrypt error: ${e.message}")
-            reportError(P2PError.EncryptionError("Failed to decrypt incoming message"))
+            Log.e(tag, "Echo decrypt error: ${e.message}")
+            reportError(ResonanceError.EncryptionError("Failed to decrypt incoming Echo"))
         }
     }
 
-    private fun handleAck(payload: MeshMessage) {
+    private fun handleAck(payload: Echo) {
         internalScope.launch(ioDispatcher) {
-            messageStore.updateMessageStatus(payload.messageId, MeshMessage.STATUS_DELIVERED)
+            echoLedger.updateEchoStatus(payload.messageId, Echo.STATUS_DELIVERED)
         }
     }
 
-    private fun handleChatMessage(address: String, payload: MeshMessage, secretKey: SecretKey) {
+    private fun handleResonanceEcho(address: String, payload: Echo, secretKey: SecretKey) {
         sendAck(address, payload, secretKey)
         if (payload.receiverId.isNullOrEmpty()) {
-            relayMessage(address, payload)
+            relayEcho(address, payload)
         }
 
         internalScope.launch(ioDispatcher) {
-            // AUTO-DISCOVER ROOMS
             val gid = payload.groupId
             val gName = payload.groupName
             if ((gid != null) && (gName != null)) {
-                val existing = messageStore.getGroup(gid)
+                val existing = echoLedger.getSphere(gid)
                 if (existing == null) {
                     val scope = when (payload.messageScope) {
-                        MeshMessage.MESSAGE_SHOUT -> MeshRoom.SCOPE_PUBLIC
-                        MeshMessage.MESSAGE_SILENCE -> MeshRoom.SCOPE_LOCAL
-                        else -> MeshRoom.SCOPE_PRIVATE
+                        Echo.MESSAGE_SHOUT -> Sphere.SCOPE_PUBLIC
+                        Echo.MESSAGE_SILENCE -> Sphere.SCOPE_LOCAL
+                        else -> Sphere.SCOPE_PRIVATE
                     }
-                    messageStore.insertGroup(
-                        MeshRoom(
+                    echoLedger.insertSphere(
+                        Sphere(
                             id = gid,
                             name = gName,
                             scope = scope,
-                            parentId = MeshRoom.ID_GLOBAL,
+                            parentId = Sphere.ID_GLOBAL,
                         ),
                     )
                 }
             }
 
-            messageStore.upsertMessage(payload)
+            echoLedger.upsertEcho(payload)
             hapticManager.triggerMessage(HapticManager.MessageType.MESSAGE)
         }
     }
 
-    /** Propagates messages to other connected BLE groups. */
-    private fun relayMessage(sourceAddress: String, payload: MeshMessage) {
+    private fun relayEcho(sourceAddress: String, payload: Echo) {
         if (payload.hopCount >= 3) return
 
         internalScope.launch(ioDispatcher) {
@@ -347,7 +331,7 @@ class BleFallbackController(
             if (payload.senderId == myId) return@launch
 
             val relayedPayload = payload.copy(hopCount = payload.hopCount + 1)
-            val json = Json.encodeToString(MeshMessage.serializer(), relayedPayload)
+            val json = Json.encodeToString(Echo.serializer(), relayedPayload)
             val bytes = json.encodeToByteArray()
 
             activeGatts.forEach { (address, _) ->
@@ -365,19 +349,19 @@ class BleFallbackController(
         }
     }
 
-    private fun sendAck(address: String, originalPayload: MeshMessage, secretKey: SecretKey) {
-        val ack = MeshMessage(
+    private fun sendAck(address: String, originalPayload: Echo, secretKey: SecretKey) {
+        val ack = Echo(
             messageId = originalPayload.messageId,
             senderId = repository.getDeviceId(),
             senderName = "",
             content = "",
             timestamp = System.currentTimeMillis(),
-            type = MeshMessage.TYPE_ACK,
+            type = Echo.TYPE_ACK,
             receiverId = originalPayload.senderId,
         )
         internalScope.launch(ioDispatcher) {
             try {
-                val json = Json.encodeToString(MeshMessage.serializer(), ack)
+                val json = Json.encodeToString(Echo.serializer(), ack)
                 val encryptedAck = cryptoManager.encrypt(json.toByteArray(), secretKey)
                 sendData(address, encryptedAck)
             } catch (e: Exception) {
@@ -386,7 +370,7 @@ class BleFallbackController(
         }
     }
 
-    private fun isNewMessage(id: String): Boolean = synchronized(messageIdHistory) {
+    private fun isNewEcho(id: String): Boolean = synchronized(messageIdHistory) {
         if (messageIdHistory.contains(id)) false else {
             messageIdHistory.add(id)
             if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
@@ -394,7 +378,6 @@ class BleFallbackController(
         }
     }
 
-    /** Core GATT write logic. Handles Android API version differences. */
     private fun sendData(address: String, data: ByteArray) {
         val gatt = activeGatts[address] ?: return
         val service = gatt.getService(SERVICE_UUID) ?: return
@@ -415,13 +398,12 @@ class BleFallbackController(
     }
 
     override fun startDiscovery() {
-        Log.i(tag, "BLE: startDiscovery()")
         if ((adapter == null) || !adapter.isEnabled) {
-            reportError(P2PError.DiscoveryError("Bluetooth Disabled"))
+            reportError(ResonanceError.SensingError("Bluetooth Disabled"))
             return
         }
         val scanner = adapter.bluetoothLeScanner ?: return
-        _isDiscovering.value = true
+        _isSensing.value = true
         
         val filter = ScanFilter.Builder()
             .setServiceUuid(ParcelUuid(SERVICE_UUID))
@@ -434,26 +416,25 @@ class BleFallbackController(
         try {
             scanner.startScan(listOf(filter), settings, scanCallback)
         } catch (_: SecurityException) {
-            reportError(P2PError.DiscoveryError("Permission Denied"))
-            _isDiscovering.value = false
+            reportError(ResonanceError.SensingError("Permission Denied"))
+            _isSensing.value = false
         }
     }
 
     override fun stopDiscovery() {
-        if (!_isDiscovering.value) return
-        _isDiscovering.value = false
+        if (!_isSensing.value) return
+        _isSensing.value = false
         try {
             adapter?.bluetoothLeScanner?.stopScan(scanCallback)
         } catch (e: SecurityException) {
-            Log.w("BleFallback", "Stop advertising failed: ${e.message}")
+            Log.w("BleFallback", "Stop sensing failed: ${e.message}")
         }
-        _scannedDevices.value = emptyList()
+        _scannedSources.value = emptyList()
     }
 
     override fun startAdvertising() {
-        Log.i(tag, "BLE: startAdvertising()")
         if ((adapter == null) || (!adapter.isEnabled)) {
-            reportError(P2PError.AdvertisingError("Bluetooth Disabled"))
+            reportError(ResonanceError.AdvertisingError("Bluetooth Disabled"))
             return
         }
         val advertiser = adapter.bluetoothLeAdvertiser ?: return
@@ -467,7 +448,6 @@ class BleFallbackController(
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
             .build()
 
-        // Persona meta: Emoji|Nickname|DeviceID
         val localMessage = "${repository.emojiAvatar.value}|${repository.getCurrentNickname()}|${repository.getDeviceId()}"
         val data = AdvertiseData.Builder()
             .setIncludeDeviceName(false)
@@ -479,12 +459,11 @@ class BleFallbackController(
             advertiser.startAdvertising(settings, data, advertiseCallback)
             startGattServer()
         } catch (_: SecurityException) {
-            reportError(P2PError.AdvertisingError("Permission Denied"))
+            reportError(ResonanceError.AdvertisingError("Permission Denied"))
             _isAdvertising.value = false
         }
     }
 
-    /** Opens the GATT server for peer connections. */
     private fun startGattServer() {
         try {
             gattServer = bluetoothManager?.openGattServer(context, gattServerCallback)
@@ -498,7 +477,7 @@ class BleFallbackController(
             gattServer?.addService(service)
         } catch (e: SecurityException) {
             Log.e(tag, "GATT Server start fail: ${e.message}")
-            reportError(P2PError.AdvertisingError("Permission Denied for GATT Server"))
+            reportError(ResonanceError.AdvertisingError("Permission Denied for GATT Server"))
         }
     }
 
@@ -510,57 +489,49 @@ class BleFallbackController(
             gattServer?.close()
             gattServer = null
         } catch (e: SecurityException) {
-            Log.e("BleFallback", "GATT connection change handle failed: ${e.message}")
+            Log.e("BleFallback", "GATT release fail: ${e.message}")
         }
     }
 
-    override fun requestRadio(device: P2PDevice) {
+    override fun requestRadio(device: Source) {
         pendingRadioRequests.add(device.id)
-        updateScannedDevices()
+        updateScannedSources()
         sendHandshake(device.id)
     }
 
     override fun isNearbyConnected(endpointId: String): Boolean = false
-    override fun acceptRadio(device: P2PDevice) {
+    override fun acceptRadio(device: Source) {
         pendingRadioRequests.remove(device.id)
-        _incomingRadioRequests.update { it - device }
-        _connectedGroups.update { it + device.id }
+        _connectedSpheres.update { it + device.id }
         _isConnected.value = true
-        updateScannedDevices()
+        updateScannedSources()
     }
 
-    override fun denyRadio(device: P2PDevice) {
+    override fun denyRadio(device: Source) {
         pendingRadioRequests.remove(device.id)
-        _incomingRadioRequests.update { it - device }
-        updateScannedDevices()
+        updateScannedSources()
     }
 
     override fun joinRoom(groupId: String) {
-        messageStore.joinGroup(groupId, repository.getDeviceId())
+        echoLedger.joinSphere(groupId, repository.getDeviceId())
     }
 
-    override fun connectToDevice(device: P2PDevice): SharedFlow<ConnectionStatus> {
+    override fun connectToDevice(device: Source): SharedFlow<ConnectionStatus> {
         val flow = MutableSharedFlow<ConnectionStatus>(replay = 1)
         flow.tryEmit(ConnectionStatus.Connecting)
         
         val bluetoothDevice = adapter?.getRemoteDevice(device.id)
         if (bluetoothDevice == null) {
-            flow.tryEmit(ConnectionStatus.Error("Device not found"))
+            flow.tryEmit(ConnectionStatus.Error("Source not found"))
             return flow.asSharedFlow()
         }
 
         try {
-            @Suppress("DEPRECATION")
-            bluetoothDevice.connectGatt(
-                context,
-                false,
-                gattCallback,
-                BluetoothDevice.TRANSPORT_LE,
-            )
+            bluetoothDevice.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
         } catch (e: SecurityException) {
             Log.e("BleFallback", "Permission Denied: ${e.message}")
             flow.tryEmit(ConnectionStatus.Error("Permission Denied"))
-            reportError(P2PError.ConnectionError("Permission Denied"))
+            reportError(ResonanceError.ConnectionError("Permission Denied"))
         }
 
         return flow.asSharedFlow()
@@ -574,13 +545,12 @@ class BleFallbackController(
         }
     }
 
-    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MeshMessage? {
-        // ENFORCE PARTICIPATION
+    override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? {
         groupId?.let { gid ->
-            if (!messageStore.isMember(gid, repository.getDeviceId())) return null
+            if (!echoLedger.isMember(gid, repository.getDeviceId())) return null
         }
 
-        val payload = MeshMessage(
+        val payload = Echo(
             messageId = messageId ?: UUID.randomUUID().toString(),
             senderId = repository.getDeviceId(),
             senderName = repository.getCurrentNickname(),
@@ -593,7 +563,7 @@ class BleFallbackController(
             messageScope = messageScope,
             type = type,
         )
-        val json = Json.encodeToString(MeshMessage.serializer(), payload)
+        val json = Json.encodeToString(Echo.serializer(), payload)
         val bytes = json.toByteArray()
 
         try {
@@ -610,7 +580,7 @@ class BleFallbackController(
                     }
                 }
             }
-            messageStore.upsertMessage(payload)
+            echoLedger.upsertEcho(payload)
             synchronized(messageIdHistory) {
                 messageIdHistory.add(payload.messageId)
                 if (messageIdHistory.size > 100) messageIdHistory.removeAt(0)
@@ -621,55 +591,54 @@ class BleFallbackController(
         }
     }
 
-    private fun updateScannedDevices() {
-        _scannedDevices.update { current ->
+    private fun updateScannedSources() {
+        _scannedSources.update { current ->
             current.map { device ->
                 device.copy(
-                    isConnected = device.id in _connectedGroups.value,
+                    isConnected = device.id in _connectedSpheres.value,
                     isGroupPending = device.id in pendingRadioRequests,
                 )
             }
         }
     }
 
-    private fun reportError(error: P2PError) {
-        internalScope.launch { _errors.emit(error) }
+    private fun reportError(error: ResonanceError) {
+        internalScope.launch { _resonanceErrors.emit(error) }
     }
 
-    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): MeshMessage? {
+    override suspend fun broadcastMessage(content: String, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? {
         return sendMessage(content, null, messageScope, messageId, groupId, groupName, type)
     }
 
-    override suspend fun broadcastIdentityUpdate(oldName: String): MeshMessage {
-        // BLE implementation does not yet support identity broadcasts.
-        return MeshMessage(
+    override suspend fun broadcastIdentityUpdate(oldName: String): Echo {
+        return Echo(
             messageId = "ble-placeholder",
             senderId = "ble",
             senderName = "ble",
             content = oldName,
             timestamp = System.currentTimeMillis(),
-            type = MeshMessage.TYPE_IDENTITY_UPDATE
+            type = Echo.TYPE_IDENTITY_UPDATE
         )
     }
 
-    override suspend fun sendGroupMessage(content: String, groupId: String): MeshMessage? {
+    override suspend fun sendGroupMessage(content: String, groupId: String): Echo? {
         return sendMessage(content, null)?.copy(groupId = groupId)
     }
 
-    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): MeshMessage? {
-        return sendMessage(content, null, MeshMessage.MESSAGE_WHISPER, messageId, groupId, null)?.copy(type = MeshMessage.TYPE_NOTE_UPDATE, noteVersion = version)
+    override suspend fun sendNoteUpdate(groupId: String, content: String, messageId: String?, version: Int): Echo? {
+        return sendMessage(content, null, Echo.MESSAGE_WHISPER, messageId, groupId, null)?.copy(type = Echo.TYPE_NOTE_UPDATE, noteVersion = version)
     }
 
-    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): MeshMessage? {
+    override suspend fun sendFile(fileUri: android.net.Uri, receiverId: String?, messageScope: Int, groupId: String?, groupName: String?): Echo? {
         Log.w(tag, "File sharing not supported on BLE Fallback")
         return null
     }
 
     override fun startGroupRoom(name: String, members: Set<String>, type: Int, groupId: String?, parentId: String?): String {
-        val gid = groupId ?: MeshRoom.generateId(name, type)
+        val gid = groupId ?: Sphere.generateId(name, type)
         internalScope.launch(ioDispatcher) {
-            messageStore.insertGroup(
-                MeshRoom(
+            echoLedger.insertSphere(
+                Sphere(
                     id = gid,
                     name = name,
                     memberIds = members + repository.getDeviceId(),
@@ -684,13 +653,13 @@ class BleFallbackController(
 
     override fun updateGroupMembers(groupId: String, memberIds: Set<String>) {
         internalScope.launch(ioDispatcher) {
-            messageStore.updateGroupMembers(groupId, memberIds)
+            echoLedger.updateSphereMembers(groupId, memberIds)
         }
     }
 
     override fun updateGroupScope(groupId: String, scope: Int) {
         internalScope.launch(ioDispatcher) {
-            messageStore.updateGroupScope(groupId, scope)
+            echoLedger.updateSphereScope(groupId, scope)
         }
     }
 
@@ -710,7 +679,7 @@ class BleFallbackController(
         activeGatts.clear()
         messageKeys.clear()
         _isConnected.value = false
-        _connectedGroups.value = emptySet()
+        _connectedSpheres.value = emptySet()
     }
 
     override fun release() {

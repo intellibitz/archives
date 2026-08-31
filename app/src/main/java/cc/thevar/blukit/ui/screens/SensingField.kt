@@ -1,8 +1,8 @@
 /**
- * BLUKIT DISCOVERY FIELD
+ * BLUKIT SENSING FIELD
  *
- * The root entry point of the mesh (Landing).
- * Provides a view of all nearby rooms and people.
+ * The root entry point of the resonance field (Landing).
+ * Provides a view of all nearby Spheres and Sources.
  */
 package cc.thevar.blukit.ui.screens
 
@@ -16,92 +16,88 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import cc.thevar.blukit.domain.model.MeshMessage
-import cc.thevar.blukit.domain.model.P2PDevice
-import cc.thevar.blukit.domain.model.MeshRoom
+import cc.thevar.blukit.domain.model.Echo
+import cc.thevar.blukit.domain.model.Source
+import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.components.MeshSearchingView
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.navigation.Route
 
 /**
- * THE DISCOVERY FIELD: The master feed for finding rooms and peers.
+ * THE SENSING FIELD: The master feed for finding Spheres and Sources.
  */
 @Composable
-fun DiscoveryField(
+fun SensingField(
     state: BluetoothUiState,
     localDeviceId: String,
     header: @Composable () -> Unit,
     pulsedPeers: Set<String> = emptySet(),
     onIdentifyUser: (String) -> Unit = {},
-    // Humanity Stage Props
     breadcrumbTrail: List<String> = emptyList(),
     onCrumbClick: (Int) -> Unit = {},
     userNickname: String = "",
-    activeCrowds: List<MeshRoom> = emptyList(),
     onShowTimeline: () -> Unit = {},
     onResetProfile: () -> Unit = {},
     onTitleClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
-    supremeReport: cc.thevar.blukit.domain.power.SupremePowerReport? = null,
-    // Hub Callbacks
-    messageText: String = "",
-    onMessageChange: (String) -> Unit = {},
+    harmonyReport: cc.thevar.blukit.domain.power.HarmonyReport? = null,
     onSearchToggle: (() -> Unit)? = null,
     isSearchActive: Boolean = false,
     onCreatePublicRoom: ((String, String?) -> Unit)? = null,
     onNavigateToGroup: (String) -> Unit = {},
     onNavigateToPulse: (String) -> Unit = {},
-    onAcceptRadio: (P2PDevice) -> Unit = {},
-    onDenyRadio: (P2PDevice) -> Unit = {},
+    onAcceptRadio: (Source) -> Unit = {},
+    onDenyRadio: (Source) -> Unit = {},
     onRestoreCrowd: (String) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
     showAirGhost: Boolean = false,
     onShowAirGhost: () -> Unit = {},
     onDismissAirGhost: () -> Unit = {},
 ) {
-    val eventMetas = state.session.groups.filter { it.scope == MeshRoom.SCOPE_PUBLIC }
+    val activeSpheres = state.session.groups.filter { it.scope == Sphere.SCOPE_PUBLIC }
     
-    val pulsesData = remember(state.session.messages, eventMetas) {
-        val groupedByTie = state.session.messages.groupBy { it.groupId ?: MeshRoom.ID_GLOBAL }
-        val counts = groupedByTie.mapValues { it.value.size }
-        val filtered = groupedByTie.map { it.value.maxBy { msg -> msg.timestamp } }
+    val echoesData = remember(state.session.messages, activeSpheres) {
+        val groupedBySphere = state.session.messages.groupBy { it.groupId ?: Sphere.ID_GLOBAL }
+        val counts = groupedBySphere.mapValues { it.value.size }
+        val filtered = groupedBySphere.map { it.value.maxBy { msg -> msg.timestamp } }
         val sorted = filtered.sortedByDescending { it.timestamp }
         Triple(sorted, counts, false)
     }
 
-    val (_, pulseCounts, _) = pulsesData
+    val (_, echoCounts, _) = echoesData
 
-    val combinedEnergy = remember(eventMetas, state.session.messages) {
-        val grouped = mutableListOf<Pair<P2PDevice, MeshMessage?>>()
-        val pinned = eventMetas.filter { it.isPinned }.sortedByDescending { it.lastMessageTimestamp }
-        val others = eventMetas.filter { !it.isPinned }.sortedBy { it.lastMessageTimestamp }
-        val sortedEvents = others + pinned 
+    val combinedResonance = remember(activeSpheres, state.session.messages) {
+        val list = mutableListOf<Pair<Source, Echo?>>()
+        val pinned = activeSpheres.filter { it.isPinned }.sortedByDescending { it.lastMessageTimestamp }
+        val others = activeSpheres.filter { !it.isPinned }.sortedBy { it.lastMessageTimestamp }
+        val sortedSpheres = others + pinned 
         
-        sortedEvents.forEach { room ->
-            val latestAiSummary = state.session.messages.findLast { 
-                (it.groupId == room.id) && (it.type == MeshMessage.TYPE_AI_SUMMARY)
+        sortedSpheres.forEach { sphere ->
+            val latestSynthesis = state.session.messages.findLast { 
+                (it.groupId == sphere.id) && (it.type == Echo.TYPE_AI_SUMMARY)
             }
-            val roomMessages = state.session.messages.asSequence().filter { 
-                (it.groupId == room.id || (room.id == MeshRoom.ID_GLOBAL && it.groupId == null)) && (it.senderId != localDeviceId)
+            val sphereMessages = state.session.messages.asSequence().filter { 
+                (it.groupId == sphere.id || (sphere.id == Sphere.ID_GLOBAL && it.groupId == null)) && (it.senderId != localDeviceId)
             }.sortedBy { it.timestamp }.toList().takeLast(3)
             
-            roomMessages.forEach { msg ->
-                val dev = P2PDevice(id = msg.senderId, name = msg.senderName, emoji = msg.senderEmoji ?: "👤", medium = P2PDevice.ConnectionMedium.BLUETOOTH)
-                grouped.add(dev to msg)
+            sphereMessages.forEach { echo ->
+                val source = Source(id = echo.senderId, name = echo.senderName, emoji = echo.senderEmoji ?: "👤", medium = Source.ResonanceMedium.BLUETOOTH)
+                list.add(source to echo)
             }
-            val headDev = P2PDevice(id = room.id, name = if (room.id == MeshRoom.ID_GLOBAL) "Global Mesh" else room.name, emoji = room.projectionEmoji ?: "✨", medium = P2PDevice.ConnectionMedium.BLUETOOTH, statusLabel = latestAiSummary?.content)
-            grouped.add(headDev to null)
+            val headSource = Source(id = sphere.id, name = if (sphere.id == Sphere.ID_GLOBAL) "Global Resonance" else sphere.name, emoji = sphere.projectionEmoji ?: "✨", medium = Source.ResonanceMedium.BLUETOOTH, statusLabel = latestSynthesis?.content)
+            list.add(headSource to null)
         }
-        grouped
+        list
     }
 
-    var roomNameProposal by remember { mutableStateOf("") }
+    var sphereNameProposal by remember { mutableStateOf("") }
     var showVault by remember { mutableStateOf(false) }
+    var messageText by remember { mutableStateOf("") }
 
-    val globalAiSummary = remember(state.session.messages) {
+    val globalSynthesis = remember(state.session.messages) {
         state.session.messages.findLast { 
-            (it.groupId == MeshRoom.ID_GLOBAL || it.groupId == null) && (it.type == MeshMessage.TYPE_AI_SUMMARY) 
+            (it.groupId == Sphere.ID_GLOBAL || it.groupId == null) && (it.type == Echo.TYPE_AI_SUMMARY) 
         }
     }
 
@@ -110,10 +106,10 @@ fun DiscoveryField(
         entries = {
             Column(modifier = Modifier.fillMaxSize()) {
                 IdentityStage(
-                    title = "DISCOVERY",
+                    title = "SENSING",
                     breadcrumbTrail = breadcrumbTrail,
                     onCrumbClick = onCrumbClick,
-                    activeRooms = activeCrowds,
+                    activeRooms = state.session.groups,
                     onShowTimeline = onShowTimeline,
                     onResetProfile = onResetProfile,
                     onBack = onBack,
@@ -127,7 +123,7 @@ fun DiscoveryField(
                                 IconButton(onClick = onSearchToggle, modifier = Modifier.size(28.dp)) {
                                     Icon(imageVector = if (isSearchActive) Icons.Rounded.Search else Icons.Rounded.People, contentDescription = "Toggle Search", tint = if (isSearchActive) StealthAmber else StealthPrimary, modifier = Modifier.size(20.dp))
                                 }
-                                Text(text = if (isSearchActive) "SEARCH" else "PEOPLE", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = StealthAlphaHigh))
+                                Text(text = if (isSearchActive) "SEARCH" else "SOURCES", style = MaterialTheme.typography.labelSmall, color = (if (isSearchActive) StealthAmber else StealthPrimary).copy(alpha = StealthAlphaHigh))
                             }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
@@ -135,40 +131,40 @@ fun DiscoveryField(
                 )
 
                 if (state.crowd.scannedDevices.isNotEmpty()) {
-                    globalAiSummary?.let { summary ->
+                    globalSynthesis?.let { synthesis ->
                         BlukitWidget(header = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(14.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(text = "Mesh AI Insights", style = MaterialTheme.typography.labelSmall, color = StealthAmber)
+                                    Text(text = "Sphere Synthesis", style = MaterialTheme.typography.labelSmall, color = StealthAmber)
                                 }
                             },
-                            entries = { Text(text = summary.content, color = Color.White, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(12.dp)) },
+                            entries = { Text(text = synthesis.content, color = Color.White, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(12.dp)) },
                             themeColor = StealthAmber, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
 
-                    LiveMessageTicker(
+                    ResonanceTicker(
                         state = state,
-                        energyList = combinedEnergy,
-                        pulseCounts = pulseCounts,
+                        resonanceList = combinedResonance,
+                        echoCounts = echoCounts,
                         localDeviceId = localDeviceId,
                         localNickname = userNickname,
                         pulsedPeers = pulsedPeers,
-                        onPulseClick = { id -> if (state.session.groups.any { it.id == id }) onNavigateToGroup(id) else onNavigateToPulse(id) },
-                        onDeviceClick = { onNavigateToPulse(it.id) },
-                        onDeviceLongClick = { },
+                        onEchoClick = { id -> if (state.session.groups.any { it.id == id }) onNavigateToGroup(id) else onNavigateToPulse(id) },
+                        onSourceClick = { onNavigateToPulse(it.id) },
+                        onSourceLongClick = { },
                         modifier = Modifier.weight(1f)
                     )
                 } else {
-                    MeshSearchingView(onSignalPresence = { onShowAirGhost() })
+                    ResonanceSensingView(onSignalPresence = { onShowAirGhost() })
                 }
             }
 
-            MessageHub(
-                currentRoute = Route.Discovery,
+            EchoHub(
+                currentRoute = Route.Sensing,
                 messageText = messageText,
-                onMessageChange = onMessageChange,
+                onMessageChange = { messageText = it },
                 onSend = { }, 
                 messageCount = state.session.messages.size,
                 incomingRadioRequests = state.crowd.incomingRadioRequests,
@@ -189,19 +185,19 @@ fun DiscoveryField(
     )
 
     if (showAirGhost) {
-        RoomRitualGhost(
-            onNameChange = { roomNameProposal = it },
+        SphereRitualGhost(
+            onNameChange = { sphereNameProposal = it },
             onDone = { templateId ->
-                onCreatePublicRoom?.invoke(roomNameProposal, templateId)
+                onCreatePublicRoom?.invoke(sphereNameProposal, templateId)
                 onDismissAirGhost()
             },
             onDismiss = onDismissAirGhost,
-            nearbyAirs = state.session.groups.filter { it.scope == MeshRoom.SCOPE_PUBLIC && it.id != MeshRoom.ID_GLOBAL },
+            nearbyAirs = state.session.groups.filter { it.scope == Sphere.SCOPE_PUBLIC && it.id != Sphere.ID_GLOBAL },
             onJoinAir = { gid -> onNavigateToGroup(gid); onDismissAirGhost() }
         )
     }
 
     if (showVault) {
-        SunkPulseVault(archivedCrowds = state.session.archivedGroups, onRestore = onRestoreCrowd, onDismiss = { showVault = false })
+        SunkRecordVault(archivedSpheres = state.session.archivedGroups, onRestore = onRestoreCrowd, onDismiss = { showVault = false })
     }
 }
