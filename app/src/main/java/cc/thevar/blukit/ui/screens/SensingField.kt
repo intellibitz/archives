@@ -20,7 +20,7 @@ import cc.thevar.blukit.domain.model.Echo
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.theme.*
-import cc.thevar.blukit.ui.components.MeshSearchingView
+import cc.thevar.blukit.ui.components.ResonanceSensingView
 import cc.thevar.blukit.ui.viewmodels.BluetoothUiState
 import cc.thevar.blukit.ui.navigation.Route
 

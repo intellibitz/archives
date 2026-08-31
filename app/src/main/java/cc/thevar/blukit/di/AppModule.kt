@@ -15,7 +15,7 @@ import cc.thevar.blukit.network.p2p.NearbyResonanceController
 import cc.thevar.blukit.network.p2p.ResonanceController
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
-import cc.thevar.blukit.ui.viewmodels.SupremePowerViewModel
+import cc.thevar.blukit.ui.viewmodels.HarmonyViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

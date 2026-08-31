@@ -61,18 +61,18 @@ fun LiveFeedField(
         ) {
             items(echoes.reversed(), key = { it.messageId }) { echo ->
                 val source = sources.find { it.id == echo.senderId || it.persistentId == echo.senderId }
-                MessageItem(
-                    msg = echo,
+                EchoItem(
+                    echo = echo,
                     isSelected = false,
-                    senderDevice = source,
-                    pulseCount = 0,
+                    senderSource = source,
+                    replyCount = 0,
                     isPulsed = false,
                     isMe = false,
                     isGrouped = false,
                     isMutual = false,
                     rowId = "live_${echo.messageId}",
-                    onPulseClick = { onEchoClick(echo.messageId) },
-                    onDeviceLongClick = {}
+                    onEchoClick = { onEchoClick(echo.messageId) },
+                    onSourceLongClick = {}
                 )
             }
         }

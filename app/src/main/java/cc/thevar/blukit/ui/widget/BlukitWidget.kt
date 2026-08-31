@@ -28,15 +28,15 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import cc.thevar.blukit.MainActivity
-import cc.thevar.blukit.data.local.MessageStore
+import cc.thevar.blukit.data.local.EchoLedger
 import org.koin.core.context.GlobalContext
 
 class BlukitWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            val messageStore = GlobalContext.get().get<MessageStore>()
-            val messages by messageStore.messages.collectAsState(initial = emptyList())
+            val messageStore = GlobalContext.get().get<EchoLedger>()
+            val messages by messageStore.echoes.collectAsState(initial = emptyList())
             val count = messages.size
 
             GlanceTheme {

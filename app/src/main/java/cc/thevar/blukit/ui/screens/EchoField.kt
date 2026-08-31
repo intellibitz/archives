@@ -151,26 +151,26 @@ fun EchoField(
                     }
                 }
 
-                LiveMessageTicker(
+                ResonanceTicker(
                     state = state,
-                    energyList = childEchoes.map { echo -> 
+                    resonanceList = childEchoes.map { echo -> 
                         val source = Source(id = echo.senderId, name = echo.senderName, emoji = echo.senderEmoji ?: "👤", medium = Source.ResonanceMedium.BLUETOOTH)
                         source to echo 
                     },
-                    pulseCounts = emptyMap(),
+                    echoCounts = emptyMap(),
                     localDeviceId = localDeviceId,
                     localNickname = userNickname,
                     pulsedPeers = emptySet(),
                     isGrouped = false,
-                    onPulseClick = { onNavigateToPulse(it) },
-                    onDeviceClick = {  },
-                    onDeviceLongClick = {  },
+                    onEchoClick = { onNavigateToPulse(it) },
+                    onSourceClick = {  },
+                    onSourceLongClick = {  },
                     modifier = Modifier.weight(1f),
                     themeColor = themeColor
                 )
             }
 
-            MessageHub(
+            EchoHub(
                 currentRoute = Route.EchoField(messageId),
                 messageText = messageText,
                 onMessageChange = onMessageChange,

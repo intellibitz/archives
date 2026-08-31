@@ -3,7 +3,9 @@ package cc.thevar.blukit.data.local
 import android.content.Context
 import cc.thevar.blukit.data.crypto.CryptoManager
 import cc.thevar.blukit.domain.model.Echo
+import io.mockk.every
 import io.mockk.mockk
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -23,6 +25,8 @@ class EchoLedgerTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        val filesDir = File("build/tmp/test").apply { mkdirs() }
+        every { context.filesDir } returns filesDir
         echoLedger = EchoLedger(context, cryptoManager, testDispatcher)
     }
 

@@ -7,6 +7,8 @@ import cc.thevar.blukit.data.repository.IdentityRepository
 import cc.thevar.blukit.data.system.HapticManager
 import cc.thevar.blukit.data.system.RadioStateManager
 import cc.thevar.blukit.domain.model.Echo
+import com.google.android.gms.nearby.Nearby
+import com.google.android.gms.nearby.connection.ConnectionsClient
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +36,10 @@ class NearbyResonanceControllerTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        mockkStatic(Nearby::class)
+        val connectionsClient = mockk<ConnectionsClient>(relaxed = true)
+        every { Nearby.getConnectionsClient(any<Context>()) } returns connectionsClient
+        
         controller = NearbyResonanceController(
             context, repository, echoLedger, hapticManager, 
             radioStateManager, cryptoManager, testDispatcher, testDispatcher
@@ -42,6 +48,7 @@ class NearbyResonanceControllerTest {
 
     @After
     fun tearDown() {
+        unmockkStatic(Nearby::class)
         Dispatchers.resetMain()
     }
 
