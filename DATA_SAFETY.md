@@ -20,7 +20,7 @@ Blukit **never** connects to the internet. All **Messages** travel directly from
 ## 2. Privacy by Proximity
 - **Physical Sandbox**: Your data can only travel as far as your device's radio range (Bluetooth/Wi-Fi). 
 - **Encrypted Chats**: All non-public conversations are end-to-end encrypted. Even if someone intercepts the radio signal, they cannot read the content.
-- **Stealth Mode**: Allows you to monitor the local feed while remaining invisible to others nearby.
+- **Silent Stealth**: The app intelligently hides your identity when you aren't active, making you a "silent listener" automatically to enhance privacy.
 - **Blocking**: Block any user to instantly stop all communication and discovery from them.
 
 ## 3. Persistence & Recovery

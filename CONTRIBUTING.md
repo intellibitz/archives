@@ -3,12 +3,19 @@
 We love your input! Blukit is built for offline use, not the web. We are building a future where communication is physical, local, and preserved on your own device.
 
 ## Design Philosophy: Local Network UI
-Blukit follows a design system optimized for high-fidelity OLED performance and ergonomic density. All UI components should:
-- Use Amber (`#FFB300`) and Rose (`#FF4081`) as the primary theme colors against Black (`#030507`) for OLED efficiency.
-- Use `MaterialTheme.colorScheme.outlineVariant` (`#2D333B`) for critical borders to ensure high contrast.
-- Use background glows, Activity Heatmaps, and visual connection indicators over static, standard Material components.
-- Replace standard system dialogs with custom overlays or Blukit Alerts to maintain immersion.
-- Enforce consistent typography: Avoid all-caps in headers, navigation, and labels. Use standard sentence casing with `HeadlineSmall` or `TitleMedium`.
+Blukit follows a "Zero Configuration" philosophy. All complex background operations (Eco Mode, Stealth Mode, Radio Throttling) must be autonomous and hidden from the user.
+
+### UI Guidelines
+- **Simple Terminology**: Strictly avoid "tactical" or "mesh" terminology. Use "Chat", "People", "Share", and "Authenticity" over "Message", "Peer", "Broadcast", and "Consensus".
+- **Background Complexity**: If a feature requires user configuration to work, it's not ready for Blukit. AI should handle optimizations silently.
+- **Visuals**: Use Amber (`#FFB300`) and Rose (`#FF4081`) as primary theme colors against Black (`#030507`) for OLED efficiency.
+- **Case Sensitivity**: Avoid all-caps in headers and labels. Use standard sentence casing with `HeadlineSmall` or `TitleMedium`.
+
+## Agent Guidelines
+AI Agents working on Blukit must:
+1.  **Enforce Terminology**: Never suggest UI changes that use technical jargon.
+2.  **Autonomous-First**: Prioritize silent, battery-aware, and activity-aware background logic over manual toggles.
+3.  **Local-Only**: Ensure all intelligence and persistence logic remains 100% offline and hardware-anchored.
 
 ## Technical Verification
 Contributors must verify changes against the following baseline:

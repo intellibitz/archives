@@ -22,7 +22,7 @@ All private interactions are protected by industrial-grade encryption. Keys are 
 In Blukit, you have total control:
 - **Deletion**: Deleting a message removes it permanently from your local storage.
 - **Hard Reset**: Resetting your profile destroys all local keys and data instantly.
-- **Stealth**: Use Stealth Mode to stay invisible to others nearby while remaining active in the local network.
+- **Silent Stealth**: Blukit automatically protects your presence by hiding your identity when you are inactive.
 
 ---
 *PRIVATE. LOCAL. INSTANT.*

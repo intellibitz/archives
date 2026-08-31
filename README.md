@@ -6,20 +6,22 @@ Blukit is a standard, easy-to-use chat app with a powerful secret: it operates 1
 
 ---
 
-## 🤖 AI ASSISTANT: SILENT INTELLIGENCE
-Blukit features an on-device AI Assistant that helps you manage information without being intrusive.
-- **Silent Context**: The Assistant analyzes conversation trends to subtly adjust UI themes, providing a visual "mood" for your groups.
-- **Task Detection**: Automatically identifies actionable items and tasks from your messages and shared documents.
-- **Private Processing**: All intelligence is generated locally on your hardware. Your data never leaves your device.
+## 🤖 AI ASSISTANT: AUTONOMOUS INTELLIGENCE
+Blukit features an on-device AI Assistant that handles complex optimizations in the background, allowing you to focus on the conversation.
+- **Silent Eco**: The app automatically throttles its engine and stops animations when it detects low battery or when the Android OS enters "Battery Saver" mode to preserve your hardware energy.
+- **Silent Stealth**: The app intelligently stops broadcasting your identity when you aren't active, making you a "silent listener" automatically without any manual configuration.
+- **Context Synthesis**: The Assistant analyzes conversation trends to subtly adjust UI themes and extract actionable items from your messages and documents locally.
 
 ---
 
 ## 🏛️ SIMPLE TERMINOLOGY
-- **PUBLIC HUB**: The default landing space where everyone nearby can communicate instantly.
-- **PEOPLE**: A simple list of users currently within your radio range.
+Blukit uses natural, human-centric language. Developers and AI agents must strictly avoid "mesh jargon" or technical complexity in the user-facing interface.
+- **PEOPLE**: Users currently within your physical range.
 - **GROUPS**: Shared spaces for collaboration and community messaging.
-- **PRIVATE CHATS**: Secure, end-to-end encrypted conversations between individuals or small groups.
+- **PRIVATE CHATS**: Secure, end-to-end encrypted conversations between individuals.
 - **HISTORY**: Your private, chronological record of all messages and shared files.
+- **SHARE TO ALL**: The act of broadcasting information to everyone nearby.
+- **AUTHENTICITY**: Verifying the source and integrity of information via the local swarm.
 
 ---
 

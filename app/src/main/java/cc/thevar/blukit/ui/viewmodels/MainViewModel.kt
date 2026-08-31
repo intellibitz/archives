@@ -28,9 +28,9 @@ class MainViewModel(
     val nickname: Flow<String?> = repository.nicknameFlow
     /** The emoji avatar projecting the user's visual identity. */
     val emojiAvatar: Flow<String> = repository.emojiAvatar
-    /** Stealth Mode: Distinguishes private interactions in Stealth Rose. */
+    /** Silent Stealth: Managed automatically based on user activity. */
     val isStealthMode: Flow<Boolean> = repository.stealthMode
-    /** Low Power Mode: preserves hardware energy by throttling mesh activity. */
+    /** Silent Eco: Managed automatically based on battery and system state. */
     val lowPowerMode: Flow<Boolean> = repository.lowPowerMode
     
     private val _deviceId = MutableStateFlow(repository.getDeviceId())

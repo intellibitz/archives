@@ -7,7 +7,7 @@
  * Features:
  * - Anonymous Personas: Map deterministic device IDs to ephemeral nicknames and emojis.
  * - Hardware Recovery: Self-healing EncryptedSharedPreferences to handle KeyStore corruption.
- * - Tactical Toggles: Global control for Stealth Mode and Low Power mesh operations.
+ * - Autonomous Intelligence: Background management for Silent Stealth and Silent Eco modes.
  */
 package cc.thevar.blukit.data.repository
 
@@ -30,9 +30,9 @@ interface IdentityRepository {
     val emojiAvatar: StateFlow<String>
     /** The local path to the user's mesh profile picture. */
     val avatarPathFlow: StateFlow<String?>
-    /** Stealth Mode: DISTINGUISHES private chains in Stealth Rose. */
+    /** Silent Stealth: Automatically managed background invisibility. */
     val stealthMode: StateFlow<Boolean>
-    /** Low Power Mode: Throttles radio frequency to preserve hardware energy. */
+    /** Silent Eco: Automatically managed hardware energy preservation. */
     val lowPowerMode: StateFlow<Boolean>
     /** Set of blocked peer hardware IDs. */
     val blockedUsers: StateFlow<Set<String>>
