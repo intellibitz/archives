@@ -29,6 +29,7 @@ data class Echo(
     val groupId: String? = null,
     val groupName: String? = null,
     val content: String,
+    val trendLabel: String? = null,
     val timestamp: Long,
     val type: Int = TYPE_TEXT,
     val messageScope: Int = SCOPE_PUBLIC,
@@ -46,6 +47,7 @@ data class Echo(
     val assigneeId: String? = null,
     val taskStatus: Int = 0,
     val resonanceWeight: Int = 0, // Social priority weight
+    val anchoredCount: Int = 0, // Number of peers holding this record
 ) {
     companion object {
         // --- Core Echo Types ---

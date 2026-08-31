@@ -19,8 +19,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import cc.thevar.blukit.domain.model.Echo
 import cc.thevar.blukit.domain.model.Sphere
 import cc.thevar.blukit.ui.navigation.Route
+import cc.thevar.blukit.ui.components.EchoRippleEffect
 import cc.thevar.blukit.ui.screens.*
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.viewmodels.BluetoothViewModel
@@ -45,6 +47,13 @@ fun BlukitApp(
     val bluetoothState by bluetoothViewModel.state.collectAsStateWithLifecycle()
     val highResonanceEchoes by bluetoothViewModel.highResonancePulses.collectAsStateWithLifecycle()
     val harmonyReport by harmonyViewModel.report.collectAsStateWithLifecycle()
+
+    var activeRipple by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    LaunchedEffect(Unit) {
+        bluetoothViewModel.resonanceTrigger.collect { trigger ->
+            activeRipple = trigger
+        }
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(bluetoothState.activity.uiError) { 
@@ -144,6 +153,7 @@ fun BlukitApp(
                         isPermanentlyDenied = isPermanentlyDenied,
                         resonanceStatus = harmonyReport.synthesis,
                         breeze = harmonyReport.currentBreeze,
+                        trend = harmonyReport.trendLabel,
                         highResonanceMessages = highResonanceEchoes,
                         trail = breadcrumbTrail,
                         onCrumbClick = onCrumbClick
@@ -219,6 +229,10 @@ fun BlukitApp(
                                 }
                                 is Route.SphereField -> {
                                     val sphere = bluetoothState.session.groups.find { it.id == entryRoute.roomId }
+                                    val sphereTrend = bluetoothState.session.messages.findLast { 
+                                        it.groupId == entryRoute.roomId && it.type == Echo.TYPE_AI_SUMMARY 
+                                    }?.trendLabel
+
                                     if (sphere?.scope == Sphere.SCOPE_PRIVATE) {
                                         PrivateSphereField(
                                             state = bluetoothState,
@@ -230,7 +244,8 @@ fun BlukitApp(
                                             onSend = { content -> bluetoothViewModel.echo(content, entryRoute.roomId) },
                                             onUpdateRecord = { gid, content, mid, v -> bluetoothViewModel.updateNote(gid, content, mid, v) },
                                             onVaultSphere = { gid, v -> bluetoothViewModel.vaultSphere(gid, v) },
-                                            onSeniorVaultSphere = { gid, v -> bluetoothViewModel.seniorVaultSphere(gid, v) }
+                                            onSeniorVaultSphere = { gid, v -> bluetoothViewModel.seniorVaultSphere(gid, v) },
+                                            trend = sphereTrend
                                         )
                                     } else {
                                         SphereField(
@@ -241,7 +256,8 @@ fun BlukitApp(
                                             highResonanceMessages = highResonanceEchoes,
                                             onBack = { backStack.removeLast() },
                                             onNavigateToPulse = { backStack.add(Route.EchoField(it)) },
-                                            onSend = { content -> bluetoothViewModel.echo(content, entryRoute.roomId) }
+                                            onSend = { content -> bluetoothViewModel.echo(content, entryRoute.roomId) },
+                                            trend = sphereTrend
                                         )
                                     }
                                 }
@@ -261,5 +277,12 @@ fun BlukitApp(
                 }
             }
         }
+    }
+
+    activeRipple?.let { (groupId, isPrivate) ->
+        EchoRippleEffect(
+            isPrivate = isPrivate,
+            onFinished = { activeRipple = null }
+        )
     }
 }

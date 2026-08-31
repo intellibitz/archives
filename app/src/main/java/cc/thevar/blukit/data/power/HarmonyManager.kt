@@ -83,6 +83,9 @@ class HarmonyManager(
                 } else 0f
 
                 val synthesis = generateSynthesis(userCount, resonanceCount, echoCount, meshHarmony, lowPower)
+                val latestSynthesis = echoes.findLast { it.type == cc.thevar.blukit.domain.model.Echo.TYPE_AI_SUMMARY }
+                val trend = latestSynthesis?.trendLabel
+                
                 val breeze = args.getOrNull(4) as? String
                 val location = args.getOrNull(5) as? android.location.Location
 
@@ -102,6 +105,7 @@ class HarmonyManager(
                     totalMessages = echoCount,
                     harmony = meshHarmony,
                     synthesis = synthesis,
+                    trendLabel = trend,
                     currentBreeze = breeze,
                     lowPowerMode = lowPower,
                     suggestedAirs = suggestions,

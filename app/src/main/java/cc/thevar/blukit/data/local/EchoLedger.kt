@@ -354,6 +354,24 @@ class EchoLedger(
         _echoes.update { it.filter { e -> e.messageId != messageId } }
     }
 
+    /**
+     * Increments the anchoring status of a record.
+     * High anchoring count indicates strong decentralized persistence.
+     */
+    fun incrementAnchoredCount(messageId: String) {
+        var updated: Echo? = null
+        _echoes.update { list ->
+            list.map {
+                if (it.messageId == messageId) {
+                    val e = it.copy(anchoredCount = (it.anchoredCount + 1).coerceAtMost(10))
+                    updated = e
+                    e
+                } else it
+            }
+        }
+        updated?.let { saveEchoToDb(it) }
+    }
+
     // --- Archive ---
 
     /** Protocols automatically move inactive Spheres into archive. */

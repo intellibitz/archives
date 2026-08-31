@@ -68,6 +68,7 @@ fun PrivateSphereField(
     lowPowerMode: Boolean = false,
     onToggleStealth: (Boolean) -> Unit = {},
     onToggleLowPower: (Boolean) -> Unit = {},
+    trend: String? = null,
     header: @Composable () -> Unit,
 ) {
     var showTip by remember { mutableStateOf(value = true) }
@@ -179,7 +180,8 @@ fun PrivateSphereField(
                     onSourceClick = { dev -> onNavigateToPulse(dev.id) },
                     onSourceLongClick = { },
                     modifier = Modifier.weight(1f),
-                    themeColor = themeColor
+                    themeColor = themeColor,
+                    trend = trend
                 )
             }
 

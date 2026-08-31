@@ -25,7 +25,8 @@ class HapticManager(context: Context) {
         CONNECTION, // Strong single message
         ERROR, // Long intense message
         SHOUT, // Rippling message
-        AIR_WAVE // Traveling wave feeling
+        AIR_WAVE, // Traveling wave feeling
+        RESONATE // Sovereign life recording pulse
     }
 
     /**
@@ -40,8 +41,11 @@ class HapticManager(context: Context) {
             MessageType.ERROR -> VibrationEffect.createWaveform(longArrayOf(0, 200, 100, 200), -1)
             MessageType.SHOUT -> VibrationEffect.createWaveform(longArrayOf(0, 30, 30, 30, 30, 30), -1)
             MessageType.AIR_WAVE -> {
-                // Wave: Increasing duration messages to simulate outward motion
                 VibrationEffect.createWaveform(longArrayOf(0, 20, 40, 30, 40, 50, 40, 70), -1)
+            }
+            MessageType.RESONATE -> {
+                // A strong, growing pulse feeling for recording life
+                VibrationEffect.createWaveform(longArrayOf(0, 40, 40, 80, 40, 150), -1)
             }
         }
         vibrator.vibrate(effect)

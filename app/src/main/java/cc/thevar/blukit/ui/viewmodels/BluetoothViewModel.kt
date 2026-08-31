@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,9 +59,13 @@ class BluetoothViewModel(
     private val echoLedger: EchoLedger,
     private val connectivityUseCase: ConnectivityUseCase,
     private val atmosphereManager: AtmosphereManager,
+    private val hapticManager: cc.thevar.blukit.data.system.HapticManager,
 ) : ViewModel() {
 
     private val _selectedSources = MutableStateFlow<Set<String>>(emptySet())
+
+    private val _resonanceTrigger = kotlinx.coroutines.flow.MutableSharedFlow<Pair<String, Boolean>>()
+    val resonanceTrigger = _resonanceTrigger.asSharedFlow()
 
     private val _currentSphereId = MutableStateFlow(Sphere.ID_GLOBAL)
     /** The currently focused Sphere context. */
@@ -411,7 +416,11 @@ class BluetoothViewModel(
         if (message.isBlank()) return
         viewModelScope.launch {
             val targetGid = groupId ?: _currentSphereId.value
-            resonanceController.sendGroupMessage(message, targetGid)
+            val echo = resonanceController.sendGroupMessage(message, targetGid)
+            if (echo != null) {
+                hapticManager.triggerMessage(cc.thevar.blukit.data.system.HapticManager.MessageType.RESONATE)
+                _resonanceTrigger.emit(targetGid to (echo.messageScope == Echo.MESSAGE_WHISPER))
+            }
         }
     }
 

@@ -9,6 +9,7 @@ data class HarmonyReport(
     val totalMessages: Int = 0,
     val harmony: Float = 0f,
     val synthesis: String = "SENSING THE AIR...",
+    val trendLabel: String? = null,
     val currentBreeze: String? = null,
     val lowPowerMode: Boolean = false,
     val suggestedAirs: List<String> = emptyList(),

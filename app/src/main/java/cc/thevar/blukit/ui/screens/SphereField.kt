@@ -53,7 +53,8 @@ fun SphereField(
     isStealthMode: Boolean = false,
     lowPowerMode: Boolean = false,
     onToggleStealth: (Boolean) -> Unit = {},
-    onToggleLowPower: (Boolean) -> Unit = {}
+    onToggleLowPower: (Boolean) -> Unit = {},
+    trend: String? = null
 ) {
     val sphere = state.session.groups.find { it.id == sphereId }
     val members = state.crowd.scannedDevices.filter { it.id in (sphere?.allMemberIds ?: emptySet()) || it.persistentId in (sphere?.allMemberIds ?: emptySet()) }
@@ -114,7 +115,8 @@ fun SphereField(
                     onSourceClick = { dev -> onNavigateToPulse(dev.id) },
                     onSourceLongClick = { },
                     modifier = Modifier.weight(1f),
-                    themeColor = StealthRose
+                    themeColor = StealthRose,
+                    trend = trend
                 )
             }
 

@@ -8,8 +8,8 @@ Blukit is a 100% offline, peer-to-peer ecosystem that lets you record your life 
 
 ## 🌬️ THE ATMOSPHERE: LOCAL AMBIENT INTELLIGENCE
 Unlike standard chat apps, Blukit uses **The Atmosphere**—on-device intelligence that understands the flow of your records.
-- **Sphere Synthesis**: Local AI synthesizes the Echoes in your Spheres to provide clarity and meaning to your records.
-- **Atmospheric Trends**: The AI identifies shared rituals, trends, and priorities across your local resonance field.
+- **Sphere Synthesis**: Local AI synthesizes the Echoes in your Spheres to provide clarity and meaning, shifting the very colors of your air.
+- **Atmospheric Trends**: The AI identifies shared rituals, trends (Academic, Social, Transit), and priorities across your local resonance field.
 - **Absolute Privacy**: All synthesis happens locally. Your life records never leave your air.
 
 ---
@@ -19,7 +19,7 @@ Unlike standard chat apps, Blukit uses **The Atmosphere**—on-device intelligen
 - **SPHERE**: A shared space for resonance and records.
 - **ECHO**: A permanent unit of existence. A record of what happened.
 - **SOURCE**: The origin of an Echo. You and those near you.
-- **THE LEDGER**: Your unchangeable, chronological history of Echoes.
+- **THE LEDGER**: Your unchangeable, chronological history, grouped by synthesis.
 
 ---
 
@@ -27,30 +27,30 @@ Unlike standard chat apps, Blukit uses **The Atmosphere**—on-device intelligen
 Experience **Sovereign Records**—familiar, fast, and secure.
 
 ### **1. Sense**
-Open the app to sense who is nearby. The Sensing Radar shows you the Sources in your air. The Sphere Synthesis bubble tells you the vibe of the local field.
+Open the app to sense who is nearby. The **Sensing Radar** shows Sources with animated **Energy Trails**. The **Synthesis Aura** glow tells you the vibe of the local field.
 
 ### **2. Resonate**
-Enter a Sphere that matters. You can Echo your thoughts, share files, or coordinate rituals immediately.
+Enter a Sphere that matters. Tap **RESONATE** to capture a thought or ritual. Feel the haptic heartbeat as your Echo ripples across the field.
 
 ### **3. Preserve**
-Every Echo is a record. Blukit ensures your shared existence is preserved in The Ledger, harmonized between Sources whenever you are near.
+Every Echo is a record. Blukit ensures your existence is preserved in **The Ledger**, automatically anchored and carried by nearby Sources for absolute safety.
 
 ---
 
 ## 📱 THE HARMONY INTERFACE
 A high-density, ergonomic architecture designed for life.
 
-- **Sovereign UX**: Clear actions optimized for recording and preserving life.
+- **Sovereign UX**: Immersive visual effects like **Vibe Heatmaps** and **Echo Ripples** make the air feel physical.
 - **Stealth Mode**: A deep-black interface for private resonance.
-- **High Resonance**: Haptic feedback that makes every Echo feel like a physical connection.
+- **High Resonance**: Multi-stage haptic feedback that reinforces every interaction.
 
 ---
 
 ## 🛠️ ARCHITECTURAL SUPREMACY
 1. **100% Offline**: Zero cloud. Zero servers. Zero tracking.
 2. **Hardware Encrypted**: P-256 ECDH + AES-256-GCM security anchored in the TEE.
-3. **The Ledger**: A deterministic database (LWW-CRDT) that lets records "harmonize" seamlessly.
-4. **Resonance Field**: Optimized radio management for differential history bridging.
+3. **The Ledger**: A deterministic database (LWW-CRDT) that harmonizes records seamlessly.
+4. **Black Box Persistence**: Critical records are automatically carried by trusted peers, ensuring your ledger survives device loss.
 
 ---
 

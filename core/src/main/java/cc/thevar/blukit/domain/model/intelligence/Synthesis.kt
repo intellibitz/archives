@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 data class Synthesis(
     val groupId: String,
     val summary: String,
+    val trendLabel: String? = null,
     val topKeywords: List<String>,
     val sentimentScore: Float, // -1.0 to 1.0
     val derivedTimestamp: Long,

@@ -154,7 +154,8 @@ fun SensingField(
                         onEchoClick = { id -> if (state.session.groups.any { it.id == id }) onNavigateToGroup(id) else onNavigateToPulse(id) },
                         onSourceClick = { onNavigateToPulse(it.id) },
                         onSourceLongClick = { },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        trend = harmonyReport?.trendLabel
                     )
                 } else {
                     ResonanceSensingView(onSignalPresence = { onShowAirGhost() })

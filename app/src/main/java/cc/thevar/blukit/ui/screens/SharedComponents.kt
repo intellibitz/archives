@@ -254,14 +254,31 @@ fun ResonanceHeader(
     breeze: String? = null,
     highResonanceMessages: List<Echo> = emptyList(),
     trail: List<String> = emptyList(),
-    onCrumbClick: (Int) -> Unit = {}
+    onCrumbClick: (Int) -> Unit = {},
+    trend: String? = null
 ) {
+    val auraColor = when (trend) {
+        "ACADEMIC RITUAL" -> AtmosphereAcademic
+        "URBAN TRANSIT" -> AtmosphereTransit
+        "SOCIAL SYNERGY" -> AtmosphereSocial
+        "ROOM NOURISHMENT" -> AtmosphereFood
+        "COLLECTIVE ACTION" -> AtmosphereAction
+        else -> themeColor
+    }
+
     val infiniteTransition = rememberInfiniteTransition(label = "HarmonyCycle")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.6f, 
         targetValue = 1f, 
         animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse), 
         label = "Alpha"
+    )
+
+    val auraGlow by infiniteTransition.animateFloat(
+        initialValue = 0.02f,
+        targetValue = 0.1f,
+        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
+        label = "Aura"
     )
     
     val scanLinePos by infiniteTransition.animateFloat(
@@ -278,8 +295,27 @@ fun ResonanceHeader(
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(28.dp))
             .background(StealthSurface)
-            .border(1.dp, Color.White.copy(alpha = StealthAlphaBorder), RoundedCornerShape(28.dp))
+            .border(
+                width = 1.dp,
+                brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                    0.0f to Color.White.copy(alpha = StealthAlphaBorder),
+                    0.5f to auraColor.copy(alpha = auraGlow * 3f),
+                    1.0f to Color.White.copy(alpha = StealthAlphaBorder)
+                ),
+                shape = RoundedCornerShape(28.dp)
+            )
     ) {
+        // Aura Background
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    androidx.compose.ui.graphics.Brush.radialGradient(
+                        colors = listOf(auraColor.copy(alpha = auraGlow), Color.Transparent),
+                        radius = 400f
+                    )
+                )
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.3f)
@@ -806,7 +842,16 @@ private fun PeerRadarLayer(
 }
 
 @Composable
-private fun VibeHeatmap(energy: Float, themeColor: Color) {
+private fun VibeHeatmap(energy: Float, themeColor: Color, trend: String? = null) {
+    val atmosphereColor = when (trend) {
+        "ACADEMIC RITUAL" -> AtmosphereAcademic
+        "URBAN TRANSIT" -> AtmosphereTransit
+        "SOCIAL SYNERGY" -> AtmosphereSocial
+        "ROOM NOURISHMENT" -> AtmosphereFood
+        "COLLECTIVE ACTION" -> AtmosphereAction
+        else -> themeColor
+    }
+
     val infiniteTransition = rememberInfiniteTransition(label = "HeatmapPulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.8f,
@@ -825,8 +870,8 @@ private fun VibeHeatmap(energy: Float, themeColor: Color) {
         drawCircle(
             brush = androidx.compose.ui.graphics.Brush.radialGradient(
                 colors = listOf(
-                    themeColor.copy(alpha = 0.15f * energy),
-                    themeColor.copy(alpha = 0.05f * energy),
+                    atmosphereColor.copy(alpha = 0.2f * energy),
+                    atmosphereColor.copy(alpha = 0.08f * energy),
                     Color.Transparent
                 ),
                 center = center,
@@ -1094,6 +1139,7 @@ fun ResonanceTicker(
     isGrouped: Boolean = true,
     reverseLayout: Boolean = true,
     themeColor: Color = StealthPrimary,
+    trend: String? = null,
     onResonanceSurge: (Float) -> Unit = {}
 ) {
     val listState = rememberLazyListState()
@@ -1152,7 +1198,7 @@ fun ResonanceTicker(
             modifier = Modifier.fillMaxSize(), 
             contentAlignment = Alignment.Center
         ) {
-            VibeHeatmap(energy = collectiveResonance, themeColor = themeColor)
+            VibeHeatmap(energy = collectiveResonance, themeColor = themeColor, trend = trend)
             RelayLayer(relayEvents)
             
             PeerRadarLayer(
@@ -1468,6 +1514,10 @@ fun EchoItem(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            if (echo.anchoredCount > 0) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(Icons.Rounded.Shield, contentDescription = null, tint = StealthAmber.copy(alpha = 0.5f), modifier = Modifier.size(10.dp))
+                            }
                             if (replyCount > 0) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
@@ -2634,6 +2684,43 @@ fun SphereRitualGhost(
     }
 }
 
+@Composable
+fun EnergyTrails(
+    modifier: Modifier = Modifier,
+    count: Int = 6,
+    color: Color = StealthPrimary,
+    proximity: Float = 0f
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "EnergyTrails")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(if (proximity > 0.7f) 2000 else 6000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "Rotation"
+    )
+
+    Canvas(modifier = modifier) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val radius = size.minDimension / 2.2f
+
+        repeat(count) { i ->
+            val angle = (rotation + i * (360f / count)) % 360f
+            val rad = Math.toRadians(angle.toDouble())
+            val x = (center.x + Math.cos(rad) * radius).toFloat()
+            val y = (center.y + Math.sin(rad) * radius).toFloat()
+
+            drawCircle(
+                color = color.copy(alpha = 0.4f),
+                radius = 1.5.dp.toPx(),
+                center = Offset(x, y)
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 /**
  * PERSONA SIGNATURE: High-fidelity visual identity for Sources.
@@ -2683,6 +2770,13 @@ fun PersonaSignature(
     
     val isMe = device.id == "YOU"
     Box(modifier = modifier.size(size * 2.2f).combinedClickable(onClick = onClick, onLongClick = onLongClick), contentAlignment = Alignment.Center) {
+        if (!isStatic && (isPulsed || isPeerPulsed || isHighlighted || isMe)) {
+            EnergyTrails(
+                modifier = Modifier.matchParentSize(),
+                color = personaThemeColor,
+                proximity = device.proximityFactor
+            )
+        }
         val haloAlpha = (if (isHighlighted || isMe) 0.3f else 0.08f + proximityGlow + bloomBoost) * pulseScale
         Surface(
             shape = CircleShape, 
@@ -2877,7 +2971,12 @@ fun BlukitInput(
         isReadOnly -> "INTERCEPTED" 
         isPrivate && targetName != null -> "Echo to $targetName..."
         isPrivate -> "Send a secure Echo..."
-        else -> "Type an Echo..." 
+        else -> listOf(
+            "What's the vibe now?",
+            "Record this ritual...",
+            "Resonate with the air...",
+            "Capture this moment..."
+        ).random()
     }
     
     Column(modifier = modifier) {

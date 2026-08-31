@@ -337,6 +337,28 @@ class NearbyResonanceController(
         }
     }
 
+    private fun backupRecentRecords(endpointId: String) {
+        internalScope.launch(ioDispatcher) {
+            val key = getEchoKeyWithRetry(endpointId) ?: return@launch
+            val recentRecords = echoLedger.echoes.value
+                .filter { it.type == Echo.TYPE_MEMORY || it.type == Echo.TYPE_IMAGE }
+                .takeLast(10)
+            
+            if (recentRecords.isEmpty()) return@launch
+            
+            val backupPayload = Echo(
+                messageId = UUID.randomUUID().toString(),
+                senderId = repository.getDeviceId(),
+                senderName = "BACKUP_ORCHESTRATOR",
+                content = Json.encodeToString(recentRecords),
+                timestamp = System.currentTimeMillis(),
+                type = Echo.TYPE_RESYNC_CHUNK,
+            )
+            sendMessageInternal(endpointId, backupPayload, key)
+            Log.i(tag, "Black Box: Resonance backup emitted to $endpointId")
+        }
+    }
+
     override suspend fun sendMessage(content: String, receiverId: String?, messageScope: Int, messageId: String?, groupId: String?, groupName: String?, type: Int): Echo? {
         groupId?.let { gid ->
             if (!echoLedger.isMember(gid, repository.getDeviceId())) {
@@ -576,6 +598,7 @@ class NearbyResonanceController(
             Log.i(tag, "SECURE: Resonance established with $endpointId")
             
             syncEchoHistory(endpointId)
+            backupRecentRecords(endpointId)
         } catch (_: Exception) {
             Log.e(tag, "Handshake failed")
         }
@@ -713,6 +736,8 @@ class NearbyResonanceController(
     private fun saveIncomingEcho(payload: Echo) {
         if (isNewEcho(payload.messageId)) {
             echoLedger.upsertEcho(payload)
+        } else {
+            echoLedger.incrementAnchoredCount(payload.messageId)
         }
     }
 

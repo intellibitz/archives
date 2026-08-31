@@ -73,6 +73,7 @@ class AtmosphereManager(
                 senderEmoji = "🧠",
                 groupId = groupId,
                 content = synthesis.summary,
+                trendLabel = synthesis.trendLabel,
                 timestamp = System.currentTimeMillis(),
                 type = Echo.TYPE_AI_SUMMARY,
                 isPriority = true,
@@ -133,6 +134,7 @@ class AtmosphereManager(
         return Synthesis(
             groupId = groupId,
             summary = "SPHERE REPORT: $mainTopic IS RESONATING.$trendSummary ENERGY IS $intensityLabel.",
+            trendLabel = intent,
             topKeywords = keywords,
             sentimentScore = sentimentScore,
             derivedTimestamp = System.currentTimeMillis(),
