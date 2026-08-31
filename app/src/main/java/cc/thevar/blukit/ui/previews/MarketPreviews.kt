@@ -237,6 +237,8 @@ fun PreviewSourceOptionsMenu() {
                 isTied = true,
                 isBlocked = false,
                 isRequesting = false,
+                activeGroupId = "group1",
+                isAlreadyInActiveGroup = false,
                 onMessage = {},
                 onAccept = {},
                 onDeny = {},
@@ -245,6 +247,9 @@ fun PreviewSourceOptionsMenu() {
                 onIdentify = {},
                 onBlock = {},
                 onUnblock = {},
+                onSync = {},
+                onAddToGroup = {},
+                onRemoveFromGroup = {},
                 onDismiss = {}
             )
         }
