@@ -37,6 +37,16 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.flowOf
 import cc.thevar.blukit.domain.power.HarmonyReport
 
+@Preview(name = "Onboarding", device = Devices.PHONE, showBackground = true)
+@Composable
+fun PreviewOnboarding() {
+    BlukitTheme {
+        Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
+            IdentityInput(onSave = { _, _ -> })
+        }
+    }
+}
+
 @Preview(name = "Nearby - People", device = Devices.PHONE, showBackground = true)
 @Composable
 fun PreviewNearbyPhone() {

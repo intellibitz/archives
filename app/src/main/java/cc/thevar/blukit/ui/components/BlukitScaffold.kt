@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import cc.thevar.blukit.ui.navigation.Route
-import cc.thevar.blukit.ui.screens.IdentityInput
 import cc.thevar.blukit.ui.screens.SyncProgressIndicator
 import cc.thevar.blukit.ui.theme.StealthBlack
 import cc.thevar.blukit.ui.theme.StealthPrimary
@@ -29,7 +28,6 @@ fun BlukitScaffold(
     onNavigate: (Route) -> Unit,
     onLogout: () -> Unit,
     onResetProfile: () -> Unit,
-    onSaveIdentity: (String, String) -> Unit,
     onBack: (() -> Unit)?,
     connectionStatus: String,
     trend: String?,
@@ -39,9 +37,11 @@ fun BlukitScaffold(
     onAwakenWifi: () -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
+    val showNavigation = nickname != null && currentRoute !is Route.Onboarding
+
     NavigationSuiteScaffold(
         navigationSuiteItems = {
-            if (nickname != null) {
+            if (showNavigation) {
                 listOf(
                     Triple(Route.Nearby, "Nearby", Icons.Rounded.Radar),
                     Triple(Route.LiveFeed, "Live", Icons.Rounded.Stream),
@@ -64,10 +64,8 @@ fun BlukitScaffold(
             modifier = Modifier.fillMaxSize(),
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
-                Column {
-                    if (nickname == null) {
-                        IdentityInput(onSave = onSaveIdentity)
-                    } else {
+                if (currentRoute !is Route.Onboarding) {
+                    Column {
                         BlukitToolbar(
                             title = title,
                             onLogout = onLogout,
@@ -81,8 +79,8 @@ fun BlukitScaffold(
                             onAwakenBluetooth = onAwakenBluetooth,
                             onAwakenWifi = onAwakenWifi
                         )
+                        SyncProgressIndicator(progress = syncProgress)
                     }
-                    SyncProgressIndicator(progress = syncProgress)
                 }
             },
             content = content

@@ -1,5 +1,5 @@
 /**
- * BLUKIT UI: MAIN APP ENTRY (MODULARIZED)
+ * BLUKIT UI: MAIN APP ENTRY (PHASE 2 - CLEAN)
  */
 package cc.thevar.blukit.ui
 
@@ -38,9 +38,17 @@ fun BlukitApp(
     val nickname by viewModel.nickname.collectAsStateWithLifecycle(initialValue = null)
     val emojiAvatar by viewModel.emojiAvatar.collectAsStateWithLifecycle(initialValue = "👤")
     val connectionState by connectionViewModel.state.collectAsStateWithLifecycle()
-
     val harmonyReport by harmonyViewModel.report.collectAsStateWithLifecycle()
     val currentRoute by navViewModel.currentRoute.collectAsStateWithLifecycle()
+
+    // Initialize backstack once nickname is known
+    LaunchedEffect(nickname) {
+        if (nickname == null) {
+            navViewModel.initBackStack(Route.Onboarding)
+        } else {
+            navViewModel.initBackStack(Route.Nearby)
+        }
+    }
 
     val personaCoordinates = remember { mutableStateMapOf<String, PersonaConnectionPoints>() }
     val activeMessageId = remember { mutableStateOf<String?>(null) }
@@ -48,27 +56,25 @@ fun BlukitApp(
     CompositionLocalProvider(
         LocalPersonaCoordinates provides personaCoordinates,
         LocalActiveMessageId provides activeMessageId,
-        LocalUserEmoji provides emojiAvatar,
+        LocalUserEmoji provides emojiAvatar
     ) {
-        BlukitAppContent(
-            modifier = modifier,
-            nickname = nickname,
-            connectionState = connectionState,
-            harmonyReport = harmonyReport,
-            currentRoute = currentRoute,
-            onNavigate = { navViewModel.navigate(it, resetStack = true) },
-            onLogout = { viewModel.logout() },
-            onResetProfile = { viewModel.resetProfile() },
-            onSaveIdentity = { name, emoji -> 
-                viewModel.saveNickname(name)
-                viewModel.saveEmoji(emoji)
-            },
-            onBack = if (navViewModel.backStack.size > 1) { { navViewModel.popBackStack() } } else null,
-            navViewModel = navViewModel,
-            connectionViewModel = connectionViewModel,
-            mainViewModel = viewModel,
-            harmonyViewModel = harmonyViewModel
-        )
+        currentRoute?.let { route ->
+            BlukitAppContent(
+                modifier = modifier,
+                nickname = nickname,
+                connectionState = connectionState,
+                harmonyReport = harmonyReport,
+                currentRoute = route,
+                onNavigate = { navViewModel.navigate(it, resetStack = true) },
+                onLogout = { viewModel.logout() },
+                onResetProfile = { viewModel.resetProfile() },
+                onBack = if (navViewModel.backStack.size > 1) { { navViewModel.popBackStack() } } else null,
+                navViewModel = navViewModel,
+                connectionViewModel = connectionViewModel,
+                mainViewModel = viewModel,
+                harmonyViewModel = harmonyViewModel
+            )
+        }
     }
 }
 
@@ -82,7 +88,6 @@ private fun BlukitAppContent(
     onNavigate: (Route) -> Unit,
     onLogout: () -> Unit,
     onResetProfile: () -> Unit,
-    onSaveIdentity: (String, String) -> Unit,
     onBack: (() -> Unit)?,
     navViewModel: NavigationViewModel,
     connectionViewModel: ConnectionViewModel,
@@ -125,6 +130,7 @@ private fun BlukitAppContent(
     val isPermanentlyDenied = !permissionState.allPermissionsGranted && !permissionState.shouldShowRationale
 
     val currentTitle = when (currentRoute) {
+        is Route.Onboarding -> "IDENTITY"
         is Route.Nearby -> "NEARBY"
         is Route.GroupField -> connectionState.session.groups.find { it.id == currentRoute.roomId }?.name ?: "GROUP"
         is Route.LiveFeed -> "LIVE FEED"
@@ -141,7 +147,6 @@ private fun BlukitAppContent(
         onNavigate = onNavigate,
         onLogout = onLogout,
         onResetProfile = onResetProfile,
-        onSaveIdentity = onSaveIdentity,
         onBack = onBack,
         connectionStatus = harmonyReport.synthesis,
         trend = harmonyReport.trendLabel,
@@ -150,9 +155,9 @@ private fun BlukitAppContent(
         onAwakenBluetooth = { connectionViewModel.refreshRadios() },
         onAwakenWifi = { /* WiFi logic */ }
     ) { innerPadding ->
-
         Box(modifier = modifier.padding(innerPadding)) {
-            if (nickname != null && !permissionState.essentialPermissionsGranted) {
+            // Only show permission requirement if not onboarding
+            if (currentRoute !is Route.Onboarding && nickname != null && !permissionState.essentialPermissionsGranted) {
                 PermissionRequiredScreen(
                     isPermanentlyDenied = isPermanentlyDenied,
                     onGrantClick = {
@@ -173,7 +178,6 @@ private fun BlukitAppContent(
                     harmonyViewModel = harmonyViewModel,
                     breadcrumbTrail = navViewModel.getBreadcrumbTrail(
                         sessionGroups = connectionState.session.groups,
-                        focusedSourceId = null,
                         scannedDevices = connectionState.crowd.scannedDevices
                     ),
                     onCrumbClick = { navViewModel.navigateToCrumb(it) },
@@ -201,7 +205,6 @@ private fun BlukitAppContent(
         )
     }
 }
-
 
 @Composable
 private fun PermissionRequiredScreen(

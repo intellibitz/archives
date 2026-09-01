@@ -10,15 +10,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class NavigationViewModel : ViewModel() {
-    val backStack = mutableStateListOf<NavKey>(Route.Nearby)
+    // Single authoritative backstack
+    val backStack = mutableStateListOf<NavKey>()
 
-    private val _currentRoute = MutableStateFlow<Route>(Route.Nearby)
-    val currentRoute: StateFlow<Route> = _currentRoute.asStateFlow()
+    private val _currentRoute = MutableStateFlow<Route?>(null)
+    val currentRoute: StateFlow<Route?> = _currentRoute.asStateFlow()
+
+    fun initBackStack(initialRoute: Route) {
+        if (backStack.isEmpty()) {
+            backStack.add(initialRoute)
+            _currentRoute.value = initialRoute
+        }
+    }
 
     private fun updateCurrentRoute() {
-        (backStack.lastOrNull() as? Route)?.let {
-            _currentRoute.value = it
-        }
+        _currentRoute.value = backStack.lastOrNull() as? Route
     }
 
     fun navigate(route: Route, resetStack: Boolean = false) {
@@ -26,7 +32,7 @@ class NavigationViewModel : ViewModel() {
             backStack.clear()
         }
         backStack.add(route)
-        _currentRoute.value = route
+        updateCurrentRoute()
     }
 
     fun popBackStack() {
@@ -37,7 +43,7 @@ class NavigationViewModel : ViewModel() {
     }
 
     fun navigateToCrumb(index: Int) {
-        if (index < backStack.size) {
+        if (index >= 0 && index < backStack.size) {
             while (backStack.size > index + 1) {
                 backStack.removeAt(backStack.size - 1)
             }
@@ -45,11 +51,14 @@ class NavigationViewModel : ViewModel() {
         }
     }
 
-    fun getBreadcrumbTrail(sessionGroups: List<Group>, focusedSourceId: String?, scannedDevices: List<cc.thevar.blukit.domain.model.Source>): List<String> {
+    fun getBreadcrumbTrail(sessionGroups: List<Group>, scannedDevices: List<cc.thevar.blukit.domain.model.Source>): List<String> {
         val trail = mutableListOf<String>()
         backStack.filterIsInstance<Route>().forEach { route ->
             when (route) {
+                is Route.Onboarding -> trail.add("IDENTITY")
                 is Route.Nearby -> trail.add("NEARBY")
+                is Route.Timeline -> trail.add("HISTORY")
+                is Route.LiveFeed -> trail.add("LIVE")
                 is Route.GroupField -> {
                     val group = sessionGroups.find { it.id == route.roomId }
                     if (group != null) {
@@ -63,13 +72,10 @@ class NavigationViewModel : ViewModel() {
                         trail.add("GROUP")
                     }
                 }
-                else -> trail.add("CHAT")
+                is Route.MessageField -> {
+                    trail.add("CHAT")
+                }
             }
-        }
-        
-        if (focusedSourceId != null && _currentRoute.value is Route.GroupField) {
-            val device = scannedDevices.find { (it.persistentId == focusedSourceId) || (it.id == focusedSourceId) }
-            trail.add(device?.name ?: "Source")
         }
         return trail.distinct()
     }

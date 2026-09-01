@@ -1,10 +1,17 @@
 package cc.thevar.blukit.ui.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -15,6 +22,7 @@ import cc.thevar.blukit.ui.viewmodels.ConnectionViewModel
 import cc.thevar.blukit.ui.viewmodels.MainViewModel
 import cc.thevar.blukit.ui.viewmodels.NavigationViewModel
 import cc.thevar.blukit.ui.viewmodels.HarmonyViewModel
+import cc.thevar.blukit.ui.theme.StealthBlack
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -39,11 +47,26 @@ fun BlukitNavGraph(
 
     NavDisplay(
         backStack = navViewModel.backStack,
+        onBack = { navViewModel.popBackStack() },
         modifier = modifier,
         sceneStrategies = listOf(listDetailStrategy),
         entryProvider = entryProvider {
+            entry<Route.Onboarding> {
+                IdentityInput(
+                    onSave = { name, emoji -> 
+                        mainViewModel.saveNickname(name)
+                        mainViewModel.saveEmoji(emoji)
+                        navViewModel.navigate(Route.Nearby, resetStack = true)
+                    }
+                )
+            }
+
             entry<Route.Nearby>(
-                metadata = ListDetailSceneStrategy.listPane()
+                metadata = ListDetailSceneStrategy.listPane(
+                    detailPlaceholder = {
+                        DetailPlaceholder("Select a person or group to start chatting")
+                    }
+                )
             ) {
                 NearbyField(
                     state = connectionState,
@@ -207,4 +230,20 @@ fun BlukitNavGraph(
             }
         }
     )
+}
+
+@Composable
+private fun DetailPlaceholder(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(StealthBlack),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message.uppercase(),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White.copy(alpha = 0.2f)
+        )
+    }
 }
