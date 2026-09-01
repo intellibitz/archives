@@ -29,8 +29,9 @@ Blukit implements a modular navigation system designed for a wide range of form 
 
 ### **Navigation 3 & Scene Strategies**
 The app uses a centralized `BlukitNavGraph` which leverages `ListDetailSceneStrategy` from the Material 3 Adaptive library.
-- **Multi-Pane**: On large screens (Tablets, Foldables), the "Nearby" list and "Group/Message" details are displayed side-by-side.
-- **Backstack Management**: UI state and backstack are synchronized via `NavigationViewModel` using a `mutableStateListOf<NavKey>`.
+- **Multi-Pane**: On large screens (Tablets, Foldables), the "Nearby" list and "Group/Message" details are displayed side-by-side. Includes `DetailPlaceholder` for a polished "unselected" state.
+- **Authoritative Backstack**: `NavigationViewModel` owns a `mutableStateListOf<NavKey>`. `BlukitNavGraph` directly consumes this list, ensuring UI and business logic are always in sync without fragile reactive bridging.
+- **Onboarding Flow**: Identity creation is handled via a dedicated `Route.Onboarding`, decoupling auth logic from the main Scaffold orchestration.
 
 ### **Scaffold Modularization**
 The top-level UI is split into:

@@ -3,18 +3,18 @@
 This file serves as a hand-off document for AI agents working on Blukit.
 
 ## 🏁 Current State (2026-09-01)
-We have just completed a "Full Architecture Surgery" to modularize the main app entry and fix performance bottlenecks.
+We have completed Phase 2 of the architecture refactor, focusing on navigation authority and adaptive UX.
 
 ### **Key Improvements**
-- **Monolith Broken**: `BlukitApp.kt` is no longer a God Composable. It's split into `BlukitScaffold` and `BlukitNavGraph`.
-- **Adaptive Fix**: `ListDetailSceneStrategy` is implemented. The app now supports side-by-side panes on tablets/foldables for the Nearby -> Chat flow.
-- **Paging Optimized**: `collectAsLazyPagingItems()` was moved from the root to individual screen level (`TimelineField`, `GroupField`, `LiveFeedField`).
-- **Navigation 3 Unified**: Backstack is managed via `NavigationViewModel.backStack` (a `mutableStateListOf`).
+- **Navigation Unified**: `NavigationViewModel` is now the single source of truth for the `backStack`. `BlukitNavGraph` consumes the VM's `SnapshotStateList`, eliminating "dual source of truth" sync issues.
+- **Onboarding Route**: Identity creation is now a first-class route (`Route.Onboarding`). This removes layout jumping and "scaffold hijacking" that occurred when checking for nickname at the root level.
+- **Multi-Pane Detail Placeholders**: Added `DetailPlaceholder` for expanded layouts (Tablets/Foldables), ensuring a polished UX when no conversation is selected.
+- **Permission Guard Refined**: Permission checks are now bypassed for the Onboarding route to ensure users can set up their identity even without system permissions.
 
 ## ⚠️ Known Issues / Technical Debt
-- **Shared State**: `isSearchActive` is currently passed down manually; consider moving to a UI state holder or `CompositionLocal` if it grows.
-- **Test Coverage**: Initial unit tests added for `NavigationViewModel`. More coverage is needed for `ConnectionViewModel` and `HarmonyViewModel`.
-- **Hardcoded Strings**: Many UI strings are still hardcoded in Composables.
+- **Re-composition Optimization**: `LocalPersonaCoordinates` still provides a global map; consider narrowing its scope.
+- **Hardcoded Strings**: Breadcrumbs and placeholders still use hardcoded strings; localization is needed.
+
 
 ## 🛠️ Testing Strategy
 Refer to `ARCHITECTURE.md` Section 6 for commands.
