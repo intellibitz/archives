@@ -43,8 +43,9 @@ Every private interaction is encrypted at the hardware level. Blukit ensures you
 Clean, ergonomic, and familiar.
 
 - **Natural Chat Experience**: Standard message bubbles, intuitive navigation, and an elegant toolbar focus on the conversation, not the technology.
-- **Adaptive Design**: The interface scales perfectly across Phones, Tablets, and Foldables.
+- **Adaptive Design**: The interface scales perfectly across Phones, Tablets, and Foldables. Large devices automatically use **List-Detail multi-pane layouts** for simultaneous list browsing and chatting.
 - **OLED Optimized**: A true-black interface designed for maximum privacy and power efficiency.
+
 - **Silent Feedback**: Subtle haptics reinforce successful connections and message delivery.
 
 ---

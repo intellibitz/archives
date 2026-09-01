@@ -22,16 +22,21 @@ import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.ui.theme.*
 import cc.thevar.blukit.ui.components.*
 
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.Flow
+
 /**
  * LIVE FEED FIELD: A real-time stream of every Message in the field using Paging.
  */
 @Composable
 fun LiveFeedField(
-    messages: LazyPagingItems<Message>,
+    messagesFlow: Flow<PagingData<Message>>,
     sources: List<Source>,
     onBack: () -> Unit,
     onMessageClick: (String) -> Unit
 ) {
+    val messages = messagesFlow.collectAsLazyPagingItems()
     Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

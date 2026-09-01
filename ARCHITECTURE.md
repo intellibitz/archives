@@ -18,11 +18,29 @@ The foundational module containing the "Soul" of the Blukit protocol.
 The platform-specific layer handling UI and low-level networking.
 - **`network.p2p`**: Implementation of the `ConnectionController` using Google Nearby Connections and native BLE.
 - **`ui.viewmodels`**: Coordination layer (`ConnectionViewModel`) using **UDF (Unidirectional Data Flow)**.
-- **`ui.screens`**: Declarative UI built with Jetpack Compose, optimized for OLED and adaptive layouts.
+- **`ui.navigation`**: Decoupled navigation graph (`BlukitNavGraph`) using **Navigation 3** and **Material 3 Adaptive** APIs.
+- **`ui.screens`**: Modular, state-hoisted Composables optimized for multi-pane layouts.
 
 ---
 
-## 2. Data Flow & Performance
+## 2. Navigation & Adaptive UI
+
+Blukit implements a modular navigation system designed for a wide range of form factors.
+
+### **Navigation 3 & Scene Strategies**
+The app uses a centralized `BlukitNavGraph` which leverages `ListDetailSceneStrategy` from the Material 3 Adaptive library.
+- **Multi-Pane**: On large screens (Tablets, Foldables), the "Nearby" list and "Group/Message" details are displayed side-by-side.
+- **Backstack Management**: UI state and backstack are synchronized via `NavigationViewModel` using a `mutableStateListOf<NavKey>`.
+
+### **Scaffold Modularization**
+The top-level UI is split into:
+1. `BlukitScaffold`: Handles `NavigationSuiteScaffold` orchestration (Rail vs Bottom Bar) and top-bar state.
+2. `BlukitNavGraph`: Handles route-to-screen mapping and pane composition.
+
+---
+
+## 3. Data Flow & Performance
+
 
 ### **Paging 3 Integration**
 Blukit uses **Paging 3** to manage message history.
@@ -54,3 +72,19 @@ The `HarmonyManager` and `AssistantManager` work together to optimize device ene
 - **Low Power Mode**: When battery is < 15%, the P2P engine throttles scanning and disables heavy UI animations.
 - **Stealth Mode**: Inactivity triggers a broadcast shutdown, moving the node to a "listen-only" state to preserve radio life.
 - **Context Synthesis**: Silent local analysis detects "Trends" (Social, Academic, Action) to adjust the UI aura and haptic feedback.
+
+---
+
+## 6. Testing Strategy 🧪
+
+Blukit follows a "Reliability First" approach with a focus on local testing.
+
+### **Unit Tests**
+- **Business Logic**: Located in `app/src/test`. Key targets: `NavigationViewModel`, `ConnectionViewModel` (state transitions), and `ConsensusUseCase`.
+- **Infrastructure**: Room DAO tests and CRDT resolution logic are verified at the unit level.
+
+### **Verification Commands**
+Run all unit tests:
+```bash
+./gradlew :app:testDebugUnitTest
+```

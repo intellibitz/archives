@@ -2,50 +2,52 @@ package cc.thevar.blukit.ui.viewmodels
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
+import androidx.navigation3.runtime.NavKey
 import cc.thevar.blukit.domain.model.Group
 import cc.thevar.blukit.ui.navigation.Route
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 
 class NavigationViewModel : ViewModel() {
-    private val _backStack = mutableStateListOf<Route>(Route.Nearby)
-    val backStack: List<Route> = _backStack
+    val backStack = mutableStateListOf<NavKey>(Route.Nearby)
 
     private val _currentRoute = MutableStateFlow<Route>(Route.Nearby)
     val currentRoute: StateFlow<Route> = _currentRoute.asStateFlow()
 
-    fun navigate(route: Route, resetStack: Boolean = false) {
-        if (resetStack) {
-            _backStack.clear()
-        }
-        if (_backStack.lastOrNull() != route) {
-            _backStack.add(route)
-            _currentRoute.value = route
+    private fun updateCurrentRoute() {
+        (backStack.lastOrNull() as? Route)?.let {
+            _currentRoute.value = it
         }
     }
 
+    fun navigate(route: Route, resetStack: Boolean = false) {
+        if (resetStack) {
+            backStack.clear()
+        }
+        backStack.add(route)
+        _currentRoute.value = route
+    }
+
     fun popBackStack() {
-        if (_backStack.size > 1) {
-            _backStack.removeLast()
-            _currentRoute.value = _backStack.last()
+        if (backStack.size > 1) {
+            backStack.removeAt(backStack.size - 1)
+            updateCurrentRoute()
         }
     }
 
     fun navigateToCrumb(index: Int) {
-        if (index < _backStack.size) {
-            while (_backStack.size > index + 1) {
-                _backStack.removeLast()
+        if (index < backStack.size) {
+            while (backStack.size > index + 1) {
+                backStack.removeAt(backStack.size - 1)
             }
-            _currentRoute.value = _backStack.last()
+            updateCurrentRoute()
         }
     }
 
     fun getBreadcrumbTrail(sessionGroups: List<Group>, focusedSourceId: String?, scannedDevices: List<cc.thevar.blukit.domain.model.Source>): List<String> {
         val trail = mutableListOf<String>()
-        _backStack.forEach { route ->
+        backStack.filterIsInstance<Route>().forEach { route ->
             when (route) {
                 is Route.Nearby -> trail.add("NEARBY")
                 is Route.GroupField -> {

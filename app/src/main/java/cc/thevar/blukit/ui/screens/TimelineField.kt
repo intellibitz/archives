@@ -28,14 +28,19 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.Flow
+
 /**
  * THE TIMELINE FIELD: A visual chronological path of existence records using Paging.
  */
 @Composable
 fun TimelineField(
-    messages: LazyPagingItems<Message>,
+    messagesFlow: Flow<PagingData<Message>>,
     onBack: () -> Unit
 ) {
+    val messages = messagesFlow.collectAsLazyPagingItems()
     val sdf = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
 
     Box(modifier = Modifier.fillMaxSize().background(StealthBlack)) {

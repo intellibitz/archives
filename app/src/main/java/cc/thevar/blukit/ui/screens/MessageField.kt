@@ -28,6 +28,9 @@ import cc.thevar.blukit.ui.components.*
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 
+import androidx.paging.PagingData
+import kotlinx.coroutines.flow.Flow
+
 /**
  * MESSAGE FIELD: Granular Message detail.
  */
@@ -37,7 +40,7 @@ fun MessageField(
     localDeviceId: String,
     messageId: String,
     rootMessage: Message?,
-    childMessages: LazyPagingItems<Message>,
+    childMessagesFlow: Flow<PagingData<Message>>,
     onNavigateToMessage: (String) -> Unit = {},
     onNavigateToLiveFeed: () -> Unit = {},
     messageText: String = "",
@@ -57,6 +60,7 @@ fun MessageField(
     onBack: (() -> Unit)? = null,
     header: @Composable () -> Unit,
 ) {
+    val childMessages = childMessagesFlow.collectAsLazyPagingItems()
     val themeColor = if (rootMessage?.messageScope == Message.MESSAGE_WHISPER) StealthRose else StealthPrimary
 
     BlukitFieldScaffold(

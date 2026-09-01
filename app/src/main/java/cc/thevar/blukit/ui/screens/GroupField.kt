@@ -35,6 +35,10 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import androidx.paging.compose.itemContentType
 
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.Flow
+
 /**
  * THE GROUP FIELD: Focuses on a specific Group.
  */
@@ -44,7 +48,7 @@ fun GroupField(
     localDeviceId: String,
     header: @Composable () -> Unit,
     groupId: String,
-    pagedMessages: LazyPagingItems<Message>,
+    pagedMessagesFlow: Flow<PagingData<Message>>,
     highConnectionMessages: List<Message> = emptyList(),
     onVote: (String, Int) -> Unit = { _, _ -> },
     isSearchActive: Boolean = false,
@@ -68,6 +72,7 @@ fun GroupField(
     onInputFocusChange: (Boolean) -> Unit = {},
     trend: String? = null
 ) {
+    val pagedMessages = pagedMessagesFlow.collectAsLazyPagingItems()
     val group = state.session.groups.find { it.id == groupId }
     val members = state.crowd.scannedDevices.filter { it.id in (group?.allMemberIds ?: emptySet()) || it.persistentId in (group?.allMemberIds ?: emptySet()) }
     

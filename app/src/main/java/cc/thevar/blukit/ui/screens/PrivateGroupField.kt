@@ -37,12 +37,16 @@ import java.util.*
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.Flow
+
 @Composable
 fun PrivateGroupField(
     state: cc.thevar.blukit.ui.viewmodels.ConnectionUiState,
     localDeviceId: String,
     groupId: String?,
-    pagedMessages: LazyPagingItems<Message>,
+    pagedMessagesFlow: Flow<PagingData<Message>>,
     onRemoveMember: (String, String) -> Unit = { _, _ -> },
     onVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
     onSeniorVaultGroup: (String, Boolean) -> Unit = { _, _ -> },
@@ -76,6 +80,7 @@ fun PrivateGroupField(
     trend: String? = null,
     header: @Composable () -> Unit,
 ) {
+    val pagedMessages = pagedMessagesFlow.collectAsLazyPagingItems()
     var showTip by remember { mutableStateOf(value = true) }
     
     val group = remember(groupId, state.session.groups) {

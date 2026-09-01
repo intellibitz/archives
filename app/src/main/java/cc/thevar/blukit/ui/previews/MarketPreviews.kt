@@ -103,7 +103,7 @@ fun PreviewChatPhone() {
         )
     )
     
-    val pagedMessages = flowOf(PagingData.from(messages)).collectAsLazyPagingItems()
+    val pagedMessagesFlow = flowOf(PagingData.from(messages))
 
     BlukitTheme {
         PrivateGroupField(
@@ -115,8 +115,9 @@ fun PreviewChatPhone() {
             localDeviceId = me,
             header = { Text("PREVIEW HEADER", color = Color.White) },
             groupId = "group1",
-            pagedMessages = pagedMessages,
+            pagedMessagesFlow = pagedMessagesFlow,
             breadcrumbTrail = listOf("NEARBY", "ALICE"),
+
             onCrumbClick = {},
             userNickname = "ME",
             activeGroups = emptyList(),
