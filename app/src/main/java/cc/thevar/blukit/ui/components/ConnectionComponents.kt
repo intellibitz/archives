@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
 import cc.thevar.blukit.ui.theme.*
 
 @Composable
@@ -93,7 +95,7 @@ fun ConnectionNearbyView(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "LOOKING FOR PEOPLE...",
+            text = stringResource(R.string.nearby_looking).uppercase(),
             style = MaterialTheme.typography.titleMedium,
             color = StealthPrimary,
             letterSpacing = 2.sp
@@ -102,7 +104,7 @@ fun ConnectionNearbyView(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "No one is nearby yet. Start a conversation to be seen.",
+            text = stringResource(R.string.nearby_empty),
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -123,7 +125,7 @@ fun ConnectionNearbyView(
             Icon(Icons.Rounded.GraphicEq, contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "START A GROUP",
+                text = stringResource(R.string.nearby_start_group).uppercase(),
                 style = MaterialTheme.typography.labelLarge
             )
         }

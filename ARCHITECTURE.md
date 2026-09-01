@@ -38,9 +38,19 @@ The top-level UI is split into:
 1. `BlukitScaffold`: Handles `NavigationSuiteScaffold` orchestration (Rail vs Bottom Bar) and top-bar state.
 2. `BlukitNavGraph`: Handles route-to-screen mapping and pane composition.
 
+### **Natural Terminology**
+Blukit strictly uses a natural, non-technical language layer to ensure accessibility for all users.
+- **Identity Setup**: Replaced "Welcome Ghost" and "Welcome Source" jargon for profile creation.
+- **Group Setup**: Replaced "Group Ritual" for room creation.
+- **Assistant Messages**: Replaced "Ghost Messages" for system notifications.
+- **Verified**: Replaced "Anchored" and "Carried" labels for data integrity.
+- **Message/Send**: Replaced "Whisper/Emit" for standard chat actions.
+- **People**: Replaced "Sources" for device discovery.
+
 ---
 
 ## 3. Data Flow & Performance
+
 
 
 ### **Paging 3 Integration**
@@ -72,7 +82,7 @@ Blukit implements a **Hardware-Anchored Security** model:
 The `HarmonyManager` and `AssistantManager` work together to optimize device energy:
 - **Low Power Mode**: When battery is < 15%, the P2P engine throttles scanning and disables heavy UI animations.
 - **Stealth Mode**: Inactivity triggers a broadcast shutdown, moving the node to a "listen-only" state to preserve radio life.
-- **Context Synthesis**: Silent local analysis detects "Trends" (Social, Academic, Action) to adjust the UI aura and haptic feedback.
+- **Context Synthesis**: Silent local analysis detects "Trends" (Social, Academic, Dining, Work) to adjust the UI aura and haptic feedback.
 
 ---
 

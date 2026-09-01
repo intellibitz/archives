@@ -126,7 +126,7 @@ class HarmonyManager(
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("SOURCE PROXIMITY")
+                if (new > old) emitBreeze("PERSON NEARBY")
             }.launchIn(scope)
 
         // Connection Formed
@@ -135,7 +135,7 @@ class HarmonyManager(
             .distinctUntilChanged()
             .scan(0 to 0) { acc, new -> acc.second to new }
             .onEach { (old, new) ->
-                if (new > old) emitBreeze("CONNECTION ENERGY")
+                if (new > old) emitBreeze("CONNECTED")
             }.launchIn(scope)
 
         // Messages Relayed
@@ -144,7 +144,7 @@ class HarmonyManager(
                 if (msgs.isNotEmpty()) {
                     val last = msgs.last()
                     if ((System.currentTimeMillis() - last.timestamp) < 1000) {
-                        emitBreeze("MESSAGE SPREAD")
+                        emitBreeze("MESSAGE SENT")
                     }
                 }
             }.launchIn(scope)
@@ -160,16 +160,16 @@ class HarmonyManager(
     }
 
     private fun generateSynthesis(users: Int, connections: Int, messages: Int, harmony: Float, lowPower: Boolean): String {
-        if (lowPower) return "ENERGY SAVER ACTIVE"
+        if (lowPower) return "POWER SAVING"
         
         return when {
-            users == 0 -> "RECORD YOUR LIFE"
-            users > 15 -> "VIBRANT GROUP DETECTED"
-            harmony < 0.3f -> "SOURCES NEARBY: CONNECT"
-            (users > 10) && (harmony > 0.8f) -> "GROUP HARMONY"
-            (connections == 0) && (users > 0) -> "CONNECTION ENERGY"
-            messages > 100 -> "MESSAGES FLOWING"
-            else -> "YOUR LIFE, CONNECTING"
+            users == 0 -> "START YOUR HISTORY"
+            users > 15 -> "MANY PEOPLE NEARBY"
+            harmony < 0.3f -> "PEOPLE NEARBY: START CHATTING"
+            (users > 10) && (harmony > 0.8f) -> "STABLE CONNECTIONS"
+            (connections == 0) && (users > 0) -> "READY TO CONNECT"
+            messages > 100 -> "ACTIVE CHAT"
+            else -> "BLUKIT: CONNECTED"
         }
     }
 }

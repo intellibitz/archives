@@ -24,6 +24,9 @@ import cc.thevar.blukit.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
+
 @Composable
 fun MessageRecordItem(
     record: Message,
@@ -166,7 +169,7 @@ fun MessageRecordCreator(
             .padding(24.dp)
     ) {
         Text(
-            text = "New Shared Record",
+            text = stringResource(R.string.record_new),
             style = MaterialTheme.typography.titleMedium,
             color = themeColor
         )
@@ -186,7 +189,7 @@ fun MessageRecordCreator(
             ),
             placeholder = { 
                 Text(
-                    text = "Describe the record...", 
+                    text = stringResource(R.string.record_hint), 
                     style = MaterialTheme.typography.bodyLarge,
                     color = StealthGray
                 ) 

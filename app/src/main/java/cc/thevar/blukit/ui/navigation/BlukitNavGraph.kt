@@ -68,6 +68,7 @@ fun BlukitNavGraph(
                     }
                 )
             ) {
+                var showGroupSetup by remember { mutableStateOf(false) }
                 NearbyField(
                     state = connectionState,
                     localDeviceId = deviceId,
@@ -92,11 +93,15 @@ fun BlukitNavGraph(
                         val source = connectionState.crowd.scannedDevices.find { it.id in selectedIds }
                         if (source != null) connectionViewModel.requestWhisper(source)
                     },
-                    onStartSubGroup = { connectionViewModel.startGroupConnection("NEW GROUP") },
+                    onStartSubGroup = { showGroupSetup = true },
                     onClearSelection = { connectionViewModel.clearSelection() },
-                    onCreatePublicRoom = { name, tid -> connectionViewModel.startGroupConnection(name, scope = cc.thevar.blukit.domain.model.Group.SCOPE_PUBLIC, templateId = tid) }
+                    onCreatePublicRoom = { name, tid -> connectionViewModel.startGroupConnection(name, scope = cc.thevar.blukit.domain.model.Group.SCOPE_PUBLIC, templateId = tid) },
+                    showGroupSetup = showGroupSetup,
+                    onShowGroupSetup = { showGroupSetup = true },
+                    onDismissGroupSetup = { showGroupSetup = false }
                 )
             }
+
             entry<Route.Timeline> {
                 TimelineField(
                     messagesFlow = connectionViewModel.timelineMessages,

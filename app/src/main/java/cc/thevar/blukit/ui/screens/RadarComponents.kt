@@ -1,7 +1,7 @@
 /**
  * BLUKIT RADAR COMPONENTS
  *
- * This module handles spatial intelligence visualizations, including the 
+ * This module handles spatial visualizations, including the 
  * Peer Radar and Connection Heatmaps.
  */
 package cc.thevar.blukit.ui.screens
@@ -33,11 +33,11 @@ import kotlin.math.sin
 @Composable
 internal fun VibeHeatmap(energy: Float, themeColor: Color, trend: String? = null) {
     val atmosphereColor = when (trend) {
-        "ACADEMIC RITUAL" -> AssistantAcademic
-        "URBAN TRANSIT" -> AssistantTransit
-        "SOCIAL SYNERGY" -> AssistantSocial
-        "ROOM NOURISHMENT" -> AssistantFood
-        "COLLECTIVE ACTION" -> AssistantAction
+        "ACADEMIC" -> AssistantAcademic
+        "TRANSIT" -> AssistantTransit
+        "SOCIAL" -> AssistantSocial
+        "DINING" -> AssistantFood
+        "WORK" -> AssistantAction
         else -> themeColor
     }
 
@@ -62,16 +62,7 @@ internal fun VibeHeatmap(energy: Float, themeColor: Color, trend: String? = null
 }
 
 /**
- * PEER RADAR LAYER: A full-screen spatial visualization of nearby Sources.
- *
- * @param devices The list of scanned and identified Sources in proximity.
- * @param onDeviceClick Triggered when a Source node is tapped.
- * @param onDeviceLongClick Triggered when a Source node is long-pressed (opens options).
- * @param selectedDevices Set of IDs currently selected for multi-action.
- * @param pulsedPeers Set of IDs that are currently emitting connection energy.
- * @param bubbleSenders Set of IDs that have sent recent messages.
- * @param themeColor The atmospheric color base for the radar.
- * @param density Screen density for pixel-to-dp calculations.
+ * PEER RADAR LAYER: A full-screen spatial visualization of nearby People.
  */
 @Composable
 fun PeerRadarLayer(
@@ -96,7 +87,6 @@ fun PeerRadarLayer(
             val id = device.persistentId ?: device.id
             val isPulsed = id in pulsedPeers
             val isSelected = device.id in selectedDevices
-            val isBubbleSender = id in bubbleSenders
             
             val proximity = device.proximityFactor
             val radiusValue = (1f - proximity) * maxRadiusPx + with(density) { 60.dp.toPx() }
@@ -112,14 +102,12 @@ fun PeerRadarLayer(
                     .offset(x = with(density) { offsetX.toDp() }, y = with(density) { offsetY.toDp() })
             ) {
                 PersonaSignature(
-                    device = device,
+                    source = device,
                     isPulsed = isPulsed,
                     isSelected = isSelected,
-                    isPeerPulsed = isBubbleSender,
                     size = 40.dp,
                     onClick = { onDeviceClick(device) },
-                    onLongClick = { onDeviceLongClick(device) },
-                    subLabel = device.name ?: "SOURCE"
+                    onLongClick = { onDeviceLongClick(device) }
                 )
             }
         }
@@ -171,14 +159,11 @@ fun GroupMiniRadar(
                 ) {
                     members.take(10).forEach { device ->
                         PersonaSignature(
-                            device = device,
+                            source = device,
                             isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
                             isSelected = false,
-                            isPeerPulsed = false,
                             size = 32.dp,
-                            isStatic = false,
                             themeColor = themeColor,
-                            subLabel = "SOURCE",
                             onClick = { onSourceClick(device) },
                             onLongClick = { onSourceLongClick(device) }
                         )
@@ -207,14 +192,11 @@ fun GroupMiniRadar(
 
             Box(modifier = Modifier.zIndex(2f)) {
                 PersonaSignature(
-                    device = Source(id = "OWNER", name = owner?.name ?: group.name, emoji = centerEmoji),
+                    source = Source(id = "OWNER", name = owner?.name ?: group.name, emoji = centerEmoji),
                     isPulsed = owner?.let { bubbleSenders.contains(it.id) || bubbleSenders.contains(it.persistentId) } ?: false,
                     isSelected = false,
-                    isPeerPulsed = false,
                     size = 48.dp,
-                    isStatic = false,
                     themeColor = themeColor,
-                    subLabel = if (owner == null) "EVENT" else "OWNER",
                     onClick = { owner?.let { onSourceClick(it) } }
                 )
             }
@@ -228,14 +210,11 @@ fun GroupMiniRadar(
 
                 Box(modifier = Modifier.offset(xOffset, yOffset)) {
                     PersonaSignature(
-                        device = device,
+                        source = device,
                         isPulsed = bubbleSenders.contains(device.id) || bubbleSenders.contains(device.persistentId),
                         isSelected = false,
-                        isPeerPulsed = false,
                         size = 32.dp,
-                        isStatic = false,
                         themeColor = themeColor,
-                        subLabel = "SOURCE",
                         onClick = { onSourceClick(device) },
                         onLongClick = { onSourceLongClick(device) }
                     )

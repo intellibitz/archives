@@ -38,15 +38,15 @@ class AssistantManagerTest {
     }
 
     @Test
-    fun `detectAtmosphericTrend identifies Academic Ritual`() {
+    fun `detectAtmosphericTrend identifies Academic`() {
         val echoes = listOf(
             createMessage("I have a lecture today"),
             createMessage("Submission for the assignment is due"),
             createMessage("The professor was great")
         )
 
-        val trend = atmosphereManager.detectAtmosphericTrend(echoes)
-        assertEquals("ACADEMIC RITUAL", trend)
+        val trend = atmosphereManager.detectConnectionTrend(echoes)
+        assertEquals("ACADEMIC", trend)
     }
 
     @Test

@@ -1,15 +1,56 @@
 <resources>
-    <string name="app_name">blukit</string>
+    <string name="app_name">Blukit</string>
 
-    <!-- Smart Flow -->
-    <string name="smart_flow_title">JOIN THE CROWD?</string>
-    <string name="smart_flow_desc">START SPREADING PULSES TO SEE THE CONNECTION.</string>
-    <string name="smart_flow_action">Join</string>
+    <!-- Onboarding -->
+    <string name="identity_title">Set Your Profile</string>
+    <string name="identity_who_are_you">Who are you?</string>
+    <string name="identity_description">Blukit is your private messaging space. No internet required. Your messages stay strictly on your device and those you chat with.</string>
+    <string name="identity_action_lurk">Just Browse</string>
+    <string name="identity_action_save">Save Profile</string>
+
+    <!-- Main Navigation Labels -->
+    <string name="nav_nearby">Nearby</string>
+    <string name="nav_live">Live</string>
+    <string name="nav_messages">Messages</string>
+    <string name="nav_history">History</string>
+
+    <!-- Nearby / Hub -->
+    <string name="nearby_looking">Searching for people…</string>
+    <string name="nearby_empty">No one is nearby yet. Start a conversation to be seen.</string>
+    <string name="nearby_groups_header">Nearby Groups</string>
+    <string name="nearby_start_group">Start a Group</string>
+
+    <!-- Messaging -->
+    <string name="msg_hub_hint">Type a message…</string>
+    <string name="msg_send">Send</string>
+    <string name="msg_cancel">Cancel</string>
+    <string name="msg_block">Block</string>
+    <string name="msg_block_title">Block this person?</string>
+    <string name="msg_block_desc">You won\'t receive messages from %1$s anymore.</string>
+    <string name="msg_empty_group">This group is quiet. Send a message to start.</string>
+    <string name="msg_no_connection">No connection detected. Send a message to begin.</string>
+    <string name="msg_verified">Verified</string>
+    <string name="msg_carried_by">Shared by %1$d people nearby</string>
+    <string name="msg_connection_request">Connection Request</string>
+    <string name="msg_action_private">Message</string>
+    <string name="msg_action_new_group">New Group</string>
+
+    <!-- Assistant / Synthesis -->
+    <string name="assistant_report">Assistant Summary</string>
+    <string name="assistant_tasks">Action Items</string>
+    <string name="assistant_synthesis">Summary</string>
 
     <!-- Shared UI -->
-    <string name="btn_send">Emit</string>
-    <string name="btn_cancel">Abort</string>
-    <string name="btn_block">Shield</string>
-    <string name="mod_block_title">Shield from this person?</string>
-    <string name="mod_block_desc">You won\'t intercept pulses from %1$s anymore.</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_create">Create</string>
+    <string name="permissions_required">Permissions Required</string>
+    <string name="history_empty">No history yet</string>
+    <string name="group_archive">Group Archive</string>
+
+    <!-- Records -->
+    <string name="record_new">New Shared Event</string>
+    <string name="record_hint">Describe the event…</string>
+    <string name="record_set_time">Set Time</string>
+    <string name="record_connect">Post</string>
+
 </resources>

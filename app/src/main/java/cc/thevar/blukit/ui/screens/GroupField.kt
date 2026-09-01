@@ -39,6 +39,9 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.Flow
 
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
+
 /**
  * THE GROUP FIELD: Focuses on a specific Group.
  */

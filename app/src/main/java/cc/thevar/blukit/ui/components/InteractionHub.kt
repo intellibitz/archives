@@ -1,5 +1,7 @@
 package cc.thevar.blukit.ui.components
 
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -154,7 +156,7 @@ fun SelectionInteractionHeader(
                 shape = RoundedCornerShape(20.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) { 
-                Text("Private", style = MaterialTheme.typography.labelLarge) 
+                Text(stringResource(R.string.msg_action_private), style = MaterialTheme.typography.labelLarge) 
             }
             Button(
                 onClick = onStartSubGroup, 
@@ -162,7 +164,7 @@ fun SelectionInteractionHeader(
                 shape = RoundedCornerShape(20.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) { 
-                Text("New Group", style = MaterialTheme.typography.labelLarge) 
+                Text(stringResource(R.string.msg_action_new_group), style = MaterialTheme.typography.labelLarge) 
             }
             IconButton(
                 onClick = onClearSelection, 
@@ -199,7 +201,7 @@ fun SearchActionBanner(
             Icon(Icons.Rounded.Grain, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = "Start Group: $messageText", 
+                text = "${stringResource(R.string.nearby_start_group)}: $messageText", 
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -230,7 +232,7 @@ fun IncomingRequestBanner(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Incoming Connection Request", 
+                    text = stringResource(R.string.msg_connection_request).uppercase(), 
                     style = MaterialTheme.typography.labelSmall, 
                     color = StealthPrimary
                 )
@@ -315,7 +317,7 @@ fun BlukitInput(
                                         isSearchActive -> "Search chat..."
                                         isMessageLocked -> "Connected to nearby people"
                                         targetName != null -> "Chat in $targetName..."
-                                        else -> "Say something..."
+                                        else -> stringResource(R.string.msg_hub_hint)
                                     },
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Color.White.copy(alpha = 0.3f)

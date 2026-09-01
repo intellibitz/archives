@@ -31,6 +31,9 @@ import cc.thevar.blukit.ui.components.*
 import cc.thevar.blukit.ui.components.*
 import org.koin.androidx.compose.koinViewModel
 
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
+
 /**
  * THE NEARBY FIELD: The master feed for finding Groups and Sources.
  */
@@ -63,9 +66,9 @@ fun NearbyField(
     onStartWhisper: () -> Unit = {},
     onStartSubGroup: () -> Unit = {},
     onClearSelection: () -> Unit = {},
-    showAssistantGhost: Boolean = false,
-    onShowAssistantGhost: () -> Unit = {},
-    onDismissAssistantGhost: () -> Unit = {},
+    showGroupSetup: Boolean = false,
+    onShowGroupSetup: () -> Unit = {},
+    onDismissGroupSetup: () -> Unit = {},
 ) {
     val connectionList by viewModel.connectionList.collectAsStateWithLifecycle()
 
@@ -85,8 +88,9 @@ fun NearbyField(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         item {
-                            TickerSectionHeader(title = "NEARBY GROUPS", color = StealthPrimary)
+                            TickerSectionHeader(title = stringResource(R.string.nearby_groups_header).uppercase(), color = StealthPrimary)
                         }
+
                         
                         val publicGroups = state.session.groups.filter { it.scope == Group.SCOPE_PUBLIC }
                         items(publicGroups) { group ->
@@ -118,7 +122,7 @@ fun NearbyField(
                         }
                     }
                 } else {
-                    ConnectionNearbyView(onSignalPresence = { onShowAssistantGhost() }, modifier = Modifier.weight(1f))
+                    ConnectionNearbyView(onSignalPresence = { onShowGroupSetup() }, modifier = Modifier.weight(1f))
                 }
 
                 MessageHub(
@@ -145,16 +149,16 @@ fun NearbyField(
         }
     )
 
-    if (showAssistantGhost) {
-        GroupRitualGhost(
+    if (showGroupSetup) {
+        GroupSetup(
             onNameChange = { groupNameProposal = it },
             onDone = { templateId ->
                 onCreatePublicRoom?.invoke(groupNameProposal, templateId)
-                onDismissAssistantGhost()
+                onDismissGroupSetup()
             },
-            onDismiss = onDismissAssistantGhost,
+            onDismiss = onDismissGroupSetup,
             nearbyGroups = state.session.groups.filter { it.scope == Group.SCOPE_PUBLIC && it.id != Group.ID_GLOBAL },
-            onJoinGroup = { gid -> onNavigateToGroup(gid); onDismissAssistantGhost() }
+            onJoinGroup = { gid -> onNavigateToGroup(gid); onDismissGroupSetup() }
         )
     }
 

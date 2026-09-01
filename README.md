@@ -21,7 +21,7 @@ Blukit uses natural, human-centric language. Developers and AI agents must stric
 - **PRIVATE CHATS**: Secure, end-to-end encrypted conversations between individuals.
 - **HISTORY**: Your private, chronological record of all messages and shared files.
 - **SHARE TO ALL**: The act of broadcasting information to everyone nearby.
-- **AUTHENTICITY**: Verifying the source and integrity of information via the local swarm.
+- **VERIFIED**: Confirming the source and integrity of information via nearby devices.
 
 ---
 
@@ -32,7 +32,7 @@ Messaging as it should be—simple and private.
 By default, you land in the **Public Hub**. Send a message instantly to whoever is nearby. No setup, no accounts, no waiting.
 
 ### **2. Connect Locally**
-Check the **Nearby** tab to see people in your immediate range. Tap a name to start a private, secure conversation that remains "anchored" to your current context.
+Check the **Nearby** tab to see people in your immediate range. Tap a name to start a private, secure conversation that remains verified in your current context.
 
 ### **3. Stay Private**
 Every private interaction is encrypted at the hardware level. Blukit ensures your data remains yours, visible only to the intended recipients.

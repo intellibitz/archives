@@ -32,6 +32,9 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.Flow
 
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
+
 /**
  * THE TIMELINE FIELD: A visual chronological path of existence records using Paging.
  */
@@ -47,7 +50,7 @@ fun TimelineField(
         if (messages.itemCount == 0) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "NO HISTORY YET", 
+                    text = stringResource(R.string.history_empty).uppercase(), 
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.4f)
                 )
@@ -133,7 +136,7 @@ private fun RecordItem(record: Message, dateStr: String) {
                         Row(modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Rounded.Security, contentDescription = null, tint = StealthAmber, modifier = Modifier.size(10.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = "ANCHORED", style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp), color = StealthAmber)
+                            Text(text = stringResource(R.string.msg_verified).uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp), color = StealthAmber)
                         }
                     }
                 }
@@ -160,7 +163,7 @@ private fun RecordItem(record: Message, dateStr: String) {
                     if (record.anchoredCount > 0) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Carried by ${record.anchoredCount} nearby Sources",
+                            text = stringResource(R.string.msg_carried_by, record.anchoredCount),
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                             color = StealthAmber.copy(alpha = 0.6f)
                         )

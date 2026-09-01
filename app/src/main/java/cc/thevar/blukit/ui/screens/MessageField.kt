@@ -31,6 +31,9 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
+
 /**
  * MESSAGE FIELD: Granular Message detail.
  */
@@ -156,7 +159,7 @@ fun MessageField(
 
             if (childMessages.itemCount == 0) {
                 BlukitTip(
-                    text = "No connection detected. Send a Message to start the ledger.",
+                    text = stringResource(R.string.msg_no_connection),
                     themeColor = themeColor,
                     onDismiss = {  },
                     modifier = Modifier.align(Alignment.TopCenter)

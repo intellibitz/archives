@@ -11,6 +11,8 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
 import cc.thevar.blukit.ui.navigation.Route
 import cc.thevar.blukit.ui.screens.SyncProgressIndicator
 import cc.thevar.blukit.ui.theme.StealthBlack
@@ -42,20 +44,28 @@ fun BlukitScaffold(
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             if (showNavigation) {
-                listOf(
-                    Triple(Route.Nearby, "Nearby", Icons.Rounded.Radar),
-                    Triple(Route.LiveFeed, "Live", Icons.Rounded.Stream),
-                    Triple(Route.Timeline, "Messages", Icons.Rounded.History),
-                ).forEach { (route, label, icon) ->
-                    item(
-                        selected = currentRoute::class == route::class,
-                        onClick = { onNavigate(route) },
-                        icon = { Icon(icon, contentDescription = label) },
-                        label = { Text(label) }
-                    )
-                }
+                item(
+                    selected = currentRoute::class == Route.Nearby::class,
+                    onClick = { onNavigate(Route.Nearby) },
+                    icon = { Icon(Icons.Rounded.Radar, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_nearby)) }
+                )
+                item(
+                    selected = currentRoute::class == Route.LiveFeed::class,
+                    onClick = { onNavigate(Route.LiveFeed) },
+                    icon = { Icon(Icons.Rounded.Stream, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_live)) }
+                )
+                item(
+                    selected = currentRoute::class == Route.Timeline::class,
+                    onClick = { onNavigate(Route.Timeline) },
+                    icon = { Icon(Icons.Rounded.History, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_messages)) }
+                )
             }
         },
+
+
         modifier = Modifier.fillMaxSize(),
         containerColor = StealthBlack,
         contentColor = Color.White

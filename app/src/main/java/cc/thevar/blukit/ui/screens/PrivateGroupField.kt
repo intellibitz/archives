@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import cc.thevar.blukit.R
 import cc.thevar.blukit.domain.model.Message
 import cc.thevar.blukit.domain.model.Source
 import cc.thevar.blukit.domain.model.Group
@@ -178,7 +180,7 @@ fun PrivateGroupField(
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 BlukitTip(
-                    text = "THIS GROUP IS SILENT. SEND A MESSAGE TO START.",
+                    text = stringResource(R.string.msg_empty_group).uppercase(),
                     themeColor = themeColor,
                     onDismiss = { showTip = false }
                 )
