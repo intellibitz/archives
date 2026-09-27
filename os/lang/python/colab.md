@@ -7,6 +7,7 @@ Reference guide for Google Colaboratory runtimes and Gemini multimodal AI model 
 ## 1. Google Colab Environment
 
 [Google Colaboratory](https://colab.research.google.com/) provides hosted Jupyter runtimes with:
+
 - Zero local setup required
 - Cloud GPU (T4, A100, H100) and TPU acceleration
 - Google Drive synchronization and instant sharing
@@ -18,11 +19,13 @@ Reference guide for Google Colaboratory runtimes and Gemini multimodal AI model 
 Use Google DeepMind's official Python SDK (`google-genai`) for Gemini models:
 
 ### Installation
+
 ```bash
 pip install --upgrade google-genai
 ```
 
 ### Python SDK Quickstart
+
 ```python
 import os
 from google import genai
@@ -40,6 +43,7 @@ print(response.text)
 ```
 
 ### Multimodal Input (Image & Vision)
+
 ```python
 from PIL import Image
 

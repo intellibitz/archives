@@ -25,21 +25,26 @@ web/javaee/
 
 ## Systems Architecture
 
-### 1. [IntelliDocs](file:///home/ramadoss/github.com/intellibitz/intellibitz/web/javaee/intellidocs)
+### 1. [IntelliDocs](./web/javaee/intellidocs)
+
 A multi-tier Java EE document management and collaboration solution engineered for modular enterprise deployment:
+
 - **`intellidocs-ejb`**: Implements container-managed persistence, declarative security, transaction demarcations, and core document lifecycle management.
 - **`intellidocs-war`**: Delivers a rich web interface using JavaServer Faces (JSF), servlets, and asynchronous listeners.
 - **`intellidocs-ear`**: Packages the EJB and WAR components into a unified deployable enterprise archive (`.ear`) for GlassFish, JBoss/WildFly, or WebLogic runtimes.
 - **`intellidocs-tests`**: Automated integration tests validating service layer contracts and data persistence.
 
 #### Building IntelliDocs
+
 ```bash
 cd web/javaee/intellidocs
 mvn clean install
 ```
 
-### 2. [IntelliMeet](file:///home/ramadoss/github.com/intellibitz/intellibitz/web/javaee/intellimeet)
+### 2. [IntelliMeet](./web/javaee/intellimeet)
+
 An enterprise matchmaking and collaborative meeting suite:
+
 - **`32tango/`**: Backend service built with the JBoss Seam framework, uniting Enterprise JavaBeans 3 (EJB 3), Hibernate ORM, and JSF into a cohesive stateful application server architecture.
 - **`dating/`**: Companion Android mobile client interfacing with the backend for mobile user coordination and messaging.
 
@@ -47,4 +52,4 @@ An enterprise matchmaking and collaborative meeting suite:
 
 ## Licensing
 
-Distributed under the repository's root **[MIT License](file:///home/ramadoss/github.com/intellibitz/intellibitz/LICENSE)**.
+Distributed under the repository's root **[MIT License](./LICENSE)**.

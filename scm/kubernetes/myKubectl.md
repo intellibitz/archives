@@ -32,6 +32,4 @@
 
     https://github.com/cri-o/cri-o/blob/main/install.md#readme
 
-
-
 #

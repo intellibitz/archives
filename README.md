@@ -36,60 +36,71 @@ intellibitz/
 
 ## Directory Index & Architecture
 
-### 🗄️ [Databases (`db/`)](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/README.md)
+### 🗄️ [Databases (`db/`)](./db/README.md)
+
 Container stacks, database administration scripts, schemas, and data specifications.
-- **[PostgreSQL](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/postgresql)**: [`docker-compose.yml`](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/postgresql/docker-compose.yml) (Postgres + pgAdmin 4), [`myPgsql.sql`](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/postgresql/myPgsql.sql) schema definitions, [`myPgsql.sh`](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/postgresql/myPgsql.sh) management script, Docker Swarm [`stack.yml`](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/postgresql/stack.yml).
-- **[MySQL](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/mysql)**: [`docker-compose.yml`](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/mysql/docker-compose.yml) stack, [`myMySQL.sql`](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/mysql/myMySQL.sql) schema, [`myMySQLCmd.sh`](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/mysql/myMySQLCmd.sh) cheatsheet.
-- **[SQLite](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/sqlite)**: Embedded database usage & CLI commands.
-- **[rqlite](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/rqlite)**: Distributed SQLite with Raft consensus.
-- **[CouchDB](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/couchdb)**: Document-oriented database operations and Fauxton setup.
-- **[Specifications](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/toml)**: [TOML v1.0.0 Specification](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/toml/toml-v1.0.0.md) and [JSON Standards](file:///home/ramadoss/github.com/intellibitz/intellibitz/db/json/myJson.md).
 
-### 🖥️ [Operating Systems & Runtimes (`os/`)](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/README.md)
+- **[PostgreSQL](./db/postgresql)**: [`docker-compose.yml`](./db/postgresql/docker-compose.yml) (Postgres + pgAdmin 4), [`myPgsql.sql`](./db/postgresql/myPgsql.sql) schema definitions, [`myPgsql.sh`](./db/postgresql/myPgsql.sh) management script, Docker Swarm [`stack.yml`](./db/postgresql/stack.yml).
+- **[MySQL](./db/mysql)**: [`docker-compose.yml`](./db/mysql/docker-compose.yml) stack, [`myMySQL.sql`](./db/mysql/myMySQL.sql) schema, [`myMySQLCmd.sh`](./db/mysql/myMySQLCmd.sh) cheatsheet.
+- **[SQLite](./db/sqlite)**: Embedded database usage & CLI commands.
+- **[rqlite](./db/rqlite)**: Distributed SQLite with Raft consensus.
+- **[CouchDB](./db/couchdb)**: Document-oriented database operations and Fauxton setup.
+- **[Specifications](./db/toml)**: [TOML v1.0.0 Specification](./db/toml/toml-v1.0.0.md) and [JSON Standards](./db/json/myJson.md).
+
+### 🖥️ [Operating Systems & Runtimes (`os/`)](./os/README.md)
+
 Operating system administration and programming language environments.
-- **[Linux Administration](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/linux)**: Ubuntu system updates (`apt-full-upgrade.sh`), Samba sharing (`mySamba.sh`), OpenSSH hardening (`ssh/`), GnuPG key management (`gpg/`), Arch Linux architecture guide (`arch/archlinux.org.adoc`), and GRUB dual-boot recovery ([`grub.md`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/linux/grub.md)).
-- **[Windows & WSL](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/win)**: WSL configuration and Windows service scripts.
-- **[Language Toolchains](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang)**:
-  - **[Kotlin](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/kotlin)**: Tutorial suite (`KotlinLearn`), sandbox (`KotlinPlay`), multiplatform modules (`multiplatform`), web clients (`jsfront`, `mpfsweb`).
-  - **[Java SE](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/javase)**: Tamil font transliterator desktop application ([`FontTransliterator`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/javase/FontTransliterator/README.md)), text editors ([`sted`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/javase/sted/README.md)).
-  - **[Python & AI](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/python)**: Modern [uv package manager](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/python/uv.md) (`uv.sh`), Python 3.12/3.13, Hugging Face Hub CLI guide ([`huggingface.md`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/python/huggingface.md)), Google Colab & Gemini API ([`colab.md`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/python/colab.md)), Meta Llama 3 ([`meta-llama.md`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/python/meta-llama.md)).
-  - **[Go](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/go)**: Workspaces, modules, testing, and binaries.
-  - **[Clojure](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/clojure)**: Language Reader syntax and data structure reference ([`myClojure.md`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/clojure/myClojure.md)).
-  - **[Expect](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/expect)**: OpenVPN and SFTP interactive automation scripts ([`expect-openvpn.exp`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/expect/expect-openvpn.exp), [`expect-sftp.exp`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/expect/expect-sftp.exp)).
-  - **[PHP](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/php/README.md)**: Web community portal and interactive AJAX services ([`intelligeek`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/php/intelligeek)).
 
-### 🔄 [DevOps & Source Control (`scm/`)](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/README.md)
+- **[Linux Administration](./os/linux)**: Ubuntu system updates (`apt-full-upgrade.sh`), Samba sharing (`mySamba.sh`), OpenSSH hardening (`ssh/`), GnuPG key management (`gpg/`), Arch Linux architecture guide (`arch/archlinux.org.adoc`), and GRUB dual-boot recovery ([`grub.md`](./os/linux/grub.md)).
+- **[Windows & WSL](./os/win)**: WSL configuration and Windows service scripts.
+- **[Language Toolchains](./os/lang)**:
+  - **[Kotlin](./os/lang/kotlin)**: Tutorial suite (`KotlinLearn`), sandbox (`KotlinPlay`), multiplatform modules (`multiplatform`), web clients (`jsfront`, `mpfsweb`).
+  - **[Java SE](./os/lang/javase)**: Tamil font transliterator desktop application ([`FontTransliterator`](./os/lang/javase/FontTransliterator/README.md)), text editors ([`sted`](./os/lang/javase/sted/README.md)).
+  - **[Python & AI](./os/lang/python)**: Modern [uv package manager](./os/lang/python/uv.md) (`uv.sh`), Python 3.12/3.13, Hugging Face Hub CLI guide ([`huggingface.md`](./os/lang/python/huggingface.md)), Google Colab & Gemini API ([`colab.md`](./os/lang/python/colab.md)), Meta Llama 3 ([`meta-llama.md`](./os/lang/python/meta-llama.md)).
+  - **[Go](./os/lang/go)**: Workspaces, modules, testing, and binaries.
+  - **[Clojure](./os/lang/clojure)**: Language Reader syntax and data structure reference ([`myClojure.md`](./os/lang/clojure/myClojure.md)).
+  - **[Expect](./os/lang/expect)**: OpenVPN and SFTP interactive automation scripts ([`expect-openvpn.exp`](./os/lang/expect/expect-openvpn.exp), [`expect-sftp.exp`](./os/lang/expect/expect-sftp.exp)).
+  - **[PHP](./os/lang/php/README.md)**: Web community portal and interactive AJAX services ([`intelligeek`](./os/lang/php/intelligeek)).
+
+### 🔄 [DevOps & Source Control (`scm/`)](./scm/README.md)
+
 CI/CD workflows, containerization, and developer tooling.
-- **[Docker](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/docker)**: Engine install scripts, rootless daemon configuration ([`dockerinstall-rootless.sh`](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/docker/dockerinstall-rootless.sh)), Docker Desktop setup guide ([`install-dockerdesktop.md`](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/docker/install-dockerdesktop.md)), Compose templates (HTTPD, Postgres, Ubuntu).
-- **[Git & Platforms](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/git)**: Pro Git complete AsciiDoc guide ([`git-scm.org.adoc`](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/git/git-scm.org.adoc)), GitHub CLI automation, GitLab, Bitbucket.
-- **[Kubernetes](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/kubernetes)**: `kubectl` installation script and operations reference.
-- **[Multipass](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/multipass)**: Lightweight Ubuntu VM cluster automation, XRDP desktop instances, and Docker blueprint containers.
-- **[Gradle](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/gradle)**: AsciiDoc Gradle user guides ([`gradle.org.adoc`](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/gradle/gradle.org.adoc)), sample multi-project builds (`GradleAuthoring`, `GradleRunning`).
-- **[Package Managers](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/brew)**: Homebrew automated installer ([`install-brew.sh`](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/brew/install-brew.sh)), Flatpak, and SDKMAN.
 
-### 📱 [User Interfaces & Clients (`ui/`)](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/README.md)
+- **[Docker](./scm/docker)**: Engine install scripts, rootless daemon configuration ([`dockerinstall-rootless.sh`](./scm/docker/dockerinstall-rootless.sh)), Docker Desktop setup guide ([`install-dockerdesktop.md`](./scm/docker/install-dockerdesktop.md)), Compose templates (HTTPD, Postgres, Ubuntu).
+- **[Git & Platforms](./scm/git)**: Pro Git complete AsciiDoc guide ([`git-scm.org.adoc`](./scm/git/git-scm.org.adoc)), GitHub CLI automation, GitLab, Bitbucket.
+- **[Kubernetes](./scm/kubernetes)**: `kubectl` installation script and operations reference.
+- **[Multipass](./scm/multipass)**: Lightweight Ubuntu VM cluster automation, XRDP desktop instances, and Docker blueprint containers.
+- **[Gradle](./scm/gradle)**: AsciiDoc Gradle user guides ([`gradle.org.adoc`](./scm/gradle/gradle.org.adoc)), sample multi-project builds (`GradleAuthoring`, `GradleRunning`).
+- **[Package Managers](./scm/brew)**: Homebrew automated installer ([`install-brew.sh`](./scm/brew/install-brew.sh)), Flatpak, and SDKMAN.
+
+### 📱 [User Interfaces & Clients (`ui/`)](./ui/README.md)
+
 Mobile client applications and web frontend living standards.
-- **[Android Applications Suite (`ui/android/`)](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/README.md)**:
-  - **[IntelliDroid](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/IntelliDroid/README.md)**: Flagship modern enterprise client (SDK 35, Gradle 8.13, AGP 8.7.2, Kotlin 2.0.21, Coroutines, Room, Firebase FCM, Socket.IO).
-  - **Modernized 100% Kotlin Modules**: Event tracker ([`MEvents`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/MEvents/README.md)), Twitter trends ([`TwRends`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/TwRends/README.md)), social bookmarking ([`UDigg`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/UDigg/README.md)), GPS telemetry & tests ([`wuffittracker`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/wuffittracker/README.md)).
-  - **Full-Stack Reference Suites**: Barcode scanner book exchange ([`booksExchange`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/booksExchange/README.md)), sparring network ([`fiteclub`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/fiteclub/README.md)), proximity discovery ([`mobeegal`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/mobeegal/README.md)).
-  - **Device Tools**: ADB data pull/push utilities, KVM acceleration setup (`install-kvm.sh`), and [`local.properties.example`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/local.properties.example).
-- **[Web Client Standards](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/client/README.md)**: Curated WHATWG & W3C specifications for HTML, CSS, JavaScript, HTTP/3, WebSockets, Storage, and URL.
-- **[AsciiDoc Documentation](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/asciidoc)**: Asciidoctor authoring documentation.
 
-### 🌐 [Web & Cloud Infrastructure (`web/`)](file:///home/ramadoss/github.com/intellibitz/intellibitz/web/README.md)
+- **[Android Applications Suite (`ui/android/`)](./ui/android/README.md)**:
+  - **[IntelliDroid](./ui/android/IntelliDroid/README.md)**: Flagship modern enterprise client (SDK 35, Gradle 8.13, AGP 8.7.2, Kotlin 2.0.21, Coroutines, Room, Firebase FCM, Socket.IO).
+  - **Modernized 100% Kotlin Modules**: Event tracker ([`MEvents`](./ui/android/MEvents/README.md)), Twitter trends ([`TwRends`](./ui/android/TwRends/README.md)), social bookmarking ([`UDigg`](./ui/android/UDigg/README.md)), GPS telemetry & tests ([`wuffittracker`](./ui/android/wuffittracker/README.md)).
+  - **Full-Stack Reference Suites**: Barcode scanner book exchange ([`booksExchange`](./ui/android/booksExchange/README.md)), sparring network ([`fiteclub`](./ui/android/fiteclub/README.md)), proximity discovery ([`mobeegal`](./ui/android/mobeegal/README.md)).
+  - **Device Tools**: ADB data pull/push utilities, KVM acceleration setup (`install-kvm.sh`), and [`local.properties.example`](./ui/android/local.properties.example).
+- **[Web Client Standards](./ui/client/README.md)**: Curated WHATWG & W3C specifications for HTML, CSS, JavaScript, HTTP/3, WebSockets, Storage, and URL.
+- **[AsciiDoc Documentation](./ui/asciidoc)**: Asciidoctor authoring documentation.
+
+### 🌐 [Web & Cloud Infrastructure (`web/`)](./web/README.md)
+
 Web servers, cloud provisioning, and enterprise backend architectures.
-- **[Web Servers](file:///home/ramadoss/github.com/intellibitz/intellibitz/web)**: Configuration recipes for Apache HTTP Server, Nginx, Caddy TLS reverse proxy, Node.js, and Apache Tomcat.
-- **[Google Cloud Platform](file:///home/ramadoss/github.com/intellibitz/intellibitz/web/google)**: CLI scripts for Compute Engine VM and disk creation, IAM service accounts, OAuth scope inspection, Cloud SDK automation, and [AT&T Demo Suite](file:///home/ramadoss/github.com/intellibitz/intellibitz/web/google/att/README.md).
-- **[Java EE Enterprise Backends](file:///home/ramadoss/github.com/intellibitz/intellibitz/web/javaee/README.md)**: Multi-module Maven enterprise architectures:
-  - **[IntelliDocs](file:///home/ramadoss/github.com/intellibitz/intellibitz/web/javaee/intellidocs)**: Enterprise document platform (`intellidocs-ear`, `intellidocs-ejb`, `intellidocs-war`).
-  - **[IntelliMeet](file:///home/ramadoss/github.com/intellibitz/intellibitz/web/javaee/intellimeet)**: Collaborative meeting platform (`32tango` backend paired with companion `dating` Android mobile client).
+
+- **[Web Servers](./web)**: Configuration recipes for Apache HTTP Server, Nginx, Caddy TLS reverse proxy, Node.js, and Apache Tomcat.
+- **[Google Cloud Platform](./web/google)**: CLI scripts for Compute Engine VM and disk creation, IAM service accounts, OAuth scope inspection, Cloud SDK automation, and [AT&T Demo Suite](./web/google/att/README.md).
+- **[Java EE Enterprise Backends](./web/javaee/README.md)**: Multi-module Maven enterprise architectures:
+  - **[IntelliDocs](./web/javaee/intellidocs)**: Enterprise document platform (`intellidocs-ear`, `intellidocs-ejb`, `intellidocs-war`).
+  - **[IntelliMeet](./web/javaee/intellimeet)**: Collaborative meeting platform (`32tango` backend paired with companion `dating` Android mobile client).
 
 ---
 
 ## Quickstart Guide
 
 ### 1. Launch Local Databases
+
 ```bash
 # Start PostgreSQL 16 + pgAdmin 4:
 cd db/postgresql
@@ -101,19 +112,23 @@ docker compose up -d
 ```
 
 ### 2. Build the Android Client
+
 ```bash
 cd ui/android/IntelliDroid
 ./gradlew assembleDebug
 ```
 
 ### 3. Explore Kotlin Multiplatform
+
 ```bash
 cd os/lang/kotlin/multiplatform
 ./gradlew build
 ```
 
 ### 4. Run System & DevOps Automation Scripts
+
 All `.sh` scripts in the repository have executable permissions set and have passed syntax validation:
+
 ```bash
 # Check syntax of any script
 bash -n os/linux/ubuntu/apt-full-upgrade.sh
@@ -126,19 +141,20 @@ bash -n os/linux/ubuntu/apt-full-upgrade.sh
 
 ## Technology Roadmap
 
-See [`roadmap.md`](file:///home/ramadoss/github.com/intellibitz/intellibitz/roadmap.md) for the active architecture status, component milestones, and future development plans.
+See [`roadmap.md`](./roadmap.md) for the active architecture status, component milestones, and future development plans.
 
 ---
 
 ## Contributing & Community
 
 Contributions are warmly welcomed! Please review:
-- [Contributing Guidelines](file:///home/ramadoss/github.com/intellibitz/intellibitz/CONTRIBUTING.md)
-- [Contributor Code of Conduct](file:///home/ramadoss/github.com/intellibitz/intellibitz/CODE_OF_CONDUCT.md)
-- [Security Policy](file:///home/ramadoss/github.com/intellibitz/intellibitz/SECURITY.md)
+
+- [Contributing Guidelines](./CONTRIBUTING.md)
+- [Contributor Code of Conduct](./CODE_OF_CONDUCT.md)
+- [Security Policy](./SECURITY.md)
 
 ---
 
 ## License
 
-This repository is licensed under the [MIT License](file:///home/ramadoss/github.com/intellibitz/intellibitz/LICENSE).
+This repository is licensed under the [MIT License](./LICENSE).

@@ -1,8 +1,9 @@
 # https://sdkman.io/
-  
+
     https://github.com/sdkman/sdkman-cli
 
 # https://sdkman.io/install
+
 Go on, paste and run the following in a terminal:
 
     curl -s "https://get.sdkman.io" | bash
@@ -11,32 +12,32 @@ Configuration can be found in the ~/.sdkman/etc/config file. To edit the configu
 
     # make sdkman non-interactive, preferred for CI environments
     sdkman_auto_answer=true|false
-    
+
     # check for newer versions and prompt for update
     sdkman_selfupdate_feature=true|false
-    
+
     # disables SSL certificate verification
     # https://github.com/sdkman/sdkman-cli/issues/327
     # HERE BE DRAGONS....
     sdkman_insecure_ssl=true|false
-    
+
     # configure curl timeouts
     sdkman_curl_connect_timeout=5
     sdkman_curl_continue=true
     sdkman_curl_max_time=10
-    
+
     # subscribe to the beta channel
     sdkman_beta_channel=true|false
-    
+
     # enable verbose debugging
     sdkman_debug_mode=true|false
-    
+
     # enable colour mode
     sdkman_colour_enable=true|false
-    
+
     # enable automatic env
     sdkman_auto_env=true|false
-    
+
     # enable bash or zsh auto-completion
     sdkman_auto_complete=true|false
 
@@ -68,6 +69,7 @@ Then issue the following command:
     sdk current java
 
     sdk env init
+
 A config file with the following content has now been created in the current directory:
 
     # Enable auto-env through the sdkman_auto_env config
@@ -107,7 +109,6 @@ After checking out a new project, you may be missing some SDKs specified in the 
     sdk home java 21.0.4-tem
     /home/myuser/.sdkman/candidates/java/21.0.4-tem
 
-
 # https://sdkman.io/jdks
 
     sdk install java x.y.z-amzn   #https://aws.amazon.com/corretto/
@@ -124,7 +125,6 @@ After checking out a new project, you may be missing some SDKs specified in the 
     sdk install kscript         #https://github.com/holgerbrandl/kscript
     sdk install ktx             #https://github.com/mpetuska/ktx
     sdk install tomcat          #https://tomcat.apache.org/
-
 
 # ~$ curl -s "https://get.sdkman.io" | bash
 
@@ -144,12 +144,13 @@ After checking out a new project, you may be missing some SDKs specified in the 
       .hN+           /d:    -MMMmhs/-.`   .MMMh   .ss+-                 `yy`       sMMN`     :N.
      :mN/           `N/     `o/-`         :MMMo   +MMMN-         .`      `ds       mMMh      do
     /NN/            `N+....--:/+oooosooo+:sMMM:   hMMMM:        `my       .m+     -MMM+     :N.
-/NMo              -+ooooo+/:-....`...:+hNMN.  `NMMMd`        .MM/       -m:    oMMN.     hs
--NMd`                                    :mm   -MMMm- .s/     -MMm.       /m-   mMMd     -N.
+
+/NMo -+ooooo+/:-....`...:+hNMN.  `NMMMd`        .MM/       -m:    oMMN.     hs
+-NMd` :mm -MMMm- .s/ -MMm. /m- mMMd -N.
 `mMM/                                      .-   /MMh. -dMo     -MMMy        od. .MMMs..---yh
-+MMM.                                           sNo`.sNMM+     :MMMM/        sh`+MMMNmNm+++-
++MMM.                                           sNo`.sNMM+ :MMMM/ sh`+MMMNmNm+++-
 mMMM-                                           /--ohmMMM+     :MMMMm.       `hyymmmdddo
-MMMMh.                  ````                  `-+yy/`yMMM/     :MMMMMy       -sm:.``..-:-.`
+MMMMh. ```                  `-+yy/`yMMM/     :MMMMMy       -sm:.``..-:-.`
 dMMMMmo-.``````..-:/osyhddddho.           `+shdh+.   hMMM:     :MmMMMM/   ./yy/` `:sys+/+sh/
 .dMMMMMMmdddddmmNMMMNNNNNMMMMMs           sNdo-      dMMM-  `-/yd/MMMMm-:sy+.   :hs-      /N`
 `/ymNNNNNNNmmdys+/::----/dMMm:          +m-         mMMM+ohmo/.` sMMMMdo-    .om:       `sh
@@ -162,13 +163,11 @@ dMMMMmo-.``````..-:/osyhddddho.           `+shdh+.   hMMM:     :MmMMMM/   ./yy/`
 -NMs                    `/yy:
 .NMy                  `:sh+.
 `mMm`               ./yds-
-`dMMMmyo:-.````.-:oymNy:`
+`dMMMmyo:-.```.-:oymNy:`
 +NMMMMMMMMMMMMMMMMms:`
 -+shmNMMMNmdy+:`
 
-
                                                                  Now attempting installation...
-
 
 Looking for a previous installation of SDKMAN...
 Looking for unzip...
@@ -180,19 +179,20 @@ Create distribution directories...
 Getting available candidates...
 Prime the config file...
 Installing script cli archive...
-* Downloading...
-  ######################################################################## 100.0%
-* Checking archive integrity...
-* Extracting archive...
-* Copying archive contents...
-* Cleaning up...
 
-* Downloading...
+- Downloading...
   ######################################################################## 100.0%
-* Checking archive integrity...
-* Extracting archive...
-* Copying archive contents...
-* Cleaning up...
+- Checking archive integrity...
+- Extracting archive...
+- Copying archive contents...
+- Cleaning up...
+
+- Downloading...
+  ######################################################################## 100.0%
+- Checking archive integrity...
+- Extracting archive...
+- Copying archive contents...
+- Cleaning up...
 
 Set version to 5.18.1 ...
 Set native version to 0.2.2 ...

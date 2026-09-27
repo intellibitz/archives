@@ -4,6 +4,7 @@ https://ubuntu.com/server/docs
 
 SSH
 --
+
 SSH ("Secure SHell") is a protocol for securely accessing one computer from another. Despite the name, SSH allows you to run command line and graphical programs, transfer files, and even create secure virtual private networks over the Internet.
 
 To use SSH, you will need to install an SSH client on the computer you connect from, and an SSH server on the computer you connect to. The most popular Linux SSH client and Linux SSH server are maintained by the OpenSSH project.
@@ -14,6 +15,7 @@ To install the OpenSSH server, install the following package: openssh-server.
 
 Using the command-line
 --
+
 All modern Unix-like systems (Linux, OS X, BSDs, and others) include a command-line ssh client. To login to your computer from a Unix-like machine, go to a command-line and type:
 
     ssh <username>@<computer name or IP address>
@@ -30,6 +32,7 @@ See ssh keys if you want to authenticate using keys instead of passwords.
 
 SSH Keys
 --
+
 SSH allow authentication between two hosts without the need of a password. SSH key authentication uses a private key and a public key.
 
 To generate the keys, from a terminal prompt enter:
@@ -54,6 +57,7 @@ You should now be able to SSH to the host without being prompted for a password.
 
 Import keys from public keyservers
 --
+
 These days many users have already ssh keys registered with services like launchpad or github. Those can be easily imported with:
 
     ssh-import-id <username-on-remote-service>
@@ -68,14 +72,14 @@ SSH programs generate public keys in a similar format:
 
     <ssh-rsa or ssh-dss> <really long string of nonsense> <username>@<host>
 
-SSH can use either "RSA" (Rivest-Shamir-Adleman) or "DSA" ("Digital Signature Algorithm") keys. 
+SSH can use either "RSA" (Rivest-Shamir-Adleman) or "DSA" ("Digital Signature Algorithm") keys.
 RSA is the only recommended choice for new keys.
 
 Key-based authentication uses two keys, one "public" key that anyone is allowed to see, and another "private" key that only the owner is allowed to see. To securely communicate using key-based authentication, one needs to create a key pair, securely store the private key on the computer one wants to log in from, and store the public key on the computer one wants to log in to.
 
-
 Generating RSA Keys
 --
+
 The first step involves creating a set of RSA keys for use in authentication.
 
 This should be done on the client.
@@ -101,6 +105,7 @@ Congratulations! You now have a set of keys. Now it's time to make your systems 
 
 Choosing a good passphrase
 --
+
 You need to change all your locks if your RSA key is stolen. Otherwise the thief could impersonate you wherever you authenticate with that key.
 
 An SSH key passphrase is a secondary form of security that gives you a little time when your keys are stolen. If your RSA key has a strong passphrase, it might take your attacker a few hours to guess by brute force. That extra time should be enough to log in to any computers you have an account on, delete your old key from the .ssh/authorized_keys file, and add a new key.
@@ -113,12 +118,14 @@ If you do adopt a passphrase, pick a strong one and store it securely in a passw
 
 Key Encryption Level
 --
+
 Note: The default is a 2048 bit key. You can increase this to 4096 bits with the -b flag (Increasing the bits makes it harder to crack the key by brute force methods).
 
     ssh-keygen -t rsa -b 4096
 
 Transfer Client Key to Host
 --
+
 The key you need to transfer to the host is the public one. If you can log in to a computer over SSH using a password, you can transfer your RSA key by doing the following from your own computer:
 
     ssh-copy-id <username>@<host>
@@ -140,7 +147,6 @@ You should be prompted for the passphrase for your key:
 
 Enter your passphrase, and provided host is configured to allow key-based logins, you should then be logged in as usual.
 
-
 To run Windows programs on Ubuntu, you can use a compatibility layer called Wine. Here are the steps to install and use Wine:
 
 Install Wine: Most Linux distributions come with Wine in their package repository. You can install Wine on Ubuntu by running the following commands in the terminal12:
@@ -155,4 +161,3 @@ wine msiexec /i /path/to/installer.msi
 
 Use Wine: After installation, you can run the Windows application from the terminal or find its shortcuts in your applications menu2.
 Please note that Wine is a work in progress, so it might not run every application perfectly2. If you encounter any issues, you can check the Wine Application Database for solutions and tweaks
-

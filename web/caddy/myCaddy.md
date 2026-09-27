@@ -1,29 +1,35 @@
 #
 
-
     https://caddyserver.com/
+
 Caddy 2 is a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go
 
 1-LINERS
 --
+
 These commands are production-ready. When given a domain name, Caddy will use HTTPS by default, which provisions and renews certificates for you.*
-* Requires domain's public A/AAAA DNS records pointed at your machine.
+
+- Requires domain's public A/AAAA DNS records pointed at your machine.
 
 Quick, local file server
 
     caddy file-server
+
 Public file server over HTTPS
 
     caddy file-server --domain example.com
+
 HTTPS reverse proxy
 
     caddy reverse-proxy --from example.com --to localhost:9000
+
 Run server with Caddyfile in working directory (if present)
 
     caddy run
 
 THE CADDYFILE
 --
+
 A config file that's human-readable and easy to write by hand. Perfect for most common and manual configurations.
 
 Local file server with template evaluation
@@ -65,6 +71,7 @@ HTTPS site with clean URLs, reverse proxying, compression, and templates
 
 CONFIG API
 --
+
 Caddy is dynamically configurable with a RESTful JSON API. Config updates are graceful, even on Windows.
 
 Using JSON gives you absolute control over the edge of your compute platform, and is perfect for dynamic and automated deployments.
@@ -105,6 +112,7 @@ All changes made through the API are persisted to disk so they can continue to b
 
 Web Protocols
 --
+
 HTTP/1.1
 Still commonly used in plaintext, development, and debug environments, Caddy has solid support for HTTP/1.1.
 
@@ -160,7 +168,5 @@ Send a certain status code for certain requests.
 
 COMPRESSION
 Compress content on-the-fly using gzip, Zstandard, or brotli.
-
-
 
 #

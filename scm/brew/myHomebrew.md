@@ -7,26 +7,31 @@ Overview and quickstart for using [Homebrew](https://brew.sh/) on macOS and Linu
 ## Installation
 
 Run the installation script in your terminal:
+
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
-*(Or execute [install-brew.sh](file:///home/ramadoss/github.com/intellibitz/intellibitz/scm/brew/install-brew.sh))*
+
+_(Or execute [install-brew.sh](./scm/brew/install-brew.sh))_
 
 ---
 
 ## Common Commands
 
 ### Installing Packages
+
 ```bash
 brew install wget
 ```
 
 ### Installing macOS GUI Applications (Casks)
+
 ```bash
 brew install --cask firefox
 ```
 
 ### Managing Formulae
+
 ```bash
 brew update
 brew upgrade
@@ -38,6 +43,7 @@ brew cleanup
 ## Creating Formulae
 
 Homebrew formulae are Ruby scripts:
+
 ```ruby
 class Wget < Formula
   homepage "https://www.gnu.org/software/wget/"
@@ -54,6 +60,7 @@ end
 ---
 
 ## Documentation & Links
+
 - [Official Website](https://brew.sh/)
 - [Manpage Reference](https://docs.brew.sh/Manpage)
 - [Formulae Search](https://formulae.brew.sh/)

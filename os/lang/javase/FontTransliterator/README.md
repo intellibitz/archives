@@ -13,7 +13,7 @@ Universal desktop transliterator and phonetic font mapper for Indian and global 
 - **Phonetic Keyboard Mapping**: Dynamic character keypad mapping and phonetic rule evaluation.
 - **Font Conversion & Mapping**: Convert between legacy 8-bit non-Unicode font encodings (BAMINI, TAB, TAM) and modern Unicode standard.
 - **Desktop GUI**: Cross-platform Java Swing interface (`STEDGUI`) with multi-document editor (`DesktopFrame`), font keypad inspector, and mapping table editor.
-- **Modern Build System**: Configured with modern Gradle Kotlin DSL ([`build.gradle.kts`](file:///home/ramadoss/github.com/intellibitz/intellibitz/os/lang/javase/FontTransliterator/build.gradle.kts)).
+- **Modern Build System**: Configured with modern Gradle Kotlin DSL ([`build.gradle.kts`](./os/lang/javase/FontTransliterator/build.gradle.kts)).
 
 ## Project Structure
 
@@ -41,4 +41,4 @@ gradle run
 
 ## License
 
-This project is licensed under the [MIT License](file:///home/ramadoss/github.com/intellibitz/intellibitz/LICENSE).
+This project is licensed under the [MIT License](./LICENSE).

@@ -1,8 +1,8 @@
 https://learn.microsoft.com/en-us/windows/wsl/wsl-config
 
-
 GNOME Desktop
 --
+
 To run the Ubuntu GNOME desktop from WSL2 Ubuntu, you’ll need to install a desktop environment and a Windows X server. Here are the steps:
 
 Install Ubuntu on WSL2: First, ensure that you have Ubuntu installed on your WSL2. You can download it from the Microsoft Store1.
@@ -31,6 +31,7 @@ Please note that running a full desktop environment can be resource-intensive an
 
 Transport end point is not connected
 --
+
 Acpid used for power management can cause the systemctl of wsl to get stuck, while modemmanager is related to the network card and can cause wsl's network settings to get stuck. Simply remove and lock these three when installing the desktop
 
     apt purge -y acpid acpi-support modemmanager
@@ -71,7 +72,7 @@ Open a Firewall Port: Open a firewall port 3389 for incoming traffic12:
 
     sudo ufw allow from any to any port 3389 proto tcp
 
-Connect from Windows: 
+Connect from Windows:
 
 On your Windows machine, open the Remote Desktop Connection client. Enter the Ubuntu’s remote desktop share IP address or hostname1. Optionally, allow Windows to save your credentials1.
 Click ‘Yes’ when prompted by the message: ‘The identity of the remote computer cannot be verified’. Enter the password of the remote Ubuntu user1. You should now be remotely connected to the Ubuntu Desktop share from your Windows computer1

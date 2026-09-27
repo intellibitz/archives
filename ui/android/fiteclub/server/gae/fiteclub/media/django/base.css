@@ -6,8 +6,9 @@
 /* Block IE 5  @import "null?\"\{";*/
 
 /* Import other styles */
-@import url('global.css');
-@import url('layout.css');
+@import url("global.css");
+@import url("layout.css");
 
 /* Import patch for IE 6 Windows */
-/*\*/ @import "patch-iewin.css"; /**/
+/*\*/
+@import "patch-iewin.css"; /**/

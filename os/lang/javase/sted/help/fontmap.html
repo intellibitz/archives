@@ -39,151 +39,187 @@
 -->
 
 <html>
-
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-    <meta name="Author" content="SushMu">
-    <meta name="Keywords"
-          content="Font Transliterator, Font Mapper, Language Neutral Editor, Tamil, Romanized Alphabet, Phonetic Keyboard">
-    <meta name="KeyWords"
-          content="java, transliterator, font, keyboard, roman, alphabet, ascii, tamil, english, converter">
-    <meta name="KeyWords"
-          content="transliterate, phonetic, international, internationlaization, i18n, editor, language, fonts">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <meta name="Author" content="SushMu" />
+    <meta
+      name="Keywords"
+      content="Font Transliterator, Font Mapper, Language Neutral Editor, Tamil, Romanized Alphabet, Phonetic Keyboard"
+    />
+    <meta
+      name="KeyWords"
+      content="java, transliterator, font, keyboard, roman, alphabet, ascii, tamil, english, converter"
+    />
+    <meta
+      name="KeyWords"
+      content="transliterate, phonetic, international, internationlaization, i18n, editor, language, fonts"
+    />
     <title>STED - Map characters between two fonts</title>
-</head>
+  </head>
 
-<body bgcolor="#FFFF99">
+  <body bgcolor="#FFFF99">
+    <!-- Begin Header -->
+    <p>
+      <a href="http://www.intellibitz.com"
+        >&nbsp;<img src="../images/ibt-logo.jpg" alt="IntelliBitz Logo"
+      /></a>
 
-<!-- Begin Header -->
-<p>
-    <a
-            href="http://www.intellibitz.com">&nbsp;<img
-            src="../images/ibt-logo.jpg" alt="IntelliBitz Logo"></a>
+      <a href="http://sourceforge.net">
+        <img
+          src="http://sourceforge.net/sflogo.php?group_id=48218"
+          width="210"
+          height="62"
+          border="0"
+          alt="SourceForge Logo"
+      /></a>
+    </p>
 
-    <A href="http://sourceforge.net"> <IMG
-            src="http://sourceforge.net/sflogo.php?group_id=48218" width="210"
-            height="62"
-            border="0" alt="SourceForge Logo"></A>
-</p>
+    <p>
+      <font size="7"
+        >&nbsp;&nbsp;
+        <a
+          style="text-decoration: none"
+          href="http://sourceforge.net/projects/sted"
+          >STED</a
+        >
+        <img border="0" src="../images/sted.gif" />
+      </font>
+      <span style="font-weight: 400"
+        >SARA Transliterator &amp; Editor - An Open Source
+        <a href="transliterate.html">Transliterator</a> and Editor for Any
+        Language.</span
+      >
+    </p>
+    <hr />
+    <!-- End Header -->
 
-<p>
-    <font size="7">&nbsp;&nbsp;
-        <a style="text-decoration: none"
-           href="http://sourceforge.net/projects/sted">STED</a>
-        <img border="0" src="../images/sted.gif">
-    </font>
-<span style="font-weight: 400">SARA Transliterator &amp; Editor - An Open Source
-<a href="transliterate.html">Transliterator</a> and Editor for Any Language.</span>
-</p>
-<hr>
-<!-- End Header -->
+    <h1>Map characters between two fonts</h1>
 
-<h1>Map characters between two fonts</h1>
+    <h3>Character Mapping</h3>
 
-<h3>Character Mapping</h3>
+    <p>
+      Select character to be mapped using the keypad. There are two keypads so
+      characters for each font can be mapped to another set of characters.
+    </p>
 
-<p>
-    Select character to be mapped using the keypad.
-    There are two keypads so characters for each font can be mapped to another
-    set of characters.
-</p>
+    <p>
+      <b>Note:</b> you will see the selected characters in the Mapping display
+    </p>
 
-<p>
-    <b>Note:</b> you will see the selected characters in the Mapping display
-</p>
+    <p>
+      After selecting character from both the left hand side and the right hand
+      side keypad, press '<b>Add</b>' button to add this character mapping to
+      the FontMap.
+    </p>
 
-<p>
-    After selecting character from both the left hand side and the right hand
-    side keypad, press '<b>Add</b>' button to add this
-    character mapping to the FontMap.
-</p>
+    <p>
+      <b>Ex: </b>
+    </p>
 
-<p>
+    <ul>
+      <li>I = U</li>
+      <li>on = OFF</li>
+      <li>You = Me</li>
+    </ul>
+    <p>
+      Note: you can add any number of character set mappings to your FontMap.
+    </p>
+
+    <p>Based on the above FontMap, the line</p>
+
+    <p>
+      <b><i>I Love You</i></b>
+    </p>
+
+    <p>will be converted to</p>
+
+    <p>
+      <b><i>U Love Me</i></b>
+    </p>
+
+    <h3>&nbsp;</h3>
+
+    <h3><font size="5">Adding Optional Rules to Character Mapping</font></h3>
+
+    <p>
+      Optionally you can add Rules to any of the FontMap Entry.
+      <br /><br />
+      There are Four kind of rules that can be set, for the FontMap Entry.
+    </p>
+
+    <ul>
+      <li>&nbsp;IS First Letter (in the word)</li>
+      <li>&nbsp;IS Last Letter (in the word)</li>
+      <li>
+        &nbsp;IS Preceded By (symbol 1 is preceded by the selected symbol)
+      </li>
+
+      <li>&nbsp;IS Followed By (symbol 1 is followed by selected symbol)</li>
+    </ul>
     <b>Ex: </b>
-<ul>
-    <li>I = U
-    <li>on = OFF
-    <li>You = Me
-</ul>
-<p>
-    Note: you can add any number of character set mappings to your FontMap.
-</p>
-
-<p>
-    Based on the above FontMap, the line
-</p>
-
-<p><b><i>I Love You</i></b></p>
-
-<p>
-    will be converted to
-</p>
-
-<p><b><i>U Love Me</i></b></p>
-
-<h3>&nbsp;</h3>
-
-<h3><font size="5">Adding Optional Rules to Character Mapping</font></h3>
-
-<p>
-    Optionally you can add Rules to any of the FontMap Entry.
-    <br><br>
-    There are Four kind of rules that can be set, for the FontMap Entry.
-<ul>
-    <li>&nbsp;IS First Letter (in the word)
-    <li>&nbsp;IS Last Letter (in the word)
-    <li>&nbsp;IS Preceded By
-        (symbol 1 is preceded by the selected symbol)
-    <li>&nbsp;IS Followed By (symbol 1
-        is followed by selected symbol)
-</ul>
-<b>Ex: </b>
-<ul>
-    <li>I = We&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [IS
+    <ul>
+      <li>
+        I = We&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [IS
         First Letter]
-    <li>You = Him&nbsp;&nbsp;&nbsp;&nbsp; [IS Last Letter]
-    <li>o = G&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </li>
+
+      <li>You = Him&nbsp;&nbsp;&nbsp;&nbsp; [IS Last Letter]</li>
+      <li>
+        o =
+        G&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         [IS Preceded By]&nbsp;&nbsp;&nbsp;&nbsp; 'L'
-    <li>v = A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </li>
+
+      <li>
+        v =
+        A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         [IS Followed By]&nbsp;&nbsp;&nbsp;&nbsp; 'e'
-</ul>
-<p>
-    Based on the above FontMap, the line
-</p>
+      </li>
+    </ul>
+    <p>Based on the above FontMap, the line</p>
 
-<p><b><i>I Love You</i></b></p>
+    <p>
+      <b><i>I Love You</i></b>
+    </p>
 
-<p>
-    will be converted to
-</p>
+    <p>will be converted to</p>
 
-<p><b><i>We LGAe Him</i></b></p>
+    <p>
+      <b><i>We LGAe Him</i></b>
+    </p>
 
+    <!-- footer -->
+    <p align="center">
+      <a href="../Readme.txt">Readme.txt</a>
+      -- <a href="../License.txt">License.txt</a> --
+      <a href="../Changes.txt">Changes.txt</a> --
+      <a href="../KnownIssues.txt">KnownIssues.txt</a> --
+      <a href="../build.txt">build.txt</a>
+    </p>
 
-<!-- footer -->
-<p align="center">
-    <a href="../Readme.txt">Readme.txt</a>
-    -- <a href="../License.txt">License.txt</a>
-    -- <a href="../Changes.txt">Changes.txt</a>
-    -- <a href="../KnownIssues.txt">KnownIssues.txt</a>
-    -- <a href="../build.txt">build.txt</a></p>
+    <p></p>
+    <hr />
+    <p>
+      <i
+        ><font size="2"
+          >Copyright (c) IntelliBitz Technologies., Muthu Ramadoss.</font
+        ></i
+      >
+    </p>
 
-<p>
-<hr>
-<p>
-    <i><font size="2">Copyright (c) IntelliBitz Technologies., Muthu
-        Ramadoss.</font></i></p>
-
-<p>
-    <a
-            href="http://www.intellibitz.com">&nbsp;<img
-            src="../images/ibt-logo.jpg" alt="IntelliBitz Logo"></a>
-    <A href="http://sourceforge.net"> <IMG
-            src="http://sourceforge.net/sflogo.php?group_id=48218" width="210"
-            height="62"
-            border="0" alt="SourceForge Logo"></A>
-</p>
-<!-- footer end -->
-
-</body>
+    <p>
+      <a href="http://www.intellibitz.com"
+        >&nbsp;<img src="../images/ibt-logo.jpg" alt="IntelliBitz Logo"
+      /></a>
+      <a href="http://sourceforge.net">
+        <img
+          src="http://sourceforge.net/sflogo.php?group_id=48218"
+          width="210"
+          height="62"
+          border="0"
+          alt="SourceForge Logo"
+      /></a>
+    </p>
+    <!-- footer end -->
+  </body>
 </html>

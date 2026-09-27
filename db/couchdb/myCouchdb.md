@@ -1,6 +1,5 @@
 #
 
-
     https://couchdb.apache.org/
 
     https://docs.couchdb.org/en/stable/install/unix.html#installing
@@ -27,12 +26,15 @@ As a recommendation, copy the rel/couchdb directory into /home/couchdb or /Users
 Ex: copy the built couchdb release to the new user’s home directory:
 
     cp -R /path/to/couchdb/rel/couchdb /home/couchdb
+
 Change the ownership of the CouchDB directories by running:
 
     chown -R couchdb:couchdb /home/couchdb
+
 Change the permission of the CouchDB directories by running:
 
     find /home/couchdb -type d -exec chmod 0770 {} \;
+
 Update the permissions for your ini files:
 
     chmod 0644 /home/couchdb/etc/*
@@ -48,6 +50,7 @@ CouchDB server administrators and passwords are not stored in the _users databas
     ;admin = mysecretpassword
     admin = -hashed-6d3c30241ba0aaa4e16c6ea99224f915687ed8cd,7f4a3e05e0cbc6f48a0035e3508eef90
     architect = -pbkdf2-43ecbd256a70a3a2f7de40d2374b6c3002918834,921a12f74df0c1052b3e562a23cd227f,10000
+
 Administrators can be added directly to the [admins] section, and when CouchDB is restarted, the passwords will be salted and encrypted. You may also use the HTTP interface to create administrator accounts; this way, you don’t need to restart CouchDB, and there’s no need to temporarily store or transmit passwords in plaintext. The HTTP /_node/{node-name}/_config/admins endpoint supports querying, deleting or creating new admin accounts:
 
     GET /_node/nonode@nohost/_config/admins HTTP/1.1
@@ -63,6 +66,7 @@ Administrators can be added directly to the [admins] section, and when CouchDB i
         "admin": "-hashed-6d3c30241ba0aaa4e16c6ea99224f915687ed8cd,7f4a3e05e0cbc6f48a0035e3508eef90",
         "architect": "-pbkdf2-43ecbd256a70a3a2f7de40d2374b6c3002918834,921a12f74df0c1052b3e562a23cd227f,10000"
     }
+
 If you already have a salted, encrypted password string (for example, from an old ini file, or from a different CouchDB server), then you can store the “raw” encrypted string, without having CouchDB doubly encrypt it.
 
     PUT /_node/nonode@nohost/_config/admins/architect?raw=true HTTP/1.1
@@ -80,6 +84,7 @@ If you already have a salted, encrypted password string (for example, from an ol
     Server: CouchDB (Erlang/OTP)
 
     "-pbkdf2-43ecbd256a70a3a2f7de40d2374b6c3002918834,921a12f74df0c1052b3e562a23cd227f,10000"
+
 Further details are available in security, including configuring the work factor for PBKDF2, and the algorithm itself at PBKDF2 (RFC-2898).
 
 Changed in version 1.4: PBKDF2 server-side hashed salted password support added, now as a synchronous call for the _config/admins API.
@@ -87,6 +92,7 @@ Changed in version 1.4: PBKDF2 server-side hashed salted password support added,
 You can start the CouchDB server by running:
 
     sudo -i -u couchdb /home/couchdb/bin/couchdb
+
 This uses the sudo command to run the couchdb command as the couchdb user.
 
 When CouchDB starts it should eventually display following messages:
@@ -97,14 +103,14 @@ Don’t be afraid, we will fix this in a moment.
 To check that everything has worked, point your web browser to:
 
     http://127.0.0.1:5984/_utils/index.html
+
 From here you should verify your installation by pointing your web browser to:
 
     http://localhost:5984/_utils/index.html#verifyinstall
+
 Your installation is not complete. Be sure to complete the Setup steps for a single node or clustered installation.
 
     https://docs.couchdb.org/en/stable/setup/index.html#setup
     https://docs.couchdb.org/en/stable/setup/cluster.html
-
-
 
 #

@@ -71,4 +71,4 @@ cd ui/android/wuffittracker
 
 ## Licensing
 
-Distributed under the repository's root **[MIT License](file:///home/ramadoss/github.com/intellibitz/intellibitz/LICENSE)**.
+Distributed under the repository's root **[MIT License](./LICENSE)**.

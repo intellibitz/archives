@@ -23,13 +23,13 @@ Docker daemon config file at
     /etc/docker/daemon.json
 
 In a default Linux installation, the client talks to the daemon via a local IPC/Unix
-socket at 
+socket at
 
-    /run/docker.sock. 
-    /var/run/docker.sock. 
-    
+    /run/docker.sock.
+    /var/run/docker.sock.
+
 On Windows this happens via a named pipe at
-    
+
     npipe://
     //./pipe/docker_engine.
 
@@ -57,10 +57,12 @@ process looks like this:
 
 docker
 --
+
 The base command for the Docker CLI.
 
 Options
 --
+
     Option	Default	Description
 
     --config	/root/.docker	Location of client config files
@@ -116,6 +118,7 @@ The following example runs a Redis container, with Redis binding to localhost, t
 
 Published ports
 --
+
 By default, when you create or run a container using docker create or docker run, the container doesn't expose any of its ports to the outside world. Use the --publish or -p flag to make a port available to services outside of Docker. This creates a firewall rule in the host, mapping a container port to a port on the Docker host to the outside world. Here are some examples:
 
     Flag value	Description
@@ -126,6 +129,7 @@ By default, when you create or run a container using docker create or docker run
 
 Important
 --
+
 Publishing container ports is insecure by default. Meaning, when you publish a container's ports it becomes available not only to the Docker host, but to the outside world as well.
 
 If you include the localhost IP address (127.0.0.1) with the publish flag, only the Docker host can access the published container port.
@@ -136,6 +140,7 @@ If you want to make a container accessible to other containers, it isn't necessa
 
 IP address and hostname
 --
+
 By default, the container gets an IP address for every Docker network it attaches to. A container receives an IP address out of the IP subnet of the network. The Docker daemon performs dynamic subnetting and IP address allocation for containers. Each network also has a default subnet mask and gateway.
 
 You can connect a running container to multiple networks, either by passing the --network flag multiple times when creating the container, or using the docker network connect command for already running containers. In both cases, you can use the --ip or --ip6 flags to specify the container's IP address on that particular network.
@@ -144,16 +149,17 @@ In the same way, a container's hostname defaults to be the container's ID in Doc
 
 User-defined networks
 --
+
 You can create custom, user-defined networks, and connect multiple containers to the same network. Once connected to a user-defined network, containers can communicate with each other using container IP addresses or container names.
 
 The following example creates a network using the bridge network driver and running a container in the created network:
-
 
     docker network create -d bridge my-net
     docker run --network=my-net -itd --name=container3 busybox
 
 Drivers
 --
+
 The following network drivers are available by default, and provide core networking functionality:
 
     Driver	Description
@@ -168,6 +174,7 @@ For more information about the different drivers, see Network drivers overview.
 
 Container networks
 --
+
 In addition to user-defined networks, you can attach a container to another container's networking stack directly, using the --network container:<name|id> flag format.
 
 The following flags aren't supported for containers using the container: networking mode:
@@ -184,6 +191,7 @@ The following flags aren't supported for containers using the container: network
 
 docker run
 --
+
 The docker run command runs a command in a new container, pulling the image if needed and starting the container.
 
 You can restart a stopped container with all its previous changes intact using docker start. Use docker ps -a to view a list of all containers, including those that are stopped.
@@ -209,6 +217,7 @@ You can restart a stopped container with all its previous changes intact using d
 
 docker exec
 --
+
 The docker exec command runs a new command in a running container.
 
 The command you specify with docker exec only runs while the container's primary process (PID 1) is running, and it isn't restarted if the container is restarted.
@@ -236,11 +245,13 @@ Options
 
 docker compose up
 --
+
 Create and start containers
-    
+
     Usage	docker compose up [OPTIONS] [SERVICE...]
+
 Description
-    
+
     Builds, (re)creates, starts, and attaches to containers for a service.
 
 Unless they are already running, this command also starts any linked services.
@@ -257,6 +268,7 @@ If the process encounters an error, the exit code for this command is 1. If the 
 
 Options
 --
+
     Option	Default	Description
     --abort-on-container-exit		Stops all containers if any container was stopped. Incompatible with -d
     --always-recreate-deps		Recreate dependent containers. Incompatible with --no-recreate.
@@ -286,18 +298,20 @@ Options
 
 docker image tag
 --
-Description	Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
-Usage	docker image tag SOURCE_IMAGE[:TAG] TARGET_IMAGE[:TAG]
+
+Description Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
+Usage docker image tag SOURCE_IMAGE[:TAG] TARGET_IMAGE[:TAG]
 Aliases
-	
+
 docker tag
 
 docker image rm
 --
-Description	Remove one or more images
-Usage	docker image rm [OPTIONS] IMAGE [IMAGE...]
+
+Description Remove one or more images
+Usage docker image rm [OPTIONS] IMAGE [IMAGE...]
 Aliases
-	
+
 docker image remove
 docker rmi
 Description
@@ -310,6 +324,7 @@ https://docs.docker.com/get-started/06_bind_mounts/
 
 Quick volume type comparisons
 --
+
 The following are examples of a named volume and a bind mount using --mount:
 
     Named volume: type=volume,src=my-volume,target=/usr/local/data
@@ -317,9 +332,8 @@ The following are examples of a named volume and a bind mount using --mount:
 
 The following table outlines the main differences between volume mounts and bind mounts.
 
-	                                                Named volumes	Bind mounts
-    
+                                                    Named volumes	Bind mounts
+
     Host location	                                Docker chooses	You decide
     Populates new volume with container contents	Yes	            No
     Supports Volume Drivers	                        Yes	            No
-

@@ -7,6 +7,7 @@ Reference guide for Clojure syntax, data types, collections, and evaluation mode
 ## 1. Literal Data Types
 
 ### Numeric Types
+
 ```clojure
 42        ; integer
 -1.5      ; floating point
@@ -14,6 +15,7 @@ Reference guide for Clojure syntax, data types, collections, and evaluation mode
 ```
 
 ### Character & String Types
+
 ```clojure
 "hello"         ; string
 \e              ; character
@@ -21,6 +23,7 @@ Reference guide for Clojure syntax, data types, collections, and evaluation mode
 ```
 
 ### Symbols and Identifiers
+
 ```clojure
 map             ; symbol
 +               ; symbol (most punctuation allowed)
@@ -54,6 +57,7 @@ In Clojure, source code is read as characters by the **Reader**. The Reader prod
 - **Code is Data (Homoiconicity)**: Macros intercept data structures produced by the Reader and transform them before compilation.
 
 ### Delaying Evaluation with Quoting
+
 To treat expressions or symbols as literal data rather than code to evaluate:
 
 ```clojure

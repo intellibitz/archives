@@ -6,12 +6,14 @@ https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generati
 
 About SSH
 --
+
 Using the SSH protocol, you can connect and authenticate to remote servers and services. With SSH keys, you can connect to GitHub without supplying your username and personal access token at each visit. You can also use an SSH key to sign commits.
 
 When you set up SSH, you will need to generate a new private SSH key and add it to the SSH agent. You must also add the public SSH key to your account on GitHub before you use the key to authenticate or sign commits.
 
 Generating a new SSH key
 --
+
 You can generate a new SSH key on your local machine. After you generate the key, you can add the public key to your account on GitHub.com to enable authentication for Git operations over SSH.
 
 Note: GitHub improved security by dropping older, insecure key types on March 15, 2022.
@@ -45,6 +47,7 @@ RSA keys (ssh-rsa) with a valid_after before November 2, 2021 may continue to us
 
 Adding your SSH key to the ssh-agent
 --
+
 Before adding a new SSH key to the ssh-agent to manage your keys, you should have checked for existing SSH keys and generated a new SSH key.
 
     Start the ssh-agent in the background.
@@ -66,6 +69,7 @@ https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a
 
 Testing your SSH connection
 --
+
 https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection
 
 After you've set up your SSH key and added it to your account on GitHub.com, you can test your connection.
@@ -129,6 +133,7 @@ http://www.unixwiz.net/techtips/ssh-agent-forwarding.html
 
 Using SSH agent forwarding
 --
+
 https://docs.github.com/en/authentication/connecting-to-github-with-ssh/using-ssh-agent-forwarding
 
 To simplify deploying to a server, you can set up SSH agent forwarding to securely use local SSH keys.
@@ -139,12 +144,15 @@ If you've already set up an SSH key to interact with GitHub, you're probably fam
 
 Setting up SSH agent forwarding
 --
+
 Ensure that your own SSH key is set up and working. You can use our guide on generating SSH keys if you've not done this yet.
 
 You can test that your local key works by entering ssh -T git@github.com in the terminal:
 
 $ ssh -T git@github.com
+
 # Attempt to SSH in to github
+
 > Hi USERNAME! You've successfully authenticated, but GitHub does not provide
 > shell access.
 
@@ -166,20 +174,27 @@ To test that agent forwarding is working with your server, you can SSH into your
 If you're unsure if your local key is being used, you can also inspect the SSH_AUTH_SOCK variable on your server:
 
 $ echo "$SSH_AUTH_SOCK"
+
 # Print out the SSH_AUTH_SOCK variable
+
 > /tmp/ssh-4hNGMk8AZX/agent.79453
 
 If the variable is not set, it means that agent forwarding is not working:
 
 $ echo "$SSH_AUTH_SOCK"
+
 # Print out the SSH_AUTH_SOCK variable
+
 > [No output]
-$ ssh -T git@github.com
+> $ ssh -T git@github.com
+
 # Try to SSH to github
+
 > Permission denied (publickey).
 
 About commit signature verification
 --
+
 https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification
 
 You can sign commits and tags locally, to give other people confidence about the origin of a change you have made. If a commit or tag has a GPG, SSH, or S/MIME signature that is cryptographically verifiable, GitHub marks the commit or tag "Verified" or "Partially verified."
@@ -188,19 +203,19 @@ For most individual users, GPG or SSH will be the best choice for signing commit
 
 GPG commit signature verification
 --
+
 You can use GPG to sign commits with a GPG key that you generate yourself.
 
 GitHub uses OpenPGP libraries to confirm that your locally signed commits and tags are cryptographically verifiable against a public key you have added to your account on GitHub.com.
 
 Checking for existing GPG keys
 --
+
 https://docs.github.com/en/authentication/managing-commit-signature-verification/checking-for-existing-gpg-keys
 
 Before you generate a GPG key, you can check to see if you have any existing GPG keys.
 
     gpg --list-secret-keys --keyid-format=long
-
-
 
 Check the command output to see if you have a GPG key pair.
 
@@ -215,6 +230,7 @@ You can then add your GPG key to your GitHub account.
 
 Generating a GPG key
 --
+
 Note: Before generating a new GPG key, make sure you've verified your email address. If you haven't verified your email address, you won't be able to sign commits and tags with GPG. For more information, see "Verifying your email address."
 
 Generate a GPG key pair. Since there are multiple versions of GPG, you may need to consult the relevant man page to find the appropriate key generation command.
@@ -231,6 +247,7 @@ Shell
 
 Telling Git about your signing key
 --
+
 To sign commits locally, you need to inform Git that there's a GPG, SSH, or X.509 key you'd like to use.
 
 If you have multiple GPG keys, you need to tell Git which one to use.
@@ -250,7 +267,6 @@ Note: Some GPG installations on Linux may require you to use gpg2 --list-keys --
 
 From the list of GPG keys, copy the long form of the GPG key ID you'd like to use. In this example, the GPG key ID is 8E1E773D7DFADC8C:
 Shell
-
 
     $ gpg --list-secret-keys --keyid-format=long
     /home/zbook/.gnupg/pubring.kbx
@@ -277,4 +293,3 @@ For more information, see "Signing commits."
 To add your GPG key to your .bashrc startup file, run the following command:
 
 [ -f ~/.bashrc ] && echo -e '\nexport GPG_TTY=$(tty)' >> ~/.bashrc
-

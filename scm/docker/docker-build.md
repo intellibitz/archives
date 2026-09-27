@@ -1,5 +1,7 @@
 #
+
 https://docs.docker.com/build/
+
 #
 
 The Docker Engine uses a client-server architecture and is composed of multiple components and tools. The most common method of executing a build is by issuing a docker build command. The CLI sends the request to Docker Engine which, in turn, executes your build.
@@ -10,12 +12,14 @@ https://docs.docker.com/build/install-buildx/
 
 Set Buildx as the default builder🔗
 --
+
 Running the command docker buildx install sets up the docker build command as an alias to docker buildx. This results in the ability to have docker build use the current Buildx builder.
 
 To remove this alias, run docker buildx uninstall.
 
 Dockerfile
 --
+
 It all starts with a Dockerfile.
 Packaging your software
 https://docs.docker.com/build/building/packaging/
@@ -44,6 +48,7 @@ Note however, that whitespace in instruction arguments, such as the commands fol
 
 Parser directives
 --
+
 Parser directives are optional, and affect the way in which subsequent lines in a Dockerfile are handled. Parser directives do not add layers to the build, and will not be shown as a build step. Parser directives are written as a special type of comment in the form # directive=value. A single directive may only be used once.
 
 Once a comment, empty line or builder instruction has been processed, Docker no longer looks for parser directives. Instead it treats anything formatted as a parser directive as a comment and does not attempt to validate if it might be a parser directive. Therefore, all parser directives must be at the very top of a Dockerfile.
@@ -55,6 +60,7 @@ The following parser directives are supported:
 
 Environment replacement
 --
+
 Environment variables (declared with the ENV statement) can also be used in certain instructions as variables to be interpreted by the Dockerfile. Escapes are also handled for including variable-like syntax into a statement literally.
 
 Environment variables are notated in the Dockerfile either with $variable_name or ${variable_name}. They are treated equivalently and the brace syntax is typically used to address issues with variable names with no whitespace, like ${foo}_bar.
@@ -75,6 +81,7 @@ Escaping is possible by adding a \ before the variable: \$foo or \${foo}, for ex
 
 .dockerignore file
 --
+
 Before the docker CLI sends the context to the docker daemon, it looks for a file named .dockerignore in the root directory of the context. If this file exists, the CLI modifies the context to exclude files and directories that match patterns in it. This helps to avoid unnecessarily sending large or sensitive files and directories to the daemon and potentially adding them to images using ADD or COPY.
 
 Here is an example .dockerignore file:
@@ -104,9 +111,8 @@ You can even use the .dockerignore file to exclude the Dockerfile and .dockerign
 
 Finally, you may want to specify which files to include in the context, rather than which to exclude. To achieve this, specify * as the first pattern, followed by one or more ! exception patterns.
 
-
-
-
 #
+
 https://daringfireball.net/projects/markdown/basics
+
 #

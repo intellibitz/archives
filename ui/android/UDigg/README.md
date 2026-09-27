@@ -45,4 +45,4 @@ The compiled APK will be generated at `build/outputs/apk/debug/UDigg-debug.apk`.
 
 ## Licensing
 
-Distributed under the repository's root **[MIT License](file:///home/ramadoss/github.com/intellibitz/intellibitz/LICENSE)**.
+Distributed under the repository's root **[MIT License](./LICENSE)**.

@@ -7,11 +7,13 @@ Guide for managing models, datasets, and Spaces using Git, Git LFS, and the `hug
 ## 1. Installation & Authentication
 
 Install the Hugging Face Hub CLI:
+
 ```bash
 pip install --upgrade huggingface_hub
 ```
 
 Authenticate your local environment using an Access Token from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens):
+
 ```bash
 huggingface-cli login
 ```
@@ -21,11 +23,13 @@ huggingface-cli login
 ## 2. Managing Repositories via CLI
 
 Create a new repository:
+
 ```bash
 huggingface-cli repo create <repo_name> --type {model,dataset,space}
 ```
 
 Clone the repository with Git LFS:
+
 ```bash
 git lfs install
 git clone https://huggingface.co/<username>/<repo_name>
@@ -33,6 +37,7 @@ cd <repo_name>
 ```
 
 Add, commit, and push large models or weights:
+
 ```bash
 git add .
 git commit -m "Upload model weights"

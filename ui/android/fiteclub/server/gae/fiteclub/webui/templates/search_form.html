@@ -1,15 +1,20 @@
-{% load i18n %}
-{% if search_flag %}
-<div id="toolbar"><form id="changelist-search" action="" method="get">
-<div><!-- DIV needed for valid HTML -->
-<label><img src="/media/django/icon_searchbox.png" alt="Search" /></label>
-{% if search_var %}
-<input type="text" size="40" name="{{ search_var }}" value="{{ cl.queryparam|escape }}" id="searchbar" />
-{% endif %}
-{% for item in searchinfos %}
-	{{ item }}
-{% endfor %}
-<input type="submit" value="{% trans 'Go' %}" />
+{% load i18n %} {% if search_flag %}
+<div id="toolbar">
+  <form id="changelist-search" action="" method="get">
+    <div>
+      <!-- DIV needed for valid HTML -->
+      <label><img src="/media/django/icon_searchbox.png" alt="Search" /></label>
+      {% if search_var %}
+      <input
+        type="text"
+        size="40"
+        name="{{ search_var }}"
+        value="{{ cl.queryparam|escape }}"
+        id="searchbar"
+      />
+      {% endif %} {% for item in searchinfos %} {{ item }} {% endfor %}
+      <input type="submit" value="{% trans 'Go' %}" />
+    </div>
+  </form>
 </div>
-</form></div>
 {% endif %}

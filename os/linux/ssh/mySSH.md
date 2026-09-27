@@ -1,15 +1,17 @@
 http://www.unixwiz.net/techtips/ssh-agent-forwarding.html
 
- Ordinary Password Authentication
+Ordinary Password Authentication
 --
+
 SSH supports access with a username and password, and this is little more than an encrypted telnet. Access is, in fact, just like telnet, with the normal username/password exchange.
 
 We'll note that this exchange, and all others in this paper, assume that an initial exchange of host keys has been completed successfully. Though an important part of session security, host validation is not material to the discussion of agent key forwarding.
 
-All examples start from a user on homepc (perhaps a Windows workstation) connecting with PuTTY to a server running OpenSSH. The particular details (program names, mainly) vary from implementation to implementation, but the underlying protocol has been proven to be highly interoperable. 
+All examples start from a user on homepc (perhaps a Windows workstation) connecting with PuTTY to a server running OpenSSH. The particular details (program names, mainly) vary from implementation to implementation, but the underlying protocol has been proven to be highly interoperable.
 
- Public Key Access
+Public Key Access
 --
+
 Note - older versions of OpenSSH stored the v2 keys in authorized_keys2 to distinguish them from v1 keys, but newer versions use either file.
 
 To counteract the shortcomings of password authentication, ssh supports public key access. A user creates a pair of public and private keys, and installs the public key in his $HOME/.ssh/authorized_keys file on the target server. This is nonsensitive information which need not be guarded, but the other half — the private key — is protected on the local machine by a (hopefully) strong passphrase.
@@ -22,17 +24,19 @@ A public key is a long string of bits encoded in ASCII, and it's stored on one l
     oH84zqu3Us8jSaQD392JZAEAhGSoe0dWMBFm9Y41VGZYmncwkfTQPFH1P07vDw49aTAa2RJNFyV \
     QANZCbSocDeuT0Q7usuUj/v8h27+PqsUUl9XVQSDIhXBkWV+bJawc1c= Steve's key
 
-This key must be installed on the target system — one time — where it is used for subsequent remote access by the holder of the private key. 
+This key must be installed on the target system — one time — where it is used for subsequent remote access by the holder of the private key.
 
- Public Key Access with Agent support
+Public Key Access with Agent support
 --
+
 Now that we've taken the leap into public key access, we'll take the next step to enable agent support. In the previous section, the user's private key was unlocked at every connection request: this is not functionally different from typing a password, and though it's the same passphrase every time (which makes it habitual), it nevertheless gets tedious in the same manner.
 
-Fortunately, the ssh suite provides a broker known as a "key agent" which can hold and manage private keys on your workstations, and responding to requests from remote systems to verify your keys. Agents provide a tremendous productivity benefit, because once you've unlocked your private key (one time when you launch the agent), subsequent access works with the agent without prompting. 
+Fortunately, the ssh suite provides a broker known as a "key agent" which can hold and manage private keys on your workstations, and responding to requests from remote systems to verify your keys. Agents provide a tremendous productivity benefit, because once you've unlocked your private key (one time when you launch the agent), subsequent access works with the agent without prompting.
 
- Public Key Access with Agent Forwarding
+Public Key Access with Agent Forwarding
 --
-With our Key Agent in place, agent forwarding.. allows a chain of ssh connections to forward key challenges back to the original agent, obviating the need for passwords or private keys on any intermediate machines. 
+
+With our Key Agent in place, agent forwarding.. allows a chain of ssh connections to forward key challenges back to the original agent, obviating the need for passwords or private keys on any intermediate machines.
 
 http://www.OpenSSH.com
 
@@ -69,4 +73,3 @@ From the server, check and see if the sshd process is running.
     626 - Is 0:00.03 /usr/sbin/sshd
     31960 - Is 0:00.38 sshd: mwlucas [priv] (sshd)
     44387 - S 0:05.75 sshd: mwlucas@pts/0 (sshd)
-

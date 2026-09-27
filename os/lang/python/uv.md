@@ -7,10 +7,13 @@
 ## 1. Installation
 
 Install `uv` via standalone installer:
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
 Or via Homebrew:
+
 ```bash
 brew install uv
 ```

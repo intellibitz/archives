@@ -52,12 +52,12 @@ ui/android/IntelliDroid/
 
 IntelliDroid uses the `color` flavor dimension to separate deployment stages:
 
-| Flavor | Application ID | Target Environment |
-| :--- | :--- | :--- |
-| `dev` | `intellibitz.intellidroid.dev` | Local development and mocked backends |
-| `qa` | `intellibitz.intellidroid.qa` | Quality assurance and integration testing |
-| `uat` | `intellibitz.intellidroid.uat` | User acceptance testing and staging |
-| `prod` | `intellibitz.intellidroid` | Production release |
+| Flavor | Application ID                 | Target Environment                        |
+| :----- | :----------------------------- | :---------------------------------------- |
+| `dev`  | `intellibitz.intellidroid.dev` | Local development and mocked backends     |
+| `qa`   | `intellibitz.intellidroid.qa`  | Quality assurance and integration testing |
+| `uat`  | `intellibitz.intellidroid.uat` | User acceptance testing and staging       |
+| `prod` | `intellibitz.intellidroid`     | Production release                        |
 
 ---
 
@@ -89,13 +89,14 @@ cd ui/android/IntelliDroid
 
 ## Configuration
 
-To specify the Android SDK path locally, create a `local.properties` file in `ui/android/IntelliDroid/` (or copy from [`ui/android/local.properties.example`](file:///home/ramadoss/github.com/intellibitz/intellibitz/ui/android/local.properties.example)):
+To specify the Android SDK path locally, create a `local.properties` file in `ui/android/IntelliDroid/` (or copy from [`ui/android/local.properties.example`](./ui/android/local.properties.example)):
 
 ```properties
 sdk.dir=/path/to/your/android/sdk
 ```
 
 For release signing, create a `keystore.properties` in `ui/android/IntelliDroid/app/`:
+
 ```properties
 storeFile=path/to/keystore.jks
 storePassword=yourStorePassword
@@ -107,4 +108,4 @@ keyPassword=yourKeyPassword
 
 ## Licensing
 
-Distributed under the repository's root **[MIT License](file:///home/ramadoss/github.com/intellibitz/intellibitz/LICENSE)**.
+Distributed under the repository's root **[MIT License](./LICENSE)**.

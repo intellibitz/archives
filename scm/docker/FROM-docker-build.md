@@ -1,13 +1,18 @@
 #
+
 https://docs.docker.com/build/
+
 #
 
 FROM
 --
+
     FROM [--platform=<platform>] <image> [AS <name>]
+
 Or
 
     FROM [--platform=<platform>] <image>[:<tag>] [AS <name>]
+
 Or
 
     FROM [--platform=<platform>] <image>[@<digest>] [AS <name>]
@@ -27,7 +32,7 @@ FROM instructions support variables that are declared by any ARG instructions th
     ARG  CODE_VERSION=latest
     FROM base:${CODE_VERSION}
     CMD  /code/run-app
-    
+
     FROM extras:${CODE_VERSION}
     CMD  /code/run-extras
 
@@ -39,5 +44,7 @@ An ARG declared before a FROM is outside of a build stage, so it can’t be used
     RUN echo $VERSION > image_version
 
 #
+
 https://daringfireball.net/projects/markdown/basics
+
 #

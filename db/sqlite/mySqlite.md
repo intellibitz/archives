@@ -5,8 +5,10 @@
     https://sqlite.org/src/doc/trunk/README.md
 
     https://www.sqlite.org/features.html
+
 Features Of SQLite
 --
+
 Transactions are atomic, consistent, isolated, and durable (ACID) even after system crashes and power failures.
 Zero-configuration - no setup or administration needed.
 Full-featured SQL implementation with advanced capabilities like partial indexes, indexes on expressions, JSON, common table expressions, and window functions. (Omitted features)
@@ -31,19 +33,20 @@ Website Database. Because it requires no configuration and stores information in
 
 Stand-in For An Enterprise RDBMS. SQLite is often used as a surrogate for an enterprise RDBMS for demonstration purposes or for testing. SQLite is fast and requires no setup, which takes a lot of the hassle out of testing and which makes demos perky and easy to launch.
 
-
     https://www.sqlite.org/appfileformat.html
     https://www.sqlite.org/whentouse.html
+
 Appropriate Uses For SQLite
 --
+
 SQLite is not directly comparable to client/server SQL database engines such as MySQL, Oracle, PostgreSQL, or SQL Server since SQLite is trying to solve a different problem.
 
 Client/server SQL database engines strive to implement a shared repository of enterprise data. They emphasize scalability, concurrency, centralization, and control. SQLite strives to provide local data storage for individual applications and devices. SQLite emphasizes economy, efficiency, reliability, independence, and simplicity.
 
 SQLite does not compete with client/server databases. SQLite competes with fopen().
 
-
     https://www.sqlite.org/zeroconf.html
+
 SQLite Is A Zero-Configuration Database
 --
 
@@ -52,8 +55,5 @@ SQLite does not need to be "installed" before it is used. There is no "setup" pr
 SQLite just works.
 
 Other database engines may run great once you get them going. But doing the initial installation and configuration can often be intimidating.
-
-
-
 
 #

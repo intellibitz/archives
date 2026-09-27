@@ -36,4 +36,4 @@ bin\sted.bat
 
 ## License
 
-This project is licensed under the [MIT License](file:///home/ramadoss/github.com/intellibitz/intellibitz/LICENSE).
+This project is licensed under the [MIT License](./LICENSE).

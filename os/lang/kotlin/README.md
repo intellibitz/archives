@@ -2,16 +2,15 @@
 
 You can use the projects in this repo to learn and reuse modules in your own projects.
 
-
 ### KotlinLearn
 
 KotlinLearn project will be simple learning code, you can download and run the samples to learn how Kotlin works.
 
-
 # More Projects will be added
-## The page will be updated with new projects
-### All projects can be reused in your projects as you wish.
 
+## The page will be updated with new projects
+
+### All projects can be reused in your projects as you wish.
 
 ### Support or Contact
 

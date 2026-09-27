@@ -1,140 +1,142 @@
 /* CSS Document by Dieter Schneider 2006 | www.csstemplateheaven.com */
 
-* {margin: 0;
-   padding: 0;
+* {
+  margin: 0;
+  padding: 0;
 }
 
 p {
-	margin-bottom: 15px;
-	background-color: #f9f9f9;
-	padding: 5px;
-	border:solid 1px #333366;
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  padding: 5px;
+  border: solid 1px #333366;
 }
 
 h1 {
-	font-family: "Times New Roman", Times, serif;
-	font-size: 4em;
-	font-style: italic;
-	color: #595726;
-	
+  font-family: "Times New Roman", Times, serif;
+  font-size: 4em;
+  font-style: italic;
+  color: #595726;
 }
 
 h2 {
-	font-size: 1.4em;
-	font-family: "Times New Roman", Times, serif;
-	margin-bottom: 15px;
-	color: #BCBB9F;
+  font-size: 1.4em;
+  font-family: "Times New Roman", Times, serif;
+  margin-bottom: 15px;
+  color: #bcbb9f;
 }
-   
+
 h3 {
-	margin-top: 5px;
-	color: #ffffff;
-	font-size: 1.2em;
-	background-color:#000066;
-	padding: 4px;
-	background-image: url(../images/tab.jpg); 
-	}
+  margin-top: 5px;
+  color: #ffffff;
+  font-size: 1.2em;
+  background-color: #000066;
+  padding: 4px;
+  background-image: url(../images/tab.jpg);
+}
 
 h4 {
-	color: #595726;
-	font-size: 0.7em;
-	background-color: #dfdec9;
-	padding: 4px;
-	text-align: left;
+  color: #595726;
+  font-size: 0.7em;
+  background-color: #dfdec9;
+  padding: 4px;
+  text-align: left;
 }
 
 a:link {
-	color: #6C6A41;
-	text-decoration: none;
-}     /* unvisited link */
-a:visited {color: #333333}  /* visited link */
-a:hover {color: #000000}   /* mouse over link */
-a:active {color: #000000}   /* selected link */
-   
-.float_left {float: left;
-             margin-right: 6px;}
+  color: #6c6a41;
+  text-decoration: none;
+} /* unvisited link */
+a:visited {
+  color: #333333;
+} /* visited link */
+a:hover {
+  color: #000000;
+} /* mouse over link */
+a:active {
+  color: #000000;
+} /* selected link */
+
+.float_left {
+  float: left;
+  margin-right: 6px;
+}
 
 body {
-    font-size: 62.5%;
-	padding: 10px;
-	font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 62.5%;
+  padding: 10px;
+  font-family: Georgia, "Times New Roman", Times, serif;
 }
 
 #header {
-	background-image: url(../images/header.jpg);
-	background-repeat: no-repeat;
-	height: 20px;
-	padding-right: 10px;
-	background-color: #000000;
-	margin-bottom: 10px;
-	text-align: right;
-	color: #CCCCCC;
-	padding-top: 45px;
+  background-image: url(../images/header.jpg);
+  background-repeat: no-repeat;
+  height: 20px;
+  padding-right: 10px;
+  background-color: #000000;
+  margin-bottom: 10px;
+  text-align: right;
+  color: #cccccc;
+  padding-top: 45px;
 }
 
 .header_txt {
-	color: #ffffff;
-	background: none;
+  color: #ffffff;
+  background: none;
 }
 
-#left {width: 25%;
-       float: left;
-       margin-top:-5px;
-	   font-size: 1.2em;
-
+#left {
+  width: 25%;
+  float: left;
+  margin-top: -5px;
+  font-size: 1.2em;
 }
 
-#right {width: 25%;
-        float: right;
-        margin-top:-5px;
-		  font-size: 1.2em;
-
+#right {
+  width: 25%;
+  float: right;
+  margin-top: -5px;
+  font-size: 1.2em;
 }
 
-#content {margin-left: 26%;
-          margin-right: 26%;
-	  font-size: 1.2em;
+#content {
+  margin-left: 26%;
+  margin-right: 26%;
+  font-size: 1.2em;
 }
-
-
 
 #footer {
-	font-size: 1.2em;
-	background-color: gray;
-	color:#ffffff;
-	border-top: 1px dotted #CCCCCC;
-	border-bottom: 1px dotted #CCCCCC;
-	text-align: center;
-	padding: 15px;
-	clear: both;
+  font-size: 1.2em;
+  background-color: gray;
+  color: #ffffff;
+  border-top: 1px dotted #cccccc;
+  border-bottom: 1px dotted #cccccc;
+  text-align: center;
+  padding: 15px;
+  clear: both;
 }
 
-
-#navcontainer
-{
-	margin-bottom: 1em;
-	overflow: hidden;
-	width: 100%;
-	font-size: 1.5em;
-	font-family:Arial;
-	font-style:normal;
-	border-bottom: 1px solid #999999;
-	border-top: 1px solid #999999;
-	background-color: #dd4400;
-	}
-
-#navlist
-{
-	list-style-type: none;
-	color: #000000;
+#navcontainer {
+  margin-bottom: 1em;
+  overflow: hidden;
+  width: 100%;
+  font-size: 1.5em;
+  font-family: Arial;
+  font-style: normal;
+  border-bottom: 1px solid #999999;
+  border-top: 1px solid #999999;
+  background-color: #dd4400;
 }
 
-#navlist li
-{
-border-left: 1px solid #000;
-float: left;
-line-height: 1.1em;
-margin: 0 .5em 0 -.5em;
-padding: 0 .5em 0 .5em;
+#navlist {
+  list-style-type: none;
+  color: #000000;
 }
 
+#navlist li {
+  border-left: 1px solid #000;
+  float: left;
+  line-height: 1.1em;
+  margin: 0 0.5em 0 -0.5em;
+  padding: 0 0.5em 0 0.5em;
+}

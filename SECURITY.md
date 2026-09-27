@@ -8,12 +8,12 @@ IntelliBitz takes the security of our repositories, scripts, and software seriou
 
 Security updates and patches are actively maintained for current branch releases:
 
-| Component | Status | Notes |
-| :--- | :--- | :--- |
-| `main` branch scripts | :white_check_mark: Supported | Actively maintained |
-| Docker configurations | :white_check_mark: Supported | Security-reviewed container configs |
-| Kotlin & Android active projects | :white_check_mark: Supported | `IntelliDroid`, Kotlin learn modules |
-| Legacy experimental archives | :x: End of Life | Provided for historical/reference use |
+| Component                        | Status                       | Notes                                 |
+| :------------------------------- | :--------------------------- | :------------------------------------ |
+| `main` branch scripts            | :white_check_mark: Supported | Actively maintained                   |
+| Docker configurations            | :white_check_mark: Supported | Security-reviewed container configs   |
+| Kotlin & Android active projects | :white_check_mark: Supported | `IntelliDroid`, Kotlin learn modules  |
+| Legacy experimental archives     | :x: End of Life              | Provided for historical/reference use |
 
 ---
 

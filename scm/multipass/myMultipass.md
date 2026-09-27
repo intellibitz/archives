@@ -25,11 +25,13 @@ To install Multipass, simply execute:
 --
 
     $ snap install multipass
+
 For architectures other than amd64, you’ll need the beta channel at the moment.
 
 You can also use the edge channel to get the latest development build:
 
     $ snap install multipass --edge
+
 Make sure you’re part of the group that Multipass gives write access to its socket (sudo in this case, but it may also be adm or admin, depending on your distribution):
 
     $ ls -l /var/snap/multipass/common/multipass_socket
@@ -37,6 +39,7 @@ Make sure you’re part of the group that Multipass gives write access to its so
 
     $ groups | grep sudo
     adm cdrom sudo dip plugdev lpadmin
+
 You can check some details about the snap with the snap info command:
 
     $ snap info multipass
@@ -74,10 +77,11 @@ To uninstall Multipass, simply run:
 
 Run
 --
+
 You’ve installed Multipass. Time to run your first commands! Use multipass version to check your version or multipass launch to create your first instance.
 
 https://multipass.run/docs/authenticate-command
-The Windows host uses a TCP socket listening on port 50051 for client connections. 
+The Windows host uses a TCP socket listening on port 50051 for client connections.
 
 To ease the burden of having to authenticate the client, the user who installs the updated version of Multipass will automatically have their clients authenticated with the service. Any other users connecting to the service will have to use authenticate using the previously set local.passphrase.
 
@@ -97,17 +101,18 @@ A client that is not authorized to connect to the Multipass service will fail wh
 
 In case client cannot authorize and the passphrase cannot be set
 --
+
 It is possible that another client that is privileged to connect to the Multipass socket will connect first and make it seemingly impossible to set the local.passphrase and also authorize the client with the service. One will see something like the following:
 
     $ multipass list
     list failed: The client is not authenticated with the Multipass service.
     Please use 'multipass authenticate' before proceeding.
     $ multipass authenticate
-    Please enter passphrase: 
+    Please enter passphrase:
     authenticate failed: Passphrase is not set. Please `multipass set local.passphrase` with a trusted client.
     $ multipass set local.passphrase
-    Please enter passphrase: 
-    Please re-enter passphrase: 
+    Please enter passphrase:
+    Please re-enter passphrase:
     set failed: The client is not authenticated with the Multipass service.
     Please use 'multipass authenticate' before proceeding.
 
@@ -184,6 +189,7 @@ The client accepts the MULTIPASS_SERVER_ADDRESS environment variable that overri
 
 Caveats:
 --
+
 Because mounts are executed as privileged users, it is recommended to use client authentication, so you can explicitly allow clients access with a shared passphrase.
 Alternatively, you can multipass set local.privileged-mounts=false to disable the mounts feature altogether.
 Additionally, the mount command takes a target filepath which is resolved daemon-side, meaning that directories are mounted from the system that the daemon is running on, not the client.
@@ -194,14 +200,15 @@ $ sudo apt update && sudo apt install -y samba-common
 Then, editing the file /etc/samba/smb.conf lets us add shares, adding entries like the following:
 
 [test_smb_mount]
-  comment = smb mount test
-  path = /my_path/
-  read only = no
-  browsable = yes
-  kernel oplocks = yes
+comment = smb mount test
+path = /my_path/
+read only = no
+browsable = yes
+kernel oplocks = yes
 
 Mount a folder shared with SMB on an instance
 --
+
 Once the host operating system is sharing the folder, we need to mount it on the instance. For this, the package cifs-tools is needed, which can be installed with
 
 $ sudo apt update && sudo apt install -y cifs-utils
@@ -221,6 +228,7 @@ $ sudo mount mount_folder/
 
 virtio-fs mounts
 --
+
 If using the LXD backend on Linux, we can benefit from a performant file system mount, at the expense of not being able to mount it while the instance is running. A folder is mounted on an instance with the command
 
 $ lxc --project multipass config device add lxdinstance mount_lxd disk source=/my_path path=//mount_folder
@@ -234,6 +242,7 @@ where the * means “export to any host”; we can specify a host name or IP add
 
 Mount a folder shared with NFS on an instance
 --
+
 We would first need to install the NFS client in the instance, with the commands
 
 $ sudo apt update && sudo apt install -y nfs-common
@@ -243,6 +252,7 @@ $ sudo mount -t nfs HOST_IP:/my_path /mount_folder -o user=host_user,uid=instanc
 
 Configuring a new storage location
 --
+
 Caveats:
 
 Multipass will not migrate your existing data, but this article explains how to do it manually. If you do not transfer the data, you will have to re-download any Ubuntu images and reinitialize any instances that you need.
@@ -350,9 +360,9 @@ You can delete the data from the custom location at your discretion, to free up 
 
     $ sudo rm -rf <path>
 
-
 Get involved!
 --
+
 Here's a set of steps to build and run your own build of Multipass. Please note that the following instructions are for building Multipass for Linux only. These instructions do not support building packages for macOS or Windows systems.
 
 Build Dependencies
@@ -371,6 +381,7 @@ Build Dependencies
 
 Running Multipass daemon and client
 --
+
 First, install multipass's runtime dependencies. On amd64 architecture, you can achieve that with:
 
     sudo apt update
@@ -399,6 +410,7 @@ Finally, use multipass's clients:
 
 Install Multipass
 --
+
 On Linux it's available as a snap:
 
 sudo snap install multipass
@@ -409,6 +421,7 @@ On Windows, download the installer from GitHub.
 
 Usage
 --
+
 Find available images
 
     $ multipass find
@@ -490,6 +503,7 @@ Get help
 
 Using RDP
 --
+
 The images used by Multipass do not come with a graphical desktop installed. For this reason, a desktop environment must be installed (we use ubuntu-desktop but there are as many other options as flavors of Ubuntu exist), along with the RDP server (we will use here xrdp but there are also other options such as freerdp). For this, we must log in to the running Multipass instance first:
 
     $ multipass shell headbanging-squid
@@ -516,9 +530,9 @@ Thus, we will use the IP address 10.49.93.209 to connect to the RDP server on th
 
 If the IP address of the instance is not displayed in the output of multipass list, it can be obtained directly from the instance, with the command ip addr.
 
-
 On Linux
 --
+
 On Linux, there are applications such as Remmina to visualize the desktop (make sure the package remmina-plugin-rdp is installed in your host along with remmina).
 
 To directly launch the client, run the following:
@@ -529,19 +543,19 @@ The system will ask for username (ubuntu) and the password set above, and then t
 
 Logging in to the RDP server with Remmina
 
-
 On Windows
 --
-On Windows, we can connect to the RDP server with the “Remote Desktop Connection” application. There, we enter the virtual machine’s IP address, set the session to XOrg and enter the username and password we created on the previuos step. And we are done… a graphical desktop!
 
+On Windows, we can connect to the RDP server with the “Remote Desktop Connection” application. There, we enter the virtual machine’s IP address, set the session to XOrg and enter the username and password we created on the previuos step. And we are done… a graphical desktop!
 
 Using X11 forwarding
 --
-It might be the case that we only want Multipass to launch one application and to see only that window, without having the need for a complete desktop. It turns out that this setup is simpler than the RDP approach, because we do not need the Multipass instance to deploy a full desktop. Instead, we can use X11 to connect the applications in the instance with the graphical capabilities of the host.
 
+It might be the case that we only want Multipass to launch one application and to see only that window, without having the need for a complete desktop. It turns out that this setup is simpler than the RDP approach, because we do not need the Multipass instance to deploy a full desktop. Instead, we can use X11 to connect the applications in the instance with the graphical capabilities of the host.
 
 On Linux
 --
+
 Linux runs X by default, so no extra software in the host is needed. We have the possibility here to be a bit more secure than on Windows, by using authentication in X forwarding. However, we will forward through ssh in order to avoid struggling with xauth stuff. We will allow our user in the host to log in to the Multipass instance through ssh, so that we can pass extra parameters to it. We can achieve that by copying our public key, in file ~/.ssh/id_rsa.pub to the list of authorized keys of the instance, in file ~/.ssh/authorized_keys (replace the example instance name with yours):
 
     $ multipass exec rocking-squirrel -- bash -c "echo `cat ~/.ssh/id_rsa.pub` >> ~/.ssh/authorized_keys"
@@ -565,6 +579,7 @@ A small window containing the X logo must show up. Done!
 
 On Windows
 --
+
 Windows knows nothing about X, therefore we need to install an X server. Here we will use VcXsrv. Other options would be Xming (however, newest versions are paid but older versions can still be downloaded for free from their SourceForge site) or installing an X server in Cygwin.
 
 The first step would be thus to install VcXsrv and run the X server through the newly created start menu entry “XLaunch”. Some options will be displayed. In the first screen, we should choose “Multiple windows” and set the display number; leaving it in -1 is a safe option. The “Next” button brings us to the “Client startup” window, on which we should choose “Start no client”. “Next” will show us the “Extra settings”, and there we should activate the option “Disable access control”. Pressing “Next” will give us then the option to save the settings, and finally we can start the X server. An icon will show up in the dock: we are done with the X server.

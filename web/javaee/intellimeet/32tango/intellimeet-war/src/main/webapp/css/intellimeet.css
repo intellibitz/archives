@@ -1,4 +1,4 @@
-@CHARSET "UTF-8";
+@charset "UTF-8";
 <!--
 /*$Id:: template.xhtml 36 2008-01-29 13:41:47Z muthu.ramadoss                     $: Id of last commit*/
 /*$Rev:: 36                                                                       $: Revision of last commit*/
@@ -8,6 +8,10 @@
 -->
 
 body {
-font: 12px verdana, arial, helvetica, sans-serif;
-background-color:#FFFFFF;
-} 
+  font:
+    12px verdana,
+    arial,
+    helvetica,
+    sans-serif;
+  background-color: #ffffff;
+}

@@ -1,5 +1,6 @@
 Docker Engine overview
 --
+
 https://docs.docker.com/engine/
 
 Docker Engine is an open source containerization technology for building and containerizing your applications.
@@ -13,19 +14,19 @@ The CLI uses Docker APIs to control or interact with the Docker daemon through s
 Many other Docker applications use the underlying API and CLI. The daemon creates and manage Docker objects,
 such as images, containers, networks, and volumes.
 
-
 Docker architecture
 --
+
 https://docs.docker.com/get-started/overview/#docker-architecture
 
 Docker uses a client-server architecture. The Docker client talks to the Docker daemon, which does the
- heavy lifting of building, running, and distributing your Docker containers. The Docker client and daemon can
-  run on the same system, or you can connect a Docker client to a remote Docker daemon. The Docker client and
-   daemon communicate using a REST API, over UNIX sockets or a network interface. Another Docker client is
-    Docker Compose, that lets you work with applications consisting of a set of containers.
+heavy lifting of building, running, and distributing your Docker containers. The Docker client and daemon can
+run on the same system, or you can connect a Docker client to a remote Docker daemon. The Docker client and
+daemon communicate using a REST API, over UNIX sockets or a network interface. Another Docker client is
+Docker Compose, that lets you work with applications consisting of a set of containers.
 
 https://docs.docker.com/assets/images/architecture.svg
-![](https://docs.docker.com/assets/images/architecture.svg) 
+![](https://docs.docker.com/assets/images/architecture.svg)
 
 https://daringfireball.net/projects/markdown/basics
 
@@ -48,8 +49,6 @@ The socket path is set to $XDG_RUNTIME_DIR/docker.sock by default. $XDG_RUNTIME_
 The data dir is set to ~/.local/share/docker by default. The data dir should not be on NFS.
 The daemon config dir is set to ~/.config/docker by default. This directory is different from ~/.docker that is used by the client.
 
-
-
     https://docs.docker.com/engine/install/linux-postinstall/
 
 Manage Docker as a non-root user
@@ -57,11 +56,9 @@ The Docker daemon binds to a Unix socket, not a TCP port. By default it’s the 
 
 If you don’t want to preface the docker command with sudo, create a Unix group called docker and add users to it. When the Docker daemon starts, it creates a Unix socket accessible by members of the docker group. On some Linux distributions, the system automatically creates this group when installing Docker Engine using a package manager. In that case, there is no need for you to manually create the group.
 
-
     https://docs.docker.com/engine/install/ubuntu/
 
 Install using the convenience script
-
 
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo sh ./get-docker.sh --dry-run
@@ -69,9 +66,9 @@ Install using the convenience script
 
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo sh get-docker.sh
+
 Executing docker install script, commit: 7cae5f8b0decc17d6571f9f52eb840fbc13b2737
 <...>
-
 
 Docker provides a convenience script at https://get.docker.com/ to install Docker into development environments non-interactively. The convenience script isn’t recommended for production environments, but it’s useful for creating a provisioning script tailored to your needs. Also refer to the install using the repository steps to learn about installation steps to install using the package repository. The source code for the script is open source, and you can find it in the docker-install repository on GitHub.
 
@@ -85,4 +82,3 @@ By default, the script installs the latest stable release of Docker, containerd,
 The script isn’t designed to upgrade an existing Docker installation. When using the script to update an existing installation, dependencies may not be updated to the expected version, resulting in outdated versions.
 
 #
-

@@ -39,193 +39,214 @@
 -->
 
 <html>
-
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-    <meta name="Author" content="SushMu">
-    <meta name="Keywords"
-          content="Font Transliterator, Font Mapper, Language Neutral Editor, Tamil, Romanized Alphabet, Phonetic Keyboard">
-    <meta name="KeyWords"
-          content="java, transliterator, font, keyboard, roman, alphabet, ascii, tamil, english, converter">
-    <meta name="KeyWords"
-          content="transliterate, phonetic, international, internationlaization, i18n, editor, language, fonts">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <meta name="Author" content="SushMu" />
+    <meta
+      name="Keywords"
+      content="Font Transliterator, Font Mapper, Language Neutral Editor, Tamil, Romanized Alphabet, Phonetic Keyboard"
+    />
+    <meta
+      name="KeyWords"
+      content="java, transliterator, font, keyboard, roman, alphabet, ascii, tamil, english, converter"
+    />
+    <meta
+      name="KeyWords"
+      content="transliterate, phonetic, international, internationlaization, i18n, editor, language, fonts"
+    />
     <title>STED - Transliterate</title>
-</head>
+  </head>
 
-<body bgcolor="#FFFF99">
+  <body bgcolor="#FFFF99">
+    <!-- Begin Header -->
+    <p>
+      <a href="http://www.intellibitz.com"
+        >&nbsp;<img src="../images/ibt-logo.jpg" alt="IntelliBitz Logo"
+      /></a>
 
-<!-- Begin Header -->
-<p>
-    <a
-            href="http://www.intellibitz.com">&nbsp;<img
-            src="../images/ibt-logo.jpg" alt="IntelliBitz Logo"></a>
+      <a href="http://sourceforge.net">
+        <img
+          src="http://sourceforge.net/sflogo.php?group_id=48218"
+          width="210"
+          height="62"
+          border="0"
+          alt="SourceForge Logo"
+      /></a>
+    </p>
 
-    <A href="http://sourceforge.net"> <IMG
-            src="http://sourceforge.net/sflogo.php?group_id=48218" width="210"
-            height="62"
-            border="0" alt="SourceForge Logo"></A>
-</p>
+    <p>
+      <font size="7"
+        >&nbsp;&nbsp;
+        <a
+          style="text-decoration: none"
+          href="http://sourceforge.net/projects/sted"
+          >STED</a
+        >
+        <img border="0" src="../images/sted.gif" />
+      </font>
+      <span style="font-weight: 400"
+        >SARA Transliterator &amp; Editor - An Open Source
+        <a href="transliterate.html">Transliterator</a> and Editor for Any
+        Language.</span
+      >
+    </p>
+    <hr />
+    <!-- End Header -->
 
-<p>
-    <font size="7">&nbsp;&nbsp;
-        <a style="text-decoration: none"
-           href="http://sourceforge.net/projects/sted">STED</a>
-        <img border="0" src="../images/sted.gif">
-    </font>
-<span style="font-weight: 400">SARA Transliterator &amp; Editor - An Open Source
-<a href="transliterate.html">Transliterator</a> and Editor for Any Language.</span>
-</p>
-<hr>
-<!-- End Header -->
+    <h1>Transliterate</h1>
 
-<h1>Transliterate</h1>
+    <h3>Defintion</h3>
 
-<h3> Defintion </h3>
+    <p>
+      To represent (letters or words) in the corresponding characters of another
+      alphabet.
+      <br /><br />
+      To express or represent in the characters of another alphabet; as, to
+      transliterate Sanskrit words by means of English letters.
+      <br /><br />
+      v : rewrite in a different script;"The Sanskrit text had to be
+      transliterated" [syn: transcribe]
+    </p>
 
-<p>
-    To represent (letters or words) in the corresponding characters of another
-    alphabet.
-    <br><br>
-    To express or represent in the characters of another alphabet; as,
-    to transliterate Sanskrit words by means of English letters.
-    <br><br>
-    v : rewrite in a different script;"The Sanskrit text had to be
-    transliterated" [syn: transcribe]
-</p>
+    <h1>Transliterate Options with STED</h1>
 
-<h1> Transliterate Options with STED </h1>
+    <h3>Reverse Transliterate</h3>
 
-<h3> Reverse Transliterate </h3>
+    <p>
+      Transliterates Output back into Source - Getting back the Original Input
+      file from the transliterated Output file.
+    </p>
 
-<p>
-    Transliterates Output back into Source - Getting back the Original Input
-    file from the transliterated Output file.
-</p>
+    <p>
+      <i>Example:</i>
 
-<p>
-    <i>Example:</i>
+      If you have the following FontMap
+      <br />
+      a=b
+      <br />
+      c=d
+      <br /><br />
+      And the following Input:
+      <br />
+      ac &lt;ca&gt; caac
+      <br /><br />
+      Here's the Transliterated Output for the above FontMap:
+      <br />
+      Output - Normal:
+      <br />
+      bd &lt;db&gt; dbbd
+      <br />
+      Output - 'Reverse Transliterate' Option Checked:
+      <br />
+      ac &lt;ca&gt; caac
+    </p>
 
-    If you have the following FontMap
-    <br>
-    a=b
-    <br>
-    c=d
-    <br><br>
-    And the following Input:
-    <br>
-    ac &lt;ca&gt; caac
-    <br><br>
-    Here's the Transliterated Output for the above FontMap:
-    <br>
-    Output - Normal:
-    <br>
-    bd &lt;db&gt; dbbd
-    <br>
-    Output - 'Reverse Transliterate' Option Checked:
-    <br>
-    ac &lt;ca&gt; caac
-</p>
+    <p>
+      As you can see, Reverse Transliterate does not do much in the above
+      scenario. But think about it more in the sense of Decompiling a Java Class
+      or Reverse Engineering Output into Source.
+      <br />
+      So, If you have an Output file that were already transliterated with your
+      FontMap and now you would want to reverse transliterate the Output back
+      into the Input. Thats a scenario where 'Reverse Transliterate' would help.
+    </p>
 
-<p>
-    As you can see, Reverse Transliterate does not do much in the above
-    scenario. But think about it more in the sense of
-    Decompiling a Java Class or Reverse Engineering Output into Source.
-    <br>
-    So, If you have an Output file that were already transliterated with your
-    FontMap and now you would want to reverse
-    transliterate the Output back into the Input. Thats a scenario where
-    'Reverse Transliterate' would help.
-</p>
+    <p>
+      Now, Lets take the above example:
+      <br />
+      FontMap:
+      <br />
+      a=b
+      <br />
+      c=d
+      <br /><br />
+      Input:
+      <br />
+      ac &lt;ca&gt; caac
+      <br /><br />
+      Output:
+      <br />
+      bd &lt;db&gt; dbbd
+      <br />
+      If you need to trasliterate the above Output back into Input, check the
+      Reverse Transliterate option and pass the output as the input.
+      <br /><br />
+      Input:
+      <br />
+      bd &lt;db&gt; dbbd
+      <br /><br />
+      Output - 'Reverse Transliterate' Option checked:
+      <br />
+      ac &lt;ca&gt; caac
+    </p>
 
-<p>
-    Now, Lets take the above example:
-    <br>
-    FontMap:
-    <br>
-    a=b
-    <br>
-    c=d
-    <br><br>
-    Input:
-    <br>
-    ac &lt;ca&gt; caac
-    <br><br>
-    Output:
-    <br>
-    bd &lt;db&gt; dbbd
-    <br>
-    If you need to trasliterate the above Output back into Input, check the
-    Reverse Transliterate option and pass the output
-    as the input.
-    <br><br>
-    Input:
-    <br>
-    bd &lt;db&gt; dbbd
-    <br><br>
-    Output - 'Reverse Transliterate' Option checked:
-    <br>
-    ac &lt;ca&gt; caac
-</p>
+    <p>
+      As shown above, the Output is Reverse Transliterated back into Input using
+      'Reverse Transliterate' Option.
+    </p>
 
-<p>
-    As shown above, the Output is Reverse Transliterated back into Input using
-    'Reverse Transliterate' Option.
-</p>
+    <h3>Preserve Tags</h3>
 
-<h3> Preserve Tags </h3>
+    <p>
+      Words enclosed in Tags will not be Transliterated - Preserves words in
+      Tags intact.
+    </p>
 
-<p>
-    Words enclosed in Tags will not be Transliterated - Preserves words in Tags
-    intact.
-</p>
+    <p>
+      Continuing with the above example:
+      <br />
+      FontMap:
+      <br />
+      a=b
+      <br />
+      c=d
+      <br /><br />
+      Input:
+      <br />
+      ac &lt;ca&gt; caac
+      <br /><br />
+      Output with 'Preserve Tags' Option checked:
+      <br />
+      bd &lt;ca&gt; dbbd
+    </p>
 
-<p>
-    Continuing with the above example:
-    <br>
-    FontMap:
-    <br>
-    a=b
-    <br>
-    c=d
-    <br><br>
-    Input:
-    <br>
-    ac &lt;ca&gt; caac
-    <br><br>
-    Output with 'Preserve Tags' Option checked:
-    <br>
-    bd &lt;ca&gt; dbbd
-</p>
+    <p>
+      As shown above, the Output preserves words inside tags using 'Preserve
+      Tags' Option.
+    </p>
 
-<p>
-    As shown above, the Output preserves words inside tags using 'Preserve Tags'
-    Option.
-</p>
+    <!-- footer -->
+    <p align="center">
+      <a href="../Readme.txt">Readme.txt</a>
+      -- <a href="../License.txt">License.txt</a> --
+      <a href="../Changes.txt">Changes.txt</a> --
+      <a href="../KnownIssues.txt">KnownIssues.txt</a> --
+      <a href="../build.txt">build.txt</a>
+    </p>
 
-<!-- footer -->
-<p align="center">
-    <a href="../Readme.txt">Readme.txt</a>
-    -- <a href="../License.txt">License.txt</a>
-    -- <a href="../Changes.txt">Changes.txt</a>
-    -- <a href="../KnownIssues.txt">KnownIssues.txt</a>
-    -- <a href="../build.txt">build.txt</a></p>
+    <p></p>
+    <hr />
+    <p>
+      <i
+        ><font size="2"
+          >Copyright (c) IntelliBitz Technologies., Muthu Ramadoss.</font
+        ></i
+      >
+    </p>
 
-<p>
-<hr>
-<p>
-    <i><font size="2">Copyright (c) IntelliBitz Technologies., Muthu
-        Ramadoss.</font></i></p>
-
-<p>
-    <a
-            href="http://www.intellibitz.com">&nbsp;<img
-            src="../images/ibt-logo.jpg" alt="IntelliBitz Logo"></a>
-    <A href="http://sourceforge.net"> <IMG
-            src="http://sourceforge.net/sflogo.php?group_id=48218" width="210"
-            height="62"
-            border="0" alt="SourceForge Logo"></A>
-</p>
-<!-- footer end -->
-
-</body>
+    <p>
+      <a href="http://www.intellibitz.com"
+        >&nbsp;<img src="../images/ibt-logo.jpg" alt="IntelliBitz Logo"
+      /></a>
+      <a href="http://sourceforge.net">
+        <img
+          src="http://sourceforge.net/sflogo.php?group_id=48218"
+          width="210"
+          height="62"
+          border="0"
+          alt="SourceForge Logo"
+      /></a>
+    </p>
+    <!-- footer end -->
+  </body>
 </html>

@@ -1,84 +1,59 @@
 var request = null;
-			function createRequest ()
-			{
-				try
-				{
-					request = new XMLHttpRequest();
-						//alert('inside java');
-				}
-				catch (trymicrosoft)
-				{
-					try
-					{
-						request = new ActiveXobject("Msxml2.XMLHTTP");
-					}
-					catch(othermicrosoft)
-					{
-						try
-						{
-							request = new ActiveXobject("Microsoft.XMLHTTP");
-						}
-						catch(failed)
-						{
-							request = null;
-						}
-					}
-				}
-				if(request == null )
-				{
-				//alert("Error creating Request Object");
-				document.write("error creating request");
-				}
-			}
+function createRequest() {
+  try {
+    request = new XMLHttpRequest();
+    //alert('inside java');
+  } catch (trymicrosoft) {
+    try {
+      request = new ActiveXobject("Msxml2.XMLHTTP");
+    } catch (othermicrosoft) {
+      try {
+        request = new ActiveXobject("Microsoft.XMLHTTP");
+      } catch (failed) {
+        request = null;
+      }
+    }
+  }
+  if (request == null) {
+    //alert("Error creating Request Object");
+    document.write("error creating request");
+  }
+}
 
+function updateTextbox() {
+  //var url = "../php/checkavailablity.php";
+  var url = "../register/checkavailablity.php";
+  createRequest();
 
+  var username = document.getElementById("username1").value;
 
-			function updateTextbox()
-			{
+  request.open("POST", url, true);
 
-				//var url = "../php/checkavailablity.php";
-           var url = "../register/checkavailablity.php";
-				createRequest();
+  //alert(url +'?user='+ escape(username));
+  request.onreadystatechange = handleResponse;
+  //alert("user=" +escape (usernamee));
+  request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  request.send("user=" + escape(username));
+}
 
-				var username= document.getElementById("username1").value;
+function handleResponse() {
+  console.log("%s", request.readyState);
+  if (request.readyState == 4) {
+    var results = request.responseText;
 
+    document.getElementById("errormsg").innerHTML = results;
+    //document.getElementById('errorlabel').value= request.responseText;
 
-				request.open("POST",url,true );
+    //document.getElementById ('response').innerHTML = request.responseText;
+    //alert('hello');
 
-				//alert(url +'?user='+ escape(username));
-				request.onreadystatechange = handleResponse;
-				//alert("user=" +escape (usernamee));
-				request.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				request.send("user=" +escape (username));
-			}
+    //alert('nsidehandle');
 
+    //alert (results);
 
-			function handleResponse()
-			{
-				console.log ("%s", request.readyState);
-				if(request.readyState==4)
-
-				{
-					    var results = request.responseText;
-
-						document.getElementById('errormsg').innerHTML = results;
-						//document.getElementById('errorlabel').value= request.responseText;
-
-						//document.getElementById ('response').innerHTML = request.responseText;
-						//alert('hello');
-
-						//alert('nsidehandle');
-
-
-						//alert (results);
-
-                  if (results=='Username Already Exist')
-                  {
-                  document.getElementById('username1').value="";
-                  document.getElementById('username1').focus();
-
-                  }
-
-				}
-			}
-
+    if (results == "Username Already Exist") {
+      document.getElementById("username1").value = "";
+      document.getElementById("username1").focus();
+    }
+  }
+}
