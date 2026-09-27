@@ -150,3 +150,5 @@ dist/
 *.sqlite
 *.sqlite3
 *.db-journal
+*.swf
+*.rar
