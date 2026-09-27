@@ -1,8 +1,0 @@
-# to list instances
- adb devices
-# to install on a device
- adb -d install -r bin/FiteClub-debug.apk
-# to install on a emulator
- adb -e install
-# to install on a specific instance
- adb -s emulator-5556 install
