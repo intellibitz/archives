@@ -3,6 +3,7 @@ plugins {
     application
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     kotlin("jvm") version "1.9.22"
+    id("org.jetbrains.compose") version "1.6.0"
 }
 
 // keep this until all targets fully migrated
@@ -39,15 +40,14 @@ tasks {
 
 application {
     // Define the main class for the application.
-    mainClass.set("intellibitz.sted.Main")
+    mainClass.set("intellibitz.sted.ComposeMainKt")
 }
 
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
     mavenCentral()
-    maven("https://dl.bintray.com/kotlin/kotlin-eap")
-    maven("https://kotlin.bintray.com/kotlinx")
+    google()
 }
 
 dependencies {
@@ -56,6 +56,9 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     // Align versions of all Kotlin components
     implementation(kotlin("bom"))
+    // Compose desktop dependencies
+    implementation(compose.desktop.currentOs)
+    
     // Use the Kotlin test library.
     testImplementation(kotlin("test"))
     // Use the Kotlin JUnit integration.
