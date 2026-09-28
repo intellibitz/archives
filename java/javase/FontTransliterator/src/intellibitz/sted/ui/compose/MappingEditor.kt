@@ -52,22 +52,34 @@ fun MappingEditor(fontMap: FontMap) {
     // State for System Font Dialogs
     var showFont1Dialog by remember { mutableStateOf(false) }
     var showFont2Dialog by remember { mutableStateOf(false) }
+    
+    var font1SearchQuery by remember { mutableStateOf("") }
+    var font2SearchQuery by remember { mutableStateOf("") }
 
     if (showFont1Dialog) {
         AlertDialog(
             onDismissRequest = { showFont1Dialog = false },
             title = { Text("Select System Font 1") },
             text = {
-                val systemFonts = intellibitz.sted.util.Resources.fonts.keys.toList().sorted()
-                LazyColumn {
-                    items(systemFonts) { fontName ->
-                        TextButton(onClick = { 
-                            fontMap.font1Path = intellibitz.sted.util.Resources.SYSTEM
-                            fontMap.setFont1(fontName)
-                            refreshTrigger++
-                            showFont1Dialog = false
-                        }) {
-                            Text(fontName)
+                Column {
+                    OutlinedTextField(
+                        value = font1SearchQuery,
+                        onValueChange = { font1SearchQuery = it },
+                        label = { Text("Search Fonts (e.g. Latha, Arial)") },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    )
+                    val allFonts = intellibitz.sted.util.Resources.fonts.keys.toList().sorted()
+                    val filteredFonts = allFonts.filter { it.contains(font1SearchQuery, ignoreCase = true) }
+                    LazyColumn(modifier = Modifier.weight(1f, fill = false).heightIn(max = 300.dp)) {
+                        items(filteredFonts) { fontName ->
+                            TextButton(onClick = { 
+                                fontMap.font1Path = intellibitz.sted.util.Resources.SYSTEM
+                                fontMap.setFont1(fontName)
+                                refreshTrigger++
+                                showFont1Dialog = false
+                            }) {
+                                Text(fontName)
+                            }
                         }
                     }
                 }
@@ -83,16 +95,25 @@ fun MappingEditor(fontMap: FontMap) {
             onDismissRequest = { showFont2Dialog = false },
             title = { Text("Select System Font 2") },
             text = {
-                val systemFonts = intellibitz.sted.util.Resources.fonts.keys.toList().sorted()
-                LazyColumn {
-                    items(systemFonts) { fontName ->
-                        TextButton(onClick = { 
-                            fontMap.font2Path = intellibitz.sted.util.Resources.SYSTEM
-                            fontMap.setFont2(fontName)
-                            refreshTrigger++
-                            showFont2Dialog = false
-                        }) {
-                            Text(fontName)
+                Column {
+                    OutlinedTextField(
+                        value = font2SearchQuery,
+                        onValueChange = { font2SearchQuery = it },
+                        label = { Text("Search Fonts (e.g. Latha, Arial)") },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    )
+                    val allFonts = intellibitz.sted.util.Resources.fonts.keys.toList().sorted()
+                    val filteredFonts = allFonts.filter { it.contains(font2SearchQuery, ignoreCase = true) }
+                    LazyColumn(modifier = Modifier.weight(1f, fill = false).heightIn(max = 300.dp)) {
+                        items(filteredFonts) { fontName ->
+                            TextButton(onClick = { 
+                                fontMap.font2Path = intellibitz.sted.util.Resources.SYSTEM
+                                fontMap.setFont2(fontName)
+                                refreshTrigger++
+                                showFont2Dialog = false
+                            }) {
+                                Text(fontName)
+                            }
                         }
                     }
                 }
@@ -221,10 +242,44 @@ fun MappingEditor(fontMap: FontMap) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Font 1 Keypad", style = MaterialTheme.typography.subtitle2, fontWeight = FontWeight.Bold)
                 if (fontMap.font1 != null && font1Family != null) {
-                    val font1Chars = remember(fontMap.font1) {
+                    val font1Blocks = remember(fontMap.font1) {
+                        val blocks = mutableSetOf<String>()
+                        for (i in 32..0xFFFF) {
+                            if (fontMap.font1!!.canDisplay(i)) {
+                                val block = Character.UnicodeBlock.of(i)
+                                if (block != null) blocks.add(block.toString())
+                            }
+                        }
+                        blocks.toList().sorted()
+                    }
+                    var selectedBlock by remember(font1Blocks) { mutableStateOf(font1Blocks.firstOrNull() ?: "") }
+                    var expanded by remember { mutableStateOf(false) }
+
+                    Box(modifier = Modifier.padding(top = 4.dp)) {
+                        Button(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(if (selectedBlock.isEmpty()) "Select Block" else selectedBlock, maxLines = 1)
+                        }
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            font1Blocks.forEach { block ->
+                                DropdownMenuItem(onClick = {
+                                    selectedBlock = block
+                                    expanded = false
+                                }) {
+                                    Text(block)
+                                }
+                            }
+                        }
+                    }
+
+                    val font1Chars = remember(fontMap.font1, selectedBlock) {
                         val list = mutableListOf<String>()
                         for (i in 32..0xFFFF) {
-                            if (fontMap.font1!!.canDisplay(i)) list.add(i.toChar().toString())
+                            if (fontMap.font1!!.canDisplay(i)) {
+                                val block = Character.UnicodeBlock.of(i)
+                                if (block != null && block.toString() == selectedBlock) {
+                                    list.add(i.toChar().toString())
+                                }
+                            }
                         }
                         list
                     }
@@ -251,10 +306,44 @@ fun MappingEditor(fontMap: FontMap) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Font 2 Keypad", style = MaterialTheme.typography.subtitle2, fontWeight = FontWeight.Bold)
                 if (fontMap.font2 != null && font2Family != null) {
-                    val font2Chars = remember(fontMap.font2) {
+                    val font2Blocks = remember(fontMap.font2) {
+                        val blocks = mutableSetOf<String>()
+                        for (i in 32..0xFFFF) {
+                            if (fontMap.font2!!.canDisplay(i)) {
+                                val block = Character.UnicodeBlock.of(i)
+                                if (block != null) blocks.add(block.toString())
+                            }
+                        }
+                        blocks.toList().sorted()
+                    }
+                    var selectedBlock by remember(font2Blocks) { mutableStateOf(font2Blocks.firstOrNull() ?: "") }
+                    var expanded by remember { mutableStateOf(false) }
+
+                    Box(modifier = Modifier.padding(top = 4.dp)) {
+                        Button(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(if (selectedBlock.isEmpty()) "Select Block" else selectedBlock, maxLines = 1)
+                        }
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            font2Blocks.forEach { block ->
+                                DropdownMenuItem(onClick = {
+                                    selectedBlock = block
+                                    expanded = false
+                                }) {
+                                    Text(block)
+                                }
+                            }
+                        }
+                    }
+
+                    val font2Chars = remember(fontMap.font2, selectedBlock) {
                         val list = mutableListOf<String>()
                         for (i in 32..0xFFFF) {
-                            if (fontMap.font2!!.canDisplay(i)) list.add(i.toChar().toString())
+                            if (fontMap.font2!!.canDisplay(i)) {
+                                val block = Character.UnicodeBlock.of(i)
+                                if (block != null && block.toString() == selectedBlock) {
+                                    list.add(i.toChar().toString())
+                                }
+                            }
                         }
                         list
                     }
