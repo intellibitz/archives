@@ -103,8 +103,17 @@ fun MappingEditor(fontMap: FontMap) {
         )
     }
 
+    var currentTab by remember { mutableStateOf(0) }
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // Top section: Fonts configuration
+        TabRow(selectedTabIndex = currentTab) {
+            Tab(selected = currentTab == 0, onClick = { currentTab = 0 }, text = { Text("Mapping Rules") })
+            Tab(selected = currentTab == 1, onClick = { currentTab = 1 }, text = { Text("Transliterate Text") })
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Top section: Fonts configuration (Shared across both tabs)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = if (fontMap.font1Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font1?.name ?: "" else fontMap.font1Path,
@@ -143,7 +152,7 @@ fun MappingEditor(fontMap: FontMap) {
             Button(onClick = { showFont2Dialog = true }) { Text("System") }
         }
         
-        // Options row
+        // Shared Options
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = hideUnusable, onCheckedChange = { hideUnusable = it })
             Text("Hide Unusable Characters (based on selected fonts)")
@@ -151,11 +160,13 @@ fun MappingEditor(fontMap: FontMap) {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Table Header
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        if (currentTab == 0) {
+            // Mapping Rules Tab
+            // Table Header
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             Text("From", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
             Text("To", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
             Text("Begins", modifier = Modifier.weight(0.5f), fontWeight = FontWeight.Bold)
@@ -353,39 +364,40 @@ fun MappingEditor(fontMap: FontMap) {
                 Text("Add")
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        Divider()
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Test Section
-        Text("Test Mapping", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
-        var testInput by remember { mutableStateOf("") }
-        var testOutput by remember { mutableStateOf("") }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = testInput,
-                onValueChange = { 
-                    testInput = it
-                    val transliterator = intellibitz.sted.fontmap.DefaultTransliterator()
-                    transliterator.setEntries(fontMap.entries)
-                    testOutput = transliterator.parseLine(it) ?: ""
-                },
-                label = { Text("Input Text") },
-                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font1Family),
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = testOutput,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Transliterated Output") },
-                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font2Family),
-                modifier = Modifier.weight(1f)
-            )
+        } else {
+            // Transliterate Text Tab
+            var testInput by remember { mutableStateOf("") }
+            var testOutput by remember { mutableStateOf("") }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    Text("Input Text (e.g. English)", fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = testInput,
+                        onValueChange = { 
+                            testInput = it
+                            val transliterator = intellibitz.sted.fontmap.DefaultTransliterator()
+                            transliterator.setEntries(fontMap.entries)
+                            testOutput = transliterator.parseLine(it) ?: ""
+                        },
+                        textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font1Family),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    Text("Transliterated Output", fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = testOutput,
+                        onValueChange = {},
+                        readOnly = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font2Family),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
         }
     }
 }
