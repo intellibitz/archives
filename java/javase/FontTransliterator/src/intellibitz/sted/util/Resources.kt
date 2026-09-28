@@ -166,8 +166,12 @@ object Resources {
 
 
     init {
-        resourceBundle = ResourceBundle.getBundle(STED_CONFIG_NAME, Locale.getDefault())
-        logger.finest("retrieved resource bundle $resourceBundle")
+        try {
+            resourceBundle = ResourceBundle.getBundle(STED_CONFIG_NAME, Locale.getDefault())
+            logger.finest("retrieved resource bundle $resourceBundle")
+        } catch (e: MissingResourceException) {
+            logger.warning("Resource bundle $STED_CONFIG_NAME not found. Proceeding without it.")
+        }
         RESOURCE_PATH_VAL = System.getProperty(RESOURCE_PATH, "./resource/")
         var settingsPath = System.getProperty(SETTINGS_PATH, "./settings/")
         settingsPath = FileHelper.suffixFileSeparator(settingsPath)
@@ -248,7 +252,7 @@ object Resources {
     fun getResource(name: String): String {
         var valStr: String? = null
         try {
-            valStr = resourceBundle!!.getString(name)
+            valStr = resourceBundle?.getString(name)
         } catch (e: MissingResourceException) {
             // ignore, since we will try alternates
         }
