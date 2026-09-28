@@ -36,6 +36,13 @@
             else="${basedir}/${srcdir}" >
         <os family="windows"/>
     </condition>
+    <!-- Filtered src tree for apkbuilder -rf (exclude sources so *.kt is not packaged as resources) -->
+    <property name="srcdir-res" value="${outdir}/src-res" />
+    <condition property="srcdir-res-ospath"
+            value="${basedir}\${srcdir-res}"
+            else="${basedir}/${srcdir-res}" >
+        <os family="windows"/>
+    </condition>
 
     <!-- folder for the 3rd party java libraries -->
     <property name="external-libs" value="libs" />
@@ -223,9 +230,17 @@
         <antcall target="package-res-${res-target}" />
     </target>
 
+    <!-- Copy non-source files from src for apkbuilder -rf, excluding Java/Kotlin/AIDL sources. -->
+    <target name="prepare-src-res" depends="dirs">
+        <mkdir dir="${srcdir-res}" />
+        <copy todir="${srcdir-res}">
+            <fileset dir="${srcdir}" excludes="**/*.java,**/*.kt,**/*.aidl" />
+        </copy>
+    </target>
+
     <!-- Package the application and sign it with a debug key.
          This is the default target when building. It is used for debug. -->
-    <target name="debug" depends="dex, package-res">
+    <target name="debug" depends="dex, package-res, prepare-src-res">
         <echo>Packaging ${out-debug-package}, and signing it with a debug key...</echo>
         <exec executable="${apk-builder}" failonerror="true">
             <arg value="${out-debug-package-ospath}" />
@@ -234,7 +249,7 @@
             <arg value="-f" />
             <arg value="${intermediate-dex-ospath}" />
             <arg value="-rf" />
-            <arg value="${srcdir-ospath}" />
+            <arg value="${srcdir-res-ospath}" />
             <arg value="-rj" />
             <arg value="${external-libs-ospath}" />
             <arg value="-nf" />
@@ -244,7 +259,7 @@
 
     <!-- Package the application without signing it.
          This allows for the application to be signed later with an official publishing key. -->
-    <target name="release" depends="dex, package-res">
+    <target name="release" depends="dex, package-res, prepare-src-res">
         <echo>Packaging ${out-unsigned-package} for release...</echo>
         <exec executable="${apk-builder}" failonerror="true">
             <arg value="${out-unsigned-package-ospath}" />
@@ -254,7 +269,7 @@
             <arg value="-f" />
             <arg value="${intermediate-dex-ospath}" />
             <arg value="-rf" />
-            <arg value="${srcdir-ospath}" />
+            <arg value="${srcdir-res-ospath}" />
             <arg value="-rj" />
             <arg value="${external-libs-ospath}" />
             <arg value="-nf" />

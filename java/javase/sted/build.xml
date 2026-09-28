@@ -67,7 +67,7 @@
         <copy todir="${BUILD_PATH}" verbose="true">
             <fileset
                     dir="${PROJECT_PATH}"
-                    excludes="**/build/**, **/dist/**, **/test/**"
+                    excludes="**/build/**, **/dist/**, **/test/**, **/*.kt"
                     defaultexcludes="true"
                     />
         </copy>

@@ -924,6 +924,7 @@
                     <excludes>
                         <exclude>**/*Bean.java</exclude>
                         <exclude>**/generated/*.java</exclude>
+                        <exclude>**/*.kt</exclude>
                         <exclude>target</exclude>
                     </excludes>
                     <rulesets>

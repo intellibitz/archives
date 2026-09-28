@@ -67,7 +67,7 @@
         <copy todir="${OUT_PATH}" verbose="true">
             <fileset
                     dir="${PROJECT_PATH}"
-                    excludes="**/${OUT}/**, **/${DIST}/**, **/${TEST}/**, **/.idea/**, **/.gradle/**, **/build/**"
+                    excludes="**/${OUT}/**, **/${DIST}/**, **/${TEST}/**, **/.idea/**, **/.gradle/**, **/build/**, **/*.kt"
                     defaultexcludes="true"
             />
         </copy>

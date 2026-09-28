@@ -11,10 +11,12 @@ ant.importBuild("build.xml")
 // if normal source directory convention is not followed, define custom sourcesets
 sourceSets.main {
     java.srcDir("src")
+    kotlin.srcDir("src")
     java.outputDir = file("./out")
 }
 sourceSets.test {
-    java.srcDir("test")
+    java.srcDir("tests/src")
+    kotlin.srcDir("tests/src")
     java.outputDir = file("./out")
 }
 

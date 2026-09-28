@@ -1,6 +1,7 @@
 //lib/build.gradle.kts
 plugins {
     java
+    alias(libs.plugins.kotlin.jvm)
 //    id("java")
 }
 

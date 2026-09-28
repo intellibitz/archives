@@ -5,6 +5,7 @@
 plugins {
     `java-library`
     `maven-publish`
+    kotlin("jvm") version "2.0.20"
 }
 
 repositories {
@@ -51,6 +52,7 @@ repositories {
 }
 
 dependencies {
+    implementation(kotlin("stdlib"))
     api(libs.log4j.log4j)
     api(libs.org.apache.commons.commons.lang3)
     api(libs.javax.validation.validation.api)

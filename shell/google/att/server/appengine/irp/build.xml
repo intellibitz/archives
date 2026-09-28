@@ -35,6 +35,7 @@
 		<copy todir="war/WEB-INF/classes">
 			<fileset dir="src">
 				<exclude name="**/*.java" />
+				<exclude name="**/*.kt" />
 			</fileset>
 		</copy>
 		<javac srcdir="src" destdir="war/WEB-INF/classes" classpathref="project.classpath" debug="on" />
@@ -105,7 +106,7 @@
 			<classpath refid="project.class.path" />
 		</javac>
 		<copy todir="war/WEB-INF/classes">
-			<fileset dir="src" excludes="**/*.java" />
+			<fileset dir="src" excludes="**/*.java,**/*.kt" />
 		</copy>
 		<antcall target="datanucleusenhance" />
 	</target>

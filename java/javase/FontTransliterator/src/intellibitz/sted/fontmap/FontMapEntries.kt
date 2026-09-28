@@ -12,8 +12,8 @@ class FontMapEntries : ITransliterate.IEntries {
     private val directEntries: MutableMap<String, FontMapEntry> = TreeMap()
     private val allEntries: MutableMap<String, FontMapEntry> = HashMap()
     private val ruleEntries: MutableMap<String, FontMapEntry> = TreeMap()
-    val undo: Stack<FontMapEntry> = Stack()
-    val redo: Stack<FontMapEntry> = Stack()
+    val undo: java.util.Stack<FontMapEntry> = Stack()
+    val redo: java.util.Stack<FontMapEntry> = Stack()
     private var fontMapEntriesChangeEvent: FontMapEntriesChangeEvent? = null
     private val fontMapEntriesChangeListeners = EventListenerList()
 

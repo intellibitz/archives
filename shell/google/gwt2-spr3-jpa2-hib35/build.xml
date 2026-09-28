@@ -71,7 +71,7 @@
             <classpath refid="project.class.path"/>
         </javac>
         <copy todir="${target.war.classes}">
-            <fileset dir="${src.java}" excludes="**/*.java"/>
+            <fileset dir="${src.java}" excludes="**/*.java,**/*.kt"/>
         </copy>
     </target>
 
