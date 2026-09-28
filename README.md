@@ -24,7 +24,7 @@
 The repository is organized by **programming languages and technologies**:
 
 ```text
-intellibitz/
+archives/
 ├── java/      # Java EE/SE projects (IntelliDocs, IntelliMeet)
 ├── kotlin/    # Kotlin apps, Multiplatform, Android clients
 ├── python/    # Python tools, AI, scripts, package management
