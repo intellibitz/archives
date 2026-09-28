@@ -33,10 +33,14 @@ fun main() = application {
         MenuBar {
             Menu("File") {
                 Item("New", onClick = { appState.newFontMap() })
-                Item("Open...", onClick = { /* TODO file dialog */ })
-                Item("Save", onClick = { /* TODO */ })
+                Item("Open...", onClick = { appState.openFontMap() })
+                Item("Save", onClick = { appState.saveFontMap() })
+                Item("Save As...", onClick = { /* TODO */ })
                 Separator()
                 Item("Exit", onClick = ::exitApplication)
+            }
+            Menu("Action") {
+                Item("Transliterate File...", onClick = { appState.transliterateFile() })
             }
         }
         intellibitz.sted.ui.compose.MainScreen(appState)
