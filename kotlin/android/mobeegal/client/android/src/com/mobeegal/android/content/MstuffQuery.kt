@@ -471,7 +471,7 @@ class MstuffQuery : BroadcastReceiver() {
                     httpPost.setEntity(
                             UrlEncodedFormEntity(data, HTTP.UTF_8))
                     val resp = httpclient.execute(httpPost)
-                    val response = HttpUtils.getResponseString(resp)
+                    response = HttpUtils.getResponseString(resp)
                     //EncryptionDecryption encryptDecrypt = EncryptionDecryption();
                     //val encrypted = encryptDecrypt.EncryptionDecryption(query, key);
                     //                    request = httpPost.getQueryString();
@@ -1119,18 +1119,18 @@ class MstuffQuery : BroadcastReceiver() {
                     }
                 }
                 //Showing Notification Message
-                CharSequence from
-                CharSequence message
+                var from: CharSequence? = null
+                var message: CharSequence? = null
                 var tickerText: String? = null
-                if (response.contains("iarea"))
+                if (response!!.contains("iarea"))
                 {
-                    val nm = (NotificationManager) context
-                            .getSystemService(Context.NOTIFICATION_SERVICE)
+                    val nm = context
+                            .getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     from = "Matching Data"
                     message = "Matches Received"
                     tickerText = "Matches Received"
                     val appIntent = Intent()
-                    val contentIntent = Intent(context, StatusbarNotification.class)
+                    val contentIntent = Intent(context, StatusbarNotification::class.java)
                     //    public Notification(Context context, int icon, CharSequence tickerText,
                     // long when, CharSequence contentTitle, CharSequence contentText,
                     //                    Intent contentIntent)
@@ -1142,11 +1142,11 @@ class MstuffQuery : BroadcastReceiver() {
                             from,
                             message,
                             contentIntent)
-                    notif.vibrate = long[]{100, 250, 100, 500}
+                    notif.vibrate = longArrayOf(100, 250, 100, 500)
                     nm.notify(R.string.notification_message, notif)
                 }
                 Looper.loop()
-                Looper.myLooper().quit()
+                Looper.myLooper()!!.quit()
             }
         }.start()
     }
