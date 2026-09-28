@@ -22,7 +22,7 @@ ui/android/mobeegal/
 │       ├── mobeegal-TestCase.odt
 │       └── mobeegal-UserGuide.odt
 └── mobeegal.in/           # Web portal frontend (PHP, HTML5, CSS)
-    ├── index.php
+    ├── index.py
     ├── content/           # Marketing and announcement views
     ├── css/style.css
     └── include/           # Header, footer, and navigation partials
