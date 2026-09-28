@@ -22,6 +22,21 @@ import intellibitz.sted.fontmap.FontMap
 import intellibitz.sted.fontmap.FontMapEntry
 import java.io.File
 
+data class LanguageDef(val name: String, val testChar: Char, val defaultFont: String)
+
+val SUPPORTED_LANGUAGES = listOf(
+    LanguageDef("English (Latin)", 'A', "Arial"),
+    LanguageDef("Tamil", '\u0B85', "Latha"),
+    LanguageDef("Hindi (Devanagari)", '\u0905', "Mangal"),
+    LanguageDef("Bengali", '\u0985', "Vrinda"),
+    LanguageDef("Telugu", '\u0C05', "Gautami"),
+    LanguageDef("Kannada", '\u0C85', "Tunga"),
+    LanguageDef("Malayalam", '\u0D05', "Kartika"),
+    LanguageDef("Gujarati", '\u0A85', "Shruti"),
+    LanguageDef("Oriya", '\u0B05', "Kalinga"),
+    LanguageDef("Punjabi (Gurmukhi)", '\u0A05', "Raavi")
+)
+
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 @Composable
 fun MappingEditor(fontMap: FontMap) {
@@ -55,6 +70,12 @@ fun MappingEditor(fontMap: FontMap) {
     
     var font1SearchQuery by remember { mutableStateOf("") }
     var font2SearchQuery by remember { mutableStateOf("") }
+    
+    var filterFont1ByLang by remember { mutableStateOf(true) }
+    var filterFont2ByLang by remember { mutableStateOf(true) }
+    
+    var sourceLanguage by remember { mutableStateOf(SUPPORTED_LANGUAGES[0]) }
+    var targetLanguage by remember { mutableStateOf(SUPPORTED_LANGUAGES[1]) }
 
     if (showFont1Dialog) {
         AlertDialog(
@@ -65,11 +86,21 @@ fun MappingEditor(fontMap: FontMap) {
                     OutlinedTextField(
                         value = font1SearchQuery,
                         onValueChange = { font1SearchQuery = it },
-                        label = { Text("Search Fonts (e.g. Latha, Arial)") },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        label = { Text("Search Fonts") },
+                        modifier = Modifier.fillMaxWidth()
                     )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = filterFont1ByLang, onCheckedChange = { filterFont1ByLang = it })
+                        Text("Show only fonts supporting ${sourceLanguage.name}")
+                    }
                     val allFonts = intellibitz.sted.util.Resources.fonts.keys.toList().sorted()
-                    val filteredFonts = allFonts.filter { it.contains(font1SearchQuery, ignoreCase = true) }
+                    val filteredFonts = allFonts.filter { fontName -> 
+                        val matchesSearch = fontName.contains(font1SearchQuery, ignoreCase = true)
+                        val matchesLang = if (!filterFont1ByLang) true else {
+                            try { java.awt.Font(fontName, java.awt.Font.PLAIN, 12).canDisplay(sourceLanguage.testChar) } catch(e:Exception) { false }
+                        }
+                        matchesSearch && matchesLang
+                    }
                     LazyColumn(modifier = Modifier.weight(1f, fill = false).heightIn(max = 300.dp)) {
                         items(filteredFonts) { fontName ->
                             TextButton(onClick = { 
@@ -99,11 +130,21 @@ fun MappingEditor(fontMap: FontMap) {
                     OutlinedTextField(
                         value = font2SearchQuery,
                         onValueChange = { font2SearchQuery = it },
-                        label = { Text("Search Fonts (e.g. Latha, Arial)") },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        label = { Text("Search Fonts") },
+                        modifier = Modifier.fillMaxWidth()
                     )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = filterFont2ByLang, onCheckedChange = { filterFont2ByLang = it })
+                        Text("Show only fonts supporting ${targetLanguage.name}")
+                    }
                     val allFonts = intellibitz.sted.util.Resources.fonts.keys.toList().sorted()
-                    val filteredFonts = allFonts.filter { it.contains(font2SearchQuery, ignoreCase = true) }
+                    val filteredFonts = allFonts.filter { fontName -> 
+                        val matchesSearch = fontName.contains(font2SearchQuery, ignoreCase = true)
+                        val matchesLang = if (!filterFont2ByLang) true else {
+                            try { java.awt.Font(fontName, java.awt.Font.PLAIN, 12).canDisplay(targetLanguage.testChar) } catch(e:Exception) { false }
+                        }
+                        matchesSearch && matchesLang
+                    }
                     LazyColumn(modifier = Modifier.weight(1f, fill = false).heightIn(max = 300.dp)) {
                         items(filteredFonts) { fontName ->
                             TextButton(onClick = { 
@@ -138,22 +179,80 @@ fun MappingEditor(fontMap: FontMap) {
             // Mapping Rules Tab
             
             // Language/Font configuration for Mapping
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Source Language/Font:", fontWeight = FontWeight.Bold)
-                OutlinedTextField(
-                    value = if (fontMap.font1Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font1?.name ?: "" else fontMap.font1Path,
-                    onValueChange = { fontMap.font1Path = it; refreshTrigger++ },
-                    modifier = Modifier.weight(1f)
-                )
-                Button(onClick = { showFont1Dialog = true }) { Text("Select") }
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+                // Source Configuration
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Source Language:", fontWeight = FontWeight.Bold)
+                    var expandedSource by remember { mutableStateOf(false) }
+                    Box {
+                        OutlinedButton(onClick = { expandedSource = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(sourceLanguage.name)
+                        }
+                        DropdownMenu(expanded = expandedSource, onDismissRequest = { expandedSource = false }) {
+                            SUPPORTED_LANGUAGES.forEach { lang ->
+                                DropdownMenuItem(onClick = {
+                                    sourceLanguage = lang
+                                    expandedSource = false
+                                    // Smart default mapping
+                                    val defFont = intellibitz.sted.util.Resources.fonts.keys.find { it.contains(lang.defaultFont, true) }
+                                        ?: intellibitz.sted.util.Resources.fonts.keys.find { try { java.awt.Font(it, 0, 12).canDisplay(lang.testChar) } catch(e:Exception){false} }
+                                    if (defFont != null) {
+                                        fontMap.font1Path = intellibitz.sted.util.Resources.SYSTEM
+                                        fontMap.setFont1(defFont)
+                                        refreshTrigger++
+                                    }
+                                }) { Text(lang.name) }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text("Source Font:", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.caption)
+                    Row {
+                        OutlinedTextField(
+                            value = if (fontMap.font1Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font1?.name ?: "" else fontMap.font1Path,
+                            onValueChange = { fontMap.font1Path = it; refreshTrigger++ },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Button(onClick = { showFont1Dialog = true }) { Text("Select") }
+                    }
+                }
                 
-                Text("Target Language/Font:", fontWeight = FontWeight.Bold)
-                OutlinedTextField(
-                    value = if (fontMap.font2Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font2?.name ?: "" else fontMap.font2Path,
-                    onValueChange = { fontMap.font2Path = it; refreshTrigger++ },
-                    modifier = Modifier.weight(1f)
-                )
-                Button(onClick = { showFont2Dialog = true }) { Text("Select") }
+                // Target Configuration
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Target Language:", fontWeight = FontWeight.Bold)
+                    var expandedTarget by remember { mutableStateOf(false) }
+                    Box {
+                        OutlinedButton(onClick = { expandedTarget = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(targetLanguage.name)
+                        }
+                        DropdownMenu(expanded = expandedTarget, onDismissRequest = { expandedTarget = false }) {
+                            SUPPORTED_LANGUAGES.forEach { lang ->
+                                DropdownMenuItem(onClick = {
+                                    targetLanguage = lang
+                                    expandedTarget = false
+                                    // Smart default mapping
+                                    val defFont = intellibitz.sted.util.Resources.fonts.keys.find { it.contains(lang.defaultFont, true) }
+                                        ?: intellibitz.sted.util.Resources.fonts.keys.find { try { java.awt.Font(it, 0, 12).canDisplay(lang.testChar) } catch(e:Exception){false} }
+                                    if (defFont != null) {
+                                        fontMap.font2Path = intellibitz.sted.util.Resources.SYSTEM
+                                        fontMap.setFont2(defFont)
+                                        refreshTrigger++
+                                    }
+                                }) { Text(lang.name) }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text("Target Font:", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.caption)
+                    Row {
+                        OutlinedTextField(
+                            value = if (fontMap.font2Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font2?.name ?: "" else fontMap.font2Path,
+                            onValueChange = { fontMap.font2Path = it; refreshTrigger++ },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Button(onClick = { showFont2Dialog = true }) { Text("Select") }
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
