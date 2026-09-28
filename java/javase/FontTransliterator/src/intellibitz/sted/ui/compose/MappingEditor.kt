@@ -13,11 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.text.platform.asComposeFontFamily
 import androidx.compose.ui.unit.dp
 import intellibitz.sted.fontmap.FontMap
 import intellibitz.sted.fontmap.FontMapEntry
 import java.io.File
 
+@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 @Composable
 fun MappingEditor(fontMap: FontMap) {
     // In a real reactive app, we should observe FontMap changes
@@ -36,25 +38,73 @@ fun MappingEditor(fontMap: FontMap) {
     // State for filtering
     var hideUnusable by remember { mutableStateOf(false) }
     
-    // Load custom fonts if files exist
-    val font1Family = remember(fontMap.font1Path, refreshTrigger) {
-        try {
-            val file = File(fontMap.font1Path)
-            if (file.exists() && file.isFile) FontFamily(Font(file)) else null
-        } catch (e: Exception) { null }
+    // Load custom fonts using Compose AWT interop
+    val font1Family = remember(fontMap.font1, fontMap.font1Path, refreshTrigger) {
+        fontMap.font1?.asComposeFontFamily()
     }
-    val font2Family = remember(fontMap.font2Path, refreshTrigger) {
-        try {
-            val file = File(fontMap.font2Path)
-            if (file.exists() && file.isFile) FontFamily(Font(file)) else null
-        } catch (e: Exception) { null }
+    val font2Family = remember(fontMap.font2, fontMap.font2Path, refreshTrigger) {
+        fontMap.font2?.asComposeFontFamily()
+    }
+    
+    // State for System Font Dialogs
+    var showFont1Dialog by remember { mutableStateOf(false) }
+    var showFont2Dialog by remember { mutableStateOf(false) }
+
+    if (showFont1Dialog) {
+        AlertDialog(
+            onDismissRequest = { showFont1Dialog = false },
+            title = { Text("Select System Font 1") },
+            text = {
+                val systemFonts = intellibitz.sted.util.Resources.fonts.keys.toList().sorted()
+                LazyColumn {
+                    items(systemFonts) { fontName ->
+                        TextButton(onClick = { 
+                            fontMap.font1Path = intellibitz.sted.util.Resources.SYSTEM
+                            fontMap.setFont1(fontName)
+                            refreshTrigger++
+                            showFont1Dialog = false
+                        }) {
+                            Text(fontName)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showFont1Dialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showFont2Dialog) {
+        AlertDialog(
+            onDismissRequest = { showFont2Dialog = false },
+            title = { Text("Select System Font 2") },
+            text = {
+                val systemFonts = intellibitz.sted.util.Resources.fonts.keys.toList().sorted()
+                LazyColumn {
+                    items(systemFonts) { fontName ->
+                        TextButton(onClick = { 
+                            fontMap.font2Path = intellibitz.sted.util.Resources.SYSTEM
+                            fontMap.setFont2(fontName)
+                            refreshTrigger++
+                            showFont2Dialog = false
+                        }) {
+                            Text(fontName)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showFont2Dialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Top section: Fonts configuration
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
-                value = fontMap.font1Path,
+                value = if (fontMap.font1Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font1?.name ?: "" else fontMap.font1Path,
                 onValueChange = { fontMap.font1Path = it; refreshTrigger++ },
                 label = { Text("Map File From (Font 1)") },
                 modifier = Modifier.weight(1f)
@@ -69,9 +119,10 @@ fun MappingEditor(fontMap: FontMap) {
                     refreshTrigger++
                 }
             }) { Text("Browse") }
+            Button(onClick = { showFont1Dialog = true }) { Text("System") }
             
             OutlinedTextField(
-                value = fontMap.font2Path,
+                value = if (fontMap.font2Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font2?.name ?: "" else fontMap.font2Path,
                 onValueChange = { fontMap.font2Path = it; refreshTrigger++ },
                 label = { Text("Map File To (Font 2)") },
                 modifier = Modifier.weight(1f)
@@ -86,6 +137,7 @@ fun MappingEditor(fontMap: FontMap) {
                     refreshTrigger++
                 }
             }) { Text("Browse") }
+            Button(onClick = { showFont2Dialog = true }) { Text("System") }
         }
         
         // Options row
