@@ -2,7 +2,7 @@ plugins {
     // Apply the application plugin to add support for building a CLI application.
     application
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    kotlin("jvm") version "1.4.0-rc"
+    kotlin("jvm") version "1.9.22"
 }
 
 // keep this until all targets fully migrated
@@ -11,11 +11,11 @@ ant.importBuild("build.xml")
 // if normal source directory convention is not followed, define custom sourcesets
 sourceSets.main {
     java.srcDir("src")
-    java.outputDir = file("./out")
+    java.destinationDirectory.set(file("./out"))
 }
 sourceSets.test {
     java.srcDir("test")
-    java.outputDir = file("./out")
+    java.destinationDirectory.set(file("./out"))
 }
 
 /*
@@ -45,7 +45,6 @@ application {
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
-    jcenter()
     mavenCentral()
     maven("https://dl.bintray.com/kotlin/kotlin-eap")
     maven("https://kotlin.bintray.com/kotlinx")
