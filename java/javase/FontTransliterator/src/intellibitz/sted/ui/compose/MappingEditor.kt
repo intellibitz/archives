@@ -11,9 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import intellibitz.sted.fontmap.FontMap
 import intellibitz.sted.fontmap.FontMapEntry
+import java.io.File
 
 @Composable
 fun MappingEditor(fontMap: FontMap) {
@@ -29,22 +32,66 @@ fun MappingEditor(fontMap: FontMap) {
     var newFollowedBy by remember { mutableStateOf("") }
     var newPrecededBy by remember { mutableStateOf("") }
     var newConditional by remember { mutableStateOf("AND") }
+    
+    // State for filtering
+    var hideUnusable by remember { mutableStateOf(false) }
+    
+    // Load custom fonts if files exist
+    val font1Family = remember(fontMap.font1Path, refreshTrigger) {
+        try {
+            val file = File(fontMap.font1Path)
+            if (file.exists() && file.isFile) FontFamily(Font(file)) else null
+        } catch (e: Exception) { null }
+    }
+    val font2Family = remember(fontMap.font2Path, refreshTrigger) {
+        try {
+            val file = File(fontMap.font2Path)
+            if (file.exists() && file.isFile) FontFamily(Font(file)) else null
+        } catch (e: Exception) { null }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Top section: Fonts configuration
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = fontMap.font1Path,
                 onValueChange = { fontMap.font1Path = it; refreshTrigger++ },
                 label = { Text("Map File From (Font 1)") },
                 modifier = Modifier.weight(1f)
             )
+            Button(onClick = {
+                val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Select Font 1", java.awt.FileDialog.LOAD)
+                dialog.isVisible = true
+                if (dialog.file != null) {
+                    val file = File(dialog.directory, dialog.file)
+                    fontMap.font1Path = file.absolutePath
+                    fontMap.setFont1(file)
+                    refreshTrigger++
+                }
+            }) { Text("Browse") }
+            
             OutlinedTextField(
                 value = fontMap.font2Path,
                 onValueChange = { fontMap.font2Path = it; refreshTrigger++ },
                 label = { Text("Map File To (Font 2)") },
                 modifier = Modifier.weight(1f)
             )
+            Button(onClick = {
+                val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Select Font 2", java.awt.FileDialog.LOAD)
+                dialog.isVisible = true
+                if (dialog.file != null) {
+                    val file = File(dialog.directory, dialog.file)
+                    fontMap.font2Path = file.absolutePath
+                    fontMap.setFont2(file)
+                    refreshTrigger++
+                }
+            }) { Text("Browse") }
+        }
+        
+        // Options row
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = hideUnusable, onCheckedChange = { hideUnusable = it })
+            Text("Hide Unusable Characters (based on selected fonts)")
         }
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -67,15 +114,22 @@ fun MappingEditor(fontMap: FontMap) {
         Divider()
         
         // Table Content
-        val entries = fontMap.entries.values().toList()
+        val entries = fontMap.entries.values().toList().filter { entry ->
+            if (!hideUnusable) true
+            else {
+                val canDisplayFrom = fontMap.font1?.let { it.canDisplayUpTo(entry.from) == -1 } ?: true
+                val canDisplayTo = fontMap.font2?.let { it.canDisplayUpTo(entry.to) == -1 } ?: true
+                canDisplayFrom && canDisplayTo
+            }
+        }
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(entries) { entry ->
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(entry.from, modifier = Modifier.weight(1f))
-                    Text(entry.to, modifier = Modifier.weight(1f))
+                    Text(entry.from, modifier = Modifier.weight(1f), fontFamily = font1Family)
+                    Text(entry.to, modifier = Modifier.weight(1f), fontFamily = font2Family)
                     Text(entry.beginsWith.toString(), modifier = Modifier.weight(0.5f))
                     Text(entry.endsWith.toString(), modifier = Modifier.weight(0.5f))
                     Text(entry.precededBy ?: "", modifier = Modifier.weight(1f))
@@ -106,12 +160,14 @@ fun MappingEditor(fontMap: FontMap) {
                 value = newFrom,
                 onValueChange = { newFrom = it },
                 label = { Text("From") },
+                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font1Family),
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
                 value = newTo,
                 onValueChange = { newTo = it },
                 label = { Text("To") },
+                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font2Family),
                 modifier = Modifier.weight(1f)
             )
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(0.5f)) {
@@ -199,6 +255,7 @@ fun MappingEditor(fontMap: FontMap) {
                     testOutput = transliterator.parseLine(it) ?: ""
                 },
                 label = { Text("Input Text") },
+                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font1Family),
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
@@ -206,6 +263,7 @@ fun MappingEditor(fontMap: FontMap) {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Transliterated Output") },
+                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font2Family),
                 modifier = Modifier.weight(1f)
             )
         }
