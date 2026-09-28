@@ -37,7 +37,7 @@ android {
     defaultConfig {
         applicationId = "intellibitz.intellidroid"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 30
         versionCode = 1
         versionName = "1.0"
         vectorDrawables.useSupportLibrary = true
@@ -54,7 +54,7 @@ android {
         create("dev") {
             dimension = "color"
             minSdk = 24
-            targetSdk = 35
+            targetSdk = 30
             applicationId = "intellibitz.intellidroid.dev"
             versionCode = 1
             versionName = "1.0-dev"
@@ -62,7 +62,7 @@ android {
         create("qa") {
             dimension = "color"
             minSdk = 24
-            targetSdk = 35
+            targetSdk = 30
             applicationId = "intellibitz.intellidroid.qa"
             versionCode = 1
             versionName = "1.0-qa"
@@ -70,7 +70,7 @@ android {
         create("uat") {
             dimension = "color"
             minSdk = 24
-            targetSdk = 35
+            targetSdk = 30
             applicationId = "intellibitz.intellidroid.uat"
             versionCode = 1
             versionName = "1.0-uat"
@@ -78,7 +78,7 @@ android {
         create("prod") {
             dimension = "color"
             minSdk = 24
-            targetSdk = 35
+            targetSdk = 30
         }
     }
 
