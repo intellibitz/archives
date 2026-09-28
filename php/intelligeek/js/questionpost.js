@@ -57,7 +57,7 @@ function get(obj) {
     encodeURI(document.getElementById("question").value) +
     "&email=" +
     encodeURI(document.getElementById("email").value);
-  makePOSTRequest("../askquestion/askquestiondb.php", poststr);
+  makePOSTRequest("../askquestion/askquestiondb.py", poststr);
 }
 function ansget(obj) {
   var poststr =
@@ -67,7 +67,7 @@ function ansget(obj) {
     encodeURI(document.getElementById("answer").value) +
     "&email=" +
     encodeURI(document.getElementById("email").value);
-  makePOSTRequest("../askquestion/answerdb.php", poststr);
+  makePOSTRequest("../askquestion/answerdb.py", poststr);
 }
 function getreg(obj) {
   var poststr =
@@ -88,7 +88,7 @@ function getreg(obj) {
     "&dob=" +
     encodeURI(document.getElementById("demo1").value);
   // var quizmail=document.getElementById("quizmail").value ;
-  makePOSTRequest("../register/registermsg.php", poststr);
+  makePOSTRequest("../register/registermsg.py", poststr);
   document.getElementById("faq").value = "";
   document.getElementById("username1").value = "";
   document.getElementById("password1").value = "";
@@ -109,7 +109,7 @@ function getupload(obj) {
   // "&upload=" + encodeURI( document.getElementById("upload").value );
   //alert (poststr);
 
-  makePOSTRequest("../login/uploaddb.php", poststr);
+  makePOSTRequest("../login/uploaddb.py", poststr);
 }
 function getforgotpswd(obj) {
   var poststr =
@@ -117,7 +117,7 @@ function getforgotpswd(obj) {
   // "&upload=" + encodeURI( document.getElementById("upload").value );
   //alert (poststr);
 
-  makePOSTRequest("../login/forgotpswddb.php", poststr);
+  makePOSTRequest("../login/forgotpswddb.py", poststr);
   document.getElementById("email").value = "";
 }
 function getchangepswd(obj) {
@@ -128,7 +128,7 @@ function getchangepswd(obj) {
     encodeURI(document.getElementById("newpwsd").value);
   //alert (poststr);
 
-  makePOSTRequest("../login/changepswddb.php", poststr);
+  makePOSTRequest("../login/changepswddb.py", poststr);
   document.getElementById("oldpwsd").value = "";
   document.getElementById("newpwsd").value = "";
 }
@@ -138,7 +138,7 @@ function getonlinename(obj) {
 
   //alert (poststr);
 
-  makePOSTRequest("../include/who_is_online.php", poststr);
+  makePOSTRequest("../include/who_is_online.py", poststr);
   //document.getElementById('oldpwsd').value="";
   //document.getElementById('newpwsd').value="";
 }

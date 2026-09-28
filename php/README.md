@@ -9,8 +9,8 @@ PHP runtime environments, historical web community applications, and interactive
 ```
 os/lang/php/
 └── intelligeek/       # Full-featured PHP community & interaction web portal
-    ├── index.php      # Main application router
-    ├── installdb.php  # Database installer and schema initializer
+    ├── index.py      # Main application router
+    ├── installdb.py  # Database installer and schema initializer
     ├── chat/          # JSON/AJAX asynchronous web chat service
     ├── intellichat/   # Dedicated real-time chatroom module
     ├── askquestion/   # Q&A community knowledge base

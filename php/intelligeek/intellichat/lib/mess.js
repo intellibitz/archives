@@ -61,7 +61,7 @@
 				{
 				
 					SendToReq = createXMLHttpRequest();
-            		SendToReq.open("GET","./Data.php?action=userinfo&no=" + sendto, true);
+            		SendToReq.open("GET","./Data.py?action=userinfo&no=" + sendto, true);
 					SendToReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             		SendToReq.onreadystatechange = function () {
                 	if (SendToReq.readyState == 4) {
@@ -107,7 +107,7 @@ document.forms[0].data.focus();
         function MessageRequest(SendType) {
 			recmsg = true;
 			MessageReq = createXMLHttpRequest();
-            MessageReq.open("GET","./lib/message.php?messno=" + message, true);
+            MessageReq.open("GET","./lib/message.py?messno=" + message, true);
 			MessageReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             MessageReq.onreadystatechange = function () {
                 if (MessageReq.readyState == 4) {
@@ -254,7 +254,7 @@ document.forms[0].data.focus();
 		
 		function OnlineCheck() {
 		   OCheck = createXMLHttpRequest();
-            OCheck.open("GET","Data.php?action=delonline", true);
+            OCheck.open("GET","Data.py?action=delonline", true);
 			OCheck.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             OCheck.send(null);
 			
@@ -268,7 +268,7 @@ document.forms[0].data.focus();
 			var onlineNum = 0;
 	
 		    GetOnlineReq = createXMLHttpRequest();       
-            GetOnlineReq.open("GET","Data.php?action=online", true);
+            GetOnlineReq.open("GET","Data.py?action=online", true);
 			GetOnlineReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
 
 
@@ -331,7 +331,7 @@ document.forms[0].data.focus();
 		if((mystatus!="DJ") || (mystatus=="DJ" && checkpass=="password"))
 		{
 			 SetStatusReq = createXMLHttpRequest(); 
-            SetStatusReq.open("post","Data.php?action=setstatus", true);
+            SetStatusReq.open("post","Data.py?action=setstatus", true);
 			SetStatusReq.setRequestHeader( "Content-Type", "application/x-www-form-urlencoded");
 			
 
@@ -358,7 +358,7 @@ document.forms[0].data.focus();
 	UonlineReq = createXMLHttpRequest();
     var pForm = document.forms[0];
     var pBody = getRequestBody(pForm);   
-	UonlineReq.open("post", "Data.php?action=updateonline", true);
+	UonlineReq.open("post", "Data.py?action=updateonline", true);
 	UonlineReq.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     UonlineReq.send(pBody); 
 				UonlineReq.onreadystatechange = function () 
@@ -415,7 +415,7 @@ function SendData() {
 			}  
 			else
 			{
-            SendDat.open("post", "Data.php?action=write", true);
+            SendDat.open("post", "Data.py?action=write", true);
             SendDat.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             SendDat.send(pBody); 
 			
@@ -567,13 +567,13 @@ function SendData() {
 }
 
 	function History(){
-	window.open("history.php#bottom",'','scrollbars=yes,width=610,height=300');
+	window.open("history.py#bottom",'','scrollbars=yes,width=610,height=300');
 	document.getElementById("status").innerHTML = "<strong>Status :</strong> Show Last 1 Hour History";
 	}
 	
 	function About(){
 	document.getElementById("status").innerHTML = "<strong>Status :</strong> Show About Page";
-	window.open("about.php",'','scrollbars=no,width=300,height=200');
+	window.open("about.py",'','scrollbars=no,width=300,height=200');
 	}
 	
 	function InsertEmo(emo){
@@ -587,7 +587,7 @@ function SendData() {
 	function MusicRequest() {
 	
 		   MusicReq = createXMLHttpRequest();
-            MusicReq.open("GET","./now.php", true);
+            MusicReq.open("GET","./now.py", true);
 			MusicReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             MusicReq.onreadystatechange = function () {
                 if (MusicReq.readyState == 4) {
@@ -633,7 +633,7 @@ function LogOut(){
 	if(confirm("Confirm To Logout")==true)
 	{
 		alert("You Are Logged Out!");
-		window.location="index.php"; 
+		window.location="index.py"; 
 	}
 }
 
@@ -674,7 +674,7 @@ function ValidateColor(string) {                // return valid color code
 		else
 			{
 			ShowColorReq = createXMLHttpRequest();       
-            ShowColorReq.open("GET","./Data.php?action=color", true);
+            ShowColorReq.open("GET","./Data.py?action=color", true);
 			ShowColorReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             ShowColorReq.onreadystatechange = function () {
                 if (ShowColorReq.readyState == 4) {
@@ -698,7 +698,7 @@ function ValidateColor(string) {                // return valid color code
 		else
 			{
 			ShowEmoReq = createXMLHttpRequest();       
-            ShowEmoReq.open("GET","./Data.php?action=emotable", true);
+            ShowEmoReq.open("GET","./Data.py?action=emotable", true);
 			ShowEmoReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             ShowEmoReq.onreadystatechange = function () {
                 if (ShowEmoReq.readyState == 4) {
@@ -724,7 +724,7 @@ function ValidateColor(string) {                // return valid color code
 			{
 			document.getElementById("status").innerHTML = "<strong>Status :</strong> Open GroupMode Window";
 			GroupReq = createXMLHttpRequest();       
-            GroupReq.open("GET","./Data.php?action=groupchat", true);
+            GroupReq.open("GET","./Data.py?action=groupchat", true);
 			GroupReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             GroupReq.onreadystatechange = function () {
                 if (GroupReq.readyState == 4) {
@@ -752,7 +752,7 @@ function ValidateColor(string) {                // return valid color code
 	grouppass = prompt("Input Your Password( Use only a-zA-Z Or 0-9 )");
 
 			GroupCreateReq = createXMLHttpRequest();       
-            GroupCreateReq.open("GET","./Data.php?action=creategroup&groupname=" + groupname + "&grouppass=" + grouppass, true);
+            GroupCreateReq.open("GET","./Data.py?action=creategroup&groupname=" + groupname + "&grouppass=" + grouppass, true);
 			GroupCreateReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             GroupCreateReq.onreadystatechange = function () {
                 if (GroupCreateReq.readyState == 4) {
@@ -792,7 +792,7 @@ function ValidateColor(string) {                // return valid color code
 		if(document.forms[0].group.value =="" || confirm("Please Confirm To Deactivate Your Group")==true)
 		{
 
-				SelGroup.open("post", "Data.php?action=checkgroup", true);
+				SelGroup.open("post", "Data.py?action=checkgroup", true);
 	            SelGroup.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	            SelGroup.send(pBody); 
 				
@@ -839,7 +839,7 @@ function ValidateColor(string) {                // return valid color code
 	
 			document.getElementById("status").innerHTML = "<strong>Status :</strong> Open GroupMode Window";
 			GroupListReq = createXMLHttpRequest();       
-            GroupListReq.open("GET","./Data.php?action=grouplist", true);
+            GroupListReq.open("GET","./Data.py?action=grouplist", true);
 			GroupListReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             GroupListReq.onreadystatechange = function () {
                 if (GroupListReq.readyState == 4) {
@@ -862,7 +862,7 @@ function ValidateColor(string) {                // return valid color code
 		else
 			{
 			ShowWinkReq = createXMLHttpRequest();       
-            ShowWinkReq.open("GET","./Data.php?action=wink", true);
+            ShowWinkReq.open("GET","./Data.py?action=wink", true);
 			ShowWinkReq.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
             ShowWinkReq.onreadystatechange = function () {
                 if (ShowWinkReq.readyState == 4) {

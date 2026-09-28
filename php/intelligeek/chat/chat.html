@@ -50,7 +50,7 @@
         if (receiveReq.readyState == 4 || receiveReq.readyState == 0) {
           receiveReq.open(
             "GET",
-            "getChat.php?chat=1&last=" + lastMessage,
+            "getChat.py?chat=1&last=" + lastMessage,
             true,
           );
           receiveReq.onreadystatechange = handleReceiveChat;
@@ -64,7 +64,7 @@
           return;
         }
         if (sendReq.readyState == 4 || sendReq.readyState == 0) {
-          sendReq.open("POST", "getChat.php?chat=1&last=" + lastMessage, true);
+          sendReq.open("POST", "getChat.py?chat=1&last=" + lastMessage, true);
           sendReq.setRequestHeader(
             "Content-Type",
             "application/x-www-form-urlencoded",
@@ -116,7 +116,7 @@
       //This cleans out the database so we can start a new chat session.
       function resetChat() {
         if (sendReq.readyState == 4 || sendReq.readyState == 0) {
-          sendReq.open("POST", "getChat.php?chat=1&last=" + lastMessage, true);
+          sendReq.open("POST", "getChat.py?chat=1&last=" + lastMessage, true);
           sendReq.setRequestHeader(
             "Content-Type",
             "application/x-www-form-urlencoded",

@@ -195,7 +195,7 @@ function fetch() {
  */
 function fetchUserList() {
   rnd++;
-  url = "userlist.php?" + rnd;
+  url = "userlist.py?" + rnd;
   req = getAjax();
 
   req.onreadystatechange = function () {
@@ -234,7 +234,7 @@ function fetchUserList() {
  */
 function fetchBufferText() {
   user = location.search.substring(1, location.search.length);
-  url = "buffertext.php?u=" + user + "&rand=" + rnd;
+  url = "buffertext.py?u=" + user + "&rand=" + rnd;
   req = getAjax();
 
   req.onreadystatechange = function () {
@@ -286,7 +286,7 @@ function postText() {
   }
 
   user = location.search.substring(1, location.search.length);
-  url = "posttext.php?u=" + user + "&rand=" + rnd + "&t=" + chat;
+  url = "posttext.py?u=" + user + "&rand=" + rnd + "&t=" + chat;
 
   req = getAjax();
 
@@ -318,7 +318,7 @@ function pingServer() {
   window.clearTimeout(pingtimeout);
 
   user = location.search.substring(1, location.search.length);
-  url = "ping.php?u=" + user + "&rand=" + rnd;
+  url = "ping.py?u=" + user + "&rand=" + rnd;
 
   req = getAjax();
   req.open("GET", url, true);

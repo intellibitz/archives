@@ -18,7 +18,7 @@ function email_validation_submit(i, b) {
     )
   ) {
     // on receiving proper mail id send mail to mailing list
-    var url = "../newsletter/registerpage.php?e_mail=" + email;
+    var url = "../newsletter/registerpage.py?e_mail=" + email;
     newsrequest(url, b);
   } else {
     document.getElementById(b).innerHTML = "Please verify the mail address";

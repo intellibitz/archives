@@ -61,5 +61,5 @@ function getlog(obj) {
     "&password=" +
     encodeURI(document.getElementById("password").value);
 
-  makePOSTRequest("../login/logindb.php", poststr1);
+  makePOSTRequest("../login/logindb.py", poststr1);
 }

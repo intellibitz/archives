@@ -21,8 +21,8 @@ function createRequest() {
 }
 
 function updateTextbox() {
-  //var url = "../php/checkavailablity.php";
-  var url = "../register/checkavailablity.php";
+  //var url = "../php/checkavailablity.py";
+  var url = "../register/checkavailablity.py";
   createRequest();
 
   var username = document.getElementById("username1").value;
