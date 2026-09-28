@@ -134,55 +134,37 @@ fun MappingEditor(fontMap: FontMap) {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Top section: Fonts configuration (Shared across both tabs)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = if (fontMap.font1Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font1?.name ?: "" else fontMap.font1Path,
-                onValueChange = { fontMap.font1Path = it; refreshTrigger++ },
-                label = { Text("Map File From (Font 1)") },
-                modifier = Modifier.weight(1f)
-            )
-            Button(onClick = {
-                val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Select Font 1", java.awt.FileDialog.LOAD)
-                dialog.isVisible = true
-                if (dialog.file != null) {
-                    val file = File(dialog.directory, dialog.file)
-                    fontMap.font1Path = file.absolutePath
-                    fontMap.setFont1(file)
-                    refreshTrigger++
-                }
-            }) { Text("Browse") }
-            Button(onClick = { showFont1Dialog = true }) { Text("System") }
-            
-            OutlinedTextField(
-                value = if (fontMap.font2Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font2?.name ?: "" else fontMap.font2Path,
-                onValueChange = { fontMap.font2Path = it; refreshTrigger++ },
-                label = { Text("Map File To (Font 2)") },
-                modifier = Modifier.weight(1f)
-            )
-            Button(onClick = {
-                val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Select Font 2", java.awt.FileDialog.LOAD)
-                dialog.isVisible = true
-                if (dialog.file != null) {
-                    val file = File(dialog.directory, dialog.file)
-                    fontMap.font2Path = file.absolutePath
-                    fontMap.setFont2(file)
-                    refreshTrigger++
-                }
-            }) { Text("Browse") }
-            Button(onClick = { showFont2Dialog = true }) { Text("System") }
-        }
-        
-        // Shared Options
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = hideUnusable, onCheckedChange = { hideUnusable = it })
-            Text("Hide Unusable Characters (based on selected fonts)")
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
         if (currentTab == 0) {
             // Mapping Rules Tab
+            
+            // Language/Font configuration for Mapping
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Source Language/Font:", fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = if (fontMap.font1Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font1?.name ?: "" else fontMap.font1Path,
+                    onValueChange = { fontMap.font1Path = it; refreshTrigger++ },
+                    modifier = Modifier.weight(1f)
+                )
+                Button(onClick = { showFont1Dialog = true }) { Text("Select") }
+                
+                Text("Target Language/Font:", fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = if (fontMap.font2Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font2?.name ?: "" else fontMap.font2Path,
+                    onValueChange = { fontMap.font2Path = it; refreshTrigger++ },
+                    modifier = Modifier.weight(1f)
+                )
+                Button(onClick = { showFont2Dialog = true }) { Text("Select") }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Shared Options
+            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = hideUnusable, onCheckedChange = { hideUnusable = it })
+                Text("Hide Unusable Characters (based on selected fonts)")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            
             // Table Header
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -454,37 +436,86 @@ fun MappingEditor(fontMap: FontMap) {
             }
         }
         } else {
-            // Transliterate Text Tab
+            // Transliterate Text Tab (Google Translate Style)
             var testInput by remember { mutableStateOf("") }
             var testOutput by remember { mutableStateOf("") }
             
-            Row(
-                modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    Text("Input Text (e.g. English)", fontWeight = FontWeight.Bold)
-                    OutlinedTextField(
-                        value = testInput,
-                        onValueChange = { 
-                            testInput = it
-                            val transliterator = intellibitz.sted.fontmap.DefaultTransliterator()
-                            transliterator.setEntries(fontMap.entries)
-                            testOutput = transliterator.parseLine(it) ?: ""
-                        },
-                        textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font1Family),
-                        modifier = Modifier.fillMaxSize()
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Language Selectors (Header)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Source
+                    Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Text("From: ", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.subtitle1)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        OutlinedButton(onClick = { showFont1Dialog = true }) {
+                            val font1Name = if (fontMap.font1Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font1?.name else fontMap.font1Path
+                            Text(font1Name?.takeIf { it.isNotBlank() } ?: "English (Default)")
+                        }
+                    }
+                    
+                    // Swap Icon Placeholder
+                    Icon(
+                        imageVector = Icons.Default.Add, // Using Add as a placeholder for swap if Swap isn't available
+                        contentDescription = "Translate",
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        tint = MaterialTheme.colors.primary
                     )
+                    
+                    // Target
+                    Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Text("To: ", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.subtitle1)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        OutlinedButton(onClick = { showFont2Dialog = true }) {
+                            val font2Name = if (fontMap.font2Path == intellibitz.sted.util.Resources.SYSTEM) fontMap.font2?.name else fontMap.font2Path
+                            Text(font2Name?.takeIf { it.isNotBlank() } ?: "Tamil (Default)")
+                        }
+                    }
                 }
-                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    Text("Transliterated Output", fontWeight = FontWeight.Bold)
-                    OutlinedTextField(
-                        value = testOutput,
-                        onValueChange = {},
-                        readOnly = true,
-                        textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font2Family),
-                        modifier = Modifier.fillMaxSize()
-                    )
+                
+                // Text Areas (Google Translate layout)
+                Row(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Input Area
+                    Card(modifier = Modifier.weight(1f).fillMaxHeight(), elevation = 2.dp) {
+                        OutlinedTextField(
+                            value = testInput,
+                            onValueChange = { 
+                                testInput = it
+                                val transliterator = intellibitz.sted.fontmap.DefaultTransliterator()
+                                transliterator.setEntries(fontMap.entries)
+                                testOutput = transliterator.parseLine(it) ?: ""
+                            },
+                            placeholder = { Text("Enter text to transliterate...", color = androidx.compose.ui.graphics.Color.Gray) },
+                            textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font1Family, fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
+                            modifier = Modifier.fillMaxSize(),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                focusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+                                unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent
+                            )
+                        )
+                    }
+                    
+                    // Output Area
+                    Card(modifier = Modifier.weight(1f).fillMaxHeight(), elevation = 2.dp, backgroundColor = androidx.compose.ui.graphics.Color(0xFFF5F5F5)) {
+                        OutlinedTextField(
+                            value = testOutput,
+                            onValueChange = {},
+                            readOnly = true,
+                            placeholder = { Text("Translation", color = androidx.compose.ui.graphics.Color.Gray) },
+                            textStyle = androidx.compose.ui.text.TextStyle(fontFamily = font2Family, fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
+                            modifier = Modifier.fillMaxSize(),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                focusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+                                unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent
+                            )
+                        )
+                    }
                 }
             }
         }
