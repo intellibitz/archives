@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.ui.text.platform.asComposeFontFamily
 import androidx.compose.ui.unit.dp
 import intellibitz.sted.fontmap.FontMap
@@ -196,6 +199,71 @@ fun MappingEditor(fontMap: FontMap) {
                     }
                 }
                 Divider()
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Keypad Section
+        Row(modifier = Modifier.fillMaxWidth().height(150.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Font 1 Keypad
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Font 1 Keypad", style = MaterialTheme.typography.subtitle2, fontWeight = FontWeight.Bold)
+                if (fontMap.font1 != null && font1Family != null) {
+                    val font1Chars = remember(fontMap.font1) {
+                        val list = mutableListOf<String>()
+                        for (i in 32..0xFFFF) {
+                            if (fontMap.font1!!.canDisplay(i)) list.add(i.toChar().toString())
+                        }
+                        list
+                    }
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(32.dp),
+                        modifier = Modifier.fillMaxSize().padding(top = 4.dp)
+                    ) {
+                        items(font1Chars) { charStr ->
+                            TextButton(
+                                onClick = { newFrom += charStr },
+                                modifier = Modifier.size(32.dp).padding(2.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(charStr, fontFamily = font1Family, color = MaterialTheme.colors.onSurface)
+                            }
+                        }
+                    }
+                } else {
+                    Text("No Font 1 Selected", modifier = Modifier.padding(top=4.dp))
+                }
+            }
+
+            // Font 2 Keypad
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Font 2 Keypad", style = MaterialTheme.typography.subtitle2, fontWeight = FontWeight.Bold)
+                if (fontMap.font2 != null && font2Family != null) {
+                    val font2Chars = remember(fontMap.font2) {
+                        val list = mutableListOf<String>()
+                        for (i in 32..0xFFFF) {
+                            if (fontMap.font2!!.canDisplay(i)) list.add(i.toChar().toString())
+                        }
+                        list
+                    }
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(32.dp),
+                        modifier = Modifier.fillMaxSize().padding(top = 4.dp)
+                    ) {
+                        items(font2Chars) { charStr ->
+                            TextButton(
+                                onClick = { newTo += charStr },
+                                modifier = Modifier.size(32.dp).padding(2.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(charStr, fontFamily = font2Family, color = MaterialTheme.colors.onSurface)
+                            }
+                        }
+                    }
+                } else {
+                    Text("No Font 2 Selected", modifier = Modifier.padding(top=4.dp))
+                }
             }
         }
         
