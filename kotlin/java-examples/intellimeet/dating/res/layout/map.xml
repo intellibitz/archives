@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : map.xml
+    Created on : March 31, 2008, 10:20 AM
+    Author     : gunasekaran
+    Description:
+        Purpose of the document follows.
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+>
+    <view class="com.google.android.maps.MapView"
+          android:id="@+id/map"
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent"/>
+</LinearLayout>

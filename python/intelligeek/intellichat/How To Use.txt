@@ -1,0 +1,25 @@
+***************************************************************
+***************************************************************
+Program : Mess Chat V.1.7.10F
+Developer : Theerasak Phuetthanyakij
+Email : service@thaimess.com
+Website : http://lab.thaimess.com
+***************************************************************
+***************************************************************
+
+This chat script is not for sale, you can donate by request at service@thaimess.com
+
+***************************************************************
+***************************************************************
+How To Install
+***************************************************************
+***************************************************************
+- Change Variable In lib/config.inc.php
+
+$user = ''; // Username To Log In TO Your Database
+$pass = ''; // Password To Log In TO Your Database
+$database = ''; // Database Name
+
+- Run install.php
+- If The Server Is Unix ,CHMOD 'data/online.dat' to 777
+- Enjoy!

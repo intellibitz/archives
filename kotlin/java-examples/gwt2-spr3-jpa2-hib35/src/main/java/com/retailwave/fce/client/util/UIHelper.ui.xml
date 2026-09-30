@@ -1,0 +1,70 @@
+<!DOCTYPE ui:UiBinder
+        SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"
+        >
+<!--
+/**
+ * $Id: UIHelper.ui.xml 5 2010-06-03 11:07:35Z muthu $
+ * $HeadURL: svn://10.10.200.111:3691/Finance/tags/framework-snapshot1/fce/src/main/java/com/retailwave/fce/client/util/UIHelper.ui.xml $
+ */
+-->
+
+<ui:UiBinder
+        xmlns:ui='urn:ui:com.google.gwt.uibinder'
+        >
+
+    <ui:style type="com.retailwave.fce.client.util.UIHelper.UIHelperStyle">
+        .inputPanel {
+        padding: 2px 2px;
+        }
+
+        .commandPanel {
+        padding: 5px 5px;
+        }
+
+        .commandPanelButton {
+        position: relative;
+        padding: 2px 2px;
+        margin: 5px;
+        min-width: 80px;
+        min-height: 20px;
+        }
+
+        .commandPanelButtonDefWidth {
+        position: relative;
+        padding: 5px 5px;
+        margin: 5px;
+        min-height: 20px;
+        }
+
+        .validationFailedBorder {
+        border: 2px solid #ff0000;
+        }
+
+        .validationFailedText {
+        color: #f00;
+        font-size: smaller;
+        text-align: justify;
+        text-indent: 10px;
+        text-decoration: underline;
+        }
+
+        .inputLabel {
+        min-width: 200px;
+        }
+
+        .inputLabelSearch {
+        min-width: 150px;
+        }
+
+        .inputLabelDisabled {
+        color: lightgray;
+        }
+
+        .floatLeft {
+        float: left;
+        }
+    </ui:style>
+
+    <div class='{style.validationFailedBorder} {style.validationFailedText}'>I'm a red box widget.</div>
+
+</ui:UiBinder>    

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                
+                android:orientation="vertical" 
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content">
+    <!--<<<<<<<<<<<<<<<<<<<<<<<<<  DISPLAYING FLIPPER MESSAGES >>>>>>>>>>>>>>>>>>-->
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                  android:id="@+id/matching"
+                  android:orientation="vertical" 
+                  android:padding="10dip"
+                  android:layout_width="fill_parent" 
+                  android:layout_height="200px"
+                  android:background="#ffffff">
+        <ViewFlipper android:id="@+id/flipper"
+                     android:layout_width="fill_parent" 
+                     android:layout_height="wrap_content" 
+                     android:flipInterval="2000" 
+                     android:layout_marginBottom="20dip">
+            <TextView 
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" 
+                android:textAlign="center"
+                android:typeface="serif" 
+                android:textStyle="bold|italic" 
+                android:textSize="20sp" android:text="@string/profile1" 
+                android:textColor="#ffcccc"/>
+            <TextView 
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content" 
+                android:textAlign="center" android:typeface="serif" 
+                android:textStyle="bold|italic"
+                android:textSize="20sp"
+                android:text="@string/profile2" 
+                android:textColor="#deb887"/>
+            <TextView 
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content" 
+                android:textAlign="center" 
+                android:typeface="serif"
+                android:textStyle="bold|italic"
+                android:textSize="20sp" 
+                android:text="@string/profile3" 
+                android:textColor="#add4e5"/>
+            <TextView 
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content" 
+                android:textAlign="center" 
+                android:typeface="serif" 
+                android:textStyle="bold|italic" 
+                android:textSize="20sp"
+                android:text="@string/profile4" 
+                android:textColor="#ff000f"/>
+        </ViewFlipper>
+        <Button 
+            android:id="@+id/chating" 
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content"
+            android:text="chat">
+        </Button>
+    </LinearLayout>
+    
+    <TextView 
+        android:id="@+id/maptext"
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content" 
+        android:textAlign="center" 
+        android:typeface="serif"
+        android:textStyle="bold|italic" 
+        android:textSize="20sp" 
+        android:text="Location of Dream-Mates." 
+        android:textColor="#00ffff"
+        android:layout_below="@id/matching"/>
+    
+    <!--<<<<<<<<<<<<<<<<<<  SHOWING MAP >>>>>>>>>>>>>>>>>>>>>>>>>>>>-->
+       
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="200px"
+                    android:layout_below="@id/maptext">    
+        <view class="com.google.android.maps.MapView"
+              android:id="@+id/map_whereami"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"/>
+    </RelativeLayout>
+    
+</RelativeLayout>   

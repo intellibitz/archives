@@ -1,0 +1,213 @@
+/*
+    Document   : geek.css
+    Created on : Dec 21, 2007, 7:59:27 PM
+    Author     : gunabalans
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+/*
+   TODO customize this sample style
+   Syntax recommendation http://www.w3.org/TR/REC-CSS2/
+*/
+
+a.one {
+  color: #ffffff;
+  text-decoration: none;
+  text-align: center;
+  width: 14.2%;
+  float: left;
+  background-color: #85c226;
+  border-right: 1px #ffffff solid;
+}
+a.one:hover {
+  background-color: #99dc30;
+}
+a.two {
+  color: #ffffff;
+  text-decoration: none;
+  text-align: center;
+  width: 14.2%;
+  float: left;
+  background-color: #f7c200;
+  border-right: 1px #ffffff solid;
+}
+a.two:hover {
+  background-color: #ffd22e;
+}
+a.three {
+  color: #ffffff;
+  text-decoration: none;
+  text-align: center;
+  width: 14.2%;
+  float: left;
+  background-color: #e8795e;
+  border-right: 1px #ffffff solid;
+}
+a.three:hover {
+  background-color: #ff876a;
+}
+a.four {
+  color: #ffffff;
+  text-decoration: none;
+  text-align: center;
+  width: 14%;
+  float: left;
+  background-color: #bab2d9;
+  border-right: 1px #ffffff solid;
+}
+a.four:hover {
+  background-color: #c5b8f6;
+}
+a.five {
+  color: #ffffff;
+  text-decoration: none;
+  text-align: center;
+  width: 14.2%;
+  float: left;
+  background-color: #df127b;
+  border-right: 1px #ffffff solid;
+}
+a.five:hover {
+  background-color: #fe2192;
+}
+a.six {
+  color: #ffffff;
+  text-decoration: none;
+  text-align: center;
+  width: 14%;
+  float: left;
+  background-color: #954578;
+}
+a.six:hover {
+  background-color: #c366a1;
+}
+
+#topic_list {
+  text-align: justify;
+  vertical-align: middle;
+  word-spacing: 2px;
+  letter-spacing: 1px;
+  padding-top: 2px;
+  padding-bottom: 5px;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+#message {
+  background-color: #ccff00;
+  color: #cc0033;
+  text-align: justify;
+  vertical-align: middle;
+}
+
+/*forms style*/
+
+/*form css*/
+
+fieldset {
+  padding: 20px 0 0 0 !important /*Non-IE6*/;
+  padding: 0 /*IE6*/;
+  margin: 0 0 20px 0;
+  border: solid 1px rgb(220, 220, 220);
+}
+fieldset legend {
+  margin: 0 0 0 5px !important /*Non-IE*/;
+  margin: 0 0 20px 5px /*IE6*/;
+  padding: 0 2px 0 2px;
+  color: rgb(80, 80, 80);
+  font-weight: bold;
+  font-size: 130%;
+}
+label.left {
+  float: left;
+  margin: 0 0 0 10px;
+  padding: 2px;
+  font-size: 110%;
+}
+select.combo {
+  padding: 2px;
+  border: solid 1px rgb(200, 200, 200);
+  font-family: verdana, arial, sans-serif;
+  font-size: 110%;
+}
+input.field {
+  padding: 2px;
+  border: solid 1px rgb(200, 200, 200);
+  font-family: verdana, arial, sans-serif;
+  font-size: 110%;
+}
+textarea {
+  padding: 2px;
+  border: solid 1px rgb(200, 200, 200);
+  font-family: verdana, arial, sans-serif;
+  font-size: 110%;
+}
+input.button {
+  float: right;
+  width: 9em;
+  margin-right: 20px;
+  padding: 1px !important /*Non-IE6*/;
+  padding: 0 /*IE6*/;
+  background: rgb(230, 230, 230);
+  border: solid 1px rgb(150, 150, 150);
+  text-align: center;
+  font-family: verdana, arial, sans-serif;
+  color: rgb(150, 150, 150);
+  font-size: 110%;
+}
+input.button:hover {
+  cursor: pointer;
+  border: solid 1px rgb(80, 80, 80);
+  background: rgb(220, 220, 220);
+  color: rgb(80, 80, 80);
+}
+
+input.field_1 {
+  border: solid 1px rgb(200, 200, 200);
+  font-family: verdana, arial, sans-serif;
+  font-size: 80%;
+  padding-top: 5px;
+  padding-bottom: -10px;
+  margin-bottom: 5px;
+}
+
+.content {
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  padding: 5px;
+  border: solid 1px #333366;
+}
+
+.message_1 {
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  padding: 5px;
+  border: solid 1px #333366;
+}
+
+#contents_duplicate {
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  padding: 5px;
+  border: solid 1px #333366;
+}
+.faqdiv {
+  background-color: #b0c4de;
+  border: solid 1px #333366;
+}
+.ans {
+  background-color: #f8f8ff;
+}
+
+.capitals {
+  text-transform: capitalize;
+  text-align: left;
+  vertical-align: middle;
+  text-indent: 5px;
+  word-spacing: 3px;
+  letter-spacing: 1px;
+  line-height: 20px;
+  font-size: 120%;
+  font-family: Geneva, Arial, Helvetica, sans-serif;
+}

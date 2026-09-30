@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    Document   : error
+    Created on : Feb 4, 2008, 3:29:41 PM
+    Author     : jailani
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a="http://richfaces.org/a4j">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <title>Intellimeet-Welcome</title>
+    </head>
+    <body>
+        <center>                
+            <ui:composition template="/template/intellimeetError.xhtml">
+                
+                <br/>
+                <ui:define name="title">IntelliMeet</ui:define>
+                <ui:define name="content">  
+                    <br/> <br/>
+                    
+                    <h2> Invalid Email/Password</h2>
+                    <br/>
+                    Go Back to <a href="../intellimeet/home.seam">Home</a><br/>
+                </ui:define>
+            </ui:composition>                
+        </center>
+    </body>
+</html>

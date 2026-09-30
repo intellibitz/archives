@@ -1,0 +1,86 @@
+<!-- 
+    Document   : post_a_question
+    Created on : Dec 31, 2007, 2:51:54 PM
+    Author     : gunabalans
+-->
+
+<?php
+        $connect = mysql_connect("ns1","geek","intelli") or die (mysql_error());
+	//echo("connected to Mysql");
+	mysql_select_db ("intelligeek",$connect) or die (mysql_error());
+	//echo("connected to Database");
+
+?>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head><title>Page title</title></head>
+<body>
+
+<div>
+<form  method = "post" action ="<?php $_SERVER[PHP_SELF]?>">
+
+<div id="err" name="err"></div>	 <p>
+ <select name ="sub_id">
+	<?php
+         
+                $query ='SELECT * FROM subject';
+                 $result = mysql_query($query) or die(mysql_error());  
+                                 
+                 while($row = mysql_fetch_array( $result )) 
+			{                     
+                        echo '<option value='.$row[0].'>'.$row[1].'</option>';
+		
+                         }
+                
+          
+         
+         
+         ?>
+</select>Subject Id</p><br>
+	 
+          <p>
+ <select name ="level">
+	<option>simple </option>
+	<option>medium </option>
+	<option>hard </option>
+</select>
+Level
+</p>
+<br>
+<p><textarea name="q"> </textarea>Question</p>
+<p><textarea name="a"> </textarea>A)</p>
+<p><textarea name="b"> </textarea>B)</p>
+<p><textarea name="c"> </textarea>C)</p>
+<p><textarea name="d"> </textarea>D)</p>
+	 <p>
+ <select name ="ans">
+	<option>1 </option>
+	<option>2 </option>
+	<option>3 </option>
+	<option>4 </option>
+</select>Select the answer</p></br>
+<input type="submit"> 
+</form>
+</div>
+
+</body>
+</html>
+
+
+
+<?php
+	
+ 	
+	$sub_id = mysql_real_escape_string($_POST['sub_id']);
+	$level = mysql_real_escape_string($_POST['level']);
+	$q = mysql_real_escape_string($_POST['q']);
+	$a = mysql_real_escape_string($_POST['a']);
+	$b = mysql_real_escape_string($_POST['b']);
+	$c = mysql_real_escape_string($_POST['c']);
+	$d = mysql_real_escape_string($_POST['d']);
+	$ans = mysql_real_escape_string($_POST['ans']);
+	mysql_query("insert into question(sub_id,level,q,a,b,c,d,ans)value('$sub_id','$level','$q','$a','$b','$c','$d','$ans')") or die(mysql_error());
+ 
+ 	
+?>

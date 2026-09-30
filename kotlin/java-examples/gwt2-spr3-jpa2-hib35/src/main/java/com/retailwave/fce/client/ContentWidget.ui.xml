@@ -1,0 +1,50 @@
+<!DOCTYPE ui:UiBinder
+        SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"
+        >
+<!--
+/**
+ * $Id: ContentWidget.ui.xml 5 2010-06-03 11:07:35Z muthu $
+ * $HeadURL: svn://10.10.200.111:3691/Finance/tags/framework-snapshot1/fce/src/main/java/com/retailwave/fce/client/ContentWidget.ui.xml $
+ */
+-->
+
+<ui:UiBinder
+        xmlns:ui='urn:ui:com.google.gwt.uibinder'
+        xmlns:g='urn:import:com.google.gwt.user.client.ui'
+        xmlns:fce='urn:import:com.retailwave.fce.client'>
+
+    <ui:style>
+        .Application-content {
+        border: 2px solid #faf9f7;
+        padding: 10px;
+        }
+        .Application-content-name {
+        font-size:large;
+        font-weight: bold;
+        }
+        .Application-content-description {
+        font-size:medium;
+        border-bottom: 1px solid #7aa5d6;
+        }
+    </ui:style>
+
+    <g:DockLayoutPanel ui:field="dockLayoutPanel" unit="PCT" styleName="{style.Application-content}">
+        <g:north size="5">
+            <g:Label ui:field="name" styleName="{style.Application-content-name}">
+                <!--content name-->
+            </g:Label>
+        </g:north>
+        <g:north size="5">
+            <g:Label ui:field="description" styleName="{style.Application-content-description}">
+                <!--content description-->
+            </g:Label>
+        </g:north>
+        <g:center>
+            <!--content value-->
+            <g:DockLayoutPanel ui:field="contentDockLayoutPanel" unit="PCT"
+                               styleName="{style.Application-content}">
+            </g:DockLayoutPanel>
+        </g:center>
+    </g:DockLayoutPanel>
+
+</ui:UiBinder>    

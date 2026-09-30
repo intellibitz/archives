@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:id="@+id/container"
+             android:layout_width="fill_parent"
+             android:layout_height="fill_parent">
+    
+    <AbsoluteLayout
+        android:id="@+id/widget125"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:background="#fffafa"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+        
+        <ViewFlipper android:id="@+id/flipper"
+                     android:layout_width="fill_parent"
+                     android:layout_height="fill_parent"
+                     android:flipInterval="2000"
+                     android:layout_marginBottom="10dip" >
+            <TextView
+                android:id="@+id/widget126"
+                android:layout_width="fill_parent"
+                android:layout_height="51px"
+                android:text="Welcome"
+                android:textSize="22sp"            
+                android:textStyle="bold"
+                android:textColor="#4b0082"
+                android:textAlign="center"
+                android:layout_x="0px"
+                android:layout_y="2px">
+            </TextView>
+            <TextView
+                android:id="@+id/widget124"
+                android:layout_width="fill_parent"
+                android:layout_height="51px"
+                android:text="Get your DreamDate closer to you !!! "
+                android:textSize="16sp"            
+                android:textStyle="bold"
+                android:textColor="#4b0082"
+                android:textAlign="center"
+                android:layout_x="0px"
+                android:layout_y="2px">
+            </TextView>
+        </ViewFlipper>
+        <TextView
+            android:id="@+id/widget127"
+            android:layout_width="315px"
+            android:layout_height="149px"
+            android:text=" Are you looking for potential dating match ? Create your profile, partner profile and activate the Dating Service. Just wait for the alerts."
+            android:textSize="12sp"
+            android:textColor="#4b0082"
+            android:layout_x="0px"
+            android:layout_y="53px">
+        </TextView>
+        <TextView
+            android:id="@+id/widget128"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start connecting with other singles for free."
+            android:textSize="13sp"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="0px"
+            android:layout_y="100px">
+        </TextView>
+        <TextView
+            android:id="@+id/widget128"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Wish you all success !!!"
+            android:textSize="15sp"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="80px"
+            android:layout_y="120px">
+        </TextView>
+       
+        <ImageView
+            android:id="@+id/icon1"
+            android:layout_width="50px"
+            android:layout_height="50px"
+            android:src="@drawable/profile"
+            android:layout_x="10px"
+            android:layout_y="160px"
+        >
+        </ImageView>
+        
+        <TextView
+            android:id="@+id/icontext1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  Profiles"
+            android:textSize="10sp"            
+            android:textStyle="bold"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="10px"
+            android:layout_y="210px"/>
+        
+        <ImageView
+            android:id="@+id/icon2"
+            android:layout_width="50px"
+            android:layout_height="50px"
+            android:src="@drawable/activate"
+            android:layout_x="128px"
+            android:layout_y="160px"
+        >
+        </ImageView>
+        
+        <TextView
+            android:id="@+id/icontext2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  Activation"
+            android:textSize="10sp"            
+            android:textStyle="bold"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="120px"
+            android:layout_y="210px"/>
+        
+        <ImageView
+            android:id="@+id/icon3"
+            android:layout_width="50px"
+            android:layout_height="50px"
+            android:src="@drawable/map"
+            android:layout_x="250px"
+            android:layout_y="160px"
+        >
+        </ImageView>
+        
+        <TextView
+            android:id="@+id/icontext3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="   Map"
+            android:textSize="10sp"            
+            android:textStyle="bold"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="250px"
+            android:layout_y="210px"/>
+        <ImageView
+            android:id="@+id/icon4"
+            android:layout_width="50px"
+            android:layout_height="50px"
+            android:src="@drawable/matching"
+            android:layout_x="10px"
+            android:layout_y="240px"
+        >
+        </ImageView>
+        
+        <TextView
+            android:id="@+id/icontext4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Matched"
+            android:textSize="10sp"            
+            android:textStyle="bold"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="10px"
+            android:layout_y="290px"/>
+        <TextView
+            android:id="@+id/icontext41"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="profiles"
+            android:textSize="10sp"            
+            android:textStyle="bold"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="12px"
+            android:layout_y="300px"/>
+        <ImageView
+            android:id="@+id/icon5"
+            android:layout_width="50px"
+            android:layout_height="50px"
+            android:src="@drawable/help"
+            android:layout_x="128px"
+            android:layout_y="240px"
+        >
+        </ImageView>
+        
+        <TextView
+            android:id="@+id/icontext5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Help"
+            android:textSize="10sp"            
+            android:textStyle="bold"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="136px"
+            android:layout_y="290px"/>
+        
+        <ImageView
+            android:id="@+id/icon6"
+            android:layout_width="50px"
+            android:layout_height="50px"
+            android:src="@drawable/quit"
+            android:layout_x="250px"
+            android:layout_y="240px"
+        >
+        </ImageView>
+        
+        <TextView
+            android:id="@+id/icontext5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="   Quit"
+            android:textSize="10sp"            
+            android:textStyle="bold"
+            android:textColor="#4b0082"
+            android:textAlign="center"
+            android:layout_x="255px"
+                android:layout_y="290px"/>
+            
+            <ImageView
+                android:id="@+id/widget27"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/rose"
+                android:layout_x="125px"
+                android:layout_y="354px"
+            >
+            </ImageView>
+            
+        </AbsoluteLayout>
+        
+        
+        
+    </FrameLayout>

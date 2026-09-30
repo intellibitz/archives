@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : help.xml
+    Created on : March 26, 2008, 3:25 PM
+    Author     : gunasekaran
+    Description:
+        Purpose of the document follows.
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
+              android:id="@+id/help" 
+              android:orientation="vertical" 
+              android:padding="4dip"
+              android:gravity="center_horizontal"
+              android:layout_width="fill_parent" 
+              android:layout_height="fill_parent"
+              android:background="#ffffff">
+    
+    <TextView     android:layout_width="fill_parent" 
+                  android:layout_height="wrap_content"
+                  android:layout_weight="0"
+                  android:paddingBottom="4dip"
+                  android:textColor="#4b0082"
+                  android:text="@string/help"/>
+    <TextView     android:layout_width="fill_parent" 
+                  android:layout_height="wrap_content"
+                  android:layout_weight="0"
+                  android:paddingBottom="4dip"
+                  android:textSize="10px"
+                  android:textColor="#4b0082"
+                  android:text="@string/helpprofile"/>
+    <TextView     android:layout_width="fill_parent" 
+                  android:layout_height="wrap_content"
+                  android:layout_weight="0"
+                  android:paddingBottom="4dip"
+                  android:textSize="10px"
+                  android:textColor="#4b0082"
+                  android:text="@string/helppartner"/>
+    <TextView     android:layout_width="fill_parent" 
+                  android:layout_height="wrap_content"
+                  android:layout_weight="0"
+                  android:paddingBottom="4dip"
+                  android:textSize="10px"
+                  android:textColor="#4b0082"
+                  android:text="@string/helpservice"/>
+    <TextView     android:layout_width="fill_parent" 
+                  android:layout_height="wrap_content"
+                  android:layout_weight="0"
+                  android:paddingBottom="4dip"
+                  android:textSize="10px"
+                  android:textColor="#4b0082"
+                  android:text="@string/helpalert"/>
+    <TextView     android:layout_width="fill_parent" 
+                  android:layout_height="wrap_content"
+                  android:layout_weight="0"
+                  android:paddingBottom="4dip"
+                  android:textSize="10px"
+                  android:textColor="#4b0082"
+                  android:text="@string/helpinteraction"/>
+    <TextView     android:layout_width="fill_parent" 
+                  android:layout_height="wrap_content"
+                  android:layout_weight="0"
+                  android:paddingBottom="4dip"
+                  android:textSize="10px"
+                  android:textColor="#4b0082"
+                  android:text="@string/helpbroadcast"/>              
+</LinearLayout> 

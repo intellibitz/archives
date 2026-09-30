@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder
+        SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"
+        >
+<!--
+/**
+ * $Id: FCEPresenter.ui.xml 5 2010-06-03 11:07:35Z muthu $
+ * $HeadURL: svn://10.10.200.111:3691/Finance/tags/framework-snapshot1/fce/src/main/java/com/retailwave/fce/client/FCEPresenter.ui.xml $
+ */
+-->
+
+<ui:UiBinder
+        xmlns:ui='urn:ui:com.google.gwt.uibinder'
+        xmlns:g='urn:import:com.google.gwt.user.client.ui'
+        xmlns:fce='urn:import:com.retailwave.fce.client'
+        >
+
+    <fce:Application ui:field='application'/>
+
+</ui:UiBinder>    

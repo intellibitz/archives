@@ -1,0 +1,31 @@
+<profilesXml>
+    <!--
+    $Id::                                                                           $: Id of last commit
+    $Rev::                                                                          $: Revision of last commit
+    $Author::                                                                       $: Author of last commit
+    $Date::                                                                         $: Date of last commit
+    $HeadURL::                                                                      $: Head URL of last commit
+    -->
+    <!-- =================================================================== -->
+    <!-- LOCAL USER SETTINGS -->
+    <!-- This exists for Continuum to build the project with default settings.-->
+    <!-- -->
+    <!-- NOTE: FEEL FREE TO CHANGE SETTINGS TO REFLECT YOUR ENVIRONMENT -->
+    <!-- IMPORTANT: BUT DO NOT CHECK-IN -->
+    <!-- -->
+    <!-- This exists for Continuum to build the project with default settings.-->
+    <!-- LOCAL USER SETTINGS -->
+    <!-- =================================================================== -->
+    <profiles>
+        <profile>
+            <id>muthu</id>
+            <properties>
+                <!--<jboss.home>/opt/share/jboss-5.0.0.Beta3</jboss.home>-->
+                <jboss.home>/opt/share/jboss-4.2.2.GA</jboss.home>
+            </properties>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>muthu</activeProfile>
+    </activeProfiles>
+</profilesXml>

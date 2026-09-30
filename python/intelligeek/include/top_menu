@@ -1,0 +1,12 @@
+<a href="javascript:ajax('../login/index.php','login')" class="one">Login</a>
+
+<a href="javascript:ajax('../register/index.php','content')" class="three">Sign Up</a>
+<a href="javascript:ajax('../php/play_list.php','content')" class="two">Play</a>
+
+<a href="javascript:ajax('../askquestion/index.php','content')" class="four">Ask a Question</a>
+<!--
+<a href="" class="five">How to Play</a>
+<a href="" class="six">About Us</a>
+-->
+
+

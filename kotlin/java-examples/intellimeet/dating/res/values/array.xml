@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <array name="age">
+        <item>Select Age </item>
+        <item>18-20</item>
+        <item>21-23</item>
+        <item>24-26</item>
+        <item>27-29</item>
+        <item>30-32</item>
+        <item>33-35</item>
+        <item>36-38</item>
+        <item>39-41</item>
+        <item>42-44</item>
+        <item>45-47</item>
+        <item>48-50</item>
+        <item>above 50</item>
+    </array>
+    <array name="height">
+        <item>Select Height</item>
+        <item>140-145</item>
+        <item>146-150</item>
+        <item>151-155</item>
+        <item>156-160</item>
+        <item>161-165</item>
+        <item>166-170</item>
+        <item>171-175</item>
+        <item>176-180</item>
+        <item>181-185</item>
+         <item>above 185</item>
+    </array>
+    <array name="weight">
+        <item>Select  Weight</item>
+        <item>40-45</item>
+        <item>46-50</item>
+        <item>51-55</item>
+        <item>56-60</item>
+        <item>61-65</item>
+        <item>66-70</item>
+        <item>71-75</item>
+        <item>76-80</item>
+        <item>81-85</item>
+         <item>above 85</item>
+    </array>
+  <array name="location">
+    <item>Select Location</item>
+    <item>TamilNadu</item>
+    <item>Kerala</item>
+    <item>Andrapradesh</item>
+    <item>Karnataka</item>
+    <item>Madhyapradesh</item>
+    <item>Maharashtra</item>
+    <item>Gujarat</item>
+    <item>Goa</item>
+    <item>Assam</item>
+    <item>Orissa</item>
+    <item>Bihar</item>
+    <item>Punjab</item>
+    <item>kashmir</item>
+   </array>
+</resources>
+

@@ -1,0 +1,79 @@
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+$Id::                                                                           $: Id of last commit
+$Rev::                                                                          $: Revision of last commit
+$Author::                                                                       $: Author of last commit
+$Date::                                                                         $: Date of last commit
+$HeadURL::                                                                      $: Head URL of last commit
+-->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:s="http://jboss.com/products/seam/taglib"
+                xmlns:a="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich"
+                template="/facelets/template.xhtml">
+
+    <!-- content -->
+    <ui:define name="content">
+        <div class="section">
+            <h1>Testing Please Wait RichFaces Ajax component</h1>
+        </div>
+        <div class="section">
+            <div class="entry errors">
+                <h:messages globalOnly="true"/>
+            </div>
+
+            <div style="clear:both"/>
+
+            <script type="text/javascript">
+                var infoWindowAMShown = false;
+                var infoWindowAMTimer;
+                function showModalInfoWindow()
+                {
+                    infoWindowAMTimer =
+                    setTimeout("if(!infoWindowAMShown){Richfaces.showModalPanel('ajaxLoadingModalBox');infoWindowAMShown=true;}", 500);
+                }
+                function hideModalInfoWindow()
+                {
+                    if (infoWindowAMShown)
+                    {
+                        Richfaces.hideModalPanel('ajaxLoadingModalBox');
+                        infoWindowAMShown = false;
+                    }
+                    else
+                    {
+                        if (infoWindowAMTimer)clearTimeout(infoWindowAMTimer);
+                    }
+                }
+            </script>
+
+
+            <a:status onstart="showModalInfoWindow();"
+                      onstop="hideModalInfoWindow()"/>
+
+            <rich:modalPanel id="ajaxLoadingModalBox" minHeight="200"
+                             minWidth="450"
+                             height="100" width="250" zindex="2000">
+                <f:facet name="header">
+                    <h:outputText value="Request being processed"/>
+                </f:facet>
+                <h:outputText
+                        value="Your request is being processed, please wait."/>
+            </rich:modalPanel></div>
+    </ui:define>
+
+    <!-- sidebar -->
+    <ui:define name="sidebar">
+
+        <h1>Component: RichFaces ModalPanel</h1>
+
+        <p>
+            A please wait ajax modal dialog must be shown
+        </p>
+
+    </ui:define>
+
+</ui:composition>

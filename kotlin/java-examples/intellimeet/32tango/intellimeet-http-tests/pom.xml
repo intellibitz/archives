@@ -1,0 +1,135 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <parent>
+        <groupId>com.ibt.intellimeet</groupId>
+        <artifactId>intellimeet</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.ibt.intellimeet</groupId>
+    <artifactId>intellimeet-http-tests</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>intellimeet-http-tests</name>
+    <url>http://localhost:8080/intellimeet</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.ibt.intellimeet</groupId>
+            <artifactId>intellimeet-ear-tests</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>ear</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.ibt.intellimeet</groupId>
+            <artifactId>intellimeet-ejb</artifactId>
+            <type>ejb</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>httpunit</groupId>
+            <artifactId>httpunit</artifactId>
+            <version>1.6</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+
+        <testSourceDirectory>src/main</testSourceDirectory>
+
+        <!-- We need to force the compiler plugin to compile tests and the surefire plugin to execute
+them because we're using a pom packaging that doesn't have those mapped in its lifecycle.
+A better solution would be for m2 to define a default integration-test lifecycle -->
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.cargo</groupId>
+                <artifactId>cargo-maven2-plugin</artifactId>
+                <configuration>
+                    <wait>false</wait>
+                    <!-- Container configuration -->
+                    <container>
+                        <containerId>jboss4x</containerId>
+                        <home>${jboss.home}</home>
+                        <!--
+                                                <zipUrlInstaller>
+                                                    <url>http://downloads.sourceforge.net/jboss/jboss-4.2.2.GA.zip</url>
+                                                    <installDir>${parent.basedir}</installDir>
+                                                </zipUrlInstaller>
+                        -->
+                        <log>${project.build.directory}/cargo.log</log>
+                    </container>
+                    <!-- Configuration to use with the container -->
+                    <configuration>
+                        <type>existing</type>
+                        <home>${jboss.home}/server/default</home>
+                        <properties>
+                            <cargo.jboss.configuration>default
+                            </cargo.jboss.configuration>
+                            <!--<cargo.servlet.port>9080</cargo.servlet.port>-->
+                            <cargo.rmi.port>1099</cargo.rmi.port>
+                            <cargo.jvmargs>-Dsun.lang.ClassLoader.allowArraySyntax=true</cargo.jvmargs>
+                        </properties>
+                    </configuration>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>start-container</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                            <deployer>
+                                <deployables>
+                                    <deployable>
+                                        <groupId>com.ibt.intellimeet</groupId>
+                                        <artifactId>intellimeet-ear-tests</artifactId>
+                                        <type>ear</type>
+                                    </deployable>
+                                </deployables>
+                            </deployer>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>stop-container</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>undeploy</goal>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

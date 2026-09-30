@@ -1,0 +1,64 @@
+<style type="text/css">
+-
+body {
+	}
+font {
+	font-family: MS Sans Serif, Tahoma, sans-serif;
+	font-size: 12px;
+}
+	a:text {text-decoration: none; color: #000000} 
+	a:link {text-decoration: none; color: #000000} 
+	a:visited {text-decoration: none; color: #000000} 
+	a:active {text-decoration: none; color: #000000} 
+	a:hover {text-decoration: none; color: #000000}
+.outerchatarea{
+	width:586px;
+	height:570px;
+	overflow:auto;
+	background-color:#bed7ec;
+     scrollbar-3d-light-color: white;
+     scrollbar-base-color: #D3E4F5;
+     scrollbar-arrow-color: black;
+     scrollbar-track-color: white;
+
+     scrollbar-shadow-color: #167FB2;
+     scrollbar-lightshadow-color: black; 
+     scrollbar-darkshadow-color: white;
+
+     scrollbar-highlight-color: white;
+     scrollbar-3dlight-color: #167FB2;
+	 background-image: url(images/background.gif);
+	 }
+.status{border-top:1px solid #64AADD;}
+.chatarea{position:fixed;bottom:2px;width:569px;height:400px;right:5%;background-color:#FFFFFF;padding:3px}
+.onlineareas{height:300px;bottom:5px;right:5%;overflow:auto;padding:10px;
+     scrollbar-3d-light-color: white;
+     scrollbar-base-color: 92c2e7;
+     scrollbar-arrow-color: black;
+     scrollbar-track-color: white;
+
+     scrollbar-shadow-color: #167FB2;
+     scrollbar-lightshadow-color: black; 
+     scrollbar-darkshadow-color: white;
+
+     scrollbar-highlight-color: white;
+     scrollbar-3dlight-color: #167FB2;
+}
+.chatloadarea{border-top:1px solid #64AADD}
+.rightareas{position:fixed;bottom:5px;width:169px;right:5%;overflow:auto;border-top:1px solid #64AADD;border-left:1px solid #64AADD;padding:10px}
+.menuareas{border-top:1px solid #64AADD;border-left:1px solid #64AADD}
+.rightout{border-top:1px solid #64AADD;border-left:1px solid #64AADD}
+.online{
+	border-bottom:1px solid #64AADD;
+	font-family: "MS Sans Serif", sans-serif, "Comic Sans MS";
+	font-size: 9px;
+	color: #003366;
+}
+.online{border-bottom:1px solid #64AADD}
+.outofarea{border-top:1px solid #000000;border-bottom:1px solid #000000;border-left:1px solid #000000;border-right:1px solid #000000}
+.button {BORDER-RIGHT: #000000 1px solid; BORDER-TOP: #000000 1px solid; BORDER-LEFT: #000000 1px solid; COLOR: #000000 ; BORDER-BOTTOM: #000000 1px solid; BACKGROUND-COLOR: #FFFFFF}
+.chattext {BORDER-RIGHT: #000000 1px solid; BORDER-TOP: #000000 1px solid; BORDER-LEFT: #000000 1px solid; COLOR: #000000 ; BORDER-BOTTOM: #000000 1px solid; BACKGROUND-COLOR: #FFFFFF}
+.border{border-left:#000000 1px}
+
+-
+</style>

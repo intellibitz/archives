@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+ <profiles>
+     <profile>
+       <id>SARA</id>
+ 
+       <properties>
+         <downloadSources>true</downloadSources>
+       </properties>
+ 
+            <repositories>
+                  <repository>
+                        <id>central</id>
+                        <url>http://ns1:8081/artifactory/repo</url>
+                        <snapshots>
+                              <enabled>false</enabled>
+                        </snapshots>
+                  </repository>
+                  <repository>
+                        <id>snapshots</id>
+                        <url>http://ns1:8081/artifactory/repo</url>
+                        <releases>
+                              <enabled>false</enabled>
+                        </releases>
+                  </repository>
+            </repositories>
+            <pluginRepositories>
+                  <pluginRepository>
+                        <id>central</id>
+                        <url>http://ns1:8081/artifactory/repo</url>
+                        <snapshots>
+                              <enabled>false</enabled>
+                        </snapshots>
+                  </pluginRepository>
+                  <pluginRepository>
+                        <id>snapshots</id>
+                        <url>http://ns1:8081/artifactory/repo</url>
+                        <releases>
+                              <enabled>false</enabled>
+                        </releases>
+                  </pluginRepository>
+            </pluginRepositories>
+      </profile>
+</profiles>
+
+<!--
+7.4.1 Installing artifacts from maven command line
+
+When using ‘mvn clean install’ command, maven only packages and installs the artifact to the local repository. To install it to the AHP internal repository, we have to add an additional configuration section in the settings.xml. The steps involved are shown below:
+
+<settings>
+      <servers>
+            <server>
+                  <id>organisation-internal</id>
+                  <username>admin</username>
+                  <password>password</password>
+            </server>
+      </servers>
+</settings>
+
+To install an artefact to internal maven repository, the command is:
+
+mvn deploy:deploy-file -DrepositoryId=organisation-internal -Durl=http://localhost:8080/artifactory/private-internal-repository
+-DgroupId=test -DartifactId=test -Dversion=1.1 -Dpackaging=jar -Dfile=target/test-1.1.jar
+
+The repository id should match the server id defined in the settings.xml. The url should include the name of the repository the artefact is to be installed in.
+
+The new artifact appears in the repository and artifactory has created the ‘pom’ file for us automatically.
+-->
+      <servers>
+            <server>
+                  <id>organisation-internal</id>
+                  <username>admin</username>
+                  <password>password</password>
+            </server>
+      </servers>
+</settings>
+

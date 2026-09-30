@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="intellimeet">
+
+    <bannerLeft>
+        <name>IntelliMeet</name>
+        <href>http://www.intellibitz.com/</href>
+    </bannerLeft>
+
+    <bannerRight>
+        <name>IntelliMeet</name>
+        <src>http://maven.apache.org/images/apache-maven-project.png</src>
+    </bannerRight>
+
+    <skin>
+        <groupId>org.apache.maven.skins</groupId>
+        <artifactId>maven-default-skin</artifactId>
+    </skin>
+
+    <publishDate format="dd MMM yyyy"/>
+
+    <body>
+        <links>
+            <item name="Apache" href="http://www.apache.org/"/>
+            <item name="Maven" href="http://maven.apache.org/"/>
+            <item name="IntelliBitz" href="http://www.intellibitz.com"/>
+        </links>
+
+        <head>
+            <meta name="faq" content="intellimeet"/>
+        </head>
+
+        <menu name="Quick Links">
+            <item name="Team" href="/team-list.html"/>
+        </menu>
+
+        <menu name="About IntelliMeet" inherit="top">
+            <item name="What is IntelliMeet?" href="/what-is-intellimeet.html"/>
+        </menu>
+
+        <menu ref="modules"/>
+
+        <menu ref="reports"/>
+
+        <menu name="Documentation">
+            <item name="User's Guide" href="/user-guide/"/>
+        </menu>
+
+        <!--
+              <menu name="Reference">
+                  <item name="API" href="/reference/"/>
+                  <item name="Developer's Info" href="/user-guide/"/>
+              </menu>
+        -->
+
+    </body>
+</project>

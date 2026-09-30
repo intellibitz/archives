@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : partner.xml
+    Created on : February 20, 2008, 5:20 PM
+    Author     : jailani
+    Description:
+        Purpose of the document follows.
+-->
+<AbsoluteLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget125"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    
+    <TextView
+        android:id="@+id/partnerid"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:text="@string/partner"
+        android:textColor="#ffffff"/>
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/textage"
+        android:layout_x="0px"
+        android:layout_y="93px"/>
+    
+    <Spinner
+        android:id="@+id/agespinner1"
+        android:layout_width="170dip"
+        android:layout_height="35dip"
+        android:drawSelectorOnTop="true"
+        android:textSize="6px"
+        android:layout_x="130px"
+        android:layout_y="88px"/>
+    
+    <TextView
+        android:id="@+id/dreamlabelsex"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Sex:"
+        android:layout_x="0px"
+        android:layout_y="138px"/>
+    
+    <RadioGroup
+        android:id="@+id/widget29"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="horizontal"
+        android:layout_x="130px"
+        android:layout_y="130px">
+        
+        <RadioButton
+            android:id="@+id/maleradiobutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Male">
+        </RadioButton>
+        
+        <RadioButton
+            android:id="@+id/femaleradiobutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Female">
+        </RadioButton>
+    </RadioGroup>
+    
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dip"
+        android:text="@string/textheight"
+        android:layout_x="0px"
+        android:layout_y="178px">
+    </TextView>
+    
+    <Spinner
+        android:id="@+id/heightspinner2"
+        android:layout_width="wrap_content"
+        android:layout_height="35dip"
+        android:drawSelectorOnTop="true"
+        android:layout_x="130px"
+        android:layout_y="170px"/>
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dip"
+        android:text="@string/textweight"
+        android:layout_x="0px"
+        android:layout_y="213px">
+    </TextView>
+    <Spinner
+        android:id="@+id/weightspinner3"
+        android:layout_width="wrap_content"
+        android:layout_height="35dip"
+        android:drawSelectorOnTop="true"
+        android:layout_x="130px"
+        android:layout_y="210px"/>
+    
+    <TextView
+        android:id="@+id/labellocation"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Location:"
+        android:layout_x="0px"
+        android:layout_y="253px"/>
+    
+    <Spinner
+        android:id="@+id/locnspinner4"
+        android:layout_width="175dip"
+        android:layout_height="35dip"
+        android:drawSelectorOnTop="true"
+        android:layout_x="130px"
+        android:layout_y="250px"/>
+    
+    <Button
+        android:id="@+id/send"
+        android:layout_width="116px"
+        android:layout_height="35px"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="10px"
+        android:text="Activate"
+        android:layout_x="50px"
+        android:layout_y="300px"/>
+    
+    <Button
+        android:id="@+id/back"
+        android:layout_width="116px"
+        android:layout_height="35px"        
+        android:text="Back"
+        android:layout_x="170px"
+        android:layout_y="300px" />
+    
+    </AbsoluteLayout>

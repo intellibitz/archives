@@ -1,0 +1,143 @@
+<!DOCTYPE ui:UiBinder
+        SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"
+        >
+<!--
+/**
+ * $Id: Application.ui.xml 5 2010-06-03 11:07:35Z muthu $
+ * $HeadURL: svn://10.10.200.111:3691/Finance/tags/framework-snapshot1/fce/src/main/java/com/retailwave/fce/client/Application.ui.xml $
+ */
+-->
+
+<ui:UiBinder
+        xmlns:ui='urn:ui:com.google.gwt.uibinder'
+        xmlns:g='urn:import:com.google.gwt.user.client.ui'
+        xmlns:ic='urn:import:com.google.gwt.widgetideas.client'
+        ui:generateFormat='com.google.gwt.i18n.rebind.format.PropertiesFormat'
+        ui:generateKeys="com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator"
+        ui:generateLocales="default"
+        >
+
+    <ui:style>
+        .Application-top-panel {
+        width: 100%;
+        color: #888;
+        margin-bottom: 10px;
+        background: #C3D9FF;
+        }
+
+        .Application-title {
+        padding: 0px 0px 0px 10px;
+        }
+
+        .Application-title h1 {
+        color: #67A7E3;
+        margin: 0px;
+        padding: 0px 0px 0px 4px;
+        font-size: large;
+        }
+
+        .Application-title h2 {
+        margin: 0px;
+        padding: 0px 0px 0px 4px;
+        font-size: small;
+        }
+
+        .Application-messagebox {
+        width: 100%;
+        color: #888;
+        border: 2px solid #ff0000;
+        }
+
+        .Application-messagebox-label {
+        text-align: center;
+        font-size: smaller;
+        }
+
+        .Application-footer {
+        width: 100%;
+        margin-right: 10px;
+        background: #C3D9FF;
+        }
+
+        .Application-footer-label {
+        text-align:right;
+        color: #888;
+        font-size: smaller;
+        }
+    </ui:style>
+
+    <g:DockLayoutPanel ui:field="layout" unit="EM">
+
+        <g:north size="5">
+
+            <!--HEADER-->
+            <g:DockLayoutPanel styleName="{style.Application-top-panel}" unit="PCT">
+                <g:west size="25">
+                    <!-- title -->
+                    <g:HTML styleName="{style.Application-title}">
+                        <h1>
+                            <ui:msg description="title">FCE</ui:msg>
+                        </h1>
+                        <h2>
+                            <ui:msg description="sub-title">Finance Costing Engine</ui:msg>
+                        </h2>
+                    </g:HTML>
+                </g:west>
+                <g:center size="55">
+                    <!-- message -->
+                    <g:DockLayoutPanel ui:field="messagePanel" styleName="{style.Application-messagebox}" unit="PCT">
+                        <g:center size="95">
+                            <g:FlowPanel>
+                                <g:Label ui:field="messageLabel" styleName='{style.Application-messagebox-label}'>
+                                    message label
+                                </g:Label>
+                                <ic:ProgressBar ui:field="progressBar"
+                                                textVisible="false" maxProgress="100" minProgress="0" width="100%">
+                                </ic:ProgressBar>
+                            </g:FlowPanel>
+                        </g:center>
+                        <g:east size="5">
+                            <g:Button ui:field="hide" width="100%">
+                                x
+                            </g:Button>
+                        </g:east>
+                    </g:DockLayoutPanel>
+                </g:center>
+                <g:east size="20">
+                    <g:HTMLPanel styleName="{style.Application-title}">
+                        <h1>
+                            <a href="/">Portal Home</a>
+                        </h1>
+                        <h2>
+                            <g:Label ui:field="userName">&nbsp;</g:Label>
+                        </h2>
+                    </g:HTMLPanel>
+                </g:east>
+            </g:DockLayoutPanel>
+
+        </g:north>
+
+        <g:south size="2">
+
+            <!--FOOTER-->
+            <g:LayoutPanel styleName="{style.Application-footer}">
+                <g:layer>
+                    <g:Label styleName='{style.Application-footer-label}'>
+                        <ui:msg description="footer">
+                            Copyright (c) RetailWave 2010. Release: 1.0-BETA, Build: RC1
+                        </ui:msg>
+                    </g:Label>
+                </g:layer>
+            </g:LayoutPanel>
+
+
+        </g:south>
+
+        <g:west size="15">
+            <!--MAIN MENU-->
+            <g:Tree ui:field="mainMenu" animationEnabled="true">
+            </g:Tree>
+        </g:west>
+
+    </g:DockLayoutPanel>
+</ui:UiBinder>

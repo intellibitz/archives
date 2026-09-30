@@ -1,0 +1,20 @@
+
+IntelliGeek
+   Gaming for the Geeks.
+
+Here's some requirements: 	
+1. Must be web based
+2. Must be delivered to browser, mobile device.
+3. Single Player, Multiplayer games.
+4. Various expert levels and strength.
+5. Any topics. (can be Java, PHP, ROR etc.,)  
+
+
+Technology Stack
+
+Linux
+Apache
+PostgreSQL
+PHP 5+ 
+Smarty
+

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a="http://richfaces.org/a4j">
+    <head>
+        <title>Welcome to IntelliMeet - Jobs made easy!</title>
+        <link href="intellimeet.css" rel="stylesheet" type="text/css"/>
+    </head>  
+    <body>
+        <center>
+            <f:view>
+                
+                <ui:composition template="/template/intellimeet.xhtml">
+                    
+                    
+                    <br/>
+                    <ui:define name="title">IntelliMeet Welcomes you ...</ui:define>
+                    <ui:define name="status">Intellimeet</ui:define>                 
+                    
+                    <ui:define name="content">
+                        <table border="0" align="left">
+                            <tr>
+                                <br/><br/>
+                                <td valign="top" style="font-size:12pt;color:blue" >
+                                    
+                                    A web 2.0 portal designed to recruit college freshers. This is a 3 way meeting 
+                                    place for colleges, training organizations and corporates. The corporates can 
+                                    directly recruit from colleges or from training organizations. The candidates 
+                                    can be posted only through colleges or training organizations. All social 
+                                    networking features like voting, discussion etc., can be enabled as addons. 
+                                    Students can find about Colleges, Colleges can promote their 
+                                    graduates, Consultants can project profiles and Corporate can recruit from 
+                                    Colleges and Consultants.
+                                    <br/><br/>
+                                </td>
+                                <td valign="top" style="font-size:12pt;color:blue" >
+                                    A web 2.0 portal designed on top of the existing social networks for job management.
+                                    The user registers and creates friends. The user can post jobs only to his profile, and 
+                                    based on the preferences like privacy setting for that particular job, his friends can act 
+                                    upon his job.
+                                </td>
+                                <td>
+                                    <center><b><p style="font-size:12pt;color:red">
+                                                Sign in to Intellimeet
+                                    </p></b></center>
+                                    <h:form id="HomeForm">
+                                        <table border="0" align="right">
+                                            <s:validateAll>
+                                                <tr>
+                                                    <td>Email</td>
+                                                    <td><h:inputText id="Name" value="#{user.email}" required="true"></h:inputText></td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                    <td>Password</td>
+                                                    <td><h:inputSecret  id="Password" value="#{user.password}" required="true"></h:inputSecret></td>
+                                                </tr>
+                                            </s:validateAll>
+                                        </table>
+                                        <br/>
+                                        <center>
+                                            <h:commandButton id="LoginUserAction" value="Login" action="#{loginUserAction.validateUserLogin}"/>
+                                            <br/>
+                                            New User? <a href="http://localhost:8080/intellimeet/register/registerUser.seam"  >Register</a> here
+                                            <br/>
+                                            
+                                            <a href="../intellimeet/Contact_Us.seam">Forget your ID/Password</a><br/>
+                                            <h:messages style="color: red"/>
+                                            
+                                        </center>
+                                    </h:form> 
+                                </td>
+                            </tr>
+                        </table>
+                    </ui:define>
+                </ui:composition>
+                
+            </f:view>
+            
+        </center>   
+    </body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+$Id:: template.xhtml 36 2008-01-29 13:41:47Z muthu.ramadoss                     $: Id of last commit
+$Rev:: 36                                                                       $: Revision of last commit
+$Author:: muthu.ramadoss                                                        $: Author of last commit
+$Date:: 2008-01-29 19:11:47 +0530 (Tue, 29 Jan 2008)                            $: Date of last commit
+$HeadURL:: https://intellimeet.googlecode.com/svn/trunk/32tango/intellimeet-war#$: Head URL of last commit
+-->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:s="http://jboss.com/products/seam/taglib">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <title><ui:insert name="title"/></title>
+        <link href="/css/intellimeet.css" rel="stylesheet" type="text/css"/>
+    </head>
+    <body >
+        <center>
+            <div id="document">
+                <div id="header">
+                <div id="title"></div>
+
+                    <div id="logo"> <img src="/intellimeet/header.jpg" width="750" height="80" alt="header"/></div>
+                    
+                    <td bgcolor="#FFE4E1">
+                         <s:link id="home" view="/home.xhtml" value=" Home "
+                                  propagation="none"/>
+                        | <s:link id="login" view="/home.xhtml" action="login" value=" Login "/>
+                        | <s:link id="ContactUs" view="/Contact_Us.seam"
+                                  value=" Contact Us " propagation="none"/>
+                        
+                    </td>
+                    <div id="status"></div>
+                </div>
+                <div id="content">
+                    <ui:insert name="content"/>
+                </div>
+                <br/>
+                 <div id="footer" style="color:RoyalBlue">© 2008 Intellibitz Technologies (P) Limited. All Rights Reserved.</div>
+            </div>
+        </center>
+    </body>
+</html>

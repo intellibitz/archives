@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+    <!--
+    $Id::                                                                           $: Id of last commit
+    $Rev::                                                                          $: Revision of last commit
+    $Author::                                                                       $: Author of last commit
+    $Date::                                                                         $: Date of last commit
+    $HeadURL::                                                                      $: Head URL of last commit
+    -->
+    <profiles>
+        <profile>
+            <id>ns3</id>
+            <activation>
+                <activeByDefault/>
+            </activation>
+
+            <properties>
+                <downloadSources>true</downloadSources>
+            </properties>
+
+            <repositories>
+                <repository>
+                    <id>central</id>
+                    <url>http://ns3:8081/artifactory/repo</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>snapshots</id>
+                    <url>http://ns3:8081/artifactory/repo</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>central</id>
+                    <url>http://ns3:8081/artifactory/repo</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </pluginRepository>
+                <pluginRepository>
+                    <id>snapshots</id>
+                    <url>http://ns3:8081/artifactory/repo</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>ns3</activeProfile>
+    </activeProfiles>
+
+    <servers>
+        <server>
+            <id>local</id>
+            <username>local</username>
+            <password>local</password>
+        </server>
+    </servers>
+</settings>
+

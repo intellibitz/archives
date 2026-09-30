@@ -1,0 +1,49 @@
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+$Id::                                                                           $: Id of last commit
+$Rev::                                                                          $: Revision of last commit
+$Author::                                                                       $: Author of last commit
+$Date::                                                                         $: Date of last commit
+$HeadURL::                                                                      $: Head URL of last commit
+-->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:s="http://jboss.com/products/seam/taglib"
+                xmlns:a="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich"
+                template="/facelets/template.xhtml">
+
+    <!-- content -->
+    <ui:define name="content">
+        <div class="section">
+            <h1>Testing Random RichFaces components</h1>
+        </div>
+        <div class="section">
+            <div class="entry errors">
+                <h:messages globalOnly="true"/>
+            </div>
+
+            <div style="clear:both"/>
+
+            <rich:separator />
+
+            <rich:calendar/>
+            
+        </div>
+    </ui:define>
+
+    <!-- sidebar -->
+    <ui:define name="sidebar">
+
+        <h1>Component: Separator, Calendar</h1>
+
+        <p>
+            Testing Random RichFaces controls
+        </p>
+
+    </ui:define>
+
+</ui:composition>

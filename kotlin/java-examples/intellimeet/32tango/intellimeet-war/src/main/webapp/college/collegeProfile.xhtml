@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    Document   : collegeProfile
+    Created on : Feb 7, 2008, 3:27:17 PM
+    Author     : jailani
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a="http://richfaces.org/a4j">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+        <title>College Profile</title>
+        <link href="intellimeet.css" rel="stylesheet" type="text/css"/>
+    </head>
+    <body>
+        <f:view>
+            <ui:composition template="../template/intellimeetLogin.xhtml">
+                <ui:define name="title">College Profile</ui:define>
+                <ui:define name="content">
+                    <h:form id="registerUser">
+                        <center><h2>College Profile</h2></center>
+                        <table border="0">
+                            <s:validateAll>
+                                <tr>
+                                    <td>College Name</td>
+                                    <td><h:inputText id="Name" size="80" required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputText> </td>
+                                </tr>
+                                <tr>
+                                    <td>Type</td>
+                                    <td><h:selectOneMenu id="Type"  required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                            <f:selectItem id="eng" itemLabel="Engineering" itemValue="1" />
+                                            <f:selectItem id="med" itemLabel="Medical" itemValue="2" />
+                                            <f:selectItem id="sci" itemLabel="Arts and Science" itemValue="3" />
+                                            <f:selectItem id="mgt" itemLabel="Management" itemValue="4" />
+                                    </h:selectOneMenu> </td>
+                                </tr>
+                                <tr>
+                                    <td>Address</td>
+                                    <td><h:inputTextarea  id="Address"  required="true" rows="5" cols="80">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/> --> 
+                                    </h:inputTextarea></td>
+                                </tr>
+                                <tr>
+                                    <td>City</td>
+                                    <td><h:inputText  id="City" required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/> -->
+                                    </h:inputText></td>
+                                </tr>
+                                <tr>
+                                    <td>State</td>
+                                    <td><h:inputText id="State"  required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputText> </td>
+                                </tr>
+                                <tr>
+                                    <td>Country</td>
+                                    <td><h:selectOneMenu id="Country"  required="true">
+                                        <f:selectItem id="s1" itemLabel="Select One" itemvalue="1"/>
+                                        <f:selectItem id="af" itemLabel="Afghanistan"  itemvalue="2"/>
+
+                                        <f:selectItem id="ax" itemLabel="Aland Islands" itemvalue="3" />
+                                        <f:selectItem id="al" itemLabel="Albania" itemvalue="4" />
+                                        <f:selectItem id="dz" itemLabel="Algeria" itemvalue="5" />
+                                        <f:selectItem id="as" itemLabel="American Samoa" itemvalue="6" />
+                                        <f:selectItem id="ad" itemLabel="Andorra" itemvalue="7" />
+                                        <f:selectItem id="ao" itemLabel="Angola" itemvalue="8" />
+
+                                        <f:selectItem id="ai" itemLabel="Anguilla" itemvalue="9" />
+                                        <f:selectItem id="aq" itemLabel="Antarctica" itemvalue="10" />
+                                        <f:selectItem id="ag" itemLabel="Antigua and Barbuda"  itemvalue="11" />
+                                        <f:selectItem id="ar" itemLabel="Argentina"  itemvalue="12"/>
+                                        <f:selectItem id="am" itemLabel="Armenia"  itemvalue="13"/>
+                                        <f:selectItem id="aw" itemLabel="Aruba"  itemvalue="14"/>
+
+                                        <f:selectItem id="au" itemLabel="Australia"  itemvalue="15"/>
+                                        <f:selectItem id="bh" itemLabel="Bahrain"  itemvalue="16"/>
+                                        <f:selectItem id="bd" itemLabel="Bangladesh"  itemvalue="17"/>
+                                        <f:selectItem id="be" itemLabel="Belgium"  itemvalue="18"/>
+
+                                        <f:selectItem id="bt" itemLabel="Bhutan"  itemvalue="19"/>
+                                        <f:selectItem id="br" itemLabel="Brazil"  itemvalue="20"/>
+
+                                        <f:selectItem id="kh" itemLabel="Cambodia" itemvalue="21" />
+                                        <f:selectItem id="ca" itemLabel="Canada" itemvalue="22" />
+                                        <f:selectItem id="cn" itemLabel="China" itemvalue="23" />
+
+                                        <f:selectItem id="hk" itemLabel="Hong Kong" itemvalue="24" />
+                                        <f:selectItem id="hu" itemLabel="Hungary"  itemvalue="25"/>
+                                        <f:selectItem id="is" itemLabel="Iceland" itemvalue="26" />
+                                        <f:selectItem id="in" itemLabel="India"  itemvalue="27"/>
+                                        <f:selectItem id="id" itemLabel="Indonesia"  itemvalue="28"/>
+                                        <f:selectItem id="iq" itemLabel="Iraq"  itemvalue="29"/>
+
+
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:selectOneMenu> </td>
+                                </tr>
+                                <tr>
+                                    <td>Pin Code</td>
+                                    <td><h:inputText id="Pincode"  required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputText> </td>
+                                </tr>
+                                <tr>
+                                    <td>Telephone</td>
+                                    <td><h:inputText id="Telephone"  required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputText> </td>
+                                </tr>
+                                <tr>
+                                    <td>Fax</td>
+                                    <td><h:inputText id="Fax"  required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputText> </td>
+                                </tr>
+                                <tr>
+                                    <td>Email</td>
+                                    <td><h:inputText id="Email"  required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputText> </td>
+                                </tr>
+                                <tr>
+                                    <td>Website</td>
+                                    <td><h:inputText id="Website"  required="true">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputText> </td>
+                                </tr>
+                                <tr>
+                                    <td>Course Offered</td>
+                                    <td><h:inputTextarea  id="Courseofffered"  required="true" rows="5" cols="80">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/> -->
+                                    </h:inputTextarea> </td>
+                                </tr>
+                                <tr>
+                                    <td>Features</td>
+                                    <td><h:inputText id="Features"  required="true" rows="5" cols="80">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputText> </td>
+                                </tr>
+                                <tr>
+                                    <td>Achievements</td>
+                                    <td><h:inputTextarea  id="Achievements"  required="true" rows="5" cols="80">
+                                            <!-- <a:support event="onblur" reRender="nameDecorate"/>-->
+                                    </h:inputTextarea> </td>
+                                </tr>                                
+                            </s:validateAll>
+                        </table>
+                        <br/>
+                        <h:commandButton id="RegisterCollegeAction" value="Upolad" action="#{registerCollegeAction.register}"/>
+                        <s:button id="cancel" value="Cancel"
+                                  view="/Welcome.xhtml"/>
+                        <h:messages style="color: red"/>
+                    </h:form>
+                </ui:define>
+            </ui:composition>
+        </f:view>
+    </body>    
+</html>

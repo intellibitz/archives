@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+$Id:: template.xhtml 35 2008-01-29 11:17:56Z muthu.ramadoss                     $: Id of last commit
+$Rev:: 35                                                                       $: Revision of last commit
+$Author:: muthu.ramadoss                                                        $: Author of last commit
+$Date:: 2008-01-29 16:47:56 +0530 (Tue, 29 Jan 2008)                            $: Date of last commit
+$HeadURL:: https://intellimeet.googlecode.com/svn/trunk/32tango/intellimeet-war#$: Head URL of last commit
+-->
+<components xmlns="http://jboss.com/products/seam/components"
+            xmlns:core="http://jboss.com/products/seam/core"
+            xmlns:persistence="http://jboss.com/products/seam/persistence"
+            xmlns:security="http://jboss.com/products/seam/security"
+            xmlns:transaction="http://jboss.com/products/seam/transaction"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation=
+                    "http://jboss.com/products/seam/core http://jboss.com/products/seam/core-2.0.xsd
+                http://jboss.com/products/seam/security http://jboss.com/products/seam/security-2.0.xsd
+                http://jboss.com/products/seam/transaction http://jboss.com/products/seam/transaction-2.0.xsd
+                http://jboss.com/products/seam/persistence http://jboss.com/products/seam/persistence-2.0.xsd
+                http://jboss.com/products/seam/components http://jboss.com/products/seam/components-2.0.xsd">
+
+    <persistence:entity-manager-factory name="${persistence.unit_name}"/>
+
+    <persistence:managed-persistence-context
+            name="em"
+            auto-create="true"
+            entity-manager-factory="#{${persistence.unit_name}}"/>
+
+    <core:init jndi-pattern="intellimeet-ear-tests-1.0-SNAPSHOT/#{ejbName}/local"
+               debug="true"
+            />
+
+    <transaction:ejb-transaction/>
+
+    <core:manager conversation-timeout="120000"
+                  concurrent-request-timeout="500"
+                  conversation-id-parameter="cid"/>
+
+</components>

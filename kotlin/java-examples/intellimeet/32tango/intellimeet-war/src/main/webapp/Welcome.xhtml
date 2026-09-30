@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    Document   : Welcome
+    Created on : Jan 29, 2008, 4:01:10 PM
+    Author     : jailani
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a="http://richfaces.org/a4j">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <title>Intellimeet-Welcome</title>
+    </head>
+    <body>
+        
+        <ui:composition template="/template/intellimeetLogin.xhtml">
+            
+            <br/>
+            <ui:define name="title">IntelliMeet</ui:define>
+            <ui:define name="content">
+                <br/><br/>
+                <td  style="color:green" align="right">
+                <h4>Upload <a href="../intellimeet/college/collegeProfile.seam">Profile</a></h4>
+                </td>
+            </ui:define>
+        </ui:composition>                
+        
+    </body>
+</html>

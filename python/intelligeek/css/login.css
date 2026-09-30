@@ -1,0 +1,65 @@
+div.logindiv {
+  background-color: lightblue;
+  width: 350px;
+  height: 190px;
+  margin: 200px 0px 0px 400px;
+  border: 1px solid black;
+}
+div.button {
+  width: 350px;
+  margin: 20px 0px 0px 105px;
+}
+
+div.tab {
+  width: 350px;
+  margin: 30px 0px 0px 0px;
+  //border: 1px solid black;
+}
+.color1 {
+  background-color: lightyellow;
+}
+
+.register1 {
+  background-color: #82b5ec;
+  width: 350px;
+  /*height:250px;*/
+  margin: 20px 50px 50px 200px;
+  border: 1px solid black;
+}
+.register2 {
+  background-color: #ddebfb;
+  width: 350px;
+  /*height:250px;*/
+  margin: 10px 50px 50px 200px;
+  border: 1px solid black;
+}
+.fpswd {
+  background-color: lightgray;
+  width: 350px;
+  height: 150px;
+  margin: 250px 0px 0px 400px;
+  border: 1px solid black;
+}
+.cpswd {
+  background-color: lightblue;
+  width: 350px;
+  height: 150px;
+  margin: 200px 0px 0px 400px;
+  border: 1px solid black;
+}
+.message {
+  background-color: #ddebfb;
+  border: 1px solid black;
+  width: 350px;
+  margin: 250px 10px 0px 400px;
+}
+.photo {
+  background-color: lightgray;
+  margin: 200px 0px 0px 400px;
+  border: 1px solid black;
+}
+.photo1 {
+  width: 150px;
+  height: 10px;
+  margin: 0px 0px 0px 400px;
+}

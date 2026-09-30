@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+$Id::                                                                           $: Id of last commit
+$Rev::                                                                          $: Revision of last commit
+$Author::                                                                       $: Author of last commit
+$Date::                                                                         $: Date of last commit
+$HeadURL::                                                                      $: Head URL of last commit
+-->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:s="http://jboss.com/products/seam/taglib">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>IntelliMeet Web testing</title>
+    <link href="/css/screen.css" rel="stylesheet" type="text/css"/>
+    <link href="/css/date.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+
+<div id="document">
+    <div id="header">
+        <div id="title">Intellimeet Web Testing</div>
+        <div id="status">
+            Welcome User
+            | <s:link id="home" view="/home.xhtml" value="Search"
+                      propagation="none"/>
+            | <s:link id="logout" action="logout" value="Logout"/>
+        </div>
+    </div>
+    <div id="container">
+        <div id="sidebar">
+            <ui:insert name="sidebar"/>
+        </div>
+        <div id="content">
+            <ui:insert name="content"/>
+        </div>
+    </div>
+    <div id="footer">Created with JBoss Seam 2.0, JBoss EJB 3.0, JSF 1.2, Hibernate 3 and Facelets with RichFaces</div>
+</div>
+</body>
+</html>

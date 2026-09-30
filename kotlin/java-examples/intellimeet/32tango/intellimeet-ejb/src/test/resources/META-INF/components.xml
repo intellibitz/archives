@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<components xmlns="http://jboss.com/products/seam/components"
+            xmlns:core="http://jboss.com/products/seam/core"
+            xmlns:persistence="http://jboss.com/products/seam/persistence"
+            xmlns:security="http://jboss.com/products/seam/security"
+            xmlns:transaction="http://jboss.com/products/seam/transaction"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation=
+                    "http://jboss.com/products/seam/core http://jboss.com/products/seam/core-2.0.xsd
+                http://jboss.com/products/seam/security http://jboss.com/products/seam/security-2.0.xsd
+                http://jboss.com/products/seam/transaction http://jboss.com/products/seam/transaction-2.0.xsd
+                http://jboss.com/products/seam/persistence http://jboss.com/products/seam/persistence-2.0.xsd
+                http://jboss.com/products/seam/components http://jboss.com/products/seam/components-2.0.xsd">
+
+    <!--
+    $HeadURL:: https://intellimeet.googlecode.com/svn/trunk/32tango/pom.xml         $: Head URL of last commit
+    $Id:: pom.xml 28 2008-01-24 08:56:00Z muthu.ramadoss                            $: Id of last commit
+    $Rev:: 28                                                                       $: Revision of last commit
+    $Author:: muthu.ramadoss                                                        $: Author of last commit
+    $Date:: 2008-01-24 14:26:00 +0530 (Thu, 24 Jan 2008)                            $: Date of last commit
+    -->
+
+    <persistence:entity-manager-factory name="${test.persistence.unit_name}"/>
+
+    <persistence:managed-persistence-context name="em"
+                                             auto-create="true"
+                                             entity-manager-factory="#{${test.persistence.unit_name}}"/>
+
+    <core:init jndi-pattern="java:comp/env/#{ejbName}/local"
+               debug="true"
+            />
+
+    <transaction:ejb-transaction/>
+
+    <core:manager conversation-timeout="120000"
+                  concurrent-request-timeout="500"
+                  conversation-id-parameter="cid"/>
+
+</components>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="app_name">Dating Application</string>
+    <string name="welcome">Dream-Date Profile</string>
+    <string name="notifying_service_controller"><b>This service will update a status bar notification
+     every 15 seconds for a minute</b></string>
+     <string name="start_service">Start Service</string>
+     <string name="stop_service">Stop Service</string>
+     <string name="status_bar_chennai">chennai</string>
+     <string name="status_bar_salem">Salem</string>
+     <string name="status_bar_notifications_ok_message">I am ok</string>
+     <string name="status_bar_coimbatore">Coimbatore</string>
+     <string name="status_bar_notifications_clear">Clear notification</string>
+     <string name="status_bar_notifications_mood_title">Matching</string>
+     <string name="status_bar_notifications_icons_only">Icons only</string>
+     <string name="status_bar_erode">Erode</string>
+     <string name="status_bar_madurai">Madurai</string>
+     <string name="status_bar_nellai">Tirunelvelli</string>
+     <string name="status_bar_notifications_icons_and_marquee">Icons and marquee</string>
+     <string name="status_bar_notifications_remote_views">Use remote views in balloon</string>
+     <string name="userinfo"> User </string>
+     <string name="local_service_started">Local service has started</string>
+     <string name="local_service_stopped">Local service has stopped</string>
+
+    <!--   partner profile    -->
+    <string name="textage">Expected Age:</string>
+    <string name="textheight">Expected Height:</string>
+    <string name="textweight">Expected Weight:</string>
+    <string name="partner"> Specify the partner profile: This will help  others to have some idea of what you want. Please fill all the fields  that are an absolutely  must and  desirable.
+    </string>
+
+   <!-- Matching Profile   -->
+
+    <string name="repeating_received">If your expected Dream-mate profile
+                  found then you will receive notification every 10 seconds.</string>
+
+    <string name="repeating_scheduled">Dream mate found! Ready to chat now.</string>
+    <string name="repeating_unscheduled">stop service</string>
+    <string name="profile1">SWEETY,FEMALE,23,155 cm,55Kg,St.ThomasMount</string>
+    <string name="profile2">BABLI,FEMALE,18,156 cm,56Kg,TNagar-Renganathan Street</string>
+    <string name="profile3">LOLO,FEMALE,19,157 cm, 57Kg,TNagar-Panagalpark</string>
+    <string name="profile4">AISH,FEMALE,21,158 cm, 45Kg,Adyar</string>
+
+    <!-- Main Profile   -->
+    <string name="help"><b>Need to find your dreamdate on your mobile? Follow these steps.</b></string>
+    <string name="helpprofile">Your Profile : First you need to fill your profile and this profile might be communicated to the matches if you wish so.</string>
+    <string name="helppartner">Dream-date Profile: You must fill out a dream-date profile. This  the kind of
+                  profile that you request for dating. More than 1 dream-date profile can be stored, and the
+                  Dating application will store this in your device locally. This information will also send
+                  to the Dating server.</string>
+     <string name="helpservice">Service : Dating service runs in the background looking for dating matches for you.
+                   The service also listens for incoming messages from the Dating server and uses an
+                   appropriate notification service to inform you.</string>
+     <string name="helpalert">Alerts : A Dating notifier will run along with the Dating service. This
+                   notifier will alert you of all dating matches found. The dating alert will specify
+                   Proximity and the Closeness of the Match. The Dating alert will use LBS, Maps and all
+                   kinds of locational api's to interact with you. </string>
+     <string name="helpinteraction">Interaction : You can interact with the matches in your own way. You
+                   can select one or more matches and communicate with the match in an anonymous way. You can
+                   save all the matching profiles in your mobile device locally for future communication.
+                   Also you can delete this matching information at anytime.</string>
+     <string name="helpbroadcast">Location Broadcast : The dating service will be broadcasting your locations
+                   to the dating server when you are on move. This location information need not be sent,
+                   if you don't want. The polling interval can be set by you to broadcast your location every 5 minutes and you can also totally turn off this feature.</string>
+</resources>

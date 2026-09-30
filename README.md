@@ -21,20 +21,19 @@
 
 **IntelliBitz** is an engineering monorepo and knowledge base providing containerized services, system administration tooling, cloud automation, mobile client architectures, and language toolchains.
 
-The repository is organized by **programming languages and technologies**:
+The repository is organized by **source language and technology**:
 
 ```text
 archives/
-├── java/      # Java EE/SE projects (IntelliDocs, IntelliMeet)
-├── kotlin/    # Kotlin apps, Multiplatform, Android clients
-├── python/    # Python tools, AI, scripts, package management
-├── shell/     # Shell scripts for OS, DevOps, Cloud (Docker, k8s, GCP)
-├── sql/       # Database schemas, scripts (PostgreSQL, MySQL)
-├── php/       # PHP Web Portals
-├── go/        # Go scripts and tools
-├── clojure/   # Clojure tutorials and tools
-├── expect/    # Expect automation scripts
-└── docs/      # Markdown documentation and guides
+├── java/          # Java EE/SE projects (IntelliDocs, IntelliMeet)
+├── kotlin/        # Kotlin apps, Multiplatform, Android clients, Java interop examples
+├── python/        # Python tools, AI, scripts, package management, web apps
+├── shell/         # Shell scripts for OS, DevOps, Cloud (Docker, k8s, GCP)
+├── sql/           # Database schemas, scripts (PostgreSQL, MySQL)
+├── go/            # Go scripts and tools
+├── clojure/       # Clojure tutorials and tools
+├── expect/        # Expect automation scripts
+└── docs/          # Markdown documentation and guides
 ```
 
 ---
@@ -55,11 +54,13 @@ Modern Kotlin development spanning mobile, web, and multiplatform.
   - 100% Kotlin modules: Event tracker (`MEvents`), Twitter trends (`TwRends`), GPS telemetry (`wuffittracker`).
 - **[Multiplatform](./kotlin/multiplatform)**: Shared logic modules.
 - **[Web](./kotlin/jsfront)**: JS frontends and tutorials.
+- **[Java Interop Examples](./kotlin/java-examples/)**: Migrated from `java/` directory (Kotlin versions of IntelliDocs, IntelliMeet, GWT projects)
 
 ### 🐍 [Python (`python/`)](./python/)
 Python automation, environment configuration, and AI toolchains.
 - Modern [uv package manager](./python/uv.md) (`uv.sh`), Python 3.12/3.13 setups.
 - AI integration: Hugging Face Hub CLI guide ([`huggingface.md`](./python/huggingface.md)), Google Colab & Gemini API ([`colab.md`](./python/colab.md)), Meta Llama 3 ([`meta-llama.md`](./python/meta-llama.md)).
+- **[IntelliGeek](./python/intelligeek/)**: Web portal applications (migrated from `php/`)
 
 ### 🐚 [Shell & DevOps (`shell/`)](./shell/)
 System administration, container orchestration, and OS utilities.

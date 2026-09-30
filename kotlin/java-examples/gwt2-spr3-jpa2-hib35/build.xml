@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+/**
+ * $Id: build.xml 5 2010-06-03 11:07:35Z muthu $
+ * $HeadURL: svn://10.10.200.111:3691/Finance/tags/framework-snapshot1/fce/build.xml $
+ */
+-->
+<project name="FCE" default="build" basedir=".">
+
+    <!-- Arguments to gwtc and devmode targets -->
+    <property name="gwt.args" value=""/>
+
+    <!-- Configure path to GWT SDK -->
+    <property name="gwt.sdk" location="/opt/tools/gwt"/>
+
+    <property name="src.java" value="src/main/java"/>
+    <property name="src.war" value="src/main/webapp"/>
+    <property name="src.res" value="src/main/resources"/>
+    <property name="build.libs" value="lib"/>
+    <property name="target.classes" value="target/classes"/>
+    <property name="target.war" value="target/war"/>
+    <property name="target.war.classes" value="${target.war}/WEB-INF/classes"/>
+    <property name="target.war.lib" value="${target.war}/WEB-INF/lib"/>
+    <property name="target.artifacts" value="target/artifacts"/>
+
+    <path id="project.class.path">
+        <pathelement location="${target.classes}"/>
+        <pathelement location="${build.libs}"/>
+        <pathelement location="${gwt.sdk}/gwt-user.jar"/>
+        <fileset dir="${gwt.sdk}" includes="gwt-dev*.jar"/>
+        <fileset dir="${build.libs}" includes="**/*.jar"/>
+    </path>
+
+    <target name="build" depends="gwtc" description="Build this project"/>
+
+    <target name="war" depends="build" description="Creates the FCE deployable war archive file">
+        <mkdir dir="${target.artifacts}"/>
+        <zip destfile="${target.artifacts}/FCE.war" basedir="${target.war}"/>
+    </target>
+
+    <target name="clean" description="Cleans this project">
+        <delete dir="${target.classes}" failonerror="false"/>
+        <delete dir="${target.war}" failonerror="false"/>
+    </target>
+
+    <target name="setup_target_war" description="sets up runnable war">
+        <mkdir dir="${target.war}"/>
+        <copy todir="${target.war}"
+                description="copies development webapp to target war">
+            <fileset dir="${src.war}"/>
+        </copy>
+        <mkdir dir="${target.war.lib}" description="webapp lib folder under WEB-INF"/>
+        <copy todir="${target.war.lib}"
+                description="copies development libraries to target war WEB-INF lib folder">
+            <fileset dir="${build.libs}"/>
+        </copy>
+        <mkdir dir="${target.war.classes}"/>
+        <!--copies source resources like META-INF/persistence.xml, log4j config etc.,-->
+        <copy todir="${target.war.classes}">
+            <fileset dir="${src.res}"/>
+        </copy>
+    </target>
+
+    <target name="javac"
+            depends="setup_target_war"
+            description="Compile java source to bytecode">
+        <javac srcdir="${src.java}" includes="**" encoding="utf-8"
+               destdir="${target.war.classes}"
+               source="1.6" target="1.6" nowarn="true"
+               debug="true" debuglevel="lines,vars,source">
+            <classpath refid="project.class.path"/>
+        </javac>
+        <copy todir="${target.war.classes}">
+            <fileset dir="${src.java}" excludes="**/*.java,**/*.kt"/>
+        </copy>
+    </target>
+
+    <target name="gwtc" depends="javac" description="GWT compile to JavaScript (production mode)">
+        <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+            <classpath>
+                <pathelement location="${src.java}"/>
+                <path refid="project.class.path"/>
+            </classpath>
+            <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+            <jvmarg value="-Xmx512M"/>
+            <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+            <arg line="${gwt.args}"/>
+            <arg value="com.retailwave.fce.FCE"/>
+            <arg value="-war"/>
+            <arg value="${target.war}"/>
+        </java>
+    </target>
+
+    <target name="devmode" depends="javac" description="Run development mode">
+        <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+            <classpath>
+                <pathelement location="${src.java}"/>
+                <path refid="project.class.path"/>
+            </classpath>
+            <jvmarg value="-Xmx512M"/>
+            <arg value="-startupUrl"/>
+            <arg value="FCE.html"/>
+            <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+            <arg line="${gwt.args}"/>
+            <arg value="com.retailwave.fce.FCE"/>
+            <arg value="-war"/>
+            <arg value="${target.war}"/>
+        </java>
+    </target>
+
+    <target name="hosted" depends="devmode"
+            description="Run development mode (NOTE: the 'hosted' target is deprecated)"/>
+
+    <target name="javac.tests" depends="javac" description="Compiles test code">
+        <javac srcdir="test" includes="**" encoding="utf-8"
+               source="1.5" target="1.5" nowarn="true"
+               debug="true" debuglevel="lines,vars,source">
+            <classpath location="/opt/tools/junit/junit-4.9-SNAPSHOT-20100512-0041.jar"/>
+            <classpath refid="project.class.path"/>
+        </javac>
+    </target>
+
+    <target name="test.dev" depends="javac.tests" description="Run development mode tests">
+        <mkdir dir="reports/htmlunit.dev"/>
+        <junit fork="yes" printsummary="yes" haltonfailure="yes">
+            <jvmarg line="-Xmx256m"/>
+            <sysproperty key="gwt.args" value="-standardsMode -logLevel WARN"/>
+            <sysproperty key="java.awt.headless" value="true"/>
+            <classpath>
+                <pathelement location="${src.java}"/>
+                <pathelement location="test"/>
+                <path refid="project.class.path"/>
+                <pathelement location="/opt/tools/junit/junit-4.9-SNAPSHOT-20100512-0041.jar"/>
+            </classpath>
+            <batchtest todir="reports/htmlunit.dev">
+                <fileset dir="test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+            </batchtest>
+            <formatter type="plain"/>
+            <formatter type="xml"/>
+        </junit>
+    </target>
+
+    <target name="test.prod" depends="javac.tests" description="Run production mode tests">
+        <mkdir dir="reports/htmlunit.prod"/>
+        <junit fork="yes" printsummary="yes" haltonfailure="yes">
+            <jvmarg line="-Xmx256m"/>
+            <sysproperty key="gwt.args" value="-prod -standardsMode -logLevel WARN -standardsMode -out www-test"/>
+            <sysproperty key="java.awt.headless" value="true"/>
+            <classpath>
+                <pathelement location="${src.java}"/>
+                <pathelement location="test"/>
+                <path refid="project.class.path"/>
+                <pathelement location="/opt/tools/junit/junit-4.9-SNAPSHOT-20100512-0041.jar"/>
+            </classpath>
+            <batchtest todir="reports/htmlunit.prod">
+                <fileset dir="test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+            </batchtest>
+            <formatter type="plain"/>
+            <formatter type="xml"/>
+        </junit>
+    </target>
+
+    <target name="test" description="Run development and production mode tests">
+        <antcall target="test.dev"/>
+        <antcall target="test.prod"/>
+    </target>
+
+</project>

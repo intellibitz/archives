@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : chat.xml
+    Created on : February 26, 2008, 6:35 PM
+    Author     : gunasekaran
+    Description:
+        Purpose of the document follows.
+-->
+
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+            >
+    
+    <TextView
+        android:id="@+id/chatmessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Messages"
+        android:textSize="15dip"
+        android:layout_marginTop="5dip"
+        android:layout_marginBottom="5dip"
+        android:layout_marginLeft="5dip"
+        android:layout_marginRight="5dip"
+        
+    />
+    
+    <TextView android:id="@+id/message"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:textSize="15dip"
+              android:layout_below="@+id/chatmessage"
+              android:layout_marginBottom="5dip"
+              android:layout_marginLeft="5dip"
+              android:layout_marginRight="5dip"
+    />
+    
+    <TextView
+        android:id="@+id/type"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textSize="15dip"
+        android:text="Type here to send your Message :"
+        android:layout_below="@+id/message"
+        android:layout_marginBottom="5dip"
+        android:layout_marginLeft="5dip"
+        android:layout_marginRight="5dip"
+    />
+    
+    <EditText
+        android:id="@+id/txtNewMessage"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/type"
+        android:textSize="15dip"
+        android:layout_marginBottom="5dip"
+        android:layout_marginLeft="5dip"
+        android:layout_marginRight="5dip"
+    />
+    
+    <Button
+        android:id="@+id/submit"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Submit"
+        android:gravity="center"
+        android:layout_below="@+id/txtNewMessage"
+        android:textSize="15dip"
+        android:layout_marginBottom="5dip"
+        android:layout_marginLeft="5dip"
+        android:layout_marginRight="5dip"
+    />
+    <TextView
+        android:id="@+id/type1"
+        android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15dip"
+            android:text="Message send as :"
+            android:layout_below="@+id/submit"
+            
+            android:layout_marginBottom="5dip"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+        />
+        <ListView
+            android:id="@+id/listmessage"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#ff3344"
+            android:background="#ffeeee"
+            android:layout_below="@+id/type1"
+            
+            />
+            
+        </RelativeLayout>
+        
+        
+        
