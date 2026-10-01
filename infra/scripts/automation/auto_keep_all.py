@@ -107,10 +107,9 @@ def load_templates():
             if os.path.exists(path):
                 tpl = cv2.imread(path)
                 if tpl is not None:
-                    # Convert to grayscale and then to edges
+                    # Convert to grayscale for robust template matching
                     tpl_gray = cv2.cvtColor(tpl, cv2.COLOR_BGR2GRAY)
-                    tpl_edges = cv2.Canny(tpl_gray, 50, 150)
-                    loaded[name] = tpl_edges
+                    loaded[name] = tpl_gray
                     break
                 else:
                     log(f"Error: Could not read template {path}")
@@ -140,19 +139,18 @@ if __name__ == "__main__":
 
             screen = get_screenshot()
             if screen is not None:
-                # Convert screen to edges for color-independent matching
+                # Convert screen to grayscale for robust matching
                 screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
-                screen_edges = cv2.Canny(screen_gray, 50, 150)
                 
-                for name, template_edges in loaded_templates.items():
-                    res = cv2.matchTemplate(screen_edges, template_edges, cv2.TM_CCOEFF_NORMED)
+                for name, template_gray in loaded_templates.items():
+                    res = cv2.matchTemplate(screen_gray, template_gray, cv2.TM_CCOEFF_NORMED)
                     _, max_val, _, max_loc = cv2.minMaxLoc(res)
                     if max_val >= 0.40:
                         log(f"Template '{name}' evaluated confidence: {max_val:.2f}")
                     if max_val >= CONFIDENCE_THRESHOLD:
-                        log(f"Button '{name}' detected via edges (Conf: {max_val:.2f})")
-                        # template_edges.shape gives (height, width)
-                        clicked = trigger_click(name, max_loc[0], max_loc[1], template_edges.shape[1], template_edges.shape[0])
+                        log(f"Button '{name}' detected via grayscale (Conf: {max_val:.2f})")
+                        # template_gray.shape gives (height, width)
+                        clicked = trigger_click(name, max_loc[0], max_loc[1], template_gray.shape[1], template_gray.shape[0])
                         if clicked:
                             time.sleep(5) # Cooldown
                         break # Only handle one button per screenshot
