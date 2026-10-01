@@ -21,67 +21,52 @@
 
 **IntelliBitz** is an engineering monorepo and knowledge base providing containerized services, system administration tooling, cloud automation, mobile client architectures, and language toolchains.
 
-The repository is organized by **source language and technology**:
+The repository is organized by **functional intent and architectural domain**:
 
 ```text
 archives/
-├── java/          # Java EE/SE projects (IntelliDocs, IntelliMeet)
-├── kotlin/        # Kotlin apps, Multiplatform, Android clients, Java interop examples
-├── python/        # Python tools, AI, scripts, package management, web apps
-├── shell/         # Shell scripts for OS, DevOps, Cloud (Docker, k8s, GCP)
-├── sql/           # Database schemas, scripts (PostgreSQL, MySQL)
-├── go/            # Go scripts and tools
-├── clojure/       # Clojure tutorials and tools
-├── expect/        # Expect automation scripts
-└── docs/          # Markdown documentation and guides
+├── runtimes/      # Operating system runtimes & language environments (Go, Clojure, Python, Shell)
+├── infra/         # SCM, DevOps & Infrastructure orchestration (Docker, K8s, GCP, Git, Gradle)
+├── data/          # Database systems, schemas & persistence stacks (PostgreSQL, MySQL, SQLite)
+├── services/      # Backend services, middleware & web servers (Java EE, Python Web, Nginx, Apache)
+├── clients/       # User interfaces & client applications (Android, Multiplatform, Java SE, Web Standards)
+└── docs/          # Project knowledge base, roadmap, contributing & security guidelines
 ```
 
 ---
 
 ## Directory Index & Architecture
 
-### ☕ [Java (`java/`)](./java/)
-Enterprise backend architectures and SE projects.
-- **[Java EE](./java/javaee/)**: Multi-module Maven enterprise architectures (Java 21).
-  - **[IntelliDocs](./java/javaee/intellidocs)**: Enterprise document platform.
-  - **[IntelliMeet](./java/javaee/intellimeet)**: Collaborative meeting backend platform (`32tango`).
-- **[Java SE](./java/javase/)**: Desktop applications (Tamil font transliterator, text editors).
+### ⚙️ [Runtimes (`runtimes/`)](./runtimes/)
+Operating system runtimes and language environment scripts.
+- **[Go & Clojure](./runtimes/)**: Workspace scripts and tutorials.
+- **[Python Runtimes](./runtimes/python/)**: Package management (`uv`, `pip`), conda setups, and AI toolchain guides.
+- **[Shell Systems](./runtimes/shell/)**: Linux system administration, brew, and SDKman configurations.
 
-### 🚀 [Kotlin (`kotlin/`)](./kotlin/)
-Modern Kotlin development spanning mobile, web, and multiplatform.
-- **[Android (`android/`)](./kotlin/android)**:
-  - **[IntelliDroid](./kotlin/android/IntelliDroid)**: Flagship enterprise client (Kotlin 2.0+, SDK 35).
-  - 100% Kotlin modules: Event tracker (`MEvents`), Twitter trends (`TwRends`), GPS telemetry (`wuffittracker`).
-- **[Multiplatform](./kotlin/multiplatform)**: Shared logic modules.
-- **[Web](./kotlin/jsfront)**: JS frontends and tutorials.
-- **[Java Interop Examples](./kotlin/java-examples/)**: Migrated from `java/` directory (Kotlin versions of IntelliDocs, IntelliMeet, GWT projects)
+### 🚀 [Infrastructure & DevOps (`infra/`)](./infra/)
+Container orchestration, cloud automation, and developer toolchains.
+- **[Containerization & Cloud](./infra/)**: Docker, Kubernetes (`kubectl`), Multipass VMs, and Google Cloud automation.
+- **[SCM & Build Systems](./infra/)**: Git guides and Gradle wrapper standards.
+- **[Automation Scripts](./infra/expect/)**: Expect automation scripts.
 
-### 🐍 [Python (`python/`)](./python/)
-Python automation, environment configuration, and AI toolchains.
-- Modern [uv package manager](./python/uv.md) (`uv.sh`), Python 3.12/3.13 setups.
-- AI integration: Hugging Face Hub CLI guide ([`huggingface.md`](./python/huggingface.md)), Google Colab & Gemini API ([`colab.md`](./python/colab.md)), Meta Llama 3 ([`meta-llama.md`](./python/meta-llama.md)).
-- **[IntelliGeek](./python/intelligeek/)**: Web portal applications (migrated from `php/`)
+### 🗄️ [Data & Databases (`data/`)](./data/)
+Container stacks, schemas, and persistence administration scripts.
+- **[PostgreSQL & MySQL](./data/)**: Production Docker Compose stacks, schemas, and initialization scripts.
+- **[SQLite & rqlite](./data/)**: Embedded and distributed Raft database setups.
+- **[CouchDB](./data/)**: Document-oriented database operations.
 
-### 🐚 [Shell & DevOps (`shell/`)](./shell/)
-System administration, container orchestration, and OS utilities.
-- **[Linux](./shell/linux)**: Ubuntu updates, Samba sharing, OpenSSH hardening, GnuPG key management.
-- **[Docker](./shell/docker)**: Engine install scripts, rootless configuration, Desktop setups.
-- **[Kubernetes](./shell/kubernetes)**: `kubectl` installation and operations.
-- **[Multipass](./shell/multipass)**: Ubuntu VM clusters and XRDP instances.
-- **[Google Cloud](./shell/google)**: Compute Engine VMs, IAM, Cloud SDK automation.
+### ☁️ [Services & Middleware (`services/`)](./services/)
+Enterprise backends, web portals, and reverse proxy web servers.
+- **[Java EE (`javaee/`)](./services/javaee/)**: Multi-module enterprise architectures (`IntelliDocs`, `IntelliMeet`).
+- **[Python Web (`python/intelligeek/`)](./services/python/intelligeek/)**: Web portal applications.
+- **[Web Servers (`webservers/`)](./services/webservers/)**: Nginx, Apache HTTP Server, Caddy, Apache Tomcat, and Flatpak configurations.
 
-### 🗄️ [SQL & Databases (`sql/`)](./sql/)
-Container stacks, schemas, and administration scripts.
-- **[PostgreSQL](./sql/postgresql)**: `docker-compose.yml`, schema definitions, Swarm stacks.
-- **[MySQL](./sql/mysql)**: `docker-compose.yml` stack and schemas.
-- **[SQLite](./sql/sqlite)** & **[rqlite](./sql/rqlite)**: Embedded and distributed SQLite setups.
-- **[CouchDB](./sql/couchdb)**: Document-oriented database operations.
-
-### 📚 [Documentation (`docs/`)](./docs/)
-System configuration, web server recipes, and client standards.
-- Web Servers: Nginx, Apache HTTP Server, Caddy, Apache Tomcat.
-- Standards: JSON, TOML, WHATWG client specifications (`client/`).
-- SCM Guides: Git (`git/`), Gradle (`gradle/`).
+### 📱 [Clients & User Interfaces (`clients/`)](./clients/)
+Mobile apps, multiplatform suites, desktop utilities, and web standards.
+- **[Android (`android/`)](./clients/android/)**: Flagship [IntelliDroid](./clients/android/IntelliDroid/README.md) and 100% Kotlin modules (`MEvents`, `TwRends`, `UDigg`, `wuffittracker`).
+- **[Multiplatform & JS](./clients/)**: Kotlin Multiplatform modules and JavaScript frontends.
+- **[Desktop & Examples (`javase/`, `java-examples/`)](./clients/)**: Java SE desktop applications and Kotlin interoperability examples.
+- **[Standards (`standards/`)](./clients/standards/)**: WHATWG specifications, JSON, and TOML standards.
 
 ---
 
@@ -91,7 +76,7 @@ System configuration, web server recipes, and client standards.
 
 ```bash
 # Start PostgreSQL:
-cd sql/postgresql
+cd data/postgresql
 docker compose up -d
 
 # Start MySQL:

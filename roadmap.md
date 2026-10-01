@@ -72,8 +72,8 @@ A unified architectural roadmap spanning operating system runtimes, developer to
 
 ### 5. User Interfaces & Clients (`ui/`)
 
-- [x] **Android Suite Modernization**: Flagship [IntelliDroid](./ui/android/IntelliDroid/README.md) and 100% Kotlin standalone modules ([MEvents](./ui/android/MEvents/README.md), [TwRends](./ui/android/TwRends/README.md), [UDigg](./ui/android/UDigg/README.md), [wuffittracker](./ui/android/wuffittracker/README.md)) upgraded to Android SDK 35, Kotlin 2.0.21, Gradle 8.13, and AGP 8.7.2.
-- [x] **Cloud & Mobile Client Systems**: Reference architectures for peer-to-peer exchange ([booksExchange](./ui/android/booksExchange/README.md)), martial arts matchmaking ([fiteclub](./ui/android/fiteclub/README.md)), and proximity discovery ([mobeegal](./ui/android/mobeegal/README.md)).
+- [x] **Android Suite Modernization**: Flagship [IntelliDroid](./clients/android/IntelliDroid/README.md) and 100% Kotlin standalone modules ([MEvents](./clients/android/MEvents/README.md), [TwRends](./clients/android/TwRends/README.md), [UDigg](./clients/android/UDigg/README.md), [wuffittracker](./clients/android/wuffittracker/README.md)) upgraded to Android SDK 35, Kotlin 2.0.21, Gradle 8.13, and AGP 8.7.2.
+- [x] **Cloud & Mobile Client Systems**: Reference architectures for peer-to-peer exchange ([booksExchange](./clients/android/booksExchange/README.md)), martial arts matchmaking ([fiteclub](./clients/android/fiteclub/README.md)), and proximity discovery ([mobeegal](./clients/android/mobeegal/README.md)).
 - [x] **Web Standards**: Complete specification guides for modern frontend (HTML, CSS, JS, HTTP/3, WebSockets, Storage).
 - [x] **Repository Documentation & License Unification**: Consolidated READMEs, deleted legacy plain-text/GPL files, and standardized on single root MIT license across all sub-projects.
 - [ ] **Jetpack Compose UI**: Modern declarative UI migration for IntelliDroid client components.
