@@ -60,26 +60,12 @@ def trigger_click(name, x, y, w, h):
         log(f"Warning: could not get mouse state: {e}")
 
     try:
-        # Save current mouse location to restore after clicking
-        res = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
-        orig_x, orig_y = None, None
-        for line in res.stdout.splitlines():
-            if line.startswith("X="):
-                orig_x = line.split("=")[1]
-            elif line.startswith("Y="):
-                orig_y = line.split("=")[1]
-
-        # Move to button and click natively for ALL buttons (including Keep All)
+        # Click at button coordinates without grabbing or restoring cursor position
         subprocess.run([
             "xdotool", 
             "mousemove", str(cx), str(cy), 
             "click", "1"
         ], env=env, check=True)
-
-        # Restore mouse cursor
-        if orig_x is not None and orig_y is not None:
-            time.sleep(0.05)
-            subprocess.run(["xdotool", "mousemove", str(orig_x), str(orig_y)], env=env)
             
         log(f"Automation for '{name}' successful.")
         return True
