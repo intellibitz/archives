@@ -2,6 +2,8 @@
 
 This top-level directory houses AI-related artifacts, models, agent configurations, prompt templates, evaluation datasets, and LLM integration guides across the repository.
 
+📊 **[View Master Cost Ranking (Lowest to Highest Cost per Token)](./COST_RANKING.md)**
+
 ## Supported AI Providers & Models (`ai/`)
 1. **[DeepSeek](./deepseek/)**: DeepSeek-V3, DeepSeek-R1 — [Cost Analysis](./deepseek/cost_analysis.md)
 2. **[Qwen](./qwen/)**: Alibaba Qwen models — [Cost Analysis](./qwen/cost_analysis.md)
