@@ -2,7 +2,7 @@
 
 This top-level directory houses AI-related artifacts, models, agent configurations, prompt templates, evaluation datasets, and LLM integration guides across the repository.
 
-📊 **[View Master Cost Ranking (Lowest to Highest Cost per Token)](./COST_RANKING.md)**
+📊 **[View Master Cost Ranking (Lowest to Highest Cost per Token)](./COST_RANKING.md)** | 💻 **[Run Open-Weights Models Locally For Free](./LOCAL_EXECUTION.md)**
 
 ## Supported AI Providers & Models (`ai/`)
 1. **[DeepSeek](./deepseek/)**: DeepSeek-V3, DeepSeek-R1 — [Cost Analysis](./deepseek/cost_analysis.md)
