@@ -5,16 +5,17 @@ import cv2
 
 # --- Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+ASSETS_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../assets"))
 TEMPLATES = {
-    "Keep All": [os.path.join(SCRIPT_DIR, "keep-all.png")],
-    "Proceed": [os.path.join(SCRIPT_DIR, "proceed.png")],
-    "Allow Always": [os.path.join(SCRIPT_DIR, "allow-always.png")],
-    "Accept All": [os.path.join(SCRIPT_DIR, "accept-all.png")],
-    "Accept All 2": [os.path.join(SCRIPT_DIR, "accept-all2.png"), os.path.join(SCRIPT_DIR, "accept_all2.png")],
-    "Accept Changes": [os.path.join(SCRIPT_DIR, "accept-changes.png"), os.path.join(SCRIPT_DIR, "accept_changes.png"), os.path.join(SCRIPT_DIR, "acceot-changes.png")],
-    "Always Run": [os.path.join(SCRIPT_DIR, "always-run.png")],
-    "Allow Once": [os.path.join(SCRIPT_DIR, "allow-once.png")],
-    "Allow": [os.path.join(SCRIPT_DIR, "allow.png"), os.path.join(SCRIPT_DIR, "allow2.png")]
+    "Keep All": [os.path.join(ASSETS_DIR, "keep-all.png")],
+    "Proceed": [os.path.join(ASSETS_DIR, "proceed.png")],
+    "Allow Always": [os.path.join(ASSETS_DIR, "allow-always.png")],
+    "Accept All": [os.path.join(ASSETS_DIR, "accept-all.png")],
+    "Accept All 2": [os.path.join(ASSETS_DIR, "accept-all2.png"), os.path.join(ASSETS_DIR, "accept_all2.png")],
+    "Accept Changes": [os.path.join(ASSETS_DIR, "accept-changes.png"), os.path.join(ASSETS_DIR, "accept_changes.png"), os.path.join(ASSETS_DIR, "acceot-changes.png")],
+    "Always Run": [os.path.join(ASSETS_DIR, "always-run.png")],
+    "Allow Once": [os.path.join(ASSETS_DIR, "allow-once.png")],
+    "Allow": [os.path.join(ASSETS_DIR, "allow.png"), os.path.join(ASSETS_DIR, "allow2.png")]
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 # We lower the confidence slightly because edge matching can be a bit more sensitive to sub-pixel rendering differences
