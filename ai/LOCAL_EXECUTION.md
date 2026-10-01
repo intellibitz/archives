@@ -35,6 +35,23 @@ If you prefer native graphical desktop apps (ChatGPT-like interfaces with no cod
 
 ---
 
+## 💻 Hardware & GPU Requirements for Local Models
+
+Running LLMs locally requires sufficient **VRAM (GPU Memory)** or **System RAM** (using 4-bit / 8-bit quantization for efficiency).
+
+| Model Parameter Size | Min. VRAM / RAM Required (4-bit Quantization) | Recommended Hardware |
+| :--- | :--- | :--- |
+| **3B – 8B Models** <br>*(e.g., Ministral 8B, Qwen2.5-7B, DeepSeek-R1-8B)* | **8 GB** | Standard laptops, MacBooks (8GB+ RAM), mid-range GPUs (RTX 3060/4060). |
+| **14B – 32B Models** <br>*(e.g., Gemma 2 27B, Qwen2.5-14B)* | **16 GB – 24 GB** | High-end consumer GPUs (RTX 3090/4090 24GB) or Apple Mac (24GB+ Unified Memory). |
+| **70B – 72B Models** <br>*(e.g., DeepSeek-R1-70B, Qwen2.5-72B)* | **48 GB – 64 GB+** | Multi-GPU rigs, Mac Studio (64GB/128GB Unified Memory), or cloud instance. |
+
+### Hardware Recommendations:
+- **Apple Silicon (M1/M2/M3/M4 Pro/Max/Ultra):** Ideal for local inference due to high-bandwidth **Unified Memory** sharing RAM and GPU seamlessly.
+- **NVIDIA GPUs (RTX series with CUDA):** Best-in-class acceleration for Ollama, vLLM, and LM Studio.
+- **CPU Fallback:** GPT4All and Ollama can run models on CPU/System RAM if no dedicated GPU is present, though token generation speeds will be significantly slower.
+
+---
+
 ## 🚀 CLI Setup: Ollama Terminal Commands
 
 Once you have Ollama installed, you can spin up open-weights models from the supported providers instantly:
