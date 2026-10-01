@@ -55,8 +55,7 @@ def trigger_click(name, x, y, w, h):
         d = display.Display()
         q = d.screen().root.query_pointer()
         if q.mask & 0x1F00:
-            log(f"User is actively using the mouse (button pressed). Skipping click for '{name}'.")
-            return False
+            log(f"Notice: User mouse active (mask: {q.mask}), proceeding with click anyway for '{name}'.")
     except Exception as e:
         log(f"Warning: could not get mouse state: {e}")
 
