@@ -18,8 +18,8 @@ TEMPLATES = {
     "Allow": [os.path.join(ASSETS_DIR, "allow.png"), os.path.join(ASSETS_DIR, "allow2.png")]
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
-# Lower confidence threshold for robust matching across themes/sub-pixel differences
-CONFIDENCE_THRESHOLD = 0.50
+# High confidence threshold (0.75) to prevent false-positive clicks on background text/patterns (which score ~0.58)
+CONFIDENCE_THRESHOLD = 0.75
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
@@ -60,12 +60,26 @@ def trigger_click(name, x, y, w, h):
         log(f"Warning: could not get mouse state: {e}")
 
     try:
-        # Click at button coordinates without grabbing or restoring cursor position
+        # Save current mouse location to restore immediately after clicking
+        res = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
+        orig_x, orig_y = None, None
+        for line in res.stdout.splitlines():
+            if line.startswith("X="):
+                orig_x = line.split("=")[1]
+            elif line.startswith("Y="):
+                orig_y = line.split("=")[1]
+
+        # Move to button and click
         subprocess.run([
             "xdotool", 
             "mousemove", str(cx), str(cy), 
             "click", "1"
         ], env=env, check=True)
+
+        # Restore mouse cursor to user's original position instantly
+        if orig_x is not None and orig_y is not None:
+            time.sleep(0.02)
+            subprocess.run(["xdotool", "mousemove", str(orig_x), str(orig_y)], env=env)
             
         log(f"Automation for '{name}' successful.")
         return True
