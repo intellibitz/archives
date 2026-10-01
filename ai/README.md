@@ -2,7 +2,7 @@
 
 This top-level directory houses AI-related artifacts, models, agent configurations, prompt templates, evaluation datasets, and LLM integration guides across the repository.
 
-📊 **[Cost Ranking](./COST_RANKING.md)** | 💻 **[Run Locally](./LOCAL_EXECUTION.md)** | 🇨🇳 vs 🌍 **[Chinese vs. Western AI](./CHINESE_VS_OTHERS_COMPARISON.md)** | 🏆 **[Leaderboard](./TOP_100_LEADERBOARD.md)** | 🧠 **[Architecture & Ecosystem (Models, Engines, Agents & MCP)](./ARCHITECTURE_ECOSYSTEM.md)**
+📊 **[Cost Ranking](./COST_RANKING.md)** | 💻 **[Run Locally](./LOCAL_EXECUTION.md)** | 🇨🇳 vs 🌍 **[Chinese vs. Western AI](./CHINESE_VS_OTHERS_COMPARISON.md)** | 🏆 **[Leaderboard](./TOP_100_LEADERBOARD.md)** | 🧠 **[Architecture](./ARCHITECTURE_ECOSYSTEM.md)** | 🛠️ **[IDEs, Plugins & Desktop Clients](./IDE_PLUGINS_DESKTOP.md)**
 
 ## Supported AI Providers & Models (`ai/`)
 1. **[DeepSeek](./deepseek/)**: DeepSeek-V3, DeepSeek-R1 — [Cost Analysis](./deepseek/cost_analysis.md)
