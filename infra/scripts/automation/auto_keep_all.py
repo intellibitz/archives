@@ -18,8 +18,8 @@ TEMPLATES = {
     "Allow": [os.path.join(ASSETS_DIR, "allow.png"), os.path.join(ASSETS_DIR, "allow2.png")]
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
-# We lower the confidence slightly because edge matching can be a bit more sensitive to sub-pixel rendering differences
-CONFIDENCE_THRESHOLD = 0.60
+# Lower confidence threshold for robust matching across themes/sub-pixel differences
+CONFIDENCE_THRESHOLD = 0.50
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
@@ -147,6 +147,8 @@ if __name__ == "__main__":
                 for name, template_edges in loaded_templates.items():
                     res = cv2.matchTemplate(screen_edges, template_edges, cv2.TM_CCOEFF_NORMED)
                     _, max_val, _, max_loc = cv2.minMaxLoc(res)
+                    if max_val >= 0.40:
+                        log(f"Template '{name}' evaluated confidence: {max_val:.2f}")
                     if max_val >= CONFIDENCE_THRESHOLD:
                         log(f"Button '{name}' detected via edges (Conf: {max_val:.2f})")
                         # template_edges.shape gives (height, width)
