@@ -1,7 +1,7 @@
-# Mistral AI Cost Analysis & Token Pricing
+# [Mistral AI](https://mistral.ai) Cost Analysis & Token Pricing
 
 ## Overview
-Mistral AI models (Ministral 3B/8B, Mistral Large 2, Codestral) offer high-density performance and flexible deployment options (API or on-prem).
+[Mistral AI](https://mistral.ai) models (Ministral 3B/8B, Mistral Large 2, Codestral) offer high-density performance and flexible deployment options (API or on-prem).
 
 ## Token Pricing (Per 1 Million Tokens)
 

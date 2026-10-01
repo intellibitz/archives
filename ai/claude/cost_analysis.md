@@ -1,7 +1,7 @@
-# Claude (Anthropic) Cost Analysis & Token Pricing
+# [Anthropic Claude](https://www.anthropic.com) Cost Analysis & Token Pricing
 
 ## Overview
-Anthropic Claude models (Claude 3.5 Sonnet, Opus, and Haiku) excel in complex software engineering, nuanced writing, and long-context analysis.
+[Anthropic](https://www.anthropic.com) Claude models (Claude 3.5 Sonnet, Opus, and Haiku) excel in complex software engineering, nuanced writing, and long-context analysis.
 
 ## Token Pricing (Per 1 Million Tokens)
 

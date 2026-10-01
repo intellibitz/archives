@@ -1,7 +1,7 @@
-# Zhipu GLM Cost Analysis & Token Pricing
+# [Zhipu GLM](https://open.bigmodel.cn) Cost Analysis & Token Pricing
 
 ## Overview
-Zhipu AI GLM-4 series delivers robust Chinese-English bilingual performance and strong tool-calling capabilities.
+[Zhipu AI](https://open.bigmodel.cn) GLM-4 series delivers robust Chinese-English bilingual performance and strong tool-calling capabilities.
 
 ## Token Pricing (Per 1 Million Tokens)
 

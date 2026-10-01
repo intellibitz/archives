@@ -1,7 +1,7 @@
-# Google AI Cost Analysis & Token Pricing
+# [Google AI](https://ai.google.dev) Cost Analysis & Token Pricing
 
 ## Overview
-Google AI (Gemini 1.5 Pro, Gemini 2.0 Flash) specializes in massive 1M+ token context windows and multimodal native processing.
+[Google AI](https://ai.google.dev) (Gemini 1.5 Pro, Gemini 2.0 Flash) specializes in massive 1M+ token context windows and multimodal native processing.
 
 ## Token Pricing (Per 1 Million Tokens)
 

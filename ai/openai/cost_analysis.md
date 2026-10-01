@@ -1,7 +1,7 @@
-# OpenAI Cost Analysis & Token Pricing
+# [OpenAI](https://openai.com) Cost Analysis & Token Pricing
 
 ## Overview
-OpenAI provides industry-standard frontier models (GPT-4o, reasoning models o1/o3-mini, and cost-efficient GPT-4o-mini).
+[OpenAI](https://openai.com) provides industry-standard frontier models (GPT-4o, reasoning models o1/o3-mini, and cost-efficient GPT-4o-mini).
 
 ## Token Pricing (Per 1 Million Tokens)
 
