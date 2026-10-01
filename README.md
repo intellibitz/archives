@@ -1,7 +1,7 @@
 # IntelliBitz
 
 <p align="center">
-  <strong>Comprehensive DevOps, Systems Infrastructure, Cloud Platforms & Multi-Platform Software Suite</strong>
+  <strong>Comprehensive AI Ecosystem, DevOps, Systems Infrastructure, Cloud Platforms & Multi-Platform Software Suite</strong>
 </p>
 
 <p align="center">
@@ -19,15 +19,16 @@
 
 ## Overview
 
-**IntelliBitz** is an engineering monorepo and knowledge base providing containerized services, system administration tooling, cloud automation, mobile client architectures, and language toolchains.
+**IntelliBitz** is an enterprise engineering monorepo and knowledge base providing a complete AI provider ecosystem, containerized services, system administration tooling, cloud automation, mobile client architectures, and language toolchains.
 
 The repository is organized by **functional intent and architectural domain**:
 
 ```text
 archives/
+├── ai/            # AI models, cost analysis, local execution guides & LLM architectures
 ├── runtimes/      # Operating system runtimes & language environments (Go, Clojure, Python, Shell)
 ├── infra/         # SCM, DevOps & Infrastructure orchestration (Docker, K8s, GCP, Git, Gradle)
-├── data/          # Database systems, schemas & persistence stacks (PostgreSQL, MySQL, SQLite)
+├── data/          # Database systems, schemas & persistence stacks (PostgreSQL, MySQL, SQLite, rqlite)
 ├── services/      # Backend services, middleware & web servers (Java EE, Python Web, Nginx, Apache)
 ├── clients/       # User interfaces & client applications (Android, Multiplatform, Java SE, Web Standards)
 └── docs/          # Project knowledge base, roadmap, contributing & security guidelines
@@ -36,6 +37,11 @@ archives/
 ---
 
 ## Directory Index & Architecture
+
+### 🤖 [AI Ecosystem & Knowledge Base (`ai/`)](./ai/)
+Comprehensive AI models, cost comparisons, and integration guides.
+- **[Providers (`ai/`)](./ai/)**: DeepSeek, Qwen, OpenAI, Claude, Xiaomi MiMo, Zhipu GLM, Agnes AI, Google AI, Mistral, and Inclusion AI.
+- **[Benchmarks & Guides](./ai/README.md)**: [Cost Ranking](./ai/COST_RANKING.md), [Local Execution](./ai/LOCAL_EXECUTION.md), [Leaderboard](./ai/TOP_100_LEADERBOARD.md), [BYOK API Keys](./ai/BYOK_API_KEYS.md), and [Top 100 GitHub AI Projects](./ai/TOP_100_GITHUB_PROJECTS.md).
 
 ### ⚙️ [Runtimes (`runtimes/`)](./runtimes/)
 Operating system runtimes and language environment scripts.
@@ -49,11 +55,11 @@ Container orchestration, cloud automation, and developer toolchains.
 - **[SCM & Build Systems](./infra/)**: Git guides and Gradle wrapper standards.
 - **[Automation Scripts](./infra/expect/)**: Expect automation scripts.
 
-### 🗄️ [Data & Databases (`data/`)](./data/)
+### 🗄️ [Data & Databases (`data/sql/`)](./data/sql/)
 Container stacks, schemas, and persistence administration scripts.
-- **[PostgreSQL & MySQL](./data/)**: Production Docker Compose stacks, schemas, and initialization scripts.
-- **[SQLite & rqlite](./data/)**: Embedded and distributed Raft database setups.
-- **[CouchDB](./data/)**: Document-oriented database operations.
+- **[PostgreSQL & MySQL (`data/sql/`)](./data/sql/)**: Production Docker Compose stacks, schemas, and initialization scripts (`data/sql/postgresql/`, `data/sql/mysql/`).
+- **[SQLite & rqlite](./data/sql/)**: Embedded and distributed Raft database setups.
+- **[CouchDB](./data/sql/)**: Document-oriented database operations.
 
 ### ☁️ [Services & Middleware (`services/`)](./services/)
 Enterprise backends, web portals, and reverse proxy web servers.
@@ -63,8 +69,8 @@ Enterprise backends, web portals, and reverse proxy web servers.
 
 ### 📱 [Clients & User Interfaces (`clients/`)](./clients/)
 Mobile apps, multiplatform suites, desktop utilities, and web standards.
-- **[Android (`android/`)](./clients/android/)**: Flagship [IntelliDroid](./clients/android/IntelliDroid/README.md) and 100% Kotlin modules (`MEvents`, `TwRends`, `UDigg`, `wuffittracker`).
-- **[Multiplatform & JS](./clients/)**: Kotlin Multiplatform modules and JavaScript frontends.
+- **[Android (`android/`)](./clients/android/)**: Flagship [IntelliDroid](./clients/android/IntelliDroid/README.md) and 100% Kotlin modules ([MEvents](./clients/android/MEvents/README.md), [TwRends](./clients/android/TwRends/README.md), [UDigg](./clients/android/UDigg/README.md), [wuffittracker](./clients/android/wuffittracker/README.md)).
+- **[Multiplatform & JS (`clients/`)](./clients/)**: Kotlin Multiplatform modules and JavaScript frontends.
 - **[Desktop & Examples (`javase/`, `java-examples/`)](./clients/)**: Java SE desktop applications and Kotlin interoperability examples.
 - **[Standards (`standards/`)](./clients/standards/)**: WHATWG specifications, JSON, and TOML standards.
 
@@ -76,7 +82,7 @@ Mobile apps, multiplatform suites, desktop utilities, and web standards.
 
 ```bash
 # Start PostgreSQL:
-cd data/postgresql
+cd data/sql/postgresql
 docker compose up -d
 
 # Start MySQL:
@@ -87,14 +93,14 @@ docker compose up -d
 ### 2. Build the Android Client
 
 ```bash
-cd kotlin/android/IntelliDroid
+cd clients/android/IntelliDroid
 ./gradlew assembleDebug
 ```
 
 ### 3. Build Java EE Backends
 
 ```bash
-cd java/javaee/intellimeet/32tango
+cd services/javaee
 mvn clean install
 ```
 
@@ -104,10 +110,10 @@ All `.sh` scripts in the repository have executable permissions set and have pas
 
 ```bash
 # Check syntax of any script
-bash -n shell/linux/ubuntu/apt-full-upgrade.sh
+bash -n infra/scripts/automation/auto_keep_all.sh
 
 # Run script
-./shell/linux/ubuntu/apt-full-upgrade.sh
+./infra/scripts/automation/auto_keep_all.sh
 ```
 
 ---
