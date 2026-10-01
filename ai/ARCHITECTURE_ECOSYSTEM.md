@@ -6,16 +6,16 @@ This document defines the core layers of modern AI system design tracked within 
 
 ## 1. 🧬 Models (Foundation & Specialized)
 Models are the underlying intelligence engines trained on massive corpora.
-- **Foundation LLMs:** General-purpose reasoning and generation engines (e.g., DeepSeek-R1, GPT-4o, Claude 3.5 Sonnet, Qwen2.5).
-- **Vision-Language Models (VLMs):** Multimodal models processing text and image/video inputs (e.g., Qwen-VL, GPT-4o, Gemini 1.5 Pro).
-- **Embedding & Reranker Models:** Specialized models for vector search, semantic similarity, and document reranking (e.g., BGE-Reranker, Voyage AI, OpenAI text-embedding-3).
+- **Foundation LLMs:** General-purpose reasoning and generation engines (e.g., DeepSeek-R1, GPT-4o, Claude 3.5 Sonnet, [Qwen](https://github.com/QwenLM/Qwen)).
+- **Vision-Language Models (VLMs):** Multimodal models processing text and image/video inputs (e.g., [Qwen-VL](https://github.com/QwenLM/Qwen-VL), GPT-4o, Gemini 1.5 Pro).
+- **Embedding & Reranker Models:** Specialized models for vector search, semantic similarity, and document reranking (e.g., [BGE](https://github.com/FlagOpen/FlagEmbedding), OpenAI text-embedding-3).
 
 ---
 
 ## 2. ⚡ Engines (Inference & Serving Runtimes)
 Engines execute model weights efficiently on consumer or cloud hardware.
-- **Production Serving:** **vLLM** (PagedAttention for high throughput), **TensorRT-LLM** (NVIDIA optimized), **TGI (Text Generation Inference)**.
-- **Local / Edge Runtimes:** **Ollama**, **Llama.cpp**, **LM Studio**, **llamafile** (optimized GGUF execution for local CPUs and GPUs).
+- **Production Serving:** **[vLLM](https://github.com/vllm-project/vllm)** (PagedAttention for high throughput), **[TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM)** (NVIDIA optimized), **[Text Generation Inference (TGI)](https://github.com/huggingface/text-generation-inference)**.
+- **Local / Edge Runtimes:** **[Ollama](https://github.com/ollama/ollama)**, **[Llama.cpp](https://github.com/ggerganov/llama.cpp)**, LM Studio, **[llamafile](https://github.com/Mozilla-Ocho/llamafile)** (optimized GGUF execution for local CPUs and GPUs).
 
 ---
 
@@ -35,7 +35,7 @@ When tasks exceed single-agent capabilities, hierarchical **"Agents of Agents"**
 ---
 
 ## 5. 🔌 MCP (Model Context Protocol)
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io) is Anthropic's open standard that allows developers to build secure, bidirectional connections between AI models (clients) and data sources/tools (servers).
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) ([GitHub](https://github.com/modelcontextprotocol)) is Anthropic's open standard that allows developers to build secure, bidirectional connections between AI models (clients) and data sources/tools (servers).
 - **Architecture:** 
   - **MCP Clients:** LLM-powered interfaces (e.g., Claude Desktop, IDE extensions, custom agent applications).
   - **MCP Servers:** Lightweight services providing direct access to local files, Git repositories, databases (PostgreSQL/MySQL), browser tools, and APIs.
