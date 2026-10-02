@@ -22,19 +22,8 @@ TEMPLATES = {
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 
-BUTTON_THRESHOLDS = {
-    "Accept All": 0.62,
-    "Accept All 2": 0.62,
-    "Accept Changes": 0.62,
-    "Allow": 0.62,
-    "Allow Once": 0.65,
-    "Allow Always": 0.65,
-    "Proceed": 0.70,
-    "Keep All": 0.70,
-    "Always Run": 0.65,
-    "Yes Don't Ask": 0.62,
-}
-DEFAULT_THRESHOLD = 0.68
+# Strict confidence threshold (0.80) to completely eliminate false-positive cursor movements
+CONFIDENCE_THRESHOLD = 0.80
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
@@ -63,7 +52,7 @@ def get_env():
     return env
 
 def get_mouse_xy():
-    """Returns (x, y) tuple of current mouse cursor position."""
+    """Returns (x, y) tuple of current mouse cursor position without moving it."""
     try:
         res = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=get_env(), capture_output=True, text=True)
         x, y = None, None
@@ -127,33 +116,30 @@ def get_screenshot():
         return None
 
 def find_best_template_match(screen_gray, template_gray):
-    """Multi-scale & inverted contrast template matching."""
+    """Multi-scale template matching (1.0x, 0.9x, 1.1x, 0.8x, 1.2x)."""
     best_val = -1.0
     best_loc = None
     best_shape = None
     
-    screen_variants = [screen_gray, cv2.bitwise_not(screen_gray)]
     scales = [1.0, 0.9, 1.1, 0.8, 1.2]
-    
-    for scr in screen_variants:
-        for scale in scales:
-            if scale == 1.0:
-                resized_tpl = template_gray
-            else:
-                w = int(template_gray.shape[1] * scale)
-                h = int(template_gray.shape[0] * scale)
-                if w <= 0 or h <= 0 or w > scr.shape[1] or h > scr.shape[0]:
-                    continue
-                interpolation = cv2.INTER_AREA if scale < 1.0 else cv2.INTER_CUBIC
-                resized_tpl = cv2.resize(template_gray, (w, h), interpolation=interpolation)
-                
-            res = cv2.matchTemplate(scr, resized_tpl, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, max_loc = cv2.minMaxLoc(res)
-            if max_val > best_val:
-                best_val = max_val
-                best_loc = max_loc
-                best_shape = resized_tpl.shape
-                
+    for scale in scales:
+        if scale == 1.0:
+            resized_tpl = template_gray
+        else:
+            w = int(template_gray.shape[1] * scale)
+            h = int(template_gray.shape[0] * scale)
+            if w <= 0 or h <= 0 or w > screen_gray.shape[1] or h > screen_gray.shape[0]:
+                continue
+            interpolation = cv2.INTER_AREA if scale < 1.0 else cv2.INTER_CUBIC
+            resized_tpl = cv2.resize(template_gray, (w, h), interpolation=interpolation)
+            
+        res = cv2.matchTemplate(screen_gray, resized_tpl, cv2.TM_CCOEFF_NORMED)
+        _, max_val, _, max_loc = cv2.minMaxLoc(res)
+        if max_val > best_val:
+            best_val = max_val
+            best_loc = max_loc
+            best_shape = resized_tpl.shape
+            
     return best_val, best_loc, best_shape
 
 def load_templates():
@@ -173,7 +159,7 @@ def load_templates():
     return loaded
 
 if __name__ == "__main__":
-    log("Watcher starting (Wayland Spectacle Capture + Authenticated Xdotool + Smart Mouse Guard)...")
+    log("Watcher starting (Zero-Jump Strict Matching + Wayland Spectacle Capture)...")
     
     loaded_templates = load_templates()
 
@@ -197,11 +183,10 @@ if __name__ == "__main__":
                 screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
                 
                 for name, template_gray in loaded_templates.items():
-                    threshold = BUTTON_THRESHOLDS.get(name, DEFAULT_THRESHOLD)
                     max_val, max_loc, best_shape = find_best_template_match(screen_gray, template_gray)
                     
-                    if max_val >= threshold:
-                        log(f"Button '{name}' detected via multi-scale vision (Conf: {max_val:.2f} >= Threshold: {threshold})")
+                    if max_val >= CONFIDENCE_THRESHOLD:
+                        log(f"Button '{name}' detected (Conf: {max_val:.2f} >= Threshold: {CONFIDENCE_THRESHOLD})")
                         clicked = trigger_click(name, max_loc[0], max_loc[1], best_shape[1], best_shape[0])
                         if clicked:
                             time.sleep(5)
