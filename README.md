@@ -1,126 +1,79 @@
-# IntelliBitz
+# IntelliBitz Archives
 
 <p align="center">
-  <strong>Comprehensive AI Ecosystem, DevOps, Systems Infrastructure, Cloud Platforms & Multi-Platform Software Suite</strong>
+  <strong>AI-Centric Knowledge Base, Uncapped Agent Platform & Engineering Ecosystem</strong>
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Focus-AI%20%26%20Agents-7F52FF.svg" alt="Focus: AI & Agents" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
   <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF.svg" alt="GitHub CI" />
-  <img src="https://img.shields.io/badge/Dependabot-Enabled-02569B.svg" alt="Dependabot" />
   <img src="https://img.shields.io/badge/Docker-Compose%20v2%20%7C%20Alpine-2496ED.svg" alt="Docker" />
   <img src="https://img.shields.io/badge/Kotlin-2.0%2B-7F52FF.svg" alt="Kotlin" />
-  <img src="https://img.shields.io/badge/Java-21%20LTS-007396.svg" alt="Java" />
-  <img src="https://img.shields.io/badge/Python-3.13%20%7C%20uv-3776AB.svg" alt="Python" />
-  <img src="https://img.shields.io/badge/PostgreSQL-17%20Alpine-336791.svg" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Python-3.14%20%7C%20uv-3776AB.svg" alt="Python" />
 </p>
 
 ---
 
-## Overview
+## 🤖 Overview
 
-**IntelliBitz** is an enterprise engineering monorepo and knowledge base providing a complete AI provider ecosystem, containerized services, system administration tooling, cloud automation, mobile client architectures, and language toolchains.
+**IntelliBitz Archives** is an **AI-centric monorepo, agent platform, and engineering knowledge base**. The primary domain of the repository is focused on **AI foundation models, autonomous agents, evaluation harnesses, cost benchmarking, and multi-provider AI architectures**.
 
-The repository is organized by **functional intent and architectural domain**:
+The repository is structured around **AI as the primary top-level directory**, with classic infrastructure, runtimes, and services organized under `engineering/`:
 
 ```text
 archives/
-├── ai/            # AI models, cost analysis, local execution guides & LLM architectures
-├── runtimes/      # Operating system runtimes & language environments (Go, Clojure, Python, Shell)
-├── infra/         # SCM, DevOps & Infrastructure orchestration (Docker, K8s, GCP, Git, Gradle)
-├── data/          # Database systems, schemas & persistence stacks (PostgreSQL, MySQL, SQLite, rqlite)
-├── services/      # Backend services, middleware & web servers (Java EE, Python Web, Nginx, Apache)
-├── clients/       # User interfaces & client applications (Android, Multiplatform, Java SE, Web Standards)
-└── docs/          # Project knowledge base, roadmap, contributing & security guidelines
+├── ai/            # 🧠 PRIMARY TOP-LEVEL: AI models, agent architectures, cost studies & harnesses
+│   ├── deepseek/  # DeepSeek-V3/R1 evaluation harnesses, API setup & real-world cost telemetry
+│   ├── qwen/      # Alibaba Qwen 2.5 Coder & instruct models
+│   ├── openai/    # GPT-4o, o1, o3-mini & OpenAI Codex
+│   ├── claude/    # Anthropic Claude 3.5 Sonnet & Opus
+│   ├── google-ai/ # Gemini 1.5 Pro & Gemini 2.0 Flash
+│   ├── mistral/   # Mistral Large, Codestral & Ministral
+│   ├── zhipu-glm/ # Zhipu GLM-4 series (Free tier)
+│   └── ...        # Xiaomi MiMo, Inclusion AI, Agnes AI
+└── engineering/   # ⚙️ CLASSIC ENGINEERING & INFRASTRUCTURE
+    ├── clients/   # User interfaces & mobile clients (Android, Multiplatform, Java SE)
+    ├── data/      # Databases & SQL schemas (PostgreSQL, MySQL, SQLite, rqlite)
+    ├── docs/      # Technical documentation, Linux maintenance & system fixes
+    ├── infra/     # DevOps, Docker, K8s, Git, Gradle & cloud automation
+    ├── runtimes/  # OS runtimes & language environments (Go, Python, Shell, Clojure)
+    └── services/  # Enterprise backends & web servers (Java EE, Python Web, Nginx)
 ```
 
 ---
 
-## Directory Index & Architecture
+## 🧠 AI Ecosystem & Knowledge Base (`ai/`)
 
-### 🤖 [AI Ecosystem & Knowledge Base (`ai/`)](./ai/)
-Comprehensive AI models, cost comparisons, and integration guides.
-- **[Providers (`ai/`)](./ai/)**: DeepSeek, Qwen, OpenAI, Claude, Xiaomi MiMo, Zhipu GLM, Agnes AI, Google AI, Mistral, and Inclusion AI.
-- **[Benchmarks & Guides](./ai/README.md)**: [Cost Ranking](./ai/COST_RANKING.md), [Local Execution](./ai/LOCAL_EXECUTION.md), [Leaderboard](./ai/TOP_100_LEADERBOARD.md), [BYOK API Keys](./ai/BYOK_API_KEYS.md), and [Top 100 GitHub AI Projects](./ai/TOP_100_GITHUB_PROJECTS.md).
+All primary AI artifacts, benchmark harnesses, agent launchers, and cost optimizations live directly under [`ai/`](./ai/):
 
-### ⚙️ [Runtimes (`runtimes/`)](./runtimes/)
-Operating system runtimes and language environment scripts.
-- **[Go & Clojure](./runtimes/)**: Workspace scripts and tutorials.
-- **[Python Runtimes](./runtimes/python/)**: Package management (`uv`, `pip`), conda setups, and AI toolchain guides.
-- **[Shell Systems](./runtimes/shell/)**: Linux system administration, brew, and SDKman configurations.
-
-### 🚀 [Infrastructure & DevOps (`infra/`)](./infra/)
-Container orchestration, cloud automation, and developer toolchains.
-- **[Containerization & Cloud](./infra/)**: Docker, Kubernetes (`kubectl`), Multipass VMs, and Google Cloud automation.
-- **[SCM & Build Systems](./infra/)**: Git guides and Gradle wrapper standards.
-- **[Automation Scripts](./infra/expect/)**: Expect automation scripts.
-
-### 🗄️ [Data & Databases (`data/sql/`)](./data/sql/)
-Container stacks, schemas, and persistence administration scripts.
-- **[PostgreSQL & MySQL (`data/sql/`)](./data/sql/)**: Production Docker Compose stacks, schemas, and initialization scripts (`data/sql/postgresql/`, `data/sql/mysql/`).
-- **[SQLite & rqlite](./data/sql/)**: Embedded and distributed Raft database setups.
-- **[CouchDB](./data/sql/)**: Document-oriented database operations.
-
-### ☁️ [Services & Middleware (`services/`)](./services/)
-Enterprise backends, web portals, and reverse proxy web servers.
-- **[Java EE (`javaee/`)](./services/javaee/)**: Multi-module enterprise architectures (`IntelliDocs`, `IntelliMeet`).
-- **[Python Web (`python/intelligeek/`)](./services/python/intelligeek/)**: Web portal applications.
-- **[Web Servers (`webservers/`)](./services/webservers/)**: Nginx, Apache HTTP Server, Caddy, Apache Tomcat, and Flatpak configurations.
-
-### 📱 [Clients & User Interfaces (`clients/`)](./clients/)
-Mobile apps, multiplatform suites, desktop utilities, and web standards.
-- **[Android (`android/`)](./clients/android/)**: Flagship [IntelliDroid](./clients/android/IntelliDroid/README.md) and 100% Kotlin modules ([MEvents](./clients/android/MEvents/README.md), [TwRends](./clients/android/TwRends/README.md), [UDigg](./clients/android/UDigg/README.md), [wuffittracker](./clients/android/wuffittracker/README.md)).
-- **[Multiplatform & JS (`clients/`)](./clients/)**: Kotlin Multiplatform modules and JavaScript frontends.
-- **[Desktop & Examples (`javase/`, `java-examples/`)](./clients/)**: Java SE desktop applications and Kotlin interoperability examples.
-- **[Standards (`standards/`)](./clients/standards/)**: WHATWG specifications, JSON, and TOML standards.
+* 🤖 **[Uncapped Agent Architecture](./ai/UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
+* 📈 **[DeepSeek Real-World Cost Telemetry](./ai/deepseek/real_world_cost_study.md)** — Empirical case study analyzing 626M tokens processed for **$3.25 USD** with a 99.49% prompt cache hit ratio.
+* 📊 **[Master Cost Ranking](./ai/COST_RANKING.md)** — Comprehensive cost ranking across all 10 tracked AI providers.
+* 🏆 **[Global AI Leaderboard](./ai/TOP_100_LEADERBOARD.md)** — Top 100 frontier AI models ranked by capability, reasoning, and coding benchmarks.
+* 🛠️ **[IDEs & Desktop AI Tools](./ai/IDE_PLUGINS_DESKTOP.md)** — Complete setup guide for Cursor, Claude Desktop, Codex Desktop, DeepSeek Harness (`dsh`), OpenHands, and Roo Code.
+* 💻 **[Local Execution Guide](./ai/LOCAL_EXECUTION.md)** — Guide to running open-weights models (DeepSeek-R1, Qwen 2.5 Coder) locally using Ollama and vLLM.
+* 🔑 **[BYOK & API Key Management](./ai/BYOK_API_KEYS.md)** — Security best practices for configuring direct API keys.
+* 🌟 **[Top 100 GitHub AI Projects](./ai/TOP_100_GITHUB_PROJECTS.md)** — Curated directory of top open-source AI repositories.
 
 ---
 
-## Quickstart Guide
+## ⚙️ Engineering & Infrastructure (`engineering/`)
 
-### 1. Launch Local Databases
+Classic systems, cloud automation, and client application modules are organized under [`engineering/`](./engineering/):
 
-```bash
-# Start PostgreSQL:
-cd data/sql/postgresql
-docker compose up -d
-
-# Start MySQL:
-cd ../mysql
-docker compose up -d
-```
-
-### 2. Build the Android Client
-
-```bash
-cd clients/android/IntelliDroid
-./gradlew assembleDebug
-```
-
-### 3. Build Java EE Backends
-
-```bash
-cd services/javaee
-mvn clean install
-```
-
-### 4. Run System & DevOps Automation Scripts
-
-All `.sh` scripts in the repository have executable permissions set and have passed syntax validation:
-
-```bash
-# Check syntax of any script
-bash -n infra/scripts/automation/auto_keep_all.sh
-
-# Run script
-./infra/scripts/automation/auto_keep_all.sh
-```
+* 📱 **[Clients (`engineering/clients/`)](./engineering/clients/)**: Flagship Android [IntelliDroid](./engineering/clients/android/IntelliDroid/README.md), Kotlin modules ([MEvents](./engineering/clients/android/MEvents/README.md), [TwRends](./engineering/clients/android/TwRends/README.md), [UDigg](./engineering/clients/android/UDigg/README.md)), and web frontends.
+* 🗄️ **[Data & SQL (`engineering/data/`)](./engineering/data/)**: Containerized PostgreSQL, MySQL, SQLite, and rqlite database stacks.
+* 📖 **[Docs & System Fixes (`engineering/docs/`)](./engineering/docs/)**: CachyOS / Arch Linux maintenance guide ([SYSTEM_FIXES_AND_OPTIMIZATIONS.md](./engineering/docs/cachyos/SYSTEM_FIXES_AND_OPTIMIZATIONS.md)).
+* 🚀 **[Infrastructure (`engineering/infra/`)](./engineering/infra/)**: Docker Compose, Kubernetes, Google Cloud, and Gradle automation.
+* 💻 **[Runtimes (`engineering/runtimes/`)](./engineering/runtimes/)**: Python, Shell Linux, Go, and Clojure toolchains.
+* ☁️ **[Services (`engineering/services/`)](./engineering/services/)**: Java EE enterprise backends and reverse proxy web servers.
 
 ---
 
 ## Technology Roadmap
 
-See [`roadmap.md`](./roadmap.md) for the active architecture status, component milestones, and future development plans.
+See [`roadmap.md`](./roadmap.md) for active component milestones and future development plans.
 
 ---
 
