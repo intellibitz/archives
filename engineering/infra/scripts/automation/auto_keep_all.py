@@ -2,6 +2,8 @@ import os
 import time
 import subprocess
 import cv2
+import numpy as np
+import mss
 
 # --- Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -18,8 +20,9 @@ TEMPLATES = {
     "Allow": [os.path.join(ASSETS_DIR, "allow.png"), os.path.join(ASSETS_DIR, "allow2.png")]
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
-# High confidence threshold (0.75) to prevent false-positive clicks on background text/patterns (which score ~0.58)
-CONFIDENCE_THRESHOLD = 0.65
+
+# Strict confidence threshold (0.80) to eliminate false positive cursor grabs
+CONFIDENCE_THRESHOLD = 0.80
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
@@ -32,32 +35,29 @@ def log(msg):
         pass
     print(line.strip(), flush=True)
 
-def get_screen_center():
+def is_user_actively_moving_mouse():
+    """Returns True if the user is currently moving the cursor."""
     env = os.environ.copy()
     env["DISPLAY"] = ":0"
     try:
-        res = subprocess.run(["xdotool", "getdisplaygeometry"], env=env, capture_output=True, text=True, check=True)
-        parts = res.stdout.strip().split()
-        return int(parts[0]) // 2, int(parts[1]) // 2
+        res1 = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
+        time.sleep(0.08)
+        res2 = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
+        return res1.stdout != res2.stdout
     except Exception:
-        return 960, 600
-
-SCREEN_CENTER_X, SCREEN_CENTER_Y = get_screen_center()
+        return False
 
 def trigger_click(name, x, y, w, h):
     cx, cy = x + w // 2, y + h // 2
+
+    # Guard: Do NOT touch or grab cursor if user is actively moving the mouse
+    if is_user_actively_moving_mouse():
+        log(f"Notice: User is actively moving mouse; skipping cursor movement for '{name}'.")
+        return False
+
     log(f"Clicking '{name}' at ({cx}, {cy})...")
     env = os.environ.copy()
     env["DISPLAY"] = ":0"
-    
-    try:
-        from Xlib import display
-        d = display.Display()
-        q = d.screen().root.query_pointer()
-        if q.mask & 0x1F00:
-            log(f"Notice: User mouse active (mask: {q.mask}), proceeding with click anyway for '{name}'.")
-    except Exception as e:
-        log(f"Warning: could not get mouse state: {e}")
 
     try:
         # Save current mouse location to restore immediately after clicking
@@ -87,12 +87,14 @@ def trigger_click(name, x, y, w, h):
         log(f"Input error for '{name}': {e}")
         return False
 
-def get_screenshot():
-    tmp = "/tmp/gha_keep_all_scr.png"
+def get_screenshot(sct):
     try:
-        subprocess.run(["spectacle", "-b", "-n", "-o", tmp], check=True, capture_output=True)
-        img = cv2.imread(tmp)
-        return img
+        # Fast 5ms focusless memory screenshot via MSS
+        monitor = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
+        sct_img = sct.grab(monitor)
+        img_np = np.array(sct_img) # BGRA image
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+        return img_bgr
     except Exception as e:
         log(f"Screenshot error: {e}")
         return None
@@ -117,7 +119,7 @@ def load_templates():
     return loaded
 
 if __name__ == "__main__":
-    log(f"Watcher starting (Screen Center: {SCREEN_CENTER_X}, {SCREEN_CENTER_Y})...")
+    log("Watcher starting (MSS Fast Focusless Screenshots)...")
     
     loaded_templates = load_templates()
 
@@ -128,7 +130,9 @@ if __name__ == "__main__":
         log("No templates found. Exiting.")
         exit(1)
         
+    sct_instance = mss.MSS()
     last_reload = time.time()
+    
     while True:
         try:
             # Periodically refresh templates every 60s in case images are updated/added
@@ -136,19 +140,15 @@ if __name__ == "__main__":
                 loaded_templates = load_templates()
                 last_reload = time.time()
 
-            screen = get_screenshot()
+            screen = get_screenshot(sct_instance)
             if screen is not None:
-                # Convert screen to grayscale for robust matching
                 screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
                 
                 for name, template_gray in loaded_templates.items():
                     res = cv2.matchTemplate(screen_gray, template_gray, cv2.TM_CCOEFF_NORMED)
                     _, max_val, _, max_loc = cv2.minMaxLoc(res)
-                    if max_val >= 0.40:
-                        log(f"Template '{name}' evaluated confidence: {max_val:.2f}")
                     if max_val >= CONFIDENCE_THRESHOLD:
                         log(f"Button '{name}' detected via grayscale (Conf: {max_val:.2f})")
-                        # template_gray.shape gives (height, width)
                         clicked = trigger_click(name, max_loc[0], max_loc[1], template_gray.shape[1], template_gray.shape[0])
                         if clicked:
                             time.sleep(5) # Cooldown
