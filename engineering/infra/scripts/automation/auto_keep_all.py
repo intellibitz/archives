@@ -17,7 +17,8 @@ TEMPLATES = {
     "Accept Changes": [os.path.join(ASSETS_DIR, "accept-changes.png"), os.path.join(ASSETS_DIR, "accept_changes.png"), os.path.join(ASSETS_DIR, "acceot-changes.png")],
     "Always Run": [os.path.join(ASSETS_DIR, "always-run.png")],
     "Allow Once": [os.path.join(ASSETS_DIR, "allow-once.png")],
-    "Allow": [os.path.join(ASSETS_DIR, "allow.png"), os.path.join(ASSETS_DIR, "allow2.png")]
+    "Allow": [os.path.join(ASSETS_DIR, "allow.png"), os.path.join(ASSETS_DIR, "allow2.png")],
+    "Yes Don't Ask": [os.path.join(ASSETS_DIR, "yes-dontask.png")]
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 
@@ -32,6 +33,7 @@ BUTTON_THRESHOLDS = {
     "Proceed": 0.70,
     "Keep All": 0.70,
     "Always Run": 0.65,
+    "Yes Don't Ask": 0.62,
 }
 DEFAULT_THRESHOLD = 0.68
 CHECK_INTERVAL = 2.0 
@@ -118,6 +120,33 @@ def get_screenshot(sct):
         log(f"Screenshot error: {e}")
         return None
 
+def find_best_template_match(screen_gray, template_gray):
+    """Multi-scale template matching (1.0x, 0.9x, 1.1x, 0.8x, 1.2x) for resolution independence."""
+    best_val = -1.0
+    best_loc = None
+    best_shape = None
+    
+    scales = [1.0, 0.9, 1.1, 0.8, 1.2]
+    for scale in scales:
+        if scale == 1.0:
+            resized_tpl = template_gray
+        else:
+            w = int(template_gray.shape[1] * scale)
+            h = int(template_gray.shape[0] * scale)
+            if w <= 0 or h <= 0 or w > screen_gray.shape[1] or h > screen_gray.shape[0]:
+                continue
+            interpolation = cv2.INTER_AREA if scale < 1.0 else cv2.INTER_CUBIC
+            resized_tpl = cv2.resize(template_gray, (w, h), interpolation=interpolation)
+            
+        res = cv2.matchTemplate(screen_gray, resized_tpl, cv2.TM_CCOEFF_NORMED)
+        _, max_val, _, max_loc = cv2.minMaxLoc(res)
+        if max_val > best_val:
+            best_val = max_val
+            best_loc = max_loc
+            best_shape = resized_tpl.shape
+            
+    return best_val, best_loc, best_shape
+
 def load_templates():
     loaded = {}
     for name, paths in TEMPLATES.items():
@@ -138,7 +167,7 @@ def load_templates():
     return loaded
 
 if __name__ == "__main__":
-    log("Watcher starting (MSS Fast Focusless Screenshots + Smart Mouse Guard)...")
+    log("Watcher starting (Multi-Scale MSS Fast Focusless Screenshots + Smart Mouse Guard)...")
     
     loaded_templates = load_templates()
 
@@ -165,12 +194,11 @@ if __name__ == "__main__":
                 
                 for name, template_gray in loaded_templates.items():
                     threshold = BUTTON_THRESHOLDS.get(name, DEFAULT_THRESHOLD)
-                    res = cv2.matchTemplate(screen_gray, template_gray, cv2.TM_CCOEFF_NORMED)
-                    _, max_val, _, max_loc = cv2.minMaxLoc(res)
+                    max_val, max_loc, best_shape = find_best_template_match(screen_gray, template_gray)
                     
                     if max_val >= threshold:
-                        log(f"Button '{name}' detected via grayscale (Conf: {max_val:.2f} >= Threshold: {threshold})")
-                        clicked = trigger_click(name, max_loc[0], max_loc[1], template_gray.shape[1], template_gray.shape[0])
+                        log(f"Button '{name}' detected via multi-scale grayscale (Conf: {max_val:.2f} >= Threshold: {threshold})")
+                        clicked = trigger_click(name, max_loc[0], max_loc[1], best_shape[1], best_shape[0])
                         if clicked:
                             time.sleep(5) # Cooldown
                         break # Only handle one button per screenshot
