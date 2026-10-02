@@ -21,8 +21,19 @@ TEMPLATES = {
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 
-# Strict confidence threshold (0.80) to eliminate false positive cursor grabs
-CONFIDENCE_THRESHOLD = 0.80
+# Per-button confidence threshold mapping to handle different button anti-aliasing / contrast
+BUTTON_THRESHOLDS = {
+    "Accept All": 0.62,
+    "Accept All 2": 0.62,
+    "Accept Changes": 0.62,
+    "Allow": 0.62,
+    "Allow Once": 0.65,
+    "Allow Always": 0.65,
+    "Proceed": 0.70,
+    "Keep All": 0.70,
+    "Always Run": 0.65,
+}
+DEFAULT_THRESHOLD = 0.68
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
@@ -35,22 +46,36 @@ def log(msg):
         pass
     print(line.strip(), flush=True)
 
-def is_user_actively_moving_mouse():
-    """Returns True if the user is currently moving the cursor."""
+def get_mouse_xy():
+    """Returns (x, y) tuple of current mouse cursor position."""
     env = os.environ.copy()
     env["DISPLAY"] = ":0"
     try:
-        res1 = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
-        time.sleep(0.08)
-        res2 = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
-        return res1.stdout != res2.stdout
+        res = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
+        x, y = None, None
+        for line in res.stdout.splitlines():
+            if line.startswith("X="):
+                x = int(line.split("=")[1])
+            elif line.startswith("Y="):
+                y = int(line.split("=")[1])
+        return x, y
     except Exception:
+        return None, None
+
+def is_user_actively_moving_mouse():
+    """Returns True if the mouse cursor moved > 10 pixels in 80ms."""
+    p1 = get_mouse_xy()
+    time.sleep(0.08)
+    p2 = get_mouse_xy()
+    if p1[0] is None or p2[0] is None:
         return False
+    delta = abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+    return delta > 10
 
 def trigger_click(name, x, y, w, h):
     cx, cy = x + w // 2, y + h // 2
 
-    # Guard: Do NOT touch or grab cursor if user is actively moving the mouse
+    # Guard: Do NOT touch or grab cursor if user is actively moving the mouse (>10px delta)
     if is_user_actively_moving_mouse():
         log(f"Notice: User is actively moving mouse; skipping cursor movement for '{name}'.")
         return False
@@ -61,13 +86,7 @@ def trigger_click(name, x, y, w, h):
 
     try:
         # Save current mouse location to restore immediately after clicking
-        res = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
-        orig_x, orig_y = None, None
-        for line in res.stdout.splitlines():
-            if line.startswith("X="):
-                orig_x = line.split("=")[1]
-            elif line.startswith("Y="):
-                orig_y = line.split("=")[1]
+        orig_x, orig_y = get_mouse_xy()
 
         # Move to button and click
         subprocess.run([
@@ -119,7 +138,7 @@ def load_templates():
     return loaded
 
 if __name__ == "__main__":
-    log("Watcher starting (MSS Fast Focusless Screenshots)...")
+    log("Watcher starting (MSS Fast Focusless Screenshots + Smart Mouse Guard)...")
     
     loaded_templates = load_templates()
 
@@ -145,10 +164,12 @@ if __name__ == "__main__":
                 screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
                 
                 for name, template_gray in loaded_templates.items():
+                    threshold = BUTTON_THRESHOLDS.get(name, DEFAULT_THRESHOLD)
                     res = cv2.matchTemplate(screen_gray, template_gray, cv2.TM_CCOEFF_NORMED)
                     _, max_val, _, max_loc = cv2.minMaxLoc(res)
-                    if max_val >= CONFIDENCE_THRESHOLD:
-                        log(f"Button '{name}' detected via grayscale (Conf: {max_val:.2f})")
+                    
+                    if max_val >= threshold:
+                        log(f"Button '{name}' detected via grayscale (Conf: {max_val:.2f} >= Threshold: {threshold})")
                         clicked = trigger_click(name, max_loc[0], max_loc[1], template_gray.shape[1], template_gray.shape[0])
                         if clicked:
                             time.sleep(5) # Cooldown
