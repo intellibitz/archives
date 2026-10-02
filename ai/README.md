@@ -5,7 +5,7 @@ This top-level directory houses AI-related artifacts, models, agent configuratio
 📊 **[Cost Ranking](./COST_RANKING.md)** | 💻 **[Run Locally](./LOCAL_EXECUTION.md)** | 🇨🇳 vs 🌍 **[Chinese vs. Western AI](./CHINESE_VS_OTHERS_COMPARISON.md)** | 🏆 **[Leaderboard](./TOP_100_LEADERBOARD.md)** | 🧠 **[Architecture](./ARCHITECTURE_ECOSYSTEM.md)** | 🛠️ **[IDEs & Desktop](./IDE_PLUGINS_DESKTOP.md)** | 🔑 **[BYOK & API Keys](./BYOK_API_KEYS.md)** | 🌟 **[Top 100 GitHub AI Projects](./TOP_100_GITHUB_PROJECTS.md)**
 
 ## Supported AI Providers & Models (`ai/`)
-1. **[DeepSeek](./deepseek/)**: DeepSeek-V3, DeepSeek-R1 — [Cost Analysis](./deepseek/cost_analysis.md)
+1. **[DeepSeek](./deepseek/)**: DeepSeek-V3, DeepSeek-R1 — [Cost Analysis](./deepseek/cost_analysis.md) \| [Eval Harness](./deepseek/eval_harness.md)
 2. **[Qwen](./qwen/)**: Alibaba Qwen models — [Cost Analysis](./qwen/cost_analysis.md)
 3. **[OpenAI](./openai/)**: GPT-4o, o1, o3-mini — [Cost Analysis](./openai/cost_analysis.md)
 4. **[Claude](./claude/)**: Anthropic Claude 3.5 Sonnet & Opus — [Cost Analysis](./claude/cost_analysis.md)

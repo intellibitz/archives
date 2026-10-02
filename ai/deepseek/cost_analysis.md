@@ -11,6 +11,7 @@
 | **[DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1)** | $0.55 | $0.14 | $2.19 | $0.00000055 / $0.00000219 |
 
 ## Cost Analysis & Economics
-- **Context Window:** Up to 64K tokens.
+- **Context Window:** Up to 128K tokens supported in API.
 - **Caching Efficiency:** DeepSeek's prompt caching reduces repeat input token costs by 90% ($0.014 / 1M tokens), making agentic loops and multi-turn conversations exceptionally economical.
-- **Reasoning ROI:** [DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1) provides near-frontier reasoning performance at ~1/10th the cost of proprietary reasoning models.
+- **Reasoning ROI:** [DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1) provides near-frontier reasoning performance at ~1/25th the cost of proprietary reasoning models like OpenAI `o1`.
+- **Evaluation Harness:** Benchmark performance metrics and test runner configurations are documented in the **[Evaluation & Integration Harness](./eval_harness.md)**.
