@@ -1,9 +1,9 @@
 import os
+import glob
 import time
 import subprocess
 import cv2
 import numpy as np
-import mss
 
 # --- Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -22,24 +22,19 @@ TEMPLATES = {
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 
-BUTTON_TARGET_LABELS = [
-    "Accept All", "Accept Changes", "Proceed", "Keep All", 
-    "Allow Always", "Allow Once", "Always Run", "Allow", "Yes, Don't Ask"
-]
-
 BUTTON_THRESHOLDS = {
-    "Accept All": 0.58,
-    "Accept All 2": 0.58,
-    "Accept Changes": 0.58,
-    "Allow": 0.58,
-    "Allow Once": 0.60,
-    "Allow Always": 0.60,
-    "Proceed": 0.65,
-    "Keep All": 0.65,
-    "Always Run": 0.60,
-    "Yes Don't Ask": 0.58,
+    "Accept All": 0.62,
+    "Accept All 2": 0.62,
+    "Accept Changes": 0.62,
+    "Allow": 0.62,
+    "Allow Once": 0.65,
+    "Allow Always": 0.65,
+    "Proceed": 0.70,
+    "Keep All": 0.70,
+    "Always Run": 0.65,
+    "Yes Don't Ask": 0.62,
 }
-DEFAULT_THRESHOLD = 0.65
+DEFAULT_THRESHOLD = 0.68
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
@@ -52,12 +47,25 @@ def log(msg):
         pass
     print(line.strip(), flush=True)
 
+def get_env():
+    """Builds execution environment with valid DISPLAY and XAUTHORITY credentials."""
+    env = os.environ.copy()
+    env["DISPLAY"] = os.environ.get("DISPLAY", ":0")
+    if "XAUTHORITY" not in env or not os.path.exists(env.get("XAUTHORITY", "")):
+        try:
+            xauth_files = glob.glob("/run/user/1000/xauth_*")
+            if xauth_files:
+                env["XAUTHORITY"] = xauth_files[0]
+            elif os.path.exists(os.path.expanduser("~/.Xauthority")):
+                env["XAUTHORITY"] = os.path.expanduser("~/.Xauthority")
+        except Exception:
+            pass
+    return env
+
 def get_mouse_xy():
     """Returns (x, y) tuple of current mouse cursor position."""
-    env = os.environ.copy()
-    env["DISPLAY"] = ":0"
     try:
-        res = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, capture_output=True, text=True)
+        res = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=get_env(), capture_output=True, text=True)
         x, y = None, None
         for line in res.stdout.splitlines():
             if line.startswith("X="):
@@ -81,14 +89,13 @@ def is_user_actively_moving_mouse():
 def trigger_click(name, x, y, w, h):
     cx, cy = x + w // 2, y + h // 2
 
-    # Guard: Do NOT touch cursor if user is actively moving the mouse (>10px)
+    # Guard: Do NOT touch or grab cursor if user is actively moving the mouse (>10px delta)
     if is_user_actively_moving_mouse():
         log(f"Notice: User is actively moving mouse; skipping cursor movement for '{name}'.")
         return False
 
     log(f"Clicking '{name}' at ({cx}, {cy})...")
-    env = os.environ.copy()
-    env["DISPLAY"] = ":0"
+    env = get_env()
 
     try:
         orig_x, orig_y = get_mouse_xy()
@@ -109,50 +116,12 @@ def trigger_click(name, x, y, w, h):
         log(f"Input error for '{name}': {e}")
         return False
 
-def check_atspi_buttons():
-    """100% exact text string matching via Linux AT-SPI D-Bus accessibility tree."""
+def get_screenshot():
+    tmp = "/tmp/auto_keep_all_scr.png"
     try:
-        import pyatspi
-        desktop = pyatspi.Registry.getDesktop(0)
-        
-        def search_node(node, depth=0):
-            if depth > 7:
-                return None
-            try:
-                role = node.getRoleName()
-                name = node.name
-                if name and ('push button' in role or 'button' in role or 'dialog' in role):
-                    for label in BUTTON_TARGET_LABELS:
-                        if label.lower() in name.lower():
-                            bbox = node.get_position(pyatspi.DESKTOP_COORDS)
-                            size = node.get_size()
-                            if bbox and size and size[0] > 0 and size[1] > 0:
-                                return label, bbox[0], bbox[1], size[0], size[1]
-                for child in node:
-                    if child:
-                        match = search_node(child, depth + 1)
-                        if match:
-                            return match
-            except Exception:
-                pass
-            return None
-
-        for app in desktop:
-            if app:
-                match = search_node(app)
-                if match:
-                    return match
-    except Exception:
-        pass
-    return None
-
-def get_screenshot(sct):
-    try:
-        monitor = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
-        sct_img = sct.grab(monitor)
-        img_np = np.array(sct_img) # BGRA
-        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
-        return img_bgr
+        subprocess.run(["spectacle", "-b", "-n", "-o", tmp], check=True, capture_output=True, env=get_env())
+        img = cv2.imread(tmp)
+        return img
     except Exception as e:
         log(f"Screenshot error: {e}")
         return None
@@ -163,7 +132,6 @@ def find_best_template_match(screen_gray, template_gray):
     best_loc = None
     best_shape = None
     
-    # Check standard and inverted contrast (for dark/light theme adaptability)
     screen_variants = [screen_gray, cv2.bitwise_not(screen_gray)]
     scales = [1.0, 0.9, 1.1, 0.8, 1.2]
     
@@ -205,7 +173,7 @@ def load_templates():
     return loaded
 
 if __name__ == "__main__":
-    log("Watcher starting (AT-SPI Accessibility + Dual-Pass Multi-Scale OpenCV + Smart Mouse Guard)...")
+    log("Watcher starting (Wayland Spectacle Capture + Authenticated Xdotool + Smart Mouse Guard)...")
     
     loaded_templates = load_templates()
 
@@ -216,7 +184,6 @@ if __name__ == "__main__":
         log("No templates found. Exiting.")
         exit(1)
         
-    sct_instance = mss.MSS()
     last_reload = time.time()
     
     while True:
@@ -225,18 +192,7 @@ if __name__ == "__main__":
                 loaded_templates = load_templates()
                 last_reload = time.time()
 
-            # Method 1: Check AT-SPI Accessibility D-Bus Tree (Exact Text Matching)
-            atspi_match = check_atspi_buttons()
-            if atspi_match:
-                name, bx, by, bw, bh = atspi_match
-                log(f"Button '{name}' detected via AT-SPI D-Bus Accessibility at ({bx}, {by})")
-                clicked = trigger_click(name, bx, by, bw, bh)
-                if clicked:
-                    time.sleep(5)
-                continue
-
-            # Method 2: In-Memory Multi-Scale Contrast-Adaptive OpenCV Template Matching
-            screen = get_screenshot(sct_instance)
+            screen = get_screenshot()
             if screen is not None:
                 screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
                 
