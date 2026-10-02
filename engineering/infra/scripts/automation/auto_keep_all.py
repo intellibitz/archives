@@ -19,7 +19,7 @@ TEMPLATES = {
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 # High confidence threshold (0.75) to prevent false-positive clicks on background text/patterns (which score ~0.58)
-CONFIDENCE_THRESHOLD = 0.75
+CONFIDENCE_THRESHOLD = 0.65
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
