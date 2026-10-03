@@ -26,6 +26,7 @@ archives/
 ├── ai/            # 🧠 PRIMARY AI KNOWLEDGE BASE & GUIDES (Agent Architecture, Benchmarks, Local Execution)
 ├── deepseek/      # DeepSeek-V3/R1 evaluation harnesses, API setup & real-world cost telemetry
 ├── openrouter/    # OpenRouter unified model router & multi-provider fallback
+├── chutes/        # Chutes AI decentralized serverless GPU compute platform
 ├── qwen/          # Alibaba Qwen 2.5 Coder & instruct models
 ├── openai/        # GPT-4o, o1, o3-mini & OpenAI Codex
 ├── claude/        # Anthropic Claude 3.5 Sonnet & Opus
