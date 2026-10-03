@@ -22,8 +22,8 @@ TEMPLATES = {
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 
-# Strict confidence threshold (0.80) to completely eliminate false-positive cursor movements
-CONFIDENCE_THRESHOLD = 0.80
+# Strict confidence threshold (0.92) to eliminate false-positive cursor movements on random screen text
+CONFIDENCE_THRESHOLD = 0.92
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
@@ -110,12 +110,12 @@ def get_screenshot():
         return None
 
 def find_best_template_match(screen_gray, template_gray):
-    """Multi-scale template matching (1.0x, 0.9x, 1.1x, 0.8x, 1.2x)."""
+    """Multi-scale template matching with tight scales (1.0x, 0.95x, 1.05x)."""
     best_val = -1.0
     best_loc = None
     best_shape = None
     
-    scales = [1.0, 0.9, 1.1, 0.8, 1.2]
+    scales = [1.0, 0.95, 1.05]
     for scale in scales:
         if scale == 1.0:
             resized_tpl = template_gray
