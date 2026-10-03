@@ -34,13 +34,14 @@ To build a **100% lock-proof environment**, combine **open-source, local agent c
 └─────────────────────────┘            └─────────────────────────┘            └─────────────────────────┘
 ```
 
-### Provider Matrix
+### Micro Model Comparison: DeepSeek vs Codex Luna vs Claude 3.5 Haiku
 
-| Provider & Model | Role in Stack | Context Window | Rate & Usage Limits | Cost Structure |
-| :--- | :--- | :---: | :--- | :--- |
-| **[DeepSeek API](https://platform.deepseek.com)** (`deepseek-chat` / `deepseek-reasoner`) | **Primary Workhorse** | 128K | **Uncapped** (Prepaid) | $0.15 / $0.003 Cached Input, $0.60 Output ($3.25 / 626M tokens) |
-| **[Google Gemini API](https://ai.google.dev)** (`gemini-2.0-flash`) | **Broad Context & Vision** | **1M – 2M** | **4,000 RPM** / 4M TPM | $0.10 / $0.025 Cached Input, $0.40 Output (Free tier available) |
-| **[OpenRouter API](https://openrouter.ai)** (`openrouter/auto`) | **Failover Router** | Model Dependent | **Uncapped** (Prepaid) | Access to Claude 3.5 Sonnet, DeepSeek V3/R1, Qwen 2.5 Coder 72B |
+| Provider & Model | Context Window | Input Rate (Miss / Hit per 1M) | Output Rate (per 1M) | Projected Cost for 626M Tokens (99.5% Cached) | Cost Ratio vs DeepSeek |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **[DeepSeek-Flash / V3](https://www.deepseek.com)** *(Primary)* | 128K | **$0.15 / $0.003** | **$0.60** | **$3.25** | **1.0x** *(Baseline)* |
+| **[Google Gemini 2.0 Flash](https://ai.google.dev)** | **1M – 2M** | $0.10 / $0.025 | $0.40 | **$16.50** | **5.08x** |
+| **[Codex Luna](https://openai.com)** *(GPT-4o-mini tier)* | 128K | $0.15 / $0.075 | $0.60 | **$48.11** | **14.80x** |
+| **[Claude 3.5 Haiku](https://www.anthropic.com)** | 200K | $0.80 / $0.080 | $4.00 | **$56.41** | **17.36x** |
 
 ---
 

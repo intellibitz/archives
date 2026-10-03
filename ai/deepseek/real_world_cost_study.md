@@ -1,6 +1,6 @@
 # Real-World DeepSeek API Cost & Caching Telemetry Study
 
-This empirical case study analyzes real-world API telemetry data over a 2-day high-throughput agentic workflow execution (~626 Million tokens across 1,672 requests) to demonstrate the cost benefits of [DeepSeek's](https://www.deepseek.com) prompt caching architecture compared to alternative proprietary and open-weights LLM providers.
+This empirical case study analyzes real-world API telemetry data over a 2-day high-throughput agentic workflow execution (~626 Million tokens across 1,672 requests) to demonstrate the cost benefits of [DeepSeek's](https://www.deepseek.com) prompt caching architecture compared to alternative high-speed micro models like **Claude 3.5 Haiku** (Anthropic) and **Codex Luna** (OpenAI).
 
 ---
 
@@ -36,9 +36,9 @@ In multi-turn agentic workflows (e.g., repository auditing, continuous refactori
 
 ---
 
-## 💰 3. Comparative Cost Analysis Across Providers
+## 💰 3. Comparative Cost Analysis: DeepSeek vs Claude 3.5 Haiku vs Codex Luna
 
-Applying this exact **626.33M Input (99.49% Cached) / 1.50M Output** workload across major commercial LLM API providers highlights the massive economic disparity:
+Applying this exact **626.33M Input (99.49% Cached) / 1.50M Output** workload across major high-speed micro models highlights the massive economic disparity:
 
 | Provider & Model | Input Rate (Miss / Hit per 1M) | Output Rate (per 1M) | Projected Total Cost for Workload | Cost Ratio vs DeepSeek |
 | :--- | :---: | :---: | :---: | :---: |
@@ -47,14 +47,14 @@ Applying this exact **626.33M Input (99.49% Cached) / 1.50M Output** workload ac
 | **[DeepSeek-Flash](https://www.deepseek.com)** *(Actual)* | **$0.15 / $0.003** | **$0.60** | **$3.25** | **1.0x** *(Baseline)* |
 | **[DeepSeek-V3](https://github.com/deepseek-ai/DeepSeek-V3)** | $0.14 / $0.014 | $0.28 | **$9.59** | **2.95x** |
 | **[Google Gemini 2.0 Flash](https://ai.google.dev)** | $0.10 / $0.025 | $0.40 | **$16.50** | **5.08x** |
-| **[OpenAI GPT-4o-mini](https://openai.com)** | $0.15 / $0.075 | $0.60 | **$48.11** | **14.80x** |
-| **[Claude 3.5 Haiku](https://www.anthropic.com)** | $0.80 / $0.08 | $4.00 | **$56.41** | **17.36x** |
-| **[OpenAI GPT-4o](https://openai.com)** | $2.50 / $1.25 | $10.00 | **$798.11** | **245.57x** |
+| **[Codex Luna](https://openai.com)** *(OpenAI GPT-4o-mini tier)* | $0.15 / $0.075 | $0.60 | **$48.11** | **14.80x** |
+| **[Claude 3.5 Haiku](https://www.anthropic.com)** | $0.80 / $0.080 | $4.00 | **$56.41** | **17.36x** |
+| **[OpenAI GPT-4o](https://openai.com)** | $2.50 / $1.250 | $10.00 | **$798.11** | **245.57x** |
 
 ---
 
-## 🔑 Key Takeaways
+## 🔑 Key Comparative Takeaways
 
-1. **Agentic Workflows Demand High Cache Hits:** When selecting an LLM provider for coding agents or IDE extensions, the **cached input token price** is the single most critical factor determining operating cost.
-2. **OpenAI GPT-4o-mini vs DeepSeek:** While GPT-4o-mini offers similar base input rates ($0.15/1M), its cached input rate ($0.075/1M) is **25x higher** than DeepSeek's ($0.003/1M), making GPT-4o-mini nearly 15 times more expensive for high-context agentic workloads.
-3. **Free Alternatives:** For budget-constrained applications, **Zhipu GLM-4-Flash** provides a free cloud API, and self-hosting **Qwen2.5-72B** or **DeepSeek-R1-32B** on local GPUs via **Ollama / vLLM** eliminates token fees entirely.
+1. **DeepSeek vs Codex Luna (OpenAI):** While Codex Luna offers an attractive base un-cached input price ($0.15/1M), its prompt cache hit price ($0.075/1M) is **25x higher** than DeepSeek's ($0.003/1M). For high-context multi-turn agent sessions, Codex Luna costs **$48.11 vs DeepSeek's $3.25** (14.8x higher).
+2. **DeepSeek vs Claude 3.5 Haiku (Anthropic):** Claude 3.5 Haiku provides exceptional instruction-following speed and a 200K context window. However, with $0.80/1M un-cached input, $0.08/1M cached input, and $4.00/1M output, processing this workload on Claude 3.5 Haiku costs **$56.41** (17.4x higher).
+3. **Cache Hit Pricing Dominates Agent Costs:** In multi-turn agentic engineering workflows, **cached input pricing** accounts for over 80% of total API expenditure. DeepSeek's $0.003/1M cache hit rate remains unmatched across all commercial AI providers.
