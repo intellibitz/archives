@@ -52,6 +52,7 @@ archives/
 
 All primary AI model provider hubs, benchmark harnesses, agent launchers, and cost optimizations live at top level:
 
+* 🦙 **[Local Llama 3.3 70B Architectural Review](./LOCAL_LLAMA70B_REVIEW.md)** — Project review generated 100% offline by the local Llama 3.3 70B model.
 * 🤖 **[Uncapped Agent Architecture](./UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
 * 🟢 **[NVIDIA 128GB Hardware Guide](./NVIDIA_128GB_HARDWARE_GUIDE.md)** — Hardware guide & benchmark specs for running 70B+ models locally on NVIDIA Jetson AGX Orin 128GB & GH200 workstations.
 * ⚡ **[CachyOS Local AI Setup](./CACHYOS_LOCAL_AI_SETUP.md)** — Hardware setup, systemd optimizations, and vLLM / llama.cpp benchmarks.
@@ -65,7 +66,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### ⚡ Live Local Inference Engines
 <!-- DYNAMIC_LOCAL_ENGINES_START -->
-> *Last Status Check: `2026-10-03 08:10 UTC`*
+> *Last Status Check: `2026-10-03 08:23 UTC`*
 
 | Inference Service / Local Server | Endpoint URL | Status |
 | :--- | :--- | :--- |
@@ -77,7 +78,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### 🔗 Free & Low-Cost AI Model Connectors
 <!-- DYNAMIC_AI_CONNECTORS_START -->
-> *Updated: `2026-10-03 08:10 UTC`*
+> *Updated: `2026-10-03 08:23 UTC`*
 
 | AI Provider & Connector | API Base Endpoint | Free / Low-Cost Models | Pricing Tier | Environment Variable |
 | :--- | :--- | :--- | :--- | :--- |
@@ -91,7 +92,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### 🌟 Trending Open-Source AI Integrations
 <!-- DYNAMIC_GITHUB_INTEGRATIONS_START -->
-> *Telemetry Sync: `2026-10-03 08:10 UTC`*
+> *Telemetry Sync: `2026-10-03 08:23 UTC`*
 
 | Open-Source AI Project | GitHub Stars | Description & Purpose |
 | :--- | :--- | :--- |
@@ -104,7 +105,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 | **[open-webui](https://github.com/open-webui/open-webui)** (`open-webui/open-webui`) | **⭐ 153,847** | User-friendly AI Interface (Supports Ollama, OpenAI API, ...) |
 | **[browser-use](https://github.com/browser-use/browser-use)** (`browser-use/browser-use`) | **⭐ 117,029** | Agents that use the browser. |
 | **[Roo-Code](https://github.com/RooCodeInc/Roo-Code)** (`RooVetGit/Roo-Cline`) | **⭐ 24,289** | Roo Code gives you a whole dev team of AI agents in your code editor. |
-| **[crewAI](https://github.com/crewAIInc/crewAI)** (`crewAIInc/crewAI`) | **⭐ 59,298** | Framework for orchestrating role-playing, autonomous AI agents. By fostering ... |
+| **[crewAI](https://github.com/crewAIInc/crewAI)** (`crewAIInc/crewAI`) | **⭐ 59,300** | Framework for orchestrating role-playing, autonomous AI agents. By fostering ... |
 <!-- DYNAMIC_GITHUB_INTEGRATIONS_END -->
 
 ---
