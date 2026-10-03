@@ -81,46 +81,46 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### ⚡ Live Local Inference Engines
 <!-- DYNAMIC_LOCAL_ENGINES_START -->
-> *Last Status Check: `2026-10-03 08:23 UTC`*
+> *Last Status Check: `2026-10-03 15:18 UTC`*
 
 | Inference Service / Local Server | Endpoint URL | Status |
 | :--- | :--- | :--- |
-| **Ollama Service** | `http://localhost:11434` | 🟢 **ACTIVE / ONLINE** |
-| **Open WebUI** | `http://localhost:8080` | 🟢 **ACTIVE / ONLINE** |
+| **Ollama Service** | `http://localhost:11434` | ⚪ Offline / Standby |
+| **Open WebUI** | `http://localhost:8080` | ⚪ Offline / Standby |
 | **vLLM Engine** | `http://localhost:8000` | ⚪ Offline / Standby |
 | **Native llama-server** | `http://localhost:8081` | ⚪ Offline / Standby |
 <!-- DYNAMIC_LOCAL_ENGINES_END -->
 
 ### 🔗 Free & Low-Cost AI Model Connectors
 <!-- DYNAMIC_AI_CONNECTORS_START -->
-> *Updated: `2026-10-03 08:23 UTC`*
+> *Updated: `2026-10-03 15:18 UTC`*
 
 | AI Provider & Connector | API Base Endpoint | Free / Low-Cost Models | Pricing Tier | Environment Variable |
 | :--- | :--- | :--- | :--- | :--- |
-| 🏆 **[DeepSeek Direct (Recommended Winner)](https://api.deepseek.com/v1)** | `https://api.deepseek.com/v1` | `deepseek-chat` (V3), `deepseek-reasoner` (R1) | **🏆 ~$3–$6 / 1B Cached Tokens** ($0.003/1M Cache Hit) | `DEEPSEEK_API_KEY` |
 | **[OpenRouter Free Tier](https://openrouter.ai/api/v1)** | `https://openrouter.ai/api/v1` | `deepseek/deepseek-r1:free`, `qwen/qwen-2.5-coder-32b:free`, `meta-llama/llama-3.3-70b-instruct:free` | **$0.00 / 1M** (Free tier) | `OPENROUTER_API_KEY` |
 | **[Zhipu GLM](https://open.bigmodel.cn/api/paas/v4)** | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` | **$0.00 / 1M** (100% Free API) | `ZHIPU_API_KEY` |
 | **[Google Gemini Free Tier](https://generativelanguage.googleapis.com/v1beta/openai/)** | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-2.0-flash-exp`, `gemini-1.5-flash` | **$0.00** (15 Req/Min free in AI Studio) | `GEMINI_API_KEY` |
 | **[Groq Cloud](https://api.groq.com/openai/v1)** | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile`, `llama-3.1-8b-instant` | Free Developer Tier (Ultra-Fast LPUs) | `GROQ_API_KEY` |
+| **[DeepSeek API Direct](https://api.deepseek.com/v1)** | `https://api.deepseek.com/v1` | `deepseek-chat` (V3), `deepseek-reasoner` (R1) | **$0.003 / 1M** (Cache Hit) / **$0.14** (Miss) | `DEEPSEEK_API_KEY` |
 | **[Chutes AI](https://chutes.ai/v1)** | `https://chutes.ai/v1` | `deepseek-ai/DeepSeek-R1`, `Qwen/Qwen2.5-Coder-32B` | Serverless GPU Pay-Per-Token | `CHUTES_API_KEY` |
 <!-- DYNAMIC_AI_CONNECTORS_END -->
 
 ### 🌟 Trending Open-Source AI Integrations
 <!-- DYNAMIC_GITHUB_INTEGRATIONS_START -->
-> *Telemetry Sync: `2026-10-03 08:23 UTC`*
+> *Telemetry Sync: `2026-10-03 15:18 UTC`*
 
 | Open-Source AI Project | GitHub Stars | Description & Purpose |
 | :--- | :--- | :--- |
 | **[deepseek-ai/DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1)** | ⭐ Tracked | deepseek-ai/DeepSeek-R1 repository |
 | **[deepseek-ai/DeepSeek-V3](https://github.com/deepseek-ai/DeepSeek-V3)** | ⭐ Tracked | deepseek-ai/DeepSeek-V3 repository |
 | **[Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder)** (`QwenLM/Qwen2.5-Coder`) | **⭐ 16,841** | Qwen3-Coder is the code version of Qwen3, the large language model series dev... |
-| **[vllm](https://github.com/vllm-project/vllm)** (`vllm-project/vllm`) | **⭐ 93,095** | A high-throughput and memory-efficient inference and serving engine for LLMs |
-| **[llama.cpp](https://github.com/ggml-org/llama.cpp)** (`ggml-org/llama.cpp`) | **⭐ 130,187** | LLM inference in C/C++ |
-| **[ollama](https://github.com/ollama/ollama)** (`ollama/ollama`) | **⭐ 182,079** | Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma an... |
-| **[open-webui](https://github.com/open-webui/open-webui)** (`open-webui/open-webui`) | **⭐ 153,847** | User-friendly AI Interface (Supports Ollama, OpenAI API, ...) |
-| **[browser-use](https://github.com/browser-use/browser-use)** (`browser-use/browser-use`) | **⭐ 117,029** | Agents that use the browser. |
+| **[vllm](https://github.com/vllm-project/vllm)** (`vllm-project/vllm`) | **⭐ 93,108** | A high-throughput and memory-efficient inference and serving engine for LLMs |
+| **[llama.cpp](https://github.com/ggml-org/llama.cpp)** (`ggml-org/llama.cpp`) | **⭐ 130,204** | LLM inference in C/C++ |
+| **[ollama](https://github.com/ollama/ollama)** (`ollama/ollama`) | **⭐ 182,097** | Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma an... |
+| **[open-webui](https://github.com/open-webui/open-webui)** (`open-webui/open-webui`) | **⭐ 153,863** | User-friendly AI Interface (Supports Ollama, OpenAI API, ...) |
+| **[browser-use](https://github.com/browser-use/browser-use)** (`browser-use/browser-use`) | **⭐ 117,053** | Agents that use the browser. |
 | **[Roo-Code](https://github.com/RooCodeInc/Roo-Code)** (`RooVetGit/Roo-Cline`) | **⭐ 24,289** | Roo Code gives you a whole dev team of AI agents in your code editor. |
-| **[crewAI](https://github.com/crewAIInc/crewAI)** (`crewAIInc/crewAI`) | **⭐ 59,300** | Framework for orchestrating role-playing, autonomous AI agents. By fostering ... |
+| **[crewAI](https://github.com/crewAIInc/crewAI)** (`crewAIInc/crewAI`) | **⭐ 59,315** | Framework for orchestrating role-playing, autonomous AI agents. By fostering ... |
 <!-- DYNAMIC_GITHUB_INTEGRATIONS_END -->
 
 ---
