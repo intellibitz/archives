@@ -86,7 +86,7 @@ class MEventsActivity : AppCompatActivity() {
                 ""
             }
 
-            val url = "http://upcoming.yahooapis.com/services/rest/?method=event.search&api_key=0cb4d3fd50&format=json&per_page=10&location=$loc"
+            val url = "http://upcoming.yahooapis.com/services/rest/?method=event.search&api_key=YOUR_API_KEY_HERE&format=json&per_page=10&location=$loc"
             HttpManager.execute(url) ?: "Could not get Upcoming Events"
         } catch (e: Exception) {
             Log.e(TAG, "Error getting events: ${e.message}")

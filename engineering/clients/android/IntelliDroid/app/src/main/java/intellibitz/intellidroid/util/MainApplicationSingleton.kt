@@ -402,7 +402,7 @@ class MainApplicationSingleton private constructor(context: Context?) {
 
         const val API_USER = "muthu"
         const val USER_PARAM = "user"
-        const val API_KEY = "86e3be35b73888f648c337e46c6dad35"
+        const val API_KEY = "YOUR_API_KEY_HERE"
         const val KEY_PARAM = "key"
 
         const val AWS_ACCESS_KEY = "INSERT_VALID_KEY_HERE"

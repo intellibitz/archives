@@ -60,7 +60,7 @@ class XmppManager private constructor() {
 
         val rnd = Random(System.currentTimeMillis()).nextInt(1000)
         loginName = "fiteclub.player.$rnd"
-        password = "fite2009"
+        password = "YOUR_PASSWORD_HERE"
         matchRoomName = "fyteclub.room@conference.xmpp.fiteclub.net" //should be all lowercase
         userName = "player.$rnd"
         fullMatchUserName = "$matchRoomName/$userName"

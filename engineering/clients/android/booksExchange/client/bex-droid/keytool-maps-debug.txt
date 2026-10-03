@@ -21,7 +21,7 @@ Here is an example xml layout to get you started on your way to mapping glory:
               <com.google.android.maps.MapView
                  android:layout_width="fill_parent"
                  android:layout_height="fill_parent"
-                 android:apiKey="07LspMAcR7tQi3FWjU9O5uRSxoJZCrUs_7qJLCA"
+                 android:apiKey="YOUR_API_KEY_HERE"
                  />
             
 

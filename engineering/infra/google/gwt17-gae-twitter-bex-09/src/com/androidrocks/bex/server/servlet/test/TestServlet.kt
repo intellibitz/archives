@@ -44,7 +44,7 @@ class TestServlet : HttpServlet() {
 
         val action = servletConfig.getInitParameter("action")
         val name = "mobeegal"
-        val token = "14281625-NkNfzTWZ5yNTEP1rddHM7NHTQ1V7i6xG3ECAF9l84"
+        val token = "YOUR_TOKEN_HERE"
         if ("user_insert".equals(action, ignoreCase = true)) {
             val users = DataMockFactory.saveMockUsers()
             resp.writer.print(Gson().toJson(users))

@@ -3,7 +3,7 @@
 path_to_chat = "./"
 admin_id = "100000001"
 admin_nick = "admin"
-admin_password = "admin"
+admin_password = "YOUR_ADMIN_PASSWORD_HERE"
 buffer_file = "b0000.txt"
 users_file = "u0000.txt"
 pings_file = "p0000.txt"

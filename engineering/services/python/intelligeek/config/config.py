@@ -9,7 +9,7 @@ from _cgiutil import mysql_connect, mysql_select_db, mysql_error  # noqa: E402
 
 HOST = "192.168.1.6"
 USER = "geek"
-PASSWORD = "geek"
+PASSWORD = "YOUR_PASSWORD_HERE"
 DATABASE = "geek"
 
 connect = mysql_connect(HOST, USER, PASSWORD)
