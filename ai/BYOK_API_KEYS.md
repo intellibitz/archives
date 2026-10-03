@@ -17,6 +17,7 @@ This document covers best practices for obtaining, configuring, storing, and sec
 | Provider | Portal for API Key Generation | Common Environment Variable |
 | :--- | :--- | :--- |
 | **DeepSeek** | [platform.deepseek.com](https://platform.deepseek.com) | `DEEPSEEK_API_KEY` |
+| **OpenRouter** | [openrouter.ai](https://openrouter.ai) | `OPENROUTER_API_KEY` / `OPENAI_API_KEY` |
 | **OpenAI** | [platform.openai.com](https://platform.openai.com) | `OPENAI_API_KEY` |
 | **Anthropic (Claude)** | [console.anthropic.com](https://console.anthropic.com) | `ANTHROPIC_API_KEY` |
 | **Alibaba Qwen** | [bailian.console.aliyun.com](https://bailian.console.aliyun.com) | `DASHSCOPE_API_KEY` |
