@@ -2,7 +2,7 @@
 
 This top-level directory houses AI-related artifacts, models, agent configurations, prompt templates, evaluation datasets, and LLM integration guides across the repository.
 
-🤖 **[Uncapped Agent Architecture](./UNCAPPED_AGENT_ARCHITECTURE.md)** | 📊 **[Cost Ranking](./COST_RANKING.md)** | 💻 **[Run Locally](./LOCAL_EXECUTION.md)** | ⚡ **[CachyOS Local AI Setup](./CACHYOS_LOCAL_AI_SETUP.md)** | 🟢 **[NVIDIA 128GB Hardware Guide](./NVIDIA_128GB_HARDWARE_GUIDE.md)** | 🇨🇳 vs 🌍 **[Chinese vs. Western AI](./CHINESE_VS_OTHERS_COMPARISON.md)** | 🏆 **[Leaderboard](./TOP_100_LEADERBOARD.md)** | 🧠 **[Architecture](./ARCHITECTURE_ECOSYSTEM.md)** | 🛠️ **[IDEs & Desktop](./IDE_PLUGINS_DESKTOP.md)** | 🔑 **[BYOK & API Keys](./BYOK_API_KEYS.md)** | 🌟 **[Top 100 GitHub AI Projects](./TOP_100_GITHUB_PROJECTS.md)**
+🤖 **[Uncapped Agent Architecture](./UNCAPPED_AGENT_ARCHITECTURE.md)** | 📈 **[Router Ledger Telemetry](../router-ledger/)** | 📊 **[Cost Ranking](./COST_RANKING.md)** | 💻 **[Run Locally](./LOCAL_EXECUTION.md)** | ⚡ **[CachyOS Local AI Setup](./CACHYOS_LOCAL_AI_SETUP.md)** | 🟢 **[NVIDIA 128GB Hardware Guide](./NVIDIA_128GB_HARDWARE_GUIDE.md)** | 🇨🇳 vs 🌍 **[Chinese vs. Western AI](./CHINESE_VS_OTHERS_COMPARISON.md)** | 🏆 **[Leaderboard](./TOP_100_LEADERBOARD.md)** | 🧠 **[Architecture](./ARCHITECTURE_ECOSYSTEM.md)** | 🛠️ **[IDEs & Desktop](./IDE_PLUGINS_DESKTOP.md)** | 🔑 **[BYOK & API Keys](./BYOK_API_KEYS.md)** | 🌟 **[Top 100 GitHub AI Projects](./TOP_100_GITHUB_PROJECTS.md)**
 
 ## Top-Level AI Providers & Models
 1. **[DeepSeek](../deepseek/)**: DeepSeek-V3, DeepSeek-R1 — [Real-World Cost Study](../deepseek/real_world_cost_study.md) \| [Cost Analysis](../deepseek/cost_analysis.md) \| [Eval Harness](../deepseek/eval_harness.md)

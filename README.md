@@ -24,6 +24,7 @@ The repository is structured around **AI as the primary top-level directory**, w
 ```text
 archives/
 ├── ai/            # 🧠 PRIMARY AI KNOWLEDGE BASE & GUIDES (Agent Architecture, Benchmarks, Local Execution)
+├── router-ledger/ # 📊 Router Ledger AI model pricing telemetry & fallback architecture
 ├── deepseek/      # DeepSeek-V3/R1 evaluation harnesses, API setup & real-world cost telemetry
 ├── openrouter/    # OpenRouter unified model router & multi-provider fallback
 ├── chutes/        # Chutes AI decentralized serverless GPU compute platform
