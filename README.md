@@ -23,15 +23,17 @@ The repository is structured around **AI as the primary top-level directory**, w
 
 ```text
 archives/
-├── ai/            # 🧠 PRIMARY TOP-LEVEL: AI models, agent architectures, cost studies & harnesses
-│   ├── deepseek/  # DeepSeek-V3/R1 evaluation harnesses, API setup & real-world cost telemetry
-│   ├── qwen/      # Alibaba Qwen 2.5 Coder & instruct models
-│   ├── openai/    # GPT-4o, o1, o3-mini & OpenAI Codex
-│   ├── claude/    # Anthropic Claude 3.5 Sonnet & Opus
-│   ├── google-ai/ # Gemini 1.5 Pro & Gemini 2.0 Flash
-│   ├── mistral/   # Mistral Large, Codestral & Ministral
-│   ├── zhipu-glm/ # Zhipu GLM-4 series (Free tier)
-│   └── ...        # Xiaomi MiMo, Inclusion AI, Agnes AI
+├── ai/            # 🧠 PRIMARY AI KNOWLEDGE BASE & GUIDES (Agent Architecture, Benchmarks, Local Execution)
+├── deepseek/      # DeepSeek-V3/R1 evaluation harnesses, API setup & real-world cost telemetry
+├── qwen/          # Alibaba Qwen 2.5 Coder & instruct models
+├── openai/        # GPT-4o, o1, o3-mini & OpenAI Codex
+├── claude/        # Anthropic Claude 3.5 Sonnet & Opus
+├── google-ai/     # Gemini 1.5 Pro & Gemini 2.0 Flash
+├── mistral/       # Mistral Large, Codestral & Ministral
+├── zhipu-glm/     # Zhipu GLM-4 series
+├── agnes-ai/      # Agnes AI agent configurations
+├── inclusion-ai/  # Inclusion AI core models
+├── xiaomi-mimo/   # Xiaomi MiMo models
 └── engineering/   # ⚙️ CLASSIC ENGINEERING & INFRASTRUCTURE
     ├── clients/   # User interfaces & mobile clients (Android, Multiplatform, Java SE)
     ├── data/      # Databases & SQL schemas (PostgreSQL, MySQL, SQLite, rqlite)
@@ -43,12 +45,12 @@ archives/
 
 ---
 
-## 🧠 AI Ecosystem & Knowledge Base (`ai/`)
+## 🧠 Top-Level AI Ecosystem & Knowledge Base
 
-All primary AI artifacts, benchmark harnesses, agent launchers, and cost optimizations live directly under [`ai/`](./ai/):
+All primary AI model provider hubs, benchmark harnesses, agent launchers, and cost optimizations live at top level:
 
 * 🤖 **[Uncapped Agent Architecture](./ai/UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
-* 📈 **[DeepSeek Real-World Cost Telemetry](./ai/deepseek/real_world_cost_study.md)** — Empirical case study analyzing 626M tokens processed for **$3.25 USD** with a 99.49% prompt cache hit ratio.
+* 📈 **[DeepSeek Real-World Cost Telemetry](./deepseek/real_world_cost_study.md)** — Empirical case study analyzing 626M tokens processed for **$3.25 USD** with a 99.49% prompt cache hit ratio.
 * 📊 **[Master Cost Ranking](./ai/COST_RANKING.md)** — Comprehensive cost ranking across all 10 tracked AI providers.
 * 🏆 **[Global AI Leaderboard](./ai/TOP_100_LEADERBOARD.md)** — Top 100 frontier AI models ranked by capability, reasoning, and coding benchmarks.
 * 🛠️ **[IDEs & Desktop AI Tools](./ai/IDE_PLUGINS_DESKTOP.md)** — Complete setup guide for Cursor, Claude Desktop, Codex Desktop, DeepSeek Harness (`dsh`), OpenHands, and Roo Code.
