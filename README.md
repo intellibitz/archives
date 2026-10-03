@@ -52,6 +52,8 @@ archives/
 All primary AI model provider hubs, benchmark harnesses, agent launchers, and cost optimizations live at top level:
 
 * 🤖 **[Uncapped Agent Architecture](./ai/UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
+* 🟢 **[NVIDIA 128GB Hardware Guide](./ai/NVIDIA_128GB_HARDWARE_GUIDE.md)** — Hardware guide & benchmark specs for running 70B+ models locally on NVIDIA Jetson AGX Orin 128GB & GH200 workstations.
+* ⚡ **[CachyOS Local AI Setup](./ai/CACHYOS_LOCAL_AI_SETUP.md)** — Hardware setup, systemd optimizations, and vLLM / llama.cpp benchmarks.
 * 📈 **[DeepSeek Real-World Cost Telemetry](./deepseek/real_world_cost_study.md)** — Empirical case study analyzing 626M tokens processed for **$3.25 USD** with a 99.49% prompt cache hit ratio.
 * 📊 **[Master Cost Ranking](./ai/COST_RANKING.md)** — Comprehensive cost ranking across all 10 tracked AI providers.
 * 🏆 **[Global AI Leaderboard](./ai/TOP_100_LEADERBOARD.md)** — Top 100 frontier AI models ranked by capability, reasoning, and coding benchmarks.
