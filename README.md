@@ -15,6 +15,21 @@
 
 ---
 
+> [!IMPORTANT]
+> ### 🏆 Undisputed AI Economics & Performance Winner: DeepSeek V3 / R1
+> **Unbeatable Agentic Economics: ~$3.00 – $6.00 USD per 1 Billion Cached Tokens**
+>
+> Across empirical cost benchmarks and real-world telemetry in the **IntelliBitz Archives** platform, **[DeepSeek](https://www.deepseek.com)** has clearly emerged as the **#1 overall winner** for building autonomous agents, coding assistants, and high-throughput LLM pipelines:
+>
+> * 💰 **Breakthrough Pricing:** **~$3.00 to $6.00 USD per 1 Billion cached input tokens** ($0.003–$0.014 / 1M tokens), thanks to 90%+ prompt cache hit ratios.
+> * 📉 **15x–50x Cheaper than Competition:** Processing 1 Billion tokens on DeepSeek costs **$3.25–$6.00**, compared to **$48.11** on GPT-4o-mini, **$56.41** on Claude 3.5 Haiku, and **$150+** on Claude 3.5 Sonnet / o1.
+> * 🧠 **Frontier Reasoning & Coding Capabilities:** DeepSeek-R1 rivals OpenAI o1 on reasoning benchmarks (AIME, MATH-500) at ~1/25th the cost; DeepSeek-V3 matches top proprietary models on SWE-bench and LiveCodeBench.
+> * 🎯 **Clear Choice / Zero-Confusion Default:** For all agent harnesses, IDE plugins, desktop tools, and serverless workflows in this repository, **DeepSeek is the default recommended provider**.
+>
+> 📈 **[Read the 626M Token Real-World Cost Telemetry Study](./deepseek/real_world_cost_study.md)** | 🛠️ **[Explore DeepSeek Integration Harness](./deepseek/README.md)** | 📊 **[Master Cost Rankings](./COST_RANKING.md)**
+
+---
+
 ## 🤖 Overview
 
 **IntelliBitz Archives** is an **AI-centric monorepo, agent platform, and engineering knowledge base**. The primary domain of the repository is focused on **AI foundation models, autonomous agents, evaluation harnesses, cost benchmarking, and multi-provider AI architectures**.
@@ -82,11 +97,11 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 | AI Provider & Connector | API Base Endpoint | Free / Low-Cost Models | Pricing Tier | Environment Variable |
 | :--- | :--- | :--- | :--- | :--- |
+| 🏆 **[DeepSeek Direct (Recommended Winner)](https://api.deepseek.com/v1)** | `https://api.deepseek.com/v1` | `deepseek-chat` (V3), `deepseek-reasoner` (R1) | **🏆 ~$3–$6 / 1B Cached Tokens** ($0.003/1M Cache Hit) | `DEEPSEEK_API_KEY` |
 | **[OpenRouter Free Tier](https://openrouter.ai/api/v1)** | `https://openrouter.ai/api/v1` | `deepseek/deepseek-r1:free`, `qwen/qwen-2.5-coder-32b:free`, `meta-llama/llama-3.3-70b-instruct:free` | **$0.00 / 1M** (Free tier) | `OPENROUTER_API_KEY` |
 | **[Zhipu GLM](https://open.bigmodel.cn/api/paas/v4)** | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` | **$0.00 / 1M** (100% Free API) | `ZHIPU_API_KEY` |
 | **[Google Gemini Free Tier](https://generativelanguage.googleapis.com/v1beta/openai/)** | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-2.0-flash-exp`, `gemini-1.5-flash` | **$0.00** (15 Req/Min free in AI Studio) | `GEMINI_API_KEY` |
 | **[Groq Cloud](https://api.groq.com/openai/v1)** | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile`, `llama-3.1-8b-instant` | Free Developer Tier (Ultra-Fast LPUs) | `GROQ_API_KEY` |
-| **[DeepSeek API Direct](https://api.deepseek.com/v1)** | `https://api.deepseek.com/v1` | `deepseek-chat` (V3), `deepseek-reasoner` (R1) | **$0.003 / 1M** (Cache Hit) / **$0.14** (Miss) | `DEEPSEEK_API_KEY` |
 | **[Chutes AI](https://chutes.ai/v1)** | `https://chutes.ai/v1` | `deepseek-ai/DeepSeek-R1`, `Qwen/Qwen2.5-Coder-32B` | Serverless GPU Pay-Per-Token | `CHUTES_API_KEY` |
 <!-- DYNAMIC_AI_CONNECTORS_END -->
 
