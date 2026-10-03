@@ -52,20 +52,20 @@ archives/
 
 All primary AI model provider hubs, benchmark harnesses, agent launchers, and cost optimizations live at top level:
 
-* 🤖 **[Uncapped Agent Architecture](./ai/UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
-* 🟢 **[NVIDIA 128GB Hardware Guide](./ai/NVIDIA_128GB_HARDWARE_GUIDE.md)** — Hardware guide & benchmark specs for running 70B+ models locally on NVIDIA Jetson AGX Orin 128GB & GH200 workstations.
-* ⚡ **[CachyOS Local AI Setup](./ai/CACHYOS_LOCAL_AI_SETUP.md)** — Hardware setup, systemd optimizations, and vLLM / llama.cpp benchmarks.
+* 🤖 **[Uncapped Agent Architecture](./UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
+* 🟢 **[NVIDIA 128GB Hardware Guide](./NVIDIA_128GB_HARDWARE_GUIDE.md)** — Hardware guide & benchmark specs for running 70B+ models locally on NVIDIA Jetson AGX Orin 128GB & GH200 workstations.
+* ⚡ **[CachyOS Local AI Setup](./CACHYOS_LOCAL_AI_SETUP.md)** — Hardware setup, systemd optimizations, and vLLM / llama.cpp benchmarks.
 * 📈 **[DeepSeek Real-World Cost Telemetry](./deepseek/real_world_cost_study.md)** — Empirical case study analyzing 626M tokens processed for **$3.25 USD** with a 99.49% prompt cache hit ratio.
-* 📊 **[Master Cost Ranking](./ai/COST_RANKING.md)** — Comprehensive cost ranking across all 10 tracked AI providers.
-* 🏆 **[Global AI Leaderboard](./ai/TOP_100_LEADERBOARD.md)** — Top 100 frontier AI models ranked by capability, reasoning, and coding benchmarks.
-* 🛠️ **[IDEs & Desktop AI Tools](./ai/IDE_PLUGINS_DESKTOP.md)** — Complete setup guide for Cursor, Claude Desktop, Codex Desktop, DeepSeek Harness (`dsh`), OpenHands, and Roo Code.
-* 💻 **[Local Execution Guide](./ai/LOCAL_EXECUTION.md)** — Guide to running open-weights models (DeepSeek-R1, Qwen 2.5 Coder) locally using Ollama and vLLM.
-* 🔑 **[BYOK & API Key Management](./ai/BYOK_API_KEYS.md)** — Security best practices for configuring direct API keys.
-* 🌟 **[Top 100 GitHub AI Projects](./ai/TOP_100_GITHUB_PROJECTS.md)** — Curated directory of top open-source AI repositories.
+* 📊 **[Master Cost Ranking](./COST_RANKING.md)** — Comprehensive cost ranking across all 10 tracked AI providers.
+* 🏆 **[Global AI Leaderboard](./TOP_100_LEADERBOARD.md)** — Top 100 frontier AI models ranked by capability, reasoning, and coding benchmarks.
+* 🛠️ **[IDEs & Desktop AI Tools](./IDE_PLUGINS_DESKTOP.md)** — Complete setup guide for Cursor, Claude Desktop, Codex Desktop, DeepSeek Harness (`dsh`), OpenHands, and Roo Code.
+* 💻 **[Local Execution Guide](./LOCAL_EXECUTION.md)** — Guide to running open-weights models (DeepSeek-R1, Qwen 2.5 Coder) locally using Ollama and vLLM.
+* 🔑 **[BYOK & API Key Management](./BYOK_API_KEYS.md)** — Security best practices for configuring direct API keys.
+* 🌟 **[Top 100 GitHub AI Projects](./TOP_100_GITHUB_PROJECTS.md)** — Curated directory of top open-source AI repositories.
 
 ### ⚡ Live Local Inference Engines
 <!-- DYNAMIC_LOCAL_ENGINES_START -->
-> *Last Status Check: `2026-10-03 08:06 UTC`*
+> *Last Status Check: `2026-10-03 08:10 UTC`*
 
 | Inference Service / Local Server | Endpoint URL | Status |
 | :--- | :--- | :--- |
@@ -77,7 +77,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### 🔗 Free & Low-Cost AI Model Connectors
 <!-- DYNAMIC_AI_CONNECTORS_START -->
-> *Updated: `2026-10-03 08:06 UTC`*
+> *Updated: `2026-10-03 08:10 UTC`*
 
 | AI Provider & Connector | API Base Endpoint | Free / Low-Cost Models | Pricing Tier | Environment Variable |
 | :--- | :--- | :--- | :--- | :--- |
@@ -91,7 +91,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### 🌟 Trending Open-Source AI Integrations
 <!-- DYNAMIC_GITHUB_INTEGRATIONS_START -->
-> *Telemetry Sync: `2026-10-03 08:06 UTC`*
+> *Telemetry Sync: `2026-10-03 08:10 UTC`*
 
 | Open-Source AI Project | GitHub Stars | Description & Purpose |
 | :--- | :--- | :--- |
@@ -100,9 +100,9 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 | **[Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder)** (`QwenLM/Qwen2.5-Coder`) | **⭐ 16,841** | Qwen3-Coder is the code version of Qwen3, the large language model series dev... |
 | **[vllm](https://github.com/vllm-project/vllm)** (`vllm-project/vllm`) | **⭐ 93,095** | A high-throughput and memory-efficient inference and serving engine for LLMs |
 | **[llama.cpp](https://github.com/ggml-org/llama.cpp)** (`ggml-org/llama.cpp`) | **⭐ 130,187** | LLM inference in C/C++ |
-| **[ollama](https://github.com/ollama/ollama)** (`ollama/ollama`) | **⭐ 182,078** | Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma an... |
+| **[ollama](https://github.com/ollama/ollama)** (`ollama/ollama`) | **⭐ 182,079** | Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma an... |
 | **[open-webui](https://github.com/open-webui/open-webui)** (`open-webui/open-webui`) | **⭐ 153,847** | User-friendly AI Interface (Supports Ollama, OpenAI API, ...) |
-| **[browser-use](https://github.com/browser-use/browser-use)** (`browser-use/browser-use`) | **⭐ 117,028** | Agents that use the browser. |
+| **[browser-use](https://github.com/browser-use/browser-use)** (`browser-use/browser-use`) | **⭐ 117,029** | Agents that use the browser. |
 | **[Roo-Code](https://github.com/RooCodeInc/Roo-Code)** (`RooVetGit/Roo-Cline`) | **⭐ 24,289** | Roo Code gives you a whole dev team of AI agents in your code editor. |
 | **[crewAI](https://github.com/crewAIInc/crewAI)** (`crewAIInc/crewAI`) | **⭐ 59,298** | Framework for orchestrating role-playing, autonomous AI agents. By fostering ... |
 <!-- DYNAMIC_GITHUB_INTEGRATIONS_END -->

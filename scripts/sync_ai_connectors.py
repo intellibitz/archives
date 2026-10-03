@@ -210,14 +210,10 @@ def main():
 
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     readme_path = os.path.join(root_dir, "README.md")
-    ai_readme_path = os.path.join(root_dir, "ai", "README.md")
 
     inject_dynamic_section(readme_path, "<!-- DYNAMIC_LOCAL_ENGINES_START -->", "<!-- DYNAMIC_LOCAL_ENGINES_END -->", local_block.strip())
     inject_dynamic_section(readme_path, "<!-- DYNAMIC_AI_CONNECTORS_START -->", "<!-- DYNAMIC_AI_CONNECTORS_END -->", connectors_block.strip())
     inject_dynamic_section(readme_path, "<!-- DYNAMIC_GITHUB_INTEGRATIONS_START -->", "<!-- DYNAMIC_GITHUB_INTEGRATIONS_END -->", github_block.strip())
-
-    inject_dynamic_section(ai_readme_path, "<!-- DYNAMIC_AI_CONNECTORS_START -->", "<!-- DYNAMIC_AI_CONNECTORS_END -->", connectors_block.strip())
-    inject_dynamic_section(ai_readme_path, "<!-- DYNAMIC_GITHUB_INTEGRATIONS_START -->", "<!-- DYNAMIC_GITHUB_INTEGRATIONS_END -->", github_block.strip())
 
     print("✨ Dynamic AI Sync completed successfully!")
 
