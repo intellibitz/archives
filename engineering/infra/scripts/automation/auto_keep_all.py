@@ -87,18 +87,12 @@ def trigger_click(name, x, y, w, h):
     env = get_env()
 
     try:
-        orig_x, orig_y = get_mouse_xy()
-
         subprocess.run([
             "xdotool", 
             "mousemove", str(cx), str(cy), 
             "click", "1"
         ], env=env, check=True)
 
-        if orig_x is not None and orig_y is not None:
-            time.sleep(0.02)
-            subprocess.run(["xdotool", "mousemove", str(orig_x), str(orig_y)], env=env)
-            
         log(f"Automation for '{name}' successful.")
         return True
     except Exception as e:
