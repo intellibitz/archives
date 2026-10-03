@@ -1,0 +1,33 @@
+name: Dynamic AI Connectors & Telemetry Sync
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Run every 6 hours
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  sync-ai-connectors:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Dynamic AI Sync Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/sync_ai_connectors.py
+
+      - name: Commit and Push Updated Landing Page
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(ai-sync): auto-update dynamic AI connectors, GitHub stars & telemetry [skip ci]"
+          branch: main
