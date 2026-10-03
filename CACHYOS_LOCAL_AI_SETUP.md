@@ -51,14 +51,17 @@ CLI Link: `~/.local/bin/vllm`
 
 ## 📊 Performance & Benchmark Metrics (Live System Audit)
 
-| Model Tier & Name | Parameters / Size | Architecture | Generation Speed (`eval_tps`) | Prompt Speed (`prompt_tps`) | Total Latency (128 Tokens) | Execution Profile |
+| Model Tier & Name | Parameters / Size | Architecture / Active Params | Generation Speed (`eval_tps`) | Prompt Speed (`prompt_tps`) | Total Latency (128 Tokens) | Execution Profile |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **`qwen2.5-coder:7b`** | 7B (4.7 GB) | Dense 7B | ⚡ **46.42 Tokens/Sec** | 🚀 **677.19 Tokens/Sec** | **6.90s** | 100% NVIDIA RTX 2000 Ada VRAM |
+| **`deepseek-coder-v2:16b`** | 16B (8.9 GB) | MoE (2.4B Active) | 🚀 **24.60 Tokens/Sec** | **57.86 Tokens/Sec** | **17.14s** | Hybrid (66x faster than dense 70B) |
 | **`qwen3-coder:30b`** | 30B (18 GB) | Dense 30B | ⚡ **11.42 Tokens/Sec** | **32.45 Tokens/Sec** | **20.09s** | Hybrid (VRAM + System RAM) |
-| **`gpt-oss_opt120b:latest`** | 120B (65 GB) | MoE 120B | 🐘 **5.61 Tokens/Sec** | **16.83 Tokens/Sec** | **82.23s** | System RAM (219 GB DDR5) |
+| **`gpt-oss_opt120b:latest`** | 120B (65 GB) | MoE (~14B Active) | 🐘 **5.61 Tokens/Sec** | **16.83 Tokens/Sec** | **82.23s** | System RAM (11x faster than dense 70B) |
 | **`deepseek-r1_opt32b:latest`** | 32B (19 GB) | Dense 32B Reasoning | 🧠 **1.39 Tokens/Sec** | **22.68 Tokens/Sec** | **103.25s** | System RAM + GPU Offload |
+| **`mixtral:8x7b`** | 47B (26 GB) | MoE (12.9B Active) | ⚡ **0.96 Tokens/Sec** | **1.83 Tokens/Sec** | **170.94s** | System RAM (219 GB DDR5) |
 | **`llama33_opt70b:latest`** | 70B (42 GB) | Dense 70B | 🦙 **0.51 Tokens/Sec** | **10.09 Tokens/Sec** | **287.76s** | System RAM (219 GB DDR5) |
 | **`deepseek-r1_opt70b:latest`** | 70B (42 GB) | Dense 70B Reasoning | 🧠 **0.37 Tokens/Sec** | **7.08 Tokens/Sec** | **353.92s** | System RAM (219 GB DDR5) |
+| **`mixtral:8x22b`** | 141B (79 GB) | MoE (39B Active) | 🐘 *Installed / Active* | *Loaded in RAM* | *Multi-Turn* | System RAM (219 GB DDR5) |
 
 ---
 
