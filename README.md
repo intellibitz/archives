@@ -81,7 +81,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### ⚡ Live Local Inference Engines
 <!-- DYNAMIC_LOCAL_ENGINES_START -->
-> *Last Status Check: `2026-10-05 23:24 UTC`*
+> *Last Status Check: `2026-10-06 03:33 UTC`*
 
 | Inference Service / Local Server | Endpoint URL | Status |
 | :--- | :--- | :--- |
@@ -93,7 +93,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### 🔗 Free & Low-Cost AI Model Connectors
 <!-- DYNAMIC_AI_CONNECTORS_START -->
-> *Updated: `2026-10-05 23:24 UTC`*
+> *Updated: `2026-10-06 03:33 UTC`*
 
 | AI Provider & Connector | API Base Endpoint | Free / Low-Cost Models | Pricing Tier | Environment Variable |
 | :--- | :--- | :--- | :--- | :--- |
@@ -107,20 +107,20 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 
 ### 🌟 Trending Open-Source AI Integrations
 <!-- DYNAMIC_GITHUB_INTEGRATIONS_START -->
-> *Telemetry Sync: `2026-10-05 23:24 UTC`*
+> *Telemetry Sync: `2026-10-06 03:33 UTC`*
 
 | Open-Source AI Project | GitHub Stars | Description & Purpose |
 | :--- | :--- | :--- |
 | **[deepseek-ai/DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1)** | ⭐ Tracked | deepseek-ai/DeepSeek-R1 repository |
 | **[deepseek-ai/DeepSeek-V3](https://github.com/deepseek-ai/DeepSeek-V3)** | ⭐ Tracked | deepseek-ai/DeepSeek-V3 repository |
 | **[Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder)** (`QwenLM/Qwen2.5-Coder`) | **⭐ 16,838** | Qwen3-Coder is the code version of Qwen3, the large language model series dev... |
-| **[vllm](https://github.com/vllm-project/vllm)** (`vllm-project/vllm`) | **⭐ 93,224** | A high-throughput and memory-efficient inference and serving engine for LLMs |
-| **[llama.cpp](https://github.com/ggml-org/llama.cpp)** (`ggml-org/llama.cpp`) | **⭐ 130,400** | LLM inference in C/C++ |
-| **[ollama](https://github.com/ollama/ollama)** (`ollama/ollama`) | **⭐ 182,261** | Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma an... |
-| **[open-webui](https://github.com/open-webui/open-webui)** (`open-webui/open-webui`) | **⭐ 154,017** | User-friendly AI Interface (Supports Ollama, OpenAI API, ...) |
-| **[browser-use](https://github.com/browser-use/browser-use)** (`browser-use/browser-use`) | **⭐ 117,206** | Agents that use the browser. |
-| **[Roo-Code](https://github.com/RooCodeInc/Roo-Code)** (`RooVetGit/Roo-Cline`) | **⭐ 24,286** | Roo Code gives you a whole dev team of AI agents in your code editor. |
-| **[crewAI](https://github.com/crewAIInc/crewAI)** (`crewAIInc/crewAI`) | **⭐ 59,373** | Framework for orchestrating role-playing, autonomous AI agents. By fostering ... |
+| **[vllm](https://github.com/vllm-project/vllm)** (`vllm-project/vllm`) | **⭐ 93,232** | A high-throughput and memory-efficient inference and serving engine for LLMs |
+| **[llama.cpp](https://github.com/ggml-org/llama.cpp)** (`ggml-org/llama.cpp`) | **⭐ 130,416** | LLM inference in C/C++ |
+| **[ollama](https://github.com/ollama/ollama)** (`ollama/ollama`) | **⭐ 182,276** | Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma an... |
+| **[open-webui](https://github.com/open-webui/open-webui)** (`open-webui/open-webui`) | **⭐ 154,026** | User-friendly AI Interface (Supports Ollama, OpenAI API, ...) |
+| **[browser-use](https://github.com/browser-use/browser-use)** (`browser-use/browser-use`) | **⭐ 117,211** | Agents that use the browser. |
+| **[Roo-Code](https://github.com/RooCodeInc/Roo-Code)** (`RooVetGit/Roo-Cline`) | **⭐ 24,287** | Roo Code gives you a whole dev team of AI agents in your code editor. |
+| **[crewAI](https://github.com/crewAIInc/crewAI)** (`crewAIInc/crewAI`) | **⭐ 59,377** | Framework for orchestrating role-playing, autonomous AI agents. By fostering ... |
 <!-- DYNAMIC_GITHUB_INTEGRATIONS_END -->
 
 ---
