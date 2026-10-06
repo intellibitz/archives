@@ -72,6 +72,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 * 🟢 **[NVIDIA 128GB Hardware Guide](./NVIDIA_128GB_HARDWARE_GUIDE.md)** — Hardware guide & benchmark specs for running 70B+ models locally on NVIDIA Jetson AGX Orin 128GB & GH200 workstations.
 * ⚡ **[CachyOS Local AI Setup](./CACHYOS_LOCAL_AI_SETUP.md)** — Hardware setup, systemd optimizations, and vLLM / llama.cpp benchmarks.
 * 📈 **[DeepSeek Real-World Cost Telemetry](./deepseek/real_world_cost_study.md)** — Empirical case study analyzing 626M tokens processed for **$3.25 USD** with a 99.49% prompt cache hit ratio.
+* 💰 **[Prompt Caching Economics & 12-Provider Pricing](./PROMPT_CACHING_LLM_PRICING_2026.md)** — DeepSeek, ZAI, Groq, Fireworks AI, Qwen, Moonshot, Xiaomi & 100M token prompt cache analysis.
 * 📊 **[Master Cost Ranking](./COST_RANKING.md)** — Comprehensive cost ranking across all 10 tracked AI providers.
 * 🏆 **[Global AI Leaderboard](./TOP_100_LEADERBOARD.md)** — Top 100 frontier AI models ranked by capability, reasoning, and coding benchmarks.
 * 🛠️ **[IDEs & Desktop AI Tools](./IDE_PLUGINS_DESKTOP.md)** — Complete setup guide for Cursor, Claude Desktop, Codex Desktop, DeepSeek Harness (`dsh`), OpenHands, and Roo Code.
