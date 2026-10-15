@@ -142,6 +142,103 @@ def run_workflow_cli(task: str, dry_run: bool = False, force_reasoner: bool = Fa
     console.print(Panel(Markdown(report.final_review), title="🛡️ 5. Quality & Security Review", border_style="red"))
 
 
+def run_langgraph_cli(task: str, dry_run: bool = False):
+    """Executes a complete LangGraph StateGraph workflow with live visuals."""
+    from orchestrator.langgraph_orchestrator import LangGraphOrchestrator
+
+    console.print(Panel(f"[bold cyan]Task Objective:[/bold cyan] {task}", title="🕸️ LangGraph Multi-Model Workflow"))
+
+    orchestrator = LangGraphOrchestrator(dry_run=dry_run)
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task_id = progress.add_task("[cyan]Traversing LangGraph state machine...", total=None)
+        result = orchestrator.run(task)
+        progress.update(task_id, description="[bold green]Graph execution finished!")
+
+    console.print("\n[bold green]✅ LangGraph Workflow Completed Successfully![/bold green]\n")
+
+    # Telemetry Table
+    telemetry = result.get("telemetry", [])
+    step_table = Table(title="📊 LangGraph Step-by-Step Telemetry", border_style="cyan")
+    step_table.add_column("Node", style="bold cyan")
+    step_table.add_column("Model Assigned", style="white")
+    step_table.add_column("Tokens", justify="right")
+    step_table.add_column("Cost (USD)", justify="right", style="green")
+
+    for step in telemetry:
+        step_table.add_row(
+            step.get("node", "Unknown"),
+            step.get("model", "Unknown"),
+            str(step.get("tokens", 0)),
+            f"${step.get('cost_usd', 0.0):.5f}",
+        )
+
+    console.print(step_table)
+    console.print(
+        f"[bold]Total Tokens:[/bold] {result.get('total_tokens', 0):,} | "
+        f"[bold green]Total Estimated Cost: ${result.get('total_cost_usd', 0.0):.5f} USD[/bold green]\n"
+    )
+
+    # Panels
+    if result.get("architect_plan"):
+        console.print(Panel(Markdown(result["architect_plan"]), title="📐 1. Master Architecture Plan", border_style="cyan"))
+    if result.get("reasoner_proof"):
+        console.print(Panel(Markdown(result["reasoner_proof"]), title="🧠 2. DeepSeek-R1 Invariant Proof", border_style="magenta"))
+    if result.get("code_implementation"):
+        console.print(Panel(Markdown(result["code_implementation"]), title="💻 3. Lead Coder Implementation", border_style="green"))
+    if result.get("test_suite"):
+        console.print(Panel(Markdown(result["test_suite"]), title="🧪 4. Swarm-Worker Unit Tests", border_style="yellow"))
+    if result.get("review_feedback"):
+        console.print(Panel(Markdown(result["review_feedback"]), title="🛡️ 5. Quality & Security Review", border_style="red"))
+
+
+def run_autogen_cli(task: str, dry_run: bool = False, selector: bool = False):
+    """Executes an AutoGen multi-agent conversational team workflow."""
+    from orchestrator.autogen_orchestrator import AutoGenOrchestrator
+
+    team_mode = "SelectorGroupChat (Dynamic)" if selector else "RoundRobinGroupChat (Pipeline)"
+    console.print(Panel(
+        f"[bold cyan]Task Objective:[/bold cyan] {task}\n[bold yellow]Team Structure:[/bold yellow] {team_mode}",
+        title="🤖 AutoGen Multi-Agent Team Running"
+    ))
+
+    orchestrator = AutoGenOrchestrator(dry_run=dry_run)
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task_id = progress.add_task("[cyan]AutoGen team collaborating...", total=None)
+        report = orchestrator.run(task, selector=selector)
+        progress.update(task_id, description="[bold green]Conversation concluded!")
+
+    console.print(f"\n[bold green]✅ AutoGen Team Finished ({report.total_messages} messages exchanged)![/bold green]\n")
+
+    # Render Conversation Log
+    colors = {
+        "User": "white",
+        "Librarian": "blue",
+        "Architect": "cyan",
+        "Reasoner": "magenta",
+        "Coder": "green",
+        "SwarmTester": "yellow",
+        "Reviewer": "red",
+    }
+
+    for msg in report.messages:
+        color = colors.get(msg.source, "white")
+        console.print(Panel(
+            Markdown(msg.content),
+            title=f"[{color}]🤖 Agent: {msg.source}[/{color}]",
+            border_style=color,
+        ))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Multi-Model AI Agent Orchestrator")
     subparsers = parser.add_subparsers(dest="command")
@@ -152,12 +249,23 @@ def main():
     # pricing command
     subparsers.add_parser("pricing", help="Show token rates and economics table")
 
-    # run command
-    run_parser = subparsers.add_parser("run", help="Run an orchestrated task")
+    # run command (Built-in Master Orchestrator)
+    run_parser = subparsers.add_parser("run", help="Run the built-in Master Orchestrator")
     run_parser.add_argument("task", type=str, help="Description of task to execute")
     run_parser.add_argument("--dry-run", action="store_true", help="Simulate execution without calling live APIs")
     run_parser.add_argument("--reasoner", action="store_true", help="Force deep algorithmic reasoning phase")
     run_parser.add_argument("--proxy", action="store_true", help="Route requests through local LiteLLM plumbing proxy gateway")
+
+    # langgraph command
+    lg_parser = subparsers.add_parser("langgraph", help="Run the LangGraph stateful graph orchestrator")
+    lg_parser.add_argument("task", type=str, help="Description of task to execute")
+    lg_parser.add_argument("--dry-run", action="store_true", help="Simulate execution without calling live APIs")
+
+    # autogen command
+    ag_parser = subparsers.add_parser("autogen", help="Run the AutoGen multi-agent collaborative team")
+    ag_parser.add_argument("task", type=str, help="Description of task to execute")
+    ag_parser.add_argument("--dry-run", action="store_true", help="Simulate execution without calling live APIs")
+    ag_parser.add_argument("--selector", action="store_true", help="Use dynamic SelectorGroupChat instead of RoundRobin")
 
     args = parser.parse_args()
 
@@ -167,10 +275,17 @@ def main():
         show_pricing()
     elif args.command == "run":
         run_workflow_cli(args.task, dry_run=args.dry_run, force_reasoner=args.reasoner, use_proxy=args.proxy)
+    elif args.command == "langgraph":
+        run_langgraph_cli(args.task, dry_run=args.dry_run)
+    elif args.command == "autogen":
+        run_autogen_cli(args.task, dry_run=args.dry_run, selector=args.selector)
     else:
         # Default behavior: show status & help
         show_status()
-        console.print("\n[bold]Usage:[/bold] python3 -m orchestrator.cli run \"Your Task Description\"")
+        console.print("\n[bold]Usage:[/bold]")
+        console.print("  python3 -m orchestrator.cli run \"Task\"        # Built-in Master Orchestrator")
+        console.print("  python3 -m orchestrator.cli langgraph \"Task\"  # LangGraph Stateful Graph")
+        console.print("  python3 -m orchestrator.cli autogen \"Task\"    # AutoGen Conversational Team\n")
 
 
 if __name__ == "__main__":

@@ -10,10 +10,12 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 
-# Automatically load .env if present
+# Automatically load .env and system AI environment files if present
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(WORKSPACE_ROOT / ".env")
 load_dotenv(WORKSPACE_ROOT / ".env.orchestrator")
+load_dotenv("/mnt/data/var/AI/env_api_keys.sh")
+load_dotenv(Path.home() / ".config/environment.d/99-ai-keys.conf")
 
 # ------------------------------------------------------------------------------
 # 1. Provider Credentials & Status Detection
