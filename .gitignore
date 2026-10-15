@@ -12,6 +12,7 @@ ehthumbs.db
 Thumbs.db
 [Dd]esktop.ini
 $RECYCLE.BIN/
+.aider*
 
 # --- IDEs & Editors ---
 # IntelliJ IDEA / Android Studio

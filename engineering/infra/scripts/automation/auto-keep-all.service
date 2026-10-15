@@ -1,0 +1,15 @@
+[Unit]
+Description=Auto Keep All Dialog Button Clicker Service
+After=graphical-session.target
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+Environment=WAYLAND_DISPLAY=wayland-0
+WorkingDirectory=/mnt/linuxshare/src/github.com/intellibitz/archives/engineering/infra/scripts/automation
+ExecStart=/usr/bin/python3 /mnt/linuxshare/src/github.com/intellibitz/archives/engineering/infra/scripts/automation/auto_keep_all.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
