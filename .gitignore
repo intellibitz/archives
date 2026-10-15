@@ -140,8 +140,8 @@ dist/
 
 # --- Environment & Credentials ---
 .env
-.env.local
-.env.*.local
+.env.*
+!.env*.example
 *.key
 *.pem
 !*.example

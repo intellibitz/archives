@@ -1,0 +1,147 @@
+# ==============================================================================
+# LiteLLM Proxy Gateway Configuration - Multi-Model Orchestration Plumbing
+# ==============================================================================
+# Unified OpenAI-compatible gateway routing between Monthly Subscriptions
+# (Antigravity/Gemini, Claude, Codex) and Pay-as-you-go Swarms (DeepSeek, GLM).
+
+model_list:
+  # ----------------------------------------------------------------------------
+  # 1. Antigravity Librarian (Gemini 2.0 Flash / Gemini 1.5 Pro - 1M-2M Context)
+  # ----------------------------------------------------------------------------
+  - model_name: antigravity-librarian
+    litellm_params:
+      model: gemini/gemini-3.8-flash
+      api_key: "os.environ/GEMINI_API_KEY"
+      rpm: 100
+      max_tokens: 8192
+
+  - model_name: antigravity-flash-latest
+    litellm_params:
+      model: gemini/gemini-flash-latest
+      api_key: "os.environ/GEMINI_API_KEY"
+      rpm: 100
+      max_tokens: 8192
+
+  - model_name: antigravity-pro
+    litellm_params:
+      model: gemini/gemini-pro-latest
+      api_key: "os.environ/GEMINI_API_KEY"
+      rpm: 60
+
+  # ----------------------------------------------------------------------------
+  # 2. Claude Master Architect (Claude 3.5 Sonnet / Claude 3.7 Sonnet)
+  # ----------------------------------------------------------------------------
+  - model_name: claude-architect
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: "os.environ/ANTHROPIC_API_KEY"
+      max_tokens: 8192
+
+  - model_name: claude-fast
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: "os.environ/ANTHROPIC_API_KEY"
+
+  # ----------------------------------------------------------------------------
+  # 3. OpenAI / Codex Specialist (o1 / o3-mini / GPT-4o)
+  # ----------------------------------------------------------------------------
+  - model_name: codex-specialist
+    litellm_params:
+      model: openai/o3-mini
+      api_key: "os.environ/OPENAI_API_KEY"
+
+  - model_name: openai-gpt4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: "os.environ/OPENAI_API_KEY"
+      max_tokens: 4096
+
+  # ----------------------------------------------------------------------------
+  # 4. DeepSeek Reasoner & Coder (Pay-As-You-Go Direct API)
+  # ----------------------------------------------------------------------------
+  - model_name: deepseek-reasoner
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+      api_base: "https://api.deepseek.com/v1"
+      max_tokens: 8192
+
+  - model_name: deepseek-coder
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+      api_base: "https://api.deepseek.com/v1"
+      max_tokens: 8192
+
+  # ----------------------------------------------------------------------------
+  # 5. Zhipu GLM Swarm Worker (Pay-As-You-Go Fast Micro-Tokens)
+  # ----------------------------------------------------------------------------
+  - model_name: glm-utility
+    litellm_params:
+      model: openai/glm-4-flash
+      api_key: "os.environ/ZHIPU_API_KEY"
+      api_base: "https://open.bigmodel.cn/api/paas/v4"
+      max_tokens: 4096
+
+  - model_name: glm-air
+    litellm_params:
+      model: openai/glm-4-air
+      api_key: "os.environ/ZHIPU_API_KEY"
+      api_base: "https://open.bigmodel.cn/api/paas/v4"
+      max_tokens: 4096
+
+  # ----------------------------------------------------------------------------
+  # 6. Functional Role Aliases (Used by the Orchestrator Pipeline)
+  # ----------------------------------------------------------------------------
+  - model_name: master-orchestrator
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: "os.environ/ANTHROPIC_API_KEY"
+      fallbacks: ["openai/gpt-4o", "gemini/gemini-2.0-flash"]
+
+  - model_name: context-librarian
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: "os.environ/GEMINI_API_KEY"
+      fallbacks: ["gemini/gemini-1.5-pro", "openai/gpt-4o"]
+
+  - model_name: deep-reasoner
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+      api_base: "https://api.deepseek.com/v1"
+      fallbacks: ["openai/o3-mini", "openai/gpt-4o"]
+
+  - model_name: code-worker
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+      api_base: "https://api.deepseek.com/v1"
+      fallbacks: ["anthropic/claude-3-5-sonnet-20241022", "openai/gpt-4o"]
+
+  - model_name: swarm-utility
+    litellm_params:
+      model: openai/glm-4-flash
+      api_key: "os.environ/ZHIPU_API_KEY"
+      api_base: "https://open.bigmodel.cn/api/paas/v4"
+      fallbacks: ["deepseek/deepseek-chat", "gemini/gemini-2.0-flash"]
+
+# ------------------------------------------------------------------------------
+# Router & Proxy Settings
+# ------------------------------------------------------------------------------
+router_settings:
+  routing_strategy: "cost-based-routing"
+  timeout: 120
+  num_retries: 3
+  allowed_fails: 2
+  cooldown_time: 30
+
+general_settings:
+  master_key: "orchestrator-local-gateway"
+  alerting: []
+  store_model_in_db: false
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+  request_timeout: 120
