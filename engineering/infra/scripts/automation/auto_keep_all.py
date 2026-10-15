@@ -168,6 +168,8 @@ def find_best_template_match(screen_gray, template_gray):
             
         res = cv2.matchTemplate(screen_gray, resized_tpl, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
+        if np.isnan(max_val) or np.isinf(max_val):
+            continue
         if max_val > best_val:
             best_val = max_val
             best_loc = max_loc
