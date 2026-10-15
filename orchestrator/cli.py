@@ -81,11 +81,11 @@ def show_pricing():
     console.print(table)
 
 
-def run_workflow_cli(task: str, dry_run: bool = False, force_reasoner: bool = False):
+def run_workflow_cli(task: str, dry_run: bool = False, force_reasoner: bool = False, use_proxy: bool = False):
     """Executes a complete orchestrated workflow with live terminal visuals."""
     console.print(Panel(f"[bold cyan]Task Objective:[/bold cyan] {task}", title="🚀 Master Orchestrator Running"))
 
-    router = ModelRouter(dry_run=dry_run)
+    router = ModelRouter(use_proxy=use_proxy, dry_run=dry_run)
     orchestrator = MasterOrchestrator(router=router, dry_run=dry_run)
 
     with Progress(
@@ -157,6 +157,7 @@ def main():
     run_parser.add_argument("task", type=str, help="Description of task to execute")
     run_parser.add_argument("--dry-run", action="store_true", help="Simulate execution without calling live APIs")
     run_parser.add_argument("--reasoner", action="store_true", help="Force deep algorithmic reasoning phase")
+    run_parser.add_argument("--proxy", action="store_true", help="Route requests through local LiteLLM plumbing proxy gateway")
 
     args = parser.parse_args()
 
@@ -165,7 +166,7 @@ def main():
     elif args.command == "pricing":
         show_pricing()
     elif args.command == "run":
-        run_workflow_cli(args.task, dry_run=args.dry_run, force_reasoner=args.reasoner)
+        run_workflow_cli(args.task, dry_run=args.dry_run, force_reasoner=args.reasoner, use_proxy=args.proxy)
     else:
         # Default behavior: show status & help
         show_status()

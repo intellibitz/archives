@@ -15,6 +15,24 @@ model_list:
       rpm: 100
       max_tokens: 8192
 
+  # ----------------------------------------------------------------------------
+  # Local Ollama Models (CachyOS RTX 3090 / System RAM)
+  # ----------------------------------------------------------------------------
+  - model_name: local-coder
+    litellm_params:
+      model: ollama/qwen2.5-coder:7b
+      api_base: "http://localhost:11434"
+
+  - model_name: local-reasoner
+    litellm_params:
+      model: ollama/deepseek-r1:32b
+      api_base: "http://localhost:11434"
+
+  - model_name: local-llama
+    litellm_params:
+      model: ollama/llama3.3:70b
+      api_base: "http://localhost:11434"
+
   - model_name: antigravity-flash-latest
     litellm_params:
       model: gemini/gemini-flash-latest
@@ -101,9 +119,9 @@ model_list:
 
   - model_name: context-librarian
     litellm_params:
-      model: gemini/gemini-2.0-flash
+      model: gemini/gemini-3.8-flash
       api_key: "os.environ/GEMINI_API_KEY"
-      fallbacks: ["gemini/gemini-1.5-pro", "openai/gpt-4o"]
+      fallbacks: ["gemini/gemini-flash-latest", "openai/gpt-4o"]
 
   - model_name: deep-reasoner
     litellm_params:
