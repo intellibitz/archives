@@ -14,6 +14,9 @@ TEMPLATES = {
     "Allow Always": [os.path.join(ASSETS_DIR, "allow-always.png")],
     "Accept All": [
         os.path.join(ASSETS_DIR, "accept-all.png"),
+        os.path.join(ASSETS_DIR, "accept-all-nohighlight.png"),
+        os.path.join(ASSETS_DIR, "accept-all-grey-50.png"),
+        os.path.join(ASSETS_DIR, "accept-all-grey-65.png"),
         os.path.join(ASSETS_DIR, "accept-all-grey.png"),
         os.path.join(ASSETS_DIR, "accept-all-grey-hover.png"),
         os.path.join(ASSETS_DIR, "accept-all-grey-dark.png"),
@@ -21,6 +24,11 @@ TEMPLATES = {
     "Accept All 2": [
         os.path.join(ASSETS_DIR, "accept-all2.png"),
         os.path.join(ASSETS_DIR, "accept_all2.png"),
+        os.path.join(ASSETS_DIR, "accept-all2-nohighlight.png"),
+        os.path.join(ASSETS_DIR, "accept_all2-nohighlight.png"),
+        os.path.join(ASSETS_DIR, "accept-all2-grey-35.png"),
+        os.path.join(ASSETS_DIR, "accept-all2-grey-48.png"),
+        os.path.join(ASSETS_DIR, "accept-all2-grey-62.png"),
         os.path.join(ASSETS_DIR, "accept-all2-grey.png"),
         os.path.join(ASSETS_DIR, "accept_all2-grey.png"),
         os.path.join(ASSETS_DIR, "accept-all2-grey-hover.png"),
@@ -30,6 +38,10 @@ TEMPLATES = {
         os.path.join(ASSETS_DIR, "accept-changes.png"),
         os.path.join(ASSETS_DIR, "accept_changes.png"),
         os.path.join(ASSETS_DIR, "acceot-changes.png"),
+        os.path.join(ASSETS_DIR, "accept-changes-nohighlight.png"),
+        os.path.join(ASSETS_DIR, "accept_changes-nohighlight.png"),
+        os.path.join(ASSETS_DIR, "accept-changes-grey-35.png"),
+        os.path.join(ASSETS_DIR, "accept-changes-grey-50.png"),
         os.path.join(ASSETS_DIR, "accept-changes-grey.png"),
         os.path.join(ASSETS_DIR, "accept_changes-grey.png"),
         os.path.join(ASSETS_DIR, "accept-changes-grey-hover.png"),
@@ -42,8 +54,8 @@ TEMPLATES = {
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 
-# Strict confidence threshold (0.92) to eliminate false-positive cursor movements on random screen text
-CONFIDENCE_THRESHOLD = 0.92
+# Strict confidence threshold (0.88) eliminating false positives while reliably capturing unhighlighted/hovered buttons
+CONFIDENCE_THRESHOLD = 0.88
 CHECK_INTERVAL = 2.0 
 
 def log(msg):
@@ -98,23 +110,30 @@ def is_user_actively_moving_mouse():
 def trigger_click(name, x, y, w, h):
     cx, cy = x + w // 2, y + h // 2
 
-    # Guard: Do NOT touch or grab cursor if user is actively moving the mouse (>10px delta)
-    if is_user_actively_moving_mouse():
-        log(f"Notice: User is actively moving mouse; skipping cursor movement for '{name}'.")
+    # Check if mouse is already positioned over the button
+    mx, my = get_mouse_xy()
+    cursor_already_on_button = (
+        mx is not None and my is not None and
+        (x - 5) <= mx <= (x + w + 5) and (y - 5) <= my <= (y + h + 5)
+    )
+
+    # Guard: Do NOT touch or grab cursor if user is actively moving the mouse elsewhere
+    if not cursor_already_on_button and is_user_actively_moving_mouse():
+        log(f"Notice: User is actively moving mouse elsewhere; skipping cursor movement for '{name}'.")
         return False
 
-    log(f"Clicking '{name}' at ({cx}, {cy})...")
+    log(f"Clicking '{name}' at ({cx}, {cy}) (cursor_already_on_button={cursor_already_on_button})...")
     env = get_env()
 
     try:
-        # Move cursor to button center
-        subprocess.run([
-            "xdotool", 
-            "mousemove", str(cx), str(cy)
-        ], env=env, check=True)
-
-        # Allow compositor and window to register hover/focus state
-        time.sleep(0.08)
+        # Move cursor to button center if not already on it
+        if not cursor_already_on_button:
+            subprocess.run([
+                "xdotool", 
+                "mousemove", str(cx), str(cy)
+            ], env=env, check=True)
+            # Allow compositor and window to register hover/focus state
+            time.sleep(0.08)
 
         # Primary click: ydotool via kernel uinput device (reliable for native Wayland windows)
         ydotool_clicked = False
