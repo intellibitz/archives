@@ -38,6 +38,7 @@ class OrchestratorState(TypedDict, total=False):
     telemetry: List[Dict[str, Any]]
     total_cost_usd: float
     total_tokens: int
+    total_cached_tokens: int
 
 
 class LangGraphOrchestrator:
@@ -66,12 +67,12 @@ class LangGraphOrchestrator:
             max_retries=2,
         )
 
-    def _invoke_llm(self, model: str, system_prompt: str, user_prompt: str) -> tuple[str, int, float]:
-        """Invokes model and returns (content, tokens, cost)."""
+    def _invoke_llm(self, model: str, system_prompt: str, user_prompt: str) -> tuple[str, int, int, float]:
+        """Invokes model and returns (content, total_tokens, cached_tokens, cost)."""
         if self.dry_run:
             time.sleep(0.05)
             mock_text = f"[DRY-RUN LANGGRAPH MOCK] Response from {model} for prompt: {user_prompt[:80]}..."
-            return mock_text, 150, 0.00003
+            return mock_text, 150, 60, 0.00002
 
         llm = self._get_llm(model=model)
         fallback_model = "local-reasoner" if "reasoner" in model else "local-coder"
@@ -90,11 +91,28 @@ class LangGraphOrchestrator:
         else:
             content = str(resp.content)
 
-        tokens = resp.response_metadata.get("token_usage", {}).get("total_tokens", 250)
-        # Cost estimate
-        rate = PRICING_TABLE.get(model, {}).get("input", 0.50)
-        cost = (tokens / 1_000_000.0) * rate
-        return content, tokens, cost
+        meta = getattr(resp, "response_metadata", {}) or {}
+        usage = meta.get("token_usage", {})
+        total_tokens = usage.get("total_tokens", 250)
+        prompt_tokens = usage.get("prompt_tokens", total_tokens)
+        cached_tokens = (
+            usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
+            or usage.get("prompt_cache_hit_tokens", 0)
+        )
+        uncached_tokens = max(0, prompt_tokens - cached_tokens)
+        completion_tokens = usage.get("completion_tokens", 0)
+
+        # Standard pricing: cached prompt tokens receive a 90% discount (DeepSeek: $0.014 vs $0.14)
+        input_rate = PRICING_TABLE.get(model, {}).get("input", 0.50)
+        cached_rate = input_rate * 0.10
+        output_rate = PRICING_TABLE.get(model, {}).get("output", input_rate * 2)
+
+        cost = (
+            (uncached_tokens / 1_000_000.0) * input_rate
+            + (cached_tokens / 1_000_000.0) * cached_rate
+            + (completion_tokens / 1_000_000.0) * output_rate
+        )
+        return content, total_tokens, cached_tokens, cost
 
     # --------------------------------------------------------------------------
     # Graph Nodes
@@ -108,19 +126,21 @@ class LangGraphOrchestrator:
         )
         user_prompt = f"Task: {state['task']}\nContext: {state.get('workspace_context', 'Repository root')}"
         model = "antigravity-librarian"
-        content, tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
+        content, tokens, cached_tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
 
         telemetry = list(state.get("telemetry", []))
         telemetry.append({
             "node": "Librarian",
             "model": model,
             "tokens": tokens,
+            "cached_tokens": cached_tokens,
             "cost_usd": cost,
         })
         return {
             "context_dossier": content,
             "telemetry": telemetry,
             "total_tokens": state.get("total_tokens", 0) + tokens,
+            "total_cached_tokens": state.get("total_cached_tokens", 0) + cached_tokens,
             "total_cost_usd": state.get("total_cost_usd", 0.0) + cost,
         }
 
@@ -135,7 +155,7 @@ class LangGraphOrchestrator:
         )
         user_prompt = f"Task: {state['task']}\nContext Dossier:\n{state.get('context_dossier', '')}"
         model = "claude-architect"
-        content, tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
+        content, tokens, cached_tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
 
         needs_deep_reasoning = "[NEEDS_DEEP_REASONING: YES]" in content or any(
             k in state["task"].lower()
@@ -147,6 +167,7 @@ class LangGraphOrchestrator:
             "node": "Architect",
             "model": model,
             "tokens": tokens,
+            "cached_tokens": cached_tokens,
             "cost_usd": cost,
             "needs_deep_reasoning": needs_deep_reasoning,
         })
@@ -155,6 +176,7 @@ class LangGraphOrchestrator:
             "needs_deep_reasoning": needs_deep_reasoning,
             "telemetry": telemetry,
             "total_tokens": state.get("total_tokens", 0) + tokens,
+            "total_cached_tokens": state.get("total_cached_tokens", 0) + cached_tokens,
             "total_cost_usd": state.get("total_cost_usd", 0.0) + cost,
         }
 
@@ -170,19 +192,21 @@ class LangGraphOrchestrator:
             f"Architecture Plan:\n{state.get('architect_plan', '')}"
         )
         model = "deepseek-reasoner"
-        content, tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
+        content, tokens, cached_tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
 
         telemetry = list(state.get("telemetry", []))
         telemetry.append({
             "node": "Reasoner",
             "model": model,
             "tokens": tokens,
+            "cached_tokens": cached_tokens,
             "cost_usd": cost,
         })
         return {
             "reasoner_proof": content,
             "telemetry": telemetry,
             "total_tokens": state.get("total_tokens", 0) + tokens,
+            "total_cached_tokens": state.get("total_cached_tokens", 0) + cached_tokens,
             "total_cost_usd": state.get("total_cost_usd", 0.0) + cost,
         }
 
@@ -202,13 +226,14 @@ class LangGraphOrchestrator:
             user_prompt += f"\nPrevious Review Rejection Feedback to Fix:\n{state['review_feedback']}"
 
         model = "deepseek-coder"
-        content, tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
+        content, tokens, cached_tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
 
         telemetry = list(state.get("telemetry", []))
         telemetry.append({
             "node": "Coder",
             "model": model,
             "tokens": tokens,
+            "cached_tokens": cached_tokens,
             "cost_usd": cost,
             "iteration": state.get("iteration_count", 0),
         })
@@ -216,6 +241,7 @@ class LangGraphOrchestrator:
             "code_implementation": content,
             "telemetry": telemetry,
             "total_tokens": state.get("total_tokens", 0) + tokens,
+            "total_cached_tokens": state.get("total_cached_tokens", 0) + cached_tokens,
             "total_cost_usd": state.get("total_cost_usd", 0.0) + cost,
         }
 
@@ -231,19 +257,21 @@ class LangGraphOrchestrator:
             f"Requirements:\n{state.get('architect_plan', '')}"
         )
         model = "glm-utility"
-        content, tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
+        content, tokens, cached_tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
 
         telemetry = list(state.get("telemetry", []))
         telemetry.append({
             "node": "Swarm-Worker",
             "model": model,
             "tokens": tokens,
+            "cached_tokens": cached_tokens,
             "cost_usd": cost,
         })
         return {
             "test_suite": content,
             "telemetry": telemetry,
             "total_tokens": state.get("total_tokens", 0) + tokens,
+            "total_cached_tokens": state.get("total_cached_tokens", 0) + cached_tokens,
             "total_cost_usd": state.get("total_cost_usd", 0.0) + cost,
         }
 
@@ -261,7 +289,7 @@ class LangGraphOrchestrator:
             f"Test Suite:\n{state.get('test_suite', '')}"
         )
         model = "claude-architect"
-        content, tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
+        content, tokens, cached_tokens, cost = self._invoke_llm(model, system_prompt, user_prompt)
 
         is_approved = "[STATUS: APPROVED]" in content or "APPROVED" in content.upper()
         telemetry = list(state.get("telemetry", []))
@@ -269,6 +297,7 @@ class LangGraphOrchestrator:
             "node": "Reviewer",
             "model": model,
             "tokens": tokens,
+            "cached_tokens": cached_tokens,
             "cost_usd": cost,
             "is_approved": is_approved,
         })
@@ -278,6 +307,7 @@ class LangGraphOrchestrator:
             "iteration_count": state.get("iteration_count", 0) + 1,
             "telemetry": telemetry,
             "total_tokens": state.get("total_tokens", 0) + tokens,
+            "total_cached_tokens": state.get("total_cached_tokens", 0) + cached_tokens,
             "total_cost_usd": state.get("total_cost_usd", 0.0) + cost,
         }
 
@@ -348,5 +378,6 @@ class LangGraphOrchestrator:
             "telemetry": [],
             "total_cost_usd": 0.0,
             "total_tokens": 0,
+            "total_cached_tokens": 0,
         }
         return self.app.invoke(initial_state)

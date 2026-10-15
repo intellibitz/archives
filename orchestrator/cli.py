@@ -163,23 +163,29 @@ def run_langgraph_cli(task: str, dry_run: bool = False):
 
     # Telemetry Table
     telemetry = result.get("telemetry", [])
-    step_table = Table(title="📊 LangGraph Step-by-Step Telemetry", border_style="cyan")
+    step_table = Table(title="📊 LangGraph Step-by-Step Telemetry & Token Caching", border_style="cyan")
     step_table.add_column("Node", style="bold cyan")
     step_table.add_column("Model Assigned", style="white")
     step_table.add_column("Tokens", justify="right")
+    step_table.add_column("Cached Tokens", justify="right", style="cyan")
     step_table.add_column("Cost (USD)", justify="right", style="green")
 
     for step in telemetry:
         step_table.add_row(
             step.get("node", "Unknown"),
             step.get("model", "Unknown"),
-            str(step.get("tokens", 0)),
+            f"{step.get('tokens', 0):,}",
+            f"{step.get('cached_tokens', 0):,}",
             f"${step.get('cost_usd', 0.0):.5f}",
         )
 
     console.print(step_table)
+    total_tokens = result.get('total_tokens', 0)
+    total_cached = result.get('total_cached_tokens', 0)
+    hit_rate = (total_cached / total_tokens * 100) if total_tokens > 0 else 0.0
     console.print(
-        f"[bold]Total Tokens:[/bold] {result.get('total_tokens', 0):,} | "
+        f"[bold]Total Tokens:[/bold] {total_tokens:,} | "
+        f"[bold cyan]Cached:[/bold cyan] {total_cached:,} ({hit_rate:.1f}% cache hit rate) | "
         f"[bold green]Total Estimated Cost: ${result.get('total_cost_usd', 0.0):.5f} USD[/bold green]\n"
     )
 

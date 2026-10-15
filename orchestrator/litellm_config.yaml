@@ -146,6 +146,7 @@ router_settings:
   num_retries: 2
   allowed_fails: 1
   cooldown_time: 30
+  cache_responses: true
   fallbacks:
     - deepseek-coder: ["local-coder"]
     - deepseek-reasoner: ["antigravity-flash-latest", "local-coder"]
@@ -164,3 +165,8 @@ litellm_settings:
   drop_params: true
   set_verbose: false
   request_timeout: 60
+  cache: true
+  cache_params:
+    type: "disk"
+    disk_cache_dir: "/mnt/data/var/AI/cache/litellm"
+    default_in_memory_ttl: 86400
