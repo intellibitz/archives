@@ -86,8 +86,7 @@ else:
     LOG_FILE = "/tmp/keep_all_auto.log"
 
 CHECK_INTERVAL = 1.0
-CLICK_COOLDOWN_SECONDS = 10.0
-recent_clicks = {}
+active_clicked_buttons = set()
 
 
 def log(msg):
@@ -164,12 +163,6 @@ def is_user_actively_moving_mouse():
 
 def trigger_click(name, x, y, w, h):
     cx, cy = x + w // 2, y + h // 2
-    now = time.time()
-
-    # Cool-down check: Don't repeat click on same target location within 10s
-    loc_key = (cx // 20, cy // 20)
-    if loc_key in recent_clicks and (now - recent_clicks[loc_key]) < CLICK_COOLDOWN_SECONDS:
-        return False
 
     orig_mx, orig_my = get_mouse_xy()
     cursor_already_on_button = (
@@ -186,8 +179,6 @@ def trigger_click(name, x, y, w, h):
     log(f"Clicking '{name}' at ({cx}, {cy}) (cursor_already_on_button={cursor_already_on_button})...")
 
     try:
-        recent_clicks[loc_key] = now
-
         # Move to button and click
         set_mouse_xy(cx, cy)
         time.sleep(0.04)
@@ -275,7 +266,7 @@ def load_templates():
 
 
 if __name__ == "__main__":
-    log(f"Auto Keep All Clicker starting on {sys.platform} (DPI Aware + Cooldown Guard)...")
+    log(f"Auto Keep All Clicker starting on {sys.platform} (Once-Per-Presence State Machine)...")
     log(f"Assets Directory: {ASSETS_DIR}")
     log(f"Log File: {LOG_FILE}")
 
@@ -301,21 +292,35 @@ if __name__ == "__main__":
             if screen is not None:
                 screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
 
-                matched = False
+                current_frame_locations = set()
+
                 for name, tpl_list in loaded_templates.items():
                     thresh = THRESHOLDS.get(name, 0.80)
                     for template_gray in tpl_list:
                         max_val, max_loc, best_shape = find_best_template_match(screen_gray, template_gray)
 
                         if max_val >= thresh:
-                            log(f"Button '{name}' detected (Conf: {max_val:.2f} >= Threshold: {thresh})")
+                            cx = max_loc[0] + best_shape[1] // 2
+                            cy = max_loc[1] + best_shape[0] // 2
+                            loc_key = (cx // 30, cy // 30)
+                            current_frame_locations.add(loc_key)
+
+                            if loc_key in active_clicked_buttons:
+                                # Button has ALREADY been clicked once during this presence; DO NOT RE-CLICK!
+                                break
+
+                            log(f"NEW Button '{name}' detected at ({cx}, {cy}) (Conf: {max_val:.2f} >= {thresh})")
                             clicked = trigger_click(name, max_loc[0], max_loc[1], best_shape[1], best_shape[0])
                             if clicked:
-                                time.sleep(4)
-                            matched = True
+                                active_clicked_buttons.add(loc_key)
+                                time.sleep(2)
                             break
-                    if matched:
-                        break
+
+                # State Cleanup: Remove locations that are no longer present on screen
+                disappeared = active_clicked_buttons - current_frame_locations
+                for loc_key in disappeared:
+                    active_clicked_buttons.remove(loc_key)
+
             time.sleep(CHECK_INTERVAL)
         except Exception as e:
             log(f"Loop error: {e}")

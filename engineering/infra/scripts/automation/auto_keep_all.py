@@ -52,11 +52,23 @@ TEMPLATES = {
     "Allow": [os.path.join(ASSETS_DIR, "allow.png"), os.path.join(ASSETS_DIR, "allow2.png")],
     "Yes Don't Ask": [os.path.join(ASSETS_DIR, "yes-dontask.png")]
 }
-LOG_FILE = "/tmp/keep_all_auto.log"
 
-# Optimal confidence threshold (0.70) matching High-DPI and scaled UI themes
-CONFIDENCE_THRESHOLD = 0.70
+THRESHOLDS = {
+    "Keep All": 0.80,
+    "Proceed": 0.80,
+    "Accept All": 0.82,
+    "Accept All 2": 0.82,
+    "Accept Changes": 0.82,
+    "Always Run": 0.85,
+    "Allow Always": 0.85,
+    "Allow Once": 0.88,
+    "Allow": 0.88,
+    "Yes Don't Ask": 0.85,
+}
+
+LOG_FILE = "/tmp/keep_all_auto.log"
 CHECK_INTERVAL = 1.0
+active_clicked_buttons = set()
 
 def log(msg):
     t = time.strftime("%H:%M:%S")
@@ -120,7 +132,6 @@ def trigger_click(name, x, y, w, h):
         (x - 5) <= mx <= (x + w + 5) and (y - 5) <= my <= (y + h + 5)
     )
 
-    # Guard: Do NOT touch or grab cursor if user is actively moving the mouse elsewhere
     if not cursor_already_on_button and is_user_actively_moving_mouse():
         log(f"Notice: User is actively moving mouse elsewhere; skipping cursor movement for '{name}'.")
         return False
@@ -129,16 +140,10 @@ def trigger_click(name, x, y, w, h):
     env = get_env()
 
     try:
-        # Move cursor to button center if not already on it
         if not cursor_already_on_button:
-            subprocess.run([
-                "xdotool", 
-                "mousemove", str(cx), str(cy)
-            ], env=env, check=True)
-            # Allow compositor and window to register hover/focus state
+            subprocess.run(["xdotool", "mousemove", str(cx), str(cy)], env=env, check=True)
             time.sleep(0.08)
 
-        # Primary click: ydotool via kernel uinput device (reliable for native Wayland windows)
         ydotool_clicked = False
         try:
             res = subprocess.run(["ydotool", "click", "0xC0"], capture_output=True, timeout=2)
@@ -147,12 +152,15 @@ def trigger_click(name, x, y, w, h):
         except Exception:
             pass
 
-        # Fallback/auxiliary click: xdotool for X11 / Xwayland windows
         try:
             subprocess.run(["xdotool", "click", "1"], env=env, check=True)
         except Exception as xe:
             if not ydotool_clicked:
                 raise xe
+
+        # Zero-Jump Restore
+        if mx is not None and my is not None and not cursor_already_on_button:
+            subprocess.run(["xdotool", "mousemove", str(mx), str(my)], env=env, check=True)
 
         log(f"Automation for '{name}' successful.")
         return True
@@ -171,12 +179,12 @@ def get_screenshot():
         return None
 
 def find_best_template_match(screen_gray, template_gray):
-    """Multi-scale template matching with wide scales (0.70x to 1.35x)."""
+    """Multi-scale template matching across 0.80x to 1.25x."""
     best_val = -1.0
     best_loc = None
     best_shape = None
     
-    scales = [0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30, 1.35]
+    scales = [0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25]
     for scale in scales:
         if scale == 1.0:
             resized_tpl = template_gray
@@ -200,7 +208,7 @@ def find_best_template_match(screen_gray, template_gray):
     return best_val, best_loc, best_shape
 
 def load_templates():
-    """Loads all template variants per button, ensuring only valid templates with sufficient contrast are used."""
+    """Loads all template variants per button."""
     loaded = {}
     for name, paths in TEMPLATES.items():
         if isinstance(paths, str):
@@ -212,7 +220,6 @@ def load_templates():
                 tpl = cv2.imread(path)
                 if tpl is not None:
                     tpl_gray = cv2.cvtColor(tpl, cv2.COLOR_BGR2GRAY)
-                    # Safeguard: ensure template has sufficient contrast (std >= 10.0)
                     if tpl_gray.std() < 10.0:
                         continue
                     h = tpl_gray.tobytes()
@@ -228,12 +235,13 @@ def load_templates():
     return loaded
 
 if __name__ == "__main__":
-    log("Watcher starting (Multi-scale 0.70x-1.35x + Threshold 0.70)...")
+    log("Watcher starting (Once-Per-Presence State Machine)...")
     
     loaded_templates = load_templates()
 
     for name, tpl_list in loaded_templates.items():
-        log(f"Loaded template: {name} ({len(tpl_list)} variants)")
+        thresh = THRESHOLDS.get(name, 0.80)
+        log(f"Loaded template: {name} ({len(tpl_list)} variants, threshold={thresh})")
 
     if not loaded_templates:
         log("No templates found. Exiting.")
@@ -251,21 +259,35 @@ if __name__ == "__main__":
             if screen is not None:
                 screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
                 
-                matched = False
+                current_frame_locations = set()
+
                 for name, tpl_list in loaded_templates.items():
+                    thresh = THRESHOLDS.get(name, 0.80)
                     for template_gray in tpl_list:
                         max_val, max_loc, best_shape = find_best_template_match(screen_gray, template_gray)
                         
-                        if max_val >= CONFIDENCE_THRESHOLD:
-                            log(f"Button '{name}' detected (Conf: {max_val:.2f} >= Threshold: {CONFIDENCE_THRESHOLD})")
+                        if max_val >= thresh:
+                            cx = max_loc[0] + best_shape[1] // 2
+                            cy = max_loc[1] + best_shape[0] // 2
+                            loc_key = (cx // 30, cy // 30)
+                            current_frame_locations.add(loc_key)
+
+                            if loc_key in active_clicked_buttons:
+                                # Already clicked during this button presence; skip re-clicking!
+                                break
+
+                            log(f"NEW Button '{name}' detected at ({cx}, {cy}) (Conf: {max_val:.2f} >= {thresh})")
                             clicked = trigger_click(name, max_loc[0], max_loc[1], best_shape[1], best_shape[0])
                             if clicked:
-                                time.sleep(5)
-                            matched = True
+                                active_clicked_buttons.add(loc_key)
+                                time.sleep(2)
                             break
-                    if matched:
-                        break
+
+                disappeared = active_clicked_buttons - current_frame_locations
+                for loc_key in disappeared:
+                    active_clicked_buttons.remove(loc_key)
+
             time.sleep(CHECK_INTERVAL)
         except Exception as e:
             log(f"Loop error: {e}")
-            time.sleep(5)
+            time.sleep(3)
