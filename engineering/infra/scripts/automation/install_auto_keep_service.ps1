@@ -3,7 +3,7 @@
 
 $TaskName = "AutoKeepAllService"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$PythonScript = Join-Path $ScriptDir "auto_keep_all_win.py"
+$RunnerScript = Join-Path $ScriptDir "run_auto_keep.ps1"
 
 Write-Host "Registering Windows Background Service task '$TaskName'..." -ForegroundColor Cyan
 
@@ -14,8 +14,8 @@ if ($ExistingTask) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
 }
 
-# Define Task Action
-$Action = New-ScheduledTaskAction -Execute "python.exe" -Argument "`"$PythonScript`""
+# Define Task Action via PowerShell runner script
+$Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$RunnerScript`""
 
 # Define Task Trigger (At User Logon / System Startup)
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
