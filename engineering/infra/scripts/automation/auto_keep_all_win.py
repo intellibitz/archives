@@ -7,6 +7,16 @@ import numpy as np
 import cv2
 from PIL import ImageGrab
 
+# Enforce Per-Monitor High DPI Awareness on Windows
+if sys.platform == "win32":
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
 # --- Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 ASSETS_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../assets"))
@@ -56,7 +66,6 @@ TEMPLATES = {
     "Yes Don't Ask": [os.path.join(ASSETS_DIR, "yes-dontask.png")],
 }
 
-# Adaptive thresholds per button to eliminate false positives
 THRESHOLDS = {
     "Keep All": 0.80,
     "Proceed": 0.80,
@@ -77,6 +86,8 @@ else:
     LOG_FILE = "/tmp/keep_all_auto.log"
 
 CHECK_INTERVAL = 1.0
+CLICK_COOLDOWN_SECONDS = 10.0
+recent_clicks = {}
 
 
 def log(msg):
@@ -93,7 +104,6 @@ def log(msg):
         pass
 
 
-# --- Win32 API Helpers ---
 def get_mouse_xy():
     """Returns (x, y) tuple of current mouse cursor position."""
     if sys.platform == "win32":
@@ -133,7 +143,6 @@ def set_mouse_xy(x, y):
 def click_mouse():
     """Trigger left mouse click."""
     if sys.platform == "win32":
-        # MOUSEEVENTF_LEFTDOWN = 0x0002, MOUSEEVENTF_LEFTUP = 0x0004
         ctypes.windll.user32.mouse_event(0x0002, 0, 0, 0, 0)
         time.sleep(0.03)
         ctypes.windll.user32.mouse_event(0x0004, 0, 0, 0, 0)
@@ -155,8 +164,13 @@ def is_user_actively_moving_mouse():
 
 def trigger_click(name, x, y, w, h):
     cx, cy = x + w // 2, y + h // 2
+    now = time.time()
 
-    # Save original user cursor position
+    # Cool-down check: Don't repeat click on same target location within 10s
+    loc_key = (cx // 20, cy // 20)
+    if loc_key in recent_clicks and (now - recent_clicks[loc_key]) < CLICK_COOLDOWN_SECONDS:
+        return False
+
     orig_mx, orig_my = get_mouse_xy()
     cursor_already_on_button = (
         orig_mx is not None
@@ -172,11 +186,13 @@ def trigger_click(name, x, y, w, h):
     log(f"Clicking '{name}' at ({cx}, {cy}) (cursor_already_on_button={cursor_already_on_button})...")
 
     try:
+        recent_clicks[loc_key] = now
+
         # Move to button and click
         set_mouse_xy(cx, cy)
-        time.sleep(0.05)
+        time.sleep(0.04)
         click_mouse()
-        time.sleep(0.05)
+        time.sleep(0.04)
 
         # Zero-Jump Restore: Return cursor back to user's working location
         if orig_mx is not None and orig_my is not None and not cursor_already_on_button:
@@ -259,7 +275,7 @@ def load_templates():
 
 
 if __name__ == "__main__":
-    log(f"Auto Keep All Clicker starting on {sys.platform} (Adaptive Thresholds + Zero-Jump Cursor)...")
+    log(f"Auto Keep All Clicker starting on {sys.platform} (DPI Aware + Cooldown Guard)...")
     log(f"Assets Directory: {ASSETS_DIR}")
     log(f"Log File: {LOG_FILE}")
 
