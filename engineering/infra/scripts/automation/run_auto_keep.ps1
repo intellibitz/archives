@@ -3,12 +3,19 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $PythonScript = Join-Path $ScriptDir "auto_keep_all_win.py"
 $LogFile = Join-Path $env:TEMP "keep_all_auto.log"
 
+# Locate Python 3.12 or fallback to PATH
+$PythonExe = "C:\Users\user\AppData\Local\Programs\Python\Python312\python.exe"
+if (-not (Test-Path $PythonExe)) {
+    $PythonExe = "python.exe"
+}
+
 Write-Host "Starting Auto Keep All dialog clicker service on Windows..." -ForegroundColor Green
+Write-Host "Python Executable: $PythonExe"
 Write-Host "Script: $PythonScript"
 Write-Host "Log File: $LogFile"
 
 $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
-$ProcessInfo.FileName = "python.exe"
+$ProcessInfo.FileName = $PythonExe
 $ProcessInfo.Arguments = "`"$PythonScript`""
 $ProcessInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
 $ProcessInfo.CreateNoWindow = $true

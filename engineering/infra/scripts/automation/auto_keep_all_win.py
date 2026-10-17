@@ -75,7 +75,10 @@ def log(msg):
             f.write(line)
     except Exception:
         pass
-    print(line.strip(), flush=True)
+    try:
+        print(line.strip(), flush=True)
+    except Exception:
+        pass
 
 
 # --- Win32 API Helpers ---
