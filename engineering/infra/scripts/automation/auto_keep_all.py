@@ -54,9 +54,9 @@ TEMPLATES = {
 }
 LOG_FILE = "/tmp/keep_all_auto.log"
 
-# Strict confidence threshold (0.88) eliminating false positives while reliably capturing unhighlighted/hovered buttons
-CONFIDENCE_THRESHOLD = 0.88
-CHECK_INTERVAL = 2.0 
+# Optimal confidence threshold (0.70) matching High-DPI and scaled UI themes
+CONFIDENCE_THRESHOLD = 0.70
+CHECK_INTERVAL = 1.0
 
 def log(msg):
     t = time.strftime("%H:%M:%S")
@@ -66,7 +66,10 @@ def log(msg):
             f.write(line)
     except:
         pass
-    print(line.strip(), flush=True)
+    try:
+        print(line.strip(), flush=True)
+    except:
+        pass
 
 def get_env():
     """Builds execution environment with valid DISPLAY and XAUTHORITY credentials."""
@@ -168,12 +171,12 @@ def get_screenshot():
         return None
 
 def find_best_template_match(screen_gray, template_gray):
-    """Multi-scale template matching with tight scales (1.0x, 0.95x, 1.05x)."""
+    """Multi-scale template matching with wide scales (0.70x to 1.35x)."""
     best_val = -1.0
     best_loc = None
     best_shape = None
     
-    scales = [1.0, 0.95, 1.05]
+    scales = [0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30, 1.35]
     for scale in scales:
         if scale == 1.0:
             resized_tpl = template_gray
@@ -225,7 +228,7 @@ def load_templates():
     return loaded
 
 if __name__ == "__main__":
-    log("Watcher starting (Zero-Jump Strict Matching + Wayland Spectacle Capture + Grey/Hover Adaptive)...")
+    log("Watcher starting (Multi-scale 0.70x-1.35x + Threshold 0.70)...")
     
     loaded_templates = load_templates()
 
