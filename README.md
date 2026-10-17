@@ -74,7 +74,9 @@ archives/
 
 All primary AI model provider hubs, benchmark harnesses, agent launchers, and cost optimizations live at top level:
 
-* 🔌 **[Model Context Protocol (MCP) Hub](./mcp/README.md)** — Native stdio MCP servers (Filesystem, Git, SQLite), executable client runner, and IDE configs for Claude Desktop & Cursor.
+* 🔌 **[Model Context Protocol (MCP) Hub](./mcp/README.md)** — Native stdio MCP servers (Filesystem, Git, SQLite), executable client runner, and IDE configs for Trae, Claude Desktop & Cursor.
+* 🤖 **[Autonomous Agent Architecture & $100 Budget Guide](./AUTONOMOUS_AGENT_BUDGET_GUIDE.md)** — Mathematical proof and blueprint for building autonomous agents with Local, DeepSeek, Gemini & MCP on a $100 PAYG budget vs. seat subscriptions.
+* 💻 **[Trae AI IDE Complete Guide](./TRAE_AI_IDE_GUIDE.md)** — Native AI code editor for Windows with out-of-the-box DeepSeek-R1, DeepSeek-V3, SOLO Builder agent mode, and MCP integration.
 * 🤖 **[Master Autonomous Agents & Frameworks Guide](./AUTONOMOUS_AGENTS.md)** — Comparative matrix and deployment guide for Browser Use, OpenHands, CrewAI, AutoGen, Claude Code, Smolagents & Pydantic AI.
 * 🤖 **[Uncapped Agent Architecture](./UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
 * 🦙 **[Local Llama 3.3 70B Architectural Review](./LOCAL_LLAMA70B_REVIEW.md)** — Project review generated 100% offline by the local Llama 3.3 70B model.
@@ -84,7 +86,7 @@ All primary AI model provider hubs, benchmark harnesses, agent launchers, and co
 * 💰 **[Prompt Caching Economics & 12-Provider Pricing](./PROMPT_CACHING_LLM_PRICING_2026.md)** — DeepSeek, ZAI, Groq, Fireworks AI, Qwen, Moonshot, Xiaomi & 100M token prompt cache analysis.
 * 📊 **[Master Cost Ranking](./COST_RANKING.md)** — Comprehensive cost ranking across all 10 tracked AI providers.
 * 🏆 **[Global AI Leaderboard](./TOP_100_LEADERBOARD.md)** — Top 100 frontier AI models ranked by capability, reasoning, and coding benchmarks.
-* 🛠️ **[IDEs & Desktop AI Tools](./IDE_PLUGINS_DESKTOP.md)** — Complete setup guide for Cursor, Claude Desktop, Codex Desktop, DeepSeek Harness (`dsh`), OpenHands, and Roo Code.
+* 🛠️ **[IDEs & Desktop AI Tools](./IDE_PLUGINS_DESKTOP.md)** — Complete setup guide for Trae, Cursor, Claude Desktop, Codex Desktop, DeepSeek Harness (`dsh`), OpenHands, and Roo Code.
 * 💻 **[Local Execution Guide](./LOCAL_EXECUTION.md)** — Guide to running open-weights models (DeepSeek-R1, Qwen 2.5 Coder) locally using Ollama and vLLM.
 * 🔑 **[BYOK & API Key Management](./BYOK_API_KEYS.md)** — Security best practices for configuring direct API keys.
 * 🌟 **[Top 100 GitHub AI Projects](./TOP_100_GITHUB_PROJECTS.md)** — Curated directory of top open-source AI repositories.

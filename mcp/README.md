@@ -42,7 +42,8 @@ mcp/
 │   └── sqlite_server.py        # SQLite Database MCP Server
 └── config/
     ├── claude_desktop_config.json  # Claude Desktop App MCP Config
-    └── cursor_mcp.json            # Cursor IDE MCP Config
+    ├── cursor_mcp.json            # Cursor IDE MCP Config
+    └── trae_mcp.json              # Trae AI IDE (DeepSeek / ByteDance) MCP Config
 ```
 
 ---

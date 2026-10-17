@@ -11,10 +11,13 @@ This guide covers the top development environments, IDE extensions, and desktop 
    - *Key Features:* Deep codebase indexing (embeddings), **Composer** (multi-file agentic code generation), natural language terminal commands, and seamless agent editing.
 2. **[Visual Studio Code](https://code.visualstudio.com)**
    - *Overview:* The world's most popular code editor ([GitHub](https://github.com/microsoft/vscode)), infinitely extensible via rich AI plugins and MCP client extensions.
-3. **[JetBrains AI Assistant / IDEs (IntelliJ, Android Studio, WebStorm)](https://www.jetbrains.com/ai)**
+3. **[Trae IDE (Native DeepSeek & MCP)](https://trae.ai)** — *See [Complete Trae Guide](./TRAE_AI_IDE_GUIDE.md)*
+   - *Overview:* An adaptive AI-native IDE built on VS Code architecture with native, out-of-the-box support for **DeepSeek-R1**, **DeepSeek-V3**, and **Claude 3.5 Sonnet**.
+   - *Key Features:* **SOLO / Builder Mode** for autonomous multi-file development, built-in **Model Context Protocol (MCP)** integration, and native 64-bit Windows installation via `winget install --id ByteDance.Trae -e`.
+4. **[JetBrains AI Assistant / IDEs (IntelliJ, Android Studio, WebStorm)](https://www.jetbrains.com/ai)**
    - *Overview:* Native AI integration built directly into JetBrains enterprise IDEs for multi-language refactoring, test generation, and intelligent completion.
-4. **[Windsurf](https://codeium.com/windsurf) & Trae**
-   - *Overview:* Emerging AI-native IDEs featuring autonomous agent flows and real-time collaborative coding agents.
+5. **[Windsurf](https://codeium.com/windsurf)**
+   - *Overview:* AI-native IDE by Codeium featuring Cascade flows and real-time collaborative coding agents.
 
 ---
 

@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "archives-filesystem": {
+      "command": "python",
+      "args": [
+        "E:/src/github.com/intellibitz/archives/mcp/servers/filesystem_server.py"
+      ]
+    },
+    "archives-git": {
+      "command": "python",
+      "args": [
+        "E:/src/github.com/intellibitz/archives/mcp/servers/git_server.py"
+      ]
+    },
+    "archives-sqlite": {
+      "command": "python",
+      "args": [
+        "E:/src/github.com/intellibitz/archives/mcp/servers/sqlite_server.py"
+      ]
+    }
+  }
+}

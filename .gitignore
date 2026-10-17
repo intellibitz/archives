@@ -17,6 +17,7 @@ $RECYCLE.BIN/
 # --- IDEs & Editors ---
 # IntelliJ IDEA / Android Studio
 .idea/
+.junie/
 *.iml
 *.iws
 *.ipr
