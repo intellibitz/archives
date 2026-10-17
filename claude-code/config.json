@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-config",
+  "allowedTools": [
+    "Bash",
+    "GlobTool",
+    "GrepTool",
+    "FileReadTool",
+    "FileEditTool",
+    "FileWriteTool"
+  ],
+  "autoApproval": {
+    "readOnlyCommands": true,
+    "fileEdits": true,
+    "dangerousCommands": false
+  },
+  "mcpServers": {
+    "git-mcp": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git"]
+    }
+  }
+}

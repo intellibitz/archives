@@ -38,7 +38,13 @@ The repository is structured around **AI as the primary top-level directory**, w
 
 ```text
 archives/
-├── ai/            # 🧠 PRIMARY AI KNOWLEDGE BASE & GUIDES (Agent Architecture, Benchmarks, Local Execution)
+├── browser-use/   # 🌐 Browser Use autonomous web agent framework & Playwright runner
+├── openhands/     # 👐 OpenHands autonomous software engineering agent platform
+├── crewai/        # 👥 CrewAI role-playing multi-agent orchestration framework
+├── autogen/       # 🤖 Microsoft AutoGen v0.4+ asynchronous multi-agent team runtime
+├── claude-code/   # 💻 Claude Code CLI terminal autonomous agent & MCP integrations
+├── smolagents/    # ⚡ Smolagents Hugging Face code-first agent framework
+├── pydantic-ai/   # 🛡️ Pydantic AI type-safe production agent framework
 ├── router-ledger/ # 📊 Router Ledger AI model pricing telemetry & fallback architecture
 ├── deepseek/      # DeepSeek-V3/R1 evaluation harnesses, API setup & real-world cost telemetry
 ├── openrouter/    # OpenRouter unified model router & multi-provider fallback
@@ -67,8 +73,9 @@ archives/
 
 All primary AI model provider hubs, benchmark harnesses, agent launchers, and cost optimizations live at top level:
 
-* 🦙 **[Local Llama 3.3 70B Architectural Review](./LOCAL_LLAMA70B_REVIEW.md)** — Project review generated 100% offline by the local Llama 3.3 70B model.
+* 🤖 **[Master Autonomous Agents & Frameworks Guide](./AUTONOMOUS_AGENTS.md)** — Comparative matrix and deployment guide for Browser Use, OpenHands, CrewAI, AutoGen, Claude Code, Smolagents & Pydantic AI.
 * 🤖 **[Uncapped Agent Architecture](./UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
+* 🦙 **[Local Llama 3.3 70B Architectural Review](./LOCAL_LLAMA70B_REVIEW.md)** — Project review generated 100% offline by the local Llama 3.3 70B model.
 * 🟢 **[NVIDIA 128GB Hardware Guide](./NVIDIA_128GB_HARDWARE_GUIDE.md)** — Hardware guide & benchmark specs for running 70B+ models locally on NVIDIA Jetson AGX Orin 128GB & GH200 workstations.
 * ⚡ **[CachyOS Local AI Setup](./CACHYOS_LOCAL_AI_SETUP.md)** — Hardware setup, systemd optimizations, and vLLM / llama.cpp benchmarks.
 * 📈 **[DeepSeek Real-World Cost Telemetry](./deepseek/real_world_cost_study.md)** — Empirical case study analyzing 626M tokens processed for **$3.25 USD** with a 99.49% prompt cache hit ratio.

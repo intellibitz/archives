@@ -1,0 +1,28 @@
+# OpenHands Autonomous Agent Configuration
+# Optimized for IntelliBitz Archives Platform
+
+[core]
+workspace_base = "./workspace"
+default_agent = "CodeActAgent"
+max_iterations = 50
+cache_dir = "~/.openhands/cache"
+
+[llm]
+# Primary Workhorse: DeepSeek-V3 via Direct API
+model = "deepseek/deepseek-chat"
+api_key = "${DEEPSEEK_API_KEY}"
+base_url = "https://api.deepseek.com/v1"
+temperature = 0.0
+max_output_tokens = 8192
+native_tool_calling = true
+
+[llm.reasoning]
+# High-Complexity Reasoning Engine: DeepSeek-R1
+model = "deepseek/deepseek-reasoner"
+api_key = "${DEEPSEEK_API_KEY}"
+base_url = "https://api.deepseek.com/v1"
+
+[agent]
+enable_sub_agents = true
+enable_browsing = true
+save_trajectory_path = "./workspace/trajectories"
