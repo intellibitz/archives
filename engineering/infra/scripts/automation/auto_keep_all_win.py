@@ -67,26 +67,30 @@ TEMPLATES = {
 }
 
 THRESHOLDS = {
-    "Keep All": 0.80,
-    "Proceed": 0.80,
-    "Accept All": 0.82,
-    "Accept All 2": 0.82,
-    "Accept Changes": 0.82,
-    "Always Run": 0.85,
-    "Allow Always": 0.85,
-    "Allow Once": 0.88,
-    "Allow": 0.88,
-    "Yes Don't Ask": 0.85,
+    "Keep All": 0.75,
+    "Proceed": 0.75,
+    "Accept All": 0.75,
+    "Accept All 2": 0.75,
+    "Accept Changes": 0.75,
+    "Always Run": 0.80,
+    "Allow Always": 0.80,
+    "Allow Once": 0.82,
+    "Allow": 0.82,
+    "Yes Don't Ask": 0.80,
 }
 
 if sys.platform == "win32":
     TEMP_DIR = os.environ.get("TEMP", os.path.expanduser("~"))
     LOG_FILE = os.path.join(TEMP_DIR, "keep_all_auto.log")
+    PID_FILE = os.path.join(TEMP_DIR, "keep_all_auto.pid")
 else:
     LOG_FILE = "/tmp/keep_all_auto.log"
+    PID_FILE = "/tmp/keep_all_auto.pid"
 
 CHECK_INTERVAL = 1.0
-active_clicked_buttons = set()
+RETRY_COOLDOWN_SECONDS = 5.0
+MAX_RETRIES = 5
+active_clicked_buttons = {}  # loc_key -> (last_clicked_time, retry_count)
 
 
 def log(msg):
@@ -140,11 +144,12 @@ def set_mouse_xy(x, y):
 
 
 def click_mouse():
-    """Trigger left mouse click."""
+    """Trigger left mouse click with solid hold duration for Windows/Electron UI."""
     if sys.platform == "win32":
         ctypes.windll.user32.mouse_event(0x0002, 0, 0, 0, 0)
-        time.sleep(0.03)
+        time.sleep(0.06)
         ctypes.windll.user32.mouse_event(0x0004, 0, 0, 0, 0)
+        time.sleep(0.05)
     else:
         import subprocess
         subprocess.run(["xdotool", "click", "1"], check=True)
@@ -179,11 +184,12 @@ def trigger_click(name, x, y, w, h):
     log(f"Clicking '{name}' at ({cx}, {cy}) (cursor_already_on_button={cursor_already_on_button})...")
 
     try:
-        # Move to button and click
+        # Move to button and allow hover state to settle
         set_mouse_xy(cx, cy)
-        time.sleep(0.04)
+        time.sleep(0.08)
         click_mouse()
-        time.sleep(0.04)
+        # Dwell time to ensure Electron / Chromium dispatches DOM click event
+        time.sleep(0.15)
 
         # Zero-Jump Restore: Return cursor back to user's working location
         if orig_mx is not None and orig_my is not None and not cursor_already_on_button:
@@ -196,9 +202,21 @@ def trigger_click(name, x, y, w, h):
         return False
 
 
+def attach_input_desktop():
+    """Attaches background thread to the active user interactive desktop."""
+    if sys.platform == "win32":
+        try:
+            hdesk = ctypes.windll.user32.OpenInputDesktop(0, False, 0x01FF)
+            if hdesk:
+                ctypes.windll.user32.SetThreadDesktop(hdesk)
+        except Exception:
+            pass
+
+
 def get_screenshot():
     """Captures desktop screen into OpenCV image array."""
     try:
+        attach_input_desktop()
         pil_img = ImageGrab.grab()
         img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
         return img
@@ -208,12 +226,12 @@ def get_screenshot():
 
 
 def find_best_template_match(screen_gray, template_gray):
-    """Multi-scale template matching across 0.80x to 1.25x."""
+    """Multi-scale template matching across 0.75x to 1.50x for High-DPI displays."""
     best_val = -1.0
     best_loc = None
     best_shape = None
 
-    scales = [0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25]
+    scales = [0.75, 0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30, 1.40, 1.50]
     for scale in scales:
         if scale == 1.0:
             resized_tpl = template_gray
@@ -266,14 +284,22 @@ def load_templates():
 
 
 if __name__ == "__main__":
-    log(f"Auto Keep All Clicker starting on {sys.platform} (Once-Per-Presence State Machine)...")
+    log(f"Auto Keep All Clicker starting on {sys.platform} (Adaptive Thresholds + Retry Cooldown)...")
     log(f"Assets Directory: {ASSETS_DIR}")
     log(f"Log File: {LOG_FILE}")
+    log(f"PID File: {PID_FILE}")
+
+    # Write current process ID to PID file
+    try:
+        with open(PID_FILE, "w", encoding="utf-8") as pf:
+            pf.write(str(os.getpid()))
+    except Exception as e:
+        log(f"Notice: Could not write PID file: {e}")
 
     loaded_templates = load_templates()
 
     for name, tpl_list in loaded_templates.items():
-        thresh = THRESHOLDS.get(name, 0.80)
+        thresh = THRESHOLDS.get(name, 0.75)
         log(f"Loaded template: {name} ({len(tpl_list)} variants, threshold={thresh})")
 
     if not loaded_templates:
@@ -293,9 +319,11 @@ if __name__ == "__main__":
                 screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
 
                 current_frame_locations = set()
+                now = time.time()
 
                 for name, tpl_list in loaded_templates.items():
-                    thresh = THRESHOLDS.get(name, 0.80)
+                    thresh = THRESHOLDS.get(name, 0.75)
+                    button_handled = False
                     for template_gray in tpl_list:
                         max_val, max_loc, best_shape = find_best_template_match(screen_gray, template_gray)
 
@@ -306,20 +334,32 @@ if __name__ == "__main__":
                             current_frame_locations.add(loc_key)
 
                             if loc_key in active_clicked_buttons:
-                                # Button has ALREADY been clicked once during this presence; DO NOT RE-CLICK!
-                                break
+                                last_time, count = active_clicked_buttons[loc_key]
+                                if (now - last_time) < RETRY_COOLDOWN_SECONDS:
+                                    # Recently clicked; give the UI time to dismiss before retrying
+                                    button_handled = True
+                                    break
+                                if count >= MAX_RETRIES:
+                                    # Exceeded maximum retry attempts for this presence
+                                    button_handled = True
+                                    break
+                                log(f"Button '{name}' still present at ({cx}, {cy}) after {now - last_time:.1f}s (retry #{count + 1})...")
 
                             log(f"NEW Button '{name}' detected at ({cx}, {cy}) (Conf: {max_val:.2f} >= {thresh})")
                             clicked = trigger_click(name, max_loc[0], max_loc[1], best_shape[1], best_shape[0])
                             if clicked:
-                                active_clicked_buttons.add(loc_key)
-                                time.sleep(2)
+                                prev_count = active_clicked_buttons.get(loc_key, (0, 0))[1]
+                                active_clicked_buttons[loc_key] = (now, prev_count + 1)
+                                time.sleep(1.0)
+                            button_handled = True
                             break
+                    if button_handled:
+                        break
 
                 # State Cleanup: Remove locations that are no longer present on screen
-                disappeared = active_clicked_buttons - current_frame_locations
+                disappeared = set(active_clicked_buttons.keys()) - current_frame_locations
                 for loc_key in disappeared:
-                    active_clicked_buttons.remove(loc_key)
+                    del active_clicked_buttons[loc_key]
 
             time.sleep(CHECK_INTERVAL)
         except Exception as e:
