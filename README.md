@@ -38,6 +38,7 @@ The repository is structured around **AI as the primary top-level directory**, w
 
 ```text
 archives/
+├── mcp/           # 🔌 Model Context Protocol (MCP) servers (Filesystem, Git, SQLite), client runner & configs
 ├── browser-use/   # 🌐 Browser Use autonomous web agent framework & Playwright runner
 ├── openhands/     # 👐 OpenHands autonomous software engineering agent platform
 ├── crewai/        # 👥 CrewAI role-playing multi-agent orchestration framework
@@ -73,6 +74,7 @@ archives/
 
 All primary AI model provider hubs, benchmark harnesses, agent launchers, and cost optimizations live at top level:
 
+* 🔌 **[Model Context Protocol (MCP) Hub](./mcp/README.md)** — Native stdio MCP servers (Filesystem, Git, SQLite), executable client runner, and IDE configs for Claude Desktop & Cursor.
 * 🤖 **[Master Autonomous Agents & Frameworks Guide](./AUTONOMOUS_AGENTS.md)** — Comparative matrix and deployment guide for Browser Use, OpenHands, CrewAI, AutoGen, Claude Code, Smolagents & Pydantic AI.
 * 🤖 **[Uncapped Agent Architecture](./UNCAPPED_AGENT_ARCHITECTURE.md)** — Guide on building 24/7 high-throughput autonomous agent pipelines without weekly token caps or seat lockouts.
 * 🦙 **[Local Llama 3.3 70B Architectural Review](./LOCAL_LLAMA70B_REVIEW.md)** — Project review generated 100% offline by the local Llama 3.3 70B model.

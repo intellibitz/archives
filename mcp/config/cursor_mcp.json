@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "filesystem-mcp": {
+      "command": "python mcp/servers/filesystem_server.py"
+    },
+    "git-mcp": {
+      "command": "python mcp/servers/git_server.py"
+    },
+    "sqlite-mcp": {
+      "command": "python mcp/servers/sqlite_server.py"
+    }
+  }
+}
