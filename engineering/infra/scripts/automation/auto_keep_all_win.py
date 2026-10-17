@@ -56,15 +56,26 @@ TEMPLATES = {
     "Yes Don't Ask": [os.path.join(ASSETS_DIR, "yes-dontask.png")],
 }
 
-# Determine log file path based on OS
+# Adaptive thresholds per button to eliminate false positives
+THRESHOLDS = {
+    "Keep All": 0.80,
+    "Proceed": 0.80,
+    "Accept All": 0.82,
+    "Accept All 2": 0.82,
+    "Accept Changes": 0.82,
+    "Always Run": 0.85,
+    "Allow Always": 0.85,
+    "Allow Once": 0.88,
+    "Allow": 0.88,
+    "Yes Don't Ask": 0.85,
+}
+
 if sys.platform == "win32":
     TEMP_DIR = os.environ.get("TEMP", os.path.expanduser("~"))
     LOG_FILE = os.path.join(TEMP_DIR, "keep_all_auto.log")
 else:
     LOG_FILE = "/tmp/keep_all_auto.log"
 
-# Optimal confidence threshold (0.70) matching High-DPI and scaled UI themes
-CONFIDENCE_THRESHOLD = 0.70
 CHECK_INTERVAL = 1.0
 
 
@@ -96,7 +107,6 @@ def get_mouse_xy():
         except Exception:
             return None, None
     else:
-        # Fallback for Linux
         import subprocess
         try:
             res = subprocess.run(["xdotool", "getmouselocation", "--shell"], capture_output=True, text=True)
@@ -146,13 +156,13 @@ def is_user_actively_moving_mouse():
 def trigger_click(name, x, y, w, h):
     cx, cy = x + w // 2, y + h // 2
 
-    # Check if mouse is already on the button
-    mx, my = get_mouse_xy()
+    # Save original user cursor position
+    orig_mx, orig_my = get_mouse_xy()
     cursor_already_on_button = (
-        mx is not None
-        and my is not None
-        and (x - 5) <= mx <= (x + w + 5)
-        and (y - 5) <= my <= (y + h + 5)
+        orig_mx is not None
+        and orig_my is not None
+        and (x - 5) <= orig_mx <= (x + w + 5)
+        and (y - 5) <= orig_my <= (y + h + 5)
     )
 
     if not cursor_already_on_button and is_user_actively_moving_mouse():
@@ -162,12 +172,17 @@ def trigger_click(name, x, y, w, h):
     log(f"Clicking '{name}' at ({cx}, {cy}) (cursor_already_on_button={cursor_already_on_button})...")
 
     try:
-        if not cursor_already_on_button:
-            set_mouse_xy(cx, cy)
-            time.sleep(0.08)
-
+        # Move to button and click
+        set_mouse_xy(cx, cy)
+        time.sleep(0.05)
         click_mouse()
-        log(f"Automation for '{name}' successful.")
+        time.sleep(0.05)
+
+        # Zero-Jump Restore: Return cursor back to user's working location
+        if orig_mx is not None and orig_my is not None and not cursor_already_on_button:
+            set_mouse_xy(orig_mx, orig_my)
+
+        log(f"Automation for '{name}' successful (Cursor restored to {orig_mx}, {orig_my}).")
         return True
     except Exception as e:
         log(f"Input error for '{name}': {e}")
@@ -186,12 +201,12 @@ def get_screenshot():
 
 
 def find_best_template_match(screen_gray, template_gray):
-    """Multi-scale template matching with wide scales (0.70x to 1.35x)."""
+    """Multi-scale template matching across 0.80x to 1.25x."""
     best_val = -1.0
     best_loc = None
     best_shape = None
 
-    scales = [0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30, 1.35]
+    scales = [0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25]
     for scale in scales:
         if scale == 1.0:
             resized_tpl = template_gray
@@ -244,14 +259,15 @@ def load_templates():
 
 
 if __name__ == "__main__":
-    log(f"Auto Keep All Clicker starting on {sys.platform}...")
+    log(f"Auto Keep All Clicker starting on {sys.platform} (Adaptive Thresholds + Zero-Jump Cursor)...")
     log(f"Assets Directory: {ASSETS_DIR}")
     log(f"Log File: {LOG_FILE}")
 
     loaded_templates = load_templates()
 
     for name, tpl_list in loaded_templates.items():
-        log(f"Loaded template: {name} ({len(tpl_list)} variants)")
+        thresh = THRESHOLDS.get(name, 0.80)
+        log(f"Loaded template: {name} ({len(tpl_list)} variants, threshold={thresh})")
 
     if not loaded_templates:
         log("No templates found in assets directory. Exiting.")
@@ -271,14 +287,15 @@ if __name__ == "__main__":
 
                 matched = False
                 for name, tpl_list in loaded_templates.items():
+                    thresh = THRESHOLDS.get(name, 0.80)
                     for template_gray in tpl_list:
                         max_val, max_loc, best_shape = find_best_template_match(screen_gray, template_gray)
 
-                        if max_val >= CONFIDENCE_THRESHOLD:
-                            log(f"Button '{name}' detected (Conf: {max_val:.2f} >= Threshold: {CONFIDENCE_THRESHOLD})")
+                        if max_val >= thresh:
+                            log(f"Button '{name}' detected (Conf: {max_val:.2f} >= Threshold: {thresh})")
                             clicked = trigger_click(name, max_loc[0], max_loc[1], best_shape[1], best_shape[0])
                             if clicked:
-                                time.sleep(5)
+                                time.sleep(4)
                             matched = True
                             break
                     if matched:
@@ -286,4 +303,4 @@ if __name__ == "__main__":
             time.sleep(CHECK_INTERVAL)
         except Exception as e:
             log(f"Loop error: {e}")
-            time.sleep(5)
+            time.sleep(3)
