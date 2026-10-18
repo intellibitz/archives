@@ -228,7 +228,7 @@ def dispatch_click(cx, cy, name=""):
     inp_down.type = INPUT_MOUSE
     inp_down.mi = MOUSEINPUT(
         norm_x, norm_y, 0,
-        MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTDOWN, 0, 0
+        MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTDOWN, 0, 0
     )
     user32.SendInput(1, ctypes.byref(inp_down), ctypes.sizeof(INPUT))
 
@@ -240,7 +240,7 @@ def dispatch_click(cx, cy, name=""):
     inp_up.type = INPUT_MOUSE
     inp_up.mi = MOUSEINPUT(
         norm_x, norm_y, 0,
-        MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTUP, 0, 0
+        MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTUP, 0, 0
     )
     user32.SendInput(1, ctypes.byref(inp_up), ctypes.sizeof(INPUT))
 
@@ -383,7 +383,8 @@ def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
     if tpl_sat > 40:
         cand_hsv = cv2.cvtColor(cand_bgr, cv2.COLOR_BGR2HSV)
         cand_sat = float(cand_hsv[:, :, 1].mean())
-        if cand_sat < 25:
+        min_required_sat = max(35.0, tpl_sat * 0.30)
+        if cand_sat < min_required_sat:
             return False
 
     return True
