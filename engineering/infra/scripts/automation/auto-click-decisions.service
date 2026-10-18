@@ -1,5 +1,5 @@
 [Unit]
-Description=Auto Keep All Dialog Button Clicker Service
+Description=Approval Button Auto-Clicker
 PartOf=graphical-session.target
 After=graphical-session.target
 
@@ -7,7 +7,7 @@ After=graphical-session.target
 Type=simple
 PassEnvironment=DISPLAY WAYLAND_DISPLAY XAUTHORITY XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS
 WorkingDirectory=/mnt/linuxshare/src/github.com/intellibitz/archives/engineering/infra/scripts/automation
-ExecStart=/usr/bin/python3 -u /mnt/linuxshare/src/github.com/intellibitz/archives/engineering/infra/scripts/automation/auto_keep_all.py
+ExecStart=/usr/bin/python3 -u /mnt/linuxshare/src/github.com/intellibitz/archives/engineering/infra/scripts/automation/auto_click_decisions.py
 Restart=always
 RestartSec=5
 

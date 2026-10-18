@@ -38,26 +38,26 @@ TEMPLATE_PATTERNS = {
     "Yes Don't Ask": ["yes-dontask*.png"],
 }
 
-# Matching threshold: 0.88 matches true interactive buttons while rejecting
+# Matching threshold: 0.78 matches true interactive buttons while rejecting
 # false-positive editor text, tabs, and explorer tree highlights.
 THRESHOLDS = {
-    "Accept All": 0.88,
-    "Accept All 2": 0.88,
-    "Accept Changes": 0.88,
-    "Accept": 0.88,
-    "Keep All": 0.88,
-    "Proceed": 0.88,
-    "Allow Always": 0.88,
-    "Always Run": 0.88,
-    "Allow Once": 0.88,
-    "Allow": 0.88,
-    "Yes Don't Ask": 0.88,
+    "Accept All": 0.90,
+    "Accept All 2": 0.90,
+    "Accept Changes": 0.90,
+    "Accept": 0.90,
+    "Keep All": 0.90,
+    "Proceed": 0.90,
+    "Allow Always": 0.90,
+    "Always Run": 0.90,
+    "Allow Once": 0.90,
+    "Allow": 0.90,
+    "Yes Don't Ask": 0.90,
 }
-DEFAULT_THRESHOLD = 0.88
-CONFIDENCE_THRESHOLD = 0.88
+DEFAULT_THRESHOLD = 0.90
+CONFIDENCE_THRESHOLD = 0.90
 
-LOG_FILE = "/tmp/keep_all_auto.log"
-PID_FILE = "/tmp/keep_all_auto.pid"
+LOG_FILE = "/tmp/auto_click_decisions.log"
+PID_FILE = "/tmp/auto_click_decisions.pid"
 
 CHECK_INTERVAL = 1.0
 RETRY_COOLDOWN_SECONDS = 2.0
@@ -159,8 +159,8 @@ def dispatch_click(cx, cy):
     try:
         res = subprocess.run(["ydotool", "mousemove", "-a", "--", str(cx), str(cy)], env=env, timeout=1)
         if res.returncode == 0:
-            subprocess.run(["ydotool", "click", "0xC0"], env=env, timeout=1)
-            return True
+            click = subprocess.run(["ydotool", "click", "0xC0"], env=env, timeout=1)
+            return click.returncode == 0
     except Exception:
         pass
 
@@ -177,7 +177,7 @@ def dispatch_click(cx, cy):
 
 def get_screenshot():
     """Captures screenshot using spectacle or fallback."""
-    tmp = "/tmp/auto_keep_all_scr.png"
+    tmp = "/tmp/auto_click_decisions_screen.png"
     env = get_env()
     try:
         subprocess.run(["spectacle", "-b", "-n", "-o", tmp], check=True, capture_output=True, env=env, timeout=3)
@@ -199,7 +199,7 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
     Enables clicking multiple buttons simultaneously across split windows.
     Returns: list of (x, y, w, h, score) sorted by score descending.
     """
-    scales = [1.00, 1.25, 1.50, 0.90, 1.10, 1.20, 1.35, 1.75, 2.00, 0.80]
+    scales = [0.60, 0.80, 0.90, 1.00, 1.10, 1.20, 1.25, 1.35, 1.50, 1.75, 2.00, 2.25, 2.50]
     all_raw_matches = []
 
     for scale in scales:
@@ -208,34 +208,38 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
         else:
             w = int(template_gray.shape[1] * scale)
             h = int(template_gray.shape[0] * scale)
-            if w <= 0 or h <= 0 or w > screen_gray.shape[1] or h > screen_gray.shape[0]:
+            if w <= 0 or h <= 0:
                 continue
             interpolation = cv2.INTER_AREA if scale < 1.0 else cv2.INTER_CUBIC
             resized_tpl = cv2.resize(template_gray, (w, h), interpolation=interpolation)
 
+        if resized_tpl.shape[1] > screen_gray.shape[1] or resized_tpl.shape[0] > screen_gray.shape[0]:
+            continue
+
         res = cv2.matchTemplate(screen_gray, resized_tpl, cv2.TM_CCOEFF_NORMED)
-        y_coords, x_coords = np.where(res >= thresh)
+        local_maxima = cv2.dilate(res, np.ones((5, 5), dtype=np.uint8))
+        y_coords, x_coords = np.where((res >= thresh) & (res >= local_maxima - 1e-6))
 
         if len(x_coords) > 0:
             th_w, th_h = resized_tpl.shape[1], resized_tpl.shape[0]
             scores = res[y_coords, x_coords]
             sort_idx = np.argsort(-scores)
-            min_dist_x = max(20, th_w // 2)
-            min_dist_y = max(15, th_h // 2)
-
             for idx in sort_idx:
                 cand_x = int(x_coords[idx])
                 cand_y = int(y_coords[idx])
                 s = float(scores[idx])
-                if not any(abs(cand_x - rx) < min_dist_x and abs(cand_y - ry) < min_dist_y for rx, ry, _, _, _ in all_raw_matches):
-                    all_raw_matches.append((cand_x, cand_y, th_w, th_h, s))
+                all_raw_matches.append((cand_x, cand_y, th_w, th_h, s))
 
     # Global Non-Maximum Suppression across all scales:
     all_raw_matches.sort(key=lambda m: m[4], reverse=True)
     distinct_matches = []
     for x, y, w, h, score in all_raw_matches:
         cx, cy = x + w // 2, y + h // 2
-        if not any(abs(cx - (dx + dw // 2)) < 30 and abs(cy - (dy + dh // 2)) < 20 for dx, dy, dw, dh, _ in distinct_matches):
+        if not any(
+            abs(cx - (dx + dw // 2)) < max(15, min(w, dw) // 2)
+            and abs(cy - (dy + dh // 2)) < max(10, min(h, dh) // 2)
+            for dx, dy, dw, dh, _ in distinct_matches
+        ):
             distinct_matches.append((x, y, w, h, score))
 
     return distinct_matches
@@ -256,7 +260,7 @@ def find_best_template_match(screen_gray, tpl_item):
 
 def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
     """Verifies that a matched region represents a true interactive button."""
-    if w < 35 or h < 16 or h > 75:
+    if w < 25 or h < 12 or h > 130:
         return False
     aspect_ratio = w / float(h)
     if aspect_ratio < 1.1 or aspect_ratio > 8.5:
@@ -264,10 +268,6 @@ def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
 
     sh, sw = screen.shape[:2]
     if x < 0 or y < 0 or (x + w) > sw or (y + h) > sh:
-        return False
-
-    # Dialog buttons never appear in the extreme left activity/tree margin
-    if x < 100:
         return False
 
     cand_bgr = screen[y:y+h, x:x+w]
@@ -279,16 +279,7 @@ def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
     if cand_gray.std() < 8.0:
         return False
 
-    # Color / Saturation validation:
-    # If the template is a colored button (e.g. blue Accept All with sat > 40),
-    # verify candidate region also has color saturation, rejecting grey editor/sidebar highlights.
-    tpl_sat = tpl_info.get("sat", 0) if isinstance(tpl_info, dict) else 0
-    if tpl_sat > 40:
-        cand_hsv = cv2.cvtColor(cand_bgr, cv2.COLOR_BGR2HSV)
-        cand_sat = float(cand_hsv[:, :, 1].mean())
-        if cand_sat < 25:
-            return False
-
+    # Match grayscale templates regardless of button color or hover state.
     return True
 
 
@@ -334,7 +325,7 @@ def load_templates():
 
 
 if __name__ == "__main__":
-    log("Auto Keep All Clicker starting on Linux (Precision Absolute Input + Multi-Instance)...")
+    log("Approval Button Auto-Clicker starting on Linux (Precision Absolute Input + Multi-Instance)...")
     log(f"Assets Directory: {ASSETS_DIR}")
     log(f"Log File: {LOG_FILE}")
     log(f"PID File: {PID_FILE}")
@@ -425,7 +416,9 @@ if __name__ == "__main__":
                     for (name, x, y, w, h, score, loc_key) in pending_clicks:
                         cx, cy = x + w // 2, y + h // 2
                         log(f"Dispatching precision click for '{name}' at ({cx}, {cy}) (Conf: {score:.2f})...")
-                        dispatch_click(cx, cy)
+                        if not dispatch_click(cx, cy):
+                            log(f"Click dispatch failed for '{name}' at ({cx}, {cy}).")
+                            continue
                         prev_count = active_clicked_buttons.get(loc_key, {}).get("count", 0)
                         active_clicked_buttons[loc_key] = {
                             "first_seen": active_clicked_buttons.get(loc_key, {}).get("first_seen", now),

@@ -56,32 +56,44 @@ BUTTON_PRIORITY = {
     "Allow": 10,
     "Yes Don't Ask": 11,
 }
-
-# Matching threshold: 0.86 matches true interactive buttons across slight antialiasing
-# differences while candidate geometric & saturation filters reject false positives.
-THRESHOLDS = {
-    "Accept All": 0.86,
-    "Accept All 2": 0.86,
-    "Accept Changes": 0.86,
-    "Accept": 0.86,
-    "Keep All": 0.86,
-    "Proceed": 0.86,
-    "Allow Always": 0.86,
-    "Always Run": 0.86,
-    "Allow Once": 0.86,
-    "Allow": 0.86,
-    "Yes Don't Ask": 0.86,
+CANONICAL_TEMPLATES = {
+    "Accept All": "accept-all.png",
+    "Accept All 2": "accept-all2.png",
+    "Accept Changes": "accept-changes.png",
+    "Accept": "accept-inline.png",
+    "Keep All": "keep-all.png",
+    "Proceed": "proceed.png",
+    "Allow Always": "allow-always.png",
+    "Always Run": "always-run.png",
+    "Allow Once": "allow-once.png",
+    "Allow": "allow.png",
+    "Yes Don't Ask": "yes-dontask.png",
 }
-DEFAULT_THRESHOLD = 0.86
-CONFIDENCE_THRESHOLD = 0.86
+
+# Templates cover button colors and states; matching remains grayscale for themes.
+THRESHOLDS = {
+    "Accept All": 0.90,
+    "Accept All 2": 0.90,
+    "Accept Changes": 0.90,
+    "Accept": 0.90,
+    "Keep All": 0.90,
+    "Proceed": 0.90,
+    "Allow Always": 0.90,
+    "Always Run": 0.90,
+    "Allow Once": 0.90,
+    "Allow": 0.90,
+    "Yes Don't Ask": 0.90,
+}
+DEFAULT_THRESHOLD = 0.90
+CONFIDENCE_THRESHOLD = 0.90
 
 if sys.platform == "win32":
     TEMP_DIR = os.environ.get("TEMP", os.path.expanduser("~"))
-    LOG_FILE = os.path.join(TEMP_DIR, "keep_all_auto.log")
-    PID_FILE = os.path.join(TEMP_DIR, "keep_all_auto.pid")
+    LOG_FILE = os.path.join(TEMP_DIR, "auto_click_decisions.log")
+    PID_FILE = os.path.join(TEMP_DIR, "auto_click_decisions.pid")
 else:
-    LOG_FILE = "/tmp/keep_all_auto.log"
-    PID_FILE = "/tmp/keep_all_auto.pid"
+    LOG_FILE = "/tmp/auto_click_decisions.log"
+    PID_FILE = "/tmp/auto_click_decisions.pid"
 
 CHECK_INTERVAL = 1.0
 RETRY_COOLDOWN_SECONDS = 2.0
@@ -113,10 +125,8 @@ if sys.platform == "win32":
         ]
 
     INPUT_MOUSE = 0
-    MOUSEEVENTF_MOVE = 0x0001
     MOUSEEVENTF_LEFTDOWN = 0x0002
     MOUSEEVENTF_LEFTUP = 0x0004
-    MOUSEEVENTF_ABSOLUTE = 0x8000
 
 
 def log(msg):
@@ -208,51 +218,44 @@ def dispatch_click(cx, cy, name=""):
     attach_input_desktop()
     user32 = ctypes.windll.user32
 
-    # 1. Activate target window if needed
-    activate_target_window(cx, cy)
+    # Screenshot coordinates are already physical pixels because this process is
+    # per-monitor DPI aware. Move once, then send button-only events at that point.
+    if not user32.SetCursorPos(int(cx), int(cy)):
+        log(f"SetCursorPos failed for '{name}' at ({cx}, {cy}).")
+        return False
 
-    # 2. Position cursor
-    user32.SetCursorPos(int(cx), int(cy))
-
-    # 3. Dwell 60ms so Chromium / Electron receives WM_MOUSEMOVE, triggers hover & hit-test
+    # Allow the target window to process WM_MOUSEMOVE and hover state.
     time.sleep(0.06)
 
-    # 4. Calculate normalized absolute coordinates (0 - 65535)
-    sw = max(1, user32.GetSystemMetrics(0))
-    sh = max(1, user32.GetSystemMetrics(1))
-    norm_x = int(cx * 65535 / (sw - 1))
-    norm_y = int(cy * 65535 / (sh - 1))
-
-    # 5. Mouse Down via SendInput
+    # Do not combine absolute motion with SendInput: it can map to a different
+    # desktop coordinate and leave the pointer scattered on high-DPI displays.
     inp_down = INPUT()
     inp_down.type = INPUT_MOUSE
-    inp_down.mi = MOUSEINPUT(
-        norm_x, norm_y, 0,
-        MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTDOWN, 0, 0
-    )
-    user32.SendInput(1, ctypes.byref(inp_down), ctypes.sizeof(INPUT))
+    inp_down.mi = MOUSEINPUT(0, 0, 0, MOUSEEVENTF_LEFTDOWN, 0, 0)
+    if user32.SendInput(1, ctypes.byref(inp_down), ctypes.sizeof(INPUT)) != 1:
+        log(f"SendInput rejected mouse-down for '{name}' (error={ctypes.get_last_error()}).")
+        return False
 
     # Hold down for 60ms (realistic button press duration)
     time.sleep(0.06)
 
-    # 6. Mouse Up via SendInput
+    # Always release the button at the current pointer location.
     inp_up = INPUT()
     inp_up.type = INPUT_MOUSE
-    inp_up.mi = MOUSEINPUT(
-        norm_x, norm_y, 0,
-        MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTUP, 0, 0
-    )
-    user32.SendInput(1, ctypes.byref(inp_up), ctypes.sizeof(INPUT))
+    inp_up.mi = MOUSEINPUT(0, 0, 0, MOUSEEVENTF_LEFTUP, 0, 0)
+    released = user32.SendInput(1, ctypes.byref(inp_up), ctypes.sizeof(INPUT)) == 1
 
     # 7. Post-click dwell: Crucial for Chromium/Electron to fire the DOM click event
     time.sleep(0.12)
-    return True
+    if not released:
+        log(f"SendInput rejected mouse-up for '{name}' (error={ctypes.get_last_error()}).")
+    return released
 
 
 def dispatch_batch_clicks(buttons_to_click):
     """
-    Executes clicks for all detected buttons in priority order.
-    Restores cursor smoothly only after all clicks complete, without stealing window focus.
+    Clicks the highest-priority candidate, then restores the original cursor.
+    A fresh screenshot is used before clicking another candidate.
     """
     if not buttons_to_click:
         return False
@@ -269,27 +272,19 @@ def dispatch_batch_clicks(buttons_to_click):
         key=lambda b: BUTTON_PRIORITY.get(b[0], 99)
     )
 
-    last_target = None
-
-    for (name, x, y, w, h, score, loc_key) in sorted_buttons:
-        cx, cy = x + w // 2, y + h // 2
-        log(f"Clicking '{name}' at ({cx}, {cy}) (Conf: {score:.2f})...")
-        dispatch_click(cx, cy, name)
-        last_target = (cx, cy)
-        time.sleep(0.10)
-
-    # Natural Cursor Restoration: only after entire batch has dispatched and settled
-    if orig_mx is not None and orig_my is not None and last_target:
-        lcx, lcy = last_target
-        curr_mx, curr_my = get_mouse_xy()
-        if curr_mx is not None and curr_my is not None:
-            # Only restore if user hasn't physically moved mouse elsewhere
-            dist = abs(curr_mx - lcx) + abs(curr_my - lcy)
-            if dist < 30:
-                time.sleep(0.05)
-                set_mouse_xy(orig_mx, orig_my)
-
-    return True
+    name, x, y, w, h, score, loc_key = sorted_buttons[0]
+    cx, cy = x + w // 2, y + h // 2
+    log(f"Clicking '{name}' at ({cx}, {cy}) (Conf: {score:.2f})...")
+    try:
+        return {loc_key} if dispatch_click(cx, cy, name) else set()
+    finally:
+        if orig_mx is not None and orig_my is not None:
+            curr_mx, curr_my = get_mouse_xy()
+            if curr_mx is not None and curr_my is not None:
+                # Restore only if the pointer stayed at our click target; preserve
+                # any manual movement that happened while the click was dispatched.
+                if abs(curr_mx - cx) + abs(curr_my - cy) < 30:
+                    set_mouse_xy(orig_mx, orig_my)
 
 
 def get_screenshot():
@@ -310,7 +305,7 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
     Enables clicking multiple buttons simultaneously across split windows.
     Returns: list of (x, y, w, h, score) sorted by score descending.
     """
-    scales = [1.00, 1.25, 1.50, 0.90, 1.10, 1.20, 1.35, 1.75, 2.00, 0.80]
+    scales = [1.00, 0.90, 1.10, 0.80, 1.25, 1.50, 1.75, 2.00]
     all_raw_matches = []
 
     for scale in scales:
@@ -319,33 +314,41 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
         else:
             w = int(template_gray.shape[1] * scale)
             h = int(template_gray.shape[0] * scale)
-            if w <= 0 or h <= 0 or w > screen_gray.shape[1] or h > screen_gray.shape[0]:
+            if w <= 0 or h <= 0:
                 continue
             interpolation = cv2.INTER_AREA if scale < 1.0 else cv2.INTER_CUBIC
             resized_tpl = cv2.resize(template_gray, (w, h), interpolation=interpolation)
 
+        if resized_tpl.shape[1] > screen_gray.shape[1] or resized_tpl.shape[0] > screen_gray.shape[0]:
+            continue
+
         res = cv2.matchTemplate(screen_gray, resized_tpl, cv2.TM_CCOEFF_NORMED)
-        y_coords, x_coords = np.where(res >= thresh)
+        local_maxima = cv2.dilate(res, np.ones((5, 5), dtype=np.uint8))
+        y_coords, x_coords = np.where((res >= thresh) & (res >= local_maxima - 1e-6))
 
         if len(x_coords) > 0:
             th_w, th_h = resized_tpl.shape[1], resized_tpl.shape[0]
             scores = res[y_coords, x_coords]
             sort_idx = np.argsort(-scores)
-            min_dist_x = max(20, th_w // 2)
-            min_dist_y = max(15, th_h // 2)
-
             for idx in sort_idx:
                 cand_x = int(x_coords[idx])
                 cand_y = int(y_coords[idx])
                 s = float(scores[idx])
-                if not any(abs(cand_x - rx) < min_dist_x and abs(cand_y - ry) < min_dist_y for rx, ry, _, _, _ in all_raw_matches):
-                    all_raw_matches.append((cand_x, cand_y, th_w, th_h, s))
+                all_raw_matches.append((cand_x, cand_y, th_w, th_h, s))
+            # A near-exact match at native scale is already decisive. Avoid
+            # sweeping the rest of the scale pyramid on every live screen.
+            if float(scores.max()) >= 0.96:
+                break
 
     all_raw_matches.sort(key=lambda m: m[4], reverse=True)
     distinct_matches = []
     for x, y, w, h, score in all_raw_matches:
         cx, cy = x + w // 2, y + h // 2
-        if not any(abs(cx - (dx + dw // 2)) < 30 and abs(cy - (dy + dh // 2)) < 20 for dx, dy, dw, dh, _ in distinct_matches):
+        if not any(
+            abs(cx - (dx + dw // 2)) < max(15, min(w, dw) // 2)
+            and abs(cy - (dy + dh // 2)) < max(10, min(h, dh) // 2)
+            for dx, dy, dw, dh, _ in distinct_matches
+        ):
             distinct_matches.append((x, y, w, h, score))
 
     return distinct_matches
@@ -353,7 +356,7 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
 
 def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
     """Verifies that a matched region represents a true interactive button."""
-    if w < 35 or h < 16 or h > 75:
+    if w < 25 or h < 12 or h > 130:
         return False
     aspect_ratio = w / float(h)
     if aspect_ratio < 1.1 or aspect_ratio > 8.5:
@@ -361,10 +364,6 @@ def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
 
     sh, sw = screen.shape[:2]
     if x < 0 or y < 0 or (x + w) > sw or (y + h) > sh:
-        return False
-
-    # Dialog buttons never appear in the extreme left activity/tree margin
-    if x < 100:
         return False
 
     cand_bgr = screen[y:y+h, x:x+w]
@@ -376,17 +375,7 @@ def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
     if cand_gray.std() < 8.0:
         return False
 
-    # Color / Saturation validation:
-    # If the template is a colored button (e.g. blue Accept All with sat > 40),
-    # verify candidate region also has color saturation, rejecting grey editor/sidebar highlights.
-    tpl_sat = tpl_info.get("sat", 0) if isinstance(tpl_info, dict) else 0
-    if tpl_sat > 40:
-        cand_hsv = cv2.cvtColor(cand_bgr, cv2.COLOR_BGR2HSV)
-        cand_sat = float(cand_hsv[:, :, 1].mean())
-        min_required_sat = max(35.0, tpl_sat * 0.30)
-        if cand_sat < min_required_sat:
-            return False
-
+    # Match grayscale templates regardless of button color or hover state.
     return True
 
 
@@ -401,7 +390,14 @@ def load_templates():
         for p in patterns:
             matched_files.update(glob.glob(os.path.join(ASSETS_DIR, p)))
 
-        for path in sorted(matched_files):
+        for path in sorted(
+            matched_files,
+            key=lambda p: (
+                os.path.basename(p) != CANONICAL_TEMPLATES.get(name),
+                "grey" in os.path.basename(p) or "nohighlight" in os.path.basename(p),
+                p,
+            ),
+        ):
             if os.path.exists(path):
                 tpl = cv2.imread(path)
                 if tpl is not None:
@@ -433,7 +429,7 @@ def load_templates():
 
 if __name__ == "__main__":
     attach_input_desktop()
-    log(f"Auto Keep All Clicker starting on {sys.platform} (SendInput Precision + Multi-Instance Support)...")
+    log(f"Approval Button Auto-Clicker starting on {sys.platform} (SendInput Precision + Multi-Instance Support)...")
     log(f"Assets Directory: {ASSETS_DIR}")
     log(f"Log File: {LOG_FILE}")
     log(f"PID File: {PID_FILE}")
@@ -474,8 +470,10 @@ if __name__ == "__main__":
                 current_frame_locations = set()
                 pending_clicks = []  # [(name, x, y, w, h, score, loc_key)]
 
-                for name, tpl_list in loaded_templates.items():
+                for name in sorted(loaded_templates, key=lambda n: BUTTON_PRIORITY.get(n, 99)):
+                    tpl_list = loaded_templates[name]
                     thresh = THRESHOLDS.get(name, DEFAULT_THRESHOLD)
+                    candidate_found = False
                     for tpl_info in tpl_list:
                         template_gray = tpl_info["gray"]
                         matches = find_all_template_matches(screen_gray, template_gray, thresh)
@@ -508,6 +506,12 @@ if __name__ == "__main__":
 
                             if not any(abs(cx - (px + pw // 2)) < 30 and abs(cy - (py + ph // 2)) < 25 for _, px, py, pw, ph, _, _ in pending_clicks):
                                 pending_clicks.append((name, x, y, w, h, score, loc_key))
+                                candidate_found = True
+                                break
+                        if candidate_found:
+                            break
+                    if candidate_found:
+                        break
 
                 # Dispatch clicks to all detected buttons across split windows
                 if pending_clicks:
@@ -517,6 +521,8 @@ if __name__ == "__main__":
                     # Only update state and increment retries if click was actually dispatched
                     if dispatched:
                         for (_, _, _, _, _, _, loc_key) in pending_clicks:
+                            if loc_key not in dispatched:
+                                continue
                             prev_count = active_clicked_buttons.get(loc_key, {}).get("count", 0)
                             active_clicked_buttons[loc_key] = {
                                 "first_seen": active_clicked_buttons.get(loc_key, {}).get("first_seen", now),

@@ -8,11 +8,11 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 AUTOMATION_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../automation"))
 sys.path.insert(0, AUTOMATION_DIR)
 
-import auto_keep_all
+import auto_click_decisions
 
 def test_blue_and_grey_variants():
-    templates = auto_keep_all.load_templates()
-    assets_dir = auto_keep_all.ASSETS_DIR
+    templates = auto_click_decisions.load_templates()
+    assets_dir = auto_click_decisions.ASSETS_DIR
 
     test_targets = [
         ("Accept All", "accept-all.png", "accept-all-grey.png", "accept-all-nohighlight.png"),
@@ -35,33 +35,33 @@ def test_blue_and_grey_variants():
 
         # Verify blue match
         max_blue = max(
-            auto_keep_all.find_best_template_match(blue_gray, tpl)[0]
+            auto_click_decisions.find_best_template_match(blue_gray, tpl)[0]
             for tpl in templates[btn_name]
         )
-        assert max_blue >= auto_keep_all.CONFIDENCE_THRESHOLD, (
-            f"{btn_name} blue match {max_blue:.2f} < threshold {auto_keep_all.CONFIDENCE_THRESHOLD}"
+        assert max_blue >= auto_click_decisions.CONFIDENCE_THRESHOLD, (
+            f"{btn_name} blue match {max_blue:.2f} < threshold {auto_click_decisions.CONFIDENCE_THRESHOLD}"
         )
 
         # Verify grey (hover/active state) match
         max_grey = max(
-            auto_keep_all.find_best_template_match(grey_gray, tpl)[0]
+            auto_click_decisions.find_best_template_match(grey_gray, tpl)[0]
             for tpl in templates[btn_name]
         )
-        assert max_grey >= auto_keep_all.CONFIDENCE_THRESHOLD, (
-            f"{btn_name} grey match {max_grey:.2f} < threshold {auto_keep_all.CONFIDENCE_THRESHOLD}"
+        assert max_grey >= auto_click_decisions.CONFIDENCE_THRESHOLD, (
+            f"{btn_name} grey match {max_grey:.2f} < threshold {auto_click_decisions.CONFIDENCE_THRESHOLD}"
         )
 
         # Verify nohighlight (transparent/hover unhighlighted) match
         max_nohighlight = max(
-            auto_keep_all.find_best_template_match(nohighlight_gray, tpl)[0]
+            auto_click_decisions.find_best_template_match(nohighlight_gray, tpl)[0]
             for tpl in templates[btn_name]
         )
-        assert max_nohighlight >= auto_keep_all.CONFIDENCE_THRESHOLD, (
-            f"{btn_name} nohighlight match {max_nohighlight:.2f} < threshold {auto_keep_all.CONFIDENCE_THRESHOLD}"
+        assert max_nohighlight >= auto_click_decisions.CONFIDENCE_THRESHOLD, (
+            f"{btn_name} nohighlight match {max_nohighlight:.2f} < threshold {auto_click_decisions.CONFIDENCE_THRESHOLD}"
         )
 
-        print(f"✓ {btn_name}: Blue ({max_blue:.2f}), Grey ({max_grey:.2f}), No-Highlight ({max_nohighlight:.2f}) passed.")
+        print(f"PASS {btn_name}: Blue ({max_blue:.2f}), Grey ({max_grey:.2f}), No-Highlight ({max_nohighlight:.2f}).")
 
 if __name__ == "__main__":
     test_blue_and_grey_variants()
-    print("All template tests passed successfully!")
+    print("All template checks passed.")

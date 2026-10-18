@@ -1,94 +1,45 @@
-# 🤖 Auto Keep All & Dialog Decision Auto-Clicker Service
+# Approval Button Auto-Clicker
 
-The **Auto Keep All** service is an automated, background decision-making daemon designed for IDEs, terminal prompts, and AI assistant permission popups. It performs real-time multi-scale OpenCV template matching against screen captures to automatically click approval and confirmation buttons ("Keep All", "Proceed", "Allow Always", "Accept All", "Accept Changes", "Always Run", "Allow Once", "Allow", "Yes Don't Ask").
+This utility watches the desktop and clicks the configured decision buttons when they appear. It includes `Accept All`, `Accept All 2`, `Accept Changes`, `Accept`, `Keep All`, `Proceed`, `Allow Always`, `Always Run`, `Allow Once`, `Allow`, and `Yes Don't Ask`.
 
----
+It uses the screenshot templates in `../assets`, grayscale matching, and multiple scales to cover themes, hover states, and display scaling. It searches the full captured screen, retries visible buttons, and logs failed capture or input attempts. The Linux and Windows runners use the matching platform implementation.
 
-## 🛠️ Architecture & Matching Logic
+## Linux
 
-1. **Multi-Instance Split-Window Matching**:
-   - Replaced single-point matching (`minMaxLoc`) with multi-instance Non-Maximum Suppression (NMS) peak extraction (`find_all_template_matches`).
-   - When multiple "Accept All" or confirmation buttons appear simultaneously (e.g. across split editor windows, multi-pane diffs, or multiple pending popups), **every single instance is discovered and clicked in a single batch sweep**, followed by natural cursor restoration.
-2. **Color & Highlight Agnostic Matching**:
-   - Matches buttons regardless of whether they are vibrant blue, green, purple, unhighlighted neutral, grey, or dark-mode themed.
-   - Removed artificial color saturation gates so buttons with low or zero saturation (e.g. dark grey or neutral unhighlighted buttons in dark themes) are never dropped.
-   - Calibrated matching threshold to **`0.78`**, ensuring resilient matching across font antialiasing (ClearType / FreeType) and subpixel rendering differences while geometric validation prevents text false-positives.
-3. **Multi-Scale DPI Coverage**:
-   - Tests across native and standard display scaling factors (`1.0x`, `1.25x`, `1.50x`, `0.90x`, `1.10x`, `1.20x`, `1.35x`, `1.75x`, `2.00x`, `0.80x`), ensuring full compatibility with fractional scaling on 1080p, 1440p, and 4K displays.
-4. **Dynamic Template Discovery**:
-   - Automatically loads all button variants in `../scripts/assets/` using wildcard patterns (`accept-all*.png`, `accept_all*.png`, `accept-changes*.png`, etc.). All 15+ "Accept All" variants are loaded.
-5. **Retry State Machine & Cooldown**:
-   - Tracks button presence via coordinate hashes.
-   - Retries click after `3.5s` cooldown up to 3 times if the dialog requires multiple clicks or initial click only focused the window.
-   - Automatically blacklists static elements after 3 failed dismissals to avoid infinite loops.
+Install `opencv-python`, `numpy`, and the system screenshot and input tools available for your desktop (`spectacle` or ImageMagick `import`, plus `ydotool` or `xdotool`). `evdev` is optional.
 
----
+Run in the current session:
 
-## 🖱️ Natural Cursor Handling & Restoration
-
-The service uses a **Zero-Disturbance Natural Cursor Restoration** model:
-
-1. **Active Drag & Typing Protection**:
-   - If the user is holding down the left mouse button (dragging, selecting text, resizing windows), automated clicks are **deferred**.
-   - If the user typed or moved the mouse within the last 350ms, clicks are **deferred** until a natural pause.
-2. **In-Place Clicking**:
-   - If the user's cursor is already positioned over or near the button, the click is dispatched in place without moving or snapping the cursor.
-3. **Natural Position Restoration**:
-   - The user's active cursor coordinate `(orig_x, orig_y)` and foreground window handle are recorded before any movement.
-   - The cursor moves to each detected button in sequence, executes a crisp 35ms hold click, and immediately returns to `(orig_x, orig_y)`.
-   - If the user moved the mouse during the click sequence, their manual movement is respected and the cursor is left in place.
-   - Keyboard window focus is restored back to the user's original application if shifted.
-
----
-
-## 🐧 Linux Service Setup
-
-### 1. Requirements
 ```bash
-sudo apt-get install xdotool ydotool spectacle
-# or on Arch/CachyOS: sudo pacman -S xdotool ydotool spectacle
-pip install opencv-python numpy pillow
+./run_auto_click_decisions.sh
 ```
 
-### 2. Manual Background Launch
-```bash
-./run_auto_keep.sh
-```
+For a user systemd service, copy `auto-click-decisions.service` into `~/.config/systemd/user/`. Update its `WorkingDirectory` and `ExecStart` to the absolute path of this checkout, then run:
 
-### 3. Systemd User Service Setup
-Copy `auto-keep-all.service` to systemd user services:
 ```bash
-mkdir -p ~/.config/systemd/user/
-cp auto-keep-all.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now auto-keep-all.service
+systemctl --user enable --now auto-click-decisions.service
 ```
 
----
+The unit requires access to the active graphical session and its screenshot/input tools.
 
-## 🪟 Windows Service & Background Setup
+## Windows
 
-### 1. Requirements
+Install Python packages:
+
 ```powershell
-pip install opencv-python numpy pillow
+python -m pip install opencv-python numpy pillow
 ```
 
-### 2. Manual Background Launch
-Run via PowerShell or Batch:
+Run with `./run_auto_click_decisions.ps1` or `run_auto_click_decisions.bat`. To register or refresh the per-user logon task, run:
+
 ```powershell
-# PowerShell
-.\run_auto_keep.ps1
-
-# Batch
-run_auto_keep.bat
+powershell -ExecutionPolicy Bypass -File .\install_auto_click_decisions_service.ps1
 ```
 
-### 3. Register as Windows Background Service (Scheduled Task)
-To start automatically at system boot/logon and run silently in the background:
-```powershell
-powershell -ExecutionPolicy Bypass -File .\install_auto_keep_service.ps1
-```
+The installer replaces the previous task with `ApprovalButtonAutoClicker` when Windows permits task registration. If the old task belongs to another account or Windows blocks task changes, the compatibility launcher at `run_auto_keep.ps1` still starts the renamed clicker; the installer also starts it in the current desktop session.
 
-### 4. Logging & Diagnostics
-- **Windows Log File**: `%TEMP%\keep_all_auto.log`
-- **Linux Log File**: `/tmp/keep_all_auto.log`
+## Logs
+
+- Windows: `%TEMP%\auto_click_decisions.log`
+- Linux: `/tmp/auto_click_decisions.log`
