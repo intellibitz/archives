@@ -28,7 +28,7 @@ TEMPLATE_PATTERNS = {
     "Accept All": ["accept-all.png", "accept-all-*.png", "accept_all.png", "accept_all-*.png"],
     "Accept All 2": ["accept-all2*.png", "accept_all2*.png"],
     "Accept Changes": ["accept-changes*.png", "accept_changes*.png", "acceot-changes*.png"],
-    "Accept": ["accept-inline*.png", "accept_inline*.png"],
+    "Accept": ["accept.png", "accept-inline*.png", "accept_inline*.png", "accept-*.png", "accept_*.png"],
     "Keep All": ["keep-all*.png"],
     "Proceed": ["proceed*.png"],
     "Allow Always": ["allow-always*.png"],
@@ -36,25 +36,45 @@ TEMPLATE_PATTERNS = {
     "Allow Once": ["allow-once*.png"],
     "Allow": ["allow.png", "allow2.png"],
     "Yes Don't Ask": ["yes-dontask*.png"],
+    "Yes": ["yes.png", "yes-*.png", "yes_*.png"],
+    "OK": ["ok.png", "ok-*.png", "ok_*.png"],
 }
 
-# Matching threshold: 0.78 matches true interactive buttons while rejecting
-# false-positive editor text, tabs, and explorer tree highlights.
-THRESHOLDS = {
-    "Accept All": 0.90,
-    "Accept All 2": 0.90,
-    "Accept Changes": 0.90,
-    "Accept": 0.90,
-    "Keep All": 0.90,
-    "Proceed": 0.90,
-    "Allow Always": 0.90,
-    "Always Run": 0.90,
-    "Allow Once": 0.90,
-    "Allow": 0.90,
-    "Yes Don't Ask": 0.90,
+# Priority ranking: clicking global dismiss/accept first ensures cascading diffs resolve cleanly
+BUTTON_PRIORITY = {
+    "Accept All": 1,
+    "Accept All 2": 2,
+    "Accept Changes": 3,
+    "Accept": 4,
+    "Keep All": 5,
+    "Proceed": 6,
+    "Allow Always": 7,
+    "Always Run": 8,
+    "Allow Once": 9,
+    "Allow": 10,
+    "Yes Don't Ask": 11,
+    "Yes": 12,
+    "OK": 13,
 }
-DEFAULT_THRESHOLD = 0.90
-CONFIDENCE_THRESHOLD = 0.90
+
+# Strict confidence thresholds prevent false matches against editor text/syntax.
+THRESHOLDS = {
+    "Accept All": 0.85,
+    "Accept All 2": 0.85,
+    "Accept Changes": 0.85,
+    "Accept": 0.85,
+    "Keep All": 0.85,
+    "Proceed": 0.85,
+    "Allow Always": 0.82,
+    "Always Run": 0.82,
+    "Allow Once": 0.82,
+    "Allow": 0.82,
+    "Yes Don't Ask": 0.82,
+    "Yes": 0.82,
+    "OK": 0.82,
+}
+DEFAULT_THRESHOLD = 0.82
+CONFIDENCE_THRESHOLD = 0.80
 
 LOG_FILE = "/tmp/auto_click_decisions.log"
 PID_FILE = "/tmp/auto_click_decisions.pid"
@@ -166,7 +186,16 @@ def dispatch_click(cx, cy):
 
     # Fallback 2: xdotool (reliable for XWayland / X11 applications like JetBrains IDEs)
     try:
+        loc_res = subprocess.run(["xdotool", "getmouselocation", "--shell"], env=env, timeout=1, capture_output=True, text=True)
+        orig_x, orig_y = None, None
+        if loc_res.returncode == 0:
+            for line in loc_res.stdout.splitlines():
+                if line.startswith("X="): orig_x = line.split("=")[1]
+                elif line.startswith("Y="): orig_y = line.split("=")[1]
+
         res = subprocess.run(["xdotool", "mousemove", str(cx), str(cy), "click", "1"], env=env, timeout=1, capture_output=True)
+        if orig_x is not None and orig_y is not None:
+            subprocess.run(["xdotool", "mousemove", str(orig_x), str(orig_y)], env=env, timeout=1, capture_output=True)
         if res.returncode == 0:
             return True
     except Exception:
@@ -260,26 +289,39 @@ def find_best_template_match(screen_gray, tpl_item):
 
 def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
     """Verifies that a matched region represents a true interactive button."""
-    if w < 25 or h < 12 or h > 130:
+    if w < 30 or h < 14 or h > 90:
         return False
     aspect_ratio = w / float(h)
-    if aspect_ratio < 1.1 or aspect_ratio > 8.5:
+    if aspect_ratio < 1.0 or aspect_ratio > 20.0:
         return False
 
     sh, sw = screen.shape[:2]
-    if x < 0 or y < 0 or (x + w) > sw or (y + h) > sh:
+    if x < 40 or y < 0 or (x + w) > sw or (y + h) > sh:
+        return False
+
+    # Exclude matches in the taskbar/dock area (bottom 45 pixels of screen)
+    if (y + h) > (sh - 45):
         return False
 
     cand_bgr = screen[y:y+h, x:x+w]
     if cand_bgr.size == 0:
         return False
 
-    # Check candidate region contrast
+    # Check candidate region contrast (reject flat monochrome blocks)
     cand_gray = cv2.cvtColor(cand_bgr, cv2.COLOR_BGR2GRAY)
-    if cand_gray.std() < 8.0:
+    if cand_gray.std() < 9.0:
         return False
 
-    # Match grayscale templates regardless of button color or hover state.
+    # Color / Saturation validation:
+    # If the template is a colored button (e.g. blue Accept All with sat > 35),
+    # verify candidate region also has color saturation, rejecting monochrome code/editor text.
+    tpl_sat = tpl_info.get("sat", 0) if isinstance(tpl_info, dict) else 0
+    if tpl_sat > 35:
+        cand_hsv = cv2.cvtColor(cand_bgr, cv2.COLOR_BGR2HSV)
+        cand_sat = float(cand_hsv[:, :, 1].mean())
+        if cand_sat < max(20.0, tpl_sat * 0.25):
+            return False
+
     return True
 
 
@@ -319,7 +361,8 @@ def load_templates():
         if tpl_list:
             loaded[name] = tpl_list
         else:
-            log(f"Warning: No valid templates found for {name}")
+            if matched_files:
+                log(f"Warning: No valid templates loaded from matching files for {name}")
 
     return loaded
 
@@ -410,22 +453,22 @@ if __name__ == "__main__":
                             if not any(abs(cx - (px + pw // 2)) < 30 and abs(cy - (py + ph // 2)) < 25 for _, px, py, pw, ph, _, _ in pending_clicks):
                                 pending_clicks.append((name, x, y, w, h, score, loc_key))
 
-                # Dispatch clicks to all detected buttons across split windows
+                # Dispatch clicks to highest priority candidate across windows
                 if pending_clicks:
                     log(f"Found {len(pending_clicks)} pending button(s) to click across window(s).")
-                    for (name, x, y, w, h, score, loc_key) in pending_clicks:
-                        cx, cy = x + w // 2, y + h // 2
-                        log(f"Dispatching precision click for '{name}' at ({cx}, {cy}) (Conf: {score:.2f})...")
-                        if not dispatch_click(cx, cy):
-                            log(f"Click dispatch failed for '{name}' at ({cx}, {cy}).")
-                            continue
+                    sorted_buttons = sorted(pending_clicks, key=lambda b: BUTTON_PRIORITY.get(b[0], 99))
+                    name, x, y, w, h, score, loc_key = sorted_buttons[0]
+                    cx, cy = x + w // 2, y + h // 2
+                    log(f"Dispatching precision click for '{name}' at ({cx}, {cy}) (Conf: {score:.2f})...")
+                    if dispatch_click(cx, cy):
                         prev_count = active_clicked_buttons.get(loc_key, {}).get("count", 0)
                         active_clicked_buttons[loc_key] = {
                             "first_seen": active_clicked_buttons.get(loc_key, {}).get("first_seen", now),
                             "last_clicked": now,
                             "count": prev_count + 1
                         }
-                        time.sleep(0.08)
+                    else:
+                        log(f"Click dispatch failed for '{name}' at ({cx}, {cy}).")
 
                 # State Cleanup: Only expire locations that have been absent for over 15 seconds
                 stale_locations = []

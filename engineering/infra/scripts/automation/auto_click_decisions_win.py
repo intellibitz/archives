@@ -32,7 +32,7 @@ TEMPLATE_PATTERNS = {
     "Accept All": ["accept-all.png", "accept-all-*.png", "accept_all.png", "accept_all-*.png"],
     "Accept All 2": ["accept-all2*.png", "accept_all2*.png"],
     "Accept Changes": ["accept-changes*.png", "accept_changes*.png", "acceot-changes*.png"],
-    "Accept": ["accept-inline*.png", "accept_inline*.png"],
+    "Accept": ["accept.png", "accept-inline*.png", "accept_inline*.png", "accept-*.png", "accept_*.png"],
     "Keep All": ["keep-all*.png"],
     "Proceed": ["proceed*.png"],
     "Allow Always": ["allow-always*.png"],
@@ -40,6 +40,8 @@ TEMPLATE_PATTERNS = {
     "Allow Once": ["allow-once*.png"],
     "Allow": ["allow.png", "allow2.png"],
     "Yes Don't Ask": ["yes-dontask*.png"],
+    "Yes": ["yes.png", "yes-*.png", "yes_*.png"],
+    "OK": ["ok.png", "ok-*.png", "ok_*.png"],
 }
 
 # Priority ranking: clicking global dismiss/accept first ensures cascading diffs resolve cleanly
@@ -55,6 +57,8 @@ BUTTON_PRIORITY = {
     "Allow Once": 9,
     "Allow": 10,
     "Yes Don't Ask": 11,
+    "Yes": 12,
+    "OK": 13,
 }
 CANONICAL_TEMPLATES = {
     "Accept All": "accept-all.png",
@@ -68,24 +72,28 @@ CANONICAL_TEMPLATES = {
     "Allow Once": "allow-once.png",
     "Allow": "allow.png",
     "Yes Don't Ask": "yes-dontask.png",
+    "Yes": "yes.png",
+    "OK": "ok.png",
 }
 
-# Templates cover button colors and states; matching remains grayscale for themes.
+# Templates cover button colors and states; strict thresholds prevent false matches against editor text/syntax.
 THRESHOLDS = {
-    "Accept All": 0.90,
-    "Accept All 2": 0.90,
-    "Accept Changes": 0.90,
-    "Accept": 0.90,
-    "Keep All": 0.90,
-    "Proceed": 0.90,
-    "Allow Always": 0.90,
-    "Always Run": 0.90,
-    "Allow Once": 0.90,
-    "Allow": 0.90,
-    "Yes Don't Ask": 0.90,
+    "Accept All": 0.85,
+    "Accept All 2": 0.85,
+    "Accept Changes": 0.85,
+    "Accept": 0.85,
+    "Keep All": 0.85,
+    "Proceed": 0.85,
+    "Allow Always": 0.82,
+    "Always Run": 0.82,
+    "Allow Once": 0.82,
+    "Allow": 0.82,
+    "Yes Don't Ask": 0.82,
+    "Yes": 0.82,
+    "OK": 0.82,
 }
-DEFAULT_THRESHOLD = 0.90
-CONFIDENCE_THRESHOLD = 0.90
+DEFAULT_THRESHOLD = 0.82
+CONFIDENCE_THRESHOLD = 0.80
 
 if sys.platform == "win32":
     TEMP_DIR = os.environ.get("TEMP", os.path.expanduser("~"))
@@ -188,6 +196,28 @@ def is_mouse_button_down():
     return False
 
 
+def is_user_actively_typing_or_interacting(threshold_ms=1000):
+    """
+    Returns True if user has provided keyboard or mouse input recently.
+    Ensures cursor and active focus are completely untouched while user is typing in another window.
+    """
+    if sys.platform == "win32":
+        try:
+            class LASTINPUTINFO(ctypes.Structure):
+                _fields_ = [("cbSize", wintypes.UINT), ("dwTime", wintypes.DWORD)]
+
+            lii = LASTINPUTINFO()
+            lii.cbSize = ctypes.sizeof(LASTINPUTINFO)
+            if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lii)):
+                tick = ctypes.windll.kernel32.GetTickCount()
+                elapsed_ms = tick - lii.dwTime
+                if elapsed_ms < threshold_ms:
+                    return True
+        except Exception:
+            pass
+    return False
+
+
 def activate_target_window(cx, cy):
     """Brings the window under (cx, cy) to foreground if not already focused."""
     if sys.platform == "win32":
@@ -255,14 +285,18 @@ def dispatch_click(cx, cy, name=""):
 def dispatch_batch_clicks(buttons_to_click):
     """
     Clicks the highest-priority candidate, then restores the original cursor.
-    A fresh screenshot is used before clicking another candidate.
+    The cursor remains completely untouched if there are no candidates or if user is actively typing/dragging.
     """
     if not buttons_to_click:
-        return False
+        return set()
 
     if is_mouse_button_down():
-        log("Notice: User holding mouse button; deferring batch clicks.")
-        return False
+        log("Notice: User holding mouse button; deferring batch clicks to keep cursor untouched.")
+        return set()
+
+    if is_user_actively_typing_or_interacting(threshold_ms=1000):
+        log("Notice: User actively typing or moving mouse; deferring batch clicks to keep cursor untouched.")
+        return set()
 
     orig_mx, orig_my = get_mouse_xy()
 
@@ -283,7 +317,7 @@ def dispatch_batch_clicks(buttons_to_click):
             if curr_mx is not None and curr_my is not None:
                 # Restore only if the pointer stayed at our click target; preserve
                 # any manual movement that happened while the click was dispatched.
-                if abs(curr_mx - cx) + abs(curr_my - cy) < 30:
+                if abs(curr_mx - cx) + abs(curr_my - cy) < 50:
                     set_mouse_xy(orig_mx, orig_my)
 
 
@@ -356,26 +390,39 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
 
 def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
     """Verifies that a matched region represents a true interactive button."""
-    if w < 25 or h < 12 or h > 130:
+    if w < 30 or h < 14 or h > 90:
         return False
     aspect_ratio = w / float(h)
-    if aspect_ratio < 1.1 or aspect_ratio > 8.5:
+    if aspect_ratio < 1.0 or aspect_ratio > 20.0:
         return False
 
     sh, sw = screen.shape[:2]
-    if x < 0 or y < 0 or (x + w) > sw or (y + h) > sh:
+    if x < 40 or y < 0 or (x + w) > sw or (y + h) > sh:
+        return False
+
+    # Exclude matches in the taskbar/dock area (bottom 45 pixels of screen)
+    if (y + h) > (sh - 45):
         return False
 
     cand_bgr = screen[y:y+h, x:x+w]
     if cand_bgr.size == 0:
         return False
 
-    # Check candidate region contrast
+    # Check candidate region contrast (reject flat monochrome blocks)
     cand_gray = cv2.cvtColor(cand_bgr, cv2.COLOR_BGR2GRAY)
-    if cand_gray.std() < 8.0:
+    if cand_gray.std() < 9.0:
         return False
 
-    # Match grayscale templates regardless of button color or hover state.
+    # Color / Saturation validation:
+    # If the template is a colored button (e.g. blue Accept All with sat > 35),
+    # verify candidate region also has color saturation, rejecting monochrome code/editor text.
+    tpl_sat = tpl_info.get("sat", 0) if isinstance(tpl_info, dict) else 0
+    if tpl_sat > 35:
+        cand_hsv = cv2.cvtColor(cand_bgr, cv2.COLOR_BGR2HSV)
+        cand_sat = float(cand_hsv[:, :, 1].mean())
+        if cand_sat < max(20.0, tpl_sat * 0.25):
+            return False
+
     return True
 
 
@@ -422,7 +469,9 @@ def load_templates():
         if tpl_list:
             loaded[name] = tpl_list
         else:
-            log(f"Warning: No valid templates found for {name}")
+            # Only warn if files actually matched pattern or on initial run
+            if matched_files:
+                log(f"Warning: No valid templates loaded from matching files for {name}")
 
     return loaded
 

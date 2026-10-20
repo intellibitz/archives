@@ -155,3 +155,4 @@ dist/
 *.db-journal
 *.swf
 *.rar
+debug_screen*.png
