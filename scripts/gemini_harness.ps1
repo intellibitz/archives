@@ -3,7 +3,7 @@
     Gemini API Pay-As-You-Go Unified Management Harness (PowerShell Entrypoint).
 #>
 param(
-    [ValidateSet("healthcheck", "start-proxy", "stop-proxy", "status-proxy", "eval", "aider")]
+    [ValidateSet("healthcheck", "start-proxy", "stop-proxy", "status-proxy", "eval", "aider", "usage")]
     [string]$Action = "healthcheck"
 )
 

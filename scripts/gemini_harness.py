@@ -199,11 +199,79 @@ def action_aider():
     subprocess.run([aider_exe, "--config", str(AIDER_CONFIG)], env=os.environ.copy(), check=False)
 
 
+def action_usage():
+    """Query and display Gemini API usage, billing status, API key metadata, and telemetry."""
+    print("===> [Gemini Usage & Billing Telemetry] Querying Google Cloud Services...")
+    gcloud = shutil.which("gcloud") or "gcloud"
+    project = "gen-lang-client-0333910863"
+
+    # 1. Billing Status
+    print("\n1. Pay-As-You-Go Billing Status:")
+    b_cmd = [gcloud, "billing", "projects", "describe", project, "--format=json"]
+    b_res = subprocess.run(b_cmd, capture_output=True, text=True, shell=(sys.platform == "win32"))
+    if b_res.returncode == 0:
+        b_data = json.loads(b_res.stdout)
+        print(f"  Account Name:    {b_data.get('billingAccountName', 'N/A')}")
+        print(f"  Billing Enabled: {b_data.get('billingEnabled', False)}")
+    else:
+        print(f"  Billing Query:   {b_res.stderr.strip()}")
+
+    # 2. API Key Restrictions & Status
+    print("\n2. API Key Governance & Targets:")
+    k_cmd = [gcloud, "services", "api-keys", "list", f"--project={project}", "--format=json"]
+    k_res = subprocess.run(k_cmd, capture_output=True, text=True, shell=(sys.platform == "win32"))
+    if k_res.returncode == 0:
+        k_data = json.loads(k_res.stdout)
+        for key in k_data:
+            display_name = key.get("displayName", "Unnamed Key")
+            create_time = key.get("createTime", "N/A")
+            restrictions = key.get("restrictions", {}).get("apiTargets", [])
+            target_svcs = [t.get("service") for t in restrictions if "service" in t]
+            print(f"  Key Name:        {display_name}")
+            print(f"  Created Time:    {create_time}")
+            print(f"  Allowed Targets: {', '.join(target_svcs) if target_svcs else 'Unrestricted'}")
+    else:
+        print(f"  Key Query:       {k_res.stderr.strip()}")
+
+    # 3. Request Count Telemetry (Cloud Monitoring)
+    print("\n3. Cloud Monitoring (24-Hour Gemini API Request Telemetry):")
+    tok_cmd = [gcloud, "auth", "print-access-token"]
+    tok_res = subprocess.run(tok_cmd, capture_output=True, text=True, shell=(sys.platform == "win32"))
+    if tok_res.returncode == 0:
+        token = tok_res.stdout.strip()
+        from datetime import datetime, timedelta, timezone
+        now = datetime.now(timezone.utc)
+        start = (now - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        end = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        m_url = (
+            f"https://monitoring.googleapis.com/v3/projects/{project}/timeSeries"
+            f"?filter=metric.type%3D%22serviceruntime.googleapis.com%2Fapi%2Frequest_count%22"
+            f"%20AND%20resource.labels.service%3D%22generativelanguage.googleapis.com%22"
+            f"&interval.startTime={start}&interval.endTime={end}"
+        )
+        try:
+            req = urllib.request.Request(m_url, headers={"Authorization": f"Bearer {token}"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                m_data = json.loads(resp.read().decode("utf-8"))
+                streams = m_data.get("timeSeries", [])
+                total_calls = 0
+                for s in streams:
+                    points = s.get("points", [])
+                    for pt in points:
+                        total_calls += int(pt.get("value", {}).get("int64Value", 0))
+                print(f"  Active Metric Streams: {len(streams)}")
+                print(f"  Measured 24h Requests: {total_calls}")
+        except Exception as e:
+            print(f"  Monitoring Query:      {e}")
+    else:
+        print("  Could not fetch gcloud access token for monitoring query.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Gemini API Pay-As-You-Go Unified Harness")
     parser.add_argument(
         "action",
-        choices=["healthcheck", "start-proxy", "stop-proxy", "status-proxy", "eval", "aider"],
+        choices=["healthcheck", "start-proxy", "stop-proxy", "status-proxy", "eval", "aider", "usage"],
         help="Action to perform"
     )
     args = parser.parse_args()
@@ -215,6 +283,7 @@ def main():
         "status-proxy": action_proxy_status,
         "eval": action_eval,
         "aider": action_aider,
+        "usage": action_usage,
     }
     actions[args.action]()
 
