@@ -21,6 +21,25 @@ model_list:
       model: ollama/qwen2.5-coder:7b
       api_base: "http://localhost:11434"
 
+  - model_name: gemini-3.8-flash
+    litellm_params:
+      model: gemini/gemini-3.8-flash
+      api_key: "os.environ/GEMINI_API_KEY"
+      rpm: 120
+      max_tokens: 8192
+
+  - model_name: gemini-payg
+    litellm_params:
+      model: gemini/gemini-3.8-flash
+      api_key: "os.environ/GEMINI_API_KEY"
+      rpm: 120
+      max_tokens: 8192
+
+  - model_name: gemini-payg
+    litellm_params:
+      model: gemini/gemini-flash-latest
+      api_key: "os.environ/GEMINI_API_KEY"
+
   - model_name: antigravity-flash-latest
     litellm_params:
       model: gemini/gemini-flash-latest
@@ -148,6 +167,7 @@ router_settings:
   cooldown_time: 30
   cache_responses: true
   fallbacks:
+    - gemini-payg: ["gemini-3.8-flash", "antigravity-flash-latest", "local-coder"]
     - deepseek-coder: ["local-coder"]
     - deepseek-reasoner: ["antigravity-flash-latest", "local-coder"]
     - claude-architect: ["antigravity-flash-latest", "local-coder"]
@@ -168,5 +188,5 @@ litellm_settings:
   cache: true
   cache_params:
     type: "disk"
-    disk_cache_dir: "/mnt/data/var/AI/cache/litellm"
+    disk_cache_dir: "./.cache/litellm"
     default_in_memory_ttl: 86400
