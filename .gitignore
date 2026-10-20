@@ -141,12 +141,38 @@ dist/
 .next/
 *.tsbuildinfo
 
+# --- Multi-Agent State & Worktrees ---
+.claude/
+.codex/
+.agents/
+.gemini/
+.cursor/
+.windsurf/
+.kilo/
+.plans/
+
 # --- Environment & Credentials ---
 .env
 .env.*
 !.env*.example
 *.key
 *.pem
+*.p12
+*.pfx
+*.pkcs12
+*.token
+*.jwt
+*.secret
+!*.secret.example
+*credentials*.json
+!*credentials*.example.json
+client_secret*.json
+!client_secret*.example.json
+service_account*.json
+!service_account*.example.json
+service-account*.json
+!service-account*.example.json
+*google-services.json
 !*.example
 
 # --- Logs & Databases ---

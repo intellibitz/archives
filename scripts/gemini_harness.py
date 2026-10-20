@@ -50,6 +50,29 @@ def get_gemini_key():
     return key
 
 
+def get_gcp_project():
+    """Retrieve GCP Project ID dynamically from environment or gcloud config."""
+    load_env()
+    project = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
+    if not project:
+        gcloud = shutil.which("gcloud") or "gcloud"
+        try:
+            res = subprocess.run(
+                [gcloud, "config", "get-value", "project"],
+                capture_output=True,
+                text=True,
+                shell=(sys.platform == "win32")
+            )
+            if res.returncode == 0 and res.stdout.strip() and "(unset)" not in res.stdout:
+                project = res.stdout.strip()
+        except Exception:
+            pass
+    if not project:
+        print("[ERROR] GCP project ID not specified in GCP_PROJECT_ID, GOOGLE_CLOUD_PROJECT, or gcloud config.", file=sys.stderr)
+        sys.exit(1)
+    return project
+
+
 def action_healthcheck():
     """Verify Google AI Studio API connectivity and list active models."""
     key = get_gemini_key()
@@ -203,15 +226,21 @@ def action_usage():
     """Query and display Gemini API usage, billing status, API key metadata, and telemetry."""
     print("===> [Gemini Usage & Billing Telemetry] Querying Google Cloud Services...")
     gcloud = shutil.which("gcloud") or "gcloud"
-    project = "gen-lang-client-0333910863"
+    project = get_gcp_project()
+    masked_project = project[:4] + "..." + project[-4:] if len(project) > 8 else "***"
 
     # 1. Billing Status
-    print("\n1. Pay-As-You-Go Billing Status:")
+    print(f"\n1. Pay-As-You-Go Billing Status ({masked_project}):")
     b_cmd = [gcloud, "billing", "projects", "describe", project, "--format=json"]
     b_res = subprocess.run(b_cmd, capture_output=True, text=True, shell=(sys.platform == "win32"))
     if b_res.returncode == 0:
         b_data = json.loads(b_res.stdout)
-        print(f"  Account Name:    {b_data.get('billingAccountName', 'N/A')}")
+        account_name = b_data.get('billingAccountName', 'N/A')
+        if account_name and "/" in account_name:
+            prefix, acc_id = account_name.split("/", 1)
+            masked_id = acc_id[:3] + "..." + acc_id[-4:] if len(acc_id) > 7 else "***"
+            account_name = f"{prefix}/{masked_id}"
+        print(f"  Account Name:    {account_name}")
         print(f"  Billing Enabled: {b_data.get('billingEnabled', False)}")
     else:
         print(f"  Billing Query:   {b_res.stderr.strip()}")

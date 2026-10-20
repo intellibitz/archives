@@ -11,7 +11,45 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROJECT = "gen-lang-client-0333910863"
+WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+ENV_FILE = WORKSPACE_ROOT / ".env"
+
+
+def load_env():
+    """Load environment variables from .env if present."""
+    if ENV_FILE.exists():
+        with open(ENV_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip('"').strip("'")
+                    os.environ[k] = v
+
+
+def get_gcp_project():
+    """Retrieve GCP Project ID dynamically from environment or gcloud config."""
+    load_env()
+    project = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
+    if not project:
+        gcloud_bin = shutil.which("gcloud") or "gcloud"
+        try:
+            res = subprocess.run(
+                [gcloud_bin, "config", "get-value", "project"],
+                capture_output=True,
+                text=True,
+                shell=(sys.platform == "win32")
+            )
+            if res.returncode == 0 and res.stdout.strip() and "(unset)" not in res.stdout:
+                project = res.stdout.strip()
+        except Exception:
+            pass
+    if not project:
+        print("[ERROR] GCP project ID not specified in GCP_PROJECT_ID, GOOGLE_CLOUD_PROJECT, or gcloud config.", file=sys.stderr)
+        sys.exit(1)
+    return project
+
 
 # Whitelist: Critical services required for Gemini API & Pay-As-You-Go Billing
 WHITELIST = {
@@ -28,10 +66,12 @@ WHITELIST = {
 
 
 def main():
-    print(f"===> Fetching enabled services for project: {PROJECT}...")
+    project = get_gcp_project()
+    masked_project = project[:4] + "..." + project[-4:] if len(project) > 8 else "***"
+    print(f"===> Fetching enabled services for project: {masked_project}...")
     gcloud = shutil.which("gcloud") or "gcloud"
 
-    cmd = [gcloud, "services", "list", "--enabled", f"--project={PROJECT}", "--format=json"]
+    cmd = [gcloud, "services", "list", "--enabled", f"--project={project}", "--format=json"]
     proc = subprocess.run(cmd, capture_output=True, text=True, shell=(sys.platform == "win32"))
     if proc.returncode != 0:
         print(f"[ERROR] Failed to list services: {proc.stderr}", file=sys.stderr)
@@ -51,7 +91,7 @@ def main():
 
     for s in to_disable:
         print(f"Disabling {s:<45} ... ", end="", flush=True)
-        dis_cmd = [gcloud, "services", "disable", s, f"--project={PROJECT}", "--quiet", "--force"]
+        dis_cmd = [gcloud, "services", "disable", s, f"--project={project}", "--quiet", "--force"]
         res = subprocess.run(dis_cmd, capture_output=True, text=True, shell=(sys.platform == "win32"))
         if res.returncode == 0:
             print("[DISABLED]")
