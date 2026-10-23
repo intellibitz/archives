@@ -824,9 +824,235 @@ body {
   font-size: 11px;
 }
 
-.val-deepseek { color: #67E8F9; }
-.val-gemini { color: #C4B5FD; }
-.val-cache { color: #6EE7B7; }
+/* ==============================================================================
+   Circuit Breaker Banner & Safety Ribbon
+   ============================================================================== */
+.circuit-breaker-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  transition: var(--transition-fast);
+  backdrop-filter: blur(12px);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.circuit-breaker-banner.normal {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+}
+
+.circuit-breaker-banner.warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+}
+
+.circuit-breaker-banner.tripped {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.5); }
+  50% { border-color: rgba(239, 68, 68, 0.9); box-shadow: 0 0 35px rgba(239, 68, 68, 0.4); }
+}
+
+.cb-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cb-icon {
+  font-size: 22px;
+}
+
+.cb-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cb-title {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.circuit-breaker-banner.normal .cb-title { color: #6EE7B7; }
+.circuit-breaker-banner.warning .cb-title { color: #FCD34D; }
+.circuit-breaker-banner.tripped .cb-title { color: #FCA5A5; }
+
+.cb-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.cb-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cb-action-btn {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  border: none;
+}
+
+.cb-action-btn.trip {
+  background: rgba(239, 68, 68, 0.2);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.cb-action-btn.trip:hover {
+  background: rgba(239, 68, 68, 0.35);
+  color: #FFFFFF;
+}
+
+.cb-action-btn.reset {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6EE7B7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.cb-action-btn.reset:hover {
+  background: rgba(16, 185, 129, 0.35);
+  color: #FFFFFF;
+}
+
+/* ==============================================================================
+   Budget Governor Progress Section
+   ============================================================================== */
+.budget-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.prog-title {
+  color: var(--text-muted);
+}
+
+.prog-numbers {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.fill-green { background: linear-gradient(90deg, #10B981, #06B6D4); }
+.fill-yellow { background: linear-gradient(90deg, #F59E0B, #EF4444); }
+.fill-red { background: #EF4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+.fill-cyan { background: linear-gradient(90deg, #06B6D4, #8B5CF6); }
+
+/* Caps Controller */
+.caps-controller {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  background: var(--bg-surface-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.caps-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.caps-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.cap-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.cap-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cap-btn.active {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.status-badge.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FCD34D;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.status-badge.tripped {
+  background: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {

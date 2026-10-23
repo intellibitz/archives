@@ -51,6 +51,21 @@
       </div>
     </header>
 
+    <!-- Executive Circuit-Breaker Safety Ribbon -->
+    <div class="circuit-breaker-banner normal" id="circuitBreakerBanner">
+      <div class="cb-left">
+        <span class="cb-icon" id="cbIcon">🛡️</span>
+        <div class="cb-text-group">
+          <span class="cb-title" id="cbTitle">CIRCUIT BREAKER: ARMED (NORMAL HYBRID)</span>
+          <span class="cb-subtitle" id="cbSubtitle">Hard spend cap active. Auto-fallback to zero-cost safeguard models if cap breached.</span>
+        </div>
+      </div>
+      <div class="cb-right">
+        <button class="cb-action-btn trip" id="btnTripBreaker" title="Emergency Stop: Halt all cloud API billing">⚡ Emergency Stop</button>
+        <button class="cb-action-btn reset" id="btnResetBreaker" style="display: none;" title="Resume Cloud Hybrid Routing">🔄 Reset & Resume</button>
+      </div>
+    </div>
+
     <!-- Executive Grid -->
     <main class="cockpit-grid">
       <!-- Left Column: Operations Dispatcher -->
@@ -219,41 +234,75 @@
           </div>
         </div>
 
-        <!-- Budget & Caching Telemetry Card -->
+        <!-- Autonomous Budget Governor & Circuit-Breaker Card -->
         <div class="card glass-card budget-card">
           <div class="card-header">
             <div class="card-heading">
-              <span class="card-icon">💰</span>
-              <h2>Budget & Cache Efficiency</h2>
+              <span class="card-icon">🛡️</span>
+              <h2>Autonomous Budget Governor</h2>
             </div>
-            <span class="status-badge green">Optimized</span>
+            <span class="status-badge green" id="hudBreakerBadge">ARMED</span>
+          </div>
+
+          <!-- Spend Gauges -->
+          <div class="budget-progress-section">
+            <div class="progress-row">
+              <div class="progress-labels">
+                <span class="prog-title">Today's Spend</span>
+                <span class="prog-numbers" id="progDailyText">$0.00 / $2.00 (0.0%)</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-green" id="progDailyBar" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <div class="progress-row">
+              <div class="progress-labels">
+                <span class="prog-title">Month-To-Date Spend</span>
+                <span class="prog-numbers" id="progMonthlyText">$0.00 / $25.00 (0.0%)</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-cyan" id="progMonthlyBar" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Cap Adjuster -->
+          <div class="caps-controller">
+            <span class="caps-label">Daily Spend Limit:</span>
+            <div class="caps-buttons" id="capsButtons">
+              <button class="cap-btn" data-cap="1.00">$1.00</button>
+              <button class="cap-btn active" data-cap="2.00">$2.00</button>
+              <button class="cap-btn" data-cap="5.00">$5.00</button>
+              <button class="cap-btn" data-cap="10.00">$10.00</button>
+            </div>
           </div>
 
           <div class="metrics-grid">
             <div class="metric-box">
-              <span class="metric-title">Cache Speedup</span>
-              <span class="metric-number text-green" id="hudSpeedup">1.8x – 10x</span>
-              <span class="metric-subtitle">Instant Redis Hits</span>
+              <span class="metric-title">Redis Cache Saved</span>
+              <span class="metric-number text-green" id="hudCostSaved">$0.0320</span>
+              <span class="metric-subtitle" id="hudHitRate">100% Cache Rate</span>
             </div>
             <div class="metric-box">
-              <span class="metric-title">PAYG Cost Avoided</span>
-              <span class="metric-number text-cyan" id="hudCostSaved">$0.0320</span>
-              <span class="metric-subtitle">From Redis Exact Matches</span>
+              <span class="metric-title">Zero-Cost Rate</span>
+              <span class="metric-number text-cyan" id="hudSpeedup">1.8x – 10x</span>
+              <span class="metric-subtitle">Instant Speedup</span>
             </div>
           </div>
 
           <div class="model-matrix">
             <div class="matrix-row">
-              <span class="matrix-label">Deep Reasoning & Logic</span>
-              <span class="matrix-val val-deepseek">DeepSeek (PAYG ~$0.14 - $0.55/M)</span>
+              <span class="matrix-label">Circuit-Breaker Policy</span>
+              <span class="matrix-val val-cache" id="hudBreakerPolicy">Auto-Fallback to Zero-Cost</span>
             </div>
             <div class="matrix-row">
-              <span class="matrix-label">High-Speed & Synthesis</span>
-              <span class="matrix-val val-gemini">Gemini Flash (PAYG ~$0.075/M)</span>
+              <span class="matrix-label">Deep Logic Tier</span>
+              <span class="matrix-val val-deepseek">DeepSeek (~$0.14-$0.55/M)</span>
             </div>
             <div class="matrix-row">
-              <span class="matrix-label">Repeated Instructions</span>
-              <span class="matrix-val val-cache">Redis Exact Match ($0.00 / 0ms)</span>
+              <span class="matrix-label">Fast Synthesis Tier</span>
+              <span class="matrix-val val-gemini">Gemini Flash (~$0.075/M)</span>
             </div>
           </div>
         </div>

@@ -1,0 +1,36 @@
+{
+  "daily_budget_usd": 2.0,
+  "monthly_budget_usd": 25.0,
+  "warning_threshold_pct": 80.0,
+  "circuit_breaker_enabled": true,
+  "circuit_breaker_state": "NORMAL",
+  "circuit_breaker_trip_reason": "",
+  "tripped_at": null,
+  "today_spend_usd": 0.000482,
+  "month_spend_usd": 0.000482,
+  "lifetime_spend_usd": 0.000482,
+  "cached_savings_usd": 0.032,
+  "total_requests": 17,
+  "cached_requests": 16,
+  "last_reset_date": "2026-10-23",
+  "audit_log": [
+    {
+      "timestamp": 1792769797.00981,
+      "date": "2026-10-23T21:06:37.009810",
+      "event": "GOVERNOR_INITIALIZED",
+      "details": "Budget Governor activated: $2.00/day, $25.00/month limits."
+    },
+    {
+      "timestamp": 1792770154.6799197,
+      "date": "2026-10-23T21:12:34.679919",
+      "event": "CIRCUIT_BREAKER_TRIPPED",
+      "details": "Executive emergency trip triggered from CEO Cockpit."
+    },
+    {
+      "timestamp": 1792770224.462053,
+      "date": "2026-10-23T21:13:44.462053",
+      "event": "CIRCUIT_BREAKER_RESET",
+      "details": "Executive manually reset circuit breaker. Normal hybrid routing restored."
+    }
+  ]
+}

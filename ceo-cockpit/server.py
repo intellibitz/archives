@@ -14,6 +14,7 @@ import time
 import os
 import subprocess
 from typing import Dict, Any, Tuple
+from budget_governor import governor
 
 PORT = 8080
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -113,6 +114,8 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/api/health":
             self.handle_health()
+        elif self.path == "/api/budget":
+            self.handle_budget()
         elif self.path == "/api/agents":
             self.handle_agents()
         elif self.path == "/api/cache-stats":
@@ -125,10 +128,40 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         if self.path == "/api/command":
             self.handle_command()
+        elif self.path == "/api/budget/config":
+            self.handle_budget_config()
+        elif self.path == "/api/budget/trip":
+            self.handle_budget_trip()
+        elif self.path == "/api/budget/reset":
+            self.handle_budget_reset()
         elif self.path == "/api/openclaw/dispatch":
             self.handle_openclaw_dispatch()
         else:
             self._send_json(404, {"error": "Endpoint not found"})
+
+    def handle_budget(self):
+        self._send_json(200, governor.get_summary())
+
+    def handle_budget_config(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            req = json.loads(post_data.decode("utf-8"))
+            daily = req.get("daily_budget_usd")
+            monthly = req.get("monthly_budget_usd")
+            enabled = req.get("circuit_breaker_enabled")
+            governor.update_caps(daily=daily, monthly=monthly, enabled=enabled)
+            self._send_json(200, {"success": True, "budget": governor.get_summary()})
+        except Exception as e:
+            self._send_json(400, {"error": f"Invalid configuration: {e}"})
+
+    def handle_budget_trip(self):
+        governor.trip("Executive emergency trip triggered from CEO Cockpit.")
+        self._send_json(200, {"success": True, "budget": governor.get_summary()})
+
+    def handle_budget_reset(self):
+        governor.reset()
+        self._send_json(200, {"success": True, "budget": governor.get_summary()})
 
     def handle_health(self):
         litellm_ok = check_tcp_port("127.0.0.1", 4000)
@@ -237,8 +270,12 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(400, {"error": "Prompt cannot be empty"})
             return
 
-        # Model resolution
-        if mode == "auto":
+        # Model resolution & Circuit-Breaker Check
+        is_tripped = governor.is_tripped()
+        if is_tripped:
+            selected_model = "gemini-flash"
+            routing_reason = "⚠️ CIRCUIT BREAKER ACTIVE: Daily spend cap enforced. Safeguard Zero-Cost Routing ($0.00)"
+        elif mode == "auto":
             selected_model, routing_reason = classify_model_intent(prompt)
         elif mode == "deepseek":
             selected_model = "deepseek-reasoner"
@@ -296,6 +333,9 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             # Redis cache hit detection: exact match cache response is near-instant (< 250ms)
             is_cached = elapsed_ms < 350
 
+            cost_metrics = governor.record_completion(selected_model, usage, is_cached)
+            cost_saved_str = f"${cost_metrics['saved_cost_usd']:.4f} (100% saved via Redis Cache)" if is_cached else f"${cost_metrics['actual_cost_usd']:.4f} (Metered)"
+
             self._send_json(200, {
                 "success": True,
                 "content": content,
@@ -305,7 +345,14 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
                 "cached": is_cached,
                 "usage": usage,
                 "provider": "DeepSeek" if "deepseek" in selected_model else "Google Gemini",
-                "cost_saved": "$0.0024 (100% saved via Redis Cache)" if is_cached else "$0.0000"
+                "cost_saved": cost_saved_str,
+                "cost_actual": cost_metrics["actual_cost_usd"],
+                "circuit_breaker": {
+                    "tripped": cost_metrics["tripped"],
+                    "state": cost_metrics["circuit_breaker_state"],
+                    "today_spend": cost_metrics["today_spend_usd"]
+                },
+                "budget": governor.get_summary()
             })
 
         except urllib.error.HTTPError as e:

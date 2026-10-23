@@ -18,7 +18,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCopy = document.getElementById('btnCopy');
   const redisKeysVal = document.getElementById('redisKeysVal');
   const hudCostSaved = document.getElementById('hudCostSaved');
+  const hudHitRate = document.getElementById('hudHitRate');
+  const hudSpeedup = document.getElementById('hudSpeedup');
   const agentItems = document.querySelectorAll('.agent-item');
+
+  // Budget Governor & Circuit-Breaker Elements
+  const circuitBreakerBanner = document.getElementById('circuitBreakerBanner');
+  const cbIcon = document.getElementById('cbIcon');
+  const cbTitle = document.getElementById('cbTitle');
+  const cbSubtitle = document.getElementById('cbSubtitle');
+  const btnTripBreaker = document.getElementById('btnTripBreaker');
+  const btnResetBreaker = document.getElementById('btnResetBreaker');
+  const hudBreakerBadge = document.getElementById('hudBreakerBadge');
+  const progDailyText = document.getElementById('progDailyText');
+  const progDailyBar = document.getElementById('progDailyBar');
+  const progMonthlyText = document.getElementById('progMonthlyText');
+  const progMonthlyBar = document.getElementById('progMonthlyBar');
+  const capButtons = document.querySelectorAll('.cap-btn');
 
   let currentMode = 'auto';
   let selectedAgent = 'local-coordinator';
@@ -150,6 +166,11 @@ document.addEventListener('DOMContentLoaded', () => {
     renderOutput(data.content);
     outputStatus.textContent = `Completed (${data.latency_ms}ms)`;
 
+    // Update Budget Telemetry immediately if returned
+    if (data.budget) {
+      renderBudget(data.budget);
+    }
+
     // Refresh Cache Count
     refreshCacheStats();
   }
@@ -277,8 +298,155 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ==============================================================================
+  // Budget Governor & Circuit-Breaker Engine
+  // ==============================================================================
+  async function fetchBudget() {
+    try {
+      const res = await fetch('/api/budget');
+      if (!res.ok) return;
+      const b = await res.json();
+      renderBudget(b);
+    } catch (err) {
+      console.warn('Budget fetch failed', err);
+    }
+  }
+
+  function renderBudget(b) {
+    if (!b) return;
+
+    // 1. Circuit-Breaker Ribbon State
+    if (circuitBreakerBanner) {
+      circuitBreakerBanner.className = `circuit-breaker-banner ${b.circuit_breaker_state.toLowerCase()}`;
+    }
+
+    if (b.circuit_breaker_state === 'TRIPPED') {
+      if (cbIcon) cbIcon.textContent = '🚨';
+      if (cbTitle) cbTitle.textContent = 'CIRCUIT BREAKER: TRIPPED (ZERO-COST SAFEGUARD ENFORCED)';
+      if (cbSubtitle) cbSubtitle.textContent = b.circuit_breaker_trip_reason || 'Hard spend limit reached. All model routing forced to Zero-Cost Local / Free Tier.';
+      if (btnTripBreaker) btnTripBreaker.style.display = 'none';
+      if (btnResetBreaker) btnResetBreaker.style.display = 'inline-block';
+      if (hudBreakerBadge) {
+        hudBreakerBadge.className = 'status-badge tripped';
+        hudBreakerBadge.textContent = 'TRIPPED';
+      }
+    } else if (b.circuit_breaker_state === 'WARNING') {
+      if (cbIcon) cbIcon.textContent = '⚠️';
+      if (cbTitle) cbTitle.textContent = 'CIRCUIT BREAKER: WARNING (SPEND ELEVATED)';
+      if (cbSubtitle) cbSubtitle.textContent = `Warning: ${b.daily_used_pct}% of daily cap utilized ($${b.today_spend_usd.toFixed(4)} of $${b.daily_budget_usd.toFixed(2)}).`;
+      if (btnTripBreaker) btnTripBreaker.style.display = 'inline-block';
+      if (btnResetBreaker) btnResetBreaker.style.display = 'none';
+      if (hudBreakerBadge) {
+        hudBreakerBadge.className = 'status-badge warning';
+        hudBreakerBadge.textContent = 'WARNING';
+      }
+    } else {
+      if (cbIcon) cbIcon.textContent = '🛡️';
+      if (cbTitle) cbTitle.textContent = 'CIRCUIT BREAKER: ARMED (NORMAL HYBRID)';
+      if (cbSubtitle) cbSubtitle.textContent = `Hard spend cap active ($${b.daily_budget_usd.toFixed(2)}/day). Auto-fallback to zero-cost safeguard models if cap breached.`;
+      if (btnTripBreaker) btnTripBreaker.style.display = 'inline-block';
+      if (btnResetBreaker) btnResetBreaker.style.display = 'none';
+      if (hudBreakerBadge) {
+        hudBreakerBadge.className = 'status-badge green';
+        hudBreakerBadge.textContent = 'ARMED';
+      }
+    }
+
+    // 2. Daily Spend Progress Bar
+    if (progDailyText) {
+      progDailyText.textContent = `$${b.today_spend_usd.toFixed(4)} / $${b.daily_budget_usd.toFixed(2)} (${b.daily_used_pct}%)`;
+    }
+    if (progDailyBar) {
+      progDailyBar.style.width = `${Math.min(100, b.daily_used_pct)}%`;
+      if (b.daily_used_pct >= 100) {
+        progDailyBar.className = 'progress-fill fill-red';
+      } else if (b.daily_used_pct >= 80) {
+        progDailyBar.className = 'progress-fill fill-yellow';
+      } else {
+        progDailyBar.className = 'progress-fill fill-green';
+      }
+    }
+
+    // 3. Monthly Spend Progress Bar
+    if (progMonthlyText) {
+      progMonthlyText.textContent = `$${b.month_spend_usd.toFixed(4)} / $${b.monthly_budget_usd.toFixed(2)} (${b.monthly_used_pct}%)`;
+    }
+    if (progMonthlyBar) {
+      progMonthlyBar.style.width = `${Math.min(100, b.monthly_used_pct)}%`;
+    }
+
+    // 4. Savings Telemetry
+    if (hudCostSaved) {
+      hudCostSaved.textContent = `$${b.cached_savings_usd.toFixed(4)}`;
+    }
+    if (hudHitRate) {
+      hudHitRate.textContent = `${b.cache_hit_rate_pct}% Cache Rate`;
+    }
+
+    // 5. Active Cap Button Highlight
+    capButtons.forEach(btn => {
+      const capVal = parseFloat(btn.dataset.cap);
+      btn.classList.toggle('active', Math.abs(capVal - b.daily_budget_usd) < 0.01);
+    });
+  }
+
+  // Emergency Trip Action
+  if (btnTripBreaker) {
+    btnTripBreaker.addEventListener('click', async () => {
+      try {
+        btnTripBreaker.disabled = true;
+        const res = await fetch('/api/budget/trip', { method: 'POST' });
+        const data = await res.json();
+        if (data.budget) renderBudget(data.budget);
+      } catch (err) {
+        console.error('Trip action failed', err);
+      } finally {
+        btnTripBreaker.disabled = false;
+      }
+    });
+  }
+
+  // Reset Action
+  if (btnResetBreaker) {
+    btnResetBreaker.addEventListener('click', async () => {
+      try {
+        btnResetBreaker.disabled = true;
+        const res = await fetch('/api/budget/reset', { method: 'POST' });
+        const data = await res.json();
+        if (data.budget) renderBudget(data.budget);
+      } catch (err) {
+        console.error('Reset action failed', err);
+      } finally {
+        btnResetBreaker.disabled = false;
+      }
+    });
+  }
+
+  // Quick Cap Click Handlers
+  capButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newDailyCap = parseFloat(btn.dataset.cap);
+      try {
+        capButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const res = await fetch('/api/budget/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ daily_budget_usd: newDailyCap })
+        });
+        const data = await res.json();
+        if (data.budget) renderBudget(data.budget);
+      } catch (err) {
+        console.error('Failed to update budget cap', err);
+      }
+    });
+  });
+
   // Initial runs
   refreshHealth();
   refreshCacheStats();
+  fetchBudget();
+
   setInterval(refreshHealth, 10000);
+  setInterval(fetchBudget, 5000);
 });
