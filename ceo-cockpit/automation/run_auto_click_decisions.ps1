@@ -1,7 +1,10 @@
 # Auto-Clicker Runner & Background Process Watchdog
 $ErrorActionPreference = "Stop"
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = $PSScriptRoot
+if (-not $ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $ScriptDir) { $ScriptDir = "F:\src\github.com\intellibitz\archives\ceo-cockpit\automation" }
+
 $TargetScript = Join-Path $ScriptDir "auto_click_decisions.py"
 
 # Stop any duplicate running clicker processes

@@ -18,8 +18,12 @@ import re
 import concurrent.futures
 from typing import Dict, Any, Tuple, List
 from budget_governor import governor
+import modules as cockpit_modules
+from modules import security as cockpit_security
 
-PORT = 8080
+cockpit_modules.load_all()
+
+PORT = int(os.environ.get("COCKPIT_PORT", 8080))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "web") if os.path.exists(os.path.join(BASE_DIR, "web")) else BASE_DIR
 
@@ -503,20 +507,37 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Origin", cockpit_security.cors_origin(self.headers))
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
         self.wfile.write(body)
 
+    def _guard(self, method: str) -> bool:
+        """Enforce loopback host + same-origin policy. Returns False if rejected."""
+        ok, reason = cockpit_security.check_request(method, self.headers)
+        if not ok:
+            self._send_json(403, {"success": False, "error": f"Forbidden: {reason}"})
+        return ok
+
+    def _module_dispatch(self, method: str) -> bool:
+        parsed = urllib.parse.urlparse(self.path)
+        if not parsed.path.startswith("/api/"):
+            return False
+        return cockpit_modules.dispatch(self, method, parsed.path, urllib.parse.parse_qs(parsed.query))
+
     def do_OPTIONS(self):
+        if not self._guard("OPTIONS"):
+            return
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Origin", cockpit_security.cors_origin(self.headers))
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
 
     def do_GET(self):
+        if not self._guard("GET") or self._module_dispatch("GET"):
+            return
         parsed = urllib.parse.urlparse(self.path)
         path_only = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
@@ -550,6 +571,8 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
+        if not self._guard("POST") or self._module_dispatch("POST"):
+            return
         parsed = urllib.parse.urlparse(self.path)
         path_only = parsed.path
 
@@ -577,6 +600,8 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(404, {"error": "Endpoint not found"})
 
     def do_DELETE(self):
+        if not self._guard("DELETE") or self._module_dispatch("DELETE"):
+            return
         parsed = urllib.parse.urlparse(self.path)
         path_only = parsed.path
         if path_only.startswith("/api/sessions/"):
@@ -968,7 +993,7 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-cache, no-transform")
         self.send_header("Connection", "keep-alive")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", cockpit_security.cors_origin(self.headers))
         self.end_headers()
 
         def write_sse(payload: Dict[str, Any]) -> bool:
@@ -1511,8 +1536,10 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
 
 def run():
-    with ThreadedHTTPServer(("", PORT), CockpitHandler) as httpd:
-        print(f"CEO Cockpit Mission Control running on http://127.0.0.1:{PORT}")
+    bind_host = cockpit_security.BIND_HOST
+    with ThreadedHTTPServer((bind_host, PORT), CockpitHandler) as httpd:
+        print(f"CEO Cockpit Mission Control running on http://{bind_host}:{PORT} "
+              f"({len(cockpit_modules.registered_routes())} module routes)", flush=True)
         httpd.serve_forever()
 
 if __name__ == "__main__":

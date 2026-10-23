@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="deck.css">
 </head>
 <body>
   <!-- Ambient Glow Effects -->
@@ -65,6 +66,11 @@
         <button class="header-action-btn primary" id="btnNewSession" title="Start a New Executive Thread">
           <span class="btn-icon">＋</span>
           <span class="btn-text">New Thread</span>
+        </button>
+        <button class="header-action-btn deck-trigger" id="btnOpenDeck" title="Command Deck: Ops, Missions, Playbooks, Analytics, Git, Activity (Ctrl+J)">
+          <span class="btn-icon">🎛️</span>
+          <span class="btn-text">Command Deck</span>
+          <span class="key-shortcut">Ctrl+J</span>
         </button>
         <button class="header-action-btn ghost cmd-trigger" id="btnOpenCommandPalette" title="Global Executive Command Palette (Ctrl+K)">
           <span class="btn-icon">⌨️</span>
@@ -739,6 +745,39 @@
     </div>
   </div>
 
+  <!-- Command Deck (Rounds 3-10 extension workspace) -->
+  <div class="deck-backdrop" id="deckBackdrop" style="display: none;">
+    <aside class="deck-panel" id="deckPanel" aria-label="Command Deck">
+      <nav class="deck-nav">
+        <div class="deck-brand">Command Deck</div>
+        <div id="deckNav"></div>
+        <div class="deck-nav-footer">
+          <div><kbd>Ctrl</kbd>+<kbd>J</kbd> toggle</div>
+          <div><kbd>Alt</kbd>+<kbd>1-9</kbd> jump</div>
+          <div><kbd>Esc</kbd> close</div>
+        </div>
+      </nav>
+      <div class="deck-body">
+        <div class="deck-header">
+          <div class="deck-header-left">
+            <span class="deck-header-icon" id="deckIcon">🎛️</span>
+            <div class="deck-header-text">
+              <span class="deck-title" id="deckTitle">Command Deck</span>
+              <span class="deck-subtitle" id="deckSubtitle"></span>
+            </div>
+          </div>
+          <div class="deck-header-right">
+            <div id="deckHeaderActions"></div>
+            <button class="deck-close" id="btnCloseDeck" title="Close (Esc)">✕</button>
+          </div>
+        </div>
+        <div class="deck-content" id="deckContent"></div>
+      </div>
+    </aside>
+  </div>
+
   <script src="app.js"></script>
+  <script src="modules/deck.js"></script>
+  <script src="modules/ops.js"></script>
 </body>
 </html>

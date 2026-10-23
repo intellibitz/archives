@@ -1097,6 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       displayError(err.message || 'Operational communication error occurred');
     } finally {
+      document.dispatchEvent(new CustomEvent('cockpit:turn-complete', { detail: { prompt } }));
       refreshHealth();
     }
   }
@@ -2062,6 +2063,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // ==============================================================================
+  // Extension Bridge (consumed by web/modules/*.js Command Deck panels)
+  // ==============================================================================
+  window.Cockpit = {
+    registerAction: (action) => { cpActions.push(action); },
+    escapeHtml,
+    formatMarkdown: formatExecutiveMarkdown,
+    getWorkspace: () => activeWorkspace,
+    getPinnedFiles: () => pinnedFiles.slice(),
+    pinFile: (fileData) => pinFile(fileData),
+    getPrompt: () => executivePrompt.value,
+    setPrompt: (text) => { executivePrompt.value = text; executivePrompt.focus(); executivePrompt.dispatchEvent(new Event('input')); },
+    submitPrompt: async (text) => { executivePrompt.value = text; await dispatchCommand(); },
+    getSelections: () => ({
+      model: selectModel ? selectModel.value : 'auto',
+      effort: selectEffort ? selectEffort.value : 'auto',
+      autonomy: selectAutonomy ? selectAutonomy.value : 'full'
+    }),
+    renderBudget: (b) => renderBudget(b),
+    refreshBudget: () => fetchBudget(),
+    newSession: () => createNewSession(),
+    closePalette: () => closeCommandPalette()
+  };
+  document.dispatchEvent(new CustomEvent('cockpit:ready'));
 
   // Initial runs
   fetchSessions();

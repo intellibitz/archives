@@ -6,13 +6,13 @@
   "circuit_breaker_state": "NORMAL",
   "circuit_breaker_trip_reason": "",
   "tripped_at": null,
-  "today_spend_usd": 0.001288,
+  "today_spend_usd": 0.0,
   "month_spend_usd": 0.001288,
   "lifetime_spend_usd": 0.001288,
   "cached_savings_usd": 0.032,
   "total_requests": 21,
   "cached_requests": 16,
-  "last_reset_date": "2026-10-23",
+  "last_reset_date": "2026-10-24",
   "audit_log": [
     {
       "timestamp": 1792769797.00981,
@@ -31,6 +31,12 @@
       "date": "2026-10-23T21:13:44.462053",
       "event": "CIRCUIT_BREAKER_RESET",
       "details": "Executive manually reset circuit breaker. Normal hybrid routing restored."
+    },
+    {
+      "timestamp": 1792781928.4095323,
+      "date": "2026-10-24T00:28:48.409532",
+      "event": "DAILY_ROLLOVER",
+      "details": "Rollover to new operational day. Today's spend reset."
     }
   ]
 }
