@@ -19,16 +19,11 @@ async def main():
         print("Install via: pip install autogen-agentchat autogen-ext[openai]")
         return
 
-    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("⚠️ No API key set (DEEPSEEK_API_KEY or OPENAI_API_KEY). Running setup check.")
-        print("AutoGen AgentChat configuration validated.")
-        return
+    api_key = os.environ.get("LITELLM_MASTER_KEY", "orchestrator-local-gateway")
+    base_url = os.environ.get("LITELLM_PROXY_URL", "http://127.0.0.1:4000/v1")
+    model_name = "deepseek-coder"
 
-    # Configure model client
-    base_url = "https://api.deepseek.com/v1" if os.environ.get("DEEPSEEK_API_KEY") else None
-    model_name = "deepseek-chat" if os.environ.get("DEEPSEEK_API_KEY") else "gpt-4o-mini"
-
+    # Configure model client pointing to local LiteLLM Proxy Gateway
     model_client = OpenAIChatCompletionClient(
         model=model_name,
         api_key=api_key,

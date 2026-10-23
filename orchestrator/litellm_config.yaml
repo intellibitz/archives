@@ -1,192 +1,162 @@
-# ==============================================================================
-# LiteLLM Proxy Gateway Configuration - Multi-Model Orchestration Plumbing
-# ==============================================================================
-# Unified OpenAI-compatible gateway routing between Monthly Subscriptions
-# (Antigravity/Gemini, Claude, Codex), Pay-as-you-go Swarms (DeepSeek, GLM),
-# and Local CachyOS GPU/RAM Models (Ollama Qwen-Coder, DeepSeek-R1, Llama 3.3).
-
 model_list:
-  # ----------------------------------------------------------------------------
-  # 1. Antigravity Context Librarian (Gemini 2M Context -> Fallback: Local Coder)
-  # ----------------------------------------------------------------------------
-  - model_name: antigravity-librarian
-    litellm_params:
-      model: gemini/gemini-flash-latest
-      api_key: "os.environ/GEMINI_API_KEY"
-      rpm: 100
-      max_tokens: 8192
-
-  - model_name: antigravity-librarian
-    litellm_params:
-      model: ollama/qwen2.5-coder:7b
-      api_base: "http://localhost:11434"
-
-  - model_name: gemini-3.8-flash
-    litellm_params:
-      model: gemini/gemini-3.8-flash
-      api_key: "os.environ/GEMINI_API_KEY"
-      rpm: 120
-      max_tokens: 8192
-
-  - model_name: gemini-payg
-    litellm_params:
-      model: gemini/gemini-3.8-flash
-      api_key: "os.environ/GEMINI_API_KEY"
-      rpm: 120
-      max_tokens: 8192
-
-  - model_name: gemini-payg
-    litellm_params:
-      model: gemini/gemini-flash-latest
-      api_key: "os.environ/GEMINI_API_KEY"
-
-  - model_name: antigravity-flash-latest
-    litellm_params:
-      model: gemini/gemini-flash-latest
-      api_key: "os.environ/GEMINI_API_KEY"
-      rpm: 100
-      max_tokens: 8192
-
-  - model_name: antigravity-pro
-    litellm_params:
-      model: gemini/gemini-pro-latest
-      api_key: "os.environ/GEMINI_API_KEY"
-      rpm: 60
-
-  # ----------------------------------------------------------------------------
-  # 2. Claude Master Architect (Claude 3.5 Sonnet -> Fallback: Local Coder)
-  # ----------------------------------------------------------------------------
-  - model_name: claude-architect
-    litellm_params:
-      model: anthropic/claude-3-5-sonnet-20241022
-      api_key: "os.environ/ANTHROPIC_API_KEY"
-      max_tokens: 8192
-
-  - model_name: claude-architect
-    litellm_params:
-      model: gemini/gemini-flash-latest
-      api_key: "os.environ/GEMINI_API_KEY"
-
-  - model_name: claude-architect
-    litellm_params:
-      model: ollama/qwen2.5-coder:7b
-      api_base: "http://localhost:11434"
-
-  # ----------------------------------------------------------------------------
-  # 3. OpenAI / Codex Specialist (o3-mini -> Fallback: Local Reasoner)
-  # ----------------------------------------------------------------------------
-  - model_name: codex-specialist
-    litellm_params:
-      model: openai/o3-mini
-      api_key: "os.environ/OPENAI_API_KEY"
-
-  - model_name: codex-specialist
-    litellm_params:
-      model: ollama/deepseek-r1:32b
-      api_base: "http://localhost:11434"
-
-  - model_name: openai-gpt4o
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: "os.environ/OPENAI_API_KEY"
-      max_tokens: 4096
-
-  - model_name: openai-gpt4o
-    litellm_params:
-      model: ollama/qwen2.5-coder:7b
-      api_base: "http://localhost:11434"
-
-  # ----------------------------------------------------------------------------
-  # 4. DeepSeek Reasoner & Coder (Cloud API -> Fallback: Local CachyOS Models)
-  # ----------------------------------------------------------------------------
-  - model_name: deepseek-reasoner
-    litellm_params:
-      model: deepseek/deepseek-reasoner
-      api_key: "os.environ/DEEPSEEK_API_KEY"
-      api_base: "https://api.deepseek.com/v1"
-      max_tokens: 8192
-
-  - model_name: deepseek-reasoner
-    litellm_params:
-      model: ollama/deepseek-r1:32b
-      api_base: "http://localhost:11434"
-
-  - model_name: deepseek-coder
-    litellm_params:
-      model: deepseek/deepseek-chat
-      api_key: "os.environ/DEEPSEEK_API_KEY"
-      api_base: "https://api.deepseek.com/v1"
-      max_tokens: 8192
-
-  - model_name: deepseek-coder
-    litellm_params:
-      model: ollama/qwen2.5-coder:7b
-      api_base: "http://localhost:11434"
-
-  # ----------------------------------------------------------------------------
-  # 5. Zhipu GLM Swarm Worker (Zhipu Cloud -> Fallback: Local Coder)
-  # ----------------------------------------------------------------------------
-  - model_name: glm-utility
-    litellm_params:
-      model: openai/glm-4-flash
-      api_key: "os.environ/ZHIPU_API_KEY"
-      api_base: "https://open.bigmodel.cn/api/paas/v4"
-      max_tokens: 4096
-
-  - model_name: glm-utility
-    litellm_params:
-      model: ollama/qwen2.5-coder:7b
-      api_base: "http://localhost:11434"
-
-  # ----------------------------------------------------------------------------
-  # 6. Dedicated Local Models (Offline / Unmetered)
-  # ----------------------------------------------------------------------------
-  - model_name: local-coder
-    litellm_params:
-      model: ollama/qwen2.5-coder:7b
-      api_base: "http://localhost:11434"
-
-  - model_name: local-reasoner
-    litellm_params:
-      model: ollama/deepseek-r1:32b
-      api_base: "http://localhost:11434"
-
-  - model_name: local-llama
-    litellm_params:
-      model: ollama/llama3.3:70b
-      api_base: "http://localhost:11434"
-
-# ------------------------------------------------------------------------------
-# Router & Proxy Settings
-# ------------------------------------------------------------------------------
+- model_name: antigravity-librarian
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    rpm: 100
+    max_tokens: 8192
+    caching: true
+- model_name: antigravity-librarian
+  litellm_params:
+    model: ollama/qwen2.5-coder:7b
+    api_base: http://localhost:11434
+- model_name: gemini-3.8-flash
+  litellm_params:
+    model: gemini/gemini-3.8-flash
+    api_key: os.environ/GEMINI_API_KEY
+    rpm: 120
+    max_tokens: 8192
+    caching: true
+- model_name: gemini-payg
+  litellm_params:
+    model: gemini/gemini-3.8-flash
+    api_key: os.environ/GEMINI_API_KEY
+    rpm: 120
+    max_tokens: 8192
+    caching: true
+- model_name: gemini-payg
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: antigravity-flash-latest
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    rpm: 100
+    max_tokens: 8192
+    caching: true
+- model_name: antigravity-pro
+  litellm_params:
+    model: gemini/gemini-pro-latest
+    api_key: os.environ/GEMINI_API_KEY
+    rpm: 60
+    caching: true
+- model_name: claude-architect
+  litellm_params:
+    model: anthropic/claude-3-5-sonnet-20241022
+    api_key: os.environ/ANTHROPIC_API_KEY
+    max_tokens: 8192
+- model_name: claude-architect
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: claude-architect
+  litellm_params:
+    model: ollama/qwen2.5-coder:7b
+    api_base: http://localhost:11434
+- model_name: codex-specialist
+  litellm_params:
+    model: openai/o3-mini
+    api_key: os.environ/OPENAI_API_KEY
+- model_name: codex-specialist
+  litellm_params:
+    model: ollama/deepseek-r1:32b
+    api_base: http://localhost:11434
+- model_name: openai-gpt4o
+  litellm_params:
+    model: openai/gpt-4o
+    api_key: os.environ/OPENAI_API_KEY
+    max_tokens: 4096
+- model_name: openai-gpt4o
+  litellm_params:
+    model: ollama/qwen2.5-coder:7b
+    api_base: http://localhost:11434
+- model_name: deepseek-reasoner
+  litellm_params:
+    model: deepseek/deepseek-reasoner
+    api_key: os.environ/DEEPSEEK_API_KEY
+    api_base: https://api.deepseek.com/v1
+    max_tokens: 8192
+    caching: true
+- model_name: deepseek-reasoner
+  litellm_params:
+    model: ollama/deepseek-r1:32b
+    api_base: http://localhost:11434
+- model_name: deepseek-coder
+  litellm_params:
+    model: deepseek/deepseek-chat
+    api_key: os.environ/DEEPSEEK_API_KEY
+    api_base: https://api.deepseek.com/v1
+    max_tokens: 8192
+    caching: true
+- model_name: deepseek-coder
+  litellm_params:
+    model: ollama/qwen2.5-coder:7b
+    api_base: http://localhost:11434
+- model_name: glm-utility
+  litellm_params:
+    model: openai/glm-4-flash
+    api_key: os.environ/ZHIPU_API_KEY
+    api_base: https://open.bigmodel.cn/api/paas/v4
+    max_tokens: 4096
+- model_name: glm-utility
+  litellm_params:
+    model: ollama/qwen2.5-coder:7b
+    api_base: http://localhost:11434
+- model_name: local-coder
+  litellm_params:
+    model: ollama/qwen2.5-coder:7b
+    api_base: http://localhost:11434
+- model_name: local-reasoner
+  litellm_params:
+    model: ollama/deepseek-r1:32b
+    api_base: http://localhost:11434
+- model_name: local-llama
+  litellm_params:
+    model: ollama/llama3.3:70b
+    api_base: http://localhost:11434
 router_settings:
-  routing_strategy: "cost-based-routing"
+  routing_strategy: cost-based-routing
   timeout: 60
   num_retries: 2
   allowed_fails: 1
   cooldown_time: 30
   cache_responses: true
   fallbacks:
-    - gemini-payg: ["gemini-3.8-flash", "antigravity-flash-latest", "local-coder"]
-    - deepseek-coder: ["local-coder"]
-    - deepseek-reasoner: ["antigravity-flash-latest", "local-coder"]
-    - claude-architect: ["antigravity-flash-latest", "local-coder"]
-    - antigravity-librarian: ["local-coder"]
-    - glm-utility: ["local-coder"]
-    - codex-specialist: ["antigravity-flash-latest", "local-coder"]
-    - openai-gpt4o: ["local-coder"]
-
+  - gemini-payg:
+    - gemini-3.8-flash
+    - antigravity-flash-latest
+    - local-coder
+  - deepseek-coder:
+    - local-coder
+  - deepseek-reasoner:
+    - antigravity-flash-latest
+    - local-coder
+  - claude-architect:
+    - antigravity-flash-latest
+    - local-coder
+  - antigravity-librarian:
+    - local-coder
+  - glm-utility:
+    - local-coder
+  - codex-specialist:
+    - antigravity-flash-latest
+    - local-coder
+  - openai-gpt4o:
+    - local-coder
 general_settings:
-  master_key: "orchestrator-local-gateway"
+  master_key: os.environ/LITELLM_MASTER_KEY
+  dangerously_permit_weak_or_unset_master_key: true
   alerting: []
   store_model_in_db: false
-
 litellm_settings:
   drop_params: true
   set_verbose: false
   request_timeout: 60
   cache: true
   cache_params:
-    type: "disk"
+    type: disk
     disk_cache_dir: "./.cache/litellm"
     default_in_memory_ttl: 86400

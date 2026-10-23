@@ -11,15 +11,13 @@ from crewai import Agent, Crew, Process, Task
 
 
 def main():
-    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("⚠️ Warning: No API key set. Please set DEEPSEEK_API_KEY, OPENROUTER_API_KEY, or OPENAI_API_KEY.")
-        print("Demonstrating Crew structure definition.\n")
-
-    # Configure DeepSeek or OpenRouter model
-    if os.environ.get("DEEPSEEK_API_KEY"):
-        os.environ["OPENAI_API_BASE"] = "https://api.deepseek.com/v1"
-        os.environ["OPENAI_MODEL_NAME"] = "deepseek-chat"
+    # Route through local LiteLLM Proxy Gateway
+    proxy_url = os.environ.get("LITELLM_PROXY_URL", "http://127.0.0.1:4000/v1")
+    master_key = os.environ.get("LITELLM_MASTER_KEY", "orchestrator-local-gateway")
+    os.environ["OPENAI_API_BASE"] = proxy_url
+    os.environ["OPENAI_API_KEY"] = master_key
+    os.environ["OPENAI_MODEL_NAME"] = "openai/deepseek-coder"
+    api_key = master_key
 
     # 1. Define Agents
     researcher = Agent(

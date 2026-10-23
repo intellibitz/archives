@@ -33,15 +33,9 @@ def main():
         print("Install via: pip install pydantic-ai")
         return
 
-    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("⚠️ No API key found. Demonstrating Pydantic AI agent schema initialization.")
-        print(f"Output Schema: {AgentAnalysis.model_json_schema()}")
-        return
-
-    model_string = "openai:deepseek-chat" if os.environ.get("DEEPSEEK_API_KEY") else "openai:gpt-4o-mini"
-    if os.environ.get("DEEPSEEK_API_KEY"):
-        os.environ["OPENAI_BASE_URL"] = "https://api.deepseek.com/v1"
+    os.environ["OPENAI_BASE_URL"] = os.environ.get("LITELLM_PROXY_URL", "http://127.0.0.1:4000/v1")
+    os.environ["OPENAI_API_KEY"] = os.environ.get("LITELLM_MASTER_KEY", "orchestrator-local-gateway")
+    model_string = "openai:deepseek-coder"
 
     # Instantiate Type-Safe Agent
     agent = Agent(

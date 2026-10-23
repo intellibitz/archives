@@ -16,21 +16,12 @@ def main():
         print("Install via: pip install smolagents duckduckgo-search litellm")
         return
 
-    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("⚠️ No API key set. Demonstrating Smolagents structure.")
-        print("CodeAgent structure initialized.")
-        return
-
-    # Instantiate model using LiteLLM wrapper (DeepSeek-V3 recommended)
-    if os.environ.get("DEEPSEEK_API_KEY"):
-        model = LiteLLMModel(
-            model_id="deepseek/deepseek-chat",
-            api_key=os.environ["DEEPSEEK_API_KEY"],
-            api_base="https://api.deepseek.com/v1",
-        )
-    else:
-        model = HfApiModel()
+    # Route through local LiteLLM Proxy Gateway
+    model = LiteLLMModel(
+        model_id="openai/deepseek-coder",
+        api_key=os.environ.get("LITELLM_MASTER_KEY", "orchestrator-local-gateway"),
+        api_base=os.environ.get("LITELLM_PROXY_URL", "http://127.0.0.1:4000/v1"),
+    )
 
     agent = CodeAgent(
         tools=[DuckDuckGoSearchTool()],

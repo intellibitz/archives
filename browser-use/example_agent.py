@@ -13,15 +13,10 @@ from langchain_openai import ChatOpenAI
 
 
 async def main():
-    # 1. Configure LLM provider (DeepSeek-V3 recommended for agentic cost efficiency)
-    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("⚠️ Warning: No API key found. Set DEEPSEEK_API_KEY, OPENROUTER_API_KEY, or OPENAI_API_KEY.")
-        print("Running in dry-run/demonstration mode.")
-        return
-
-    base_url = "https://api.deepseek.com/v1" if os.environ.get("DEEPSEEK_API_KEY") else None
-    model_name = "deepseek-chat" if os.environ.get("DEEPSEEK_API_KEY") else "gpt-4o-mini"
+    # Configure LLM provider via local LiteLLM Proxy Gateway
+    api_key = os.environ.get("LITELLM_MASTER_KEY", "orchestrator-local-gateway")
+    base_url = os.environ.get("LITELLM_PROXY_URL", "http://127.0.0.1:4000/v1")
+    model_name = "deepseek-coder"
 
     llm = ChatOpenAI(
         model=model_name,
