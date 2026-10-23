@@ -155,6 +155,8 @@ def active_workspace() -> str:
 # Activity event bus (consumed by the Activity Feed module)
 # ------------------------------------------------------------------------------
 ACTIVITY_FILE = data_path("activity.jsonl")
+EVENT_SUBSCRIBERS: List[Any] = []
+_event_lock = threading.Lock()
 
 
 def emit_event(kind: str, title: str, detail: str = "", level: str = "info",
@@ -171,6 +173,13 @@ def emit_event(kind: str, title: str, detail: str = "", level: str = "info",
         append_jsonl(ACTIVITY_FILE, record, max_lines=3000)
     except Exception as e:
         log("events", f"emit failed: {e}")
+
+    with _event_lock:
+        for q in list(EVENT_SUBSCRIBERS):
+            try:
+                q.put_nowait(record)
+            except Exception:
+                pass
 
 
 # ------------------------------------------------------------------------------

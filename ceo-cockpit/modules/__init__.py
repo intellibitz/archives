@@ -21,6 +21,7 @@ FEATURE_MODULES = [
     "modules.playbooks",
     "modules.analytics",
     "modules.git_ops",
+    "modules.activity",
 ]
 
 

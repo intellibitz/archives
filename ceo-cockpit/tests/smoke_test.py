@@ -271,6 +271,19 @@ def t_git_assets():
     assert s == 200, f"git_ops.js status={s}"
 
 
+# ------------------------------------------------------------- activity
+@check("activity")
+def t_activity_recent():
+    s, d = request("GET", "/api/activity/recent?limit=10")
+    assert s == 200 and "events" in d, f"status={s}"
+
+
+@check("activity")
+def t_activity_assets():
+    s, _, _ = request("GET", "/modules/activity.js", raw=True)
+    assert s == 200, f"activity.js status={s}"
+
+
 def main():
     global BASE
     ap = argparse.ArgumentParser()

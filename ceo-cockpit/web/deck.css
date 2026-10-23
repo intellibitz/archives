@@ -454,6 +454,30 @@
 .git-commit-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; font-size: 11.5px; color: var(--text-secondary); }
 .git-commit-bullet { color: var(--accent-cyan); font-size: 8px; }
 
+/* ---------- Round 9: Real-Time Activity Stream ---------- */
+.activity-layout { display: flex; flex-direction: column; gap: 12px; }
+.activity-filters { display: flex; gap: 6px; }
+.filter-chip { cursor: pointer; transition: all var(--transition-fast); }
+.filter-chip.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); font-weight: 600; }
+.activity-stream-card {
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.25); max-height: calc(100vh - 240px); overflow-y: auto;
+}
+.activity-feed { display: flex; flex-direction: column; }
+.activity-event-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03); transition: background var(--transition-fast);
+}
+.activity-event-row:hover { background: rgba(255, 255, 255, 0.02); }
+.event-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); flex-shrink: 0; width: 68px; }
+.event-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.event-title { font-size: 12.5px; color: var(--text-primary); }
+.event-detail { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-level-pill { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; }
+.activity-event-row.success .event-title { color: #A7F3D0; }
+.activity-event-row.warning .event-title { color: #FDE68A; }
+.activity-event-row.error .event-title { color: #FDA4AF; }
+
 /* ---------- Animations ---------- */
 @keyframes deckFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes deckPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
