@@ -210,6 +210,27 @@ def t_voice_assets():
     assert s == 200, f"voice.js status={s}"
 
 
+# --------------------------------------------------------------- playbooks
+@check("playbooks")
+def t_playbooks_catalog_listed():
+    s, d = request("GET", "/api/playbooks")
+    assert s == 200 and len(d.get("playbooks", [])) >= 5, f"status={s} playbooks={len(d.get('playbooks', []))}"
+    titles = [p["title"] for p in d.get("playbooks", [])]
+    assert any("Security" in t for t in titles), "Security playbook missing"
+
+
+@check("playbooks")
+def t_playbooks_assets():
+    s, _, _ = request("GET", "/modules/playbooks.js", raw=True)
+    assert s == 200, f"playbooks.js status={s}"
+
+
+@check("playbooks")
+def t_playbooks_history():
+    s, d = request("GET", "/api/playbooks/history?limit=5")
+    assert s == 200 and "history" in d, f"status={s}"
+
+
 def main():
     global BASE
     ap = argparse.ArgumentParser()

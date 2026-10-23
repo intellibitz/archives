@@ -18,6 +18,7 @@ _PREFIX: List[Tuple[str, str, Callable]] = []
 FEATURE_MODULES = [
     "modules.ops",
     "modules.swarm",
+    "modules.playbooks",
 ]
 
 
