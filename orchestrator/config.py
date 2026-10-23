@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 
 # Automatically load .env and system AI environment files if present
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(Path.home() / ".secrets" / ".env")
+load_dotenv(Path.home() / ".secrets" / "intellibitz" / ".env")
+load_dotenv(Path.home() / ".env")
 load_dotenv(WORKSPACE_ROOT / ".env")
 load_dotenv(WORKSPACE_ROOT / ".env.orchestrator")
 load_dotenv("/mnt/data/var/AI/env_api_keys.sh")
