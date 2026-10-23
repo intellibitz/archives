@@ -17,6 +17,7 @@ _PREFIX: List[Tuple[str, str, Callable]] = []
 # Feature modules loaded at startup (order is irrelevant; each self-registers).
 FEATURE_MODULES = [
     "modules.ops",
+    "modules.swarm",
 ]
 
 

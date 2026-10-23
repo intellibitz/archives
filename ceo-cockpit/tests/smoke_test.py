@@ -183,6 +183,26 @@ def t_timeout_enforced():
     assert job["status"] == "timeout" and job["duration_ms"] < 15000, f"status={job['status']} {job['duration_ms']}ms"
 
 
+# ------------------------------------------------------------------- swarm
+@check("swarm")
+def t_swarm_topology_listed():
+    s, d = request("GET", "/api/swarm/topology")
+    assert s == 200 and len(d.get("agents", [])) >= 5, f"status={s} agents={len(d.get('agents', []))}"
+    assert "Parallel Council" in str(d) or "parallel-council" in str(d), "missing council strategy"
+
+
+@check("swarm")
+def t_swarm_assets():
+    s, _, _ = request("GET", "/modules/swarm.js", raw=True)
+    assert s == 200, f"swarm.js status={s}"
+
+
+@check("swarm")
+def t_swarm_history():
+    s, d = request("GET", "/api/swarm/history?limit=5")
+    assert s == 200 and "history" in d, f"status={s}"
+
+
 def main():
     global BASE
     ap = argparse.ArgumentParser()
