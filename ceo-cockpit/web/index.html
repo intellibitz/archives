@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antigravity CEO Cockpit — Executive AI OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient Glow Effects -->
+  <div class="ambient-glow glow-cyan"></div>
+  <div class="ambient-glow glow-purple"></div>
+
+  <div class="cockpit-container">
+    <!-- Top Executive Nav Header -->
+    <header class="executive-header">
+      <div class="brand-group">
+        <div class="brand-badge">
+          <span class="pulse-indicator"></span>
+          <span class="badge-title">AI OS MISSION CONTROL</span>
+        </div>
+        <h1 class="brand-title">CEO Executive Cockpit</h1>
+        <p class="brand-subtitle">Autonomous Model Orchestration &bull; Multi-Agent Swarm &bull; Redis Exact Caching</p>
+      </div>
+
+      <!-- Live Infrastructure Pulse Badges -->
+      <div class="telemetry-bar" id="telemetryBar">
+        <div class="telemetry-chip" id="chipLitellm" title="Port 4000: Model Gateway with Automatic Provider Routing">
+          <span class="chip-dot dot-green"></span>
+          <span class="chip-label">LiteLLM Proxy</span>
+          <span class="chip-val">:4000</span>
+        </div>
+        <div class="telemetry-chip" id="chipOpenclaw" title="Port 18789: Unrestricted Open-Source Multi-Agent Gateway">
+          <span class="chip-dot dot-green"></span>
+          <span class="chip-label">OpenClaw Gateway</span>
+          <span class="chip-val">:18789</span>
+        </div>
+        <div class="telemetry-chip" id="chipRedis" title="Port 6379: In-Memory Response Caching (Zero-Cost Repeated Calls)">
+          <span class="chip-dot dot-green"></span>
+          <span class="chip-label">Redis Cache</span>
+          <span class="chip-val" id="redisKeysVal">16 Cached</span>
+        </div>
+        <div class="telemetry-chip" id="chipQdrant" title="Port 6333: Neural Long-Term Memory Collection">
+          <span class="chip-dot dot-green"></span>
+          <span class="chip-label">Qdrant Memory</span>
+          <span class="chip-val">:6333</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Executive Grid -->
+    <main class="cockpit-grid">
+      <!-- Left Column: Operations Dispatcher -->
+      <section class="grid-column main-command-col">
+        <div class="card glass-card command-card">
+          <div class="card-header">
+            <div class="card-heading">
+              <span class="card-icon">⚡</span>
+              <h2>Executive Operations Dispatcher</h2>
+            </div>
+            <div class="budget-pill">
+              <span class="pill-icon">🛡️</span>
+              <span class="pill-text">PAYG Budget Conscious Active</span>
+            </div>
+          </div>
+
+          <!-- Mode Selector Tabs -->
+          <div class="routing-mode-selector">
+            <button class="mode-tab active" data-mode="auto" id="tabAuto">
+              <span class="tab-icon">✨</span>
+              <span class="tab-text">Auto Mode</span>
+              <span class="tab-badge">Budget Optimized</span>
+            </button>
+            <button class="mode-tab" data-mode="deepseek" id="tabDeepseek">
+              <span class="tab-icon">🧠</span>
+              <span class="tab-text">DeepSeek Reasoner</span>
+              <span class="tab-sub">Deep Logic</span>
+            </button>
+            <button class="mode-tab" data-mode="gemini" id="tabGemini">
+              <span class="tab-icon">⚡</span>
+              <span class="tab-text">Gemini 3.8 Flash</span>
+              <span class="tab-sub">Fast & Scale</span>
+            </button>
+            <button class="mode-tab" data-mode="openclaw" id="tabOpenclaw">
+              <span class="tab-icon">🧭</span>
+              <span class="tab-text">Chief of Staff</span>
+              <span class="tab-sub">Multi-Agent</span>
+            </button>
+          </div>
+
+          <!-- Command Input Area -->
+          <div class="command-input-container">
+            <textarea 
+              id="executivePrompt" 
+              class="executive-textarea" 
+              placeholder="Enter your executive directive or operational objective... (e.g. 'Draft quarterly strategic growth priorities', 'Assess platform security risks', 'Summarize key market moves')"
+              rows="3"
+            ></textarea>
+
+            <div class="input-actions-bar">
+              <div class="quick-presets">
+                <span class="presets-label">Quick Prompts:</span>
+                <button class="preset-chip" data-prompt="Synthesize executive priority goals for our core business initiatives this quarter with clear milestones and key risk mitigations.">📊 Strategic Priorities</button>
+                <button class="preset-chip" data-prompt="Conduct an executive architectural audit on our AI gateway, caching speedups, and payload budget controls.">🔍 System Audit</button>
+                <button class="preset-chip" data-prompt="Draft a high-density, 1-page executive briefing memo on competitive market landscape and strategic moat.">📝 Executive Memo</button>
+              </div>
+              <button id="btnDispatch" class="dispatch-button">
+                <span class="btn-text">Execute Directive</span>
+                <span class="btn-icon">➔</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Model Decision & Cache Pill -->
+          <div class="decision-banner" id="decisionBanner">
+            <div class="decision-left">
+              <span class="decision-indicator" id="decisionIndicator">✨</span>
+              <span class="decision-text" id="decisionText">Auto-Mode Ready: The engine will classify task complexity, select DeepSeek or Gemini, and query Redis cache first.</span>
+            </div>
+            <div class="decision-metrics" id="decisionMetrics" style="display: none;">
+              <span class="metric-tag tag-model" id="metricModel"></span>
+              <span class="metric-tag tag-cache" id="metricCache"></span>
+              <span class="metric-tag tag-latency" id="metricLatency"></span>
+            </div>
+          </div>
+
+          <!-- Output Display Panel -->
+          <div class="output-panel" id="outputPanel">
+            <div class="output-header">
+              <span class="output-title">Executive Briefing & Results</span>
+              <div class="output-tools">
+                <span class="output-status" id="outputStatus">Awaiting Directive</span>
+                <button class="tool-btn" id="btnCopy" title="Copy to Clipboard">📋 Copy Brief</button>
+              </div>
+            </div>
+            <div class="output-content" id="outputContent">
+              <div class="output-placeholder">
+                <div class="placeholder-icon">🎯</div>
+                <h3>Executive Cockpit Standing By</h3>
+                <p>Type your strategic command above or select a quick prompt. All operations automatically leverage exact-match Redis caching and optimal model selection.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Multi-Agent Swarm & System HUD -->
+      <section class="grid-column side-hud-col">
+        <!-- OpenClaw Multi-Agent Roster Card -->
+        <div class="card glass-card roster-card">
+          <div class="card-header">
+            <div class="card-heading">
+              <span class="card-icon">🧭</span>
+              <h2>OpenClaw Agent Swarm</h2>
+            </div>
+            <span class="status-badge live">4 Autonomous Units</span>
+          </div>
+          <p class="card-description">Free, open-source multi-agent roster running isolated tasks in the background.</p>
+
+          <div class="agents-roster" id="agentsRoster">
+            <!-- Dynamically populated or static baseline -->
+            <div class="agent-item" data-agent="local-coordinator">
+              <div class="agent-avatar avatar-gold">🧭</div>
+              <div class="agent-info">
+                <div class="agent-name-row">
+                  <span class="agent-name">Chief of Staff</span>
+                  <span class="agent-badge badge-gold">Coordinator</span>
+                </div>
+                <div class="agent-role">Orchestration & Task Delegation</div>
+                <div class="agent-model">🧠 DeepSeek V4 Pro</div>
+              </div>
+            </div>
+
+            <div class="agent-item" data-agent="local-researcher">
+              <div class="agent-avatar avatar-cyan">🔎</div>
+              <div class="agent-info">
+                <div class="agent-name-row">
+                  <span class="agent-name">Strategic Researcher</span>
+                  <span class="agent-badge badge-cyan">Intel</span>
+                </div>
+                <div class="agent-role">Fact Discovery & Deep Intel</div>
+                <div class="agent-model">⚡ DeepSeek Flash</div>
+              </div>
+            </div>
+
+            <div class="agent-item" data-agent="local-writer">
+              <div class="agent-avatar avatar-purple">✍️</div>
+              <div class="agent-info">
+                <div class="agent-name-row">
+                  <span class="agent-name">Executive Writer</span>
+                  <span class="agent-badge badge-purple">Comms</span>
+                </div>
+                <div class="agent-role">Board Memos & Polished Briefs</div>
+                <div class="agent-model">⚡ Gemini 3.1 Flash</div>
+              </div>
+            </div>
+
+            <div class="agent-item" data-agent="local-reviewer">
+              <div class="agent-avatar avatar-green">🔍</div>
+              <div class="agent-info">
+                <div class="agent-name-row">
+                  <span class="agent-name">Quality Reviewer</span>
+                  <span class="agent-badge badge-green">Audit</span>
+                </div>
+                <div class="agent-role">Risk Analysis & Verification</div>
+                <div class="agent-model">🧠 GLM / DeepSeek</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="openclaw-actions">
+            <a href="http://127.0.0.1:18789/" target="_blank" class="action-link-btn" id="btnOpenClawDashboard">
+              <span>Launch OpenClaw Control UI</span>
+              <span class="ext-icon">↗</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Budget & Caching Telemetry Card -->
+        <div class="card glass-card budget-card">
+          <div class="card-header">
+            <div class="card-heading">
+              <span class="card-icon">💰</span>
+              <h2>Budget & Cache Efficiency</h2>
+            </div>
+            <span class="status-badge green">Optimized</span>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-title">Cache Speedup</span>
+              <span class="metric-number text-green" id="hudSpeedup">1.8x – 10x</span>
+              <span class="metric-subtitle">Instant Redis Hits</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-title">PAYG Cost Avoided</span>
+              <span class="metric-number text-cyan" id="hudCostSaved">$0.0320</span>
+              <span class="metric-subtitle">From Redis Exact Matches</span>
+            </div>
+          </div>
+
+          <div class="model-matrix">
+            <div class="matrix-row">
+              <span class="matrix-label">Deep Reasoning & Logic</span>
+              <span class="matrix-val val-deepseek">DeepSeek (PAYG ~$0.14 - $0.55/M)</span>
+            </div>
+            <div class="matrix-row">
+              <span class="matrix-label">High-Speed & Synthesis</span>
+              <span class="matrix-val val-gemini">Gemini Flash (PAYG ~$0.075/M)</span>
+            </div>
+            <div class="matrix-row">
+              <span class="matrix-label">Repeated Instructions</span>
+              <span class="matrix-val val-cache">Redis Exact Match ($0.00 / 0ms)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+{
+  "agents": {
+    "defaults": {
+      "workspace": "C:\\Users\\user\\.openclaw\\workspace",
+      "model": {
+        "primary": "deepseek/deepseek-v4-pro"
+      },
+      "systemAgent": {
+        "agentId": "local-coordinator"
+      },
+      "heartbeat": {
+        "agentId": "main"
+      },
+      "models": {
+        "deepseek/deepseek-flash": {},
+        "google/gemini-3.8-flash": {},
+        "zai/glm-5.3-flash": {},
+        "google/gemini-3.1-flash-lite": {
+          "params": {
+            "cacheRetention": "short"
+          }
+        },
+        "deepseek/deepseek-v4-pro": {}
+      }
+    },
+    "ownership": "explicit",
+    "entries": {
+      "main": {
+        "name": "main",
+        "workspace": "C:\\Users\\user\\.openclaw\\workspace",
+        "agentDir": "C:\\Users\\user\\.openclaw\\agents\\main\\agent",
+        "identity": {
+          "name": "main"
+        }
+      },
+      "local-coordinator": {
+        "name": "local-coordinator",
+        "workspace": "C:\\Users\\user\\.openclaw\\workspace\\local-coordinator",
+        "agentDir": "C:\\Users\\user\\.openclaw\\agents\\local-coordinator\\agent",
+        "identity": {
+          "name": "Chief of Staff",
+          "emoji": "🧭",
+          "theme": "calm, accountable coordination"
+        },
+        "subagents": {
+          "allowAgents": [
+            "local-researcher",
+            "local-writer",
+            "local-reviewer"
+          ],
+          "delegationMode": "prefer"
+        },
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "local-researcher": {
+        "name": "local-researcher",
+        "workspace": "C:\\Users\\user\\.openclaw\\workspace\\local-researcher",
+        "agentDir": "C:\\Users\\user\\.openclaw\\agents\\local-researcher\\agent",
+        "identity": {
+          "name": "Researcher",
+          "emoji": "🔎",
+          "theme": "curious, evidence-led research"
+        },
+        "subagents": {
+          "allowAgents": []
+        },
+        "model": "deepseek/deepseek-flash"
+      },
+      "local-writer": {
+        "name": "local-writer",
+        "workspace": "C:\\Users\\user\\.openclaw\\workspace\\local-writer",
+        "agentDir": "C:\\Users\\user\\.openclaw\\agents\\local-writer\\agent",
+        "identity": {
+          "name": "Writer",
+          "emoji": "✍️",
+          "theme": "clear, audience-aware writing"
+        },
+        "subagents": {
+          "allowAgents": []
+        },
+        "model": "google/gemini-3.1-flash-lite"
+      },
+      "local-reviewer": {
+        "name": "local-reviewer",
+        "workspace": "C:\\Users\\user\\.openclaw\\workspace\\local-reviewer",
+        "agentDir": "C:\\Users\\user\\.openclaw\\agents\\local-reviewer\\agent",
+        "identity": {
+          "name": "Reviewer",
+          "emoji": "🔍",
+          "theme": "careful, independent review"
+        },
+        "subagents": {
+          "allowAgents": []
+        },
+        "model": "zai/glm-5.3-flash"
+      }
+    }
+  },
+  "gateway": {
+    "bind": "loopback",
+    "port": 18789,
+    "mode": "local"
+  }
+}

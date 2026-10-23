@@ -1,0 +1,125 @@
+# LiteLLM proxy for the susi harness.
+#
+# The harness gateway points at this proxy and stays the control point:
+# attribution, price and ledger are the gateway's. LiteLLM owns the provider
+# layer and its cache, so one OpenAI-compatible URL serves DeepSeek,
+# SiliconFlow, DashScope, Gemini and Anthropic, and a repeated request costs nothing.
+#
+#   harness-litellm --config deploy/litellm/config.yaml --port 4000
+#
+# Keys are read from the environment. A model whose key is unset fails only
+# when it is called, never at startup.
+
+model_list:
+  - model_name: deepseek-chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  - model_name: deepseek-reasoner
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # SiliconFlow, OpenAI-compatible.
+  - model_name: siliconflow-qwen
+    litellm_params:
+      model: openai/Qwen/Qwen3-235B-A22B-Instruct-2507
+      api_base: https://api.siliconflow.cn/v1
+      api_key: os.environ/SILICONFLOW_API_KEY
+
+  - model_name: siliconflow-deepseek
+    litellm_params:
+      model: openai/deepseek-ai/DeepSeek-V3.2
+      api_base: https://api.siliconflow.cn/v1
+      api_key: os.environ/SILICONFLOW_API_KEY
+
+  - model_name: siliconflow-qwen-coder
+    litellm_params:
+      model: openai/Qwen/Qwen2.5-Coder-32B-Instruct
+      api_base: https://api.siliconflow.cn/v1
+      api_key: os.environ/SILICONFLOW_API_KEY
+
+  # DashScope, OpenAI-compatible mode.
+  - model_name: dashscope-qwen-plus
+    litellm_params:
+      model: openai/qwen-plus
+      api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  - model_name: dashscope-qwen-max
+    litellm_params:
+      model: openai/qwen-max
+      api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  - model_name: dashscope-qwen-coder
+    litellm_params:
+      model: openai/qwen2.5-coder-32b-instruct
+      api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  - model_name: text-embedding-004
+    litellm_params:
+      model: gemini/gemini-embedding-001
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-embedding
+    litellm_params:
+      model: gemini/gemini-embedding-001
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: gemini/gemini-embedding-001
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-flash
+    litellm_params:
+      model: gemini/gemini-3.8-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-pro
+    litellm_params:
+      model: gemini/gemini-3.1-pro-preview
+      api_key: os.environ/GEMINI_API_KEY
+
+  # Anthropic Claude (Power Escalation Tier)
+  - model_name: claude-3-5-haiku
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+litellm_settings:
+  # Exact-match response cache, per proxy process. Repeat a request and it is
+  # served from the cache, so the provider is paid once. For a cache shared by
+  # every worker, set REDIS_URL and change type to redis.
+  cache: true
+  cache_params:
+    type: redis
+    host: localhost
+    port: 6379
+    ttl: 86400
+  drop_params: true
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 2
+
+# Optional: set LITELLM_MASTER_KEY to require a bearer key on the proxy itself.
+# The gateway already attributes calls; this only hardens the local port.
+# The proxy listens on loopback only, so an unset key is local development.
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  dangerously_permit_weak_or_unset_master_key: true
+
+
+
+
+
+
