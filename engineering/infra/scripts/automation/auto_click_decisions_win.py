@@ -35,11 +35,11 @@ TEMPLATE_PATTERNS = {
     "Accept": ["accept.png", "accept-inline*.png", "accept_inline*.png", "accept-*.png", "accept_*.png"],
     "Keep All": ["keep-all*.png"],
     "Proceed": ["proceed*.png"],
-    "Allow Always": ["allow-always*.png"],
+    "Yes Don't Ask": ["yes-dontask*.png", "yes-dont-ask*.png"],
+    "Allow Always": ["allow-always*.png", "always-allow*.png"],
     "Always Run": ["always-run*.png"],
     "Allow Once": ["allow-once*.png"],
-    "Allow": ["allow.png", "allow2.png"],
-    "Yes Don't Ask": ["yes-dontask*.png"],
+    "Allow": ["allow.png", "allow2.png", "allow*.png"],
     "Yes": ["yes.png", "yes-*.png", "yes_*.png"],
     "OK": ["ok.png", "ok-*.png", "ok_*.png"],
 }
@@ -52,11 +52,11 @@ BUTTON_PRIORITY = {
     "Accept": 4,
     "Keep All": 5,
     "Proceed": 6,
-    "Allow Always": 7,
-    "Always Run": 8,
-    "Allow Once": 9,
-    "Allow": 10,
-    "Yes Don't Ask": 11,
+    "Yes Don't Ask": 7,
+    "Allow Always": 8,
+    "Always Run": 9,
+    "Allow Once": 10,
+    "Allow": 11,
     "Yes": 12,
     "OK": 13,
 }
@@ -110,6 +110,7 @@ BLACKLIST_DURATION_SECONDS = 10.0
 
 active_clicked_buttons = {}  # loc_key -> {"first_seen": t, "last_clicked": t, "count": n}
 blacklisted_locations = {}   # loc_key -> unblock_time
+button_first_seen = {}       # loc_key -> timestamp first observed
 
 # Win32 SendInput Structures (64-bit compliant)
 if sys.platform == "win32":
@@ -294,13 +295,22 @@ def dispatch_batch_clicks(buttons_to_click):
         log("Notice: User holding mouse button; deferring batch clicks to keep cursor untouched.")
         return set()
 
-    if is_user_actively_typing_or_interacting(threshold_ms=1000):
-        log("Notice: User actively typing or moving mouse; deferring batch clicks to keep cursor untouched.")
+    now = time.time()
+    # If any candidate has been waiting for >= 1.5s, click it even if user is typing,
+    # preventing IDE permission prompts from blocking execution indefinitely.
+    any_waiting_long = any(
+        (now - button_first_seen.get(loc_key, now)) >= 1.5
+        for _, _, _, _, _, _, loc_key in buttons_to_click
+    )
+    if not any_waiting_long and is_user_actively_typing_or_interacting(threshold_ms=400):
+        log("Notice: User actively typing; briefly deferring click to keep cursor untouched.")
         return set()
 
     orig_mx, orig_my = get_mouse_xy()
+    user32 = ctypes.windll.user32 if sys.platform == "win32" else None
+    orig_fg = user32.GetForegroundWindow() if user32 else None
 
-    # Sort buttons by priority (e.g. Accept All before inline diffs)
+    # Sort buttons by priority (e.g. Accept All / Permanent Allow before one-time)
     sorted_buttons = sorted(
         buttons_to_click,
         key=lambda b: BUTTON_PRIORITY.get(b[0], 99)
@@ -310,6 +320,7 @@ def dispatch_batch_clicks(buttons_to_click):
     cx, cy = x + w // 2, y + h // 2
     log(f"Clicking '{name}' at ({cx}, {cy}) (Conf: {score:.2f})...")
     try:
+        activate_target_window(cx, cy)
         return {loc_key} if dispatch_click(cx, cy, name) else set()
     finally:
         if orig_mx is not None and orig_my is not None:
@@ -319,6 +330,13 @@ def dispatch_batch_clicks(buttons_to_click):
                 # any manual movement that happened while the click was dispatched.
                 if abs(curr_mx - cx) + abs(curr_my - cy) < 50:
                     set_mouse_xy(orig_mx, orig_my)
+        if user32 and orig_fg:
+            try:
+                curr_fg = user32.GetForegroundWindow()
+                if curr_fg != orig_fg:
+                    user32.SetForegroundWindow(orig_fg)
+            except Exception:
+                pass
 
 
 def get_screenshot():
@@ -579,13 +597,24 @@ if __name__ == "__main__":
                                 "count": prev_count + 1
                             }
 
+                # Record appearance time for smart typing deferral
+                for (_, _, _, _, _, _, loc_key) in pending_clicks:
+                    if loc_key not in button_first_seen:
+                        button_first_seen[loc_key] = now
+
                 stale_locations = []
                 for loc_key, state in active_clicked_buttons.items():
                     if loc_key not in current_frame_locations:
-                        if now - state["last_clicked"] > 15.0:
+                        # CRITICAL FIX: If button is no longer on screen, it was successfully dismissed!
+                        # Clean up after 1.5s so future prompts at the same coordinates are not treated as retries.
+                        if now - state["last_clicked"] > 1.5:
                             stale_locations.append(loc_key)
                 for loc_key in stale_locations:
                     del active_clicked_buttons[loc_key]
+
+                stale_seen = [k for k in button_first_seen if k not in current_frame_locations]
+                for k in stale_seen:
+                    del button_first_seen[k]
 
             time.sleep(CHECK_INTERVAL)
         except Exception as e:

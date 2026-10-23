@@ -24,7 +24,10 @@ Get-CimInstance Win32_Process -Filter "Name = 'python.exe' OR Name = 'pythonw.ex
 }
 
 # Locate Python 3.12 or fallback to PATH
-$PythonExe = "C:\Users\user\AppData\Local\Programs\Python\Python312\python.exe"
+$PythonExe = "C:\Users\user\AppData\Local\Programs\Python\Python312\pythonw.exe"
+if (-not (Test-Path $PythonExe)) {
+    $PythonExe = "C:\Users\user\AppData\Local\Programs\Python\Python312\python.exe"
+}
 if (-not (Test-Path $PythonExe)) {
     $PythonExe = "python.exe"
 }
