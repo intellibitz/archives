@@ -171,6 +171,69 @@ def save_workspace_state(active_path: str):
     except Exception:
         pass
 
+SESSIONS_DIR = os.path.join(BASE_DIR, "data", "sessions")
+os.makedirs(SESSIONS_DIR, exist_ok=True)
+
+def get_session_file(session_id: str) -> str:
+    clean_id = "".join(c for c in session_id if c.isalnum() or c in ("-", "_"))
+    return os.path.join(SESSIONS_DIR, f"session_{clean_id}.json")
+
+def list_sessions() -> list:
+    sessions = []
+    if not os.path.isdir(SESSIONS_DIR):
+        return sessions
+    for f in os.listdir(SESSIONS_DIR):
+        if f.startswith("session_") and f.endswith(".json"):
+            path = os.path.join(SESSIONS_DIR, f)
+            try:
+                with open(path, "r", encoding="utf-8") as fp:
+                    data = json.load(fp)
+                    sessions.append({
+                        "id": data.get("id"),
+                        "title": data.get("title", "Untitled Directive"),
+                        "created_at": data.get("created_at", 0),
+                        "updated_at": data.get("updated_at", 0),
+                        "model": data.get("model", "auto"),
+                        "message_count": len(data.get("messages", [])),
+                        "workspace_path": data.get("workspace_path", "")
+                    })
+            except Exception:
+                pass
+    sessions.sort(key=lambda s: s.get("updated_at", 0), reverse=True)
+    return sessions
+
+def load_session(session_id: str) -> Dict[str, Any]:
+    path = get_session_file(session_id)
+    if os.path.isfile(path):
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                return json.load(fp)
+        except Exception:
+            pass
+    return None
+
+def save_session(session_data: Dict[str, Any]) -> bool:
+    session_id = session_data.get("id")
+    if not session_id:
+        return False
+    path = get_session_file(session_id)
+    try:
+        with open(path, "w", encoding="utf-8") as fp:
+            json.dump(session_data, fp, indent=2)
+        return True
+    except Exception:
+        return False
+
+def delete_session(session_id: str) -> bool:
+    path = get_session_file(session_id)
+    if os.path.isfile(path):
+        try:
+            os.remove(path)
+            return True
+        except Exception:
+            pass
+    return False
+
 def inspect_workspace(path: str) -> Dict[str, Any]:
     path = os.path.abspath(path)
     if not os.path.isdir(path):
@@ -305,12 +368,21 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_workspace_get()
         elif self.path == "/api/models":
             self.handle_models_get()
+        elif self.path == "/api/sessions":
+            self.handle_sessions_get()
+        elif self.path.startswith("/api/sessions/"):
+            session_id = self.path[len("/api/sessions/"):].strip()
+            self.handle_session_detail_get(session_id)
         else:
             super().do_GET()
 
     def do_POST(self):
         if self.path == "/api/command":
             self.handle_command()
+        elif self.path == "/api/command/stream":
+            self.handle_command_stream()
+        elif self.path == "/api/sessions":
+            self.handle_sessions_create()
         elif self.path == "/api/workspace":
             self.handle_workspace_post()
         elif self.path == "/api/budget/config":
@@ -321,6 +393,13 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_budget_reset()
         elif self.path == "/api/openclaw/dispatch":
             self.handle_openclaw_dispatch()
+        else:
+            self._send_json(404, {"error": "Endpoint not found"})
+
+    def do_DELETE(self):
+        if self.path.startswith("/api/sessions/"):
+            session_id = self.path[len("/api/sessions/"):].strip()
+            self.handle_session_delete(session_id)
         else:
             self._send_json(404, {"error": "Endpoint not found"})
 
@@ -486,6 +565,297 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
     def handle_models_get(self):
         models = fetch_available_models()
         self._send_json(200, {"models": models})
+
+    def handle_sessions_get(self):
+        sessions = list_sessions()
+        self._send_json(200, {"sessions": sessions})
+
+    def handle_session_detail_get(self, session_id: str):
+        session = load_session(session_id)
+        if session:
+            self._send_json(200, {"session": session})
+        else:
+            self._send_json(404, {"error": "Session not found"})
+
+    def handle_sessions_create(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(content_length) if content_length > 0 else b"{}"
+        try:
+            req = json.loads(body.decode("utf-8")) if body else {}
+        except Exception:
+            req = {}
+        
+        session_id = f"ses_{int(time.time())}_{os.urandom(3).hex()}"
+        state = get_workspace_state()
+        new_session = {
+            "id": session_id,
+            "title": req.get("title") or "New Executive Directive",
+            "created_at": time.time(),
+            "updated_at": time.time(),
+            "model": req.get("model", "auto"),
+            "workspace_path": req.get("workspace_path") or state["active_path"],
+            "messages": []
+        }
+        save_session(new_session)
+        self._send_json(200, {"success": True, "session": new_session})
+
+    def handle_session_delete(self, session_id: str):
+        success = delete_session(session_id)
+        self._send_json(200, {"success": success})
+
+    def handle_command_stream(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            req = json.loads(post_data.decode("utf-8"))
+        except Exception as e:
+            self._send_json(400, {"error": f"Invalid JSON: {e}"})
+            return
+
+        prompt = req.get("prompt", "").strip()
+        if not prompt:
+            self._send_json(400, {"error": "Prompt cannot be empty"})
+            return
+
+        requested_model = req.get("model", "auto")
+        effort = req.get("effort", "auto").lower()
+        autonomy = req.get("autonomy_mode", "full").lower()
+        temperature = float(req.get("temperature", 0.3))
+        include_ws_context = req.get("include_workspace_context", True)
+
+        state = get_workspace_state()
+        ws_path = req.get("workspace_path") or state["active_path"]
+        ws_info = inspect_workspace(ws_path)
+        ws_context_str = ""
+
+        if include_ws_context and ws_info.get("exists"):
+            entries = ws_info.get("entries", [])
+            files_preview = ", ".join([f"{e['name']}/" if e['is_dir'] else e['name'] for e in entries[:30]])
+            readme_snippet = ""
+            readme_path = os.path.join(ws_path, "README.md")
+            if os.path.exists(readme_path):
+                try:
+                    with open(readme_path, "r", encoding="utf-8") as rf:
+                        readme_snippet = rf.read(600).strip().replace("\n", " ")
+                except Exception:
+                    pass
+
+            ws_context_str = (
+                f"\n[Active Workspace Directory: {ws_path}]\n"
+                f"[Repository Branch: {ws_info.get('branch', 'N/A')} | Items: {ws_info.get('total_items', 0)}]\n"
+                f"[Workspace Top-Level Items: {files_preview}]\n"
+            )
+            if readme_snippet:
+                ws_context_str += f"[Project Brief: {readme_snippet[:300]}...]\n"
+
+        if autonomy == "plan_first":
+            autonomy_directive = "Operate in Plan-First Mode. Structure response into: 1. Executive Summary, 2. Architectural Blueprint & Phased Roadmap, 3. Concrete Action Steps."
+        elif autonomy == "advisory":
+            autonomy_directive = "Operate in Executive Advisory Mode. Evaluate strategic options, risk factors, and financial/technical tradeoffs without enacting operational state mutations."
+        else:
+            autonomy_directive = "Operate with Full Autonomy. Formulate authoritative, end-to-end executive resolutions and decisions."
+
+        if effort == "low":
+            max_tokens = 2048
+            effort_directive = "Reasoning Effort: Low (Rapid Synthesis). Deliver high-density, concise conclusions with minimal preamble."
+        elif effort == "medium":
+            max_tokens = 4096
+            effort_directive = "Reasoning Effort: Medium (Standard Audit). Provide balanced deduction with core tradeoffs and next steps."
+        elif effort == "high":
+            max_tokens = 8192
+            effort_directive = "Reasoning Effort: High (Deep Verification). Exhaustively verify assumptions, edge cases, risks, and mitigations."
+        elif effort == "max":
+            max_tokens = 16384
+            effort_directive = "Reasoning Effort: Max (Frontier Deliberation). Execute complete strategic proof, multi-perspective scenario modeling, and full architectural rationale."
+        else:
+            max_tokens = 4096
+            effort_directive = "Reasoning Effort: Auto (Adaptive Deliberation). Calibrate reasoning depth dynamically to query complexity."
+
+        is_tripped = governor.is_tripped()
+        if is_tripped:
+            selected_model = "gemini-flash"
+            routing_reason = "⚠️ CIRCUIT BREAKER ACTIVE: Daily spend cap enforced. Safeguard Zero-Cost Routing ($0.00)"
+        elif requested_model == "auto":
+            selected_model, routing_reason = classify_model_intent(prompt)
+        elif requested_model in [
+            "deepseek", "deepseek-reasoner", "deepseek-chat",
+            "gemini", "gemini-flash", "gemini-pro",
+            "claude-3-5-sonnet", "claude-3-5-haiku",
+            "siliconflow-qwen-coder", "dashscope-qwen-max"
+        ]:
+            if requested_model == "deepseek":
+                selected_model = "deepseek-reasoner"
+            elif requested_model == "gemini":
+                selected_model = "gemini-flash"
+            else:
+                selected_model = requested_model
+            routing_reason = f"Executive Model Selection: {format_model_display_name(selected_model)}"
+        else:
+            selected_model = requested_model
+            routing_reason = f"Selected Model: {format_model_display_name(selected_model)}"
+
+        if "reasoner" in selected_model and effort in ["auto", "high", "max"]:
+            max_tokens = max(max_tokens, 8192)
+
+        session_id = req.get("session_id")
+        session_data = load_session(session_id) if session_id else None
+        if not session_data:
+            session_id = f"ses_{int(time.time())}_{os.urandom(3).hex()}"
+            title = prompt[:45] + ("..." if len(prompt) > 45 else "")
+            session_data = {
+                "id": session_id,
+                "title": title,
+                "created_at": time.time(),
+                "updated_at": time.time(),
+                "model": selected_model,
+                "workspace_path": ws_path,
+                "messages": []
+            }
+
+        system_prompt = (
+            "You are the Executive AI Engine for the CEO Cockpit.\n"
+            "The user is the CEO and operates at an executive decision-making level.\n"
+            "Do not output technical code blocks or file diffs unless specifically requested for an engineering review.\n"
+            "Deliver high-density, authoritative, clear executive briefings with key takeaways, strategic options, and concrete action items.\n"
+            f"Harness Autonomy Directive: {autonomy_directive}\n"
+            f"{effort_directive}\n"
+            f"{ws_context_str}"
+        )
+
+        messages = [{"role": "system", "content": system_prompt}]
+        for m in session_data.get("messages", [])[-8:]:
+            if m.get("role") in ("user", "assistant") and m.get("content"):
+                messages.append({"role": m["role"], "content": m["content"]})
+        messages.append({"role": "user", "content": prompt})
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache, no-transform")
+        self.send_header("Connection", "keep-alive")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+
+        def write_sse(payload: Dict[str, Any]) -> bool:
+            try:
+                line = f"data: {json.dumps(payload)}\n\n"
+                self.wfile.write(line.encode("utf-8"))
+                self.wfile.flush()
+                return True
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                return False
+
+        write_sse({
+            "type": "start",
+            "session_id": session_id,
+            "model": selected_model,
+            "model_name": format_model_display_name(selected_model),
+            "routing_reason": routing_reason,
+            "effort": effort,
+            "autonomy_mode": autonomy,
+            "workspace": {
+                "path": ws_info.get("path"),
+                "name": ws_info.get("name"),
+                "branch": ws_info.get("branch")
+            }
+        })
+
+        start_time = time.time()
+        full_content = ""
+        full_reasoning = ""
+
+        litellm_payload = {
+            "model": selected_model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stream": True
+        }
+        if effort != "auto" and "reasoner" in selected_model:
+            litellm_payload["reasoning_effort"] = "high" if effort in ["high", "max"] else ("low" if effort == "low" else "medium")
+
+        try:
+            req_data = json.dumps(litellm_payload).encode("utf-8")
+            litellm_req = urllib.request.Request(
+                f"{LITELLM_URL}/v1/chat/completions",
+                data=req_data,
+                headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(litellm_req, timeout=90) as resp:
+                for raw_line in resp:
+                    line_str = raw_line.decode("utf-8").strip()
+                    if not line_str or line_str.startswith(":"):
+                        continue
+                    if line_str == "data: [DONE]":
+                        break
+                    if line_str.startswith("data: "):
+                        try:
+                            chunk_obj = json.loads(line_str[6:])
+                            choice = chunk_obj.get("choices", [{}])[0]
+                            delta = choice.get("delta", {})
+
+                            r_chunk = delta.get("reasoning_content")
+                            if r_chunk:
+                                full_reasoning += r_chunk
+                                if not write_sse({"type": "thinking", "delta": r_chunk}):
+                                    break
+
+                            c_chunk = delta.get("content")
+                            if c_chunk:
+                                full_content += c_chunk
+                                if not write_sse({"type": "content", "delta": c_chunk}):
+                                    break
+                        except Exception:
+                            pass
+
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            prompt_tokens_est = max(1, sum(len(m.get("content", "")) for m in messages) // 4)
+            comp_tokens_est = max(1, (len(full_reasoning) + len(full_content)) // 4)
+            usage = {
+                "prompt_tokens": prompt_tokens_est,
+                "completion_tokens": comp_tokens_est,
+                "total_tokens": prompt_tokens_est + comp_tokens_est
+            }
+
+            is_cached = elapsed_ms < 350
+            cost_metrics = governor.record_completion(selected_model, usage, is_cached)
+
+            session_data["updated_at"] = time.time()
+            session_data["model"] = selected_model
+            session_data["messages"].append({
+                "role": "user",
+                "content": prompt,
+                "timestamp": start_time
+            })
+            session_data["messages"].append({
+                "role": "assistant",
+                "content": full_content,
+                "reasoning_content": full_reasoning,
+                "model": selected_model,
+                "latency_ms": elapsed_ms,
+                "usage": usage,
+                "cost_usd": cost_metrics["actual_cost_usd"],
+                "timestamp": time.time()
+            })
+            save_session(session_data)
+
+            write_sse({
+                "type": "done",
+                "session_id": session_id,
+                "session": session_data,
+                "latency_ms": elapsed_ms,
+                "usage": usage,
+                "cost_actual": cost_metrics["actual_cost_usd"],
+                "cached": is_cached,
+                "circuit_breaker": {
+                    "tripped": cost_metrics["tripped"],
+                    "state": cost_metrics["circuit_breaker_state"],
+                    "today_spend": cost_metrics["today_spend_usd"]
+                },
+                "budget": governor.get_summary()
+            })
+
+        except Exception as e:
+            write_sse({"type": "error", "error": str(e), "model": selected_model})
 
     def handle_command(self):
         content_length = int(self.headers.get("Content-Length", 0))
@@ -723,9 +1093,12 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json(500, {"error": f"OpenClaw agent turn failed: {str(e)}"})
 
+class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+    allow_reuse_address = True
+    daemon_threads = True
+
 def run():
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), CockpitHandler) as httpd:
+    with ThreadedHTTPServer(("", PORT), CockpitHandler) as httpd:
         print(f"CEO Cockpit Mission Control running on http://127.0.0.1:{PORT}")
         httpd.serve_forever()
 

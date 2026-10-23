@@ -54,6 +54,23 @@
           <span class="chip-val" id="autoClickVal">ACTIVE</span>
         </div>
       </div>
+
+      <!-- Executive Header Actions -->
+      <div class="header-actions">
+        <button class="header-action-btn" id="btnToggleSessions" title="View Executive Sessions Archive">
+          <span class="btn-icon">💬</span>
+          <span class="btn-text">Sessions</span>
+          <span class="badge-count" id="sessionCountBadge">0</span>
+        </button>
+        <button class="header-action-btn primary" id="btnNewSession" title="Start a New Executive Thread">
+          <span class="btn-icon">＋</span>
+          <span class="btn-text">New Thread</span>
+        </button>
+        <button class="header-action-btn ghost cmd-trigger" id="btnOpenCommandPalette" title="Global Executive Command Palette (Ctrl+K)">
+          <span class="btn-icon">⌨️</span>
+          <span class="key-shortcut">Ctrl+K</span>
+        </button>
+      </div>
     </header>
 
     <!-- Executive Circuit-Breaker Safety Ribbon -->
@@ -144,6 +161,23 @@
             </div>
             <div class="ws-files-list" id="wsFilesList">
               <!-- Dynamically populated files and folders -->
+            </div>
+          </div>
+
+          <!-- Executive Sessions Archive Drawer -->
+          <div class="workspace-drawer sessions-drawer" id="sessionsDrawer" style="display: none;">
+            <div class="ws-drawer-header">
+              <span class="ws-drawer-title">🗄️ Executive Sessions Archive</span>
+              <div class="drawer-header-actions">
+                <button class="drawer-action-btn" id="btnDrawerNewSession">＋ New Thread</button>
+                <button class="ws-drawer-close" id="btnCloseSessionsDrawer">✕</button>
+              </div>
+            </div>
+            <div class="sessions-filter-row">
+              <input type="text" id="inputFilterSessions" class="ws-path-input" placeholder="Search executive directives..." />
+            </div>
+            <div class="sessions-list" id="sessionsListContainer">
+              <!-- Dynamically populated sessions -->
             </div>
           </div>
 
@@ -252,10 +286,69 @@
 
           <!-- Command Input Area -->
           <div class="command-input-container">
+            <!-- Slash Commands Popover Menu -->
+            <div class="slash-commands-menu" id="slashMenu" style="display: none;">
+              <div class="slash-menu-header">
+                <span>⚡ Executive Slash Commands</span>
+                <span class="slash-hint">Tab / Enter to select &bull; Esc to dismiss</span>
+              </div>
+              <div class="slash-options-list" id="slashOptionsList">
+                <div class="slash-option active" data-cmd="/plan">
+                  <span class="slash-icon">📋</span>
+                  <div class="slash-info">
+                    <span class="slash-title">/plan [directive]</span>
+                    <span class="slash-desc">Execute in Plan-First mode with architectural roadmap & milestones</span>
+                  </div>
+                </div>
+                <div class="slash-option" data-cmd="/reason">
+                  <span class="slash-icon">🧠</span>
+                  <div class="slash-info">
+                    <span class="slash-title">/reason [directive]</span>
+                    <span class="slash-desc">DeepSeek R1 frontier strategic reasoning with full deliberation trace</span>
+                  </div>
+                </div>
+                <div class="slash-option" data-cmd="/fast">
+                  <span class="slash-icon">⚡</span>
+                  <div class="slash-info">
+                    <span class="slash-title">/fast [directive]</span>
+                    <span class="slash-desc">Fast synthesis tier via Gemini Flash with massive context ingestion</span>
+                  </div>
+                </div>
+                <div class="slash-option" data-cmd="/audit">
+                  <span class="slash-icon">🛡️</span>
+                  <div class="slash-info">
+                    <span class="slash-title">/audit</span>
+                    <span class="slash-desc">Run complete health verification on gateways, redis, and budget governor</span>
+                  </div>
+                </div>
+                <div class="slash-option" data-cmd="/memo">
+                  <span class="slash-icon">📝</span>
+                  <div class="slash-info">
+                    <span class="slash-title">/memo [topic]</span>
+                    <span class="slash-desc">Draft structured 1-page executive memorandum for leadership team</span>
+                  </div>
+                </div>
+                <div class="slash-option" data-cmd="/export">
+                  <span class="slash-icon">📄</span>
+                  <div class="slash-info">
+                    <span class="slash-title">/export</span>
+                    <span class="slash-desc">Export current executive conversation thread as Markdown document</span>
+                  </div>
+                </div>
+                <div class="slash-option" data-cmd="/clear">
+                  <span class="slash-icon">🗑️</span>
+                  <div class="slash-info">
+                    <span class="slash-title">/clear</span>
+                    <span class="slash-desc">Reset conversation thread and start a fresh directive</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <textarea 
               id="executivePrompt" 
               class="executive-textarea" 
-              placeholder="Enter your executive directive or operational objective... (e.g. 'Draft quarterly strategic growth priorities', 'Assess platform security risks', 'Summarize key market moves')"
+              placeholder="Enter your executive directive or operational objective... (Type / for commands, Ctrl+Enter to dispatch)"
               rows="3"
             ></textarea>
 
@@ -266,10 +359,16 @@
                 <button class="preset-chip" data-prompt="Conduct an executive architectural audit on our AI gateway, caching speedups, and payload budget controls.">🔍 System Audit</button>
                 <button class="preset-chip" data-prompt="Draft a high-density, 1-page executive briefing memo on competitive market landscape and strategic moat.">📝 Executive Memo</button>
               </div>
-              <button id="btnDispatch" class="dispatch-button">
-                <span class="btn-text">Execute Directive</span>
-                <span class="btn-icon">➔</span>
-              </button>
+              <div class="dispatch-group">
+                <button id="btnHaltStream" class="halt-button" style="display: none;" title="Halt Live Stream (Esc)">
+                  <span class="btn-icon">⏹️</span>
+                  <span class="btn-text">Stop</span>
+                </button>
+                <button id="btnDispatch" class="dispatch-button">
+                  <span class="btn-text">Execute Directive</span>
+                  <span class="btn-icon">➔</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -291,33 +390,61 @@
           <!-- Output Display Panel -->
           <div class="output-panel" id="outputPanel">
             <div class="output-header">
-              <span class="output-title">Executive Briefing & Results</span>
+              <div class="output-header-left">
+                <span class="output-title" id="outputThreadTitle">Executive Briefing & Results</span>
+                <span class="output-session-badge" id="outputSessionBadge" style="display: none;">Active Thread</span>
+              </div>
               <div class="output-tools">
                 <span class="output-status" id="outputStatus">Awaiting Directive</span>
-                <button class="tool-btn" id="btnCopy" title="Copy to Clipboard">📋 Copy Brief</button>
+                <button class="tool-btn" id="btnExportReport" title="Export Thread as Markdown Report">📄 Export Report</button>
+                <button class="tool-btn" id="btnCopy" title="Copy Latest Brief to Clipboard">📋 Copy Brief</button>
               </div>
             </div>
 
-            <!-- Frontier Chain of Thought (Live Reasoning Trace) Accordion -->
-            <div class="thinking-accordion" id="thinkingAccordion" style="display: none;">
-              <div class="thinking-header" id="thinkingHeader">
-                <div class="thinking-title">
-                  <span class="thinking-sparkle">🧠</span>
-                  <span>Frontier Chain of Thought (Reasoning Trace)</span>
-                  <span class="thinking-badge" id="thinkingBadge">Deliberation</span>
-                </div>
-                <button class="thinking-toggle-btn" id="btnToggleThinking">Show Thoughts ▾</button>
-              </div>
-              <div class="thinking-body" id="thinkingBody" style="display: none;">
-                <div class="thinking-content" id="thinkingText"></div>
-              </div>
-            </div>
-
-            <div class="output-content" id="outputContent">
-              <div class="output-placeholder">
+            <!-- Conversation Timeline Container -->
+            <div class="conversation-timeline" id="conversationTimeline">
+              <div class="output-placeholder" id="outputPlaceholder">
                 <div class="placeholder-icon">🎯</div>
                 <h3>Executive Cockpit Standing By</h3>
-                <p>Type your strategic command above or select a quick prompt. All operations automatically leverage exact-match Redis caching, workspace context, and optimal reasoning models.</p>
+                <p>Type your strategic command above, pick a quick preset, or press <code>/</code> for slash commands. All turns maintain multi-turn context memory, exact-match Redis caching, and real-time streaming.</p>
+              </div>
+            </div>
+
+            <!-- Live Streaming Card (Active Generation) -->
+            <div class="turn-card turn-streaming" id="streamingTurnCard" style="display: none;">
+              <div class="turn-header">
+                <div class="turn-header-left">
+                  <span class="turn-avatar">🤖</span>
+                  <div class="turn-meta">
+                    <span class="turn-author" id="streamingModelPill">Frontier AI Deliberation</span>
+                    <span class="turn-time" id="streamingVelocity">⚡ Streaming...</span>
+                  </div>
+                </div>
+                <div class="streaming-pulse-pill">
+                  <span class="streaming-dot"></span>
+                  <span class="streaming-text">Streaming</span>
+                </div>
+              </div>
+
+              <!-- Live Streaming Thinking Accordion -->
+              <div class="thinking-accordion" id="streamingThinkingAccordion" style="display: none;">
+                <div class="thinking-header" id="streamingThinkingHeader">
+                  <div class="thinking-title">
+                    <span class="thinking-sparkle">🧠</span>
+                    <span>Frontier Chain of Thought</span>
+                    <span class="thinking-badge" id="streamingThinkingBadge">Deliberating</span>
+                  </div>
+                  <button class="thinking-toggle-btn" id="btnToggleStreamingThinking">Show Thoughts ▾</button>
+                </div>
+                <div class="thinking-body" id="streamingThinkingBody" style="display: none;">
+                  <div class="thinking-content" id="streamingThinkingText"></div>
+                </div>
+              </div>
+
+              <!-- Streaming Content Body -->
+              <div class="streaming-body">
+                <div class="turn-content markdown-body" id="streamingContentText"></div>
+                <span class="typewriter-cursor" id="typewriterCursor">▌</span>
               </div>
             </div>
           </div>
@@ -470,6 +597,23 @@
         </div>
       </section>
     </main>
+  <!-- Global Executive Command Palette Modal (Ctrl+K) -->
+  <div class="command-palette-backdrop" id="commandPaletteBackdrop" style="display: none;">
+    <div class="command-palette-modal" id="commandPaletteModal">
+      <div class="cp-search-row">
+        <span class="cp-search-icon">🔍</span>
+        <input type="text" id="cpSearchInput" class="cp-search-input" placeholder="Type a command or jump to feature... (Esc to close)" autocomplete="off" />
+        <span class="cp-shortcut-badge">ESC</span>
+      </div>
+      <div class="cp-options-list" id="cpOptionsList">
+        <!-- Dynamically rendered and filtered options -->
+      </div>
+      <div class="cp-footer">
+        <span>Use <b>↑</b> <b>↓</b> to navigate</span>
+        <span><b>Enter</b> to select</span>
+        <span><b>Esc</b> to close</span>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>

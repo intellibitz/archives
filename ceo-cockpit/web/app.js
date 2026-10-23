@@ -55,6 +55,48 @@ document.addEventListener('DOMContentLoaded', () => {
   const thinkingText = document.getElementById('thinkingText');
   const thinkingBadge = document.getElementById('thinkingBadge');
 
+  // Header Actions & Session Elements
+  const btnToggleSessions = document.getElementById('btnToggleSessions');
+  const btnNewSession = document.getElementById('btnNewSession');
+  const btnOpenCommandPalette = document.getElementById('btnOpenCommandPalette');
+  const sessionCountBadge = document.getElementById('sessionCountBadge');
+
+  // Sessions Drawer Elements
+  const sessionsDrawer = document.getElementById('sessionsDrawer');
+  const btnCloseSessionsDrawer = document.getElementById('btnCloseSessionsDrawer');
+  const btnDrawerNewSession = document.getElementById('btnDrawerNewSession');
+  const inputFilterSessions = document.getElementById('inputFilterSessions');
+  const sessionsListContainer = document.getElementById('sessionsListContainer');
+
+  // Slash Commands & Action Elements
+  const slashMenu = document.getElementById('slashMenu');
+  const slashOptionsList = document.getElementById('slashOptionsList');
+  const btnHaltStream = document.getElementById('btnHaltStream');
+  const btnExportReport = document.getElementById('btnExportReport');
+  const conversationTimeline = document.getElementById('conversationTimeline');
+  const outputPlaceholder = document.getElementById('outputPlaceholder');
+  const outputThreadTitle = document.getElementById('outputThreadTitle');
+  const outputSessionBadge = document.getElementById('outputSessionBadge');
+
+  // Streaming Turn Card Elements
+  const streamingTurnCard = document.getElementById('streamingTurnCard');
+  const streamingModelPill = document.getElementById('streamingModelPill');
+  const streamingVelocity = document.getElementById('streamingVelocity');
+  const streamingThinkingAccordion = document.getElementById('streamingThinkingAccordion');
+  const streamingThinkingHeader = document.getElementById('streamingThinkingHeader');
+  const streamingThinkingBody = document.getElementById('streamingThinkingBody');
+  const streamingThinkingText = document.getElementById('streamingThinkingText');
+  const streamingThinkingBadge = document.getElementById('streamingThinkingBadge');
+  const btnToggleStreamingThinking = document.getElementById('btnToggleStreamingThinking');
+  const streamingContentText = document.getElementById('streamingContentText');
+  const typewriterCursor = document.getElementById('typewriterCursor');
+
+  // Command Palette Elements
+  const commandPaletteBackdrop = document.getElementById('commandPaletteBackdrop');
+  const commandPaletteModal = document.getElementById('commandPaletteModal');
+  const cpSearchInput = document.getElementById('cpSearchInput');
+  const cpOptionsList = document.getElementById('cpOptionsList');
+
   // Budget Governor & Circuit-Breaker Elements
   const circuitBreakerBanner = document.getElementById('circuitBreakerBanner');
   const cbIcon = document.getElementById('cbIcon');
@@ -74,6 +116,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeWorkspace = null;
   let isWsContextAttached = true;
   let isThinkingExpanded = false;
+  let isStreamingThinkingExpanded = false;
+  let activeSessionId = null;
+  let activeSession = null;
+  let allSessions = [];
+  let activeStreamAbortController = null;
+  let activeSlashIndex = 0;
+  let activeCpIndex = 0;
 
   // ==============================================================================
   // Workspace Management Engine
@@ -373,12 +422,306 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Copy Brief Button
-  btnCopy.addEventListener('click', async () => {
-    const text = outputContent.innerText;
-    if (!text || text.includes('Standing By')) return;
+  // ==============================================================================
+  // Executive Sessions Archive Engine
+  // ==============================================================================
+  async function fetchSessions() {
     try {
-      await navigator.clipboard.writeText(text);
+      const res = await fetch('/api/sessions');
+      if (!res.ok) return;
+      const data = await res.json();
+      allSessions = data.sessions || [];
+      if (sessionCountBadge) sessionCountBadge.textContent = allSessions.length;
+      renderSessionsList(allSessions);
+
+      if (!activeSessionId && allSessions.length > 0) {
+        selectSession(allSessions[0].id);
+      }
+    } catch (err) {
+      console.warn('Failed to load sessions', err);
+    }
+  }
+
+  function renderSessionsList(sessions) {
+    if (!sessionsListContainer) return;
+    sessionsListContainer.innerHTML = '';
+
+    if (!sessions.length) {
+      sessionsListContainer.innerHTML = '<div style="padding:16px;text-align:center;color:#64748B;font-size:12px;">No archived sessions. Click "+ New Thread" to begin.</div>';
+      return;
+    }
+
+    sessions.forEach(s => {
+      const item = document.createElement('div');
+      item.className = `session-item ${s.id === activeSessionId ? 'active' : ''}`;
+      
+      const timeStr = formatRelativeTime(s.updated_at);
+      const modelTag = s.model ? s.model.replace('-reasoner', ' R1').replace('-flash', ' Flash') : 'Auto';
+
+      item.innerHTML = `
+        <div class="session-item-left">
+          <span class="session-item-title">${escapeHtml(s.title || 'Untitled Directive')}</span>
+          <div class="session-item-meta">
+            <span class="meta-tag">🤖 ${escapeHtml(modelTag)}</span>
+            <span class="meta-tag">💬 ${s.message_count || 0} turns</span>
+            <span>•</span>
+            <span>${timeStr}</span>
+          </div>
+        </div>
+        <div class="session-item-right">
+          <button class="session-del-btn" title="Delete Session" data-id="${s.id}">✕</button>
+        </div>
+      `;
+
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.session-del-btn')) return;
+        selectSession(s.id);
+        if (sessionsDrawer) sessionsDrawer.style.display = 'none';
+      });
+
+      const delBtn = item.querySelector('.session-del-btn');
+      if (delBtn) {
+        delBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await deleteSession(s.id);
+        });
+      }
+
+      sessionsListContainer.appendChild(item);
+    });
+  }
+
+  async function selectSession(sessionId) {
+    if (!sessionId) return;
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      activeSessionId = sessionId;
+      activeSession = data.session;
+
+      if (outputThreadTitle) outputThreadTitle.textContent = activeSession.title || 'Executive Briefing';
+      if (outputSessionBadge) {
+        outputSessionBadge.style.display = 'inline-block';
+        outputSessionBadge.textContent = `${(activeSession.messages || []).length} turns`;
+      }
+
+      renderTimeline(activeSession.messages || []);
+      renderSessionsList(allSessions);
+    } catch (err) {
+      console.warn('Failed to load session details', err);
+    }
+  }
+
+  async function createNewSession(customTitle) {
+    try {
+      const res = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: customTitle || 'New Executive Directive',
+          workspace_path: activeWorkspace ? activeWorkspace.path : null,
+          model: selectModel ? selectModel.value : 'auto'
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.session) {
+        activeSessionId = data.session.id;
+        activeSession = data.session;
+        if (outputThreadTitle) outputThreadTitle.textContent = activeSession.title;
+        if (outputSessionBadge) outputSessionBadge.style.display = 'none';
+        renderTimeline([]);
+        await fetchSessions();
+        if (sessionsDrawer) sessionsDrawer.style.display = 'none';
+        executivePrompt.value = '';
+        executivePrompt.focus();
+      }
+    } catch (err) {
+      console.error('Failed to create new session', err);
+    }
+  }
+
+  async function deleteSession(sessionId) {
+    try {
+      await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+      if (activeSessionId === sessionId) {
+        activeSessionId = null;
+        activeSession = null;
+        renderTimeline([]);
+        if (outputThreadTitle) outputThreadTitle.textContent = 'Executive Briefing & Results';
+        if (outputSessionBadge) outputSessionBadge.style.display = 'none';
+      }
+      await fetchSessions();
+    } catch (err) {
+      console.error('Failed to delete session', err);
+    }
+  }
+
+  // Sessions Drawer toggles
+  if (btnToggleSessions) {
+    btnToggleSessions.addEventListener('click', () => {
+      if (!sessionsDrawer) return;
+      const isOpen = sessionsDrawer.style.display !== 'none';
+      sessionsDrawer.style.display = isOpen ? 'none' : 'block';
+      if (workspaceDrawer) workspaceDrawer.style.display = 'none';
+      if (workspaceFilesDrawer) workspaceFilesDrawer.style.display = 'none';
+      if (!isOpen && inputFilterSessions) {
+        inputFilterSessions.value = '';
+        inputFilterSessions.focus();
+        renderSessionsList(allSessions);
+      }
+    });
+  }
+
+  if (btnCloseSessionsDrawer && sessionsDrawer) {
+    btnCloseSessionsDrawer.addEventListener('click', () => {
+      sessionsDrawer.style.display = 'none';
+    });
+  }
+
+  if (btnNewSession) btnNewSession.addEventListener('click', () => createNewSession());
+  if (btnDrawerNewSession) btnDrawerNewSession.addEventListener('click', () => createNewSession());
+
+  if (inputFilterSessions) {
+    inputFilterSessions.addEventListener('input', () => {
+      const q = inputFilterSessions.value.toLowerCase().trim();
+      const filtered = allSessions.filter(s => (s.title || '').toLowerCase().includes(q));
+      renderSessionsList(filtered);
+    });
+  }
+
+  // ==============================================================================
+  // Conversation Timeline & Turn Card Engine
+  // ==============================================================================
+  function renderTimeline(messages) {
+    if (!conversationTimeline) return;
+    conversationTimeline.innerHTML = '';
+
+    if (!messages || messages.length === 0) {
+      if (outputPlaceholder) {
+        outputPlaceholder.style.display = 'block';
+        conversationTimeline.appendChild(outputPlaceholder);
+      }
+      outputStatus.textContent = 'Awaiting Directive';
+      return;
+    }
+
+    if (outputPlaceholder) outputPlaceholder.style.display = 'none';
+
+    messages.forEach((msg, idx) => {
+      const card = createTurnCard(msg, idx);
+      conversationTimeline.appendChild(card);
+    });
+
+    scrollToTimelineBottom();
+  }
+
+  function createTurnCard(msg, idx) {
+    const card = document.createElement('div');
+    const isUser = msg.role === 'user';
+    card.className = `turn-card ${isUser ? 'turn-user' : 'turn-assistant'}`;
+
+    const timeStr = msg.timestamp ? formatTime(msg.timestamp) : '';
+
+    if (isUser) {
+      card.innerHTML = `
+        <div class="turn-header">
+          <div class="turn-header-left">
+            <span class="turn-avatar">👔</span>
+            <div class="turn-meta">
+              <span class="turn-author">CEO Directive</span>
+              <span class="turn-time">${timeStr}</span>
+            </div>
+          </div>
+          ${activeWorkspace ? `<span class="ws-badge" style="font-size:10px;">📁 ${escapeHtml(activeWorkspace.name)}</span>` : ''}
+        </div>
+        <div class="turn-content" style="font-size:14.5px;font-weight:500;color:#F1F5F9;white-space:pre-wrap;">${escapeHtml(msg.content)}</div>
+      `;
+    } else {
+      const modelDisplayName = msg.model ? formatModelName(msg.model) : 'Frontier AI OS';
+      const costStr = msg.cost_usd ? `$${msg.cost_usd.toFixed(4)}` : '';
+      const latencyStr = msg.latency_ms ? `${msg.latency_ms}ms` : '';
+
+      let thinkingHtml = '';
+      if (msg.reasoning_content) {
+        const thinkingId = `t_card_${idx}_${Date.now()}`;
+        thinkingHtml = `
+          <div class="thinking-accordion" style="display:block;margin-bottom:12px;">
+            <div class="thinking-header" id="${thinkingId}_hdr" style="cursor:pointer;">
+              <div class="thinking-title">
+                <span class="thinking-sparkle">🧠</span>
+                <span>Frontier Chain of Thought</span>
+                <span class="thinking-badge">Verified Trace</span>
+              </div>
+              <button class="thinking-toggle-btn" id="${thinkingId}_btn">Show Thoughts ▾</button>
+            </div>
+            <div class="thinking-body" id="${thinkingId}_body" style="display:none;">
+              <div class="thinking-content">${escapeHtml(msg.reasoning_content)}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="turn-header">
+          <div class="turn-header-left">
+            <span class="turn-avatar">🤖</span>
+            <div class="turn-meta">
+              <span class="turn-author">${escapeHtml(modelDisplayName)}</span>
+              <span class="turn-time">${timeStr} ${latencyStr ? `• ${latencyStr}` : ''}</span>
+            </div>
+          </div>
+          <div class="turn-actions">
+            ${costStr ? `<span class="meta-tag" style="color:#6EE7B7;background:rgba(16,185,129,0.1);font-size:11px;padding:2px 8px;border-radius:4px;">${costStr}</span>` : ''}
+            <button class="turn-btn copy-turn-btn" title="Copy response">📋 Copy</button>
+          </div>
+        </div>
+        ${thinkingHtml}
+        <div class="turn-content markdown-body">${formatExecutiveMarkdown(msg.content)}</div>
+      `;
+
+      const copyBtn = card.querySelector('.copy-turn-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(msg.content);
+            copyBtn.textContent = '✓ Copied!';
+            setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+          } catch (err) {}
+        });
+      }
+
+      if (msg.reasoning_content) {
+        const hdr = card.querySelector('.thinking-header');
+        const body = card.querySelector('.thinking-body');
+        const btn = card.querySelector('.thinking-toggle-btn');
+        let expanded = false;
+        if (hdr && body && btn) {
+          hdr.addEventListener('click', () => {
+            expanded = !expanded;
+            body.style.display = expanded ? 'block' : 'none';
+            btn.textContent = expanded ? 'Hide Thoughts ▴' : 'Show Thoughts ▾';
+          });
+        }
+      }
+    }
+
+    return card;
+  }
+
+  function scrollToTimelineBottom() {
+    if (outputPanel) {
+      outputPanel.scrollTop = outputPanel.scrollHeight;
+    }
+  }
+
+  // Copy Latest Brief Button
+  btnCopy.addEventListener('click', async () => {
+    if (!activeSession || !activeSession.messages || !activeSession.messages.length) return;
+    const lastAssistant = [...activeSession.messages].reverse().find(m => m.role === 'assistant');
+    if (!lastAssistant) return;
+    try {
+      await navigator.clipboard.writeText(lastAssistant.content);
       const originalText = btnCopy.textContent;
       btnCopy.textContent = '✓ Copied!';
       setTimeout(() => { btnCopy.textContent = originalText; }, 2000);
@@ -395,27 +738,92 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    setLoading(true);
-
     try {
       if (currentMode === 'openclaw') {
         await dispatchToOpenClaw(prompt);
       } else {
-        await dispatchToLiteLLM(prompt);
+        await dispatchStreamingDirective(prompt);
       }
     } catch (err) {
       displayError(err.message || 'Operational communication error occurred');
     } finally {
-      setLoading(false);
       refreshHealth();
     }
   }
 
-  async function dispatchToLiteLLM(prompt) {
-    outputStatus.textContent = 'Deliberating & Executing...';
+  // ==============================================================================
+  // Real-Time Streaming Dispatcher Engine
+  // ==============================================================================
+  async function dispatchStreamingDirective(rawPrompt) {
+    let prompt = rawPrompt.trim();
+
+    // Check Slash Commands
+    if (prompt.startsWith('/plan')) {
+      prompt = prompt.replace(/^\/plan\s*/i, '');
+      if (selectAutonomy) selectAutonomy.value = 'plan_first';
+    } else if (prompt.startsWith('/reason')) {
+      prompt = prompt.replace(/^\/reason\s*/i, '');
+      if (selectModel) selectModel.value = 'deepseek-reasoner';
+    } else if (prompt.startsWith('/fast')) {
+      prompt = prompt.replace(/^\/fast\s*/i, '');
+      if (selectModel) selectModel.value = 'gemini-flash';
+    } else if (prompt.startsWith('/audit')) {
+      prompt = 'Perform a complete architectural and infrastructure health check on our AI gateways, Redis cache latency, and budget governor limits.';
+    } else if (prompt.startsWith('/memo')) {
+      prompt = `Draft a high-density, 1-page executive memorandum for the leadership team regarding: ${prompt.replace(/^\/memo\s*/i, '') || 'our core technical and business priorities'}.`;
+    } else if (prompt.startsWith('/export')) {
+      exportReport();
+      executivePrompt.value = '';
+      return;
+    } else if (prompt.startsWith('/clear')) {
+      await createNewSession();
+      executivePrompt.value = '';
+      return;
+    } else if (prompt.startsWith('/workspace')) {
+      const targetPath = prompt.replace(/^\/workspace\s*/i, '').trim();
+      if (targetPath) await switchWorkspace(targetPath);
+      executivePrompt.value = '';
+      return;
+    }
+
+    if (!prompt) return;
+
+    if (!activeSessionId) {
+      await createNewSession(prompt.slice(0, 42));
+    }
+
+    const userMsg = {
+      role: 'user',
+      content: prompt,
+      timestamp: Date.now() / 1000
+    };
+    if (activeSession) {
+      activeSession.messages = activeSession.messages || [];
+      activeSession.messages.push(userMsg);
+    }
+    const userCard = createTurnCard(userMsg, (activeSession?.messages?.length || 1) - 1);
+    if (conversationTimeline) {
+      if (outputPlaceholder) outputPlaceholder.style.display = 'none';
+      conversationTimeline.appendChild(userCard);
+      scrollToTimelineBottom();
+    }
+
+    executivePrompt.value = '';
+    setLoading(true);
+    if (btnHaltStream) btnHaltStream.style.display = 'inline-flex';
+
+    if (streamingTurnCard) {
+      streamingTurnCard.style.display = 'block';
+      if (streamingContentText) streamingContentText.innerHTML = '';
+      if (streamingThinkingText) streamingThinkingText.textContent = '';
+      if (streamingThinkingAccordion) streamingThinkingAccordion.style.display = 'none';
+      if (streamingVelocity) streamingVelocity.textContent = '⚡ Initializing stream...';
+      if (typewriterCursor) typewriterCursor.style.display = 'inline-block';
+    }
 
     const payload = {
       prompt,
+      session_id: activeSessionId,
       model: selectModel ? selectModel.value : 'auto',
       effort: selectEffort ? selectEffort.value : 'auto',
       autonomy_mode: selectAutonomy ? selectAutonomy.value : 'full',
@@ -423,115 +831,500 @@ document.addEventListener('DOMContentLoaded', () => {
       include_workspace_context: isWsContextAttached,
       workspace_path: activeWorkspace ? activeWorkspace.path : null
     };
-    
-    const response = await fetch('/api/command', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
 
-    const data = await response.json();
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Execution failed');
-    }
+    activeStreamAbortController = new AbortController();
+    const startTime = performance.now();
+    let tokenCount = 0;
+    let accumulatedContent = '';
+    let accumulatedReasoning = '';
 
-    // Update Decision Banner
-    decisionIndicator.textContent = data.cached ? '💾' : (data.provider === 'DeepSeek' ? '🧠' : '⚡');
-    decisionText.textContent = `${data.routing_reason}`;
-    decisionMetrics.style.display = 'flex';
-    metricModel.textContent = data.model;
-    
-    if (metricEffort) {
-      metricEffort.style.display = data.effort ? 'inline-block' : 'none';
-      metricEffort.textContent = data.effort ? `${data.effort.toUpperCase()} EFFORT` : '';
-    }
-    if (metricWorkspace && data.workspace) {
-      metricWorkspace.style.display = 'inline-block';
-      metricWorkspace.textContent = `📁 ${data.workspace.name}`;
-      metricWorkspace.title = data.workspace.path || '';
-    }
+    try {
+      const response = await fetch('/api/command/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: activeStreamAbortController.signal
+      });
 
-    metricCache.textContent = data.cached ? 'CACHE HIT (0ms cost)' : 'DIRECT INFERENCE';
-    metricCache.style.color = data.cached ? '#6EE7B7' : '#94A3B8';
-    metricLatency.textContent = `${data.latency_ms} ms`;
-
-    // Handle Frontier Chain of Thought (Live Reasoning Trace)
-    if (data.reasoning_content && thinkingAccordion && thinkingText) {
-      thinkingAccordion.style.display = 'block';
-      thinkingText.textContent = data.reasoning_content;
-      if (thinkingBadge) {
-        const rTokens = data.usage?.completion_tokens_details?.reasoning_tokens;
-        thinkingBadge.textContent = rTokens ? `${rTokens} Reasoning Tokens` : 'Frontier Trace';
+      if (!response.ok) {
+        throw new Error(`Server returned HTTP ${response.status}`);
       }
-    } else if (thinkingAccordion) {
-      thinkingAccordion.style.display = 'none';
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop();
+
+        for (const eventBlock of events) {
+          const lines = eventBlock.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6).trim();
+              if (!jsonStr) continue;
+              try {
+                const eventData = JSON.parse(jsonStr);
+
+                if (eventData.type === 'start') {
+                  if (streamingModelPill) streamingModelPill.textContent = eventData.model_name || eventData.model;
+                  decisionIndicator.textContent = eventData.model.includes('reasoner') ? '🧠' : '⚡';
+                  decisionText.textContent = eventData.routing_reason;
+                  decisionMetrics.style.display = 'flex';
+                  metricModel.textContent = eventData.model;
+                  if (metricEffort) metricEffort.textContent = `${(eventData.effort || 'AUTO').toUpperCase()} EFFORT`;
+                  if (metricWorkspace && eventData.workspace) metricWorkspace.textContent = `📁 ${eventData.workspace.name}`;
+                } else if (eventData.type === 'thinking') {
+                  accumulatedReasoning += eventData.delta;
+                  tokenCount += 1;
+                  if (streamingThinkingAccordion) streamingThinkingAccordion.style.display = 'block';
+                  if (streamingThinkingText) streamingThinkingText.textContent = accumulatedReasoning;
+                  if (streamingThinkingBadge) streamingThinkingBadge.textContent = `${tokenCount} Tokens`;
+                } else if (eventData.type === 'content') {
+                  accumulatedContent += eventData.delta;
+                  tokenCount += 1;
+                  if (streamingContentText) {
+                    streamingContentText.innerHTML = formatExecutiveMarkdown(accumulatedContent);
+                  }
+                  const elapsedSec = (performance.now() - startTime) / 1000;
+                  if (elapsedSec > 0.3 && streamingVelocity) {
+                    const speed = (tokenCount / elapsedSec).toFixed(1);
+                    streamingVelocity.textContent = `⚡ ${speed} tokens/s`;
+                  }
+                  scrollToTimelineBottom();
+                } else if (eventData.type === 'done') {
+                  if (streamingTurnCard) streamingTurnCard.style.display = 'none';
+                  if (btnHaltStream) btnHaltStream.style.display = 'none';
+
+                  const assistantMsg = {
+                    role: 'assistant',
+                    content: accumulatedContent,
+                    reasoning_content: accumulatedReasoning,
+                    model: eventData.session?.model || payload.model,
+                    latency_ms: eventData.latency_ms,
+                    cost_usd: eventData.cost_actual,
+                    timestamp: Date.now() / 1000
+                  };
+
+                  if (activeSession) {
+                    activeSession.messages.push(assistantMsg);
+                  }
+
+                  const assistantCard = createTurnCard(assistantMsg, (activeSession?.messages?.length || 1) - 1);
+                  if (conversationTimeline) {
+                    conversationTimeline.appendChild(assistantCard);
+                    scrollToTimelineBottom();
+                  }
+
+                  if (eventData.budget) renderBudget(eventData.budget);
+                  refreshCacheStats();
+                  fetchSessions();
+                  outputStatus.textContent = `Completed (${eventData.latency_ms}ms)`;
+                } else if (eventData.type === 'error') {
+                  displayError(eventData.error);
+                }
+              } catch (parseErr) {
+                console.warn('SSE JSON parse error', parseErr);
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        outputStatus.textContent = 'Stream Halted by CEO';
+        if (streamingTurnCard) streamingTurnCard.style.display = 'none';
+        if (btnHaltStream) btnHaltStream.style.display = 'none';
+      } else {
+        displayError(err.message || 'Stream communication failed');
+      }
+    } finally {
+      setLoading(false);
+      activeStreamAbortController = null;
+      if (btnHaltStream) btnHaltStream.style.display = 'none';
+      if (streamingTurnCard) streamingTurnCard.style.display = 'none';
     }
+  }
 
-    // Render Formatted Output
-    renderOutput(data.content);
-    outputStatus.textContent = `Completed (${data.latency_ms}ms)`;
+  // Stop button handler
+  if (btnHaltStream) {
+    btnHaltStream.addEventListener('click', () => {
+      if (activeStreamAbortController) {
+        activeStreamAbortController.abort();
+      }
+    });
+  }
 
-    // Update Budget Telemetry immediately if returned
-    if (data.budget) {
-      renderBudget(data.budget);
-    }
-
-    // Refresh Cache Count
-    refreshCacheStats();
+  if (btnToggleStreamingThinking) {
+    btnToggleStreamingThinking.addEventListener('click', () => {
+      isStreamingThinkingExpanded = !isStreamingThinkingExpanded;
+      if (streamingThinkingBody) streamingThinkingBody.style.display = isStreamingThinkingExpanded ? 'block' : 'none';
+      btnToggleStreamingThinking.textContent = isStreamingThinkingExpanded ? 'Hide Thoughts ▴' : 'Show Thoughts ▾';
+    });
   }
 
   async function dispatchToOpenClaw(prompt) {
     outputStatus.textContent = 'Dispatching to OpenClaw Swarm...';
 
-    if (thinkingAccordion) thinkingAccordion.style.display = 'none';
+    const userMsg = {
+      role: 'user',
+      content: prompt,
+      timestamp: Date.now() / 1000
+    };
+    if (activeSession) {
+      activeSession.messages = activeSession.messages || [];
+      activeSession.messages.push(userMsg);
+    }
+    const userCard = createTurnCard(userMsg, (activeSession?.messages?.length || 1) - 1);
+    if (conversationTimeline) {
+      if (outputPlaceholder) outputPlaceholder.style.display = 'none';
+      conversationTimeline.appendChild(userCard);
+      scrollToTimelineBottom();
+    }
+    executivePrompt.value = '';
+    setLoading(true);
 
-    const response = await fetch('/api/openclaw/dispatch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: prompt, agent_id: selectedAgent })
-    });
+    try {
+      const response = await fetch('/api/openclaw/dispatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: prompt, agent_id: selectedAgent })
+      });
 
-    const data = await response.json();
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || 'OpenClaw execution failed');
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'OpenClaw execution failed');
+      }
+
+      decisionIndicator.textContent = '🧭';
+      decisionText.textContent = `Autonomous execution completed by OpenClaw Agent [${data.agent_id}].`;
+      decisionMetrics.style.display = 'flex';
+      metricModel.textContent = `OpenClaw: ${data.agent_id}`;
+      metricCache.textContent = 'SWARM COMPLETE';
+      metricLatency.textContent = `${data.latency_ms} ms`;
+
+      const assistantMsg = {
+        role: 'assistant',
+        content: data.reply,
+        model: `OpenClaw (${data.agent_id})`,
+        latency_ms: data.latency_ms,
+        cost_usd: 0.0,
+        timestamp: Date.now() / 1000
+      };
+
+      if (activeSession) {
+        activeSession.messages.push(assistantMsg);
+      }
+
+      const assistantCard = createTurnCard(assistantMsg, (activeSession?.messages?.length || 1) - 1);
+      if (conversationTimeline) {
+        conversationTimeline.appendChild(assistantCard);
+        scrollToTimelineBottom();
+      }
+
+      outputStatus.textContent = `Agent Completed (${data.latency_ms}ms)`;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ==============================================================================
+  // Slash Commands Popover Engine
+  // ==============================================================================
+  const slashItems = [
+    { cmd: '/plan', title: '/plan [directive]', desc: 'Execute in Plan-First mode with architectural roadmap & milestones' },
+    { cmd: '/reason', title: '/reason [directive]', desc: 'DeepSeek R1 frontier strategic reasoning with full deliberation trace' },
+    { cmd: '/fast', title: '/fast [directive]', desc: 'Fast synthesis tier via Gemini Flash with massive context ingestion' },
+    { cmd: '/audit', title: '/audit', desc: 'Run complete health verification on gateways, redis, and budget governor' },
+    { cmd: '/memo', title: '/memo [topic]', desc: 'Draft structured 1-page executive memorandum for leadership team' },
+    { cmd: '/export', title: '/export', desc: 'Export current executive conversation thread as Markdown document' },
+    { cmd: '/clear', title: '/clear', desc: 'Reset conversation thread and start a fresh directive' }
+  ];
+
+  executivePrompt.addEventListener('input', () => {
+    const val = executivePrompt.value;
+    if (val.startsWith('/')) {
+      const q = val.toLowerCase();
+      renderSlashMenu(q);
+    } else {
+      if (slashMenu) slashMenu.style.display = 'none';
+    }
+  });
+
+  function renderSlashMenu(query) {
+    if (!slashMenu || !slashOptionsList) return;
+    const filtered = slashItems.filter(item => item.cmd.startsWith(query) || item.title.toLowerCase().includes(query));
+
+    if (!filtered.length) {
+      slashMenu.style.display = 'none';
+      return;
     }
 
-    decisionIndicator.textContent = '🧭';
-    decisionText.textContent = `Autonomous execution completed by OpenClaw Agent [${data.agent_id}].`;
-    decisionMetrics.style.display = 'flex';
-    metricModel.textContent = `OpenClaw: ${data.agent_id}`;
-    metricCache.textContent = 'SWARM COMPLETE';
-    metricLatency.textContent = `${data.latency_ms} ms`;
+    slashOptionsList.innerHTML = '';
+    filtered.forEach((item, idx) => {
+      const opt = document.createElement('div');
+      opt.className = `slash-option ${idx === 0 ? 'active' : ''}`;
+      opt.dataset.cmd = item.cmd;
+      opt.innerHTML = `
+        <span class="slash-icon">${item.cmd === '/plan' ? '📋' : (item.cmd === '/reason' ? '🧠' : (item.cmd === '/fast' ? '⚡' : (item.cmd === '/audit' ? '🛡️' : (item.cmd === '/memo' ? '📝' : (item.cmd === '/export' ? '📄' : '🗑️')))))}</span>
+        <div class="slash-info">
+          <span class="slash-title">${escapeHtml(item.title)}</span>
+          <span class="slash-desc">${escapeHtml(item.desc)}</span>
+        </div>
+      `;
+      opt.addEventListener('click', () => applySlashCommand(item.cmd));
+      slashOptionsList.appendChild(opt);
+    });
 
-    renderOutput(data.reply);
-    outputStatus.textContent = `Agent Completed (${data.latency_ms}ms)`;
-  }
-  }
-
-  function renderOutput(content) {
-    outputContent.innerHTML = '';
-    const formatted = formatExecutiveMarkdown(content);
-    outputContent.innerHTML = formatted;
+    slashMenu.style.display = 'block';
+    activeSlashIndex = 0;
   }
 
+  function applySlashCommand(cmd) {
+    executivePrompt.value = `${cmd} `;
+    if (slashMenu) slashMenu.style.display = 'none';
+    executivePrompt.focus();
+  }
+
+  executivePrompt.addEventListener('keydown', (e) => {
+    if (slashMenu && slashMenu.style.display !== 'none') {
+      const options = slashOptionsList.querySelectorAll('.slash-option');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeSlashIndex = (activeSlashIndex + 1) % options.length;
+        options.forEach((o, i) => o.classList.toggle('active', i === activeSlashIndex));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeSlashIndex = (activeSlashIndex - 1 + options.length) % options.length;
+        options.forEach((o, i) => o.classList.toggle('active', i === activeSlashIndex));
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        const activeOpt = options[activeSlashIndex];
+        if (activeOpt) applySlashCommand(activeOpt.dataset.cmd);
+        return;
+      }
+      if (e.key === 'Escape') {
+        slashMenu.style.display = 'none';
+        return;
+      }
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      dispatchCommand();
+    }
+  });
+
+  // ==============================================================================
+  // Global Executive Command Palette (Ctrl+K)
+  // ==============================================================================
+  const cpActions = [
+    { title: 'New Executive Thread', desc: 'Create a clean, isolated conversation session', icon: '＋', action: () => createNewSession() },
+    { title: 'Export Executive Briefing', desc: 'Download entire thread transcript as formatted Markdown report', icon: '📄', action: () => exportReport() },
+    { title: 'Model: DeepSeek Reasoner (R1)', desc: 'Switch model to frontier reasoning tier', icon: '🧠', action: () => { if (selectModel) selectModel.value = 'deepseek-reasoner'; } },
+    { title: 'Model: Gemini 2.5/3.8 Flash', desc: 'Switch model to high-speed context synthesis tier', icon: '⚡', action: () => { if (selectModel) selectModel.value = 'gemini-flash'; } },
+    { title: 'Model: Claude 3.5 Sonnet', desc: 'Switch model to frontier Anthropic tier', icon: '🎭', action: () => { if (selectModel) selectModel.value = 'claude-3-5-sonnet'; } },
+    { title: 'Model: Qwen 2.5 Coder 32B', desc: 'Switch model to Alibaba deep coding tier', icon: '💻', action: () => { if (selectModel) selectModel.value = 'siliconflow-qwen-coder'; } },
+    { title: 'Effort: Low (2k Tokens)', desc: 'Set reasoning effort to rapid synthesis tier', icon: '⚡', action: () => { if (selectEffort) selectEffort.value = 'low'; } },
+    { title: 'Effort: Max (16k+ Tokens)', desc: 'Set reasoning effort to maximum frontier proof tier', icon: '🌌', action: () => { if (selectEffort) selectEffort.value = 'max'; } },
+    { title: 'Autonomy: Full Autonomy', desc: 'Enable end-to-end autonomous execution', icon: '🚀', action: () => { if (selectAutonomy) selectAutonomy.value = 'full'; } },
+    { title: 'Autonomy: Plan-First', desc: 'Require structured roadmap and architecture first', icon: '📋', action: () => { if (selectAutonomy) selectAutonomy.value = 'plan_first'; } },
+    { title: 'Switch Active Workspace', desc: 'Open workspace switcher folder drawer', icon: '📁', action: () => { if (workspaceDrawer) workspaceDrawer.style.display = 'block'; } },
+    { title: 'Emergency Stop: Trip Circuit Breaker', desc: 'Immediately halt cloud API spend and fallback to local', icon: '🛑', action: () => { if (btnTripBreaker) btnTripBreaker.click(); } }
+  ];
+
+  function openCommandPalette() {
+    if (!commandPaletteBackdrop) return;
+    commandPaletteBackdrop.style.display = 'flex';
+    if (cpSearchInput) {
+      cpSearchInput.value = '';
+      cpSearchInput.focus();
+    }
+    renderCommandPalette('');
+  }
+
+  function closeCommandPalette() {
+    if (commandPaletteBackdrop) commandPaletteBackdrop.style.display = 'none';
+  }
+
+  function renderCommandPalette(query) {
+    if (!cpOptionsList) return;
+    const q = (query || '').toLowerCase().trim();
+    const filtered = cpActions.filter(a => a.title.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q));
+
+    cpOptionsList.innerHTML = '';
+    if (!filtered.length) {
+      cpOptionsList.innerHTML = '<div style="padding:16px;text-align:center;color:#64748B;font-size:12px;">No matching actions found.</div>';
+      return;
+    }
+
+    filtered.forEach((item, idx) => {
+      const opt = document.createElement('div');
+      opt.className = `cp-option ${idx === 0 ? 'active' : ''}`;
+      opt.innerHTML = `
+        <div class="cp-option-left">
+          <span class="cp-option-icon">${item.icon}</span>
+          <div class="cp-option-info">
+            <span class="cp-option-title">${escapeHtml(item.title)}</span>
+            <span class="cp-option-desc">${escapeHtml(item.desc)}</span>
+          </div>
+        </div>
+      `;
+      opt.addEventListener('click', () => {
+        closeCommandPalette();
+        item.action();
+      });
+      cpOptionsList.appendChild(opt);
+    });
+    activeCpIndex = 0;
+  }
+
+  if (btnOpenCommandPalette) btnOpenCommandPalette.addEventListener('click', openCommandPalette);
+
+  if (commandPaletteBackdrop) {
+    commandPaletteBackdrop.addEventListener('click', (e) => {
+      if (e.target === commandPaletteBackdrop) closeCommandPalette();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      openCommandPalette();
+    }
+    if (e.key === 'Escape') {
+      if (commandPaletteBackdrop && commandPaletteBackdrop.style.display !== 'none') {
+        closeCommandPalette();
+      }
+      if (slashMenu && slashMenu.style.display !== 'none') {
+        slashMenu.style.display = 'none';
+      }
+    }
+  });
+
+  if (cpSearchInput) {
+    cpSearchInput.addEventListener('input', () => {
+      renderCommandPalette(cpSearchInput.value);
+    });
+
+    cpSearchInput.addEventListener('keydown', (e) => {
+      const options = cpOptionsList.querySelectorAll('.cp-option');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeCpIndex = (activeCpIndex + 1) % options.length;
+        options.forEach((o, i) => o.classList.toggle('active', i === activeCpIndex));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeCpIndex = (activeCpIndex - 1 + options.length) % options.length;
+        options.forEach((o, i) => o.classList.toggle('active', i === activeCpIndex));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const activeOpt = options[activeCpIndex];
+        if (activeOpt) activeOpt.click();
+      }
+    });
+  }
+
+  // ==============================================================================
+  // One-Click Executive Report Exporter
+  // ==============================================================================
+  function exportReport() {
+    if (!activeSession || !activeSession.messages || activeSession.messages.length === 0) {
+      alert('No conversation history to export.');
+      return;
+    }
+
+    const title = activeSession.title || 'Executive_Briefing';
+    const timestamp = new Date().toISOString();
+    let md = `# Executive Briefing Report: ${title}\n\n`;
+    md += `**Date**: ${timestamp}  \n`;
+    md += `**Target Workspace**: \`${activeSession.workspace_path || 'N/A'}\`  \n`;
+    md += `**Orchestration Engine**: Antigravity CEO Cockpit (Round 1 Frontier Harness)  \n\n`;
+    md += `---\n\n`;
+
+    activeSession.messages.forEach((msg, idx) => {
+      if (msg.role === 'user') {
+        md += `### Directive ${idx + 1} (CEO):\n> ${msg.content.replace(/\n/g, '\n> ')}\n\n`;
+      } else {
+        md += `### AI OS Resolution (${msg.model || 'Frontier Model'}):\n`;
+        if (msg.latency_ms) md += `*Latency: ${msg.latency_ms}ms | Cost: $${(msg.cost_usd || 0).toFixed(4)}*\n\n`;
+        if (msg.reasoning_content) {
+          md += `#### Frontier Deliberation Trace (Chain of Thought):\n\`\`\`\n${msg.reasoning_content}\n\`\`\`\n\n`;
+        }
+        md += `${msg.content}\n\n---\n\n`;
+      }
+    });
+
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/[^a-zA-Z0-9_-]/g, '_')}_Report.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  if (btnExportReport) btnExportReport.addEventListener('click', exportReport);
+
+  // ==============================================================================
+  // Markdown & Utility Helpers
+  // ==============================================================================
   function formatExecutiveMarkdown(text) {
     if (!text) return '<p>No content generated.</p>';
     
     let html = text
-      // Bold headers
       .replace(/^### (.*$)/gim, '<h4 style="color:#67E8F9;margin:16px 0 8px;font-size:15px;font-weight:700;">$1</h4>')
       .replace(/^## (.*$)/gim, '<h3 style="color:#FFFFFF;margin:20px 0 10px;font-size:17px;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:6px;">$1</h3>')
       .replace(/^# (.*$)/gim, '<h2 style="color:#FFFFFF;margin:24px 0 12px;font-size:19px;font-weight:700;">$1</h2>')
-      // Bold highlights
-      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#F1F5F9;font-weight:600;">$1</strong>')
-      // Bullet items
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#F1F5F9;font-weight:700;">$1</strong>')
       .replace(/^\s*[-*]\s(.*$)/gim, '<li style="margin-left:20px;margin-bottom:6px;color:#CBD5E1;">$1</li>')
-      // Numbered items
       .replace(/^\s*\d+\.\s(.*$)/gim, '<li style="margin-left:20px;margin-bottom:6px;color:#CBD5E1;">$1</li>')
-      // Paragraphs
+      .replace(/`([^`]+)`/g, '<code style="font-family:var(--font-mono);background:rgba(0,0,0,0.35);color:#38BDF8;padding:2px 6px;border-radius:4px;font-size:12.5px;">$1</code>')
       .replace(/\n\n/g, '<br><br>');
 
     return `<div class="formatted-brief">${html}</div>`;
+  }
+
+  function formatRelativeTime(ts) {
+    if (!ts) return 'just now';
+    const diff = Math.floor(Date.now() / 1000 - ts);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  }
+
+  function formatTime(ts) {
+    if (!ts) return '';
+    const d = new Date(ts * 1000);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatModelName(modelId) {
+    if (!modelId) return 'Frontier AI OS';
+    if (modelId.includes('deepseek-reasoner')) return 'DeepSeek Reasoner (R1)';
+    if (modelId.includes('deepseek-chat')) return 'DeepSeek Chat (V3)';
+    if (modelId.includes('gemini-flash')) return 'Gemini 2.5/3.8 Flash';
+    if (modelId.includes('gemini-pro')) return 'Gemini Pro';
+    if (modelId.includes('claude-3-5-sonnet')) return 'Claude 3.5 Sonnet';
+    if (modelId.includes('qwen-coder')) return 'Qwen 2.5 Coder 32B';
+    return modelId;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function displayError(errMsg) {
@@ -758,6 +1551,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initial runs
+  fetchSessions();
   fetchWorkspace();
   fetchModelsList();
   refreshHealth();

@@ -1,4 +1,5 @@
 # Local state and runtime metadata
 workspace_state.json
+data/
 __pycache__/
 *.pyc
