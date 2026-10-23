@@ -87,6 +87,66 @@
             </div>
           </div>
 
+          <!-- Executive Workspace Harness Bar -->
+          <div class="workspace-harness-bar" id="workspaceHarnessBar">
+            <div class="ws-left">
+              <span class="ws-icon">📁</span>
+              <div class="ws-meta">
+                <span class="ws-label">ACTIVE WORKSPACE</span>
+                <div class="ws-path-row">
+                  <span class="ws-path" id="activeWorkspacePath" title="Active Workspace Folder">F:\src\github.com\intellibitz\archives</span>
+                  <span class="ws-badge" id="wsBranchBadge">🌱 main</span>
+                  <span class="ws-badge-sub" id="wsItemsBadge">67 items</span>
+                </div>
+              </div>
+            </div>
+            <div class="ws-right">
+              <button class="ws-btn ws-btn-toggle active" id="btnToggleWsContext" title="Toggle injection of repository files and architecture context into AI prompt">
+                <span class="ws-btn-icon">📎</span>
+                <span class="ws-btn-text">Context Attached</span>
+              </button>
+              <button class="ws-btn ws-btn-secondary" id="btnExploreWs" title="View files and directories in current workspace">
+                <span class="ws-btn-icon">👁️</span>
+                <span class="ws-btn-text">Files</span>
+              </button>
+              <button class="ws-btn ws-btn-primary" id="btnSwitchWs" title="Select or switch workspace folder">
+                <span class="ws-btn-icon">⇄</span>
+                <span class="ws-btn-text">Switch Workspace</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Workspace Switcher Drawer Popover -->
+          <div class="workspace-drawer" id="workspaceDrawer" style="display: none;">
+            <div class="ws-drawer-header">
+              <span class="ws-drawer-title">Select Executive Workspace Folder</span>
+              <button class="ws-drawer-close" id="btnCloseWsDrawer">✕</button>
+            </div>
+            <div class="ws-drawer-body">
+              <div class="ws-input-row">
+                <input type="text" id="inputCustomWsPath" class="ws-path-input" placeholder="Enter folder path (e.g. F:\src\..., C:\Users\...)" />
+                <button id="btnApplyWsPath" class="ws-apply-btn">Set Active</button>
+              </div>
+              <div class="ws-recents-group">
+                <span class="ws-recents-title">Recent & Discovered Workspaces:</span>
+                <div class="ws-recents-chips" id="wsRecentsChips">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workspace Files Preview Drawer -->
+          <div class="workspace-drawer" id="workspaceFilesDrawer" style="display: none;">
+            <div class="ws-drawer-header">
+              <span class="ws-drawer-title">Workspace Directory Snapshot (<span id="wsSnapshotName">archives</span>)</span>
+              <button class="ws-drawer-close" id="btnCloseWsFilesDrawer">✕</button>
+            </div>
+            <div class="ws-files-list" id="wsFilesList">
+              <!-- Dynamically populated files and folders -->
+            </div>
+          </div>
+
           <!-- Mode Selector Tabs -->
           <div class="routing-mode-selector">
             <button class="mode-tab active" data-mode="auto" id="tabAuto">
@@ -109,6 +169,85 @@
               <span class="tab-text">Chief of Staff</span>
               <span class="tab-sub">Multi-Agent</span>
             </button>
+          </div>
+
+          <!-- Orchestration Harness Deliberation Controls Strip -->
+          <div class="harness-controls-grid">
+            <!-- Model Selection Dropdown (Default: Auto) -->
+            <div class="harness-control-group">
+              <label for="selectModel" class="control-label">
+                <span class="label-icon">🤖</span>
+                <span>AI Model</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="selectModel" class="harness-select">
+                  <option value="auto" selected>✨ Auto (Frontier Router)</option>
+                  <optgroup label="Frontier Reasoning">
+                    <option value="deepseek-reasoner">🧠 DeepSeek Reasoner (R1)</option>
+                  </optgroup>
+                  <optgroup label="Speed & High-Context">
+                    <option value="deepseek-chat">⚡ DeepSeek Chat (V3)</option>
+                    <option value="gemini-flash">⚡ Gemini 2.5/3.8 Flash (1M+)</option>
+                  </optgroup>
+                  <optgroup label="Frontier Synthesis">
+                    <option value="gemini-pro">💎 Gemini Pro</option>
+                    <option value="claude-3-5-sonnet">🎭 Claude 3.5 Sonnet</option>
+                    <option value="claude-3-5-haiku">🍃 Claude 3.5 Haiku</option>
+                  </optgroup>
+                  <optgroup label="Code & Domain">
+                    <option value="siliconflow-qwen-coder">💻 Qwen 2.5 Coder 32B</option>
+                    <option value="dashscope-qwen-max">🌐 DashScope Qwen Max</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+
+            <!-- Reasoning Effort Dropdown (Default: Auto) -->
+            <div class="harness-control-group">
+              <label for="selectEffort" class="control-label">
+                <span class="label-icon">🧠</span>
+                <span>Reasoning Effort</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="selectEffort" class="harness-select">
+                  <option value="auto" selected>🔄 Auto (Adaptive Deliberation)</option>
+                  <option value="low">⚡ Low (Rapid Synthesis • 2k Tokens)</option>
+                  <option value="medium">⚖️ Medium (Standard Audit • 4k Tokens)</option>
+                  <option value="high">🧠 High (Deep Verification • 8k Tokens)</option>
+                  <option value="max">🌌 Max (Frontier Deliberation • 16k+ Tokens)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Autonomy Level -->
+            <div class="harness-control-group">
+              <label for="selectAutonomy" class="control-label">
+                <span class="label-icon">🧭</span>
+                <span>Autonomy Level</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="selectAutonomy" class="harness-select">
+                  <option value="full" selected>🚀 Full Autonomy (End-to-End)</option>
+                  <option value="plan_first">📋 Plan & Strategy First</option>
+                  <option value="advisory">🛡️ Advisory & Risk Audit</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Precision Tier (Temperature) -->
+            <div class="harness-control-group">
+              <label for="selectTemperature" class="control-label">
+                <span class="label-icon">🎯</span>
+                <span>Precision Tier</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="selectTemperature" class="harness-select">
+                  <option value="0.1">🔒 Strict Deterministic (0.1)</option>
+                  <option value="0.3" selected>🎯 Balanced Executive (0.3)</option>
+                  <option value="0.7">💡 Creative Scenario (0.7)</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <!-- Command Input Area -->
@@ -142,6 +281,8 @@
             </div>
             <div class="decision-metrics" id="decisionMetrics" style="display: none;">
               <span class="metric-tag tag-model" id="metricModel"></span>
+              <span class="metric-tag tag-effort" id="metricEffort" style="display: none;"></span>
+              <span class="metric-tag tag-workspace" id="metricWorkspace"></span>
               <span class="metric-tag tag-cache" id="metricCache"></span>
               <span class="metric-tag tag-latency" id="metricLatency"></span>
             </div>
@@ -156,11 +297,27 @@
                 <button class="tool-btn" id="btnCopy" title="Copy to Clipboard">📋 Copy Brief</button>
               </div>
             </div>
+
+            <!-- Frontier Chain of Thought (Live Reasoning Trace) Accordion -->
+            <div class="thinking-accordion" id="thinkingAccordion" style="display: none;">
+              <div class="thinking-header" id="thinkingHeader">
+                <div class="thinking-title">
+                  <span class="thinking-sparkle">🧠</span>
+                  <span>Frontier Chain of Thought (Reasoning Trace)</span>
+                  <span class="thinking-badge" id="thinkingBadge">Deliberation</span>
+                </div>
+                <button class="thinking-toggle-btn" id="btnToggleThinking">Show Thoughts ▾</button>
+              </div>
+              <div class="thinking-body" id="thinkingBody" style="display: none;">
+                <div class="thinking-content" id="thinkingText"></div>
+              </div>
+            </div>
+
             <div class="output-content" id="outputContent">
               <div class="output-placeholder">
                 <div class="placeholder-icon">🎯</div>
                 <h3>Executive Cockpit Standing By</h3>
-                <p>Type your strategic command above or select a quick prompt. All operations automatically leverage exact-match Redis caching and optimal model selection.</p>
+                <p>Type your strategic command above or select a quick prompt. All operations automatically leverage exact-match Redis caching, workspace context, and optimal reasoning models.</p>
               </div>
             </div>
           </div>

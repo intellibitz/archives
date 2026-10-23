@@ -133,6 +133,141 @@ def check_auto_clicker() -> Dict[str, Any]:
         "mode": "SendInput-LowLatency"
     }
 
+WORKSPACE_CONFIG_FILE = os.path.join(BASE_DIR, "workspace_state.json")
+DEFAULT_WORKSPACE = os.path.abspath(os.path.join(BASE_DIR, ".."))
+
+def get_workspace_state() -> Dict[str, Any]:
+    state = {
+        "active_path": DEFAULT_WORKSPACE,
+        "recent_paths": [
+            DEFAULT_WORKSPACE,
+            os.path.abspath(BASE_DIR),
+            os.path.abspath(os.path.join(BASE_DIR, "automation")),
+            os.path.expanduser("~")
+        ]
+    }
+    if os.path.exists(WORKSPACE_CONFIG_FILE):
+        try:
+            with open(WORKSPACE_CONFIG_FILE, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if loaded.get("active_path") and os.path.isdir(loaded["active_path"]) and loaded["active_path"] != "/":
+                    state["active_path"] = loaded["active_path"]
+                if loaded.get("recent_paths"):
+                    state["recent_paths"] = loaded["recent_paths"]
+        except Exception:
+            pass
+    return state
+
+def save_workspace_state(active_path: str):
+    state = get_workspace_state()
+    active_path = os.path.abspath(active_path)
+    state["active_path"] = active_path
+    recents = [p for p in state.get("recent_paths", []) if p != active_path]
+    recents.insert(0, active_path)
+    state["recent_paths"] = recents[:8]
+    try:
+        with open(WORKSPACE_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+    except Exception:
+        pass
+
+def inspect_workspace(path: str) -> Dict[str, Any]:
+    path = os.path.abspath(path)
+    if not os.path.isdir(path):
+        return {
+            "path": path,
+            "name": os.path.basename(path) or path,
+            "exists": False,
+            "error": "Directory does not exist"
+        }
+    
+    name = os.path.basename(path) or path
+    branch = "N/A"
+    try:
+        res = subprocess.run(["git", "-C", path, "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True, timeout=1.5)
+        if res.returncode == 0:
+            branch = res.stdout.strip()
+    except Exception:
+        pass
+
+    entries = []
+    total_files = 0
+    try:
+        for entry in os.scandir(path):
+            if entry.name.startswith(".git") or entry.name == "__pycache__":
+                continue
+            is_dir = entry.is_dir()
+            size_bytes = 0
+            if not is_dir:
+                try:
+                    size_bytes = entry.stat().st_size
+                except Exception:
+                    pass
+            total_files += 1
+            entries.append({
+                "name": entry.name,
+                "is_dir": is_dir,
+                "size_bytes": size_bytes
+            })
+    except Exception:
+        pass
+
+    entries.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
+
+    return {
+        "path": path,
+        "name": name,
+        "exists": True,
+        "is_git": branch != "N/A",
+        "branch": branch,
+        "total_items": total_files,
+        "entries": entries[:50]
+    }
+
+def format_model_display_name(model_id: str) -> str:
+    mapping = {
+        "deepseek-reasoner": "DeepSeek Reasoner (R1)",
+        "deepseek-chat": "DeepSeek Chat (V3)",
+        "gemini-flash": "Gemini 2.5/3.8 Flash (1M+)",
+        "gemini-pro": "Gemini Pro (Frontier)",
+        "claude-3-5-sonnet": "Claude 3.5 Sonnet",
+        "claude-3-5-haiku": "Claude 3.5 Haiku",
+        "siliconflow-qwen-coder": "Qwen 2.5 Coder 32B",
+        "dashscope-qwen-max": "DashScope Qwen Max",
+    }
+    return mapping.get(model_id, model_id)
+
+def fetch_available_models() -> list:
+    try:
+        req = urllib.request.Request(f"{LITELLM_URL}/v1/models")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            raw_models = data.get("data", [])
+            models = []
+            for m in raw_models:
+                mid = m.get("id", "")
+                if "embedding" in mid.lower():
+                    continue
+                models.append({
+                    "id": mid,
+                    "name": format_model_display_name(mid),
+                    "is_reasoning": ("reasoner" in mid.lower() or "r1" in mid.lower() or "o1" in mid.lower())
+                })
+            if models:
+                return models
+    except Exception:
+        pass
+
+    return [
+        {"id": "deepseek-reasoner", "name": "DeepSeek Reasoner (R1)", "is_reasoning": True},
+        {"id": "deepseek-chat", "name": "DeepSeek Chat (V3)", "is_reasoning": False},
+        {"id": "gemini-flash", "name": "Gemini 2.5/3.8 Flash (1M+)", "is_reasoning": False},
+        {"id": "gemini-pro", "name": "Gemini Pro (Frontier)", "is_reasoning": False},
+        {"id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet", "is_reasoning": False},
+        {"id": "claude-3-5-haiku", "name": "Claude 3.5 Haiku", "is_reasoning": False},
+        {"id": "siliconflow-qwen-coder", "name": "Qwen 2.5 Coder 32B", "is_reasoning": False}
+    ]
+
 class CockpitHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC_DIR, **kwargs)
@@ -166,12 +301,18 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_cache_stats()
         elif self.path == "/api/openclaw-url":
             self.handle_openclaw_url()
+        elif self.path == "/api/workspace":
+            self.handle_workspace_get()
+        elif self.path == "/api/models":
+            self.handle_models_get()
         else:
             super().do_GET()
 
     def do_POST(self):
         if self.path == "/api/command":
             self.handle_command()
+        elif self.path == "/api/workspace":
+            self.handle_workspace_post()
         elif self.path == "/api/budget/config":
             self.handle_budget_config()
         elif self.path == "/api/budget/trip":
@@ -305,6 +446,47 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             "token": token
         })
 
+    def handle_workspace_get(self):
+        state = get_workspace_state()
+        active_path = state["active_path"]
+        info = inspect_workspace(active_path)
+        self._send_json(200, {
+            "workspace": info,
+            "recents": state["recent_paths"]
+        })
+
+    def handle_workspace_post(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            req = json.loads(post_data.decode("utf-8"))
+        except Exception as e:
+            self._send_json(400, {"error": f"Invalid JSON: {e}"})
+            return
+
+        target_path = req.get("path", "").strip()
+        if not target_path:
+            self._send_json(400, {"error": "Path is required"})
+            return
+
+        target_path = os.path.abspath(target_path)
+        if not os.path.isdir(target_path):
+            self._send_json(400, {"error": f"Directory does not exist on disk: {target_path}"})
+            return
+
+        save_workspace_state(target_path)
+        info = inspect_workspace(target_path)
+        state = get_workspace_state()
+        self._send_json(200, {
+            "success": True,
+            "workspace": info,
+            "recents": state["recent_paths"]
+        })
+
+    def handle_models_get(self):
+        models = fetch_available_models()
+        self._send_json(200, {"models": models})
+
     def handle_command(self):
         content_length = int(self.headers.get("Content-Length", 0))
         post_data = self.rfile.read(content_length)
@@ -315,55 +497,118 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         prompt = req.get("prompt", "").strip()
-        mode = req.get("mode", "auto")
-
         if not prompt:
             self._send_json(400, {"error": "Prompt cannot be empty"})
             return
+
+        requested_model = req.get("model", "auto")
+        effort = req.get("effort", "auto").lower()
+        autonomy = req.get("autonomy_mode", "full").lower()
+        temperature = float(req.get("temperature", 0.3))
+        include_ws_context = req.get("include_workspace_context", True)
+
+        # Workspace Context Injection
+        state = get_workspace_state()
+        ws_path = req.get("workspace_path") or state["active_path"]
+        ws_info = inspect_workspace(ws_path)
+        ws_context_str = ""
+
+        if include_ws_context and ws_info.get("exists"):
+            entries = ws_info.get("entries", [])
+            files_preview = ", ".join([f"{e['name']}/" if e['is_dir'] else e['name'] for e in entries[:30]])
+            readme_snippet = ""
+            readme_path = os.path.join(ws_path, "README.md")
+            if os.path.exists(readme_path):
+                try:
+                    with open(readme_path, "r", encoding="utf-8") as rf:
+                        readme_snippet = rf.read(600).strip().replace("\n", " ")
+                except Exception:
+                    pass
+
+            ws_context_str = (
+                f"\n[Active Workspace Directory: {ws_path}]\n"
+                f"[Repository Branch: {ws_info.get('branch', 'N/A')} | Items: {ws_info.get('total_items', 0)}]\n"
+                f"[Workspace Top-Level Items: {files_preview}]\n"
+            )
+            if readme_snippet:
+                ws_context_str += f"[Project Brief: {readme_snippet[:300]}...]\n"
+
+        # Autonomy Directive
+        if autonomy == "plan_first":
+            autonomy_directive = "Operate in Plan-First Mode. Structure response into: 1. Executive Summary, 2. Architectural Blueprint & Phased Roadmap, 3. Concrete Action Steps."
+        elif autonomy == "advisory":
+            autonomy_directive = "Operate in Executive Advisory Mode. Evaluate strategic options, risk factors, and financial/technical tradeoffs without enacting operational state mutations."
+        else:
+            autonomy_directive = "Operate with Full Autonomy. Formulate authoritative, end-to-end executive resolutions and decisions."
+
+        # Reasoning Effort & Token Budget
+        if effort == "low":
+            max_tokens = 2048
+            effort_directive = "Reasoning Effort: Low (Rapid Synthesis). Deliver high-density, concise conclusions with minimal preamble."
+        elif effort == "medium":
+            max_tokens = 4096
+            effort_directive = "Reasoning Effort: Medium (Standard Audit). Provide balanced deduction with core tradeoffs and next steps."
+        elif effort == "high":
+            max_tokens = 8192
+            effort_directive = "Reasoning Effort: High (Deep Verification). Exhaustively verify assumptions, edge cases, risks, and mitigations."
+        elif effort == "max":
+            max_tokens = 16384
+            effort_directive = "Reasoning Effort: Max (Frontier Deliberation). Execute complete strategic proof, multi-perspective scenario modeling, and full architectural rationale."
+        else:
+            max_tokens = 4096
+            effort_directive = "Reasoning Effort: Auto (Adaptive Deliberation). Calibrate reasoning depth dynamically to query complexity."
 
         # Model resolution & Circuit-Breaker Check
         is_tripped = governor.is_tripped()
         if is_tripped:
             selected_model = "gemini-flash"
             routing_reason = "⚠️ CIRCUIT BREAKER ACTIVE: Daily spend cap enforced. Safeguard Zero-Cost Routing ($0.00)"
-        elif mode == "auto":
+        elif requested_model == "auto":
             selected_model, routing_reason = classify_model_intent(prompt)
-        elif mode == "deepseek":
-            selected_model = "deepseek-reasoner"
-            routing_reason = "Manual Override: DeepSeek Frontier Reasoner"
-        elif mode == "deepseek-chat":
-            selected_model = "deepseek-chat"
-            routing_reason = "Manual Override: DeepSeek High-Speed Chat"
-        elif mode == "gemini":
-            selected_model = "gemini-flash"
-            routing_reason = "Manual Override: Gemini 3.8 Flash"
-        elif mode == "gemini-pro":
-            selected_model = "gemini-pro"
-            routing_reason = "Manual Override: Gemini 3.1 Pro"
+        elif requested_model in [
+            "deepseek", "deepseek-reasoner", "deepseek-chat",
+            "gemini", "gemini-flash", "gemini-pro",
+            "claude-3-5-sonnet", "claude-3-5-haiku",
+            "siliconflow-qwen-coder", "dashscope-qwen-max"
+        ]:
+            if requested_model == "deepseek":
+                selected_model = "deepseek-reasoner"
+            elif requested_model == "gemini":
+                selected_model = "gemini-flash"
+            else:
+                selected_model = requested_model
+            routing_reason = f"Executive Model Selection: {format_model_display_name(selected_model)}"
         else:
-            selected_model = "gemini-flash"
-            routing_reason = "Default Fallback Tier"
+            selected_model = requested_model
+            routing_reason = f"Selected Model: {format_model_display_name(selected_model)}"
+
+        if "reasoner" in selected_model and effort in ["auto", "high", "max"]:
+            max_tokens = max(max_tokens, 8192)
 
         start_time = time.time()
-        
-        # Dispatch to LiteLLM
+
+        system_prompt = (
+            "You are the Executive AI Engine for the CEO Cockpit.\n"
+            "The user is the CEO and operates at an executive decision-making level.\n"
+            "Do not output technical code blocks or file diffs unless specifically requested for an engineering review.\n"
+            "Deliver high-density, authoritative, clear executive briefings with key takeaways, strategic options, and concrete action items.\n"
+            f"Harness Autonomy Directive: {autonomy_directive}\n"
+            f"{effort_directive}\n"
+            f"{ws_context_str}"
+        )
+
         litellm_payload = {
             "model": selected_model,
             "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        "You are the Executive AI Engine for the CEO Cockpit. "
-                        "The user is the CEO and operates at an executive decision-making level. "
-                        "Do not output technical code blocks or syntax diffs unless specifically requested for an engineering review. "
-                        "Deliver high-density, authoritative, clear executive briefings with key takeaways, strategic options, and concrete action items."
-                    )
-                },
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 2048,
-            "temperature": 0.2
+            "max_tokens": max_tokens,
+            "temperature": temperature
         }
+
+        if effort != "auto" and "reasoner" in selected_model:
+            litellm_payload["reasoning_effort"] = "high" if effort in ["high", "max"] else ("low" if effort == "low" else "medium")
 
         try:
             req_data = json.dumps(litellm_payload).encode("utf-8")
@@ -372,36 +617,44 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
                 data=req_data,
                 headers={"Content-Type": "application/json"}
             )
-            with urllib.request.urlopen(litellm_req, timeout=45) as resp:
+            with urllib.request.urlopen(litellm_req, timeout=60) as resp:
                 resp_json = json.loads(resp.read().decode("utf-8"))
-                
+
             elapsed_ms = int((time.time() - start_time) * 1000)
             choice = resp_json.get("choices", [{}])[0]
             message = choice.get("message", {})
             content = message.get("content", "")
+            reasoning_content = message.get("reasoning_content", "")
             usage = resp_json.get("usage", {})
-            
-            # Redis cache hit detection: exact match cache response is near-instant (< 250ms)
-            is_cached = elapsed_ms < 350
 
+            is_cached = elapsed_ms < 350
             cost_metrics = governor.record_completion(selected_model, usage, is_cached)
             cost_saved_str = f"${cost_metrics['saved_cost_usd']:.4f} (100% saved via Redis Cache)" if is_cached else f"${cost_metrics['actual_cost_usd']:.4f} (Metered)"
 
             self._send_json(200, {
                 "success": True,
                 "content": content,
+                "reasoning_content": reasoning_content,
                 "model": selected_model,
+                "effort": effort,
+                "autonomy_mode": autonomy,
                 "routing_reason": routing_reason,
                 "latency_ms": elapsed_ms,
                 "cached": is_cached,
                 "usage": usage,
-                "provider": "DeepSeek" if "deepseek" in selected_model else "Google Gemini",
+                "provider": "DeepSeek" if "deepseek" in selected_model else ("Anthropic" if "claude" in selected_model else ("Alibaba / Qwen" if "qwen" in selected_model else "Google Gemini")),
                 "cost_saved": cost_saved_str,
                 "cost_actual": cost_metrics["actual_cost_usd"],
                 "circuit_breaker": {
                     "tripped": cost_metrics["tripped"],
                     "state": cost_metrics["circuit_breaker_state"],
                     "today_spend": cost_metrics["today_spend_usd"]
+                },
+                "workspace": {
+                    "path": ws_info.get("path"),
+                    "name": ws_info.get("name"),
+                    "branch": ws_info.get("branch"),
+                    "exists": ws_info.get("exists")
                 },
                 "budget": governor.get_summary()
             })

@@ -22,6 +22,39 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudSpeedup = document.getElementById('hudSpeedup');
   const agentItems = document.querySelectorAll('.agent-item');
 
+  // Orchestration Harness Controls
+  const selectModel = document.getElementById('selectModel');
+  const selectEffort = document.getElementById('selectEffort');
+  const selectAutonomy = document.getElementById('selectAutonomy');
+  const selectTemperature = document.getElementById('selectTemperature');
+  const metricEffort = document.getElementById('metricEffort');
+  const metricWorkspace = document.getElementById('metricWorkspace');
+
+  // Workspace Harness Elements
+  const activeWorkspacePath = document.getElementById('activeWorkspacePath');
+  const wsBranchBadge = document.getElementById('wsBranchBadge');
+  const wsItemsBadge = document.getElementById('wsItemsBadge');
+  const btnToggleWsContext = document.getElementById('btnToggleWsContext');
+  const btnExploreWs = document.getElementById('btnExploreWs');
+  const btnSwitchWs = document.getElementById('btnSwitchWs');
+  const workspaceDrawer = document.getElementById('workspaceDrawer');
+  const btnCloseWsDrawer = document.getElementById('btnCloseWsDrawer');
+  const inputCustomWsPath = document.getElementById('inputCustomWsPath');
+  const btnApplyWsPath = document.getElementById('btnApplyWsPath');
+  const wsRecentsChips = document.getElementById('wsRecentsChips');
+  const workspaceFilesDrawer = document.getElementById('workspaceFilesDrawer');
+  const btnCloseWsFilesDrawer = document.getElementById('btnCloseWsFilesDrawer');
+  const wsSnapshotName = document.getElementById('wsSnapshotName');
+  const wsFilesList = document.getElementById('wsFilesList');
+
+  // Frontier Chain of Thought Accordion Elements
+  const thinkingAccordion = document.getElementById('thinkingAccordion');
+  const thinkingHeader = document.getElementById('thinkingHeader');
+  const btnToggleThinking = document.getElementById('btnToggleThinking');
+  const thinkingBody = document.getElementById('thinkingBody');
+  const thinkingText = document.getElementById('thinkingText');
+  const thinkingBadge = document.getElementById('thinkingBadge');
+
   // Budget Governor & Circuit-Breaker Elements
   const circuitBreakerBanner = document.getElementById('circuitBreakerBanner');
   const cbIcon = document.getElementById('cbIcon');
@@ -38,16 +71,245 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentMode = 'auto';
   let selectedAgent = 'local-coordinator';
+  let activeWorkspace = null;
+  let isWsContextAttached = true;
+  let isThinkingExpanded = false;
 
-  // Mode Selection
+  // ==============================================================================
+  // Workspace Management Engine
+  // ==============================================================================
+  async function fetchWorkspace() {
+    try {
+      const res = await fetch('/api/workspace');
+      if (!res.ok) return;
+      const data = await res.json();
+      renderWorkspace(data.workspace, data.recents);
+    } catch (err) {
+      console.warn('Workspace fetch error', err);
+    }
+  }
+
+  function renderWorkspace(ws, recents) {
+    if (!ws) return;
+    activeWorkspace = ws;
+    if (activeWorkspacePath) {
+      activeWorkspacePath.textContent = ws.path;
+      activeWorkspacePath.title = ws.path;
+    }
+    if (wsBranchBadge) {
+      wsBranchBadge.textContent = ws.branch && ws.branch !== 'N/A' ? `🌱 ${ws.branch}` : '🌱 main';
+    }
+    if (wsItemsBadge) {
+      wsItemsBadge.textContent = `${ws.total_items || (ws.entries ? ws.entries.length : 0)} items`;
+    }
+    if (wsSnapshotName) {
+      wsSnapshotName.textContent = ws.name;
+    }
+
+    // Render recents chips
+    if (wsRecentsChips && Array.isArray(recents)) {
+      wsRecentsChips.innerHTML = '';
+      recents.forEach(p => {
+        const chip = document.createElement('button');
+        chip.className = 'ws-chip';
+        const base = p.split(/[\\/]/).filter(Boolean).pop() || p;
+        chip.textContent = `${base} (${p})`;
+        chip.title = p;
+        chip.addEventListener('click', () => switchWorkspace(p));
+        wsRecentsChips.appendChild(chip);
+      });
+    }
+
+    renderWorkspaceFiles(ws.entries || []);
+  }
+
+  function renderWorkspaceFiles(entries) {
+    if (!wsFilesList) return;
+    wsFilesList.innerHTML = '';
+    if (!entries.length) {
+      wsFilesList.innerHTML = '<span style="color:#64748B;font-size:12px;">No items found in directory.</span>';
+      return;
+    }
+
+    entries.slice(0, 48).forEach(entry => {
+      const item = document.createElement('div');
+      item.className = `ws-file-item ${entry.is_dir ? 'is-dir' : ''}`;
+      const icon = entry.is_dir ? '📁' : '📄';
+      const sizeStr = entry.is_dir ? '' : ` (${formatBytes(entry.size_bytes)})`;
+      item.innerHTML = `<span class="ws-file-icon">${icon}</span><span>${entry.name}${sizeStr}</span>`;
+      wsFilesList.appendChild(item);
+    });
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes || bytes <= 0) return '0 B';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1048576).toFixed(1)} MB`;
+  }
+
+  async function switchWorkspace(newPath) {
+    if (!newPath) return;
+    try {
+      const res = await fetch('/api/workspace', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: newPath })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(data.error || 'Failed to switch workspace');
+        return;
+      }
+      renderWorkspace(data.workspace, data.recents);
+      if (workspaceDrawer) workspaceDrawer.style.display = 'none';
+    } catch (err) {
+      alert(`Workspace error: ${err.message}`);
+    }
+  }
+
+  // Workspace Context Toggle
+  if (btnToggleWsContext) {
+    btnToggleWsContext.addEventListener('click', () => {
+      isWsContextAttached = !isWsContextAttached;
+      btnToggleWsContext.classList.toggle('active', isWsContextAttached);
+      const icon = btnToggleWsContext.querySelector('.ws-btn-icon');
+      const text = btnToggleWsContext.querySelector('.ws-btn-text');
+      if (icon) icon.textContent = isWsContextAttached ? '📎' : '❌';
+      if (text) text.textContent = isWsContextAttached ? 'Context Attached' : 'Context Detached';
+    });
+  }
+
+  // Workspace Switcher Drawer Toggle
+  if (btnSwitchWs) {
+    btnSwitchWs.addEventListener('click', () => {
+      if (!workspaceDrawer) return;
+      const isOpen = workspaceDrawer.style.display !== 'none';
+      workspaceDrawer.style.display = isOpen ? 'none' : 'block';
+      if (workspaceFilesDrawer) workspaceFilesDrawer.style.display = 'none';
+      if (!isOpen && inputCustomWsPath && activeWorkspace) {
+        inputCustomWsPath.value = activeWorkspace.path;
+        inputCustomWsPath.focus();
+      }
+    });
+  }
+
+  if (btnCloseWsDrawer && workspaceDrawer) {
+    btnCloseWsDrawer.addEventListener('click', () => {
+      workspaceDrawer.style.display = 'none';
+    });
+  }
+
+  if (btnApplyWsPath && inputCustomWsPath) {
+    btnApplyWsPath.addEventListener('click', () => {
+      switchWorkspace(inputCustomWsPath.value.trim());
+    });
+    inputCustomWsPath.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') switchWorkspace(inputCustomWsPath.value.trim());
+    });
+  }
+
+  // Workspace Files Preview Drawer Toggle
+  if (btnExploreWs) {
+    btnExploreWs.addEventListener('click', () => {
+      if (!workspaceFilesDrawer) return;
+      const isOpen = workspaceFilesDrawer.style.display !== 'none';
+      workspaceFilesDrawer.style.display = isOpen ? 'none' : 'block';
+      if (workspaceDrawer) workspaceDrawer.style.display = 'none';
+    });
+  }
+
+  if (btnCloseWsFilesDrawer && workspaceFilesDrawer) {
+    btnCloseWsFilesDrawer.addEventListener('click', () => {
+      workspaceFilesDrawer.style.display = 'none';
+    });
+  }
+
+  // ==============================================================================
+  // Models & Harness Deliberation Controls
+  // ==============================================================================
+  async function fetchModelsList() {
+    try {
+      const res = await fetch('/api/models');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.models || !selectModel) return;
+
+      const existingValues = new Set(Array.from(selectModel.options).map(o => o.value));
+      const group = document.createElement('optgroup');
+      group.label = 'Additional Available Models';
+      let added = false;
+
+      data.models.forEach(m => {
+        if (!existingValues.has(m.id)) {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = `${m.is_reasoning ? '🧠 ' : '🤖 '}${m.name}`;
+          group.appendChild(opt);
+          added = true;
+        }
+      });
+      if (added) selectModel.appendChild(group);
+    } catch (err) {
+      console.warn('Models fetch error', err);
+    }
+  }
+
+  // Sync Model Dropdown with Mode Tabs
+  if (selectModel) {
+    selectModel.addEventListener('change', () => {
+      const val = selectModel.value;
+      tabButtons.forEach(t => t.classList.remove('active'));
+      if (val === 'auto') {
+        currentMode = 'auto';
+        const tab = document.getElementById('tabAuto');
+        if (tab) tab.classList.add('active');
+      } else if (val === 'deepseek-reasoner') {
+        currentMode = 'deepseek';
+        const tab = document.getElementById('tabDeepseek');
+        if (tab) tab.classList.add('active');
+      } else if (val === 'gemini-flash') {
+        currentMode = 'gemini';
+        const tab = document.getElementById('tabGemini');
+        if (tab) tab.classList.add('active');
+      } else {
+        currentMode = val;
+      }
+      updateDecisionBannerForModel(val);
+    });
+  }
+
   tabButtons.forEach(tab => {
     tab.addEventListener('click', () => {
       tabButtons.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       currentMode = tab.dataset.mode;
+
+      if (selectModel) {
+        if (currentMode === 'auto') selectModel.value = 'auto';
+        else if (currentMode === 'deepseek') selectModel.value = 'deepseek-reasoner';
+        else if (currentMode === 'gemini') selectModel.value = 'gemini-flash';
+      }
       updateDecisionBannerForMode(currentMode);
     });
   });
+
+  function updateDecisionBannerForModel(modelVal) {
+    decisionMetrics.style.display = 'none';
+    if (modelVal === 'auto') {
+      decisionIndicator.textContent = '✨';
+      decisionText.textContent = 'Auto-Mode Active: Dynamically routes DeepSeek for deep logic vs Gemini for high-throughput speed, caching responses in Redis.';
+    } else if (modelVal === 'deepseek-reasoner') {
+      decisionIndicator.textContent = '🧠';
+      decisionText.textContent = 'Frontier Reasoning: DeepSeek Reasoner (R1) engaged with live multi-stage chain-of-thought verification.';
+    } else if (modelVal === 'gemini-flash') {
+      decisionIndicator.textContent = '⚡';
+      decisionText.textContent = 'Ultra-Speed Tier: Gemini 2.5/3.8 Flash engaged for rapid synthesis and 1M+ token context window.';
+    } else {
+      decisionIndicator.textContent = '🤖';
+      decisionText.textContent = `Harness Model Override: Executing directly on ${modelVal} with executive parameters.`;
+    }
+  }
 
   function updateDecisionBannerForMode(mode) {
     decisionMetrics.style.display = 'none';
@@ -65,6 +327,16 @@ document.addEventListener('DOMContentLoaded', () => {
       decisionText.textContent = 'Multi-Agent Swarm: Dispatching directly to Chief of Staff & OpenClaw background agents.';
     }
   }
+
+  // Thinking Accordion Toggle
+  function toggleThinkingAccordion() {
+    isThinkingExpanded = !isThinkingExpanded;
+    if (thinkingBody) thinkingBody.style.display = isThinkingExpanded ? 'block' : 'none';
+    if (btnToggleThinking) btnToggleThinking.textContent = isThinkingExpanded ? 'Hide Thoughts ▴' : 'Show Thoughts ▾';
+  }
+
+  if (btnToggleThinking) btnToggleThinking.addEventListener('click', (e) => { e.stopPropagation(); toggleThinkingAccordion(); });
+  if (thinkingHeader) thinkingHeader.addEventListener('click', toggleThinkingAccordion);
 
   // Quick Presets
   presetChips.forEach(chip => {
@@ -140,12 +412,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function dispatchToLiteLLM(prompt) {
-    outputStatus.textContent = 'Routing & Executing...';
+    outputStatus.textContent = 'Deliberating & Executing...';
+
+    const payload = {
+      prompt,
+      model: selectModel ? selectModel.value : 'auto',
+      effort: selectEffort ? selectEffort.value : 'auto',
+      autonomy_mode: selectAutonomy ? selectAutonomy.value : 'full',
+      temperature: selectTemperature ? parseFloat(selectTemperature.value) : 0.3,
+      include_workspace_context: isWsContextAttached,
+      workspace_path: activeWorkspace ? activeWorkspace.path : null
+    };
     
     const response = await fetch('/api/command', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, mode: currentMode })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
@@ -158,9 +440,32 @@ document.addEventListener('DOMContentLoaded', () => {
     decisionText.textContent = `${data.routing_reason}`;
     decisionMetrics.style.display = 'flex';
     metricModel.textContent = data.model;
+    
+    if (metricEffort) {
+      metricEffort.style.display = data.effort ? 'inline-block' : 'none';
+      metricEffort.textContent = data.effort ? `${data.effort.toUpperCase()} EFFORT` : '';
+    }
+    if (metricWorkspace && data.workspace) {
+      metricWorkspace.style.display = 'inline-block';
+      metricWorkspace.textContent = `📁 ${data.workspace.name}`;
+      metricWorkspace.title = data.workspace.path || '';
+    }
+
     metricCache.textContent = data.cached ? 'CACHE HIT (0ms cost)' : 'DIRECT INFERENCE';
     metricCache.style.color = data.cached ? '#6EE7B7' : '#94A3B8';
     metricLatency.textContent = `${data.latency_ms} ms`;
+
+    // Handle Frontier Chain of Thought (Live Reasoning Trace)
+    if (data.reasoning_content && thinkingAccordion && thinkingText) {
+      thinkingAccordion.style.display = 'block';
+      thinkingText.textContent = data.reasoning_content;
+      if (thinkingBadge) {
+        const rTokens = data.usage?.completion_tokens_details?.reasoning_tokens;
+        thinkingBadge.textContent = rTokens ? `${rTokens} Reasoning Tokens` : 'Frontier Trace';
+      }
+    } else if (thinkingAccordion) {
+      thinkingAccordion.style.display = 'none';
+    }
 
     // Render Formatted Output
     renderOutput(data.content);
@@ -177,6 +482,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function dispatchToOpenClaw(prompt) {
     outputStatus.textContent = 'Dispatching to OpenClaw Swarm...';
+
+    if (thinkingAccordion) thinkingAccordion.style.display = 'none';
 
     const response = await fetch('/api/openclaw/dispatch', {
       method: 'POST',
@@ -198,6 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderOutput(data.reply);
     outputStatus.textContent = `Agent Completed (${data.latency_ms}ms)`;
+  }
   }
 
   function renderOutput(content) {
@@ -450,6 +758,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initial runs
+  fetchWorkspace();
+  fetchModelsList();
   refreshHealth();
   refreshCacheStats();
   fetchBudget();
