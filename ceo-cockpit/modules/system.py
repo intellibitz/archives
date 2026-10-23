@@ -19,7 +19,7 @@ from modules import registered_routes, route
 from modules.common import active_workspace, emit_event, log, send_json
 
 START_TIME = time.time()
-VERSION = "2.10.0-mission-control"
+VERSION = "2.20.0-mission-control"
 
 ROADMAP_ROUNDS = [
     {"round": 1, "name": "Multi-Model Council Arena", "status": "operational", "focus": "Parallel multi-model routing & consensus arena"},
@@ -31,7 +31,17 @@ ROADMAP_ROUNDS = [
     {"round": 7, "name": "Spend Intelligence & Latency", "status": "operational", "focus": "Financial ledger, run rate, Redis savings & latency metrics"},
     {"round": 8, "name": "Git Hygiene & Conventional Release", "status": "operational", "focus": "Git status, staged diff inspector & AI commit builder"},
     {"round": 9, "name": "Real-Time Activity Stream", "status": "operational", "focus": "Live SSE operational event stream & persistent audit trail"},
-    {"round": 10, "name": "Mission Control Hardening & Matrix", "status": "operational", "focus": "System manifest, cross-wired shortcuts & complete verification suite"}
+    {"round": 10, "name": "Mission Control Hardening & Matrix", "status": "operational", "focus": "System manifest, cross-wired shortcuts & complete verification suite"},
+    {"round": 11, "name": "Spend Forecaster & Runway Predictor", "status": "operational", "focus": "Live burn velocity, runway prediction, and what-if spend simulation"},
+    {"round": 12, "name": "Autonomous Workflow Scheduler", "status": "operational", "focus": "Scheduled background jobs, maintenance automation, and execution logs"},
+    {"round": 13, "name": "Executive Knowledge & Vector Memory", "status": "operational", "focus": "Qdrant vector memory integration, semantic indexing, and search"},
+    {"round": 14, "name": "Architecture & Compliance Reviewer", "status": "operational", "focus": "Static AST validation, secret leak detection, and hygiene scoring"},
+    {"round": 15, "name": "Cross-Harness Gateway Matrix", "status": "operational", "focus": "Multi-gateway latency probes (LiteLLM, OpenClaw, Redis, Qdrant, Ollama)"},
+    {"round": 16, "name": "Executive Incident War Room", "status": "operational", "focus": "Incident tracking, severity grading (P1-P4), and automated AI root-cause analysis"},
+    {"round": 17, "name": "Repository Test Benchmarks", "status": "operational", "focus": "One-click test suite execution, pass-rate telemetry, and model speed leaderboard"},
+    {"round": 18, "name": "Board-Level Report Generator", "status": "operational", "focus": "Boardroom briefings, financial burn audits, and Markdown RFC compilation"},
+    {"round": 19, "name": "Environment & Secrets Guardian", "status": "operational", "focus": "Zero-leak credential auditing, key health validation, and security rating"},
+    {"round": 20, "name": "Mission Control 2.0 Hardening", "status": "operational", "focus": "Full 20-round verification suite, port isolation, and complete hardening"}
 ]
 
 
@@ -126,9 +136,9 @@ def get_system_manifest(h, query, tail):
             "python": platform.python_version()
         },
         "roadmap": {
-            "completed_rounds": 10,
-            "total_rounds": 10,
-            "status": "100% Operational",
+            "completed_rounds": 20,
+            "total_rounds": 20,
+            "status": "100% Operational (Rounds 1-20 Shipped)",
             "rounds": ROADMAP_ROUNDS
         },
         "modules": [
@@ -139,6 +149,15 @@ def get_system_manifest(h, query, tail):
             {"id": "analytics", "name": "Spend Intelligence", "icon": "📊", "shortcut": "Alt+5"},
             {"id": "git", "name": "Git Hygiene & Release", "icon": "🌿", "shortcut": "Alt+6"},
             {"id": "activity", "name": "Activity Stream & Audit", "icon": "📡", "shortcut": "Alt+7"},
+            {"id": "forecaster", "name": "Spend Forecaster & Runway", "icon": "📈", "shortcut": "Alt+7"},
+            {"id": "scheduler", "name": "Autonomous Scheduler", "icon": "⏱️", "shortcut": "Alt+8"},
+            {"id": "memory_vault", "name": "Vector Memory Vault", "icon": "🧠", "shortcut": "Alt+9"},
+            {"id": "compliance", "name": "Architecture Compliance", "icon": "🛡️", "shortcut": "Alt+0"},
+            {"id": "gateways", "name": "Gateway Matrix", "icon": "🌐", "shortcut": "Deck"},
+            {"id": "war_room", "name": "Incident War Room", "icon": "🚨", "shortcut": "Deck"},
+            {"id": "benchmark", "name": "Test Benchmarks", "icon": "📊", "shortcut": "Deck"},
+            {"id": "reports", "name": "Board-Level Reports", "icon": "📑", "shortcut": "Deck"},
+            {"id": "secrets", "name": "Secrets Guardian", "icon": "🔑", "shortcut": "Deck"},
             {"id": "system", "name": "System Hardening & Manifest", "icon": "🛡️", "shortcut": "Ctrl+J"}
         ],
         "registered_routes": {

@@ -322,9 +322,9 @@ def t_activity_assets():
 def t_system_manifest():
     s, d = request("GET", "/api/system/manifest")
     assert s == 200 and d.get("success") is True, f"manifest status={s} body={d}"
-    assert d.get("roadmap", {}).get("completed_rounds") == 10, "10 rounds not reported"
-    assert len(d.get("modules", [])) >= 7, "missing modules in manifest"
-    assert "registered_routes" in d and d["registered_routes"]["count"] >= 15, "missing routes"
+    assert d.get("roadmap", {}).get("completed_rounds") == 20, "20 rounds not reported"
+    assert len(d.get("modules", [])) >= 15, "missing modules in manifest"
+    assert "registered_routes" in d and d["registered_routes"]["count"] >= 30, "missing routes"
 
 
 @check("system")
@@ -345,6 +345,228 @@ def t_system_deck_assets():
     s, content, _ = request("GET", "/modules/deck.js", raw=True)
     assert s == 200, f"deck.js status={s}"
     assert "registerView" in content and "registerPanel" in content, "registerView missing in deck.js"
+
+
+# ----------------------------------------------------------- forecaster
+@check("forecaster")
+def t_forecast_runway():
+    s, d = request("GET", "/api/forecast/runway")
+    assert s == 200 and "runway" in d, f"runway status={s}"
+    assert "hours_to_daily_cap" in d["runway"], "missing hours_to_daily_cap"
+
+
+@check("forecaster")
+def t_forecast_simulate():
+    s, d = request("POST", "/api/forecast/simulate", body={"model": "deepseek-reasoner", "queries_per_day": 120})
+    assert s == 200 and "simulation" in d, f"simulation status={s}"
+    assert d["simulation"]["queries_per_day"] == 120, "queries_per_day mismatch"
+
+
+@check("forecaster")
+def t_forecast_assets():
+    s, _, _ = request("GET", "/modules/forecaster.js", raw=True)
+    assert s == 200, f"forecaster.js status={s}"
+
+
+# ------------------------------------------------------------ scheduler
+@check("scheduler")
+def t_scheduler_jobs():
+    s, d = request("GET", "/api/scheduler/jobs")
+    assert s == 200 and "jobs" in d, f"jobs status={s}"
+    assert len(d["jobs"]) >= 5, "default jobs missing"
+
+
+@check("scheduler")
+def t_scheduler_run():
+    s, d = request("POST", "/api/scheduler/run", body={"id": "job-git-hygiene"})
+    assert s == 200 and d.get("success") is True, f"scheduler run status={s}"
+    assert d.get("job", {}).get("last_status") == "SUCCESS", "job last_status not SUCCESS"
+
+
+@check("scheduler")
+def t_scheduler_toggle():
+    s, d = request("POST", "/api/scheduler/toggle", body={"id": "job-git-hygiene"})
+    assert s == 200 and "enabled" in d, f"scheduler toggle status={s}"
+
+
+@check("scheduler")
+def t_scheduler_assets():
+    s, _, _ = request("GET", "/modules/scheduler.js", raw=True)
+    assert s == 200, f"scheduler.js status={s}"
+
+
+# --------------------------------------------------------------- memory
+@check("memory")
+def t_memory_stats():
+    s, d = request("GET", "/api/memory/stats")
+    assert s == 200 and "total_memories" in d, f"memory stats status={s}"
+
+
+@check("memory")
+def t_memory_search():
+    s, d = request("GET", "/api/memory/search?q=routing")
+    assert s == 200 and "results" in d, f"memory search status={s}"
+    assert len(d["results"]) > 0, "no memory search results"
+
+
+@check("memory")
+def t_memory_index():
+    s, d = request("POST", "/api/memory/index", body={
+        "title": "Smoke Test ADR",
+        "category": "Architecture",
+        "content": "Automated verification assertion for memory vault."
+    })
+    assert s == 200 and d.get("success") is True, f"memory index status={s}"
+
+
+@check("memory")
+def t_memory_assets():
+    s, _, _ = request("GET", "/modules/memory_vault.js", raw=True)
+    assert s == 200, f"memory_vault.js status={s}"
+
+
+# ----------------------------------------------------------- compliance
+@check("compliance")
+def t_compliance_scan():
+    s, d = request("GET", "/api/compliance/scan")
+    assert s == 200 and "compliance" in d, f"compliance scan status={s}"
+    assert "score" in d["compliance"] and "grade" in d["compliance"], "missing score/grade"
+
+
+@check("compliance")
+def t_compliance_redact():
+    s, d = request("POST", "/api/compliance/redact", body={"text": "User key is sk-123456789012345678901234"})
+    assert s == 200 and d.get("matches_found", 0) >= 1, f"compliance redact status={s}"
+    assert "[REDACTED_OPENAI_KEY]" in d.get("redacted_text", ""), "redaction text mismatch"
+
+
+@check("compliance")
+def t_compliance_assets():
+    s, _, _ = request("GET", "/modules/compliance.js", raw=True)
+    assert s == 200, f"compliance.js status={s}"
+
+
+# ------------------------------------------------------------- gateways
+@check("gateways")
+def t_gateways_status():
+    s, d = request("GET", "/api/gateways/status")
+    assert s == 200 and "gateways" in d, f"gateways status={s}"
+    assert len(d["gateways"]) == 5, f"expected 5 gateways, got {len(d['gateways'])}"
+
+
+@check("gateways")
+def t_gateways_ping():
+    s, d = request("POST", "/api/gateways/ping-all", body={})
+    assert s == 200 and "healthy_count" in d, f"gateways ping status={s}"
+
+
+@check("gateways")
+def t_gateways_routing():
+    s, d = request("GET", "/api/gateways/routing-matrix")
+    assert s == 200 and "failover_chain" in d, f"gateways routing status={s}"
+
+
+@check("gateways")
+def t_gateways_assets():
+    s, _, _ = request("GET", "/modules/gateway_matrix.js", raw=True)
+    assert s == 200, f"gateway_matrix.js status={s}"
+
+
+# ------------------------------------------------------------- war_room
+@check("war_room")
+def t_war_room_incidents():
+    s, d = request("GET", "/api/war-room/incidents")
+    assert s == 200 and "incidents" in d, f"war room incidents status={s}"
+
+
+@check("war_room")
+def t_war_room_create_and_triage():
+    s, d = request("POST", "/api/war-room/create", body={
+        "title": "Smoke Test Incident",
+        "severity": "P3",
+        "affected_component": "Test Suite"
+    })
+    assert s == 200 and d.get("success") is True, f"war room create status={s}"
+    inc_id = d["incident"]["id"]
+
+    s2, d2 = request("POST", "/api/war-room/triage", body={"id": inc_id})
+    assert s2 == 200 and d2.get("success") is True, f"war room triage status={s2}"
+    assert "Automated RCA" in d2["incident"].get("rca", ""), "RCA generation failed"
+
+    s3, d3 = request("POST", "/api/war-room/resolve", body={"id": inc_id})
+    assert s3 == 200 and d3["incident"]["status"] == "RESOLVED", "resolve failed"
+
+
+@check("war_room")
+def t_war_room_assets():
+    s, _, _ = request("GET", "/modules/war_room.js", raw=True)
+    assert s == 200, f"war_room.js status={s}"
+
+
+# ------------------------------------------------------------ benchmark
+@check("benchmark")
+def t_benchmark_history():
+    s, d = request("GET", "/api/benchmark/history")
+    assert s == 200 and "runs" in d, f"benchmark history status={s}"
+
+
+@check("benchmark")
+def t_benchmark_run_tests():
+    s, d = request("POST", "/api/benchmark/run-tests", body={})
+    assert s == 200 and d.get("success") is True, f"run-tests status={s}"
+    assert d.get("run", {}).get("pass_rate_pct") == 100.0, "pass rate not 100%"
+
+
+@check("benchmark")
+def t_benchmark_leaderboard():
+    s, d = request("GET", "/api/benchmark/leaderboard")
+    assert s == 200 and "leaderboard" in d, f"leaderboard status={s}"
+
+
+@check("benchmark")
+def t_benchmark_assets():
+    s, _, _ = request("GET", "/modules/benchmark.js", raw=True)
+    assert s == 200, f"benchmark.js status={s}"
+
+
+# -------------------------------------------------------------- reports
+@check("reports")
+def t_reports_templates():
+    s, d = request("GET", "/api/reports/templates")
+    assert s == 200 and "templates" in d, f"reports templates status={s}"
+
+
+@check("reports")
+def t_reports_generate():
+    s, d = request("POST", "/api/reports/generate", body={"template_id": "tpl-board-brief"})
+    assert s == 200 and d.get("success") is True, f"reports generate status={s}"
+    assert "Board of Directors" in d.get("report", {}).get("markdown", ""), "markdown content mismatch"
+
+
+@check("reports")
+def t_reports_assets():
+    s, _, _ = request("GET", "/modules/reports.js", raw=True)
+    assert s == 200, f"reports.js status={s}"
+
+
+# -------------------------------------------------------------- secrets
+@check("secrets")
+def t_secrets_audit():
+    s, d = request("GET", "/api/secrets/audit")
+    assert s == 200 and "audit" in d, f"secrets audit status={s}"
+    assert "credentials" in d["audit"], "missing credentials list"
+
+
+@check("secrets")
+def t_secrets_verify():
+    s, d = request("POST", "/api/secrets/verify", body={"provider_id": "deepseek"})
+    assert s == 200 and d.get("status") == "VERIFIED", f"secrets verify status={s}"
+
+
+@check("secrets")
+def t_secrets_assets():
+    s, _, _ = request("GET", "/modules/secrets_guardian.js", raw=True)
+    assert s == 200, f"secrets_guardian.js status={s}"
 
 
 def main():

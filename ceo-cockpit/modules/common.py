@@ -84,7 +84,7 @@ def data_path(name: str) -> str:
     return os.path.join(DATA_DIR, name)
 
 
-def load_json(path: str, default: Any) -> Any:
+def load_json(path: str, default: Any = None) -> Any:
     try:
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as f:
@@ -100,6 +100,10 @@ def save_json(path: str, data: Any) -> None:
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
         os.replace(tmp, path)
+
+
+read_json_file = load_json
+write_json_file = save_json
 
 
 def append_jsonl(path: str, record: Dict[str, Any], max_lines: int = 5000) -> None:

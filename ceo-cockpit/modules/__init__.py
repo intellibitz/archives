@@ -23,6 +23,15 @@ FEATURE_MODULES = [
     "modules.git_ops",
     "modules.activity",
     "modules.system",
+    "modules.forecaster",
+    "modules.scheduler",
+    "modules.memory_vault",
+    "modules.compliance",
+    "modules.gateway_matrix",
+    "modules.war_room",
+    "modules.benchmark",
+    "modules.reports",
+    "modules.secrets_guardian",
 ]
 
 
