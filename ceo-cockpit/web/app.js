@@ -134,6 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const simOutputTokens = document.getElementById('simOutputTokens');
   const pricingMatrixTableBody = document.getElementById('pricingMatrixTableBody');
   const calcPresetChips = document.querySelectorAll('.calc-preset-chip');
+  const customModelRow = document.getElementById('customModelRow');
+  const inputCustomModel = document.getElementById('inputCustomModel');
+  const btnApplyCustomModel = document.getElementById('btnApplyCustomModel');
+  const btnCancelCustomModel = document.getElementById('btnCancelCustomModel');
 
   let allModelsList = [];
   let allModelsPricingMap = {};
@@ -647,116 +651,255 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================================================================
   // Models & Harness Deliberation Controls (Budget-Conscious & Pricing-Aware)
   // ==============================================================================
+  const KNOWN_MODEL_REGISTRY = {
+    'deepseek-reasoner': { name: 'DeepSeek Reasoner (R1)', provider: 'DeepSeek', prompt: 0.55, completion: 2.19, icon: '🧠', tier: 'Low ($$)', context: '128k', is_reasoning: true, group: 'reasoning' },
+    'deepseek-chat': { name: 'DeepSeek Chat (V3)', provider: 'DeepSeek', prompt: 0.14, completion: 0.28, icon: '⚡', tier: 'Ultra-Low ($)', context: '128k', group: 'speed' },
+    'gemini-flash': { name: 'Gemini 2.5/3.8 Flash (1M+)', provider: 'Google AI Studio', prompt: 0.075, completion: 0.30, icon: '⚡', tier: 'Ultra-Low ($)', context: '1M+', is_safeguard: true, group: 'speed' },
+    'gemini-pro': { name: 'Gemini Pro (Frontier)', provider: 'Google AI Studio', prompt: 1.25, completion: 5.00, icon: '💎', tier: 'Moderate ($$$)', context: '1M+', group: 'multimodal' },
+    'claude-3-5-sonnet': { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', prompt: 3.00, completion: 15.00, icon: '🎭', tier: 'Premium ($$$$)', context: '200k', group: 'multimodal' },
+    'claude-3-5-haiku': { name: 'Claude 3.5 Haiku', provider: 'Anthropic', prompt: 0.80, completion: 4.00, icon: '🍃', tier: 'Moderate ($$$)', context: '200k', group: 'multimodal' },
+    'siliconflow-qwen-coder': { name: 'Qwen 2.5 Coder 32B (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.20, completion: 0.40, icon: '💻', tier: 'Ultra-Low ($)', context: '128k', group: 'code' },
+    'siliconflow-qwen': { name: 'Qwen 2.5 72B Instruct (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.20, completion: 0.40, icon: '🌐', tier: 'Ultra-Low ($)', context: '128k', group: 'generalist' },
+    'siliconflow-deepseek': { name: 'DeepSeek V3 (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.14, completion: 0.28, icon: '⚡', tier: 'Ultra-Low ($)', context: '64k', group: 'speed' },
+    'dashscope-qwen-max': { name: 'DashScope Qwen Max', provider: 'Alibaba DashScope', prompt: 1.60, completion: 6.40, icon: '👑', tier: 'Moderate ($$$)', context: '32k', is_reasoning: true, group: 'reasoning' },
+    'dashscope-qwen-plus': { name: 'DashScope Qwen Plus', provider: 'Alibaba DashScope', prompt: 0.12, completion: 0.24, icon: '🌐', tier: 'Ultra-Low ($)', context: '128k', group: 'speed' },
+    'dashscope-qwen-coder': { name: 'DashScope Qwen Coder', provider: 'Alibaba DashScope', prompt: 0.12, completion: 0.24, icon: '💻', tier: 'Ultra-Low ($)', context: '128k', group: 'code' },
+    'local-safeguard': { name: 'Zero-Cost Local Safeguard', provider: 'Local / OpenClaw', prompt: 0.0, completion: 0.0, icon: '🛡️', tier: 'Free ($0.00)', context: '32k', is_safeguard: true, group: 'safeguard' }
+  };
+
   async function fetchModelsList() {
+    let serverModels = [];
     try {
       const res = await fetch('/api/models');
-      if (!res.ok) return;
-      const data = await res.json();
-      if (!data.models || !selectModel) return;
+      if (res.ok) {
+        const data = await res.json();
+        if (data.models && Array.isArray(data.models)) {
+          serverModels = data.models;
+        }
+      }
+    } catch (err) {
+      console.warn('Models fetch fallback to known registry', err);
+    }
 
-      allModelsList = data.models;
-      allModelsPricingMap = {};
-      data.models.forEach(m => { allModelsPricingMap[m.id] = m; });
+    // Populate modelMap seeded with complete registry
+    const modelMap = new Map();
+    Object.keys(KNOWN_MODEL_REGISTRY).forEach(id => {
+      const k = KNOWN_MODEL_REGISTRY[id];
+      modelMap.set(id, {
+        id,
+        name: k.name,
+        provider: k.provider,
+        cost_tier: k.tier,
+        context_window: k.context,
+        prompt_price_per_m: k.prompt,
+        completion_price_per_m: k.completion,
+        cached_price_per_m: k.prompt * 0.2,
+        is_reasoning: Boolean(k.is_reasoning),
+        is_safeguard: Boolean(k.is_safeguard),
+        icon: k.icon,
+        group: k.group,
+        status: 'active',
+        price_display: k.prompt === 0 ? 'Free ($0.000)' : `$${k.prompt.toFixed(3)} / $${k.completion.toFixed(3)} per 1M`,
+        typical_turn_cents: ((2000 * k.prompt + 1000 * k.completion) / 10000.0)
+      });
+    });
 
-      const currentSelected = selectModel.value || 'auto';
-      selectModel.innerHTML = '';
+    // Layer in any server-provided or dynamically discovered models
+    serverModels.forEach(sm => {
+      const id = sm.id;
+      if (!id || id.toLowerCase().includes('embedding')) return;
+      const k = KNOWN_MODEL_REGISTRY[id] || {};
+      const promptP = typeof sm.prompt_price_per_m === 'number' ? sm.prompt_price_per_m : (k.prompt ?? 0.50);
+      const compP = typeof sm.completion_price_per_m === 'number' ? sm.completion_price_per_m : (k.completion ?? 2.00);
+      const isReasoning = sm.is_reasoning !== undefined ? sm.is_reasoning : Boolean(k.is_reasoning || id.includes('reasoner') || id.includes('r1'));
+      const isSafeguard = sm.is_safeguard !== undefined ? sm.is_safeguard : Boolean(k.is_safeguard || promptP === 0);
+      const icon = k.icon || (isReasoning ? '🧠' : (id.includes('coder') ? '💻' : (id.includes('claude') ? '🎭' : '🤖')));
 
-      // 1. Auto Router & Zero-Cost Safeguards
-      const grpAuto = document.createElement('optgroup');
-      grpAuto.label = '⚡ Auto-Routed & Safeguards (Budget Default)';
-      
-      const optAuto = document.createElement('option');
-      optAuto.value = 'auto';
-      optAuto.textContent = '✨ Auto (Frontier Router - Budget Conscious)';
-      grpAuto.appendChild(optAuto);
+      let group = k.group || 'generalist';
+      if (!k.group) {
+        if (isReasoning) group = 'reasoning';
+        else if (id.includes('coder')) group = 'code';
+        else if (promptP < 0.40) group = 'speed';
+        else if (promptP >= 3.00) group = 'multimodal';
+      }
 
-      const safeguards = data.models.filter(m => m.is_safeguard || m.prompt_price_per_m === 0);
-      safeguards.forEach(m => {
+      modelMap.set(id, {
+        id,
+        name: sm.name || k.name || formatModelName(id),
+        provider: sm.provider || k.provider || 'LiteLLM Gateway',
+        cost_tier: sm.cost_tier || k.tier || (promptP >= 3.0 ? 'Premium ($$$$)' : (promptP < 0.4 ? 'Ultra-Low ($)' : 'Moderate ($$$)')),
+        context_window: sm.context_window || k.context || '128k',
+        prompt_price_per_m: promptP,
+        completion_price_per_m: compP,
+        cached_price_per_m: sm.cached_price_per_m ?? (promptP * 0.2),
+        is_reasoning: isReasoning,
+        is_safeguard: isSafeguard,
+        icon,
+        group,
+        status: sm.status || 'active',
+        price_display: promptP === 0 ? 'Free ($0.000)' : `$${promptP.toFixed(3)} / $${compP.toFixed(3)} per 1M`,
+        typical_turn_cents: sm.typical_turn_cents || ((2000 * promptP + 1000 * compP) / 10000.0)
+      });
+    });
+
+    allModelsList = Array.from(modelMap.values());
+    allModelsPricingMap = {};
+    allModelsList.forEach(m => { allModelsPricingMap[m.id] = m; });
+
+    if (!selectModel) return;
+    const currentSelected = selectModel.value || 'auto';
+    selectModel.innerHTML = '';
+
+    // Helper to append options into optgroups
+    const appendGroup = (label, models) => {
+      if (!models || models.length === 0) return;
+      const grp = document.createElement('optgroup');
+      grp.label = label;
+      models.forEach(m => {
         const opt = document.createElement('option');
         opt.value = m.id;
-        const statusTag = m.status === 'active' ? '[Active]' : '[Inactive]';
-        opt.textContent = `🛡️ ${m.name} — Free ($0.000) ${statusTag}`;
-        if (m.status !== 'active') opt.disabled = true;
-        grpAuto.appendChild(opt);
+        opt.textContent = `${m.icon} ${m.name} — $${m.prompt_price_per_m.toFixed(2)} / $${m.completion_price_per_m.toFixed(2)} [Active]`;
+        grp.appendChild(opt);
       });
-      selectModel.appendChild(grpAuto);
+      selectModel.appendChild(grp);
+    };
 
-      // 2. Ultra-Low Spend (< $0.40 / 1M tokens)
-      const ultralowModels = data.models.filter(m => !m.is_safeguard && m.prompt_price_per_m < 0.40 && m.status === 'active');
-      if (ultralowModels.length > 0) {
-        const grpUltraLow = document.createElement('optgroup');
-        grpUltraLow.label = '🟢 Ultra-Low Spend Tier (< $0.40 / 1M Tokens)';
-        ultralowModels.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m.id;
-          const icon = m.is_reasoning ? '🧠 ' : (m.id.includes('coder') ? '💻 ' : '⚡ ');
-          opt.textContent = `${icon}${m.name} — $${m.prompt_price_per_m.toFixed(3)} / $${m.completion_price_per_m.toFixed(3)} [Active]`;
-          grpUltraLow.appendChild(opt);
-        });
-        selectModel.appendChild(grpUltraLow);
-      }
+    // 1. Auto Router & Safeguards
+    const grpAuto = document.createElement('optgroup');
+    grpAuto.label = '⚡ Auto Router & Safeguards (Budget Default)';
+    const optAuto = document.createElement('option');
+    optAuto.value = 'auto';
+    optAuto.textContent = '✨ Auto (Frontier Router - DeepSeek / Gemini)';
+    grpAuto.appendChild(optAuto);
+    const safeguards = allModelsList.filter(m => m.is_safeguard);
+    safeguards.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = `${m.icon} ${m.name} — Free ($0.000) [Active]`;
+      grpAuto.appendChild(opt);
+    });
+    selectModel.appendChild(grpAuto);
 
-      // 3. Frontier Reasoning & Moderate ($0.40 - $3.00 / 1M tokens)
-      const moderateModels = data.models.filter(m => !m.is_safeguard && m.prompt_price_per_m >= 0.40 && m.prompt_price_per_m < 3.00 && m.status === 'active');
-      if (moderateModels.length > 0) {
-        const grpModerate = document.createElement('optgroup');
-        grpModerate.label = '🟡 Frontier Reasoning & Balanced Tier ($0.50 - $4.00 / 1M)';
-        moderateModels.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m.id;
-          const icon = m.is_reasoning ? '🧠 ' : '💎 ';
-          opt.textContent = `${icon}${m.name} — $${m.prompt_price_per_m.toFixed(2)} / $${m.completion_price_per_m.toFixed(2)} [Active]`;
-          grpModerate.appendChild(opt);
-        });
-        selectModel.appendChild(grpModerate);
-      }
+    // 2. Frontier Reasoning Tier
+    appendGroup('🧠 Frontier Reasoning Tier (Deep Logic & Math)', allModelsList.filter(m => !m.is_safeguard && (m.group === 'reasoning' || m.is_reasoning)));
 
-      // 4. Premium Tier (>= $3.00 / 1M tokens)
-      const premiumModels = data.models.filter(m => m.prompt_price_per_m >= 3.00 && m.status === 'active');
-      if (premiumModels.length > 0) {
-        const grpPremium = document.createElement('optgroup');
-        grpPremium.label = '🔴 Premium Tier ($15.00+/1M Output - High Spend Alert)';
-        premiumModels.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m.id;
-          opt.textContent = `🎭 ${m.name} — $${m.prompt_price_per_m.toFixed(2)} / $${m.completion_price_per_m.toFixed(2)} [Active]`;
-          grpPremium.appendChild(opt);
-        });
-        selectModel.appendChild(grpPremium);
-      }
+    // 3. Ultra-Speed Tier (< $0.40/1M)
+    appendGroup('⚡ Ultra-Speed & Massive Context Tier (< $0.40/1M)', allModelsList.filter(m => !m.is_safeguard && !m.is_reasoning && m.group === 'speed'));
 
-      // 5. Inactive / Offline Models
-      const inactiveModels = data.models.filter(m => m.status === 'inactive');
-      if (inactiveModels.length > 0) {
-        const grpInactive = document.createElement('optgroup');
-        grpInactive.label = '⚪ Inactive Models (Offline / Requires Upstream Key)';
-        inactiveModels.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m.id;
-          opt.disabled = true;
-          opt.textContent = `⚪ ${m.name} — ${m.price_display} [Inactive]`;
-          grpInactive.appendChild(opt);
-        });
-        selectModel.appendChild(grpInactive);
-      }
+    // 4. Code Engineering Tier
+    appendGroup('💻 Code Engineering & Architecture Tier', allModelsList.filter(m => !m.is_safeguard && m.group === 'code'));
 
-      // Restore selected value
-      const values = Array.from(selectModel.options).map(o => o.value);
-      if (values.includes(currentSelected)) {
-        selectModel.value = currentSelected;
-      } else {
-        selectModel.value = 'auto';
-      }
+    // 5. Frontier Multimodal & Claude Tier
+    appendGroup('💎 Frontier Multimodal & Claude Tier', allModelsList.filter(m => !m.is_safeguard && m.group === 'multimodal'));
 
-      updateModelCostBadge(selectModel.value);
-      updatePromptPennyMeter();
-    } catch (err) {
-      console.warn('Models fetch error', err);
+    // 6. Open Frontier Generalist
+    appendGroup('🌐 Open Frontier Generalist Tier', allModelsList.filter(m => !m.is_safeguard && m.group === 'generalist'));
+
+    // 7. Custom Model ID Entry
+    const grpCustom = document.createElement('optgroup');
+    grpCustom.label = '✏️ Custom / Direct Model ID';
+    const optCustom = document.createElement('option');
+    optCustom.value = '__custom__';
+    optCustom.textContent = '✏️ Enter Custom LiteLLM Model ID...';
+    grpCustom.appendChild(optCustom);
+    selectModel.appendChild(grpCustom);
+
+    // Restore selected value
+    const values = Array.from(selectModel.options).map(o => o.value);
+    if (values.includes(currentSelected)) {
+      selectModel.value = currentSelected;
+    } else if (currentSelected && currentSelected !== 'auto' && currentSelected !== '__custom__') {
+      const opt = document.createElement('option');
+      opt.value = currentSelected;
+      opt.textContent = `🤖 ${currentSelected} (Custom Model)`;
+      grpCustom.insertBefore(opt, optCustom);
+      selectModel.value = currentSelected;
+    } else {
+      selectModel.value = 'auto';
     }
+
+    updateModelCostBadge(selectModel.value);
+    updatePromptPennyMeter();
+  }
+
+  function applyCustomModel() {
+    if (!inputCustomModel || !selectModel) return;
+    const modelId = inputCustomModel.value.trim();
+    if (!modelId) {
+      if (customModelRow) customModelRow.style.display = 'none';
+      selectModel.value = 'auto';
+      selectModel.dispatchEvent(new Event('change'));
+      return;
+    }
+
+    if (!allModelsPricingMap[modelId]) {
+      const customMeta = {
+        id: modelId,
+        name: formatModelName(modelId),
+        provider: 'LiteLLM Gateway',
+        cost_tier: 'Custom ($$)',
+        context_window: '128k',
+        prompt_price_per_m: 0.50,
+        completion_price_per_m: 2.00,
+        cached_price_per_m: 0.10,
+        is_reasoning: (modelId.includes('reasoner') || modelId.includes('r1') || modelId.includes('o1')),
+        is_safeguard: false,
+        icon: '🤖',
+        status: 'active',
+        price_display: '$0.500 / $2.000 per 1M',
+        typical_turn_cents: 0.30
+      };
+      allModelsList.push(customMeta);
+      allModelsPricingMap[modelId] = customMeta;
+    }
+
+    let opt = Array.from(selectModel.options).find(o => o.value === modelId);
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = modelId;
+      opt.textContent = `🤖 ${formatModelName(modelId)} [Active]`;
+      const optCustom = selectModel.querySelector('option[value="__custom__"]');
+      if (optCustom && optCustom.parentNode) {
+        optCustom.parentNode.insertBefore(opt, optCustom);
+      } else {
+        selectModel.appendChild(opt);
+      }
+    }
+
+    selectModel.value = modelId;
+    if (customModelRow) customModelRow.style.display = 'none';
+    selectModel.dispatchEvent(new Event('change'));
+    if (window.Cockpit) window.Cockpit.notify(`Selected model: ${modelId}`, 'success');
+  }
+
+  if (btnApplyCustomModel && inputCustomModel) {
+    btnApplyCustomModel.addEventListener('click', applyCustomModel);
+    inputCustomModel.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        applyCustomModel();
+      }
+    });
+  }
+
+  if (btnCancelCustomModel) {
+    btnCancelCustomModel.addEventListener('click', () => {
+      if (customModelRow) customModelRow.style.display = 'none';
+      if (selectModel.value === '__custom__') {
+        selectModel.value = 'auto';
+        selectModel.dispatchEvent(new Event('change'));
+      }
+    });
   }
 
   function updateModelCostBadge(modelId) {
     if (!modelCostBadge || !modelCostText) return;
+    if (modelId === '__custom__') {
+      modelCostBadge.className = 'model-cost-pill tier-moderate';
+      if (modelCostDot) modelCostDot.className = 'cost-dot dot-green';
+      modelCostText.innerHTML = '✏️ Custom Model &bull; Enter any LiteLLM Model ID';
+      return;
+    }
     if (modelId === 'auto') {
       modelCostBadge.className = 'model-cost-pill tier-ultralow';
       if (modelCostDot) modelCostDot.className = 'cost-dot dot-green';
@@ -766,23 +909,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const m = allModelsPricingMap[modelId];
     if (!m) {
-      modelCostBadge.className = 'model-cost-pill';
+      modelCostBadge.className = 'model-cost-pill tier-moderate';
       if (modelCostDot) modelCostDot.className = 'cost-dot dot-green';
-      modelCostText.textContent = `${modelId} &bull; Standard Pricing`;
+      modelCostText.textContent = `🤖 ${modelId} &bull; Standard Pricing (~$0.50/M in)`;
       return;
     }
 
     const isFree = m.prompt_price_per_m === 0;
     const isUltraLow = m.prompt_price_per_m < 0.40;
     const isPremium = m.prompt_price_per_m >= 3.00;
-    const isActive = m.status === 'active';
-
-    if (!isActive) {
-      modelCostBadge.className = 'model-cost-pill';
-      if (modelCostDot) modelCostDot.className = 'cost-dot dot-rose';
-      modelCostText.textContent = `⚪ Inactive &bull; Requires Upstream API Key`;
-      return;
-    }
 
     if (isFree) {
       modelCostBadge.className = 'model-cost-pill tier-free';
@@ -825,7 +960,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let promptPrice = 0.075;
     let completionPrice = 0.30;
 
-    if (selModel !== 'auto' && allModelsPricingMap[selModel]) {
+    if (selModel !== 'auto' && selModel !== '__custom__' && allModelsPricingMap[selModel]) {
       promptPrice = allModelsPricingMap[selModel].prompt_price_per_m;
       completionPrice = allModelsPricingMap[selModel].completion_price_per_m;
     }
@@ -854,6 +989,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (selectModel) {
     selectModel.addEventListener('change', () => {
       const val = selectModel.value;
+      if (val === '__custom__') {
+        if (customModelRow) {
+          customModelRow.style.display = 'flex';
+          if (inputCustomModel) {
+            inputCustomModel.focus();
+            inputCustomModel.select();
+          }
+        }
+        updateModelCostBadge('__custom__');
+        return;
+      } else {
+        if (customModelRow) customModelRow.style.display = 'none';
+      }
+
       tabButtons.forEach(t => t.classList.remove('active'));
       if (val === 'auto') {
         currentMode = 'auto';
@@ -988,21 +1137,33 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><span class="sim-cost-tag ${costTagClass}">${simCostStr}</span></td>
         <td><span style="font-family:var(--font-mono);font-size:11px;color:#94A3B8;">${escapeHtml(m.context_window || '128k')}</span></td>
         <td>
-          <button class="btn-select-model-row" ${!isActive ? 'disabled' : ''} data-model="${escapeHtml(m.id)}">
-            ${isActive ? 'Select Model' : 'Unavailable'}
+          <button class="btn-select-model-row" data-model="${escapeHtml(m.id)}">
+            Select Model
           </button>
         </td>
       `;
 
       const selectBtn = tr.querySelector('.btn-select-model-row');
-      if (selectBtn && isActive) {
+      if (selectBtn) {
         selectBtn.addEventListener('click', () => {
           if (selectModel) {
+            let opt = Array.from(selectModel.options).find(o => o.value === m.id);
+            if (!opt) {
+              opt = document.createElement('option');
+              opt.value = m.id;
+              opt.textContent = `${m.icon || '🤖'} ${m.name} — ${m.price_display || '$0.50 / $2.00'} [Active]`;
+              const optCustom = selectModel.querySelector('option[value="__custom__"]');
+              if (optCustom && optCustom.parentNode) {
+                optCustom.parentNode.insertBefore(opt, optCustom);
+              } else {
+                selectModel.appendChild(opt);
+              }
+            }
             selectModel.value = m.id;
             selectModel.dispatchEvent(new Event('change'));
           }
           closePricingModal();
-          if (window.Cockpit) window.Cockpit.notify(`Selected ${m.name} (${m.price_display})`, 'success');
+          if (window.Cockpit) window.Cockpit.notify(`Selected ${m.name} (${m.price_display || ''})`, 'success');
         });
       }
 
@@ -1999,10 +2160,17 @@ document.addEventListener('DOMContentLoaded', () => {
     { title: 'Auto-Decisions Mission Control', desc: 'View live desktop approval stream, click counts, and restart service', icon: '⚡', action: () => openAutoClickerModal() },
     { title: 'Clear Pinned Context Files', desc: 'Remove all pinned files from active prompt context', icon: '🧹', action: () => clearPinnedFiles() },
     { title: 'Export Executive Briefing', desc: 'Download entire thread transcript as formatted Markdown report', icon: '📄', action: () => exportReport() },
-    { title: 'Model: DeepSeek Reasoner (R1)', desc: 'Switch model to frontier reasoning tier', icon: '🧠', action: () => { if (selectModel) selectModel.value = 'deepseek-reasoner'; } },
-    { title: 'Model: Gemini 2.5/3.8 Flash', desc: 'Switch model to high-speed context synthesis tier', icon: '⚡', action: () => { if (selectModel) selectModel.value = 'gemini-flash'; } },
-    { title: 'Model: Claude 3.5 Sonnet', desc: 'Switch model to frontier Anthropic tier', icon: '🎭', action: () => { if (selectModel) selectModel.value = 'claude-3-5-sonnet'; } },
-    { title: 'Model: Qwen 2.5 Coder 32B', desc: 'Switch model to Alibaba deep coding tier', icon: '💻', action: () => { if (selectModel) selectModel.value = 'siliconflow-qwen-coder'; } },
+    { title: 'Model: DeepSeek Reasoner (R1)', desc: 'Switch model to frontier reasoning tier ($0.55 / $2.19)', icon: '🧠', action: () => selectHarnessModel('deepseek-reasoner') },
+    { title: 'Model: DeepSeek Chat (V3)', desc: 'Switch model to ultra-low cost high-speed synthesis ($0.14 / $0.28)', icon: '⚡', action: () => selectHarnessModel('deepseek-chat') },
+    { title: 'Model: Gemini 2.5/3.8 Flash', desc: 'Switch model to high-speed 1M+ context tier ($0.075 / $0.300)', icon: '⚡', action: () => selectHarnessModel('gemini-flash') },
+    { title: 'Model: Gemini Pro', desc: 'Switch model to frontier multimodal tier ($1.25 / $5.00)', icon: '💎', action: () => selectHarnessModel('gemini-pro') },
+    { title: 'Model: Claude 3.5 Sonnet', desc: 'Switch model to frontier Anthropic tier ($3.00 / $15.00)', icon: '🎭', action: () => selectHarnessModel('claude-3-5-sonnet') },
+    { title: 'Model: Claude 3.5 Haiku', desc: 'Switch model to lightweight high-velocity Claude tier ($0.80 / $4.00)', icon: '🍃', action: () => selectHarnessModel('claude-3-5-haiku') },
+    { title: 'Model: Qwen 2.5 Coder 32B', desc: 'Switch model to SiliconFlow deep coding tier ($0.20 / $0.40)', icon: '💻', action: () => selectHarnessModel('siliconflow-qwen-coder') },
+    { title: 'Model: Qwen 2.5 72B Instruct', desc: 'Switch model to open frontier generalist tier ($0.20 / $0.40)', icon: '🌐', action: () => selectHarnessModel('siliconflow-qwen') },
+    { title: 'Model: DashScope Qwen Max', desc: 'Switch model to Alibaba frontier reasoning tier ($1.60 / $6.40)', icon: '👑', action: () => selectHarnessModel('dashscope-qwen-max') },
+    { title: 'Model: DashScope Qwen Plus', desc: 'Switch model to Alibaba economical tier ($0.12 / $0.24)', icon: '🌐', action: () => selectHarnessModel('dashscope-qwen-plus') },
+    { title: 'Model: Custom Model Entry', desc: 'Type any custom LiteLLM model ID directly', icon: '✏️', action: () => selectHarnessModel('__custom__') },
     { title: 'Effort: Low (2k Tokens)', desc: 'Set reasoning effort to rapid synthesis tier', icon: '⚡', action: () => { if (selectEffort) selectEffort.value = 'low'; } },
     { title: 'Effort: Max (16k+ Tokens)', desc: 'Set reasoning effort to maximum frontier proof tier', icon: '🌌', action: () => { if (selectEffort) selectEffort.value = 'max'; } },
     { title: 'Autonomy: Full Autonomy', desc: 'Enable end-to-end autonomous execution', icon: '🚀', action: () => { if (selectAutonomy) selectAutonomy.value = 'full'; } },
@@ -2011,6 +2179,30 @@ document.addEventListener('DOMContentLoaded', () => {
     { title: 'Switch Active Workspace', desc: 'Open workspace switcher folder drawer', icon: '📁', action: () => { if (workspaceDrawer) workspaceDrawer.style.display = 'block'; } },
     { title: 'Emergency Stop: Trip Circuit Breaker', desc: 'Immediately halt cloud API spend and fallback to local', icon: '🛑', action: () => { if (btnTripBreaker) btnTripBreaker.click(); } }
   ];
+
+  function selectHarnessModel(modelId) {
+    if (!selectModel) return;
+    if (modelId === '__custom__') {
+      selectModel.value = '__custom__';
+      selectModel.dispatchEvent(new Event('change'));
+      return;
+    }
+    let opt = Array.from(selectModel.options).find(o => o.value === modelId);
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = modelId;
+      opt.textContent = `🤖 ${formatModelName(modelId)} [Active]`;
+      const optCustom = selectModel.querySelector('option[value="__custom__"]');
+      if (optCustom && optCustom.parentNode) {
+        optCustom.parentNode.insertBefore(opt, optCustom);
+      } else {
+        selectModel.appendChild(opt);
+      }
+    }
+    selectModel.value = modelId;
+    selectModel.dispatchEvent(new Event('change'));
+    if (window.Cockpit) window.Cockpit.notify(`Model switched to ${formatModelName(modelId)}`, 'info');
+  }
 
   function openCommandPalette() {
     if (!commandPaletteBackdrop) return;
@@ -2183,12 +2375,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function formatModelName(modelId) {
     if (!modelId) return 'Frontier AI OS';
+    if (KNOWN_MODEL_REGISTRY[modelId]) return KNOWN_MODEL_REGISTRY[modelId].name;
     if (modelId.includes('deepseek-reasoner')) return 'DeepSeek Reasoner (R1)';
     if (modelId.includes('deepseek-chat')) return 'DeepSeek Chat (V3)';
     if (modelId.includes('gemini-flash')) return 'Gemini 2.5/3.8 Flash';
     if (modelId.includes('gemini-pro')) return 'Gemini Pro';
     if (modelId.includes('claude-3-5-sonnet')) return 'Claude 3.5 Sonnet';
+    if (modelId.includes('claude-3-5-haiku')) return 'Claude 3.5 Haiku';
     if (modelId.includes('qwen-coder')) return 'Qwen 2.5 Coder 32B';
+    if (modelId.includes('qwen-max')) return 'DashScope Qwen Max';
+    if (modelId.includes('qwen-plus')) return 'DashScope Qwen Plus';
+    if (modelId.includes('siliconflow-qwen')) return 'Qwen 2.5 72B Instruct';
+    if (modelId.includes('siliconflow-deepseek')) return 'DeepSeek V3 (SiliconFlow)';
+    if (modelId.includes('safeguard')) return 'Zero-Cost Local Safeguard';
     return modelId;
   }
 

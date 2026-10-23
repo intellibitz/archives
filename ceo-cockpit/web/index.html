@@ -236,24 +236,41 @@
               </label>
               <div class="select-wrapper">
                 <select id="selectModel" class="harness-select">
-                  <option value="auto" selected>✨ Auto (Frontier Router)</option>
-                  <optgroup label="Frontier Reasoning">
-                    <option value="deepseek-reasoner">🧠 DeepSeek Reasoner (R1)</option>
+                  <option value="auto" selected>✨ Auto (Frontier Router - DeepSeek / Gemini)</option>
+                  <optgroup label="🧠 Frontier Reasoning Tier">
+                    <option value="deepseek-reasoner">🧠 DeepSeek Reasoner (R1) — $0.55 / $2.19 [Active]</option>
+                    <option value="dashscope-qwen-max">👑 DashScope Qwen Max — $1.60 / $6.40 [Active]</option>
                   </optgroup>
-                  <optgroup label="Speed & High-Context">
-                    <option value="deepseek-chat">⚡ DeepSeek Chat (V3)</option>
-                    <option value="gemini-flash">⚡ Gemini 2.5/3.8 Flash (1M+)</option>
+                  <optgroup label="⚡ Ultra-Speed & Massive Context Tier (< $0.40/1M)">
+                    <option value="gemini-flash">⚡ Gemini 2.5/3.8 Flash (1M+) — $0.075 / $0.300 [Active]</option>
+                    <option value="deepseek-chat">⚡ DeepSeek Chat (V3) — $0.140 / $0.280 [Active]</option>
+                    <option value="siliconflow-deepseek">⚡ DeepSeek V3 (SiliconFlow) — $0.140 / $0.280 [Active]</option>
+                    <option value="dashscope-qwen-plus">🌐 DashScope Qwen Plus — $0.120 / $0.240 [Active]</option>
                   </optgroup>
-                  <optgroup label="Frontier Synthesis">
-                    <option value="gemini-pro">💎 Gemini Pro</option>
-                    <option value="claude-3-5-sonnet">🎭 Claude 3.5 Sonnet</option>
-                    <option value="claude-3-5-haiku">🍃 Claude 3.5 Haiku</option>
+                  <optgroup label="💻 Code Engineering Tier">
+                    <option value="siliconflow-qwen-coder">💻 Qwen 2.5 Coder 32B (SiliconFlow) — $0.20 / $0.40 [Active]</option>
+                    <option value="dashscope-qwen-coder">💻 DashScope Qwen Coder — $0.12 / $0.24 [Active]</option>
                   </optgroup>
-                  <optgroup label="Code & Domain">
-                    <option value="siliconflow-qwen-coder">💻 Qwen 2.5 Coder 32B</option>
-                    <option value="dashscope-qwen-max">🌐 DashScope Qwen Max</option>
+                  <optgroup label="💎 Frontier Multimodal & Claude Tier">
+                    <option value="claude-3-5-sonnet">🎭 Claude 3.5 Sonnet — $3.00 / $15.00 [Active]</option>
+                    <option value="claude-3-5-haiku">🍃 Claude 3.5 Haiku — $0.80 / $4.00 [Active]</option>
+                    <option value="gemini-pro">💎 Gemini Pro (Frontier) — $1.25 / $5.00 [Active]</option>
+                  </optgroup>
+                  <optgroup label="🌐 Open Frontier Generalist Tier">
+                    <option value="siliconflow-qwen">🌐 Qwen 2.5 72B Instruct (SiliconFlow) — $0.20 / $0.40 [Active]</option>
+                  </optgroup>
+                  <optgroup label="🛡️ Zero-Cost Local Safeguards">
+                    <option value="local-safeguard">🛡️ Zero-Cost Local Safeguard — Free ($0.000) [Active]</option>
+                  </optgroup>
+                  <optgroup label="✏️ Custom / Direct Model ID">
+                    <option value="__custom__">✏️ Enter Custom LiteLLM Model ID...</option>
                   </optgroup>
                 </select>
+              </div>
+              <div class="custom-model-row" id="customModelRow" style="display: none;">
+                <input type="text" id="inputCustomModel" class="custom-model-input" placeholder="Enter LiteLLM model (e.g. gpt-4o, o1, llama-3.3-70b)..." />
+                <button type="button" id="btnApplyCustomModel" class="custom-model-apply-btn">Apply</button>
+                <button type="button" id="btnCancelCustomModel" class="custom-model-cancel-btn" title="Cancel">✕</button>
               </div>
               <div class="model-cost-pill" id="modelCostBadge" title="Real-time model pricing & status">
                 <span class="cost-dot dot-green" id="modelCostDot"></span>

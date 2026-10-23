@@ -462,8 +462,13 @@ def format_model_display_name(model_id: str) -> str:
         "gemini-pro": "Gemini Pro (Frontier)",
         "claude-3-5-sonnet": "Claude 3.5 Sonnet",
         "claude-3-5-haiku": "Claude 3.5 Haiku",
-        "siliconflow-qwen-coder": "Qwen 2.5 Coder 32B",
+        "siliconflow-qwen-coder": "Qwen 2.5 Coder 32B (SiliconFlow)",
+        "siliconflow-qwen": "Qwen 2.5 72B Instruct (SiliconFlow)",
+        "siliconflow-deepseek": "DeepSeek V3 (SiliconFlow)",
         "dashscope-qwen-max": "DashScope Qwen Max",
+        "dashscope-qwen-plus": "DashScope Qwen Plus",
+        "dashscope-qwen-coder": "DashScope Qwen Coder",
+        "local-safeguard": "Zero-Cost Local Safeguard",
     }
     return mapping.get(model_id, model_id)
 
@@ -1003,22 +1008,15 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             routing_reason = "⚠️ CIRCUIT BREAKER ACTIVE: Daily spend cap enforced. Safeguard Zero-Cost Routing ($0.00)"
         elif requested_model == "auto":
             selected_model, routing_reason = classify_model_intent(prompt)
-        elif requested_model in [
-            "deepseek", "deepseek-reasoner", "deepseek-chat",
-            "gemini", "gemini-flash", "gemini-pro",
-            "claude-3-5-sonnet", "claude-3-5-haiku",
-            "siliconflow-qwen-coder", "dashscope-qwen-max"
-        ]:
-            if requested_model == "deepseek":
-                selected_model = "deepseek-reasoner"
-            elif requested_model == "gemini":
-                selected_model = "gemini-flash"
-            else:
-                selected_model = requested_model
-            routing_reason = f"Executive Model Selection: {format_model_display_name(selected_model)}"
+        elif requested_model == "deepseek":
+            selected_model = "deepseek-reasoner"
+            routing_reason = "Executive Model Selection: DeepSeek Reasoner (R1)"
+        elif requested_model == "gemini":
+            selected_model = "gemini-flash"
+            routing_reason = "Executive Model Selection: Gemini 2.5/3.8 Flash"
         else:
             selected_model = requested_model
-            routing_reason = f"Selected Model: {format_model_display_name(selected_model)}"
+            routing_reason = f"Executive Model Selection: {format_model_display_name(selected_model)}"
 
         if "reasoner" in selected_model and effort in ["auto", "high", "max"]:
             max_tokens = max(max_tokens, 8192)
@@ -1438,22 +1436,15 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             routing_reason = "⚠️ CIRCUIT BREAKER ACTIVE: Daily spend cap enforced. Safeguard Zero-Cost Routing ($0.00)"
         elif requested_model == "auto":
             selected_model, routing_reason = classify_model_intent(prompt)
-        elif requested_model in [
-            "deepseek", "deepseek-reasoner", "deepseek-chat",
-            "gemini", "gemini-flash", "gemini-pro",
-            "claude-3-5-sonnet", "claude-3-5-haiku",
-            "siliconflow-qwen-coder", "dashscope-qwen-max"
-        ]:
-            if requested_model == "deepseek":
-                selected_model = "deepseek-reasoner"
-            elif requested_model == "gemini":
-                selected_model = "gemini-flash"
-            else:
-                selected_model = requested_model
-            routing_reason = f"Executive Model Selection: {format_model_display_name(selected_model)}"
+        elif requested_model == "deepseek":
+            selected_model = "deepseek-reasoner"
+            routing_reason = "Executive Model Selection: DeepSeek Reasoner (R1)"
+        elif requested_model == "gemini":
+            selected_model = "gemini-flash"
+            routing_reason = "Executive Model Selection: Gemini 2.5/3.8 Flash"
         else:
             selected_model = requested_model
-            routing_reason = f"Selected Model: {format_model_display_name(selected_model)}"
+            routing_reason = f"Executive Model Selection: {format_model_display_name(selected_model)}"
 
         if "reasoner" in selected_model and effort in ["auto", "high", "max"]:
             max_tokens = max(max_tokens, 8192)

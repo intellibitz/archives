@@ -3106,4 +3106,65 @@ body {
   background: transparent;
 }
 
+/* Custom Model Direct Input Row */
+.custom-model-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.custom-model-input {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #F8FAFC;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  outline: none;
+  transition: var(--transition-fast);
+}
+
+.custom-model-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.35);
+}
+
+.custom-model-apply-btn {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.5);
+  border-radius: 6px;
+  color: #E2E8F0;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.custom-model-apply-btn:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.5) 0%, rgba(59, 130, 246, 0.5) 100%);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+.custom-model-cancel-btn {
+  padding: 6px 9px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.custom-model-cancel-btn:hover {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #FDA4AF;
+}
+
 
