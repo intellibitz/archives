@@ -203,6 +203,13 @@ def t_swarm_history():
     assert s == 200 and "history" in d, f"status={s}"
 
 
+# ------------------------------------------------------------------- voice
+@check("voice")
+def t_voice_assets():
+    s, _, _ = request("GET", "/modules/voice.js", raw=True)
+    assert s == 200, f"voice.js status={s}"
+
+
 def main():
     global BASE
     ap = argparse.ArgumentParser()
