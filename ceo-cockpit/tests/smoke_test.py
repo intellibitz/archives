@@ -251,6 +251,26 @@ def t_analytics_assets():
     assert s == 200, f"analytics.js status={s}"
 
 
+# ------------------------------------------------------------------- git
+@check("git")
+def t_git_status():
+    s, d = request("GET", "/api/git/status")
+    assert s == 200 and d.get("is_repo") is True, f"status={s} body={d}"
+    assert "branch" in d and "recent_commits" in d, "missing branch or commits"
+
+
+@check("git")
+def t_git_diff():
+    s, d = request("GET", "/api/git/diff")
+    assert s == 200 and "diff" in d, f"status={s}"
+
+
+@check("git")
+def t_git_assets():
+    s, _, _ = request("GET", "/modules/git_ops.js", raw=True)
+    assert s == 200, f"git_ops.js status={s}"
+
+
 def main():
     global BASE
     ap = argparse.ArgumentParser()
