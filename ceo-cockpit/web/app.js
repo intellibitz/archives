@@ -124,6 +124,40 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeSlashIndex = 0;
   let activeCpIndex = 0;
 
+  // Round 2 DOM Elements: Pinned Files, File Viewer, Auto-Decisions & Tree Explorer
+  const pinnedFilesBar = document.getElementById('pinnedFilesBar');
+  const pinnedChipsContainer = document.getElementById('pinnedChipsContainer');
+  const pinnedTokensBadge = document.getElementById('pinnedTokensBadge');
+  const btnClearPinned = document.getElementById('btnClearPinned');
+
+  const fileViewerBackdrop = document.getElementById('fileViewerBackdrop');
+  const fileViewerTitle = document.getElementById('fileViewerTitle');
+  const fileViewerMeta = document.getElementById('fileViewerMeta');
+  const fileViewerCodeBlock = document.getElementById('fileViewerCodeBlock');
+  const btnPinViewerFile = document.getElementById('btnPinViewerFile');
+  const btnCopyViewerFile = document.getElementById('btnCopyViewerFile');
+  const btnCloseFileViewer = document.getElementById('btnCloseFileViewer');
+
+  const chipAutoClick = document.getElementById('chipAutoClick');
+  const autoClickerBackdrop = document.getElementById('autoClickerBackdrop');
+  const btnCloseAutoClickerModal = document.getElementById('btnCloseAutoClickerModal');
+  const btnRestartAutoClicker = document.getElementById('btnRestartAutoClicker');
+  const acModalStatus = document.getElementById('acModalStatus');
+  const acModalMode = document.getElementById('acModalMode');
+  const acModalPid = document.getElementById('acModalPid');
+  const acModalHeartbeat = document.getElementById('acModalHeartbeat');
+  const acModalTotalClicks = document.getElementById('acModalTotalClicks');
+  const acActionsTableBody = document.getElementById('acActionsTableBody');
+  const acLogTailBlock = document.getElementById('acLogTailBlock');
+
+  const inputFilterWsFiles = document.getElementById('inputFilterWsFiles');
+  const btnRefreshWsTree = document.getElementById('btnRefreshWsTree');
+
+  // Round 2 State
+  let pinnedFiles = [];
+  let currentViewingFile = null;
+  let workspaceTreeData = null;
+
   // ==============================================================================
   // Workspace Management Engine
   // ==============================================================================
@@ -169,25 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    renderWorkspaceFiles(ws.entries || []);
-  }
-
-  function renderWorkspaceFiles(entries) {
-    if (!wsFilesList) return;
-    wsFilesList.innerHTML = '';
-    if (!entries.length) {
-      wsFilesList.innerHTML = '<span style="color:#64748B;font-size:12px;">No items found in directory.</span>';
-      return;
-    }
-
-    entries.slice(0, 48).forEach(entry => {
-      const item = document.createElement('div');
-      item.className = `ws-file-item ${entry.is_dir ? 'is-dir' : ''}`;
-      const icon = entry.is_dir ? '📁' : '📄';
-      const sizeStr = entry.is_dir ? '' : ` (${formatBytes(entry.size_bytes)})`;
-      item.innerHTML = `<span class="ws-file-icon">${icon}</span><span>${entry.name}${sizeStr}</span>`;
-      wsFilesList.appendChild(item);
-    });
+    fetchWorkspaceTree();
   }
 
   function formatBytes(bytes) {
@@ -195,6 +211,331 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1048576).toFixed(1)} MB`;
+  }
+
+  // ==============================================================================
+  // Pinned Context Files Engine
+  // ==============================================================================
+  function renderPinnedFilesBar() {
+    if (!pinnedFilesBar || !pinnedChipsContainer) return;
+    if (pinnedFiles.length === 0) {
+      pinnedFilesBar.style.display = 'none';
+      return;
+    }
+
+    pinnedFilesBar.style.display = 'flex';
+    pinnedChipsContainer.innerHTML = '';
+
+    let totalTokens = 0;
+    pinnedFiles.forEach(file => {
+      totalTokens += file.token_estimate || 0;
+      const chip = document.createElement('div');
+      chip.className = 'pinned-chip';
+      chip.innerHTML = `
+        <span>📄</span>
+        <span>${escapeHtml(file.name)}</span>
+        <span class="pinned-chip-tokens">~${file.token_estimate} tok</span>
+        <button class="pinned-chip-remove" title="Unpin ${escapeHtml(file.name)}">✕</button>
+      `;
+      chip.querySelector('.pinned-chip-remove').addEventListener('click', (e) => {
+        e.stopPropagation();
+        unpinFile(file.path);
+      });
+      chip.addEventListener('click', () => {
+        openFileViewer(file.path);
+      });
+      pinnedChipsContainer.appendChild(chip);
+    });
+
+    if (pinnedTokensBadge) {
+      pinnedTokensBadge.textContent = `${totalTokens.toLocaleString()} tokens attached`;
+    }
+  }
+
+  function pinFile(fileData) {
+    if (!fileData || !fileData.path) return;
+    const exists = pinnedFiles.some(f => f.path === fileData.path);
+    if (!exists) {
+      pinnedFiles.push(fileData);
+      renderPinnedFilesBar();
+      renderFileTree();
+    }
+  }
+
+  function unpinFile(filePath) {
+    pinnedFiles = pinnedFiles.filter(f => f.path !== filePath);
+    renderPinnedFilesBar();
+    renderFileTree();
+  }
+
+  function clearPinnedFiles() {
+    pinnedFiles = [];
+    renderPinnedFilesBar();
+    renderFileTree();
+  }
+
+  if (btnClearPinned) {
+    btnClearPinned.addEventListener('click', clearPinnedFiles);
+  }
+
+  // ==============================================================================
+  // Hierarchical File Explorer & File Viewer
+  // ==============================================================================
+  async function fetchWorkspaceTree() {
+    try {
+      const res = await fetch('/api/workspace/tree');
+      if (!res.ok) return;
+      const data = await res.json();
+      workspaceTreeData = data.tree;
+      renderFileTree();
+    } catch (err) {
+      console.warn('Workspace tree fetch failed', err);
+    }
+  }
+
+  function renderFileTree() {
+    if (!wsFilesList || !workspaceTreeData) return;
+    wsFilesList.innerHTML = '';
+    const filterText = (inputFilterWsFiles?.value || '').trim().toLowerCase();
+
+    const container = document.createElement('div');
+    container.className = 'ws-tree-container';
+
+    function traverse(node, depth = 0) {
+      if (!node) return;
+      const matches = !filterText || node.name.toLowerCase().includes(filterText) || node.path.toLowerCase().includes(filterText);
+
+      let hasMatchingChild = false;
+      if (node.is_dir && node.children) {
+        hasMatchingChild = node.children.some(c => matchesFilter(c, filterText));
+      }
+
+      if (matches || hasMatchingChild) {
+        if (depth > 0) {
+          const item = document.createElement('div');
+          item.className = 'tree-node-item';
+
+          const left = document.createElement('div');
+          left.className = 'tree-node-left';
+          
+          let indents = '';
+          for (let i = 1; i < depth; i++) {
+            indents += '<span class="tree-indent"></span>';
+          }
+
+          const icon = node.is_dir ? '📁' : '📄';
+          left.innerHTML = `${indents}<span class="tree-icon">${icon}</span><span class="tree-name">${escapeHtml(node.name)}</span>`;
+
+          const right = document.createElement('div');
+          right.className = 'tree-node-right';
+
+          if (!node.is_dir) {
+            const sizeStr = formatBytes(node.size_bytes);
+            const isPinned = pinnedFiles.some(f => f.path === node.path || f.path === node.full_path);
+            right.innerHTML = `
+              <span class="tree-size">${sizeStr}</span>
+              <button class="tree-action-btn tree-btn-view" title="Preview file">👁️ View</button>
+              <button class="tree-action-btn tree-btn-pin ${isPinned ? 'pinned' : ''}" title="${isPinned ? 'Unpin' : 'Pin to Context'}">${isPinned ? '📌 Pinned' : '+ Pin'}</button>
+            `;
+
+            right.querySelector('.tree-btn-view').addEventListener('click', (e) => {
+              e.stopPropagation();
+              openFileViewer(node.path);
+            });
+
+            right.querySelector('.tree-btn-pin').addEventListener('click', async (e) => {
+              e.stopPropagation();
+              if (isPinned) {
+                unpinFile(node.path);
+              } else {
+                const res = await fetch(`/api/workspace/file?path=${encodeURIComponent(node.path)}`);
+                if (res.ok) {
+                  const fData = await res.json();
+                  if (fData.file) pinFile(fData.file);
+                }
+              }
+            });
+          } else {
+            const count = node.children ? node.children.length : 0;
+            right.innerHTML = `<span class="tree-size">${count} items</span>`;
+          }
+
+          item.appendChild(left);
+          item.appendChild(right);
+          container.appendChild(item);
+        }
+
+        if (node.is_dir && node.children) {
+          node.children.forEach(child => traverse(child, depth + 1));
+        }
+      }
+    }
+
+    function matchesFilter(n, q) {
+      if (!q) return true;
+      if (n.name.toLowerCase().includes(q) || n.path.toLowerCase().includes(q)) return true;
+      if (n.is_dir && n.children) {
+        return n.children.some(c => matchesFilter(c, q));
+      }
+      return false;
+    }
+
+    traverse(workspaceTreeData, 0);
+    wsFilesList.appendChild(container);
+  }
+
+  if (inputFilterWsFiles) {
+    inputFilterWsFiles.addEventListener('input', () => {
+      renderFileTree();
+    });
+  }
+
+  if (btnRefreshWsTree) {
+    btnRefreshWsTree.addEventListener('click', () => {
+      fetchWorkspaceTree();
+    });
+  }
+
+  // ==============================================================================
+  // Executive File Viewer Modal
+  // ==============================================================================
+  async function openFileViewer(filePath) {
+    if (!filePath) return;
+    try {
+      const res = await fetch(`/api/workspace/file?path=${encodeURIComponent(filePath)}`);
+      if (!res.ok) {
+        alert('Could not read file from workspace.');
+        return;
+      }
+      const data = await res.json();
+      if (!data.file) return;
+
+      currentViewingFile = data.file;
+      if (fileViewerTitle) fileViewerTitle.textContent = currentViewingFile.name;
+      if (fileViewerMeta) {
+        const sizeStr = formatBytes(currentViewingFile.size_bytes);
+        fileViewerMeta.textContent = `${currentViewingFile.lines || 0} lines • ${sizeStr} • ~${currentViewingFile.token_estimate || 0} tokens`;
+      }
+      if (fileViewerCodeBlock) {
+        fileViewerCodeBlock.textContent = currentViewingFile.content || '';
+      }
+
+      if (btnPinViewerFile) {
+        const isPinned = pinnedFiles.some(f => f.path === currentViewingFile.path);
+        btnPinViewerFile.textContent = isPinned ? '📌 Already Pinned' : '📌 Pin to Context';
+      }
+
+      if (fileViewerBackdrop) fileViewerBackdrop.style.display = 'flex';
+    } catch (err) {
+      alert(`Error viewing file: ${err.message}`);
+    }
+  }
+
+  function closeFileViewer() {
+    if (fileViewerBackdrop) fileViewerBackdrop.style.display = 'none';
+    currentViewingFile = null;
+  }
+
+  if (btnCloseFileViewer) btnCloseFileViewer.addEventListener('click', closeFileViewer);
+  if (fileViewerBackdrop) {
+    fileViewerBackdrop.addEventListener('click', (e) => {
+      if (e.target === fileViewerBackdrop) closeFileViewer();
+    });
+  }
+
+  if (btnPinViewerFile) {
+    btnPinViewerFile.addEventListener('click', () => {
+      if (currentViewingFile) {
+        pinFile(currentViewingFile);
+        closeFileViewer();
+      }
+    });
+  }
+
+  if (btnCopyViewerFile) {
+    btnCopyViewerFile.addEventListener('click', () => {
+      if (currentViewingFile && currentViewingFile.content) {
+        navigator.clipboard.writeText(currentViewingFile.content);
+        btnCopyViewerFile.textContent = '✓ Copied';
+        setTimeout(() => { btnCopyViewerFile.textContent = '📋 Copy'; }, 2000);
+      }
+    });
+  }
+
+  // ==============================================================================
+  // Decision Auto-Clicker Mission Control Modal
+  // ==============================================================================
+  async function openAutoClickerModal() {
+    try {
+      const res = await fetch('/api/autoclicker/telemetry');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (acModalStatus) {
+        acModalStatus.textContent = data.online ? 'ACTIVE' : 'IDLE / RESTARTING';
+        acModalStatus.className = `stat-value ${data.online ? 'text-green' : 'text-red'}`;
+      }
+      if (acModalMode) acModalMode.textContent = data.mode || 'Low-Latency';
+      if (acModalPid) acModalPid.textContent = data.pid ? `PID ${data.pid}` : 'PID N/A';
+      if (acModalHeartbeat) acModalHeartbeat.textContent = `Heartbeat: ${data.heartbeat_age_sec}s ago`;
+      if (acModalTotalClicks) acModalTotalClicks.textContent = (data.total_clicks || 0).toLocaleString();
+
+      if (acActionsTableBody) {
+        acActionsTableBody.innerHTML = '';
+        if (data.recent_actions && data.recent_actions.length > 0) {
+          data.recent_actions.forEach(act => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td style="font-family:var(--font-mono);font-size:11px;color:#94A3B8;">${escapeHtml(act.timestamp)}</td>
+              <td><span class="ac-btn-tag">${escapeHtml(act.button)}</span></td>
+              <td style="font-family:var(--font-mono);font-size:10.5px;color:#64748B;">${escapeHtml(act.raw)}</td>
+            `;
+            acActionsTableBody.appendChild(tr);
+          });
+        } else {
+          acActionsTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#64748B;padding:12px;">No dialog approvals recorded in current window.</td></tr>';
+        }
+      }
+
+      if (acLogTailBlock) {
+        acLogTailBlock.textContent = (data.recent_log_lines || []).join('\n');
+      }
+
+      if (autoClickerBackdrop) autoClickerBackdrop.style.display = 'flex';
+    } catch (err) {
+      console.warn('Auto-clicker telemetry error', err);
+    }
+  }
+
+  function closeAutoClickerModal() {
+    if (autoClickerBackdrop) autoClickerBackdrop.style.display = 'none';
+  }
+
+  if (chipAutoClick) chipAutoClick.addEventListener('click', openAutoClickerModal);
+  if (btnCloseAutoClickerModal) btnCloseAutoClickerModal.addEventListener('click', closeAutoClickerModal);
+  if (autoClickerBackdrop) {
+    autoClickerBackdrop.addEventListener('click', (e) => {
+      if (e.target === autoClickerBackdrop) closeAutoClickerModal();
+    });
+  }
+
+  if (btnRestartAutoClicker) {
+    btnRestartAutoClicker.addEventListener('click', async () => {
+      btnRestartAutoClicker.textContent = '🔄 Restarting...';
+      try {
+        await fetch('/api/autoclicker/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'restart' })
+        });
+        setTimeout(async () => {
+          await openAutoClickerModal();
+          btnRestartAutoClicker.textContent = '🔄 Restart Process';
+        }, 1500);
+      } catch (err) {
+        btnRestartAutoClicker.textContent = '🔄 Restart Process';
+      }
+    });
   }
 
   async function switchWorkspace(newPath) {
@@ -265,6 +606,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const isOpen = workspaceFilesDrawer.style.display !== 'none';
       workspaceFilesDrawer.style.display = isOpen ? 'none' : 'block';
       if (workspaceDrawer) workspaceDrawer.style.display = 'none';
+      if (!isOpen) {
+        fetchWorkspaceTree();
+      }
     });
   }
 
@@ -374,6 +718,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (mode === 'openclaw') {
       decisionIndicator.textContent = '🧭';
       decisionText.textContent = 'Multi-Agent Swarm: Dispatching directly to Chief of Staff & OpenClaw background agents.';
+    } else if (mode === 'arena') {
+      decisionIndicator.textContent = '🏛️';
+      decisionText.textContent = 'Council Arena Active: Parallel adversarial deliberation across DeepSeek Reasoner & Gemini Flash with executive consensus synthesis.';
     }
   }
 
@@ -741,6 +1088,9 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (currentMode === 'openclaw') {
         await dispatchToOpenClaw(prompt);
+      } else if (currentMode === 'arena' || prompt.startsWith('/arena')) {
+        const cleanPrompt = prompt.startsWith('/arena') ? prompt.replace(/^\/arena\s*/i, '') : prompt;
+        await dispatchArenaDirective(cleanPrompt);
       } else {
         await dispatchStreamingDirective(prompt);
       }
@@ -750,6 +1100,164 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshHealth();
     }
   }
+
+  // ==============================================================================
+  // Council Arena (Parallel Multi-Model) Dispatcher
+  // ==============================================================================
+  async function dispatchArenaDirective(prompt) {
+    if (!prompt) return;
+    setLoading(true);
+    if (outputStatus) outputStatus.textContent = 'Council Deliberating in Parallel...';
+
+    if (!activeSessionId) {
+      await createNewSession(`🏛️ Council: ${prompt.slice(0, 30)}...`);
+    }
+
+    const userMsg = {
+      role: 'user',
+      content: prompt,
+      timestamp: Date.now() / 1000
+    };
+    if (activeSession) {
+      activeSession.messages = activeSession.messages || [];
+      activeSession.messages.push(userMsg);
+    }
+    const userCard = createTurnCard(userMsg, (activeSession?.messages?.length || 1) - 1);
+    if (conversationTimeline) {
+      if (outputPlaceholder) outputPlaceholder.style.display = 'none';
+      conversationTimeline.appendChild(userCard);
+      scrollToTimelineBottom();
+    }
+
+    executivePrompt.value = '';
+
+    try {
+      const arenaModels = ['deepseek-reasoner', 'gemini-flash'];
+      const payload = {
+        prompt: prompt,
+        models: arenaModels,
+        effort: selectEffort ? selectEffort.value : 'auto',
+        autonomy_mode: selectAutonomy ? selectAutonomy.value : 'full',
+        temperature: selectTemperature ? parseFloat(selectTemperature.value) : 0.3,
+        workspace_path: activeWorkspace ? activeWorkspace.path : null,
+        pinned_files: pinnedFiles,
+        session_id: activeSessionId
+      };
+
+      const res = await fetch('/api/command/arena', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Arena deliberation failed');
+      }
+
+      if (data.session) {
+        activeSession = data.session;
+        activeSessionId = data.session.id;
+        fetchSessions();
+      }
+
+      renderArenaTurnInTimeline(data.results, data.consensus);
+      if (data.budget) renderBudget(data.budget);
+      if (outputStatus) outputStatus.textContent = 'Council Verdict Complete';
+
+    } catch (err) {
+      const errMsg = {
+        role: 'assistant',
+        content: `⚠️ Council Deliberation Error: ${err.message}`,
+        timestamp: Date.now() / 1000
+      };
+      if (conversationTimeline) {
+        conversationTimeline.appendChild(createTurnCard(errMsg, 999));
+        scrollToTimelineBottom();
+      }
+      if (outputStatus) outputStatus.textContent = 'Deliberation Error';
+    } finally {
+      setLoading(false);
+      executivePrompt.value = '';
+    }
+  }
+
+  function renderArenaTurnInTimeline(results, consensus) {
+    if (!conversationTimeline) return;
+    if (outputPlaceholder) outputPlaceholder.style.display = 'none';
+
+    const card = document.createElement('div');
+    card.className = 'turn-card turn-arena';
+
+    let colsHtml = '';
+    (results || []).forEach(r => {
+      const reasoningHtml = r.reasoning_content ? `
+        <div class="thinking-accordion" style="margin-bottom:8px;">
+          <div class="thinking-header" onclick="const b = this.nextElementSibling; b.style.display = b.style.display === 'none' ? 'block' : 'none';">
+            <div class="thinking-title">
+              <span class="thinking-sparkle">🧠</span>
+              <span>Reasoning Trace</span>
+            </div>
+            <button class="thinking-toggle-btn">Show Thoughts ▾</button>
+          </div>
+          <div class="thinking-body" style="display:none;">
+            <div class="thinking-content">${escapeHtml(r.reasoning_content)}</div>
+          </div>
+        </div>
+      ` : '';
+
+      colsHtml += `
+        <div class="arena-col-card">
+          <div class="arena-col-header">
+            <div class="arena-model-tag">
+              <span>🤖</span>
+              <span>${escapeHtml(r.model_name)}</span>
+            </div>
+            <div class="arena-meta-strip">
+              <span class="arena-badge-latency">⚡ ${r.latency_ms}ms</span>
+              <span class="arena-badge-cost">💵 $${(r.cost_actual || 0).toFixed(4)}</span>
+            </div>
+          </div>
+          ${reasoningHtml}
+          <div class="turn-content markdown-body">${formatExecutiveMarkdown(r.content || '')}</div>
+        </div>
+      `;
+    });
+
+    const consensusHtml = `
+      <div class="arena-consensus-card">
+        <div class="consensus-header">
+          <span>🏛️</span>
+          <span class="consensus-title">Executive Consensus & Trade-off Analysis</span>
+        </div>
+        <div class="consensus-body">
+          <p><strong>Fastest Perspective:</strong> ${escapeHtml(consensus?.fastest?.model_name || 'N/A')} (${consensus?.fastest?.latency_ms || 0}ms)</p>
+          <p><strong>Cost-Optimal:</strong> ${escapeHtml(consensus?.most_cost_efficient?.model_name || 'N/A')} ($${(consensus?.most_cost_efficient?.cost_usd || 0).toFixed(5)})</p>
+          <p style="margin-top:6px;color:#E2E8F0;">${escapeHtml(consensus?.consensus_verdict || '')}</p>
+        </div>
+      </div>
+    `;
+
+    card.innerHTML = `
+      <div class="turn-header">
+        <div class="turn-header-left">
+          <span class="turn-avatar">🏛️</span>
+          <div class="turn-meta">
+            <span class="turn-author">Executive AI Council Arena</span>
+            <span class="turn-time">${(results || []).length} Frontier Perspectives Synthesized</span>
+          </div>
+        </div>
+        <span class="tag-model" style="background:rgba(245,158,11,0.15);color:#FBBF24;border:1px solid rgba(245,158,11,0.3);padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;">Multi-Model Arena</span>
+      </div>
+      <div class="arena-grid">${colsHtml}</div>
+      ${consensusHtml}
+    `;
+
+    conversationTimeline.appendChild(card);
+    scrollToTimelineBottom();
+  }
+
+
 
   // ==============================================================================
   // Real-Time Streaming Dispatcher Engine
@@ -829,7 +1337,8 @@ document.addEventListener('DOMContentLoaded', () => {
       autonomy_mode: selectAutonomy ? selectAutonomy.value : 'full',
       temperature: selectTemperature ? parseFloat(selectTemperature.value) : 0.3,
       include_workspace_context: isWsContextAttached,
-      workspace_path: activeWorkspace ? activeWorkspace.path : null
+      workspace_path: activeWorkspace ? activeWorkspace.path : null,
+      pinned_files: pinnedFiles
     };
 
     activeStreamAbortController = new AbortController();
@@ -1129,6 +1638,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================================================================
   const cpActions = [
     { title: 'New Executive Thread', desc: 'Create a clean, isolated conversation session', icon: '＋', action: () => createNewSession() },
+    { title: 'Council Arena Mode (Parallel Multi-Model)', desc: 'Run DeepSeek + Gemini concurrently with consensus synthesis', icon: '🏛️', action: () => { const tab = document.getElementById('tabArena'); if (tab) tab.click(); } },
+    { title: 'Browse Workspace File Explorer', desc: 'Browse repository hierarchy, inspect files, and pin context', icon: '📁', action: () => { if (btnExploreWs) btnExploreWs.click(); } },
+    { title: 'Auto-Decisions Mission Control', desc: 'View live desktop approval stream, click counts, and restart service', icon: '⚡', action: () => openAutoClickerModal() },
+    { title: 'Clear Pinned Context Files', desc: 'Remove all pinned files from active prompt context', icon: '🧹', action: () => clearPinnedFiles() },
     { title: 'Export Executive Briefing', desc: 'Download entire thread transcript as formatted Markdown report', icon: '📄', action: () => exportReport() },
     { title: 'Model: DeepSeek Reasoner (R1)', desc: 'Switch model to frontier reasoning tier', icon: '🧠', action: () => { if (selectModel) selectModel.value = 'deepseek-reasoner'; } },
     { title: 'Model: Gemini 2.5/3.8 Flash', desc: 'Switch model to high-speed context synthesis tier', icon: '⚡', action: () => { if (selectModel) selectModel.value = 'gemini-flash'; } },

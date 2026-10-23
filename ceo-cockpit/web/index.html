@@ -154,10 +154,16 @@
           </div>
 
           <!-- Workspace Files Preview Drawer -->
-          <div class="workspace-drawer" id="workspaceFilesDrawer" style="display: none;">
+          <div class="workspace-drawer files-drawer" id="workspaceFilesDrawer" style="display: none;">
             <div class="ws-drawer-header">
-              <span class="ws-drawer-title">Workspace Directory Snapshot (<span id="wsSnapshotName">archives</span>)</span>
-              <button class="ws-drawer-close" id="btnCloseWsFilesDrawer">✕</button>
+              <span class="ws-drawer-title">📁 Workspace File Explorer (<span id="wsSnapshotName">archives</span>)</span>
+              <div class="drawer-header-actions">
+                <button class="drawer-action-btn" id="btnRefreshWsTree" title="Refresh files tree">🔄 Refresh</button>
+                <button class="ws-drawer-close" id="btnCloseWsFilesDrawer">✕</button>
+              </div>
+            </div>
+            <div class="ws-files-filter-row">
+              <input type="text" id="inputFilterWsFiles" class="ws-path-input" placeholder="Search files & directories..." />
             </div>
             <div class="ws-files-list" id="wsFilesList">
               <!-- Dynamically populated files and folders -->
@@ -202,6 +208,11 @@
               <span class="tab-icon">🧭</span>
               <span class="tab-text">Chief of Staff</span>
               <span class="tab-sub">Multi-Agent</span>
+            </button>
+            <button class="mode-tab" data-mode="arena" id="tabArena">
+              <span class="tab-icon">🏛️</span>
+              <span class="tab-text">Council Arena</span>
+              <span class="tab-sub">Parallel Multi-Model</span>
             </button>
           </div>
 
@@ -284,6 +295,21 @@
             </div>
           </div>
 
+          <!-- Pinned Context Files Dock -->
+          <div class="pinned-files-bar" id="pinnedFilesBar" style="display: none;">
+            <div class="pinned-left">
+              <span class="pinned-icon">📌</span>
+              <span class="pinned-label">PINNED CONTEXT:</span>
+              <div class="pinned-chips" id="pinnedChipsContainer">
+                <!-- Dynamically populated pinned file chips -->
+              </div>
+            </div>
+            <div class="pinned-right">
+              <span class="pinned-tokens-badge" id="pinnedTokensBadge">0 tokens</span>
+              <button class="pinned-clear-btn" id="btnClearPinned" title="Unpin all files">Clear</button>
+            </div>
+          </div>
+
           <!-- Command Input Area -->
           <div class="command-input-container">
             <!-- Slash Commands Popover Menu -->
@@ -298,6 +324,13 @@
                   <div class="slash-info">
                     <span class="slash-title">/plan [directive]</span>
                     <span class="slash-desc">Execute in Plan-First mode with architectural roadmap & milestones</span>
+                  </div>
+                </div>
+                <div class="slash-option" data-cmd="/arena">
+                  <span class="slash-icon">🏛️</span>
+                  <div class="slash-info">
+                    <span class="slash-title">/arena [directive]</span>
+                    <span class="slash-desc">Parallel multi-model council evaluation (DeepSeek + Gemini) with consensus</span>
                   </div>
                 </div>
                 <div class="slash-option" data-cmd="/reason">
@@ -612,6 +645,96 @@
         <span>Use <b>↑</b> <b>↓</b> to navigate</span>
         <span><b>Enter</b> to select</span>
         <span><b>Esc</b> to close</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Executive File Viewer Modal -->
+  <div class="modal-backdrop" id="fileViewerBackdrop" style="display: none;">
+    <div class="modal-dialog file-viewer-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📄</span>
+          <div class="modal-title-text">
+            <span class="modal-heading" id="fileViewerTitle">File Preview</span>
+            <span class="modal-subheading" id="fileViewerMeta">0 lines &bull; 0 KB &bull; ~0 tokens</span>
+          </div>
+        </div>
+        <div class="modal-header-actions">
+          <button class="modal-btn-action primary" id="btnPinViewerFile">📌 Pin to Context</button>
+          <button class="modal-btn-action secondary" id="btnCopyViewerFile">📋 Copy</button>
+          <button class="modal-btn-close" id="btnCloseFileViewer">✕</button>
+        </div>
+      </div>
+      <div class="modal-body file-viewer-body">
+        <pre class="file-code-pre"><code id="fileViewerCodeBlock" class="language-plaintext"></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto-Decisions Mission Control Drawer / Modal -->
+  <div class="modal-backdrop" id="autoClickerBackdrop" style="display: none;">
+    <div class="modal-dialog auto-clicker-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">⚡</span>
+          <div class="modal-title-text">
+            <span class="modal-heading">Autonomous Decision & Permission Telemetry</span>
+            <span class="modal-subheading">Desktop modal auto-approval & cursor restoration engine</span>
+          </div>
+        </div>
+        <div class="modal-header-actions">
+          <button class="modal-btn-action primary" id="btnRestartAutoClicker">🔄 Restart Process</button>
+          <button class="modal-btn-close" id="btnCloseAutoClickerModal">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <!-- Telemetry Stats Grid -->
+        <div class="telemetry-stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Service Health</span>
+            <span class="stat-value text-green" id="acModalStatus">ACTIVE</span>
+            <span class="stat-sub" id="acModalMode">SendInput Low-Latency</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Process ID</span>
+            <span class="stat-value text-cyan" id="acModalPid">PID 28940</span>
+            <span class="stat-sub" id="acModalHeartbeat">Heartbeat: 0.4s ago</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Prompts Approved</span>
+            <span class="stat-value text-purple" id="acModalTotalClicks">541</span>
+            <span class="stat-sub">Zero executive interruptions</span>
+          </div>
+        </div>
+
+        <!-- Recent Approvals Table -->
+        <div class="ac-table-section">
+          <span class="ac-section-title">Recent Desktop Dialog Approvals:</span>
+          <div class="ac-actions-table-wrap">
+            <table class="ac-table" id="acActionsTable">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Action Approved</th>
+                  <th>Audit Log Details</th>
+                </tr>
+              </thead>
+              <tbody id="acActionsTableBody">
+                <!-- Dynamically populated actions -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Raw Log Tail -->
+        <div class="ac-log-section">
+          <div class="ac-log-header">
+            <span class="ac-section-title">Raw Heartbeat & Click Stream:</span>
+            <span class="ac-log-badge">Live Tail</span>
+          </div>
+          <pre class="ac-log-pre" id="acLogTailBlock"></pre>
+        </div>
       </div>
     </div>
   </div>

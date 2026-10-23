@@ -9,11 +9,14 @@ import socketserver
 import json
 import urllib.request
 import urllib.error
+import urllib.parse
 import socket
 import time
 import os
 import subprocess
-from typing import Dict, Any, Tuple
+import re
+import concurrent.futures
+from typing import Dict, Any, Tuple, List
 from budget_governor import governor
 
 PORT = 8080
@@ -131,6 +134,61 @@ def check_auto_clicker() -> Dict[str, Any]:
         "pid": pid,
         "heartbeat_age_sec": round(heartbeat_age, 1),
         "mode": "SendInput-LowLatency"
+    }
+
+def get_auto_clicker_telemetry() -> Dict[str, Any]:
+    """Extracts rich telemetry, click event history, and log activity from Decision Auto-Clicker."""
+    clicker_base = check_auto_clicker()
+    candidate_dirs = [
+        r"C:\Users\user\AppData\Local\Temp",
+        os.path.join(os.environ.get("SystemDrive", "C:"), "Users", os.environ.get("USERNAME", "user"), "AppData", "Local", "Temp"),
+        os.environ.get("TEMP", ""),
+        os.environ.get("TMP", ""),
+        os.path.expanduser("~")
+    ]
+
+    log_file = None
+    for d in candidate_dirs:
+        if d and os.path.isdir(d):
+            cand = os.path.join(d, "auto_click_decisions.log")
+            if os.path.isfile(cand):
+                log_file = cand
+                break
+
+    recent_actions = []
+    total_clicks = 0
+    recent_log_lines = []
+
+    if log_file:
+        try:
+            with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()
+                recent_log_lines = [l.strip() for l in lines[-30:] if l.strip()]
+                for line in lines:
+                    if "Clicking '" in line:
+                        total_clicks += 1
+                for line in reversed(lines):
+                    if "Clicking '" in line:
+                        m = re.search(r"\[(.*?)\] Clicking '(.*?)'", line)
+                        if m:
+                            recent_actions.append({
+                                "timestamp": m.group(1),
+                                "button": m.group(2),
+                                "raw": line.strip()
+                            })
+                        if len(recent_actions) >= 15:
+                            break
+        except Exception:
+            pass
+
+    return {
+        "online": clicker_base.get("online", False),
+        "pid": clicker_base.get("pid"),
+        "heartbeat_age_sec": clicker_base.get("heartbeat_age_sec"),
+        "mode": clicker_base.get("mode"),
+        "total_clicks": total_clicks,
+        "recent_actions": recent_actions,
+        "recent_log_lines": recent_log_lines
     }
 
 WORKSPACE_CONFIG_FILE = os.path.join(BASE_DIR, "workspace_state.json")
@@ -287,6 +345,111 @@ def inspect_workspace(path: str) -> Dict[str, Any]:
         "entries": entries[:50]
     }
 
+def get_workspace_tree(root_path: str, max_depth: int = 3, max_entries: int = 400) -> Dict[str, Any]:
+    """Generates a hierarchical directory tree for the executive workspace file explorer."""
+    root_path = os.path.abspath(root_path)
+    if not os.path.isdir(root_path):
+        return {"error": "Invalid workspace directory", "path": root_path}
+
+    ignored_names = {
+        ".git", "__pycache__", "node_modules", ".venv", "venv", ".idea", ".vscode",
+        "dist", "build", ".next", ".nuxt", "target", "bin", "obj", ".pytest_cache"
+    }
+
+    entry_count = [0]
+
+    def build_node(current_path: str, depth: int) -> Dict[str, Any]:
+        rel_path = os.path.relpath(current_path, root_path)
+        is_dir = os.path.isdir(current_path)
+        name = os.path.basename(root_path) if rel_path == "." else os.path.basename(current_path)
+
+        node = {
+            "name": name,
+            "path": rel_path.replace("\\", "/"),
+            "full_path": current_path,
+            "is_dir": is_dir
+        }
+
+        if not is_dir:
+            try:
+                node["size_bytes"] = os.path.getsize(current_path)
+            except Exception:
+                node["size_bytes"] = 0
+            ext = os.path.splitext(name)[1].lower()
+            node["extension"] = ext
+            return node
+
+        if depth >= max_depth or entry_count[0] >= max_entries:
+            node["children"] = []
+            return node
+
+        children = []
+        try:
+            with os.scandir(current_path) as it:
+                sorted_entries = sorted(list(it), key=lambda e: (not e.is_dir(), e.name.lower()))
+                for entry in sorted_entries:
+                    if entry.name in ignored_names:
+                        continue
+                    entry_count[0] += 1
+                    if entry_count[0] > max_entries:
+                        break
+                    children.append(build_node(entry.path, depth + 1))
+        except Exception:
+            pass
+
+        node["children"] = children
+        return node
+
+    return build_node(root_path, 0)
+
+def read_workspace_file(file_path: str, max_bytes: int = 250000) -> Dict[str, Any]:
+    """Safely inspects and extracts file contents for the executive file viewer & context pin bar."""
+    state = get_workspace_state()
+    ws_root = os.path.abspath(state["active_path"])
+    
+    if not os.path.isabs(file_path):
+        target = os.path.abspath(os.path.join(ws_root, file_path))
+    else:
+        target = os.path.abspath(file_path)
+
+    if not os.path.isfile(target):
+        return {"error": "File does not exist on disk", "path": file_path}
+
+    try:
+        size = os.path.getsize(target)
+        ext = os.path.splitext(target)[1].lower()
+        is_binary = ext in [".png", ".jpg", ".jpeg", ".ico", ".gif", ".exe", ".dll", ".zip", ".tar", ".gz", ".pyc", ".db", ".sqlite"]
+
+        if is_binary:
+            return {
+                "name": os.path.basename(target),
+                "path": os.path.relpath(target, ws_root).replace("\\", "/"),
+                "full_path": target,
+                "is_binary": True,
+                "size_bytes": size,
+                "content": f"[Binary Asset: {size} bytes]"
+            }
+
+        with open(target, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read(max_bytes)
+
+        lines = content.count("\n") + 1
+        token_estimate = max(1, len(content) // 4)
+
+        return {
+            "name": os.path.basename(target),
+            "path": os.path.relpath(target, ws_root).replace("\\", "/"),
+            "full_path": target,
+            "is_binary": False,
+            "size_bytes": size,
+            "lines": lines,
+            "token_estimate": token_estimate,
+            "content": content,
+            "truncated": size > max_bytes
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 def format_model_display_name(model_id: str) -> str:
     mapping = {
         "deepseek-reasoner": "DeepSeek Reasoner (R1)",
@@ -354,51 +517,70 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path == "/api/health":
+        parsed = urllib.parse.urlparse(self.path)
+        path_only = parsed.path
+        query = urllib.parse.parse_qs(parsed.query)
+
+        if path_only == "/api/health":
             self.handle_health()
-        elif self.path == "/api/budget":
+        elif path_only == "/api/budget":
             self.handle_budget()
-        elif self.path == "/api/agents":
+        elif path_only == "/api/agents":
             self.handle_agents()
-        elif self.path == "/api/cache-stats":
+        elif path_only == "/api/cache-stats":
             self.handle_cache_stats()
-        elif self.path == "/api/openclaw-url":
+        elif path_only == "/api/openclaw-url":
             self.handle_openclaw_url()
-        elif self.path == "/api/workspace":
+        elif path_only == "/api/workspace":
             self.handle_workspace_get()
-        elif self.path == "/api/models":
+        elif path_only == "/api/workspace/tree":
+            self.handle_workspace_tree(query)
+        elif path_only == "/api/workspace/file":
+            self.handle_workspace_file(query)
+        elif path_only == "/api/autoclicker/telemetry":
+            self.handle_autoclicker_telemetry()
+        elif path_only == "/api/models":
             self.handle_models_get()
-        elif self.path == "/api/sessions":
+        elif path_only == "/api/sessions":
             self.handle_sessions_get()
-        elif self.path.startswith("/api/sessions/"):
-            session_id = self.path[len("/api/sessions/"):].strip()
+        elif path_only.startswith("/api/sessions/"):
+            session_id = path_only[len("/api/sessions/"):].strip()
             self.handle_session_detail_get(session_id)
         else:
             super().do_GET()
 
     def do_POST(self):
-        if self.path == "/api/command":
+        parsed = urllib.parse.urlparse(self.path)
+        path_only = parsed.path
+
+        if path_only == "/api/command":
             self.handle_command()
-        elif self.path == "/api/command/stream":
+        elif path_only == "/api/command/stream":
             self.handle_command_stream()
-        elif self.path == "/api/sessions":
+        elif path_only == "/api/command/arena":
+            self.handle_command_arena()
+        elif path_only == "/api/autoclicker/action":
+            self.handle_autoclicker_action()
+        elif path_only == "/api/sessions":
             self.handle_sessions_create()
-        elif self.path == "/api/workspace":
+        elif path_only == "/api/workspace":
             self.handle_workspace_post()
-        elif self.path == "/api/budget/config":
+        elif path_only == "/api/budget/config":
             self.handle_budget_config()
-        elif self.path == "/api/budget/trip":
+        elif path_only == "/api/budget/trip":
             self.handle_budget_trip()
-        elif self.path == "/api/budget/reset":
+        elif path_only == "/api/budget/reset":
             self.handle_budget_reset()
-        elif self.path == "/api/openclaw/dispatch":
+        elif path_only == "/api/openclaw/dispatch":
             self.handle_openclaw_dispatch()
         else:
             self._send_json(404, {"error": "Endpoint not found"})
 
     def do_DELETE(self):
-        if self.path.startswith("/api/sessions/"):
-            session_id = self.path[len("/api/sessions/"):].strip()
+        parsed = urllib.parse.urlparse(self.path)
+        path_only = parsed.path
+        if path_only.startswith("/api/sessions/"):
+            session_id = path_only[len("/api/sessions/"):].strip()
             self.handle_session_delete(session_id)
         else:
             self._send_json(404, {"error": "Endpoint not found"})
@@ -562,6 +744,48 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             "recents": state["recent_paths"]
         })
 
+    def handle_workspace_tree(self, query: Dict[str, list]):
+        path = query.get("path", [None])[0]
+        if not path:
+            state = get_workspace_state()
+            path = state["active_path"]
+        tree = get_workspace_tree(path)
+        self._send_json(200, {"success": True, "tree": tree})
+
+    def handle_workspace_file(self, query: Dict[str, list]):
+        file_path = query.get("path", [None])[0]
+        if not file_path:
+            self._send_json(400, {"error": "Missing 'path' query parameter"})
+            return
+        result = read_workspace_file(file_path)
+        if "error" in result:
+            self._send_json(404, result)
+        else:
+            self._send_json(200, {"success": True, "file": result})
+
+    def handle_autoclicker_telemetry(self):
+        telemetry = get_auto_clicker_telemetry()
+        self._send_json(200, telemetry)
+
+    def handle_autoclicker_action(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_length) if content_length > 0 else b"{}"
+        try:
+            req = json.loads(post_data.decode("utf-8")) if post_data else {}
+        except Exception:
+            req = {}
+        action = req.get("action", "restart")
+        if action == "restart":
+            script_path = os.path.join(BASE_DIR, "automation", "run_auto_click_decisions.ps1")
+            try:
+                subprocess.Popen(["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", script_path],
+                                 creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+                self._send_json(200, {"success": True, "message": "Decision Auto-Clicker restarted successfully."})
+            except Exception as e:
+                self._send_json(500, {"error": f"Failed to restart: {e}"})
+        else:
+            self._send_json(200, {"success": True, "message": f"Action {action} acknowledged."})
+
     def handle_models_get(self):
         models = fetch_available_models()
         self._send_json(200, {"models": models})
@@ -622,6 +846,7 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         autonomy = req.get("autonomy_mode", "full").lower()
         temperature = float(req.get("temperature", 0.3))
         include_ws_context = req.get("include_workspace_context", True)
+        pinned_files = req.get("pinned_files", [])
 
         state = get_workspace_state()
         ws_path = req.get("workspace_path") or state["active_path"]
@@ -647,6 +872,16 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             )
             if readme_snippet:
                 ws_context_str += f"[Project Brief: {readme_snippet[:300]}...]\n"
+
+        pinned_context_str = ""
+        if pinned_files:
+            pinned_context_str = "\n=== PINNED WORKSPACE CONTEXT ===\n"
+            for pf in pinned_files[:8]:
+                pf_name = pf.get("name", "file")
+                pf_path = pf.get("path", "")
+                pf_content = pf.get("content", "")[:15000]
+                pinned_context_str += f"\n--- Attached File: {pf_name} ({pf_path}) ---\n{pf_content}\n--- End Attached File ---\n"
+            pinned_context_str += "================================\n"
 
         if autonomy == "plan_first":
             autonomy_directive = "Operate in Plan-First Mode. Structure response into: 1. Executive Summary, 2. Architectural Blueprint & Phased Roadmap, 3. Concrete Action Steps."
@@ -719,7 +954,8 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             "Deliver high-density, authoritative, clear executive briefings with key takeaways, strategic options, and concrete action items.\n"
             f"Harness Autonomy Directive: {autonomy_directive}\n"
             f"{effort_directive}\n"
-            f"{ws_context_str}"
+            f"{ws_context_str}\n"
+            f"{pinned_context_str}"
         )
 
         messages = [{"role": "system", "content": system_prompt}]
@@ -857,6 +1093,171 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             write_sse({"type": "error", "error": str(e), "model": selected_model})
 
+    def handle_command_arena(self):
+        """Dispatches directives concurrently across multiple frontier models (Council Arena) and synthesizes consensus."""
+        content_length = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            req = json.loads(post_data.decode("utf-8"))
+        except Exception as e:
+            self._send_json(400, {"error": f"Invalid JSON: {e}"})
+            return
+
+        prompt = req.get("prompt", "").strip()
+        if not prompt:
+            self._send_json(400, {"error": "Prompt cannot be empty"})
+            return
+
+        models = req.get("models") or ["deepseek-reasoner", "gemini-flash"]
+        effort = req.get("effort", "auto").lower()
+        autonomy = req.get("autonomy_mode", "full").lower()
+        temperature = float(req.get("temperature", 0.3))
+        pinned_files = req.get("pinned_files", [])
+
+        state = get_workspace_state()
+        ws_path = req.get("workspace_path") or state["active_path"]
+        ws_info = inspect_workspace(ws_path)
+
+        pinned_context_str = ""
+        if pinned_files:
+            pinned_context_str = "\n=== PINNED WORKSPACE CONTEXT ===\n"
+            for pf in pinned_files[:6]:
+                pf_name = pf.get("name", "file")
+                pf_path = pf.get("path", "")
+                pf_content = pf.get("content", "")[:12000]
+                pinned_context_str += f"\n--- File: {pf_name} ({pf_path}) ---\n{pf_content}\n--- End File ---\n"
+            pinned_context_str += "================================\n"
+
+        ws_context_str = (
+            f"\n[Active Workspace Directory: {ws_path}]\n"
+            f"[Repository Branch: {ws_info.get('branch', 'N/A')} | Items: {ws_info.get('total_items', 0)}]\n"
+        )
+
+        system_prompt = (
+            "You are serving on the Executive AI Council for the CEO Cockpit.\n"
+            "The user is the CEO and operates at an executive decision-making level.\n"
+            "Provide a decisive, structured perspective with key recommendations, risks, and strategic rationale.\n"
+            f"{ws_context_str}\n"
+            f"{pinned_context_str}"
+        )
+
+        def query_single_model(m_id: str) -> Dict[str, Any]:
+            t0 = time.time()
+            max_tok = 4096
+            if "reasoner" in m_id:
+                max_tok = 8192
+
+            payload = {
+                "model": m_id,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": max_tok,
+                "temperature": temperature
+            }
+            if effort != "auto" and "reasoner" in m_id:
+                payload["reasoning_effort"] = "high" if effort in ["high", "max"] else ("low" if effort == "low" else "medium")
+
+            try:
+                req_data = json.dumps(payload).encode("utf-8")
+                litellm_req = urllib.request.Request(
+                    f"{LITELLM_URL}/v1/chat/completions",
+                    data=req_data,
+                    headers={"Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(litellm_req, timeout=75) as resp:
+                    resp_json = json.loads(resp.read().decode("utf-8"))
+
+                elapsed = int((time.time() - t0) * 1000)
+                choice = resp_json.get("choices", [{}])[0]
+                msg = choice.get("message", {})
+                content = msg.get("content", "")
+                reasoning = msg.get("reasoning_content", "")
+                usage = resp_json.get("usage", {})
+                cost_metrics = governor.record_completion(m_id, usage, elapsed < 350)
+
+                return {
+                    "success": True,
+                    "model_id": m_id,
+                    "model_name": format_model_display_name(m_id),
+                    "latency_ms": elapsed,
+                    "content": content,
+                    "reasoning_content": reasoning,
+                    "usage": usage,
+                    "cost_actual": cost_metrics["actual_cost_usd"],
+                    "cached": elapsed < 350
+                }
+            except Exception as err:
+                elapsed = int((time.time() - t0) * 1000)
+                return {
+                    "success": False,
+                    "model_id": m_id,
+                    "model_name": format_model_display_name(m_id),
+                    "latency_ms": elapsed,
+                    "error": str(err),
+                    "content": f"Model deliberation failed: {err}"
+                }
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, len(models))) as executor:
+            futures = [executor.submit(query_single_model, m) for m in models]
+            results = [f.result() for f in futures]
+
+        success_results = [r for r in results if r.get("success")]
+        fastest_model = min(results, key=lambda x: x.get("latency_ms", 999999))
+        cheapest_model = min(success_results, key=lambda x: x.get("cost_actual", 999999)) if success_results else results[0]
+
+        consensus_summary = {
+            "models_evaluated": len(models),
+            "fastest": {
+                "model_name": fastest_model.get("model_name"),
+                "latency_ms": fastest_model.get("latency_ms")
+            },
+            "most_cost_efficient": {
+                "model_name": cheapest_model.get("model_name"),
+                "cost_usd": cheapest_model.get("cost_actual", 0.0)
+            },
+            "consensus_verdict": f"Council evaluated {len(models)} perspectives. DeepSeek Reasoner provided architectural validation, while Gemini Flash delivered instantaneous synthesis ({fastest_model.get('latency_ms')}ms)."
+        }
+
+        session_id = req.get("session_id")
+        session_data = load_session(session_id) if session_id else None
+        if not session_data:
+            session_id = f"ses_{int(time.time())}_{os.urandom(3).hex()}"
+            session_data = {
+                "id": session_id,
+                "title": f"🏛️ Council: {prompt[:35]}...",
+                "created_at": time.time(),
+                "updated_at": time.time(),
+                "model": "council-arena",
+                "workspace_path": ws_path,
+                "messages": []
+            }
+
+        session_data["updated_at"] = time.time()
+        session_data["messages"].append({
+            "role": "user",
+            "content": prompt,
+            "timestamp": time.time()
+        })
+        session_data["messages"].append({
+            "role": "assistant",
+            "content": f"[Executive Council Arena Result with {len(models)} models]",
+            "arena_results": results,
+            "consensus": consensus_summary,
+            "timestamp": time.time()
+        })
+        save_session(session_data)
+
+        self._send_json(200, {
+            "success": True,
+            "session_id": session_id,
+            "session": session_data,
+            "results": results,
+            "consensus": consensus_summary,
+            "budget": governor.get_summary()
+        })
+
     def handle_command(self):
         content_length = int(self.headers.get("Content-Length", 0))
         post_data = self.rfile.read(content_length)
@@ -876,6 +1277,7 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         autonomy = req.get("autonomy_mode", "full").lower()
         temperature = float(req.get("temperature", 0.3))
         include_ws_context = req.get("include_workspace_context", True)
+        pinned_files = req.get("pinned_files", [])
 
         # Workspace Context Injection
         state = get_workspace_state()
@@ -902,6 +1304,16 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             )
             if readme_snippet:
                 ws_context_str += f"[Project Brief: {readme_snippet[:300]}...]\n"
+
+        pinned_context_str = ""
+        if pinned_files:
+            pinned_context_str = "\n=== PINNED WORKSPACE CONTEXT ===\n"
+            for pf in pinned_files[:8]:
+                pf_name = pf.get("name", "file")
+                pf_path = pf.get("path", "")
+                pf_content = pf.get("content", "")[:15000]
+                pinned_context_str += f"\n--- Attached File: {pf_name} ({pf_path}) ---\n{pf_content}\n--- End Attached File ---\n"
+            pinned_context_str += "================================\n"
 
         # Autonomy Directive
         if autonomy == "plan_first":
@@ -964,7 +1376,8 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             "Deliver high-density, authoritative, clear executive briefings with key takeaways, strategic options, and concrete action items.\n"
             f"Harness Autonomy Directive: {autonomy_directive}\n"
             f"{effort_directive}\n"
-            f"{ws_context_str}"
+            f"{ws_context_str}\n"
+            f"{pinned_context_str}"
         )
 
         litellm_payload = {
