@@ -19,6 +19,7 @@ FEATURE_MODULES = [
     "modules.ops",
     "modules.swarm",
     "modules.playbooks",
+    "modules.analytics",
 ]
 
 

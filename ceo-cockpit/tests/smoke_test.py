@@ -231,6 +231,26 @@ def t_playbooks_history():
     assert s == 200 and "history" in d, f"status={s}"
 
 
+# -------------------------------------------------------------- analytics
+@check("analytics")
+def t_analytics_summary():
+    s, d = request("GET", "/api/analytics/summary")
+    assert s == 200 and "financials" in d and "performance" in d, f"status={s} body={d}"
+    assert "daily_burn_usd" in d["financials"], "missing daily_burn_usd"
+
+
+@check("analytics")
+def t_analytics_ledger():
+    s, d = request("GET", "/api/analytics/ledger?limit=10")
+    assert s == 200 and "records" in d, f"status={s}"
+
+
+@check("analytics")
+def t_analytics_assets():
+    s, _, _ = request("GET", "/modules/analytics.js", raw=True)
+    assert s == 200, f"analytics.js status={s}"
+
+
 def main():
     global BASE
     ap = argparse.ArgumentParser()

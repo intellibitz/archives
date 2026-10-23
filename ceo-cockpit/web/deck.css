@@ -380,6 +380,38 @@
 .playbook-report-actions { display: flex; gap: 8px; }
 .playbook-report-content { padding: 16px; overflow-y: auto; max-height: calc(100vh - 350px); }
 
+/* ---------- Round 7: Spend Intelligence & Analytics ---------- */
+.analytics-layout { display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 200px); overflow-y: auto; padding-right: 4px; }
+.analytics-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.analytics-kpi-card {
+  padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 4px;
+}
+.kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; }
+.kpi-val { font-size: 24px; font-weight: 700; font-family: var(--font-mono); color: var(--text-primary); }
+.kpi-sub { font-size: 11px; color: var(--text-secondary); }
+.kpi-progress-bar { width: 100%; height: 4px; background: rgba(255, 255, 255, 0.06); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+.kpi-progress-fill { height: 100%; background: var(--accent-cyan); border-radius: 2px; transition: width 0.3s ease; }
+.analytics-section-row { display: flex; gap: 14px; }
+.analytics-card {
+  padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 10px;
+}
+.model-dist-list { display: flex; flex-direction: column; gap: 8px; }
+.model-dist-row { display: flex; flex-direction: column; gap: 4px; }
+.dist-meta { display: flex; justify-content: space-between; font-size: 11.5px; }
+.dist-name { font-family: var(--font-mono); color: var(--text-primary); }
+.dist-val { color: var(--text-secondary); }
+.dist-bar { width: 100%; height: 5px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; }
+.dist-fill { height: 100%; background: linear-gradient(90deg, var(--accent-violet), var(--accent-cyan)); border-radius: 3px; }
+.gov-metrics-list { display: flex; flex-direction: column; gap: 8px; }
+.gov-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(0,0,0,0.25); border-radius: 4px; font-size: 12px; }
+.ledger-table-wrap { overflow-x: auto; max-height: 260px; }
+.ledger-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.ledger-table th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 10.5px; }
+.ledger-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-secondary); }
+.ledger-table tr:hover td { background: rgba(255, 255, 255, 0.02); color: var(--text-primary); }
+
 /* ---------- Animations ---------- */
 @keyframes deckFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes deckPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
