@@ -2752,4 +2752,358 @@ body {
   color: var(--text-secondary);
 }
 
+/* ==============================================================================
+ * Model Cost Pill & Pre-Dispatch Penny Meter
+ * ============================================================================== */
+.model-cost-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 3px 8px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  width: fit-content;
+}
+
+.model-cost-pill .cost-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.model-cost-pill.tier-free {
+  border-color: rgba(6, 182, 212, 0.35);
+  color: var(--accent-cyan);
+}
+
+.model-cost-pill.tier-ultralow {
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34D399;
+}
+
+.model-cost-pill.tier-moderate {
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #FBBF24;
+}
+
+.model-cost-pill.tier-premium {
+  border-color: rgba(244, 63, 94, 0.45);
+  background: rgba(244, 63, 94, 0.1);
+  color: #FDA4AF;
+}
+
+.penny-meter-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  margin-top: 6px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  font-size: 11.5px;
+}
+
+.penny-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.penny-icon {
+  font-size: 12px;
+}
+
+.penny-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 10.5px;
+  color: #94A3B8;
+  letter-spacing: 0.4px;
+}
+
+.penny-tokens {
+  font-family: var(--font-mono);
+  color: #CBD5E1;
+}
+
+.penny-sep {
+  color: #475569;
+}
+
+.penny-cost {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.penny-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.penny-remaining {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.penny-link-btn {
+  background: transparent;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 4px;
+  color: var(--accent-cyan);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.penny-link-btn:hover {
+  background: rgba(6, 182, 212, 0.15);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.25);
+}
+
+/* ==============================================================================
+ * Model Pricing & Penny Matrix Modal
+ * ============================================================================== */
+.pricing-modal-dialog {
+  max-width: 960px;
+  width: 94%;
+}
+
+.penny-calculator-panel {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.calc-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.calc-title {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #67E8F9;
+}
+
+.calc-hint {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.calc-controls-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.calc-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calc-input-label {
+  font-size: 11.5px;
+  color: #CBD5E1;
+}
+
+.calc-number-input {
+  width: 90px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #F8FAFC;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.calc-number-input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
+}
+
+.calc-presets-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.calc-preset-chip {
+  padding: 3px 9px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #94A3B8;
+  font-size: 11px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.calc-preset-chip:hover,
+.calc-preset-chip.active {
+  background: rgba(6, 182, 212, 0.18);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: #67E8F9;
+}
+
+.pricing-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.pricing-matrix-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pricing-matrix-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.pricing-matrix-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table-model-title {
+  font-weight: 600;
+  color: #F8FAFC;
+}
+
+.table-model-sub {
+  font-size: 10.5px;
+  color: #64748B;
+  display: block;
+}
+
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.badge-status.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-status.inactive {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94A3B8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.badge-tier {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+.badge-tier.free {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--accent-cyan);
+}
+
+.badge-tier.ultralow {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+}
+
+.badge-tier.moderate {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+}
+
+.badge-tier.premium {
+  background: rgba(244, 63, 94, 0.15);
+  color: #FDA4AF;
+}
+
+.table-price-val {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.sim-cost-tag {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.sim-cost-tag.free {
+  color: var(--accent-cyan);
+}
+
+.sim-cost-tag.cheap {
+  color: #34D399;
+}
+
+.sim-cost-tag.moderate {
+  color: #FBBF24;
+}
+
+.sim-cost-tag.expensive {
+  color: #FDA4AF;
+}
+
+.btn-select-model-row {
+  padding: 3px 8px;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 4px;
+  color: var(--accent-cyan);
+  font-size: 11px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-select-model-row:hover {
+  background: rgba(6, 182, 212, 0.25);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
+}
+
+.btn-select-model-row:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #64748B;
+  background: transparent;
+}
+
 

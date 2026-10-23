@@ -111,6 +111,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const progMonthlyBar = document.getElementById('progMonthlyBar');
   const capButtons = document.querySelectorAll('.cap-btn');
 
+  // Model Pricing & Penny Matrix Elements
+  const btnOpenPricingModal = document.getElementById('btnOpenPricingModal');
+  const btnClosePricingModal = document.getElementById('btnClosePricingModal');
+  const btnRefreshPricingMatrix = document.getElementById('btnRefreshPricingMatrix');
+  const modelPricingBackdrop = document.getElementById('modelPricingBackdrop');
+  const modelCostBadge = document.getElementById('modelCostBadge');
+  const modelCostDot = document.getElementById('modelCostDot');
+  const modelCostText = document.getElementById('modelCostText');
+  const promptPennyMeter = document.getElementById('promptPennyMeter');
+  const pennyEstimatedTokens = document.getElementById('pennyEstimatedTokens');
+  const pennyEstimatedCost = document.getElementById('pennyEstimatedCost');
+  const pennyRemainingBudget = document.getElementById('pennyRemainingBudget');
+  const btnOpenPricingFromMeter = document.getElementById('btnOpenPricingFromMeter');
+  const pricingModalActiveCount = document.getElementById('pricingModalActiveCount');
+  const pricingModalTotalCount = document.getElementById('pricingModalTotalCount');
+  const pricingModalTodaySpend = document.getElementById('pricingModalTodaySpend');
+  const pricingModalRemainingDaily = document.getElementById('pricingModalRemainingDaily');
+  const pricingModalCacheSaved = document.getElementById('pricingModalCacheSaved');
+  const pricingModalBreakerState = document.getElementById('pricingModalBreakerState');
+  const simInputTokens = document.getElementById('simInputTokens');
+  const simOutputTokens = document.getElementById('simOutputTokens');
+  const pricingMatrixTableBody = document.getElementById('pricingMatrixTableBody');
+  const calcPresetChips = document.querySelectorAll('.calc-preset-chip');
+
+  let allModelsList = [];
+  let allModelsPricingMap = {};
   let currentMode = 'auto';
   let selectedAgent = 'local-coordinator';
   let activeWorkspace = null;
@@ -619,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==============================================================================
-  // Models & Harness Deliberation Controls
+  // Models & Harness Deliberation Controls (Budget-Conscious & Pricing-Aware)
   // ==============================================================================
   async function fetchModelsList() {
     try {
@@ -628,23 +654,199 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (!data.models || !selectModel) return;
 
-      const existingValues = new Set(Array.from(selectModel.options).map(o => o.value));
-      const group = document.createElement('optgroup');
-      group.label = 'Additional Available Models';
-      let added = false;
+      allModelsList = data.models;
+      allModelsPricingMap = {};
+      data.models.forEach(m => { allModelsPricingMap[m.id] = m; });
 
-      data.models.forEach(m => {
-        if (!existingValues.has(m.id)) {
+      const currentSelected = selectModel.value || 'auto';
+      selectModel.innerHTML = '';
+
+      // 1. Auto Router & Zero-Cost Safeguards
+      const grpAuto = document.createElement('optgroup');
+      grpAuto.label = '⚡ Auto-Routed & Safeguards (Budget Default)';
+      
+      const optAuto = document.createElement('option');
+      optAuto.value = 'auto';
+      optAuto.textContent = '✨ Auto (Frontier Router - Budget Conscious)';
+      grpAuto.appendChild(optAuto);
+
+      const safeguards = data.models.filter(m => m.is_safeguard || m.prompt_price_per_m === 0);
+      safeguards.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        const statusTag = m.status === 'active' ? '[Active]' : '[Inactive]';
+        opt.textContent = `🛡️ ${m.name} — Free ($0.000) ${statusTag}`;
+        if (m.status !== 'active') opt.disabled = true;
+        grpAuto.appendChild(opt);
+      });
+      selectModel.appendChild(grpAuto);
+
+      // 2. Ultra-Low Spend (< $0.40 / 1M tokens)
+      const ultralowModels = data.models.filter(m => !m.is_safeguard && m.prompt_price_per_m < 0.40 && m.status === 'active');
+      if (ultralowModels.length > 0) {
+        const grpUltraLow = document.createElement('optgroup');
+        grpUltraLow.label = '🟢 Ultra-Low Spend Tier (< $0.40 / 1M Tokens)';
+        ultralowModels.forEach(m => {
           const opt = document.createElement('option');
           opt.value = m.id;
-          opt.textContent = `${m.is_reasoning ? '🧠 ' : '🤖 '}${m.name}`;
-          group.appendChild(opt);
-          added = true;
-        }
-      });
-      if (added) selectModel.appendChild(group);
+          const icon = m.is_reasoning ? '🧠 ' : (m.id.includes('coder') ? '💻 ' : '⚡ ');
+          opt.textContent = `${icon}${m.name} — $${m.prompt_price_per_m.toFixed(3)} / $${m.completion_price_per_m.toFixed(3)} [Active]`;
+          grpUltraLow.appendChild(opt);
+        });
+        selectModel.appendChild(grpUltraLow);
+      }
+
+      // 3. Frontier Reasoning & Moderate ($0.40 - $3.00 / 1M tokens)
+      const moderateModels = data.models.filter(m => !m.is_safeguard && m.prompt_price_per_m >= 0.40 && m.prompt_price_per_m < 3.00 && m.status === 'active');
+      if (moderateModels.length > 0) {
+        const grpModerate = document.createElement('optgroup');
+        grpModerate.label = '🟡 Frontier Reasoning & Balanced Tier ($0.50 - $4.00 / 1M)';
+        moderateModels.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          const icon = m.is_reasoning ? '🧠 ' : '💎 ';
+          opt.textContent = `${icon}${m.name} — $${m.prompt_price_per_m.toFixed(2)} / $${m.completion_price_per_m.toFixed(2)} [Active]`;
+          grpModerate.appendChild(opt);
+        });
+        selectModel.appendChild(grpModerate);
+      }
+
+      // 4. Premium Tier (>= $3.00 / 1M tokens)
+      const premiumModels = data.models.filter(m => m.prompt_price_per_m >= 3.00 && m.status === 'active');
+      if (premiumModels.length > 0) {
+        const grpPremium = document.createElement('optgroup');
+        grpPremium.label = '🔴 Premium Tier ($15.00+/1M Output - High Spend Alert)';
+        premiumModels.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = `🎭 ${m.name} — $${m.prompt_price_per_m.toFixed(2)} / $${m.completion_price_per_m.toFixed(2)} [Active]`;
+          grpPremium.appendChild(opt);
+        });
+        selectModel.appendChild(grpPremium);
+      }
+
+      // 5. Inactive / Offline Models
+      const inactiveModels = data.models.filter(m => m.status === 'inactive');
+      if (inactiveModels.length > 0) {
+        const grpInactive = document.createElement('optgroup');
+        grpInactive.label = '⚪ Inactive Models (Offline / Requires Upstream Key)';
+        inactiveModels.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.disabled = true;
+          opt.textContent = `⚪ ${m.name} — ${m.price_display} [Inactive]`;
+          grpInactive.appendChild(opt);
+        });
+        selectModel.appendChild(grpInactive);
+      }
+
+      // Restore selected value
+      const values = Array.from(selectModel.options).map(o => o.value);
+      if (values.includes(currentSelected)) {
+        selectModel.value = currentSelected;
+      } else {
+        selectModel.value = 'auto';
+      }
+
+      updateModelCostBadge(selectModel.value);
+      updatePromptPennyMeter();
     } catch (err) {
       console.warn('Models fetch error', err);
+    }
+  }
+
+  function updateModelCostBadge(modelId) {
+    if (!modelCostBadge || !modelCostText) return;
+    if (modelId === 'auto') {
+      modelCostBadge.className = 'model-cost-pill tier-ultralow';
+      if (modelCostDot) modelCostDot.className = 'cost-dot dot-green';
+      modelCostText.innerHTML = '⚡ Auto Router &bull; Budget Conscious (DeepSeek / Gemini)';
+      return;
+    }
+
+    const m = allModelsPricingMap[modelId];
+    if (!m) {
+      modelCostBadge.className = 'model-cost-pill';
+      if (modelCostDot) modelCostDot.className = 'cost-dot dot-green';
+      modelCostText.textContent = `${modelId} &bull; Standard Pricing`;
+      return;
+    }
+
+    const isFree = m.prompt_price_per_m === 0;
+    const isUltraLow = m.prompt_price_per_m < 0.40;
+    const isPremium = m.prompt_price_per_m >= 3.00;
+    const isActive = m.status === 'active';
+
+    if (!isActive) {
+      modelCostBadge.className = 'model-cost-pill';
+      if (modelCostDot) modelCostDot.className = 'cost-dot dot-rose';
+      modelCostText.textContent = `⚪ Inactive &bull; Requires Upstream API Key`;
+      return;
+    }
+
+    if (isFree) {
+      modelCostBadge.className = 'model-cost-pill tier-free';
+      if (modelCostDot) modelCostDot.className = 'cost-dot dot-green';
+      modelCostText.textContent = `🛡️ Free &bull; $0.000 / 1M &bull; 100% Zero-Cost Local`;
+    } else if (isUltraLow) {
+      modelCostBadge.className = 'model-cost-pill tier-ultralow';
+      if (modelCostDot) modelCostDot.className = 'cost-dot dot-green';
+      modelCostText.textContent = `🟢 Active &bull; In: $${m.prompt_price_per_m.toFixed(3)}/M &bull; Out: $${m.completion_price_per_m.toFixed(3)}/M &bull; ~${m.typical_turn_cents.toFixed(2)}¢/turn`;
+    } else if (isPremium) {
+      modelCostBadge.className = 'model-cost-pill tier-premium';
+      if (modelCostDot) modelCostDot.className = 'cost-dot dot-rose';
+      modelCostText.textContent = `⚠️ Premium Model &bull; In: $${m.prompt_price_per_m.toFixed(2)}/M &bull; Out: $${m.completion_price_per_m.toFixed(2)}/M &bull; ~${m.typical_turn_cents.toFixed(2)}¢/turn`;
+    } else {
+      modelCostBadge.className = 'model-cost-pill tier-moderate';
+      if (modelCostDot) modelCostDot.className = 'cost-dot dot-green';
+      modelCostText.textContent = `🟡 Active &bull; In: $${m.prompt_price_per_m.toFixed(2)}/M &bull; Out: $${m.completion_price_per_m.toFixed(2)}/M &bull; ~${m.typical_turn_cents.toFixed(2)}¢/turn`;
+    }
+  }
+
+  function updatePromptPennyMeter() {
+    if (!promptPennyMeter) return;
+    const text = executivePrompt ? executivePrompt.value : '';
+    const charLen = text.length;
+    let inputTokens = Math.max(1, Math.ceil(charLen / 4));
+
+    pinnedFiles.forEach(pf => { inputTokens += (pf.token_estimate || 0); });
+
+    const effort = selectEffort ? selectEffort.value : 'auto';
+    let outputTokens = 2000;
+    if (effort === 'low') outputTokens = 1500;
+    else if (effort === 'medium') outputTokens = 3000;
+    else if (effort === 'high') outputTokens = 6000;
+    else if (effort === 'max') outputTokens = 12000;
+
+    const totalTokens = inputTokens + outputTokens;
+    if (pennyEstimatedTokens) pennyEstimatedTokens.textContent = `~${inputTokens.toLocaleString()} in + ~${outputTokens.toLocaleString()} out (${totalTokens.toLocaleString()} tk)`;
+
+    const selModel = selectModel ? selectModel.value : 'auto';
+    let promptPrice = 0.075;
+    let completionPrice = 0.30;
+
+    if (selModel !== 'auto' && allModelsPricingMap[selModel]) {
+      promptPrice = allModelsPricingMap[selModel].prompt_price_per_m;
+      completionPrice = allModelsPricingMap[selModel].completion_price_per_m;
+    }
+
+    const estCostUsd = (inputTokens * promptPrice + outputTokens * completionPrice) / 1_000_000.0;
+    const estCostCents = estCostUsd * 100.0;
+
+    if (pennyEstimatedCost) {
+      if (promptPrice === 0 && completionPrice === 0) {
+        pennyEstimatedCost.textContent = `~$0.0000 (0.00¢) [Free]`;
+        pennyEstimatedCost.className = 'penny-cost text-cyan';
+      } else {
+        pennyEstimatedCost.textContent = `~$${estCostUsd.toFixed(5)} (${estCostCents.toFixed(3)}¢)`;
+        if (estCostUsd < 0.001) {
+          pennyEstimatedCost.className = 'penny-cost text-green';
+        } else if (estCostUsd < 0.01) {
+          pennyEstimatedCost.className = 'penny-cost text-amber';
+        } else {
+          pennyEstimatedCost.className = 'penny-cost text-rose';
+        }
+      }
     }
   }
 
@@ -669,6 +871,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentMode = val;
       }
       updateDecisionBannerForModel(val);
+      updateModelCostBadge(val);
+      updatePromptPennyMeter();
     });
   }
 
@@ -682,8 +886,159 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentMode === 'auto') selectModel.value = 'auto';
         else if (currentMode === 'deepseek') selectModel.value = 'deepseek-reasoner';
         else if (currentMode === 'gemini') selectModel.value = 'gemini-flash';
+        updateModelCostBadge(selectModel.value);
+        updatePromptPennyMeter();
       }
       updateDecisionBannerForMode(currentMode);
+    });
+  });
+
+  if (executivePrompt) {
+    executivePrompt.addEventListener('input', updatePromptPennyMeter);
+  }
+  if (selectEffort) {
+    selectEffort.addEventListener('change', updatePromptPennyMeter);
+  }
+
+  // ==============================================================================
+  // Executive Model Pricing & Penny Matrix Modal Logic
+  // ==============================================================================
+  async function openPricingModal() {
+    if (!modelPricingBackdrop) return;
+    modelPricingBackdrop.style.display = 'flex';
+    await refreshPricingMatrix();
+  }
+
+  function closePricingModal() {
+    if (modelPricingBackdrop) modelPricingBackdrop.style.display = 'none';
+  }
+
+  async function refreshPricingMatrix() {
+    try {
+      const res = await fetch('/api/models/pricing');
+      if (!res.ok) return;
+      const data = await res.json();
+      renderPricingModalData(data);
+    } catch (err) {
+      console.warn('Failed to load pricing matrix', err);
+    }
+  }
+
+  function renderPricingModalData(data) {
+    if (!data) return;
+    const b = data.budget || {};
+    if (pricingModalActiveCount) pricingModalActiveCount.textContent = data.active_count || '--';
+    if (pricingModalTotalCount) pricingModalTotalCount.textContent = `of ${data.count || '--'} cataloged`;
+    if (pricingModalTodaySpend) pricingModalTodaySpend.textContent = `$${(b.today_spend_usd || 0).toFixed(4)}`;
+    if (pricingModalRemainingDaily) pricingModalRemainingDaily.textContent = `Remaining: $${(b.remaining_daily_usd || 0).toFixed(4)}`;
+    if (pricingModalCacheSaved) pricingModalCacheSaved.textContent = `$${(b.cached_savings_usd || 0).toFixed(4)}`;
+    if (pricingModalBreakerState) {
+      pricingModalBreakerState.textContent = b.circuit_breaker_state || 'NORMAL';
+      pricingModalBreakerState.className = b.circuit_breaker_state === 'TRIPPED' ? 'stat-value text-rose' : (b.circuit_breaker_state === 'WARNING' ? 'stat-value text-amber' : 'stat-value text-green');
+    }
+
+    renderPricingTableRows(data.models || allModelsList);
+  }
+
+  function renderPricingTableRows(models) {
+    if (!pricingMatrixTableBody) return;
+    pricingMatrixTableBody.innerHTML = '';
+
+    const inTokens = parseInt(simInputTokens ? simInputTokens.value : 2000, 10) || 2000;
+    const outTokens = parseInt(simOutputTokens ? simOutputTokens.value : 1000, 10) || 1000;
+
+    models.forEach(m => {
+      const tr = document.createElement('tr');
+      const isActive = m.status === 'active';
+      const promptP = m.prompt_price_per_m || 0;
+      const compP = m.completion_price_per_m || 0;
+      const simCostUsd = (inTokens * promptP + outTokens * compP) / 1_000_000.0;
+      const simCostCents = simCostUsd * 100.0;
+
+      let tierBadgeClass = 'ultralow';
+      if (promptP === 0) tierBadgeClass = 'free';
+      else if (promptP >= 3.0) tierBadgeClass = 'premium';
+      else if (promptP >= 0.5) tierBadgeClass = 'moderate';
+
+      let costTagClass = 'cheap';
+      if (promptP === 0) costTagClass = 'free';
+      else if (simCostUsd > 0.05) costTagClass = 'expensive';
+      else if (simCostUsd > 0.005) costTagClass = 'moderate';
+
+      const promptPriceStr = promptP === 0 ? '$0.000 (Free)' : `$${promptP.toFixed(3)}`;
+      const compPriceStr = compP === 0 ? '$0.000 (Free)' : `$${compP.toFixed(3)}`;
+      const simCostStr = promptP === 0 ? '$0.0000 (0.00¢)' : `$${simCostUsd.toFixed(5)} (${simCostCents.toFixed(3)}¢)`;
+
+      tr.innerHTML = `
+        <td>
+          <div class="table-model-title">
+            ${m.is_reasoning ? '🧠 ' : (m.id.includes('coder') ? '💻 ' : (promptP === 0 ? '🛡️ ' : '⚡ '))}${escapeHtml(m.name)}
+            <span class="badge-tier ${tierBadgeClass}">${escapeHtml(m.cost_tier || '')}</span>
+          </div>
+          <span class="table-model-sub">${escapeHtml(m.id)} &bull; ${escapeHtml(m.category || '')}</span>
+        </td>
+        <td><span style="color:#CBD5E1;">${escapeHtml(m.provider || 'Gateway')}</span></td>
+        <td>
+          <span class="badge-status ${isActive ? 'active' : 'inactive'}">
+            ${isActive ? '● ACTIVE' : '○ INACTIVE'}
+          </span>
+        </td>
+        <td><span class="table-price-val text-cyan">${promptPriceStr}</span></td>
+        <td><span class="table-price-val text-green">${compPriceStr}</span></td>
+        <td><span class="sim-cost-tag ${costTagClass}">${simCostStr}</span></td>
+        <td><span style="font-family:var(--font-mono);font-size:11px;color:#94A3B8;">${escapeHtml(m.context_window || '128k')}</span></td>
+        <td>
+          <button class="btn-select-model-row" ${!isActive ? 'disabled' : ''} data-model="${escapeHtml(m.id)}">
+            ${isActive ? 'Select Model' : 'Unavailable'}
+          </button>
+        </td>
+      `;
+
+      const selectBtn = tr.querySelector('.btn-select-model-row');
+      if (selectBtn && isActive) {
+        selectBtn.addEventListener('click', () => {
+          if (selectModel) {
+            selectModel.value = m.id;
+            selectModel.dispatchEvent(new Event('change'));
+          }
+          closePricingModal();
+          if (window.Cockpit) window.Cockpit.notify(`Selected ${m.name} (${m.price_display})`, 'success');
+        });
+      }
+
+      pricingMatrixTableBody.appendChild(tr);
+    });
+  }
+
+  if (btnOpenPricingModal) btnOpenPricingModal.addEventListener('click', openPricingModal);
+  if (btnClosePricingModal) btnClosePricingModal.addEventListener('click', closePricingModal);
+  if (btnOpenPricingFromMeter) btnOpenPricingFromMeter.addEventListener('click', openPricingModal);
+  if (btnRefreshPricingMatrix) btnRefreshPricingMatrix.addEventListener('click', refreshPricingMatrix);
+
+  if (modelPricingBackdrop) {
+    modelPricingBackdrop.addEventListener('click', (e) => {
+      if (e.target === modelPricingBackdrop) closePricingModal();
+    });
+  }
+
+  if (simInputTokens) {
+    simInputTokens.addEventListener('input', () => {
+      renderPricingTableRows(allModelsList);
+    });
+  }
+  if (simOutputTokens) {
+    simOutputTokens.addEventListener('input', () => {
+      renderPricingTableRows(allModelsList);
+    });
+  }
+
+  calcPresetChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      calcPresetChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      if (simInputTokens) simInputTokens.value = chip.dataset.in;
+      if (simOutputTokens) simOutputTokens.value = chip.dataset.out;
+      renderPricingTableRows(allModelsList);
     });
   });
 
@@ -1652,6 +2007,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { title: 'Effort: Max (16k+ Tokens)', desc: 'Set reasoning effort to maximum frontier proof tier', icon: '🌌', action: () => { if (selectEffort) selectEffort.value = 'max'; } },
     { title: 'Autonomy: Full Autonomy', desc: 'Enable end-to-end autonomous execution', icon: '🚀', action: () => { if (selectAutonomy) selectAutonomy.value = 'full'; } },
     { title: 'Autonomy: Plan-First', desc: 'Require structured roadmap and architecture first', icon: '📋', action: () => { if (selectAutonomy) selectAutonomy.value = 'plan_first'; } },
+    { title: 'Model Pricing & Penny Ledger', desc: 'Inspect token costs and active/inactive status across all models', icon: '💰', action: () => openPricingModal() },
     { title: 'Switch Active Workspace', desc: 'Open workspace switcher folder drawer', icon: '📁', action: () => { if (workspaceDrawer) workspaceDrawer.style.display = 'block'; } },
     { title: 'Emergency Stop: Trip Circuit Breaker', desc: 'Immediately halt cloud API spend and fallback to local', icon: '🛑', action: () => { if (btnTripBreaker) btnTripBreaker.click(); } }
   ];
@@ -1997,12 +2353,16 @@ document.addEventListener('DOMContentLoaded', () => {
       progMonthlyBar.style.width = `${Math.min(100, b.monthly_used_pct)}%`;
     }
 
-    // 4. Savings Telemetry
+    // 4. Savings Telemetry & Penny Remaining Meter
     if (hudCostSaved) {
       hudCostSaved.textContent = `$${b.cached_savings_usd.toFixed(4)}`;
     }
     if (hudHitRate) {
       hudHitRate.textContent = `${b.cache_hit_rate_pct}% Cache Rate`;
+    }
+    if (pennyRemainingBudget) {
+      const rem = Math.max(0, b.daily_budget_usd - b.today_spend_usd);
+      pennyRemainingBudget.textContent = `Daily Cap: $${rem.toFixed(2)} rem / $${b.daily_budget_usd.toFixed(2)}`;
     }
 
     // 5. Active Cap Button Highlight

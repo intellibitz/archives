@@ -16,26 +16,230 @@ CONFIG_DIR = os.path.join(BASE_DIR, "config")
 GOVERNOR_FILE = os.path.join(CONFIG_DIR, "budget_governor.json")
 
 # Token pricing per 1,000,000 tokens (USD)
-# Source: Official Provider Pricing (DeepSeek, Google AI Studio, Anthropic, OpenAI)
-MODEL_PRICING: Dict[str, Dict[str, float]] = {
-    # DeepSeek
-    "deepseek-reasoner": {"prompt": 0.55, "completion": 2.19, "cached_prompt": 0.14},
-    "deepseek-chat": {"prompt": 0.14, "completion": 0.28, "cached_prompt": 0.014},
-    "deepseek-coder": {"prompt": 0.14, "completion": 0.28, "cached_prompt": 0.014},
+# Source: Official Provider Pricing (DeepSeek, Google AI Studio, Anthropic, SiliconFlow, Alibaba)
+MODEL_PRICING: Dict[str, Dict[str, Any]] = {
     # Google Gemini
-    "gemini-flash": {"prompt": 0.075, "completion": 0.30, "cached_prompt": 0.018},
-    "gemini-3.8-flash": {"prompt": 0.075, "completion": 0.30, "cached_prompt": 0.018},
-    "gemini-pro": {"prompt": 1.25, "completion": 5.00, "cached_prompt": 0.3125},
+    "gemini-flash": {
+        "name": "Gemini 2.5/3.8 Flash",
+        "provider": "Google AI Studio",
+        "category": "Speed & Massive Context (1M+)",
+        "prompt": 0.075,
+        "completion": 0.30,
+        "cached_prompt": 0.018,
+        "context_window": "1M+",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": True
+    },
+    "gemini-3.8-flash": {
+        "name": "Gemini 3.8 Flash",
+        "provider": "Google AI Studio",
+        "category": "Speed & Massive Context (1M+)",
+        "prompt": 0.075,
+        "completion": 0.30,
+        "cached_prompt": 0.018,
+        "context_window": "1M+",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": True
+    },
+    "gemini-pro": {
+        "name": "Gemini Pro (Frontier)",
+        "provider": "Google AI Studio",
+        "category": "Frontier Multimodal",
+        "prompt": 1.25,
+        "completion": 5.00,
+        "cached_prompt": 0.3125,
+        "context_window": "1M+",
+        "cost_tier": "Moderate ($$$)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    # DeepSeek
+    "deepseek-reasoner": {
+        "name": "DeepSeek Reasoner (R1)",
+        "provider": "DeepSeek",
+        "category": "Frontier Deep Reasoning",
+        "prompt": 0.55,
+        "completion": 2.19,
+        "cached_prompt": 0.14,
+        "context_window": "128k",
+        "cost_tier": "Low ($$)",
+        "is_reasoning": True,
+        "is_safeguard": False
+    },
+    "deepseek-chat": {
+        "name": "DeepSeek Chat (V3)",
+        "provider": "DeepSeek",
+        "category": "High-Speed Synthesis",
+        "prompt": 0.14,
+        "completion": 0.28,
+        "cached_prompt": 0.014,
+        "context_window": "128k",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    "deepseek-coder": {
+        "name": "DeepSeek Coder (V2.5)",
+        "provider": "DeepSeek",
+        "category": "Code Engineering",
+        "prompt": 0.14,
+        "completion": 0.28,
+        "cached_prompt": 0.014,
+        "context_window": "128k",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    # SiliconFlow / Qwen
+    "siliconflow-qwen-coder": {
+        "name": "Qwen 2.5 Coder 32B",
+        "provider": "SiliconFlow",
+        "category": "Deep Code Generation",
+        "prompt": 0.20,
+        "completion": 0.40,
+        "cached_prompt": 0.05,
+        "context_window": "128k",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    "siliconflow-qwen": {
+        "name": "Qwen 2.5 72B Instruct",
+        "provider": "SiliconFlow",
+        "category": "Open Frontier Generalist",
+        "prompt": 0.20,
+        "completion": 0.40,
+        "cached_prompt": 0.05,
+        "context_window": "128k",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    "siliconflow-deepseek": {
+        "name": "DeepSeek V3 (SiliconFlow)",
+        "provider": "SiliconFlow",
+        "category": "Redundant High-Speed",
+        "prompt": 0.14,
+        "completion": 0.28,
+        "cached_prompt": 0.014,
+        "context_window": "64k",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    # DashScope / Alibaba
+    "dashscope-qwen-plus": {
+        "name": "DashScope Qwen Plus",
+        "provider": "Alibaba DashScope",
+        "category": "Economical Generalist",
+        "prompt": 0.12,
+        "completion": 0.24,
+        "cached_prompt": 0.03,
+        "context_window": "128k",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    "dashscope-qwen-max": {
+        "name": "DashScope Qwen Max",
+        "provider": "Alibaba DashScope",
+        "category": "Frontier Complex Reasoning",
+        "prompt": 1.60,
+        "completion": 6.40,
+        "cached_prompt": 0.40,
+        "context_window": "32k",
+        "cost_tier": "Moderate ($$$)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    "dashscope-qwen-coder": {
+        "name": "DashScope Qwen Coder",
+        "provider": "Alibaba DashScope",
+        "category": "Code Engineering",
+        "prompt": 0.12,
+        "completion": 0.24,
+        "cached_prompt": 0.03,
+        "context_window": "128k",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
     # Anthropic
-    "claude-3-5-haiku": {"prompt": 0.80, "completion": 4.00, "cached_prompt": 0.08},
-    "claude-3-5-sonnet": {"prompt": 3.00, "completion": 15.00, "cached_prompt": 0.30},
-    # SiliconFlow / DashScope Qwen
-    "siliconflow-qwen": {"prompt": 0.20, "completion": 0.40, "cached_prompt": 0.05},
-    "dashscope-qwen-plus": {"prompt": 0.12, "completion": 0.24, "cached_prompt": 0.03},
-    # Local & Free tiers
-    "local-coder": {"prompt": 0.0, "completion": 0.0, "cached_prompt": 0.0},
-    "local-reasoner": {"prompt": 0.0, "completion": 0.0, "cached_prompt": 0.0},
-    "local-llama": {"prompt": 0.0, "completion": 0.0, "cached_prompt": 0.0},
+    "claude-3-5-haiku": {
+        "name": "Claude 3.5 Haiku",
+        "provider": "Anthropic",
+        "category": "Fast Frontier Lightweight",
+        "prompt": 0.80,
+        "completion": 4.00,
+        "cached_prompt": 0.08,
+        "context_window": "200k",
+        "cost_tier": "Moderate ($$$)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    "claude-3-5-sonnet": {
+        "name": "Claude 3.5 Sonnet",
+        "provider": "Anthropic",
+        "category": "Frontier Architecture & Coding",
+        "prompt": 3.00,
+        "completion": 15.00,
+        "cached_prompt": 0.30,
+        "context_window": "200k",
+        "cost_tier": "Premium ($$$$)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    # Local & Zero-Cost Safeguards
+    "local-safeguard": {
+        "name": "Zero-Cost Local Safeguard",
+        "provider": "Local / OpenClaw",
+        "category": "Zero-Cost Circuit Breaker Safeguard",
+        "prompt": 0.0,
+        "completion": 0.0,
+        "cached_prompt": 0.0,
+        "context_window": "32k",
+        "cost_tier": "Free ($0.00)",
+        "is_reasoning": False,
+        "is_safeguard": True
+    },
+    "local-coder": {
+        "name": "Local Qwen Coder 7B",
+        "provider": "Local / Ollama",
+        "category": "Local Code Generation",
+        "prompt": 0.0,
+        "completion": 0.0,
+        "cached_prompt": 0.0,
+        "context_window": "32k",
+        "cost_tier": "Free ($0.00)",
+        "is_reasoning": False,
+        "is_safeguard": True
+    },
+    "local-reasoner": {
+        "name": "Local DeepSeek R1 Distill",
+        "provider": "Local / Ollama",
+        "category": "Local Reasoning",
+        "prompt": 0.0,
+        "completion": 0.0,
+        "cached_prompt": 0.0,
+        "context_window": "32k",
+        "cost_tier": "Free ($0.00)",
+        "is_reasoning": True,
+        "is_safeguard": True
+    },
+    "local-llama": {
+        "name": "Local Llama 3.3 8B",
+        "provider": "Local / Ollama",
+        "category": "Local Generalist",
+        "prompt": 0.0,
+        "completion": 0.0,
+        "cached_prompt": 0.0,
+        "context_window": "32k",
+        "cost_tier": "Free ($0.00)",
+        "is_reasoning": False,
+        "is_safeguard": True
+    }
 }
 
 DEFAULT_CONFIG: Dict[str, Any] = {
@@ -265,6 +469,62 @@ class BudgetGovernor:
             "daily_used_pct": daily_pct,
             "monthly_used_pct": month_pct,
             "audit_log": self.data.get("audit_log", [])[-10:]
+        }
+
+    def get_pricing_matrix(self) -> Dict[str, Any]:
+        """Returns comprehensive catalog of all models with exact token pricing and penny calculations."""
+        self._check_date_rollover()
+        summary = self.get_summary()
+        today = summary["today_spend_usd"]
+        daily_cap = summary["daily_budget_usd"]
+        remaining_daily = max(0.0, daily_cap - today)
+
+        catalog = []
+        for mid, meta in MODEL_PRICING.items():
+            prompt_cost = float(meta.get("prompt", 0.0))
+            completion_cost = float(meta.get("completion", 0.0))
+            cached_cost = float(meta.get("cached_prompt", prompt_cost * 0.2))
+            
+            # Standard executive turn: 2,000 input tokens, 1,000 output tokens
+            turn_cost_usd = (2000 * prompt_cost + 1000 * completion_cost) / 1_000_000.0
+            turn_cost_cents = turn_cost_usd * 100.0
+
+            catalog.append({
+                "id": mid,
+                "name": meta.get("name", mid),
+                "provider": meta.get("provider", "Unknown"),
+                "category": meta.get("category", "General"),
+                "cost_tier": meta.get("cost_tier", "Standard"),
+                "context_window": meta.get("context_window", "128k"),
+                "is_reasoning": meta.get("is_reasoning", False),
+                "is_safeguard": meta.get("is_safeguard", False),
+                "prompt_price_per_m": prompt_cost,
+                "completion_price_per_m": completion_cost,
+                "cached_price_per_m": cached_cost,
+                "prompt_price_per_1k": round(prompt_cost / 1000.0, 6),
+                "completion_price_per_1k": round(completion_cost / 1000.0, 6),
+                "price_display": f"${prompt_cost:.3f} / ${completion_cost:.3f} per 1M" if (prompt_cost > 0 or completion_cost > 0) else "Free ($0.000)",
+                "typical_turn_usd": round(turn_cost_usd, 6),
+                "typical_turn_cents": round(turn_cost_cents, 4)
+            })
+
+        # Sort: Safeguards/Free first, then by prompt price ascending
+        catalog.sort(key=lambda x: (not x["is_safeguard"], x["prompt_price_per_m"], x["completion_price_per_m"]))
+
+        return {
+            "success": True,
+            "models": catalog,
+            "count": len(catalog),
+            "budget": {
+                "daily_budget_usd": daily_cap,
+                "monthly_budget_usd": summary["monthly_budget_usd"],
+                "today_spend_usd": today,
+                "remaining_daily_usd": round(remaining_daily, 4),
+                "month_spend_usd": summary["month_spend_usd"],
+                "remaining_monthly_usd": round(max(0.0, summary["monthly_budget_usd"] - summary["month_spend_usd"]), 4),
+                "cached_savings_usd": summary["cached_savings_usd"],
+                "circuit_breaker_state": summary["circuit_breaker_state"]
+            }
         }
 
 

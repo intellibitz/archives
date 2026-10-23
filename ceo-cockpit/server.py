@@ -17,7 +17,7 @@ import subprocess
 import re
 import concurrent.futures
 from typing import Dict, Any, Tuple, List
-from budget_governor import governor
+from budget_governor import governor, MODEL_PRICING
 import modules as cockpit_modules
 from modules import security as cockpit_security
 
@@ -468,35 +468,83 @@ def format_model_display_name(model_id: str) -> str:
     return mapping.get(model_id, model_id)
 
 def fetch_available_models() -> list:
+    litellm_active_ids = set()
     try:
         req = urllib.request.Request(f"{LITELLM_URL}/v1/models")
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            raw_models = data.get("data", [])
-            models = []
-            for m in raw_models:
+            for m in data.get("data", []):
                 mid = m.get("id", "")
-                if "embedding" in mid.lower():
-                    continue
-                models.append({
-                    "id": mid,
-                    "name": format_model_display_name(mid),
-                    "is_reasoning": ("reasoner" in mid.lower() or "r1" in mid.lower() or "o1" in mid.lower())
-                })
-            if models:
-                return models
+                if "embedding" not in mid.lower():
+                    litellm_active_ids.add(mid)
     except Exception:
-        pass
+        # LiteLLM unreachable: treat primary default models as active
+        litellm_active_ids = {"gemini-flash", "deepseek-reasoner", "deepseek-chat", "siliconflow-qwen-coder", "claude-3-5-sonnet"}
 
-    return [
-        {"id": "deepseek-reasoner", "name": "DeepSeek Reasoner (R1)", "is_reasoning": True},
-        {"id": "deepseek-chat", "name": "DeepSeek Chat (V3)", "is_reasoning": False},
-        {"id": "gemini-flash", "name": "Gemini 2.5/3.8 Flash (1M+)", "is_reasoning": False},
-        {"id": "gemini-pro", "name": "Gemini Pro (Frontier)", "is_reasoning": False},
-        {"id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet", "is_reasoning": False},
-        {"id": "claude-3-5-haiku", "name": "Claude 3.5 Haiku", "is_reasoning": False},
-        {"id": "siliconflow-qwen-coder", "name": "Qwen 2.5 Coder 32B", "is_reasoning": False}
-    ]
+    models = []
+    seen_ids = set()
+
+    for mid, meta in MODEL_PRICING.items():
+        seen_ids.add(mid)
+        prompt_cost = float(meta.get("prompt", 0.0))
+        completion_cost = float(meta.get("completion", 0.0))
+        cached_cost = float(meta.get("cached_prompt", prompt_cost * 0.2))
+        is_safeguard = bool(meta.get("is_safeguard", False))
+        is_active = (mid in litellm_active_ids) or is_safeguard or mid.startswith("local-")
+
+        turn_cost_usd = (2000 * prompt_cost + 1000 * completion_cost) / 1_000_000.0
+        turn_cost_cents = turn_cost_usd * 100.0
+        price_disp = f"${prompt_cost:.3f} / ${completion_cost:.3f} per 1M" if (prompt_cost > 0 or completion_cost > 0) else "Free ($0.000)"
+        penny_1k = f"${prompt_cost/1000.0:.5f} in / ${completion_cost/1000.0:.5f} out"
+
+        models.append({
+            "id": mid,
+            "name": meta.get("name", format_model_display_name(mid)),
+            "provider": meta.get("provider", "General"),
+            "category": meta.get("category", "Frontier"),
+            "cost_tier": meta.get("cost_tier", "Standard"),
+            "context_window": meta.get("context_window", "128k"),
+            "status": "active" if is_active else "inactive",
+            "is_reasoning": bool(meta.get("is_reasoning", False)),
+            "is_safeguard": is_safeguard,
+            "prompt_price_per_m": prompt_cost,
+            "completion_price_per_m": completion_cost,
+            "cached_price_per_m": cached_cost,
+            "price_display": price_disp,
+            "penny_per_1k": penny_1k,
+            "typical_turn_usd": round(turn_cost_usd, 6),
+            "typical_turn_cents": round(turn_cost_cents, 4)
+        })
+
+    for mid in litellm_active_ids:
+        if mid not in seen_ids:
+            seen_ids.add(mid)
+            models.append({
+                "id": mid,
+                "name": format_model_display_name(mid),
+                "provider": "LiteLLM Gateway",
+                "category": "Discovered Model",
+                "cost_tier": "Standard ($$)",
+                "context_window": "128k",
+                "status": "active",
+                "is_reasoning": ("reasoner" in mid.lower() or "r1" in mid.lower() or "o1" in mid.lower()),
+                "is_safeguard": False,
+                "prompt_price_per_m": 0.50,
+                "completion_price_per_m": 2.00,
+                "cached_price_per_m": 0.10,
+                "price_display": "$0.500 / $2.000 per 1M",
+                "penny_per_1k": "$0.00050 in / $0.00200 out",
+                "typical_turn_usd": 0.003,
+                "typical_turn_cents": 0.3
+            })
+
+    models.sort(key=lambda m: (
+        0 if m["status"] == "active" else 1,
+        0 if m["is_safeguard"] else 1,
+        m["prompt_price_per_m"],
+        m["completion_price_per_m"]
+    ))
+    return models
 
 class CockpitHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -562,6 +610,8 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_autoclicker_telemetry()
         elif path_only == "/api/models":
             self.handle_models_get()
+        elif path_only == "/api/models/pricing":
+            self.handle_models_pricing()
         elif path_only == "/api/sessions":
             self.handle_sessions_get()
         elif path_only.startswith("/api/sessions/"):
@@ -813,7 +863,23 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_models_get(self):
         models = fetch_available_models()
-        self._send_json(200, {"models": models})
+        budget = governor.get_summary()
+        self._send_json(200, {
+            "success": True,
+            "models": models,
+            "total_count": len(models),
+            "active_count": sum(1 for m in models if m.get("status") == "active"),
+            "inactive_count": sum(1 for m in models if m.get("status") == "inactive"),
+            "budget": budget
+        })
+
+    def handle_models_pricing(self):
+        models = fetch_available_models()
+        matrix = governor.get_pricing_matrix()
+        matrix["models"] = models
+        matrix["active_count"] = sum(1 for m in models if m.get("status") == "active")
+        matrix["inactive_count"] = sum(1 for m in models if m.get("status") == "inactive")
+        self._send_json(200, matrix)
 
     def handle_sessions_get(self):
         sessions = list_sessions()

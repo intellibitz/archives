@@ -113,6 +113,39 @@ def t_deck_assets():
         assert s == 200, f"{p} -> {s}"
 
 
+# ------------------------------------------------------------- budget & pricing
+@check("budget")
+def t_models_catalog_with_pricing():
+    s, d = request("GET", "/api/models")
+    assert s == 200, f"status={s} body={d}"
+    assert "models" in d and len(d["models"]) > 0, "no models returned"
+    assert "total_count" in d and "active_count" in d and "inactive_count" in d, "missing count telemetry"
+    for m in d["models"]:
+        assert "id" in m and "name" in m, f"malformed model entry: {m}"
+        assert m.get("status") in ("active", "inactive"), f"invalid status in model: {m}"
+        assert "prompt_price_per_m" in m and "completion_price_per_m" in m, f"missing pricing fields in: {m}"
+        assert "cost_tier" in m, f"missing cost_tier in: {m}"
+
+
+@check("budget")
+def t_models_pricing_matrix():
+    s, d = request("GET", "/api/models/pricing")
+    assert s == 200, f"status={s} body={d}"
+    assert "models" in d and "budget" in d, "missing models or budget in pricing matrix"
+    b = d["budget"]
+    assert "daily_budget_usd" in b and "remaining_daily_usd" in b, "missing daily budget fields"
+    assert "circuit_breaker_state" in b, "missing circuit breaker state"
+    assert d.get("count", 0) >= len(d["models"]), "pricing count mismatch"
+
+
+@check("budget")
+def t_budget_governor_telemetry():
+    s, d = request("GET", "/api/budget")
+    assert s == 200, f"status={s} body={d}"
+    assert "daily_budget_usd" in d and "today_spend_usd" in d, "missing budget fields"
+    assert "circuit_breaker_state" in d, "missing circuit breaker state"
+
+
 # -------------------------------------------------------------- security
 @check("security")
 def t_foreign_origin_rejected():

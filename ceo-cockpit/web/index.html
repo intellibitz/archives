@@ -67,6 +67,10 @@
           <span class="btn-icon">＋</span>
           <span class="btn-text">New Thread</span>
         </button>
+        <button class="header-action-btn" id="btnOpenPricingModal" title="Executive Model Pricing & Penny Matrix: View cost and active/inactive status for every model">
+          <span class="btn-icon">💰</span>
+          <span class="btn-text">Model Costs</span>
+        </button>
         <button class="header-action-btn deck-trigger" id="btnOpenDeck" title="Command Deck: Ops, Missions, Playbooks, Analytics, Git, Activity (Ctrl+J)">
           <span class="btn-icon">🎛️</span>
           <span class="btn-text">Command Deck</span>
@@ -251,6 +255,10 @@
                   </optgroup>
                 </select>
               </div>
+              <div class="model-cost-pill" id="modelCostBadge" title="Real-time model pricing & status">
+                <span class="cost-dot dot-green" id="modelCostDot"></span>
+                <span class="cost-text" id="modelCostText">Auto Router &bull; Budget Conscious</span>
+              </div>
             </div>
 
             <!-- Reasoning Effort Dropdown (Default: Auto) -->
@@ -390,6 +398,20 @@
               placeholder="Enter your executive directive or operational objective... (Type / for commands, Ctrl+Enter to dispatch)"
               rows="3"
             ></textarea>
+
+            <div class="penny-meter-strip" id="promptPennyMeter">
+              <div class="penny-left">
+                <span class="penny-icon">🪙</span>
+                <span class="penny-label">PRE-DISPATCH ESTIMATE:</span>
+                <span class="penny-tokens" id="pennyEstimatedTokens">~0 tokens</span>
+                <span class="penny-sep">&bull;</span>
+                <span class="penny-cost text-green" id="pennyEstimatedCost">~$0.0000 (0.00¢)</span>
+              </div>
+              <div class="penny-right">
+                <span class="penny-remaining" id="pennyRemainingBudget">Daily Remaining: $2.00</span>
+                <button class="penny-link-btn" id="btnOpenPricingFromMeter" type="button" title="View pricing and penny cost across every model">Matrix ➔</button>
+              </div>
+            </div>
 
             <div class="input-actions-bar">
               <div class="quick-presets">
@@ -740,6 +762,97 @@
             <span class="ac-log-badge">Live Tail</span>
           </div>
           <pre class="ac-log-pre" id="acLogTailBlock"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model Pricing & Penny Matrix Modal -->
+  <div class="modal-backdrop" id="modelPricingBackdrop" style="display: none;">
+    <div class="modal-dialog pricing-modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">💰</span>
+          <div class="modal-title-text">
+            <span class="modal-heading">Executive Model Pricing & Penny Ledger</span>
+            <span class="modal-subheading">Track every penny across all models &bull; Active/Inactive status &bull; Live token cost calculator</span>
+          </div>
+        </div>
+        <div class="modal-header-actions">
+          <button class="modal-btn-action primary" id="btnRefreshPricingMatrix">🔄 Refresh Status</button>
+          <button class="modal-btn-close" id="btnClosePricingModal">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <!-- Pricing Metrics Grid -->
+        <div class="telemetry-stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Active / Total Models</span>
+            <span class="stat-value text-green" id="pricingModalActiveCount">--</span>
+            <span class="stat-sub" id="pricingModalTotalCount">-- models cataloged</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Today's Spend</span>
+            <span class="stat-value text-cyan" id="pricingModalTodaySpend">$0.0000</span>
+            <span class="stat-sub" id="pricingModalRemainingDaily">Remaining: $2.0000</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Redis Cache Saved</span>
+            <span class="stat-value text-purple" id="pricingModalCacheSaved">$0.0000</span>
+            <span class="stat-sub">Zero-cost repeated queries</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Circuit Breaker</span>
+            <span class="stat-value text-amber" id="pricingModalBreakerState">NORMAL</span>
+            <span class="stat-sub">Auto-safeguard armed</span>
+          </div>
+        </div>
+
+        <!-- Interactive Penny Cost Calculator -->
+        <div class="penny-calculator-panel">
+          <div class="calc-header-row">
+            <span class="calc-title">🧮 Live Task Penny Cost Simulator</span>
+            <span class="calc-hint">Calculate exact costs for any task across every model simultaneously:</span>
+          </div>
+          <div class="calc-controls-row">
+            <div class="calc-input-wrap">
+              <label for="simInputTokens" class="calc-input-label">Prompt Tokens (Input):</label>
+              <input type="number" id="simInputTokens" value="2000" min="0" step="500" class="calc-number-input" />
+            </div>
+            <div class="calc-input-wrap">
+              <label for="simOutputTokens" class="calc-input-label">Completion Tokens (Output):</label>
+              <input type="number" id="simOutputTokens" value="1000" min="0" step="500" class="calc-number-input" />
+            </div>
+            <div class="calc-presets-group">
+              <button class="calc-preset-chip" type="button" data-in="500" data-out="250">Quick Q&A (750 tk)</button>
+              <button class="calc-preset-chip active" type="button" data-in="2000" data-out="1000">Standard Turn (3k tk)</button>
+              <button class="calc-preset-chip" type="button" data-in="15000" data-out="3000">Code Audit (18k tk)</button>
+              <button class="calc-preset-chip" type="button" data-in="50000" data-out="5000">Large Context (55k tk)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comprehensive Models Pricing Table -->
+        <div class="pricing-table-section">
+          <div class="ac-actions-table-wrap">
+            <table class="pricing-matrix-table" id="pricingMatrixTable">
+              <thead>
+                <tr>
+                  <th>Model Tier & Name</th>
+                  <th>Provider</th>
+                  <th>Status</th>
+                  <th>Prompt ($/1M)</th>
+                  <th>Completion ($/1M)</th>
+                  <th>Simulated Cost</th>
+                  <th>Context Limit</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="pricingMatrixTableBody">
+                <!-- Dynamically populated model rows -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
