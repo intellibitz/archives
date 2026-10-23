@@ -284,6 +284,36 @@ def t_activity_assets():
     assert s == 200, f"activity.js status={s}"
 
 
+# --------------------------------------------------------------- system
+@check("system")
+def t_system_manifest():
+    s, d = request("GET", "/api/system/manifest")
+    assert s == 200 and d.get("success") is True, f"manifest status={s} body={d}"
+    assert d.get("roadmap", {}).get("completed_rounds") == 10, "10 rounds not reported"
+    assert len(d.get("modules", [])) >= 7, "missing modules in manifest"
+    assert "registered_routes" in d and d["registered_routes"]["count"] >= 15, "missing routes"
+
+
+@check("system")
+def t_system_health():
+    s, d = request("GET", "/api/system/health")
+    assert s == 200 and d.get("success") is True, f"health status={s}"
+    assert "subsystems" in d, "missing subsystems in health check"
+
+
+@check("system")
+def t_system_ping():
+    s, d = request("POST", "/api/system/ping", body={})
+    assert s == 200 and d.get("pong") is True, f"ping status={s}"
+
+
+@check("system")
+def t_system_deck_assets():
+    s, content, _ = request("GET", "/modules/deck.js", raw=True)
+    assert s == 200, f"deck.js status={s}"
+    assert "registerView" in content and "registerPanel" in content, "registerView missing in deck.js"
+
+
 def main():
     global BASE
     ap = argparse.ArgumentParser()

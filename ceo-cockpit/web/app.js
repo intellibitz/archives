@@ -2085,7 +2085,14 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBudget: (b) => renderBudget(b),
     refreshBudget: () => fetchBudget(),
     newSession: () => createNewSession(),
-    closePalette: () => closeCommandPalette()
+    closePalette: () => closeCommandPalette(),
+    notify: (msg, level = 'info') => {
+      if (window.CockpitDeck && typeof window.CockpitDeck.toast === 'function') {
+        window.CockpitDeck.toast(msg, level);
+      } else {
+        console.log(`[${level.toUpperCase()}] ${msg}`);
+      }
+    }
   };
   document.dispatchEvent(new CustomEvent('cockpit:ready'));
 

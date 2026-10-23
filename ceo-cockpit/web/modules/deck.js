@@ -250,9 +250,33 @@
       panels.sort((a, b) => a.order - b.order);
       if (state.mounted) { renderNav(); registerPaletteAction(def); }
     },
+    registerView(id, def) {
+      if (!id || !def) return;
+      const shortcutNum = def.shortcut ? parseInt(def.shortcut.replace(/\D/g, ''), 10) : null;
+      const order = def.order ?? (shortcutNum ? shortcutNum * 10 : 100);
+      this.registerPanel({
+        id: id,
+        order: order,
+        title: def.title || id,
+        navLabel: def.navLabel || (def.title ? def.title.split(' ')[0] : id),
+        subtitle: def.subtitle || def.desc || def.title || '',
+        icon: def.icon || '📦',
+        render: (view, actions) => {
+          if (typeof def.mount === 'function') {
+            def.mount(view);
+          } else if (typeof def.render === 'function') {
+            def.render(view, actions);
+          }
+        },
+        onShow: def.onShow,
+        onHide: def.onHide,
+        paletteActions: def.paletteActions || []
+      });
+    },
     open, close, activate, setBadge, toast, api, streamSSE, esc, fmt,
     isOpen: () => state.open,
-    activePanel: () => state.activeId
+    activePanel: () => state.activeId,
+    getPanels: () => panels.slice()
   };
 
   document.addEventListener('cockpit:ready', mount);

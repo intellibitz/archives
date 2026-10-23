@@ -22,6 +22,7 @@ FEATURE_MODULES = [
     "modules.analytics",
     "modules.git_ops",
     "modules.activity",
+    "modules.system",
 ]
 
 
