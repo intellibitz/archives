@@ -89,6 +89,50 @@ def count_redis_keys() -> int:
         pass
     return 16
 
+def check_auto_clicker() -> Dict[str, Any]:
+    """Checks whether the Decision Auto-Clicker background process is running and beating."""
+    candidate_dirs = [
+        r"C:\Users\user\AppData\Local\Temp",
+        os.path.join(os.environ.get("SystemDrive", "C:"), "Users", os.environ.get("USERNAME", "user"), "AppData", "Local", "Temp"),
+        os.environ.get("TEMP", ""),
+        os.environ.get("TMP", ""),
+        os.path.expanduser("~")
+    ]
+
+    pid = None
+    heartbeat_age = 999.0
+
+    for temp_dir in candidate_dirs:
+        if not temp_dir or not os.path.isdir(temp_dir):
+            continue
+        pid_file = os.path.join(temp_dir, "auto_click_decisions.pid")
+        heartbeat_file = os.path.join(temp_dir, "auto_click_decisions.heartbeat")
+
+        if os.path.isfile(heartbeat_file):
+            try:
+                with open(heartbeat_file, "r", encoding="utf-8") as f:
+                    hb = float(f.read().strip())
+                    age = time.time() - hb
+                    if age < heartbeat_age:
+                        heartbeat_age = age
+            except Exception:
+                pass
+
+        if os.path.isfile(pid_file) and pid is None:
+            try:
+                with open(pid_file, "r", encoding="utf-8") as f:
+                    pid = int(f.read().strip())
+            except Exception:
+                pass
+
+    online = (heartbeat_age <= 15.0)
+    return {
+        "online": online,
+        "pid": pid,
+        "heartbeat_age_sec": round(heartbeat_age, 1),
+        "mode": "SendInput-LowLatency"
+    }
+
 class CockpitHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC_DIR, **kwargs)
@@ -169,9 +213,10 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         redis_ok = check_tcp_port("127.0.0.1", 6379)
         qdrant_ok = check_tcp_port("127.0.0.1", 6333)
         cached_keys = count_redis_keys()
+        clicker = check_auto_clicker()
 
         self._send_json(200, {
-            "status": "healthy" if (litellm_ok and openclaw_ok and redis_ok) else "degraded",
+            "status": "healthy" if (litellm_ok and openclaw_ok and redis_ok and clicker.get("online")) else "degraded",
             "services": {
                 "litellm": {
                     "port": 4000,
@@ -194,6 +239,12 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
                     "port": 6333,
                     "online": qdrant_ok,
                     "collection": "agent_memory"
+                },
+                "auto_clicker": {
+                    "online": clicker.get("online", False),
+                    "pid": clicker.get("pid"),
+                    "heartbeat_age_sec": clicker.get("heartbeat_age_sec"),
+                    "mode": clicker.get("mode", "SendInput-LowLatency")
                 }
             },
             "timestamp": time.time()

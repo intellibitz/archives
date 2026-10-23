@@ -51,3 +51,21 @@ if (Test-Path $memuraiCli) {
     $keysCount = & $memuraiCli dbsize
     Write-Host "In-Memory Redis Cache Entries: $keysCount (Exact-Match Zero Cost Active)" -ForegroundColor Green
 }
+
+# Check Decision Auto-Clicker Process & Heartbeat
+$clickerProc = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*auto_click_decisions*" }
+$heartbeatFile = Join-Path $env:TEMP "auto_click_decisions.heartbeat"
+$isFresh = $false
+if (Test-Path $heartbeatFile) {
+    $ts = [double](Get-Content $heartbeatFile)
+    $now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    if (($now - $ts) -lt 10) { $isFresh = $true }
+}
+
+if ($clickerProc -and $isFresh) {
+    Write-Host "Decision Auto-Clicker: ACTIVE (PID $($clickerProc.ProcessId), Live Scanning)" -ForegroundColor Green
+} elseif ($clickerProc) {
+    Write-Host "Decision Auto-Clicker: RUNNING (PID $($clickerProc.ProcessId))" -ForegroundColor Yellow
+} else {
+    Write-Host "Decision Auto-Clicker: OFFLINE" -ForegroundColor Red
+}

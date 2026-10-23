@@ -260,6 +260,13 @@ document.addEventListener('DOMContentLoaded', () => {
       updateChip('chipOpenclaw', s.openclaw.online);
       updateChip('chipRedis', s.redis_cache.online);
       updateChip('chipQdrant', s.qdrant_memory.online);
+      if (s.auto_clicker) {
+        updateChip('chipAutoClick', s.auto_clicker.online);
+        const autoClickVal = document.getElementById('autoClickVal');
+        if (autoClickVal) {
+          autoClickVal.textContent = s.auto_clicker.online ? 'ACTIVE' : 'OFFLINE';
+        }
+      }
 
       if (s.redis_cache && s.redis_cache.keys !== undefined) {
         redisKeysVal.textContent = `${s.redis_cache.keys} Cached`;
