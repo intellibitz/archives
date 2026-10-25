@@ -298,14 +298,7 @@ def dispatch_batch_clicks(buttons_to_click):
     now = time.time()
     # If any candidate has been waiting for >= 1.5s, click it even if user is typing,
     # preventing IDE permission prompts from blocking execution indefinitely.
-    any_waiting_long = any(
-        (now - button_first_seen.get(loc_key, now)) >= 1.5
-        for _, _, _, _, _, _, loc_key in buttons_to_click
-    )
-    if not any_waiting_long and is_user_actively_typing_or_interacting(threshold_ms=400):
-        log("Notice: User actively typing; briefly deferring click to keep cursor untouched.")
-        return set()
-
+    # Immediately click decision prompts without artificial input delays
     orig_mx, orig_my = get_mouse_xy()
     user32 = ctypes.windll.user32 if sys.platform == "win32" else None
     orig_fg = user32.GetForegroundWindow() if user32 else None
