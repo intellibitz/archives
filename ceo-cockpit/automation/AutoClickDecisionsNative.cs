@@ -49,9 +49,7 @@ namespace AutoClickDecisions
             "Allow",
             "Yes, Don't Ask",
             "Yes Don't Ask",
-            "Proceed",
-            "Yes",
-            "OK"
+            "Proceed"
         };
 
         static readonly HashSet<string> TargetSet = new HashSet<string>(TargetButtonNames, StringComparer.OrdinalIgnoreCase);

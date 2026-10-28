@@ -40,8 +40,6 @@ TEMPLATE_PATTERNS = {
     "Always Run": ["always-run*.png"],
     "Allow Once": ["allow-once*.png"],
     "Allow": ["allow.png", "allow2.png", "allow*.png"],
-    "Yes": ["yes.png", "yes-*.png", "yes_*.png"],
-    "OK": ["ok.png", "ok-*.png", "ok_*.png"],
 }
 
 # Priority ranking: clicking global dismiss/accept first ensures cascading diffs resolve cleanly
@@ -57,8 +55,6 @@ BUTTON_PRIORITY = {
     "Always Run": 9,
     "Allow Once": 10,
     "Allow": 11,
-    "Yes": 12,
-    "OK": 13,
 }
 CANONICAL_TEMPLATES = {
     "Accept All": "accept-all.png",
@@ -72,8 +68,6 @@ CANONICAL_TEMPLATES = {
     "Allow Once": "allow-once.png",
     "Allow": "allow.png",
     "Yes Don't Ask": "yes-dontask.png",
-    "Yes": "yes.png",
-    "OK": "ok.png",
 }
 
 # Templates cover button colors and states; strict thresholds prevent false matches against editor text/syntax.
@@ -89,8 +83,6 @@ THRESHOLDS = {
     "Allow Once": 0.72,
     "Allow": 0.72,
     "Yes Don't Ask": 0.72,
-    "Yes": 0.72,
-    "OK": 0.72,
 }
 DEFAULT_THRESHOLD = 0.72
 CONFIDENCE_THRESHOLD = 0.70
