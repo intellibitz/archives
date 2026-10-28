@@ -72,20 +72,20 @@ CANONICAL_TEMPLATES = {
 
 # Templates cover button colors and states; strict thresholds prevent false matches against editor text/syntax.
 THRESHOLDS = {
-    "Accept All": 0.72,
-    "Accept All 2": 0.72,
-    "Accept Changes": 0.72,
-    "Accept": 0.72,
-    "Keep All": 0.72,
-    "Proceed": 0.72,
-    "Allow Always": 0.72,
-    "Always Run": 0.72,
-    "Allow Once": 0.72,
-    "Allow": 0.72,
-    "Yes Don't Ask": 0.72,
+    "Accept All": 0.82,
+    "Accept All 2": 0.82,
+    "Accept Changes": 0.82,
+    "Accept": 0.82,
+    "Keep All": 0.82,
+    "Proceed": 0.82,
+    "Allow Always": 0.82,
+    "Always Run": 0.82,
+    "Allow Once": 0.82,
+    "Allow": 0.82,
+    "Yes Don't Ask": 0.82,
 }
-DEFAULT_THRESHOLD = 0.72
-CONFIDENCE_THRESHOLD = 0.70
+DEFAULT_THRESHOLD = 0.82
+CONFIDENCE_THRESHOLD = 0.80
 
 if sys.platform == "win32":
     TEMP_DIR = os.environ.get("TEMP", os.path.expanduser("~"))
@@ -96,9 +96,9 @@ else:
     PID_FILE = "/tmp/auto_click_decisions.pid"
 
 CHECK_INTERVAL = 1.0
-RETRY_COOLDOWN_SECONDS = 2.0
-MAX_RETRIES = 5
-BLACKLIST_DURATION_SECONDS = 10.0
+RETRY_COOLDOWN_SECONDS = 3.0
+MAX_RETRIES = 2
+BLACKLIST_DURATION_SECONDS = 60.0
 
 active_clicked_buttons = {}  # loc_key -> {"first_seen": t, "last_clicked": t, "count": n}
 blacklisted_locations = {}   # loc_key -> unblock_time
@@ -286,22 +286,19 @@ def dispatch_click(cx, cy, name=""):
 def dispatch_batch_clicks(buttons_to_click):
     """
     Clicks the highest-priority candidate, then restores the original cursor.
-    The cursor remains completely untouched if there are no candidates or if user is actively typing/dragging.
+    The cursor remains completely untouched if user is actively typing/interacting or holding mouse.
     """
     if not buttons_to_click:
         return set()
 
     if is_mouse_button_down():
-        log("Notice: User holding mouse button; deferring batch clicks to keep cursor untouched.")
+        return set()
+
+    if is_user_actively_typing_or_interacting(threshold_ms=1500):
         return set()
 
     now = time.time()
-    # If any candidate has been waiting for >= 1.5s, click it even if user is typing,
-    # preventing IDE permission prompts from blocking execution indefinitely.
-    # Immediately click decision prompts without artificial input delays
     orig_mx, orig_my = get_mouse_xy()
-    user32 = ctypes.windll.user32 if sys.platform == "win32" else None
-    orig_fg = user32.GetForegroundWindow() if user32 else None
 
     # Sort buttons by priority (e.g. Accept All / Permanent Allow before one-time)
     sorted_buttons = sorted(
@@ -313,21 +310,14 @@ def dispatch_batch_clicks(buttons_to_click):
     cx, cy = x + w // 2, y + h // 2
     log(f"Clicking '{name}' at ({cx}, {cy}) (Conf: {score:.2f})...")
     try:
-        activate_target_window(cx, cy)
         return {loc_key} if dispatch_click(cx, cy, name) else set()
     finally:
         if orig_mx is not None and orig_my is not None:
             curr_mx, curr_my = get_mouse_xy()
             if curr_mx is not None and curr_my is not None:
-                # Restore only if the pointer stayed at our click target; preserve
-                # any manual movement that happened while the click was dispatched.
+                # Restore only if pointer stayed at click target; preserve manual movement
                 if abs(curr_mx - cx) + abs(curr_my - cy) < 50:
                     set_mouse_xy(orig_mx, orig_my)
-        if user32 and orig_fg:
-            try:
-                curr_fg = user32.GetForegroundWindow()
-                if curr_fg != orig_fg:
-                    user32.SetForegroundWindow(orig_fg)
             except Exception:
                 pass
 
