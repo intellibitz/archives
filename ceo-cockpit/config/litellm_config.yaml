@@ -159,6 +159,6 @@ router_settings:
   num_retries: 2
 
 general_settings:
-  master_key: ceo-cockpit-master-key
+  master_key: os.environ/LITELLM_MASTER_KEY
   trusted_proxy_ranges: []
   dangerously_permit_weak_or_unset_master_key: true
