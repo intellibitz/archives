@@ -38,7 +38,7 @@ model_list:
     caching: true
 - model_name: antigravity-pro
   litellm_params:
-    model: gemini/gemini-pro-latest
+    model: gemini/gemini-3.1-pro-preview
     api_key: os.environ/GEMINI_API_KEY
     rpm: 60
     caching: true
@@ -105,6 +105,39 @@ model_list:
   litellm_params:
     model: ollama/qwen2.5-coder:7b
     api_base: http://localhost:11434
+- model_name: kimi-reasoner
+  litellm_params:
+    model: moonshot/kimi-k3
+    api_key: os.environ/MOONSHOT_API_KEY
+    max_tokens: 8192
+    caching: true
+- model_name: kimi-reasoner
+  litellm_params:
+    model: deepseek/deepseek-reasoner
+    api_key: os.environ/DEEPSEEK_API_KEY
+    caching: true
+- model_name: kimi-coder
+  litellm_params:
+    model: moonshot/kimi-k2.7-code
+    api_key: os.environ/MOONSHOT_API_KEY
+    max_tokens: 8192
+    caching: true
+- model_name: kimi-coder
+  litellm_params:
+    model: deepseek/deepseek-chat
+    api_key: os.environ/DEEPSEEK_API_KEY
+    caching: true
+- model_name: kimi-architect
+  litellm_params:
+    model: moonshot/kimi-k3.1-pro
+    api_key: os.environ/MOONSHOT_API_KEY
+    max_tokens: 8192
+    caching: true
+- model_name: kimi-architect
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
 - model_name: local-coder
   litellm_params:
     model: ollama/qwen2.5-coder:7b
@@ -145,6 +178,15 @@ router_settings:
     - antigravity-flash-latest
     - local-coder
   - openai-gpt4o:
+    - local-coder
+  - kimi-reasoner:
+    - deepseek-reasoner
+    - local-reasoner
+  - kimi-coder:
+    - deepseek-coder
+    - local-coder
+  - kimi-architect:
+    - antigravity-flash-latest
     - local-coder
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

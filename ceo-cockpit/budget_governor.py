@@ -20,19 +20,7 @@ GOVERNOR_FILE = os.path.join(CONFIG_DIR, "budget_governor.json")
 MODEL_PRICING: Dict[str, Dict[str, Any]] = {
     # Google Gemini
     "gemini-flash": {
-        "name": "Gemini 2.5/3.8 Flash",
-        "provider": "Google AI Studio",
-        "category": "Speed & Massive Context (1M+)",
-        "prompt": 0.075,
-        "completion": 0.30,
-        "cached_prompt": 0.018,
-        "context_window": "1M+",
-        "cost_tier": "Ultra-Low ($)",
-        "is_reasoning": False,
-        "is_safeguard": True
-    },
-    "gemini-3.8-flash": {
-        "name": "Gemini 3.8 Flash",
+        "name": "Gemini 2.5 Flash",
         "provider": "Google AI Studio",
         "category": "Speed & Massive Context (1M+)",
         "prompt": 0.075,
@@ -44,18 +32,78 @@ MODEL_PRICING: Dict[str, Dict[str, Any]] = {
         "is_safeguard": True
     },
     "gemini-pro": {
-        "name": "Gemini Pro (Frontier)",
+        "name": "Gemini 2.5 Pro (Frontier)",
         "provider": "Google AI Studio",
         "category": "Frontier Multimodal",
         "prompt": 1.25,
         "completion": 5.00,
         "cached_prompt": 0.3125,
-        "context_window": "1M+",
-        "cost_tier": "Moderate ($$$)",
+        "context_window": "2M+",
+        "cost_tier": "High ($$$)",
         "is_reasoning": False,
         "is_safeguard": False
     },
+    "vertex-gemini-flash": {
+        "name": "Vertex AI Gemini 2.5 Flash",
+        "provider": "Google Vertex AI",
+        "category": "Enterprise Context & Speed",
+        "prompt": 0.075,
+        "completion": 0.30,
+        "cached_prompt": 0.018,
+        "context_window": "1M+",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    "vertex-gemini-pro": {
+        "name": "Vertex AI Gemini 2.5 Pro",
+        "provider": "Google Vertex AI",
+        "category": "Enterprise Frontier Multimodal",
+        "prompt": 1.25,
+        "completion": 5.00,
+        "cached_prompt": 0.3125,
+        "context_window": "2M+",
+        "cost_tier": "High ($$$)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
+    "vertex-claude-3-7-sonnet": {
+        "name": "Vertex AI Claude 3.7 Sonnet",
+        "provider": "Google Vertex AI",
+        "category": "Enterprise Frontier Autonomous Agents",
+        "prompt": 3.00,
+        "completion": 15.00,
+        "cached_prompt": 0.30,
+        "context_window": "200k",
+        "cost_tier": "Premium ($$$$)",
+        "is_reasoning": True,
+        "is_safeguard": False
+    },
     # DeepSeek
+    "deepseek-v4-pro": {
+        "name": "DeepSeek V4 Pro",
+        "provider": "DeepSeek",
+        "category": "Frontier Deep Reasoning & Coding",
+        "prompt": 0.55,
+        "completion": 2.19,
+        "cached_prompt": 0.14,
+        "context_window": "1M+",
+        "cost_tier": "Low ($$)",
+        "is_reasoning": True,
+        "is_safeguard": False
+    },
+    "deepseek-flash": {
+        "name": "DeepSeek Flash",
+        "provider": "DeepSeek",
+        "category": "High-Speed Flash Synthesis",
+        "prompt": 0.14,
+        "completion": 0.28,
+        "cached_prompt": 0.014,
+        "context_window": "1M+",
+        "cost_tier": "Ultra-Low ($)",
+        "is_reasoning": False,
+        "is_safeguard": False
+    },
     "deepseek-reasoner": {
         "name": "DeepSeek Reasoner (R1)",
         "provider": "DeepSeek",
@@ -191,6 +239,18 @@ MODEL_PRICING: Dict[str, Dict[str, Any]] = {
         "is_reasoning": False,
         "is_safeguard": False
     },
+    "claude-3-7-sonnet": {
+        "name": "Claude 3.7 Sonnet",
+        "provider": "Anthropic",
+        "category": "Frontier Autonomous Agents",
+        "prompt": 3.00,
+        "completion": 15.00,
+        "cached_prompt": 0.30,
+        "context_window": "200k",
+        "cost_tier": "Premium ($$$$)",
+        "is_reasoning": True,
+        "is_safeguard": False
+    },
     # Local & Zero-Cost Safeguards
     "local-safeguard": {
         "name": "Zero-Cost Local Safeguard",
@@ -238,6 +298,42 @@ MODEL_PRICING: Dict[str, Dict[str, Any]] = {
         "context_window": "32k",
         "cost_tier": "Free ($0.00)",
         "is_reasoning": False,
+        "is_safeguard": True
+    },
+    "local-32b": {
+        "name": "Local 32B GPU Engine (Qwen 2.5 Coder 32B / DeepSeek R1 32B)",
+        "provider": "Local Hardware (GPU/VRAM)",
+        "category": "Zero-Cost Local 32B Scale",
+        "prompt": 0.00,
+        "completion": 0.00,
+        "cached_prompt": 0.00,
+        "context_window": "32k",
+        "cost_tier": "Free ($0.00)",
+        "is_reasoning": True,
+        "is_safeguard": True
+    },
+    "local-70b": {
+        "name": "Local 70B GPU/RAM Engine (Llama 3.3 70B / Qwen 70B)",
+        "provider": "Local Hardware (GPU+CPU Offload)",
+        "category": "Zero-Cost Local 70B Scale",
+        "prompt": 0.00,
+        "completion": 0.00,
+        "cached_prompt": 0.00,
+        "context_window": "128k",
+        "cost_tier": "Free ($0.00)",
+        "is_reasoning": True,
+        "is_safeguard": True
+    },
+    "local-lmstudio-120b": {
+        "name": "Local LM Studio 120B Engine (Command-R+ / Qwen 120B GGUF)",
+        "provider": "LM Studio Local Server",
+        "category": "Zero-Cost Local 120B Scale",
+        "prompt": 0.00,
+        "completion": 0.00,
+        "cached_prompt": 0.00,
+        "context_window": "128k",
+        "cost_tier": "Free ($0.00)",
+        "is_reasoning": True,
         "is_safeguard": True
     }
 }

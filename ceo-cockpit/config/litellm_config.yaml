@@ -1,16 +1,14 @@
-# LiteLLM proxy for the susi harness.
-#
-# The harness gateway points at this proxy and stays the control point:
-# attribution, price and ledger are the gateway's. LiteLLM owns the provider
-# layer and its cache, so one OpenAI-compatible URL serves DeepSeek,
-# SiliconFlow, DashScope, Gemini and Anthropic, and a repeated request costs nothing.
-#
-#   harness-litellm --config deploy/litellm/config.yaml --port 4000
-#
-# Keys are read from the environment. A model whose key is unset fails only
-# when it is called, never at startup.
-
 model_list:
+  - model_name: deepseek-v4-pro
+    litellm_params:
+      model: deepseek/deepseek-v4-pro
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  - model_name: deepseek-flash
+    litellm_params:
+      model: deepseek/deepseek-flash
+      api_key: os.environ/DEEPSEEK_API_KEY
+
   - model_name: deepseek-chat
     litellm_params:
       model: deepseek/deepseek-chat
@@ -76,12 +74,28 @@ model_list:
 
   - model_name: gemini-flash
     litellm_params:
-      model: gemini/gemini-3.8-flash
+      model: gemini/gemini-2.5-flash
       api_key: os.environ/GEMINI_API_KEY
 
   - model_name: gemini-pro
     litellm_params:
-      model: gemini/gemini-3.1-pro-preview
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GEMINI_API_KEY
+
+  # Google Vertex AI Enterprise Tier
+  - model_name: vertex-gemini-flash
+    litellm_params:
+      model: vertex_ai/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: vertex-gemini-pro
+    litellm_params:
+      model: vertex_ai/gemini-2.5-pro
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: vertex-claude-3-7-sonnet
+    litellm_params:
+      model: vertex_ai/claude-3-7-sonnet@20250219
       api_key: os.environ/GEMINI_API_KEY
 
   # Anthropic Claude (Power Escalation Tier)
@@ -89,16 +103,49 @@ model_list:
     litellm_params:
       model: anthropic/claude-3-5-haiku-20241022
       api_key: os.environ/ANTHROPIC_API_KEY
+      extra_headers:
+        anthropic-organization: "88d2a275-ff8f-4ff4-94cf-c8656b0b117a"
+        anthropic-workspace-id: "wrkspc_011YpM3192a61DxpcKdNnVsS"
 
   - model_name: claude-3-5-sonnet
     litellm_params:
       model: anthropic/claude-3-5-sonnet-20241022
       api_key: os.environ/ANTHROPIC_API_KEY
+      extra_headers:
+        anthropic-organization: "88d2a275-ff8f-4ff4-94cf-c8656b0b117a"
+        anthropic-workspace-id: "wrkspc_011YpM3192a61DxpcKdNnVsS"
+
+  - model_name: claude-3-7-sonnet
+    litellm_params:
+      model: anthropic/claude-3-7-sonnet-20250219
+      api_key: os.environ/ANTHROPIC_API_KEY
+      extra_headers:
+        anthropic-organization: "88d2a275-ff8f-4ff4-94cf-c8656b0b117a"
+        anthropic-workspace-id: "wrkspc_011YpM3192a61DxpcKdNnVsS"
+
+  # Hardened Local Inference Tier (Ollama / LM Studio / Llama.cpp)
+  - model_name: local-ollama
+    litellm_params:
+      model: ollama/qwen2.5-coder:32b
+      api_base: http://127.0.0.1:11434
+
+  - model_name: local-32b
+    litellm_params:
+      model: ollama/qwen2.5-coder:32b
+      api_base: http://127.0.0.1:11434
+
+  - model_name: local-70b
+    litellm_params:
+      model: ollama/llama3.3:70b
+      api_base: http://127.0.0.1:11434
+
+  - model_name: local-lmstudio-120b
+    litellm_params:
+      model: openai/local-120b-gguf
+      api_base: http://127.0.0.1:1234/v1
+      api_key: lm-studio
 
 litellm_settings:
-  # Exact-match response cache, per proxy process. Repeat a request and it is
-  # served from the cache, so the provider is paid once. For a cache shared by
-  # every worker, set REDIS_URL and change type to redis.
   cache: true
   cache_params:
     type: redis
@@ -111,15 +158,7 @@ router_settings:
   routing_strategy: simple-shuffle
   num_retries: 2
 
-# Optional: set LITELLM_MASTER_KEY to require a bearer key on the proxy itself.
-# The gateway already attributes calls; this only hardens the local port.
-# The proxy listens on loopback only, so an unset key is local development.
 general_settings:
-  master_key: os.environ/LITELLM_MASTER_KEY
+  master_key: ceo-cockpit-master-key
+  trusted_proxy_ranges: []
   dangerously_permit_weak_or_unset_master_key: true
-
-
-
-
-
-

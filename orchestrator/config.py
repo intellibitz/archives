@@ -28,6 +28,7 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "")
+MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
 # LiteLLM Proxy Host/Port
@@ -43,7 +44,9 @@ PRICING_TABLE: Dict[str, Dict[str, float]] = {
     # Gemini (Antigravity subscription or free/cheap tier)
     "gemini/gemini-3.8-flash": {"input": 0.10, "cached_input": 0.025, "output": 0.40},
     "gemini/gemini-flash-latest": {"input": 0.10, "cached_input": 0.025, "output": 0.40},
-    "gemini/gemini-pro-latest": {"input": 1.25, "cached_input": 0.3125, "output": 5.00},
+    "gemini/gemini-pro-latest": {"input": 2.00, "cached_input": 0.50, "output": 12.00},
+    "gemini/gemini-3.1-pro": {"input": 2.00, "cached_input": 0.50, "output": 12.00},
+    "gemini/gemini-3.1-pro-preview": {"input": 2.00, "cached_input": 0.50, "output": 12.00},
     "gemini/gemini-2.0-flash": {"input": 0.10, "cached_input": 0.025, "output": 0.40},
     "gemini/gemini-1.5-pro": {"input": 1.25, "cached_input": 0.3125, "output": 5.00},
     
@@ -61,6 +64,11 @@ PRICING_TABLE: Dict[str, Dict[str, float]] = {
     # DeepSeek (Pay-as-you-go micro tokens)
     "deepseek/deepseek-chat": {"input": 0.14, "cached_input": 0.003, "output": 0.60},
     "deepseek/deepseek-reasoner": {"input": 0.55, "cached_input": 0.14, "output": 2.19},
+    
+    # Moonshot AI / Kimi (Context caching enabled)
+    "moonshot/kimi-k3": {"input": 3.00, "cached_input": 0.30, "output": 15.00},
+    "moonshot/kimi-k3.1-pro": {"input": 2.00, "cached_input": 0.20, "output": 10.00},
+    "moonshot/kimi-k2.7-code": {"input": 0.95, "cached_input": 0.16, "output": 4.00},
     
     # Zhipu GLM (Pay-as-you-go sub-cent)
     "openai/glm-4-flash": {"input": 0.00, "cached_input": 0.00, "output": 0.00}, # Free Tier
@@ -81,11 +89,14 @@ def get_model_for_role(role: str) -> str:
     has_gemini = bool(GEMINI_API_KEY)
     has_deepseek = bool(DEEPSEEK_API_KEY)
     has_zhipu = bool(ZHIPU_API_KEY)
+    has_moonshot = bool(MOONSHOT_API_KEY)
 
     if role == "architect":
-        # Preferred: Claude 3.5/3.7 Sonnet -> OpenAI GPT-4o -> Gemini 2.0 Flash
+        # Preferred: Claude 3.5/3.7 Sonnet -> Kimi K3.1 Pro -> OpenAI GPT-4o -> Gemini 2.0 Flash
         if has_anthropic:
             return "anthropic/claude-3-5-sonnet-20241022"
+        if has_moonshot:
+            return "moonshot/kimi-k3.1-pro"
         if has_openai:
             return "openai/gpt-4o"
         if has_gemini:
@@ -103,7 +114,9 @@ def get_model_for_role(role: str) -> str:
         return "deepseek/deepseek-chat"
 
     elif role == "reasoner":
-        # Preferred: DeepSeek-R1 (cheap elite reasoning) -> OpenAI o3-mini/o1 -> Claude
+        # Preferred: Kimi K3 -> DeepSeek-R1 -> OpenAI o3-mini/o1 -> Claude
+        if has_moonshot:
+            return "moonshot/kimi-k3"
         if has_deepseek:
             return "deepseek/deepseek-reasoner"
         if has_openai:
@@ -113,7 +126,9 @@ def get_model_for_role(role: str) -> str:
         return "gemini/gemini-2.0-flash"
 
     elif role == "coder":
-        # Preferred: DeepSeek-V3 (cheap & fast) or Claude 3.5 Sonnet -> GPT-4o
+        # Preferred: Kimi K2.7 Code -> DeepSeek-V3 -> Claude 3.5 Sonnet -> GPT-4o
+        if has_moonshot:
+            return "moonshot/kimi-k2.7-code"
         if has_deepseek:
             return "deepseek/deepseek-chat"
         if has_anthropic:
@@ -154,6 +169,7 @@ def get_active_providers_summary() -> Dict[str, Any]:
         "Anthropic (Claude)": {"status": bool(ANTHROPIC_API_KEY), "role": "Architect & Reviewer (Lead Planner)"},
         "OpenAI (Codex)": {"status": bool(OPENAI_API_KEY), "role": "Algorithmic Reasoning Specialist"},
         "DeepSeek": {"status": bool(DEEPSEEK_API_KEY), "role": "R1 Deep Reasoning & V3 Coding Swarm"},
+        "Moonshot (Kimi)": {"status": bool(MOONSHOT_API_KEY), "role": "K3 Reasoning, K2.7 Code & K3.1 Pro"},
         "Zhipu GLM": {"status": bool(ZHIPU_API_KEY), "role": "Utility, Scraping & Fast Unit Test Gen"},
         "OpenRouter": {"status": bool(OPENROUTER_API_KEY), "role": "Universal Fallback Router"},
     }

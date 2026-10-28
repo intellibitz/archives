@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ceo-cockpit-antigravity": {
+      "command": "python",
+      "args": [
+        "F:/src/github.com/intellibitz/archives/mcp/servers/mcp-google-antigravity/server.py"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}

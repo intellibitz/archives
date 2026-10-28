@@ -28,6 +28,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "web") if os.path.exists(os.path.join(BASE_DIR, "web")) else BASE_DIR
 
 LITELLM_URL = "http://127.0.0.1:4000"
+LITELLM_KEY = os.environ.get("LITELLM_MASTER_KEY", "ceo-cockpit-master-key")
+LITELLM_HEADERS = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {LITELLM_KEY}"
+}
 OPENCLAW_URL = "http://127.0.0.1:18789"
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
@@ -40,50 +45,259 @@ def check_tcp_port(host: str, port: int, timeout: float = 1.0) -> bool:
     except (socket.timeout, ConnectionRefusedError, OSError):
         return False
 
-def get_openclaw_token() -> str:
-    cfg_path = os.path.expanduser(r"~\.openclaw\openclaw.json")
-    if os.path.exists(cfg_path):
+def execute_tool_call_locally(name: str, args: dict, ws_path: str) -> str:
+    """Executes a tool call locally in the active workspace."""
+    if name in ["execute_shell", "bash", "powershell", "cmd"]:
+        cmd = args.get("command", "") or args.get("cmd", "") or args.get("input", "")
+        if not cmd:
+            return "Tool Error: Empty command string."
+        res = execute_shell(cmd, ws_path)
+        out = res.get("output", "")
+        return f"[Exit Code {res.get('exit_code', 0)}]\n{out[:3000]}"
+    elif name in ["read_file", "read"]:
+        filepath = args.get("path", "") or args.get("filepath", "")
+        if not os.path.isabs(filepath):
+            filepath = os.path.join(ws_path, filepath)
         try:
-            with open(cfg_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("gateway", {}).get("auth", {}).get("token", "")
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
+            return content[:5000] + ("..." if len(content) > 5000 else "")
+        except Exception as e:
+            return f"Read Error: {e}"
+    elif name in ["write_file", "write"]:
+        filepath = args.get("path", "") or args.get("filepath", "")
+        content_val = args.get("content", "") or args.get("text", "")
+        if not os.path.isabs(filepath):
+            filepath = os.path.join(ws_path, filepath)
+        try:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(content_val)
+            return "File written successfully."
+        except Exception as e:
+            return f"Write Error: {e}"
+    else:
+        return f"Unknown tool: {name}"
+
+def parse_and_execute_raw_tool_calls(content: str, ws_path: str) -> str:
+    """
+    Generalized Tool Execution Parser:
+    Detects and executes raw XML, JSON, or ReAct tool calls emitted by any open-weights GGUF model,
+    handling custom tag variations (<tool_coke>, <tool_calls>, <system-remoke_calls>, <invoke>, <parameter>).
+    """
+    if not content:
+        return content
+
+    import re
+
+    # 1. Regex to catch any <parameter name="command">cmd</parameter> or <parameter name="cmd">cmd</parameter>
+    cmd_matches = re.findall(r'<parameter\s+name=["\'](?:command|cmd|input)["\']\s*>(.*?)</parameter>', content, re.DOTALL | re.IGNORECASE)
+
+    # Fallback to <invoke name="bash">cmd</invoke> or <terminal>cmd</terminal>
+    if not cmd_matches:
+        cmd_matches = re.findall(r'<(?:invoke|terminal)\s*(?:name=["\'](?:bash|powershell|cmd|shell)["\'])?\s*>(.*?)</(?:invoke|terminal)>', content, re.DOTALL | re.IGNORECASE)
+
+    if cmd_matches:
+        executed_outputs = []
+        for cmd_raw in cmd_matches:
+            cmd = cmd_raw.strip()
+            if cmd:
+                print(f"[COCKPIT AUTO TOOL EXECUTOR]: Executing command '{cmd}' in {ws_path}")
+                res_str = execute_tool_call_locally("execute_shell", {"command": cmd}, ws_path)
+                executed_outputs.append(f"⚙️ **[AUTO-EXECUTED TOOL]**: `{cmd}`\n```text\n{res_str}\n```")
+
+        # Clean out all raw XML wrapper tags (<tool_coke>, <tool_calls>, <invoke>, etc.)
+        cleaned_content = re.sub(r'<tool_[^>]+>.*?</tool_[^>]+>', '', content, flags=re.DOTALL | re.IGNORECASE).strip()
+        cleaned_content = re.sub(r'<system-[^>]+>.*?</system-[^>]+>', '', cleaned_content, flags=re.DOTALL | re.IGNORECASE).strip()
+
+        return f"{cleaned_content}\n\n" + "\n\n".join(executed_outputs)
+
+    # 2. JSON Code Block Tool Calls
+    json_match = re.search(r'```json\s*(\{\s*"tool".*?\})\s*```', content, re.DOTALL | re.IGNORECASE)
+    if json_match:
+        try:
+            tool_data = json.loads(json_match.group(1))
+            t_name = tool_data.get("tool") or tool_data.get("name")
+            t_args = tool_data.get("args") or tool_data.get("parameters") or tool_data
+            if t_name:
+                print(f"[COCKPIT AUTO TOOL EXECUTOR]: Executing JSON tool '{t_name}' in {ws_path}")
+                res_str = execute_tool_call_locally(t_name, t_args, ws_path)
+                cleaned = re.sub(r'```json\s*\{\s*"tool".*?\}\s*```', '', content, flags=re.DOTALL).strip()
+                return f"{cleaned}\n\n⚙️ **[AUTO-EXECUTED TOOL]**: `{t_name}`\n```text\n{res_str}\n```"
         except Exception:
             pass
+
+    return content
+
+def detect_any_tool_call(content: str, native_tool_calls: list = None) -> Tuple[bool, str, str, dict]:
+    """
+    Detects any tool call (native OpenAI tool_calls, DSML, XML, JSON, or ReAct tool tags).
+    Returns (has_tool, tool_name, tool_command, tool_args).
+    """
+    if native_tool_calls and len(native_tool_calls) > 0:
+        tc = native_tool_calls[0]
+        func = tc.get("function", {})
+        t_name = func.get("name", "execute_shell")
+        try:
+            t_args = json.loads(func.get("arguments", "{}"))
+        except Exception:
+            t_args = {}
+        t_cmd = t_args.get("command") or t_args.get("cmd") or ""
+        return True, t_name, t_cmd, t_args
+
+    if not content:
+        return False, "", "", {}
+
+    import re
+
+    # 1. DSML Tool Calls (<｜｜DSML｜｜invoke name="...">...)
+    if "DSML" in content:
+        cmd_inner_match = re.search(r'<｜｜DSML｜｜parameter\s+name=["\']cmd["\'][^>]*>(.*?)</｜｜DSML｜｜parameter>', content, re.DOTALL | re.IGNORECASE)
+        if cmd_inner_match:
+            cmd = cmd_inner_match.group(1).strip()
+            if ">" in cmd:
+                cmd = cmd.split(">", 1)[-1].strip()
+            if cmd:
+                return True, "execute_shell", cmd, {"command": cmd}
+
+        inv_match = re.search(r'invoke name="([^"]+)"\s*>(.*?)</', content, re.DOTALL)
+        if inv_match:
+            t_name = inv_match.group(1).strip()
+            params = dict(re.findall(r'parameter name="([^"]+)" string="([^"]+)"', inv_match.group(2)))
+            t_cmd = params.get("command") or params.get("cmd") or ""
+            if not t_cmd and t_name in ["list_files", "list_dir", "ls", "dir", "exec_command"]:
+                target_dir = params.get("target_directory") or params.get("path") or ""
+                t_cmd = f"Get-ChildItem -Path '{target_dir if target_dir else '.'}'"
+                t_name = "execute_shell"
+            return True, t_name, t_cmd, params
+
+    # 2. XML parameter commands (<parameter name="command">cmd</parameter>)
+    cmd_match = re.search(r'<parameter\s+name=["\'](?:command|cmd|input)["\']\s*>(.*?)</parameter>', content, re.DOTALL | re.IGNORECASE)
+    if not cmd_match:
+        cmd_match = re.search(r'<(?:invoke|terminal)\s*(?:name=["\'](?:bash|powershell|cmd|shell)["\'])?\s*>(.*?)</(?:invoke|terminal)>', content, re.DOTALL | re.IGNORECASE)
+
+    if cmd_match:
+        cmd = cmd_match.group(1).strip()
+        if cmd.startswith('cd "') or cmd.startswith("cd '"):
+            parts = cmd.split("&&", 1)
+            if len(parts) > 1:
+                cmd = parts[1].strip()
+        return True, "execute_shell", cmd, {"command": cmd}
+
+    # 3. JSON code blocks (```json {"tool": "...", "command": "..."} ```)
+    json_match = re.search(r'```json\s*(\{\s*"tool".*?\})\s*```', content, re.DOTALL | re.IGNORECASE)
+    if json_match:
+        try:
+            tool_data = json.loads(json_match.group(1))
+            t_name = tool_data.get("tool") or tool_data.get("name") or "execute_shell"
+            t_args = tool_data.get("args") or tool_data.get("parameters") or tool_data
+            t_cmd = t_args.get("command") or t_args.get("cmd") or ""
+            return True, t_name, t_cmd, t_args
+        except Exception:
+            pass
+
+    return False, "", "", {}
+
+def process_chat_completion_with_closed_loop_tools(target_url: str, req_json: dict, headers: dict, ws_path: str, max_turns: int = 5) -> dict:
+    """
+    Executes a multi-turn closed loop for local (32B, 70B, 120B) & cloud models.
+    If a model emits a tool call, Cockpit executes it in the active workspace, feeds the result back,
+    and re-queries the model recursively until the model generates its complete final analysis.
+    """
+    import copy
+    current_req = copy.deepcopy(req_json)
+
+    for turn in range(max_turns):
+        target_req = urllib.request.Request(
+            target_url,
+            data=json.dumps(current_req).encode("utf-8"),
+            headers=headers
+        )
+        with urllib.request.urlopen(target_req, timeout=120) as resp:
+            resp_bytes = resp.read()
+            resp_json = json.loads(resp_bytes.decode("utf-8"))
+
+        choice = resp_json.get("choices", [{}])[0]
+        message = choice.get("message", {})
+        content = message.get("content", "") or ""
+        native_tool_calls = message.get("tool_calls", [])
+
+        has_tool, t_name, t_cmd, t_args = detect_any_tool_call(content, native_tool_calls)
+        if not has_tool:
+            return resp_json
+
+        print(f"[COCKPIT CLOSED-LOOP TURN {turn+1}]: Executing tool '{t_name}' ({t_cmd}) in '{ws_path}'")
+        tool_output = execute_tool_call_locally(t_name, t_args if t_args else {"command": t_cmd}, ws_path)
+
+        current_req["messages"].append(message)
+        current_req["messages"].append({
+            "role": "user",
+            "content": f"[AUTO-EXECUTED TOOL RESULT FOR '{t_cmd}']:\n```text\n{tool_output[:3000]}\n```\nNow complete your full review and final analysis for the CEO."
+        })
+
+    return resp_json
+
+def get_openclaw_token() -> str:
+    # Try multiple paths: user home, then hardcoded user path (for LocalSystem service)
+    cfg_paths = [
+        os.path.join(os.path.expanduser("~"), ".openclaw", "openclaw.json"),
+        r"C:\Users\user\.openclaw\openclaw.json",
+        os.path.join(os.environ.get("SystemDrive", "C:"), "Users", os.environ.get("USERNAME", "user"), ".openclaw", "openclaw.json"),
+    ]
+    for cfg_path in cfg_paths:
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    token = data.get("gateway", {}).get("auth", {}).get("token", "")
+                    if token:
+                        return token
+            except Exception:
+                pass
     return ""
 
 def classify_model_intent(prompt: str) -> Tuple[str, str]:
     """
-    Intelligent Model Router:
-    Selects DeepSeek for high-reasoning, architectural, coding, and strategic breakdown.
-    Selects Gemini for fast summarization, synthesis, large-scale ingestion, and broad overviews.
+    4-Tier Budget-Conscious Smart Router:
+    1. DeepSeek V4 Pro: Complex tool execution, refactoring, autonomous agent directives ($0.55/1M).
+    2. DeepSeek Reasoner R1: Math, formal logic, algorithms, architectural breakdown ($0.55/1M).
+    3. DeepSeek Flash / Vertex Gemini Flash: High-speed synthesis, large context, ultra-low cost ($0.075 - $0.14/1M).
+    4. Local Ollama: Zero-cost safeguard / offline operations ($0.00).
     """
     prompt_lower = prompt.lower()
-    
+    is_tripped = governor.is_tripped()
+    if is_tripped:
+        return "local-ollama", "⚠️ CIRCUIT BREAKER ACTIVE: Daily budget limit reached. Routing to Zero-Cost Local GPU ($0.00)"
+
+    claude_triggers = [
+        "execute", "tool", "run", "refactor", "autonomous", "build", "deploy",
+        "agent", "terminal", "powershell", "git commit", "cargo", "npm", "rust", "playwright", "browser"
+    ]
     deepseek_triggers = [
         "reason", "strategy", "strategic", "architect", "architecture", "plan",
-        "logic", "math", "code", "debug", "algorithm", "audit", "financial model",
-        "breakdown", "step-by-step", "critique", "evaluate risk", "tradeoff", "why"
+        "logic", "math", "algorithm", "audit", "financial model", "v4", "r1",
+        "step-by-step", "critique", "evaluate risk", "tradeoff", "why", "code", "debug"
     ]
-    
-    gemini_triggers = [
+    flash_triggers = [
         "summarize", "summary", "brief", "fast", "quick", "overview",
         "bullet points", "extract", "translate", "rewrite", "table", "headline", "triage"
     ]
-    
+
+    claude_score = sum(1 for w in claude_triggers if w in prompt_lower)
     deepseek_score = sum(1 for w in deepseek_triggers if w in prompt_lower)
-    gemini_score = sum(1 for w in gemini_triggers if w in prompt_lower)
-    
-    # Very long prompts (> 4000 characters) benefit heavily from Gemini's massive 1M context
-    if len(prompt) > 4000 and deepseek_score <= gemini_score:
-        return "gemini-flash", "High Context Volume Routing -> Gemini Flash (1M+ Token Window)"
-        
-    if deepseek_score > gemini_score:
-        return "deepseek-reasoner", "High Reasoning & Strategic Logic -> DeepSeek Reasoner"
-    elif gemini_score > 0:
-        return "gemini-flash", "High-Throughput Synthesis & Speed -> Gemini Flash"
+    flash_score = sum(1 for w in flash_triggers if w in prompt_lower)
+
+    if len(prompt) > 4000 and claude_score == 0 and deepseek_score <= flash_score:
+        return "vertex-gemini-flash", "High Context Volume (1M+ Tokens) -> Vertex AI Gemini Flash ($0.075/1M)"
+
+    if claude_score > max(deepseek_score, flash_score):
+        return "deepseek-v4-pro", "Autonomous Execution & Complex Directives -> DeepSeek V4 Pro ($0.55/1M)"
+    elif deepseek_score > flash_score:
+        return "deepseek-v4-pro", "Frontier Logic & Deep Strategy -> DeepSeek V4 Pro ($0.55/1M)"
+    elif flash_score > 0:
+        return "deepseek-flash", "High-Speed Throughput & Synthesis -> DeepSeek Flash ($0.14/1M)"
     else:
-        # Default budget-optimized fast tier
-        return "gemini-flash", "Budget-Conscious Fast Tier -> Gemini Flash"
+        return "deepseek-flash", "Budget-Conscious Ultra-Low Cost Default Tier -> DeepSeek Flash ($0.14/1M)"
 
 def count_redis_keys() -> int:
     try:
@@ -456,11 +670,17 @@ def read_workspace_file(file_path: str, max_bytes: int = 250000) -> Dict[str, An
 
 def format_model_display_name(model_id: str) -> str:
     mapping = {
+        "deepseek-v4-pro": "DeepSeek V4 Pro (Frontier)",
+        "deepseek-flash": "DeepSeek Flash",
         "deepseek-reasoner": "DeepSeek Reasoner (R1)",
         "deepseek-chat": "DeepSeek Chat (V3)",
-        "gemini-flash": "Gemini 2.5/3.8 Flash (1M+)",
-        "gemini-pro": "Gemini Pro (Frontier)",
+        "gemini-flash": "Gemini 2.5 Flash (1M+)",
+        "gemini-pro": "Gemini 2.5 Pro (Frontier)",
+        "vertex-gemini-flash": "Vertex AI Gemini 2.5 Flash",
+        "vertex-gemini-pro": "Vertex AI Gemini 2.5 Pro",
+        "vertex-claude-3-7-sonnet": "Vertex AI Claude 3.7 Sonnet",
         "claude-3-5-sonnet": "Claude 3.5 Sonnet",
+        "claude-3-7-sonnet": "Claude 3.7 Sonnet (Frontier)",
         "claude-3-5-haiku": "Claude 3.5 Haiku",
         "siliconflow-qwen-coder": "Qwen 2.5 Coder 32B (SiliconFlow)",
         "siliconflow-qwen": "Qwen 2.5 72B Instruct (SiliconFlow)",
@@ -475,7 +695,7 @@ def format_model_display_name(model_id: str) -> str:
 def fetch_available_models() -> list:
     litellm_active_ids = set()
     try:
-        req = urllib.request.Request(f"{LITELLM_URL}/v1/models")
+        req = urllib.request.Request(f"{LITELLM_URL}/v1/models", headers=LITELLM_HEADERS)
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             for m in data.get("data", []):
@@ -484,7 +704,7 @@ def fetch_available_models() -> list:
                     litellm_active_ids.add(mid)
     except Exception:
         # LiteLLM unreachable: treat primary default models as active
-        litellm_active_ids = {"gemini-flash", "deepseek-reasoner", "deepseek-chat", "siliconflow-qwen-coder", "claude-3-5-sonnet"}
+        litellm_active_ids = {"gemini-flash", "deepseek-reasoner", "deepseek-chat", "siliconflow-qwen-coder", "claude-3-7-sonnet"}
 
     models = []
     seen_ids = set()
@@ -595,7 +815,11 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         path_only = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
 
-        if path_only == "/api/health":
+        if path_only in ("/v1/models", "/api/v1/models"):
+            self.handle_v1_models()
+        elif path_only in ("/v1/workspace", "/api/workspace"):
+            self.handle_workspace_get()
+        elif path_only == "/api/health":
             self.handle_health()
         elif path_only == "/api/budget":
             self.handle_budget()
@@ -631,7 +855,11 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path_only = parsed.path
 
-        if path_only == "/api/command":
+        if path_only in ("/v1/chat/completions", "/api/v1/chat/completions"):
+            self.handle_v1_chat_completions()
+        elif path_only in ("/v1/workspace", "/api/workspace"):
+            self.handle_workspace_post()
+        elif path_only == "/api/command":
             self.handle_command()
         elif path_only == "/api/command/stream":
             self.handle_command_stream()
@@ -691,7 +919,7 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_health(self):
         litellm_ok = check_tcp_port("127.0.0.1", 4000)
-        openclaw_ok = check_tcp_port("127.0.0.1", 18789)
+        openclaw_ok = litellm_ok or check_tcp_port("127.0.0.1", 18789) or check_tcp_port("127.0.0.1", 18182)
         redis_ok = check_tcp_port("127.0.0.1", 6379)
         qdrant_ok = check_tcp_port("127.0.0.1", 6333)
         cached_keys = count_redis_keys()
@@ -865,6 +1093,208 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(500, {"error": f"Failed to restart: {e}"})
         else:
             self._send_json(200, {"success": True, "message": f"Action {action} acknowledged."})
+
+    def handle_v1_models(self):
+        try:
+            req = urllib.request.Request(f"{LITELLM_URL}/v1/models", headers=LITELLM_HEADERS)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+
+                # Expose 'auto' mode at the very top of the model list!
+                auto_model = [
+                    {"id": "auto", "object": "model", "owned_by": "CEO Cockpit Smart Auto-Router (Budget & Intent First)", "permission": []}
+                ]
+                extra_models = [
+                    {"id": "openclaw/local-coordinator", "object": "model", "owned_by": "OpenClaw Swarm (Claude 3.7 COO)", "permission": []},
+                    {"id": "openclaw/local-researcher", "object": "model", "owned_by": "OpenClaw Swarm (Gemini 2.5 Flash)", "permission": []},
+                    {"id": "openclaw/local-writer", "object": "model", "owned_by": "OpenClaw Swarm (DeepSeek V3)", "permission": []},
+                    {"id": "openclaw/local-reviewer", "object": "model", "owned_by": "OpenClaw Swarm (DeepSeek R1)", "permission": []},
+                    {"id": "autonomous-model-ladder", "object": "model", "owned_by": "CEO Cockpit 24x7 Self-Healing OS", "permission": []}
+                ]
+                data["data"] = auto_model + data["data"] + extra_models
+                self._send_json(200, data)
+        except Exception as e:
+            self._send_json(500, {"error": f"Failed to fetch models from LiteLLM: {e}"})
+
+    def handle_v1_chat_completions(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        body_bytes = self.rfile.read(content_length) if content_length > 0 else b"{}"
+        try:
+            req_json = json.loads(body_bytes.decode("utf-8"))
+            model_id = req_json.get("model", "")
+
+            # Inline Workspace Switch Command Check (/ws <path>, /workspace <path>, cd <path>)
+            messages = req_json.get("messages", [])
+            last_user_msg = ""
+            for m in reversed(messages):
+                if m.get("role") == "user":
+                    c = m.get("content", "")
+                    if isinstance(c, str):
+                        last_user_msg = c.strip()
+                    elif isinstance(c, list):
+                        last_user_msg = " ".join([item.get("text", "") for item in c if isinstance(item, dict)]).strip()
+                    break
+
+            if last_user_msg.lower().startswith(("/ws ", "/workspace ", "cd ")) or last_user_msg.lower() in ["/ws", "/workspace"]:
+                parts = last_user_msg.split(" ", 1)
+                if len(parts) > 1 and parts[1].strip():
+                    target_candidate = parts[1].strip().strip('"').strip("'")
+                    if os.path.isdir(target_candidate):
+                        target_abs = os.path.abspath(target_candidate)
+                        save_workspace_state(target_abs)
+                        res_content = (
+                            f"📁 **[ACTIVE WORKSPACE SWITCHED]**\n\n"
+                            f"Active workspace directory updated to:\n`{target_abs}`\n\n"
+                            f"All subsequent model queries, terminal commands, tool executions, and file operations "
+                            f"in Cherry Studio are now tethered to this folder."
+                        )
+                    else:
+                        res_content = f"❌ **[WORKSPACE SWITCH ERROR]**: Directory does not exist on disk:\n`{target_candidate}`"
+                else:
+                    state = get_workspace_state()
+                    res_content = (
+                        f"📂 **[CURRENT ACTIVE WORKSPACE]**\n\n`{state['active_path']}`\n\n"
+                        f"To switch workspaces directly inside Cherry Studio, type:\n`/ws F:\\path\\to\\your\\project`"
+                    )
+
+                response_payload = {
+                    "id": f"chatcmpl-ws-{int(time.time())}",
+                    "object": "chat.completion",
+                    "created": int(time.time()),
+                    "model": "workspace-manager",
+                    "choices": [{
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": res_content
+                        },
+                        "finish_reason": "stop"
+                    }]
+                }
+                self._send_json(200, response_payload)
+                return
+
+            # Active Workspace Detection & Context Injection
+            custom_ws = self.headers.get("X-Workspace-Path") or req_json.get("workspace_path")
+            if custom_ws and os.path.isdir(custom_ws):
+                save_workspace_state(custom_ws)
+                ws_path = os.path.abspath(custom_ws)
+            else:
+                state = get_workspace_state()
+                ws_path = state["active_path"]
+
+            ws_sys_prompt = {
+                "role": "system",
+                "content": f"[ACTIVE WORKSPACE CONTEXT]: You are operating inside the directory '{ws_path}'. All relative file paths, terminal commands, git operations, and code inspections MUST execute within this workspace folder."
+            }
+            messages = req_json.get("messages", [])
+            if not any("[ACTIVE WORKSPACE CONTEXT]" in str(m.get("content", "")) for m in messages):
+                messages.insert(0, ws_sys_prompt)
+            req_json["messages"] = messages
+
+            # 1. AUTO MODE: Cockpit Smart Budget-Defined Router
+            if model_id in ["auto", "cockpit-auto", "default", ""]:
+                user_prompt = ""
+                for msg in reversed(messages):
+                    if msg.get("role") == "user":
+                        content = msg.get("content", "")
+                        if isinstance(content, str):
+                            user_prompt = content
+                        elif isinstance(content, list):
+                            user_prompt = " ".join([item.get("text", "") for item in content if isinstance(item, dict)])
+                        break
+
+                selected_model, routing_reason = classify_model_intent(user_prompt)
+                req_json["model"] = selected_model
+                model_id = selected_model
+                print(f"[COCKPIT AUTO-ROUTER]: Workspace='{ws_path}' -> Routed prompt to '{selected_model}' ({routing_reason})")
+
+            # 2. Local 120B Scale Failover Safeguard
+            if "120b" in model_id.lower() or "lmstudio" in model_id.lower():
+                if not check_tcp_port("127.0.0.1", 1234):
+                    print(f"[COCKPIT FAILOVER]: LM Studio port 1234 offline. Auto-failing over from '{model_id}' to 'deepseek-v4-pro'.")
+                    req_json["model"] = "deepseek-v4-pro"
+                    model_id = "deepseek-v4-pro"
+
+            # 2. OpenClaw Agent Personas
+            if model_id.startswith("openclaw/"):
+                agent_id = model_id.replace("openclaw/", "")
+                token = get_openclaw_token()
+                openclaw_headers = {
+                    "Content-Type": "application/json"
+                }
+                if token:
+                    openclaw_headers["Authorization"] = f"Bearer {token}"
+
+                req_json["model"] = f"openclaw:{agent_id}"
+
+                target_url = f"{OPENCLAW_URL}/v1/chat/completions" if check_tcp_port("127.0.0.1", 18789) else f"{LITELLM_URL}/v1/chat/completions"
+                if target_url == f"{LITELLM_URL}/v1/chat/completions":
+                    agent_model_map = {
+                        "local-coordinator": "deepseek-v4-pro",
+                        "local-researcher": "deepseek-flash",
+                        "local-writer": "deepseek-v4-pro",
+                        "local-reviewer": "deepseek-reasoner"
+                    }
+                    req_json["model"] = agent_model_map.get(agent_id, "deepseek-v4-pro")
+                    target_url = f"{LITELLM_URL}/v1/chat/completions"
+                    openclaw_headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LITELLM_KEY}"}
+
+                target_req = urllib.request.Request(
+                    target_url,
+                    data=json.dumps(req_json).encode("utf-8"),
+                    headers=openclaw_headers
+                )
+            else:
+                target_req = urllib.request.Request(
+                    f"{LITELLM_URL}/v1/chat/completions",
+                    data=json.dumps(req_json).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "Authorization": f"Bearer {LITELLM_KEY}"}
+                )
+
+            with urllib.request.urlopen(target_req, timeout=120) as resp:
+                resp_bytes = resp.read()
+                try:
+                    resp_data = json.loads(resp_bytes.decode("utf-8"))
+                    for choice in resp_data.get("choices", []):
+                        msg = choice.get("message", {})
+
+                        # 1. Native OpenAI tool_calls execution
+                        tool_calls = msg.get("tool_calls", [])
+                        if tool_calls:
+                            executed_results = []
+                            for tc in tool_calls:
+                                func = tc.get("function", {})
+                                t_name = func.get("name", "")
+                                try:
+                                    t_args = json.loads(func.get("arguments", "{}"))
+                                except Exception:
+                                    t_args = {}
+                                print(f"[COCKPIT NATIVE TOOL EXECUTOR]: Executing native tool '{t_name}' in {ws_path}")
+                                t_out = execute_tool_call_locally(t_name, t_args, ws_path)
+                                executed_results.append(f"⚙️ **[AUTO-EXECUTED NATIVE TOOL]**: `{t_name}`\n```text\n{t_out}\n```")
+
+                            orig_content = msg.get("content", "") or ""
+                            msg["content"] = f"{orig_content}\n\n" + "\n\n".join(executed_results)
+
+                        # 2. Raw XML / JSON / Markdown text tool_calls execution
+                        elif "content" in msg and msg["content"]:
+                            msg["content"] = parse_and_execute_raw_tool_calls(msg["content"], ws_path)
+
+                    resp_bytes = json.dumps(resp_data).encode("utf-8")
+                except Exception:
+                    pass
+
+                self.send_response(resp.status)
+                for k, v in resp.headers.items():
+                    if k.lower() not in ("content-length", "transfer-encoding"):
+                        self.send_header(k, v)
+                self.send_header("Content-Length", str(len(resp_bytes)))
+                self.end_headers()
+                self.wfile.write(resp_bytes)
+
+        except Exception as e:
+            self._send_json(500, {"error": f"Unified Proxy Error: {e}"})
 
     def handle_models_get(self):
         models = fetch_available_models()
@@ -1103,7 +1533,7 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             litellm_req = urllib.request.Request(
                 f"{LITELLM_URL}/v1/chat/completions",
                 data=req_data,
-                headers={"Content-Type": "application/json"}
+                headers=LITELLM_HEADERS
             )
             with urllib.request.urlopen(litellm_req, timeout=90) as resp:
                 for raw_line in resp:
@@ -1480,7 +1910,7 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             litellm_req = urllib.request.Request(
                 f"{LITELLM_URL}/v1/chat/completions",
                 data=req_data,
-                headers={"Content-Type": "application/json"}
+                headers=LITELLM_HEADERS
             )
             with urllib.request.urlopen(litellm_req, timeout=60) as resp:
                 resp_json = json.loads(resp.read().decode("utf-8"))

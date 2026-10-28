@@ -32,6 +32,7 @@ FEATURE_MODULES = [
     "modules.benchmark",
     "modules.reports",
     "modules.secrets_guardian",
+    "modules.autonomous",
 ]
 
 

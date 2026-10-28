@@ -6,13 +6,13 @@
   "circuit_breaker_state": "NORMAL",
   "circuit_breaker_trip_reason": "",
   "tripped_at": null,
-  "today_spend_usd": 0.000286,
+  "today_spend_usd": 0.0,
   "month_spend_usd": 0.001574,
   "lifetime_spend_usd": 0.001574,
   "cached_savings_usd": 0.032,
   "total_requests": 22,
   "cached_requests": 16,
-  "last_reset_date": "2026-10-24",
+  "last_reset_date": "2026-10-28",
   "audit_log": [
     {
       "timestamp": 1792769797.00981,
@@ -35,6 +35,30 @@
     {
       "timestamp": 1792783383.6719594,
       "date": "2026-10-24T00:53:03.671959",
+      "event": "DAILY_ROLLOVER",
+      "details": "Rollover to new operational day. Today's spend reset."
+    },
+    {
+      "timestamp": 1792866602.1865103,
+      "date": "2026-10-25T00:00:02.186510",
+      "event": "DAILY_ROLLOVER",
+      "details": "Rollover to new operational day. Today's spend reset."
+    },
+    {
+      "timestamp": 1792958673.7374547,
+      "date": "2026-10-26T01:34:33.737454",
+      "event": "DAILY_ROLLOVER",
+      "details": "Rollover to new operational day. Today's spend reset."
+    },
+    {
+      "timestamp": 1793074247.4953809,
+      "date": "2026-10-27T09:40:47.495381",
+      "event": "DAILY_ROLLOVER",
+      "details": "Rollover to new operational day. Today's spend reset."
+    },
+    {
+      "timestamp": 1793143388.816956,
+      "date": "2026-10-28T04:53:08.816956",
       "event": "DAILY_ROLLOVER",
       "details": "Rollover to new operational day. Today's spend reset."
     }
