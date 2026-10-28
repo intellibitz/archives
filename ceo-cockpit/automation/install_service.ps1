@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 
 $TaskName = "ApprovalButtonAutoClicker"
 $LegacyTaskName = "AutoKeepAllService"
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = "F:\src\github.com\intellibitz\archives\ceo-cockpit\automation"
 $RunnerScript = Join-Path $ScriptDir "run_auto_click_decisions.ps1"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
@@ -31,10 +31,10 @@ $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowSt
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 
 # Task Settings: Never stop, allow on battery, restart on failure
-$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 0) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
+$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 0)
 
 try {
-    Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Description "CEO Cockpit Permission & Decision Dialog Auto-Clicker" -ErrorAction Stop
+    Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Description "Approval Button Auto-Clicker for IDEs and Prompt Windows"
     Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop
     Write-Host "[OK] Task '$TaskName' registered and started successfully!" -ForegroundColor Green
 } catch {

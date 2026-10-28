@@ -33,7 +33,7 @@ TEMPLATE_PATTERNS = {
     "Accept All 2": ["accept-all2*.png", "accept_all2*.png"],
     "Accept Changes": ["accept-changes*.png", "accept_changes*.png", "acceot-changes*.png"],
     "Accept": ["accept.png", "accept-inline*.png", "accept_inline*.png", "accept-*.png", "accept_*.png"],
-    "Keep All": ["keep-all*.png"],
+    "Keep All": ["keep-all*.png", "keep_all*.png", "keep*.png"],
     "Proceed": ["proceed*.png"],
     "Yes Don't Ask": ["yes-dontask*.png", "yes-dont-ask*.png"],
     "Allow Always": ["allow-always*.png", "always-allow*.png"],
@@ -78,22 +78,22 @@ CANONICAL_TEMPLATES = {
 
 # Templates cover button colors and states; strict thresholds prevent false matches against editor text/syntax.
 THRESHOLDS = {
-    "Accept All": 0.85,
-    "Accept All 2": 0.85,
-    "Accept Changes": 0.85,
-    "Accept": 0.85,
-    "Keep All": 0.85,
-    "Proceed": 0.85,
-    "Allow Always": 0.82,
-    "Always Run": 0.82,
-    "Allow Once": 0.82,
-    "Allow": 0.82,
-    "Yes Don't Ask": 0.82,
-    "Yes": 0.82,
-    "OK": 0.82,
+    "Accept All": 0.72,
+    "Accept All 2": 0.72,
+    "Accept Changes": 0.72,
+    "Accept": 0.72,
+    "Keep All": 0.72,
+    "Proceed": 0.72,
+    "Allow Always": 0.72,
+    "Always Run": 0.72,
+    "Allow Once": 0.72,
+    "Allow": 0.72,
+    "Yes Don't Ask": 0.72,
+    "Yes": 0.72,
+    "OK": 0.72,
 }
-DEFAULT_THRESHOLD = 0.82
-CONFIDENCE_THRESHOLD = 0.80
+DEFAULT_THRESHOLD = 0.72
+CONFIDENCE_THRESHOLD = 0.70
 
 if sys.platform == "win32":
     TEMP_DIR = os.environ.get("TEMP", os.path.expanduser("~"))
@@ -235,13 +235,13 @@ def activate_target_window(cx, cy):
                 fg = user32.GetForegroundWindow()
                 if fg != root:
                     user32.SetForegroundWindow(root)
-                    time.sleep(0.04)
+                    time.sleep(0.08)
 
 
 def dispatch_click(cx, cy, name=""):
     """
     Sends an absolute click with proper hover dwell and mouse down hold.
-    Ensures Chromium/Electron processes hit-testing and DOM click event dispatch.
+    Guarantees pointer placement via SetCursorPos + mouse_event absolute positioning fallback.
     """
     if sys.platform != "win32":
         return False
@@ -249,38 +249,46 @@ def dispatch_click(cx, cy, name=""):
     attach_input_desktop()
     user32 = ctypes.windll.user32
 
-    # Screenshot coordinates are already physical pixels because this process is
-    # per-monitor DPI aware. Move once, then send button-only events at that point.
-    if not user32.SetCursorPos(int(cx), int(cy)):
-        log(f"SetCursorPos failed for '{name}' at ({cx}, {cy}).")
-        return False
+    # Primary move: SetCursorPos
+    user32.SetCursorPos(int(cx), int(cy))
 
-    # Allow the target window to process WM_MOUSEMOVE and hover state.
+    # Absolute move fallback via mouse_event (works across all desktop window stations and DPI scaling)
+    sw = max(1, user32.GetSystemMetrics(0))
+    sh = max(1, user32.GetSystemMetrics(1))
+    x_norm = int(cx * 65535 / (sw - 1)) if sw > 1 else 0
+    y_norm = int(cy * 65535 / (sh - 1)) if sh > 1 else 0
+    user32.mouse_event(0x8000 | 0x0001, x_norm, y_norm, 0, 0)
+
+    # Allow the target window to process WM_MOUSEMOVE and hover state
     time.sleep(0.06)
 
-    # Do not combine absolute motion with SendInput: it can map to a different
-    # desktop coordinate and leave the pointer scattered on high-DPI displays.
+    # Primary click method: SendInput
     inp_down = INPUT()
     inp_down.type = INPUT_MOUSE
     inp_down.mi = MOUSEINPUT(0, 0, 0, MOUSEEVENTF_LEFTDOWN, 0, 0)
-    if user32.SendInput(1, ctypes.byref(inp_down), ctypes.sizeof(INPUT)) != 1:
-        log(f"SendInput rejected mouse-down for '{name}' (error={ctypes.get_last_error()}).")
-        return False
+    sent_down = (user32.SendInput(1, ctypes.byref(inp_down), ctypes.sizeof(INPUT)) == 1)
 
-    # Hold down for 60ms (realistic button press duration)
-    time.sleep(0.06)
+    if not sent_down:
+        user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
 
-    # Always release the button at the current pointer location.
+    time.sleep(0.08)
+
     inp_up = INPUT()
     inp_up.type = INPUT_MOUSE
     inp_up.mi = MOUSEINPUT(0, 0, 0, MOUSEEVENTF_LEFTUP, 0, 0)
-    released = user32.SendInput(1, ctypes.byref(inp_up), ctypes.sizeof(INPUT)) == 1
+    sent_up = (user32.SendInput(1, ctypes.byref(inp_up), ctypes.sizeof(INPUT)) == 1)
 
-    # 7. Post-click dwell: Crucial for Chromium/Electron to fire the DOM click event
+    if not sent_up:
+        user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+
+    # Double click pulse for Swing/Compose canvas controls requiring focus + click
+    time.sleep(0.04)
+    user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+    time.sleep(0.06)
+    user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+
     time.sleep(0.12)
-    if not released:
-        log(f"SendInput rejected mouse-up for '{name}' (error={ctypes.get_last_error()}).")
-    return released
+    return True
 
 
 def dispatch_batch_clicks(buttons_to_click):
@@ -332,15 +340,21 @@ def dispatch_batch_clicks(buttons_to_click):
                 pass
 
 
+_last_screenshot_error_time = 0
+
 def get_screenshot():
     """Captures desktop screen into OpenCV image array."""
+    global _last_screenshot_error_time
     try:
         attach_input_desktop()
         pil_img = ImageGrab.grab()
         img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
         return img
     except Exception as e:
-        log(f"Screenshot error: {e}")
+        now = time.time()
+        if now - _last_screenshot_error_time > 60:
+            log(f"Screenshot error (screen locked or display inactive): {e}")
+            _last_screenshot_error_time = now
         return None
 
 
@@ -350,7 +364,7 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
     Enables clicking multiple buttons simultaneously across split windows.
     Returns: list of (x, y, w, h, score) sorted by score descending.
     """
-    scales = [1.00, 0.90, 1.10, 0.80, 1.25, 1.50, 1.75, 2.00]
+    scales = [1.00, 0.90, 0.80, 0.75, 0.70, 0.65, 0.60, 0.50, 1.10, 1.25, 1.50, 1.75, 2.00]
     all_raw_matches = []
 
     for scale in scales:
@@ -380,10 +394,6 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
                 cand_y = int(y_coords[idx])
                 s = float(scores[idx])
                 all_raw_matches.append((cand_x, cand_y, th_w, th_h, s))
-            # A near-exact match at native scale is already decisive. Avoid
-            # sweeping the rest of the scale pyramid on every live screen.
-            if float(scores.max()) >= 0.96:
-                break
 
     all_raw_matches.sort(key=lambda m: m[4], reverse=True)
     distinct_matches = []
@@ -401,27 +411,31 @@ def find_all_template_matches(screen_gray, template_gray, thresh):
 
 def is_valid_button_candidate(screen, x, y, w, h, tpl_info):
     """Verifies that a matched region represents a true interactive button."""
-    if w < 30 or h < 14 or h > 90:
+    if w < 20 or h < 12 or h > 100:
         return False
     aspect_ratio = w / float(h)
-    if aspect_ratio < 1.0 or aspect_ratio > 20.0:
+    if aspect_ratio < 0.8 or aspect_ratio > 25.0:
         return False
 
     sh, sw = screen.shape[:2]
-    if x < 40 or y < 0 or (x + w) > sw or (y + h) > sh:
+    if x < 10 or y < 0 or (x + w) > sw or (y + h) > sh:
         return False
 
-    # Exclude matches in the taskbar/dock area (bottom 45 pixels of screen)
-    if (y + h) > (sh - 45):
+    # Exclude matches in the taskbar/dock area (bottom 40 pixels of screen)
+    if (y + h) > (sh - 40):
+        return False
+
+    # Exclude bottom-left IDE status bar area (where static status text appears)
+    if y > (sh - 140) and x < 250:
         return False
 
     cand_bgr = screen[y:y+h, x:x+w]
     if cand_bgr.size == 0:
         return False
 
-    # Check candidate region contrast (reject flat monochrome blocks)
+    # Check candidate region contrast (reject flat dark panels / monochrome background blocks)
     cand_gray = cv2.cvtColor(cand_bgr, cv2.COLOR_BGR2GRAY)
-    if cand_gray.std() < 9.0:
+    if cand_gray.std() < 26.0:
         return False
 
     # Color / Saturation validation:

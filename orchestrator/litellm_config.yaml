@@ -200,5 +200,11 @@ litellm_settings:
   cache: true
   cache_params:
     type: disk
-    disk_cache_dir: "./.cache/litellm"
+    disk_cache_dir: "C:\\ProgramData\\litellm\\.cache"
+    ttl: 86400
     default_in_memory_ttl: 86400
+    supported_call_types:
+      - "completion"
+      - "acompletion"
+      - "embedding"
+      - "aembedding"

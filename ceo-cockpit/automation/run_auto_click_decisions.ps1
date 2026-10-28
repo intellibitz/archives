@@ -6,6 +6,7 @@ if (-not $ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.P
 if (-not $ScriptDir) { $ScriptDir = "F:\src\github.com\intellibitz\archives\ceo-cockpit\automation" }
 
 $TargetScript = Join-Path $ScriptDir "auto_click_decisions.py"
+$NativeExe = Join-Path $ScriptDir "AutoClickDecisionsNative.exe"
 
 # Stop any duplicate running clicker processes
 Get-CimInstance Win32_Process -Filter "Name = 'python.exe' OR Name = 'pythonw.exe' OR Name = 'AutoClickDecisionsNative.exe'" -ErrorAction SilentlyContinue |
@@ -17,7 +18,16 @@ Get-CimInstance Win32_Process -Filter "Name = 'python.exe' OR Name = 'pythonw.ex
 
 Start-Sleep -Milliseconds 400
 
-# Locate pythonw (hidden GUI runner) or fallback to python
+# 1. Launch Native C# UI Automation Clicker
+if (Test-Path $NativeExe) {
+    Write-Host "Starting Native C# UI Automation Clicker: $NativeExe" -ForegroundColor Cyan
+    $procNative = Start-Process -FilePath $NativeExe -WorkingDirectory $ScriptDir -WindowStyle Hidden -PassThru
+    if ($procNative) {
+        Write-Host "[OK] Native C# Auto-Clicker started with PID $($procNative.Id)." -ForegroundColor Green
+    }
+}
+
+# 2. Locate pythonw (hidden GUI runner) or fallback to python
 $PythonW = "C:\Users\user\AppData\Local\Programs\Python\Python312\pythonw.exe"
 if (-not (Test-Path $PythonW)) {
     $PythonW = (Get-Command pythonw.exe -ErrorAction SilentlyContinue).Source
@@ -26,20 +36,13 @@ if (-not $PythonW -or -not (Test-Path $PythonW)) {
     $PythonW = "C:\Users\user\AppData\Local\Programs\Python\Python312\python.exe"
 }
 
-Write-Host "Starting Auto-Clicker using: $PythonW" -ForegroundColor Cyan
+Write-Host "Starting Python OpenCV Auto-Clicker using: $PythonW" -ForegroundColor Cyan
 Write-Host "Target script: $TargetScript" -ForegroundColor Cyan
 
-# Launch process detached in interactive desktop session
-$psi = New-Object System.Diagnostics.ProcessStartInfo
-$psi.FileName = $PythonW
-$psi.Arguments = "`"$TargetScript`""
-$psi.WorkingDirectory = $ScriptDir
-$psi.UseShellExecute = $false
-$psi.CreateNoWindow = $true
-
-$proc = [System.Diagnostics.Process]::Start($psi)
+# Launch process in interactive desktop session via Start-Process
+$proc = Start-Process -FilePath $PythonW -ArgumentList "`"$TargetScript`"" -WorkingDirectory $ScriptDir -WindowStyle Hidden -PassThru
 if ($proc) {
-    Write-Host "[OK] Auto-Clicker started successfully with PID $($proc.Id)." -ForegroundColor Green
+    Write-Host "[OK] Python OpenCV Auto-Clicker started with PID $($proc.Id)." -ForegroundColor Green
 } else {
-    Write-Error "Failed to launch Auto-Clicker process."
+    Write-Error "Failed to launch Python Auto-Clicker process."
 }
