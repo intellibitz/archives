@@ -261,7 +261,7 @@ def classify_model_intent(prompt: str) -> Tuple[str, str]:
     4-Tier Budget-Conscious Smart Router:
     1. DeepSeek V4 Pro: Complex tool execution, refactoring, autonomous agent directives ($0.55/1M).
     2. DeepSeek Reasoner R1: Math, formal logic, algorithms, architectural breakdown ($0.55/1M).
-    3. DeepSeek Flash / Vertex Gemini Flash: High-speed synthesis, large context, ultra-low cost ($0.075 - $0.14/1M).
+    3. DeepSeek Flash / Gemini Flash: High-speed synthesis, large context, ultra-low cost ($0.075 - $0.14/1M).
     4. Local Ollama: Zero-cost safeguard / offline operations ($0.00).
     """
     prompt_lower = prompt.lower()
@@ -288,7 +288,7 @@ def classify_model_intent(prompt: str) -> Tuple[str, str]:
     flash_score = sum(1 for w in flash_triggers if w in prompt_lower)
 
     if len(prompt) > 4000 and claude_score == 0 and deepseek_score <= flash_score:
-        return "vertex-gemini-flash", "High Context Volume (1M+ Tokens) -> Vertex AI Gemini Flash ($0.075/1M)"
+        return "gemini-flash", "High Context Volume (1M+ Tokens) -> Gemini Flash ($0.075/1M)"
 
     if claude_score > max(deepseek_score, flash_score):
         return "deepseek-v4-pro", "Autonomous Execution & Complex Directives -> DeepSeek V4 Pro ($0.55/1M)"
@@ -676,9 +676,6 @@ def format_model_display_name(model_id: str) -> str:
         "deepseek-chat": "DeepSeek Chat (V3)",
         "gemini-flash": "Gemini 2.5 Flash (1M+)",
         "gemini-pro": "Gemini 2.5 Pro (Frontier)",
-        "vertex-gemini-flash": "Vertex AI Gemini 2.5 Flash",
-        "vertex-gemini-pro": "Vertex AI Gemini 2.5 Pro",
-        "vertex-claude-3-7-sonnet": "Vertex AI Claude 3.7 Sonnet",
         "claude-3-5-sonnet": "Claude 3.5 Sonnet",
         "claude-3-7-sonnet": "Claude 3.7 Sonnet (Frontier)",
         "claude-3-5-haiku": "Claude 3.5 Haiku",

@@ -50,7 +50,6 @@ ceo-cockpit/
 ├── server.py                      # Production mission control API server (:8080)
 ├── budget_governor.py             # Autonomous spend governor & circuit-breaker engine
 ├── config/
-│   ├── litellm_config.yaml        # LiteLLM proxy configuration with Redis cache
 │   ├── openclaw_agents.json       # OpenClaw 4-agent roster configuration
 │   └── budget_governor.json       # Live budget ledger, spend caps, and audit log
 ├── scripts/

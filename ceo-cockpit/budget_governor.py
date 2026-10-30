@@ -43,42 +43,6 @@ MODEL_PRICING: Dict[str, Dict[str, Any]] = {
         "is_reasoning": False,
         "is_safeguard": False
     },
-    "vertex-gemini-flash": {
-        "name": "Vertex AI Gemini 2.5 Flash",
-        "provider": "Google Vertex AI",
-        "category": "Enterprise Context & Speed",
-        "prompt": 0.075,
-        "completion": 0.30,
-        "cached_prompt": 0.018,
-        "context_window": "1M+",
-        "cost_tier": "Ultra-Low ($)",
-        "is_reasoning": False,
-        "is_safeguard": False
-    },
-    "vertex-gemini-pro": {
-        "name": "Vertex AI Gemini 2.5 Pro",
-        "provider": "Google Vertex AI",
-        "category": "Enterprise Frontier Multimodal",
-        "prompt": 1.25,
-        "completion": 5.00,
-        "cached_prompt": 0.3125,
-        "context_window": "2M+",
-        "cost_tier": "High ($$$)",
-        "is_reasoning": False,
-        "is_safeguard": False
-    },
-    "vertex-claude-3-7-sonnet": {
-        "name": "Vertex AI Claude 3.7 Sonnet",
-        "provider": "Google Vertex AI",
-        "category": "Enterprise Frontier Autonomous Agents",
-        "prompt": 3.00,
-        "completion": 15.00,
-        "cached_prompt": 0.30,
-        "context_window": "200k",
-        "cost_tier": "Premium ($$$$)",
-        "is_reasoning": True,
-        "is_safeguard": False
-    },
     # DeepSeek
     "deepseek-v4-pro": {
         "name": "DeepSeek V4 Pro",
