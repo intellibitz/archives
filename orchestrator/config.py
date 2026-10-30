@@ -37,6 +37,14 @@ LITELLM_PORT = int(os.getenv("LITELLM_PROXY_PORT", "4000"))
 LITELLM_API_BASE = f"http://{LITELLM_HOST}:{LITELLM_PORT}/v1"
 LITELLM_MASTER_KEY = os.getenv("LITELLM_MASTER_KEY", "orchestrator-local-gateway")
 
+# A key that mirrors the gateway master key is a *proxy* credential, not a real
+# provider credential. Treat it as absent so detection does not claim a funded
+# provider (OPENAI_API_KEY is commonly set to the LiteLLM master key for clients
+# that talk to the local gateway).
+if OPENAI_API_KEY and OPENAI_API_KEY == LITELLM_MASTER_KEY:
+    OPENAI_API_KEY = ""
+
+
 # ------------------------------------------------------------------------------
 # 2. Token Pricing Matrix (Cost per 1M tokens in USD)
 # ------------------------------------------------------------------------------
@@ -47,13 +55,13 @@ PRICING_TABLE: Dict[str, Dict[str, float]] = {
     "gemini/gemini-pro-latest": {"input": 2.00, "cached_input": 0.50, "output": 12.00},
     "gemini/gemini-3.1-pro": {"input": 2.00, "cached_input": 0.50, "output": 12.00},
     "gemini/gemini-3.1-pro-preview": {"input": 2.00, "cached_input": 0.50, "output": 12.00},
-    "gemini/gemini-2.0-flash": {"input": 0.10, "cached_input": 0.025, "output": 0.40},
+    "gemini/gemini-3.8-flash": {"input": 0.10, "cached_input": 0.025, "output": 0.40},
     "gemini/gemini-1.5-pro": {"input": 1.25, "cached_input": 0.3125, "output": 5.00},
     
     # Anthropic Claude (Subscription / API)
-    "anthropic/claude-3-5-sonnet-20241022": {"input": 3.00, "cached_input": 0.30, "output": 15.00},
-    "anthropic/claude-3-7-sonnet-20250219": {"input": 3.00, "cached_input": 0.30, "output": 15.00},
-    "anthropic/claude-3-5-haiku-20241022": {"input": 0.80, "cached_input": 0.08, "output": 4.00},
+    "anthropic/claude-sonnet-5": {"input": 3.00, "cached_input": 0.30, "output": 15.00},
+    "anthropic/claude-sonnet-5": {"input": 3.00, "cached_input": 0.30, "output": 15.00},
+    "anthropic/claude-haiku-4-5-20251001": {"input": 0.80, "cached_input": 0.08, "output": 4.00},
     
     # OpenAI / Codex (Subscription / API)
     "openai/o1": {"input": 15.00, "cached_input": 7.50, "output": 60.00},
@@ -71,7 +79,7 @@ PRICING_TABLE: Dict[str, Dict[str, float]] = {
     "moonshot/kimi-k2.7-code": {"input": 0.95, "cached_input": 0.16, "output": 4.00},
     
     # Zhipu GLM (Pay-as-you-go sub-cent)
-    "openai/glm-4-flash": {"input": 0.00, "cached_input": 0.00, "output": 0.00}, # Free Tier
+    "openai/glm-4.5-air": {"input": 0.00, "cached_input": 0.00, "output": 0.00}, # Free Tier
     "openai/glm-4-air": {"input": 0.14, "cached_input": 0.07, "output": 0.14},
     "openai/glm-4": {"input": 1.40, "cached_input": 0.70, "output": 1.40},
 }
@@ -94,7 +102,7 @@ def get_model_for_role(role: str) -> str:
     if role == "architect":
         # Preferred: Claude 3.5/3.7 Sonnet -> Kimi K3.1 Pro -> OpenAI GPT-4o -> Gemini 2.0 Flash
         if has_anthropic:
-            return "anthropic/claude-3-5-sonnet-20241022"
+            return "anthropic/claude-sonnet-5"
         if has_moonshot:
             return "moonshot/kimi-k3.1-pro"
         if has_openai:
@@ -108,7 +116,7 @@ def get_model_for_role(role: str) -> str:
         if has_gemini:
             return "gemini/gemini-3.8-flash"
         if has_anthropic:
-            return "anthropic/claude-3-5-sonnet-20241022"
+            return "anthropic/claude-sonnet-5"
         if has_openai:
             return "openai/gpt-4o"
         return "deepseek/deepseek-chat"
@@ -122,8 +130,8 @@ def get_model_for_role(role: str) -> str:
         if has_openai:
             return "openai/o3-mini"
         if has_anthropic:
-            return "anthropic/claude-3-5-sonnet-20241022"
-        return "gemini/gemini-2.0-flash"
+            return "anthropic/claude-sonnet-5"
+        return "gemini/gemini-3.8-flash"
 
     elif role == "coder":
         # Preferred: Kimi K2.7 Code -> DeepSeek-V3 -> Claude 3.5 Sonnet -> GPT-4o
@@ -132,34 +140,34 @@ def get_model_for_role(role: str) -> str:
         if has_deepseek:
             return "deepseek/deepseek-chat"
         if has_anthropic:
-            return "anthropic/claude-3-5-sonnet-20241022"
+            return "anthropic/claude-sonnet-5"
         if has_openai:
             return "openai/gpt-4o"
-        return "gemini/gemini-2.0-flash"
+        return "gemini/gemini-3.8-flash"
 
     elif role == "swarm":
         # Preferred: GLM-4-Flash (Free/sub-cent) -> DeepSeek-V3 -> Gemini Flash
         if has_zhipu:
-            return "openai/glm-4-flash"
+            return "openai/glm-4.5-air"
         if has_deepseek:
             return "deepseek/deepseek-chat"
         if has_gemini:
             return "gemini/gemini-3.8-flash"
         if has_openai:
             return "openai/gpt-4o-mini"
-        return "anthropic/claude-3-5-haiku-20241022"
+        return "anthropic/claude-haiku-4-5-20251001"
 
     elif role == "reviewer":
         # Preferred: Claude 3.5 Sonnet -> Gemini 2.0 Flash -> GPT-4o
         if has_anthropic:
-            return "anthropic/claude-3-5-sonnet-20241022"
+            return "anthropic/claude-sonnet-5"
         if has_gemini:
             return "gemini/gemini-3.8-flash"
         if has_openai:
             return "openai/gpt-4o"
         return "deepseek/deepseek-chat"
 
-    return "gemini/gemini-2.0-flash"
+    return "gemini/gemini-3.8-flash"
 
 
 def get_active_providers_summary() -> Dict[str, Any]:

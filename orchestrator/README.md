@@ -56,12 +56,19 @@ All keys are referenced as `os.environ/NAME`, never literals:
 | `GEMINI_API_KEY` / `GOOGLE_API_KEY` | Google AI Studio | user + machine |
 | `ANTHROPIC_API_KEY` | Anthropic | machine |
 | `ZHIPU_API_KEY` / `ZAI_API_KEY` | Zhipu / Z.ai | user + machine |
-| `OPENAI_API_KEY` | OpenAI (dormant until funded) | user |
+| `OPENAI_API_KEY` | OpenAI (valid key, no credits yet) | **machine** (real key) / user (gateway proxy key) |
 
 The service runs as **LocalSystem**, so it only sees **machine**-scope
 variables. Anything a route needs must exist at machine scope, not just user
 scope. `ANTHROPIC_WORKSPACE_ID` is baked into the anthropic entries as a header
 because this account's key is not workspace-scoped.
+
+Note the deliberate split on `OPENAI_API_KEY`: at machine scope it is the real
+OpenAI key (used by the gateway, currently returning 429 "no credits"); at user
+scope it is the LiteLLM master key, which is what local clients that point
+`OPENAI_BASE_URL` at the gateway expect. `orchestrator/config.py` treats a
+provider key that merely mirrors the master key as *absent* so provider
+detection does not claim a funded provider.
 
 ## Adding a route
 
