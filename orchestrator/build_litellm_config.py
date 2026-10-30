@@ -86,6 +86,25 @@ ROUTES = [
     ("claude-architect", "anthropic/claude-sonnet-5", AN),
     ("claude-architect", "gemini/gemini-flash-latest", GM),
 
+    # --- Anthropic native ids -------------------------------------------------
+    # Claude Code (and any Anthropic-protocol client) addresses models by their
+    # native id, so the gateway has to expose those exact names or the client
+    # gets "invalid model name". These are the ids this account can call.
+    ("claude-haiku-5-5", "anthropic/claude-haiku-5-5", AN),
+    ("claude-sonnet-5-5", "anthropic/claude-sonnet-5-5", AN),
+    ("claude-opus-5-5", "anthropic/claude-opus-5-5", AN),
+    ("claude-fable-5-1", "anthropic/claude-fable-5-1", AN),
+    ("claude-opus-5", "anthropic/claude-opus-5", AN),
+    ("claude-sonnet-5", "anthropic/claude-sonnet-5", AN),
+    ("claude-fable-5", "anthropic/claude-fable-5", AN),
+    ("claude-opus-4-8", "anthropic/claude-opus-4-8", AN),
+    ("claude-opus-4-7", "anthropic/claude-opus-4-7", AN),
+    ("claude-sonnet-4-6", "anthropic/claude-sonnet-4-6", AN),
+    ("claude-opus-4-6", "anthropic/claude-opus-4-6", AN),
+    ("claude-opus-4-5-20251101", "anthropic/claude-opus-4-5-20251101", AN),
+    ("claude-haiku-4-5-20251001", "anthropic/claude-haiku-4-5-20251001", AN),
+    ("claude-sonnet-4-5-20250929", "anthropic/claude-sonnet-4-5-20250929", AN),
+
     # --- Zhipu / GLM (glm-4-flash is retired; glm-4.5-air is the cheap tier) ---
     # Balance on this account is currently exhausted (code 1113), so the route
     # degrades to deepseek-flash instead of failing outright.

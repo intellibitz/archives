@@ -194,6 +194,90 @@ model_list:
     model: gemini/gemini-flash-latest
     api_key: os.environ/GEMINI_API_KEY
     caching: true
+- model_name: claude-haiku-5-5
+  litellm_params:
+    model: anthropic/claude-haiku-5-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-sonnet-5-5
+  litellm_params:
+    model: anthropic/claude-sonnet-5-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-opus-5-5
+  litellm_params:
+    model: anthropic/claude-opus-5-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-fable-5-1
+  litellm_params:
+    model: anthropic/claude-fable-5-1
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-opus-5
+  litellm_params:
+    model: anthropic/claude-opus-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-sonnet-5
+  litellm_params:
+    model: anthropic/claude-sonnet-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-fable-5
+  litellm_params:
+    model: anthropic/claude-fable-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-opus-4-8
+  litellm_params:
+    model: anthropic/claude-opus-4-8
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-opus-4-7
+  litellm_params:
+    model: anthropic/claude-opus-4-7
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-sonnet-4-6
+  litellm_params:
+    model: anthropic/claude-sonnet-4-6
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-opus-4-6
+  litellm_params:
+    model: anthropic/claude-opus-4-6
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-opus-4-5-20251101
+  litellm_params:
+    model: anthropic/claude-opus-4-5-20251101
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-haiku-4-5-20251001
+  litellm_params:
+    model: anthropic/claude-haiku-4-5-20251001
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-sonnet-4-5-20250929
+  litellm_params:
+    model: anthropic/claude-sonnet-4-5-20250929
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
 - model_name: glm-utility
   litellm_params:
     model: openai/glm-4.5-air
