@@ -177,43 +177,6 @@ MODEL_PRICING: Dict[str, Dict[str, Any]] = {
         "is_reasoning": False,
         "is_safeguard": False
     },
-    # DashScope / Alibaba
-    "dashscope-qwen-plus": {
-        "name": "DashScope Qwen Plus",
-        "provider": "Alibaba DashScope",
-        "category": "Economical Generalist",
-        "prompt": 0.12,
-        "completion": 0.24,
-        "cached_prompt": 0.03,
-        "context_window": "128k",
-        "cost_tier": "Ultra-Low ($)",
-        "is_reasoning": False,
-        "is_safeguard": False
-    },
-    "dashscope-qwen-max": {
-        "name": "DashScope Qwen Max",
-        "provider": "Alibaba DashScope",
-        "category": "Frontier Complex Reasoning",
-        "prompt": 1.60,
-        "completion": 6.40,
-        "cached_prompt": 0.40,
-        "context_window": "32k",
-        "cost_tier": "Moderate ($$$)",
-        "is_reasoning": False,
-        "is_safeguard": False
-    },
-    "dashscope-qwen-coder": {
-        "name": "DashScope Qwen Coder",
-        "provider": "Alibaba DashScope",
-        "category": "Code Engineering",
-        "prompt": 0.12,
-        "completion": 0.24,
-        "cached_prompt": 0.03,
-        "context_window": "128k",
-        "cost_tier": "Ultra-Low ($)",
-        "is_reasoning": False,
-        "is_safeguard": False
-    },
     # Anthropic
     "claude-3-5-haiku": {
         "name": "Claude 3.5 Haiku",

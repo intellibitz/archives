@@ -661,9 +661,6 @@ document.addEventListener('DOMContentLoaded', () => {
     'siliconflow-qwen-coder': { name: 'Qwen 2.5 Coder 32B (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.20, completion: 0.40, icon: '💻', tier: 'Ultra-Low ($)', context: '128k', group: 'code' },
     'siliconflow-qwen': { name: 'Qwen 2.5 72B Instruct (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.20, completion: 0.40, icon: '🌐', tier: 'Ultra-Low ($)', context: '128k', group: 'generalist' },
     'siliconflow-deepseek': { name: 'DeepSeek V3 (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.14, completion: 0.28, icon: '⚡', tier: 'Ultra-Low ($)', context: '64k', group: 'speed' },
-    'dashscope-qwen-max': { name: 'DashScope Qwen Max', provider: 'Alibaba DashScope', prompt: 1.60, completion: 6.40, icon: '👑', tier: 'Moderate ($$$)', context: '32k', is_reasoning: true, group: 'reasoning' },
-    'dashscope-qwen-plus': { name: 'DashScope Qwen Plus', provider: 'Alibaba DashScope', prompt: 0.12, completion: 0.24, icon: '🌐', tier: 'Ultra-Low ($)', context: '128k', group: 'speed' },
-    'dashscope-qwen-coder': { name: 'DashScope Qwen Coder', provider: 'Alibaba DashScope', prompt: 0.12, completion: 0.24, icon: '💻', tier: 'Ultra-Low ($)', context: '128k', group: 'code' },
     'local-safeguard': { name: 'Zero-Cost Local Safeguard', provider: 'Local / OpenClaw', prompt: 0.0, completion: 0.0, icon: '🛡️', tier: 'Free ($0.00)', context: '32k', is_safeguard: true, group: 'safeguard' }
   };
 
@@ -2168,8 +2165,6 @@ document.addEventListener('DOMContentLoaded', () => {
     { title: 'Model: Claude 3.5 Haiku', desc: 'Switch model to lightweight high-velocity Claude tier ($0.80 / $4.00)', icon: '🍃', action: () => selectHarnessModel('claude-3-5-haiku') },
     { title: 'Model: Qwen 2.5 Coder 32B', desc: 'Switch model to SiliconFlow deep coding tier ($0.20 / $0.40)', icon: '💻', action: () => selectHarnessModel('siliconflow-qwen-coder') },
     { title: 'Model: Qwen 2.5 72B Instruct', desc: 'Switch model to open frontier generalist tier ($0.20 / $0.40)', icon: '🌐', action: () => selectHarnessModel('siliconflow-qwen') },
-    { title: 'Model: DashScope Qwen Max', desc: 'Switch model to Alibaba frontier reasoning tier ($1.60 / $6.40)', icon: '👑', action: () => selectHarnessModel('dashscope-qwen-max') },
-    { title: 'Model: DashScope Qwen Plus', desc: 'Switch model to Alibaba economical tier ($0.12 / $0.24)', icon: '🌐', action: () => selectHarnessModel('dashscope-qwen-plus') },
     { title: 'Model: Custom Model Entry', desc: 'Type any custom LiteLLM model ID directly', icon: '✏️', action: () => selectHarnessModel('__custom__') },
     { title: 'Effort: Low (2k Tokens)', desc: 'Set reasoning effort to rapid synthesis tier', icon: '⚡', action: () => { if (selectEffort) selectEffort.value = 'low'; } },
     { title: 'Effort: Max (16k+ Tokens)', desc: 'Set reasoning effort to maximum frontier proof tier', icon: '🌌', action: () => { if (selectEffort) selectEffort.value = 'max'; } },
@@ -2383,8 +2378,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modelId.includes('claude-3-5-sonnet')) return 'Claude 3.5 Sonnet';
     if (modelId.includes('claude-3-5-haiku')) return 'Claude 3.5 Haiku';
     if (modelId.includes('qwen-coder')) return 'Qwen 2.5 Coder 32B';
-    if (modelId.includes('qwen-max')) return 'DashScope Qwen Max';
-    if (modelId.includes('qwen-plus')) return 'DashScope Qwen Plus';
     if (modelId.includes('siliconflow-qwen')) return 'Qwen 2.5 72B Instruct';
     if (modelId.includes('siliconflow-deepseek')) return 'DeepSeek V3 (SiliconFlow)';
     if (modelId.includes('safeguard')) return 'Zero-Cost Local Safeguard';

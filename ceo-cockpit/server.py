@@ -685,9 +685,6 @@ def format_model_display_name(model_id: str) -> str:
         "siliconflow-qwen-coder": "Qwen 2.5 Coder 32B (SiliconFlow)",
         "siliconflow-qwen": "Qwen 2.5 72B Instruct (SiliconFlow)",
         "siliconflow-deepseek": "DeepSeek V3 (SiliconFlow)",
-        "dashscope-qwen-max": "DashScope Qwen Max",
-        "dashscope-qwen-plus": "DashScope Qwen Plus",
-        "dashscope-qwen-coder": "DashScope Qwen Coder",
         "local-safeguard": "Zero-Cost Local Safeguard",
     }
     return mapping.get(model_id, model_id)

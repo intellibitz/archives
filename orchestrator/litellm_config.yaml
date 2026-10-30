@@ -1,115 +1,88 @@
+# SINGLE SOURCE OF TRUTH for the LiteLLM gateway.
+# Edit here, then run: powershell -ExecutionPolicy Bypass -File orchestrator/deploy_litellm_config.ps1
+# Do not hand-edit C:\ProgramData\litellm\config\config.yaml - it is generated.
+#
+# Route names cover both conventions in this repo:
+#   flat provider names (ceo-cockpit: gemini-flash, siliconflow-qwen, deepseek-flash, ...)
+#   role names         (orchestrator: antigravity-librarian, claude-architect, kimi-coder, ...)
+#
+# Removed 2026-10-30: dashscope-* (no DASHSCOPE_API_KEY), vertex-* (no GCP credentials).
+#
 model_list:
-- model_name: antigravity-librarian
+- model_name: siliconflow-qwen
   litellm_params:
-    model: gemini/gemini-flash-latest
-    api_key: os.environ/GEMINI_API_KEY
-    rpm: 100
-    max_tokens: 8192
+    model: openai/Qwen/Qwen3.8-27B
+    api_base: https://api.siliconflow.com/v1
+    api_key: os.environ/SILICONFLOW_API_KEY
     caching: true
-- model_name: antigravity-librarian
+- model_name: siliconflow-qwen-coder
   litellm_params:
-    model: ollama/qwen2.5-coder:7b
-    api_base: http://localhost:11434
-- model_name: gemini-3.8-flash
-  litellm_params:
-    model: gemini/gemini-3.8-flash
-    api_key: os.environ/GEMINI_API_KEY
-    rpm: 120
-    max_tokens: 8192
+    model: openai/Qwen/Qwen3-Coder-30B-A3B-Instruct
+    api_base: https://api.siliconflow.com/v1
+    api_key: os.environ/SILICONFLOW_API_KEY
     caching: true
-- model_name: gemini-payg
+- model_name: siliconflow-deepseek
   litellm_params:
-    model: gemini/gemini-3.8-flash
-    api_key: os.environ/GEMINI_API_KEY
-    rpm: 120
-    max_tokens: 8192
+    model: openai/deepseek-ai/DeepSeek-V3.2
+    api_base: https://api.siliconflow.com/v1
+    api_key: os.environ/SILICONFLOW_API_KEY
     caching: true
-- model_name: gemini-payg
+- model_name: deepinfra-qwen-coder
   litellm_params:
-    model: gemini/gemini-flash-latest
-    api_key: os.environ/GEMINI_API_KEY
+    model: openai/Qwen/Qwen2.5-Coder-32B-Instruct
+    api_base: https://api.deepinfra.com/v1/openai
+    api_key: os.environ/DEEPINFRA_API_KEY
     caching: true
-- model_name: antigravity-flash-latest
+- model_name: deepinfra-llama3-70b
   litellm_params:
-    model: gemini/gemini-flash-latest
-    api_key: os.environ/GEMINI_API_KEY
-    rpm: 100
-    max_tokens: 8192
+    model: openai/meta-llama/Meta-Llama-3.1-70B-Instruct
+    api_base: https://api.deepinfra.com/v1/openai
+    api_key: os.environ/DEEPINFRA_API_KEY
     caching: true
-- model_name: antigravity-pro
+- model_name: deepseek-chat
   litellm_params:
-    model: gemini/gemini-3.1-pro-preview
-    api_key: os.environ/GEMINI_API_KEY
-    rpm: 60
+    model: deepseek/deepseek-chat
+    api_key: os.environ/DEEPSEEK_API_KEY
     caching: true
-- model_name: claude-architect
+- model_name: deepseek-flash
   litellm_params:
-    model: anthropic/claude-3-5-sonnet-20241022
-    api_key: os.environ/ANTHROPIC_API_KEY
-    max_tokens: 8192
-- model_name: claude-architect
-  litellm_params:
-    model: gemini/gemini-flash-latest
-    api_key: os.environ/GEMINI_API_KEY
+    model: deepseek/deepseek-flash
+    api_key: os.environ/DEEPSEEK_API_KEY
     caching: true
-- model_name: claude-architect
-  litellm_params:
-    model: ollama/qwen2.5-coder:7b
-    api_base: http://localhost:11434
-- model_name: codex-specialist
-  litellm_params:
-    model: openai/o3-mini
-    api_key: os.environ/OPENAI_API_KEY
-- model_name: codex-specialist
-  litellm_params:
-    model: ollama/deepseek-r1:32b
-    api_base: http://localhost:11434
-- model_name: openai-gpt4o
-  litellm_params:
-    model: openai/gpt-4o
-    api_key: os.environ/OPENAI_API_KEY
-    max_tokens: 4096
-- model_name: openai-gpt4o
-  litellm_params:
-    model: ollama/qwen2.5-coder:7b
-    api_base: http://localhost:11434
 - model_name: deepseek-reasoner
   litellm_params:
     model: deepseek/deepseek-reasoner
     api_key: os.environ/DEEPSEEK_API_KEY
-    api_base: https://api.deepseek.com/v1
-    max_tokens: 8192
     caching: true
-- model_name: deepseek-reasoner
+- model_name: deepseek-v4-pro
   litellm_params:
-    model: ollama/deepseek-r1:32b
-    api_base: http://localhost:11434
+    model: deepseek/deepseek-v4-pro
+    api_key: os.environ/DEEPSEEK_API_KEY
+    caching: true
 - model_name: deepseek-coder
   litellm_params:
     model: deepseek/deepseek-chat
     api_key: os.environ/DEEPSEEK_API_KEY
-    api_base: https://api.deepseek.com/v1
-    max_tokens: 8192
     caching: true
-- model_name: deepseek-coder
+- model_name: kimi-k3
   litellm_params:
-    model: ollama/qwen2.5-coder:7b
-    api_base: http://localhost:11434
-- model_name: glm-utility
+    model: moonshot/kimi-k3
+    api_key: os.environ/MOONSHOT_API_KEY
+    caching: true
+- model_name: kimi-k2-7-code
   litellm_params:
-    model: openai/glm-4-flash
-    api_key: os.environ/ZHIPU_API_KEY
-    api_base: https://open.bigmodel.cn/api/paas/v4
-    max_tokens: 4096
-- model_name: glm-utility
+    model: moonshot/kimi-k2.7-code
+    api_key: os.environ/MOONSHOT_API_KEY
+    caching: true
+- model_name: kimi-k3-1-pro
   litellm_params:
-    model: ollama/qwen2.5-coder:7b
-    api_base: http://localhost:11434
+    model: moonshot/kimi-k3.1-pro
+    api_key: os.environ/MOONSHOT_API_KEY
+    caching: true
 - model_name: kimi-reasoner
   litellm_params:
     model: moonshot/kimi-k3
     api_key: os.environ/MOONSHOT_API_KEY
-    max_tokens: 8192
     caching: true
 - model_name: kimi-reasoner
   litellm_params:
@@ -120,7 +93,6 @@ model_list:
   litellm_params:
     model: moonshot/kimi-k2.7-code
     api_key: os.environ/MOONSHOT_API_KEY
-    max_tokens: 8192
     caching: true
 - model_name: kimi-coder
   litellm_params:
@@ -131,101 +103,185 @@ model_list:
   litellm_params:
     model: moonshot/kimi-k3.1-pro
     api_key: os.environ/MOONSHOT_API_KEY
-    max_tokens: 8192
     caching: true
 - model_name: kimi-architect
   litellm_params:
     model: gemini/gemini-flash-latest
     api_key: os.environ/GEMINI_API_KEY
     caching: true
+- model_name: gemini-flash
+  litellm_params:
+    model: gemini/gemini-3.8-flash
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: gemini-pro
+  litellm_params:
+    model: gemini/gemini-3.1-pro-preview
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: gemini-3.8-flash
+  litellm_params:
+    model: gemini/gemini-3.8-flash
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: gemini-payg
+  litellm_params:
+    model: gemini/gemini-3.8-flash
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: gemini-payg
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: antigravity-librarian
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: antigravity-flash-latest
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: antigravity-pro
+  litellm_params:
+    model: gemini/gemini-3.1-pro-preview
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: gemini-embedding
+  litellm_params:
+    model: gemini/gemini-embedding-001
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: text-embedding-004
+  litellm_params:
+    model: gemini/gemini-embedding-001
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: text-embedding-3-small
+  litellm_params:
+    model: gemini/gemini-embedding-001
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: claude-3-5-haiku
+  litellm_params:
+    model: anthropic/claude-haiku-4-5-20251001
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: &id001
+      anthropic-workspace-id: wrkspc_011YpM3192a61DxpcKdNnVsS
+    caching: true
+- model_name: claude-3-5-sonnet
+  litellm_params:
+    model: anthropic/claude-sonnet-4-5-20250929
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-3-7-sonnet
+  litellm_params:
+    model: anthropic/claude-sonnet-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-architect
+  litellm_params:
+    model: anthropic/claude-sonnet-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+    extra_headers: *id001
+    caching: true
+- model_name: claude-architect
+  litellm_params:
+    model: gemini/gemini-flash-latest
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: glm-utility
+  litellm_params:
+    model: openai/glm-4.5-air
+    api_base: https://open.bigmodel.cn/api/paas/v4
+    api_key: os.environ/ZHIPU_API_KEY
+    caching: true
+- model_name: glm-utility
+  litellm_params:
+    model: deepseek/deepseek-flash
+    api_key: os.environ/DEEPSEEK_API_KEY
+    caching: true
+- model_name: openai-gpt4o
+  litellm_params:
+    model: openai/gpt-4o
+    api_key: os.environ/OPENAI_API_KEY
+    caching: true
+- model_name: openai-gpt4o
+  litellm_params:
+    model: gemini/gemini-3.8-flash
+    api_key: os.environ/GEMINI_API_KEY
+    caching: true
+- model_name: codex-specialist
+  litellm_params:
+    model: openai/o3-mini
+    api_key: os.environ/OPENAI_API_KEY
+    caching: true
+- model_name: codex-specialist
+  litellm_params:
+    model: deepseek/deepseek-reasoner
+    api_key: os.environ/DEEPSEEK_API_KEY
+    caching: true
+- model_name: local-ollama
+  litellm_params:
+    model: ollama/qwen2.5-coder:32b
+    api_base: http://127.0.0.1:11434
+    caching: true
+- model_name: local-32b
+  litellm_params:
+    model: ollama/qwen2.5-coder:32b
+    api_base: http://127.0.0.1:11434
+    caching: true
+- model_name: local-70b
+  litellm_params:
+    model: ollama/llama3.3:70b
+    api_base: http://127.0.0.1:11434
+    caching: true
 - model_name: local-coder
   litellm_params:
     model: ollama/qwen2.5-coder:7b
-    api_base: http://localhost:11434
-- model_name: local-reasoner
-  litellm_params:
-    model: ollama/deepseek-r1:32b
-    api_base: http://localhost:11434
+    api_base: http://127.0.0.1:11434
+    caching: true
 - model_name: local-llama
   litellm_params:
     model: ollama/llama3.3:70b
-    api_base: http://localhost:11434
-- model_name: siliconflow-qwen-coder
-  litellm_params:
-    model: openai/Qwen/Qwen3-Coder-30B-A3B-Instruct
-    api_base: https://api.siliconflow.com/v1
-    api_key: os.environ/SILICONFLOW_API_KEY
+    api_base: http://127.0.0.1:11434
     caching: true
-- model_name: deepinfra-qwen-coder
+- model_name: local-reasoner
   litellm_params:
-    model: openai/Qwen/Qwen2.5-Coder-32B-Instruct
-    max_tokens: 4096
-    api_base: https://api.deepinfra.com/v1/openai
-    api_key: os.environ/DEEPINFRA_API_KEY
+    model: ollama/deepseek-r1:32b
+    api_base: http://127.0.0.1:11434
+    caching: true
+- model_name: local-lmstudio-120b
+  litellm_params:
+    model: openai/local-120b-gguf
+    api_base: http://127.0.0.1:1234/v1
+    api_key: lm-studio
     caching: true
 router_settings:
-  routing_strategy: cost-based-routing
-  timeout: 60
+  routing_strategy: simple-shuffle
   num_retries: 2
-  allowed_fails: 1
-  cooldown_time: 30
   cache_responses: true
-  fallbacks:
-  - gemini-payg:
-    - gemini-3.8-flash
-    - antigravity-flash-latest
-    - local-coder
-  - deepseek-coder:
-    - local-coder
-  - deepseek-reasoner:
-    - antigravity-flash-latest
-    - local-coder
-  - claude-architect:
-    - antigravity-flash-latest
-    - local-coder
-  - antigravity-librarian:
-    - local-coder
-  - glm-utility:
-    - local-coder
-  - codex-specialist:
-    - antigravity-flash-latest
-    - local-coder
-  - openai-gpt4o:
-    - local-coder
-  - kimi-reasoner:
-    - deepseek-reasoner
-    - local-reasoner
-  - kimi-coder:
-    - deepseek-coder
-    - local-coder
-  - kimi-architect:
-    - antigravity-flash-latest
-    - local-coder
-general_settings:
-  master_key: os.environ/LITELLM_MASTER_KEY
-  dangerously_permit_weak_or_unset_master_key: true
-  alerting: []
-  store_model_in_db: false
 litellm_settings:
-  drop_params: true
-  set_verbose: false
-  request_timeout: 60
   cache: true
   cache_params:
     type: disk
-    disk_cache_dir: "C:\\ProgramData\\litellm\\.cache"
+    disk_cache_dir: C:\ProgramData\litellm\.cache
     ttl: 86400
     default_in_memory_ttl: 86400
     supported_call_types:
-      - "completion"
-      - "acompletion"
-      - "embedding"
-      - "aembedding"
-
-
-
-
-
-
-
-
+    - completion
+    - acompletion
+    - embedding
+    - aembedding
+  drop_params: true
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  host: 0.0.0.0
+  port: 4000
+  trusted_proxy_ranges: []
+  dangerously_permit_weak_or_unset_master_key: true
+  database_connection_string: sqlite:///C:/ProgramData/litellm/litellm.db

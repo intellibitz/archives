@@ -34,7 +34,6 @@
               <option value="gemini-flash" selected>Gemini 2.5/3.8 Flash — $0.075 / $0.300</option>
               <option value="claude-3-5-sonnet">Claude 3.5 Sonnet — $3.00 / $15.00</option>
               <option value="siliconflow-qwen-coder">Qwen 2.5 Coder 32B — $0.20 / $0.40</option>
-              <option value="dashscope-qwen-max">DashScope Qwen Max — $1.60 / $6.40</option>
             </select>
             <label>Projected Queries / Day:</label>
             <input type="number" id="simDailyQueries" class="ws-path-input" value="150" style="width:100%;margin-bottom:12px;" />
