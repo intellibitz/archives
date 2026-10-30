@@ -1,4 +1,4 @@
-model_list:
+﻿model_list:
 - model_name: antigravity-librarian
   litellm_params:
     model: gemini/gemini-flash-latest
@@ -150,6 +150,21 @@ model_list:
   litellm_params:
     model: ollama/llama3.3:70b
     api_base: http://localhost:11434
+- model_name: siliconflow-qwen-coder
+  litellm_params:
+    model: openai/Qwen/Qwen2.5-Coder-32B-Instruct
+    api_base: https://api.siliconflow.com/v1
+    api_key: os.environ/SILICONFLOW_API_KEY
+    caching: true
+- model_name: deepinfra-qwen-coder
+  litellm_params:
+    model: openai/Qwen/Qwen2.5-Coder-32B-Instruct
+    max_tokens: 4096
+    api_base: https://api.deepinfra.com/v1/openai
+    max_tokens: 4096
+    api_key: os.environ/DEEPINFRA_API_KEY
+    max_tokens: 4096
+    caching: true
 router_settings:
   routing_strategy: cost-based-routing
   timeout: 60
@@ -208,3 +223,12 @@ litellm_settings:
       - "acompletion"
       - "embedding"
       - "aembedding"
+
+
+
+
+
+
+
+
+

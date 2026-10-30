@@ -8,7 +8,7 @@ set PYTHONUTF8=1
 rem Ingest credentials from private user secrets folder on C: drive if available
 if exist "%USERPROFILE%\.secrets\.env" (
     for /F "usebackq tokens=1* delims==" %%A in ("%USERPROFILE%\.secrets\.env") do (
-        if not "%%A"=="" if not "%%A:~0,1%"=="#" set "%%A=%%B"
+        if not "%%A"=="" set "%%A=%%B"
     )
 )
 
