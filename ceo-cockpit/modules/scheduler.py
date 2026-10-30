@@ -74,7 +74,7 @@ DEFAULT_JOBS: List[Dict[str, Any]] = [
         "name": "Agent Swarm Gateway Heartbeat",
         "cron": "*/15 * * * *",
         "interval_human": "Every 15 Minutes",
-        "description": "Pings OpenClaw Gateway (18789) and LiteLLM (4000) for sub-second availability.",
+        "description": "Pings LiteLLM (4000) and Redis (6379) for sub-second availability.",
         "enabled": True,
         "last_run": None,
         "last_status": "SUCCESS",

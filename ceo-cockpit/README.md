@@ -7,7 +7,6 @@ Executive control plane designed specifically for executive leadership who comma
 ## 1. Quick Access Links
 
 * **Live Web Cockpit:** [http://localhost:8080](http://localhost:8080)
-* **OpenClaw Control Gateway:** [http://localhost:18789](http://localhost:18789)
 * **LiteLLM Model Catalog:** [http://localhost:4000/v1/models](http://localhost:4000/v1/models)
 * **Qdrant Neural Dashboard:** [http://localhost:6333/dashboard](http://localhost:6333/dashboard)
 
@@ -28,12 +27,11 @@ graph TD
         DeepSeek & Gemini <-->|Exact-Match In-Memory Cache| Redis["Memurai / Redis (:6379)"]
     end
     
-    subgraph "Autonomous Multi-Agent Swarm"
-        Cockpit -->|Delegated Workloads| OpenClaw["OpenClaw Gateway (:18789)"]
-        OpenClaw --> CoS["🧭 Chief of Staff (Coordinator)"]
-        OpenClaw --> Res["🔎 Strategic Researcher"]
-        OpenClaw --> Wri["✍️ Executive Writer"]
-        OpenClaw --> Rev["🔍 Quality Reviewer"]
+    subgraph "Local Offline Inference"
+        Cockpit -->|Zero-Cost Fallback| Ollama["Ollama (:11434)"]
+        Ollama --> Coder["qwen2.5-coder:7b"]
+        Ollama --> Reasoner["deepseek-r1:7b"]
+        Ollama --> Llama["llama3.2:1b"]
     end
 ```
 
@@ -50,7 +48,6 @@ ceo-cockpit/
 ├── server.py                      # Production mission control API server (:8080)
 ├── budget_governor.py             # Autonomous spend governor & circuit-breaker engine
 ├── config/
-│   ├── openclaw_agents.json       # OpenClaw 4-agent roster configuration
 │   └── budget_governor.json       # Live budget ledger, spend caps, and audit log
 ├── scripts/
 │   ├── start_cockpit.ps1          # One-click launch script
@@ -88,4 +85,4 @@ gsudo powershell -ExecutionPolicy Bypass -File .\scripts\register_service.ps1
 | **Deep Reasoning & Strategy** | `deepseek-reasoner` / `deepseek-chat` | Frontier logic at ~$0.14 - $0.55/M tokens. |
 | **High-Speed Synthesis & Memos** | `gemini-3.8-flash` | Sub-second briefs with 1M context at ~$0.075/M tokens. |
 | **Repeated Directives** | `Redis In-Memory Cache` | Served in ~20ms with **$0.00 token cost**. |
-| **Autonomous Delegations** | `OpenClaw Swarm` | Isolated background agents for multi-step goals. |
+| **Local / Offline Fallback** | `local-coder` / `local-reasoner` | Ollama on the local GPU, **$0.00 token cost**. |

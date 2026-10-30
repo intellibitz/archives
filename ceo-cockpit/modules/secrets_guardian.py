@@ -41,13 +41,6 @@ PROVIDERS = [
         "role": "Secondary Fallback & Embedding Support"
     },
     {
-        "id": "openclaw",
-        "name": "OpenClaw Swarm Token",
-        "env_vars": ["OPENCLAW_TOKEN", "OPENCLAW_GATEWAY_TOKEN"],
-        "required": True,
-        "role": "Multi-Agent Swarm Orchestration"
-    },
-    {
         "id": "redis",
         "name": "Redis / Memurai In-Memory Auth",
         "env_vars": ["REDIS_PASSWORD"],
@@ -169,7 +162,6 @@ def handle_secrets_recommendations(handler, query, tail):
         "success": True,
         "recommendations": [
             {"severity": "INFO", "title": "Zero-Leak Masking Active", "detail": "API credentials are never returned in plaintext by any endpoint or log."},
-            {"severity": "RECOMMENDED", "title": "Quarterly Key Rotation", "detail": "Rotate DeepSeek and Gemini API keys every 90 days."},
-            {"severity": "RECOMMENDED", "title": "Least-Privilege Token Scoping", "detail": "Ensure OpenClaw gateway token has read/write workspace isolation."}
+            {"severity": "RECOMMENDED", "title": "Quarterly Key Rotation", "detail": "Rotate DeepSeek and Gemini API keys every 90 days."}
         ]
     })

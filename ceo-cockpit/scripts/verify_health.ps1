@@ -9,7 +9,6 @@ $services = @(
     @{ Name = "CEO Cockpit Web"; Url = "http://localhost:8080/api/health"; Port = 8080 },
     # /v1/models needs the master key, so probe the unauthenticated liveness route
     @{ Name = "LiteLLM Gateway"; Url = "http://localhost:4000/health/liveliness"; Port = 4000 },
-    @{ Name = "OpenClaw Gateway"; Url = "http://localhost:18789/"; Port = 18789 },
     @{ Name = "Redis / Memurai"; Port = 6379 },
     @{ Name = "Qdrant Vector DB"; Url = "http://localhost:6333/healthz"; Port = 6333 }
 )

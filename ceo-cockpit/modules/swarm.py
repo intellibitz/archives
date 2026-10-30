@@ -1,8 +1,7 @@
 """
 Round 4 — Multi-Agent Swarm Mission Control.
 
-Manages autonomous multi-agent swarms across OpenClaw Gateway (Port 18789)
-and LiteLLM (Port 4000). Provides topology discovery, role specialization,
+Manages autonomous multi-agent swarms across LiteLLM (Port 4000). Provides topology discovery, role specialization,
 and concurrent swarm directive orchestration with executive synthesis.
 """
 

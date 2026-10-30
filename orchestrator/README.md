@@ -83,10 +83,32 @@ detection does not claim a funded provider.
 
 Then deploy and run the verification script. Known current gaps:
 
-- `local-*` routes need ollama (`:11434`) and lm-studio (`:1234`) running; they
-  are the only routes that fail today.
-- `dashscope-*` and `vertex-*` were removed (no credentials).
 - Zhipu balance is exhausted (code 1113), so `glm-utility` degrades to DeepSeek.
+- `dashscope-*` and `vertex-*` were removed (no credentials).
+- `openai-gpt4o` / `codex-specialist` degrade to Gemini / DeepSeek until OpenAI
+  credits are added.
+
+## Local models (Ollama)
+
+Ollama runs on `:11434` and is wired into four routes:
+
+| Route | Model | Notes |
+| --- | --- | --- |
+| `local-ollama` | `qwen2.5-coder:7b` | default local tier |
+| `local-coder` | `qwen2.5-coder:7b` | ~31 tok/s on the RTX 2000 Ada |
+| `local-reasoner` | `deepseek-r1:7b` | chain-of-thought distill |
+| `local-llama` | `llama3.2:1b` | smallest, fastest |
+
+The old `local-32b`, `local-70b` and `local-lmstudio-120b` routes were dropped:
+those models are not installed and 32B+ would run on CPU (slow), and lm-studio
+is not used. To add a bigger local model:
+
+```powershell
+ollama pull qwen2.5-coder:32b
+```
+
+then add a route in `orchestrator/build_litellm_config.py` pointing at
+`ollama/qwen2.5-coder:32b`, regenerate and deploy.
 
 ## Service management
 

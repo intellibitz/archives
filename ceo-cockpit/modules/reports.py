@@ -113,7 +113,7 @@ def handle_reports_generate(handler, query, tail):
 **Date:** {t_str} | **Author:** Executive CEO Cockpit AI OS | **Scope:** Global Repository & Swarm
 
 ## 1. Executive Summary & OKR Status
-All core infrastructure tiers (LiteLLM, OpenClaw, Redis, Qdrant, Ollama) are operating in full harmony. 
+All core infrastructure tiers (LiteLLM, Redis, Qdrant, Ollama) are operating in full harmony. 
 Autonomous engineering swarms are executing without prompt friction under strict budget governance.
 
 ## 2. Engineering & Architecture Velocity

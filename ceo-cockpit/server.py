@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Antigravity CEO Cockpit & AI OS Mission Control Server
-Bridges LiteLLM (Port 4000), OpenClaw Gateway (Port 18789), Redis (Port 6379), and Qdrant (Port 6333).
+Bridges LiteLLM (Port 4000), Redis (Port 6379), and Qdrant (Port 6333).
 """
 
 import http.server
@@ -33,7 +33,6 @@ LITELLM_HEADERS = {
     "Content-Type": "application/json",
     "Authorization": f"Bearer {LITELLM_KEY}"
 }
-OPENCLAW_URL = "http://127.0.0.1:18789"
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
 QDRANT_URL = "http://127.0.0.1:6333"
@@ -236,25 +235,6 @@ def process_chat_completion_with_closed_loop_tools(target_url: str, req_json: di
         })
 
     return resp_json
-
-def get_openclaw_token() -> str:
-    # Try multiple paths: user home, then hardcoded user path (for LocalSystem service)
-    cfg_paths = [
-        os.path.join(os.path.expanduser("~"), ".openclaw", "openclaw.json"),
-        r"C:\Users\user\.openclaw\openclaw.json",
-        os.path.join(os.environ.get("SystemDrive", "C:"), "Users", os.environ.get("USERNAME", "user"), ".openclaw", "openclaw.json"),
-    ]
-    for cfg_path in cfg_paths:
-        if os.path.exists(cfg_path):
-            try:
-                with open(cfg_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    token = data.get("gateway", {}).get("auth", {}).get("token", "")
-                    if token:
-                        return token
-            except Exception:
-                pass
-    return ""
 
 def classify_model_intent(prompt: str) -> Tuple[str, str]:
     """
@@ -821,8 +801,6 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_agents()
         elif path_only == "/api/cache-stats":
             self.handle_cache_stats()
-        elif path_only == "/api/openclaw-url":
-            self.handle_openclaw_url()
         elif path_only == "/api/workspace":
             self.handle_workspace_get()
         elif path_only == "/api/workspace/tree":
@@ -871,8 +849,6 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_budget_trip()
         elif path_only == "/api/budget/reset":
             self.handle_budget_reset()
-        elif path_only == "/api/openclaw/dispatch":
-            self.handle_openclaw_dispatch()
         else:
             self._send_json(404, {"error": "Endpoint not found"})
 
@@ -913,25 +889,23 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_health(self):
         litellm_ok = check_tcp_port("127.0.0.1", 4000)
-        openclaw_ok = litellm_ok or check_tcp_port("127.0.0.1", 18789) or check_tcp_port("127.0.0.1", 18182)
         redis_ok = check_tcp_port("127.0.0.1", 6379)
         qdrant_ok = check_tcp_port("127.0.0.1", 6333)
+        ollama_ok = check_tcp_port("127.0.0.1", 11434)
         cached_keys = count_redis_keys()
         clicker = check_auto_clicker()
 
         self._send_json(200, {
-            "status": "healthy" if (litellm_ok and openclaw_ok and redis_ok and clicker.get("online")) else "degraded",
+            "status": "healthy" if (litellm_ok and redis_ok and clicker.get("online")) else "degraded",
             "services": {
                 "litellm": {
                     "port": 4000,
                     "online": litellm_ok,
                     "models": ["deepseek-reasoner", "deepseek-chat", "gemini-flash", "gemini-pro"]
                 },
-                "openclaw": {
-                    "port": 18789,
-                    "online": openclaw_ok,
-                    "version": "2026.10.6",
-                    "mode": "autonomous-multi-agent"
+                "ollama": {
+                    "port": 11434,
+                    "online": ollama_ok
                 },
                 "redis_cache": {
                     "port": 6379,
@@ -955,7 +929,6 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
         })
 
     def handle_agents(self):
-        token = get_openclaw_token()
         agents = [
             {
                 "id": "local-coordinator",
@@ -990,7 +963,7 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
                 "status": "active"
             }
         ]
-        self._send_json(200, {"agents": agents, "hasToken": bool(token)})
+        self._send_json(200, {"agents": agents})
 
     def handle_cache_stats(self):
         keys = count_redis_keys()
@@ -999,14 +972,6 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             "cacheHitSpeedup": "1.8x - 10x",
             "estimatedCostSaved": f"${keys * 0.002:.4f}",
             "cachingStatus": "Active Exact-Match Redis Caching"
-        })
-
-    def handle_openclaw_url(self):
-        token = get_openclaw_token()
-        dashboard_url = f"http://127.0.0.1:18789/"
-        self._send_json(200, {
-            "url": dashboard_url,
-            "token": token
         })
 
     def handle_workspace_get(self):
@@ -1099,10 +1064,6 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
                     {"id": "auto", "object": "model", "owned_by": "CEO Cockpit Smart Auto-Router (Budget & Intent First)", "permission": []}
                 ]
                 extra_models = [
-                    {"id": "openclaw/local-coordinator", "object": "model", "owned_by": "OpenClaw Swarm (Claude 3.7 COO)", "permission": []},
-                    {"id": "openclaw/local-researcher", "object": "model", "owned_by": "OpenClaw Swarm (Gemini 2.5 Flash)", "permission": []},
-                    {"id": "openclaw/local-writer", "object": "model", "owned_by": "OpenClaw Swarm (DeepSeek V3)", "permission": []},
-                    {"id": "openclaw/local-reviewer", "object": "model", "owned_by": "OpenClaw Swarm (DeepSeek R1)", "permission": []},
                     {"id": "autonomous-model-ladder", "object": "model", "owned_by": "CEO Cockpit 24x7 Self-Healing OS", "permission": []}
                 ]
                 data["data"] = auto_model + data["data"] + extra_models
@@ -1203,48 +1164,18 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
                 model_id = selected_model
                 print(f"[COCKPIT AUTO-ROUTER]: Workspace='{ws_path}' -> Routed prompt to '{selected_model}' ({routing_reason})")
 
-            # 2. Local 120B Scale Failover Safeguard
-            if "120b" in model_id.lower() or "lmstudio" in model_id.lower():
-                if not check_tcp_port("127.0.0.1", 1234):
-                    print(f"[COCKPIT FAILOVER]: LM Studio port 1234 offline. Auto-failing over from '{model_id}' to 'deepseek-v4-pro'.")
-                    req_json["model"] = "deepseek-v4-pro"
-                    model_id = "deepseek-v4-pro"
+            # 2. Local model failover: if ollama is down, local-* routes fall back
+            if model_id.startswith("local-"):
+                if not check_tcp_port("127.0.0.1", 11434):
+                    print(f"[COCKPIT FAILOVER]: Ollama port 11434 offline. Auto-failing over from '{model_id}' to 'deepseek-flash'.")
+                    req_json["model"] = "deepseek-flash"
+                    model_id = "deepseek-flash"
 
-            # 2. OpenClaw Agent Personas
-            if model_id.startswith("openclaw/"):
-                agent_id = model_id.replace("openclaw/", "")
-                token = get_openclaw_token()
-                openclaw_headers = {
-                    "Content-Type": "application/json"
-                }
-                if token:
-                    openclaw_headers["Authorization"] = f"Bearer {token}"
-
-                req_json["model"] = f"openclaw:{agent_id}"
-
-                target_url = f"{OPENCLAW_URL}/v1/chat/completions" if check_tcp_port("127.0.0.1", 18789) else f"{LITELLM_URL}/v1/chat/completions"
-                if target_url == f"{LITELLM_URL}/v1/chat/completions":
-                    agent_model_map = {
-                        "local-coordinator": "deepseek-v4-pro",
-                        "local-researcher": "deepseek-flash",
-                        "local-writer": "deepseek-v4-pro",
-                        "local-reviewer": "deepseek-reasoner"
-                    }
-                    req_json["model"] = agent_model_map.get(agent_id, "deepseek-v4-pro")
-                    target_url = f"{LITELLM_URL}/v1/chat/completions"
-                    openclaw_headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LITELLM_KEY}"}
-
-                target_req = urllib.request.Request(
-                    target_url,
-                    data=json.dumps(req_json).encode("utf-8"),
-                    headers=openclaw_headers
-                )
-            else:
-                target_req = urllib.request.Request(
-                    f"{LITELLM_URL}/v1/chat/completions",
-                    data=json.dumps(req_json).encode("utf-8"),
-                    headers={"Content-Type": "application/json", "Authorization": f"Bearer {LITELLM_KEY}"}
-                )
+            target_req = urllib.request.Request(
+                f"{LITELLM_URL}/v1/chat/completions",
+                data=json.dumps(req_json).encode("utf-8"),
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {LITELLM_KEY}"}
+            )
 
             with urllib.request.urlopen(target_req, timeout=120) as resp:
                 resp_bytes = resp.read()
@@ -1953,64 +1884,6 @@ class CockpitHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(e.code, {"error": f"LiteLLM Provider Error: {err_body}", "model": selected_model})
         except Exception as e:
             self._send_json(500, {"error": f"Server Error: {str(e)}", "model": selected_model})
-
-    def handle_openclaw_dispatch(self):
-        content_length = int(self.headers.get("Content-Length", 0))
-        post_data = self.rfile.read(content_length)
-        try:
-            req = json.loads(post_data.decode("utf-8"))
-        except Exception as e:
-            self._send_json(400, {"error": f"Invalid JSON: {e}"})
-            return
-
-        agent_id = req.get("agent_id", "local-coordinator")
-        message = req.get("message", "").strip()
-
-        if not message:
-            self._send_json(400, {"error": "Message is required"})
-            return
-
-        token = get_openclaw_token()
-        start_time = time.time()
-
-        # Call OpenClaw HTTP chatCompletions endpoint
-        openclaw_payload = {
-            "model": f"openclaw/{agent_id}",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": message
-                }
-            ],
-            "max_tokens": 2048
-        }
-
-        try:
-            req_data = json.dumps(openclaw_payload).encode("utf-8")
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {token}"
-            }
-            openclaw_req = urllib.request.Request(
-                f"{OPENCLAW_URL}/v1/chat/completions",
-                data=req_data,
-                headers=headers
-            )
-            with urllib.request.urlopen(openclaw_req, timeout=60) as resp:
-                resp_json = json.loads(resp.read().decode("utf-8"))
-
-            elapsed_ms = int((time.time() - start_time) * 1000)
-            choice = resp_json.get("choices", [{}])[0]
-            reply = choice.get("message", {}).get("content", "")
-
-            self._send_json(200, {
-                "success": True,
-                "agent_id": agent_id,
-                "reply": reply,
-                "latency_ms": elapsed_ms
-            })
-        except Exception as e:
-            self._send_json(500, {"error": f"OpenClaw agent turn failed: {str(e)}"})
 
 class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     allow_reuse_address = True

@@ -1,6 +1,6 @@
 /* =============================================================================
  * Round 15 — Cross-Harness Interop & Gateway Matrix
- * Probing LiteLLM, OpenClaw, Redis, Qdrant, and Ollama in real-time.
+ * Probing LiteLLM, Redis, Qdrant, and Ollama in real-time.
  * ========================================================================== */
 (function () {
   'use strict';

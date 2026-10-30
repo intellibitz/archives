@@ -1,7 +1,7 @@
 """
 Round 15 — Cross-Harness Interop & Gateway Matrix.
 
-Continuous multi-gateway probing across LiteLLM (4000), OpenClaw (18789),
+Continuous multi-gateway probing across LiteLLM (4000), Redis (6379),
 Redis/Memurai (6379), Qdrant (6333), and Local LLM/Ollama (11434).
 """
 
@@ -24,16 +24,6 @@ GATEWAYS = [
         "protocol": "HTTP/REST",
         "role": "Model Routing & Cost Metering",
         "failover_rank": 1
-    },
-    {
-        "id": "openclaw",
-        "name": "OpenClaw Multi-Agent Gateway",
-        "host": "127.0.0.1",
-        "port": 18789,
-        "http_check": "http://127.0.0.1:18789/",
-        "protocol": "HTTP/SSE",
-        "role": "Autonomous Swarm Orchestration",
-        "failover_rank": 2
     },
     {
         "id": "redis",
@@ -150,7 +140,6 @@ def handle_gateways_routing(handler, query, tail):
         "failover_chain": [
             {"tier": 0, "name": "Exact-Match Cache", "target": "Redis :6379", "cost": "$0.00", "latency": "< 2ms"},
             {"tier": 1, "name": "Primary Cognitive Tier", "target": "LiteLLM (DeepSeek R1 / Gemini)", "cost": "Metered", "latency": "~500ms"},
-            {"tier": 2, "name": "Multi-Agent Swarm Tier", "target": "OpenClaw :18789", "cost": "Autonomous", "latency": "~800ms"},
             {"tier": 3, "name": "Local Offline Backup", "target": "Ollama :11434", "cost": "$0.00", "latency": "~2000ms"}
         ]
     })

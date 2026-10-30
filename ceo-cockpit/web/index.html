@@ -34,10 +34,10 @@
           <span class="chip-label">LiteLLM Proxy</span>
           <span class="chip-val">:4000</span>
         </div>
-        <div class="telemetry-chip" id="chipOpenclaw" title="Port 18789: Unrestricted Open-Source Multi-Agent Gateway">
+        <div class="telemetry-chip" id="chipOllama" title="Port 11434: Local Offline Inference (Ollama)">
           <span class="chip-dot dot-green"></span>
-          <span class="chip-label">OpenClaw Gateway</span>
-          <span class="chip-val">:18789</span>
+          <span class="chip-label">Ollama Local</span>
+          <span class="chip-val">:11434</span>
         </div>
         <div class="telemetry-chip" id="chipRedis" title="Port 6379: In-Memory Response Caching (Zero-Cost Repeated Calls)">
           <span class="chip-dot dot-green"></span>
@@ -213,11 +213,6 @@
               <span class="tab-icon">⚡</span>
               <span class="tab-text">Gemini 3.8 Flash</span>
               <span class="tab-sub">Fast & Scale</span>
-            </button>
-            <button class="mode-tab" data-mode="openclaw" id="tabOpenclaw">
-              <span class="tab-icon">🧭</span>
-              <span class="tab-text">Chief of Staff</span>
-              <span class="tab-sub">Multi-Agent</span>
             </button>
             <button class="mode-tab" data-mode="arena" id="tabArena">
               <span class="tab-icon">🏛️</span>
@@ -528,75 +523,6 @@
 
       <!-- Right Column: Multi-Agent Swarm & System HUD -->
       <section class="grid-column side-hud-col">
-        <!-- OpenClaw Multi-Agent Roster Card -->
-        <div class="card glass-card roster-card">
-          <div class="card-header">
-            <div class="card-heading">
-              <span class="card-icon">🧭</span>
-              <h2>OpenClaw Agent Swarm</h2>
-            </div>
-            <span class="status-badge live">4 Autonomous Units</span>
-          </div>
-          <p class="card-description">Free, open-source multi-agent roster running isolated tasks in the background.</p>
-
-          <div class="agents-roster" id="agentsRoster">
-            <!-- Dynamically populated or static baseline -->
-            <div class="agent-item" data-agent="local-coordinator">
-              <div class="agent-avatar avatar-gold">🧭</div>
-              <div class="agent-info">
-                <div class="agent-name-row">
-                  <span class="agent-name">Chief of Staff</span>
-                  <span class="agent-badge badge-gold">Coordinator</span>
-                </div>
-                <div class="agent-role">Orchestration & Task Delegation</div>
-                <div class="agent-model">🧠 DeepSeek V4 Pro</div>
-              </div>
-            </div>
-
-            <div class="agent-item" data-agent="local-researcher">
-              <div class="agent-avatar avatar-cyan">🔎</div>
-              <div class="agent-info">
-                <div class="agent-name-row">
-                  <span class="agent-name">Strategic Researcher</span>
-                  <span class="agent-badge badge-cyan">Intel</span>
-                </div>
-                <div class="agent-role">Fact Discovery & Deep Intel</div>
-                <div class="agent-model">⚡ DeepSeek Flash</div>
-              </div>
-            </div>
-
-            <div class="agent-item" data-agent="local-writer">
-              <div class="agent-avatar avatar-purple">✍️</div>
-              <div class="agent-info">
-                <div class="agent-name-row">
-                  <span class="agent-name">Executive Writer</span>
-                  <span class="agent-badge badge-purple">Comms</span>
-                </div>
-                <div class="agent-role">Board Memos & Polished Briefs</div>
-                <div class="agent-model">⚡ Gemini 3.1 Flash</div>
-              </div>
-            </div>
-
-            <div class="agent-item" data-agent="local-reviewer">
-              <div class="agent-avatar avatar-green">🔍</div>
-              <div class="agent-info">
-                <div class="agent-name-row">
-                  <span class="agent-name">Quality Reviewer</span>
-                  <span class="agent-badge badge-green">Audit</span>
-                </div>
-                <div class="agent-role">Risk Analysis & Verification</div>
-                <div class="agent-model">🧠 GLM / DeepSeek</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="openclaw-actions">
-            <a href="http://127.0.0.1:18789/" target="_blank" class="action-link-btn" id="btnOpenClawDashboard">
-              <span>Launch OpenClaw Control UI</span>
-              <span class="ext-icon">↗</span>
-            </a>
-          </div>
-        </div>
 
         <!-- Autonomous Budget Governor & Circuit-Breaker Card -->
         <div class="card glass-card budget-card">

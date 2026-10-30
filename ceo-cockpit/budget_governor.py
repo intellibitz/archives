@@ -181,7 +181,7 @@ MODEL_PRICING: Dict[str, Dict[str, Any]] = {
     # Local & Zero-Cost Safeguards
     "local-safeguard": {
         "name": "Zero-Cost Local Safeguard",
-        "provider": "Local / OpenClaw",
+        "provider": "Local / Ollama",
         "category": "Zero-Cost Circuit Breaker Safeguard",
         "prompt": 0.0,
         "completion": 0.0,
@@ -225,42 +225,6 @@ MODEL_PRICING: Dict[str, Dict[str, Any]] = {
         "context_window": "32k",
         "cost_tier": "Free ($0.00)",
         "is_reasoning": False,
-        "is_safeguard": True
-    },
-    "local-32b": {
-        "name": "Local 32B GPU Engine (Qwen 2.5 Coder 32B / DeepSeek R1 32B)",
-        "provider": "Local Hardware (GPU/VRAM)",
-        "category": "Zero-Cost Local 32B Scale",
-        "prompt": 0.00,
-        "completion": 0.00,
-        "cached_prompt": 0.00,
-        "context_window": "32k",
-        "cost_tier": "Free ($0.00)",
-        "is_reasoning": True,
-        "is_safeguard": True
-    },
-    "local-70b": {
-        "name": "Local 70B GPU/RAM Engine (Llama 3.3 70B / Qwen 70B)",
-        "provider": "Local Hardware (GPU+CPU Offload)",
-        "category": "Zero-Cost Local 70B Scale",
-        "prompt": 0.00,
-        "completion": 0.00,
-        "cached_prompt": 0.00,
-        "context_window": "128k",
-        "cost_tier": "Free ($0.00)",
-        "is_reasoning": True,
-        "is_safeguard": True
-    },
-    "local-lmstudio-120b": {
-        "name": "Local LM Studio 120B Engine (Command-R+ / Qwen 120B GGUF)",
-        "provider": "LM Studio Local Server",
-        "category": "Zero-Cost Local 120B Scale",
-        "prompt": 0.00,
-        "completion": 0.00,
-        "cached_prompt": 0.00,
-        "context_window": "128k",
-        "cost_tier": "Free ($0.00)",
-        "is_reasoning": True,
         "is_safeguard": True
     }
 }

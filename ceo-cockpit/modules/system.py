@@ -36,7 +36,7 @@ ROADMAP_ROUNDS = [
     {"round": 12, "name": "Autonomous Workflow Scheduler", "status": "operational", "focus": "Scheduled background jobs, maintenance automation, and execution logs"},
     {"round": 13, "name": "Executive Knowledge & Vector Memory", "status": "operational", "focus": "Qdrant vector memory integration, semantic indexing, and search"},
     {"round": 14, "name": "Architecture & Compliance Reviewer", "status": "operational", "focus": "Static AST validation, secret leak detection, and hygiene scoring"},
-    {"round": 15, "name": "Cross-Harness Gateway Matrix", "status": "operational", "focus": "Multi-gateway latency probes (LiteLLM, OpenClaw, Redis, Qdrant, Ollama)"},
+    {"round": 15, "name": "Cross-Harness Gateway Matrix", "status": "operational", "focus": "Multi-gateway latency probes (LiteLLM, Redis, Qdrant, Ollama)"},
     {"round": 16, "name": "Executive Incident War Room", "status": "operational", "focus": "Incident tracking, severity grading (P1-P4), and automated AI root-cause analysis"},
     {"round": 17, "name": "Repository Test Benchmarks", "status": "operational", "focus": "One-click test suite execution, pass-rate telemetry, and model speed leaderboard"},
     {"round": 18, "name": "Board-Level Report Generator", "status": "operational", "focus": "Boardroom briefings, financial burn audits, and Markdown RFC compilation"},
@@ -120,7 +120,6 @@ def get_system_manifest(h, query, tail):
     clicker = _check_clicker()
 
     litellm_ok = _check_tcp("127.0.0.1", 4000)
-    openclaw_ok = _check_tcp("127.0.0.1", 18789)
     redis_ok = _check_tcp("127.0.0.1", 6379)
     qdrant_ok = _check_tcp("127.0.0.1", 6333)
 
@@ -166,7 +165,6 @@ def get_system_manifest(h, query, tail):
         },
         "subsystems": {
             "litellm": {"port": 4000, "online": litellm_ok},
-            "openclaw": {"port": 18789, "online": openclaw_ok},
             "redis": {"port": 6379, "online": redis_ok},
             "qdrant": {"port": 6333, "online": qdrant_ok},
             "autoclicker": clicker
@@ -185,18 +183,16 @@ def get_system_health(h, query, tail):
     """Fast aggregate health report."""
     clicker = _check_clicker()
     litellm_ok = _check_tcp("127.0.0.1", 4000)
-    openclaw_ok = _check_tcp("127.0.0.1", 18789)
     redis_ok = _check_tcp("127.0.0.1", 6379)
     qdrant_ok = _check_tcp("127.0.0.1", 6333)
 
-    healthy = bool(litellm_ok and openclaw_ok and redis_ok and clicker.get("online"))
+    healthy = bool(litellm_ok and redis_ok and clicker.get("online"))
     send_json(h, 200, {
         "success": True,
         "healthy": healthy,
         "status": "healthy" if healthy else "degraded",
         "subsystems": {
             "litellm": litellm_ok,
-            "openclaw": openclaw_ok,
             "redis": redis_ok,
             "qdrant": qdrant_ok,
             "autoclicker": clicker.get("online")

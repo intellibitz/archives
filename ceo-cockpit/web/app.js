@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudCostSaved = document.getElementById('hudCostSaved');
   const hudHitRate = document.getElementById('hudHitRate');
   const hudSpeedup = document.getElementById('hudSpeedup');
-  const agentItems = document.querySelectorAll('.agent-item');
 
   // Orchestration Harness Controls
   const selectModel = document.getElementById('selectModel');
@@ -142,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let allModelsList = [];
   let allModelsPricingMap = {};
   let currentMode = 'auto';
-  let selectedAgent = 'local-coordinator';
   let activeWorkspace = null;
   let isWsContextAttached = true;
   let isThinkingExpanded = false;
@@ -661,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'siliconflow-qwen-coder': { name: 'Qwen 2.5 Coder 32B (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.20, completion: 0.40, icon: '💻', tier: 'Ultra-Low ($)', context: '128k', group: 'code' },
     'siliconflow-qwen': { name: 'Qwen 2.5 72B Instruct (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.20, completion: 0.40, icon: '🌐', tier: 'Ultra-Low ($)', context: '128k', group: 'generalist' },
     'siliconflow-deepseek': { name: 'DeepSeek V3 (SiliconFlow)', provider: 'SiliconFlow', prompt: 0.14, completion: 0.28, icon: '⚡', tier: 'Ultra-Low ($)', context: '64k', group: 'speed' },
-    'local-safeguard': { name: 'Zero-Cost Local Safeguard', provider: 'Local / OpenClaw', prompt: 0.0, completion: 0.0, icon: '🛡️', tier: 'Free ($0.00)', context: '32k', is_safeguard: true, group: 'safeguard' }
+    'local-safeguard': { name: 'Zero-Cost Local Safeguard', provider: 'Local / Ollama', prompt: 0.0, completion: 0.0, icon: '🛡️', tier: 'Free ($0.00)', context: '32k', is_safeguard: true, group: 'safeguard' }
   };
 
   async function fetchModelsList() {
@@ -1228,9 +1226,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (mode === 'gemini') {
       decisionIndicator.textContent = '⚡';
       decisionText.textContent = 'Manual Tier: Gemini 3.8 Flash engaged for rapid synthesis, high context processing, and executive memos.';
-    } else if (mode === 'openclaw') {
-      decisionIndicator.textContent = '🧭';
-      decisionText.textContent = 'Multi-Agent Swarm: Dispatching directly to Chief of Staff & OpenClaw background agents.';
     } else if (mode === 'arena') {
       decisionIndicator.textContent = '🏛️';
       decisionText.textContent = 'Council Arena Active: Parallel adversarial deliberation across DeepSeek Reasoner & Gemini Flash with executive consensus synthesis.';
@@ -1264,23 +1259,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnDispatch.addEventListener('click', dispatchCommand);
-
-  // Agent Roster Click: focus agent
-  agentItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const agentId = item.dataset.agent;
-      selectedAgent = agentId;
-      tabButtons.forEach(t => t.classList.remove('active'));
-      const openclawTab = document.getElementById('tabOpenclaw');
-      if (openclawTab) openclawTab.classList.add('active');
-      currentMode = 'openclaw';
-      
-      const agentName = item.querySelector('.agent-name').textContent;
-      decisionIndicator.textContent = '🤖';
-      decisionText.textContent = `Direct Agent Target: Assigned to ${agentName} (${agentId}) for autonomous execution.`;
-      executivePrompt.focus();
-    });
-  });
 
   // ==============================================================================
   // Executive Sessions Archive Engine
@@ -1599,9 +1577,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      if (currentMode === 'openclaw') {
-        await dispatchToOpenClaw(prompt);
-      } else if (currentMode === 'arena' || prompt.startsWith('/arena')) {
+      if (currentMode === 'arena' || prompt.startsWith('/arena')) {
         const cleanPrompt = prompt.startsWith('/arena') ? prompt.replace(/^\/arena\s*/i, '') : prompt;
         await dispatchArenaDirective(cleanPrompt);
       } else {
@@ -1991,71 +1967,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function dispatchToOpenClaw(prompt) {
-    outputStatus.textContent = 'Dispatching to OpenClaw Swarm...';
-
-    const userMsg = {
-      role: 'user',
-      content: prompt,
-      timestamp: Date.now() / 1000
-    };
-    if (activeSession) {
-      activeSession.messages = activeSession.messages || [];
-      activeSession.messages.push(userMsg);
-    }
-    const userCard = createTurnCard(userMsg, (activeSession?.messages?.length || 1) - 1);
-    if (conversationTimeline) {
-      if (outputPlaceholder) outputPlaceholder.style.display = 'none';
-      conversationTimeline.appendChild(userCard);
-      scrollToTimelineBottom();
-    }
-    executivePrompt.value = '';
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/openclaw/dispatch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: prompt, agent_id: selectedAgent })
-      });
-
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'OpenClaw execution failed');
-      }
-
-      decisionIndicator.textContent = '🧭';
-      decisionText.textContent = `Autonomous execution completed by OpenClaw Agent [${data.agent_id}].`;
-      decisionMetrics.style.display = 'flex';
-      metricModel.textContent = `OpenClaw: ${data.agent_id}`;
-      metricCache.textContent = 'SWARM COMPLETE';
-      metricLatency.textContent = `${data.latency_ms} ms`;
-
-      const assistantMsg = {
-        role: 'assistant',
-        content: data.reply,
-        model: `OpenClaw (${data.agent_id})`,
-        latency_ms: data.latency_ms,
-        cost_usd: 0.0,
-        timestamp: Date.now() / 1000
-      };
-
-      if (activeSession) {
-        activeSession.messages.push(assistantMsg);
-      }
-
-      const assistantCard = createTurnCard(assistantMsg, (activeSession?.messages?.length || 1) - 1);
-      if (conversationTimeline) {
-        conversationTimeline.appendChild(assistantCard);
-        scrollToTimelineBottom();
-      }
-
-      outputStatus.textContent = `Agent Completed (${data.latency_ms}ms)`;
-    } finally {
-      setLoading(false);
-    }
-  }
-
   // ==============================================================================
   // Slash Commands Popover Engine
   // ==============================================================================
@@ -2420,7 +2331,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const s = data.services;
       updateChip('chipLitellm', s.litellm.online);
-      updateChip('chipOpenclaw', s.openclaw.online);
+      updateChip('chipOllama', s.ollama ? s.ollama.online : false);
       updateChip('chipRedis', s.redis_cache.online);
       updateChip('chipQdrant', s.qdrant_memory.online);
       if (s.auto_clicker) {
