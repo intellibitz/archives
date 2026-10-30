@@ -53,7 +53,9 @@ if (Test-Path $memuraiCli) {
 }
 
 # Check Decision Auto-Clicker Process & Heartbeat
-$clickerProc = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*auto_click_decisions*" }
+# One implementation: AutoClickDecisionsNative.exe (writes the heartbeat below).
+$clickerProc = Get-CimInstance Win32_Process -Filter "Name = 'AutoClickDecisionsNative.exe'" |
+    Select-Object -First 1
 $heartbeatFile = Join-Path $env:TEMP "auto_click_decisions.heartbeat"
 $isFresh = $false
 if (Test-Path $heartbeatFile) {
