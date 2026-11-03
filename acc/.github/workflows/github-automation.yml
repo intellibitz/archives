@@ -1,0 +1,124 @@
+name: GitHub Automation (Preflight + Optional Task)
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+  issues: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      gradle_task:
+        description: 'Gradle automation task to run after preflight (e.g., githubMergeAll). Leave empty to only run preflight.'
+        required: false
+        default: 'githubMergeAll'
+  push:
+    branches: [ main ]
+
+jobs:
+  automation:
+    name: Automation with Preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3g -Dkotlin.daemon.jvmargs=-Xmx2g"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Preflight (gh auth and env checks)
+        run: ./gradlew githubPreflight
+        env:
+          MAIN_RESET_CONFIRM: ${{ secrets.MAIN_RESET_CONFIRM != '' && secrets.MAIN_RESET_CONFIRM || 'true' }}
+          FORCE_PUSH_CONFIRM: ${{ secrets.FORCE_PUSH_CONFIRM != '' && secrets.FORCE_PUSH_CONFIRM || 'true' }}
+          GH_SKIP_AUTH_CHECK: ${{ secrets.GH_SKIP_AUTH_CHECK != '' && secrets.GH_SKIP_AUTH_CHECK || 'true' }}
+          AUTO_RESOLVE_MANUAL: ${{ secrets.AUTO_RESOLVE_MANUAL != '' && secrets.AUTO_RESOLVE_MANUAL || 'true' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run requested automation task (optional)
+        if: ${{ github.event.inputs.gradle_task != '' }}
+        run: |
+          TASK="${{ github.event.inputs.gradle_task }}"
+          if [ -n "${TASK}" ]; then
+            echo "Running Gradle task: ${TASK}"
+            ./gradlew "${TASK}"
+          else
+            echo "No automation task specified; skipping."
+          fi
+        env:
+          MAIN_RESET_CONFIRM: ${{ secrets.MAIN_RESET_CONFIRM != '' && secrets.MAIN_RESET_CONFIRM || 'true' }}
+          FORCE_PUSH_CONFIRM: ${{ secrets.FORCE_PUSH_CONFIRM != '' && secrets.FORCE_PUSH_CONFIRM || 'true' }}
+          GH_SKIP_AUTH_CHECK: ${{ secrets.GH_SKIP_AUTH_CHECK != '' && secrets.GH_SKIP_AUTH_CHECK || 'true' }}
+          AUTO_RESOLVE_MANUAL: ${{ secrets.AUTO_RESOLVE_MANUAL != '' && secrets.AUTO_RESOLVE_MANUAL || 'true' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Optionally prune local branches on runner
+        if: ${{ secrets.PRUNE_LOCAL_BRANCHES == 'true' }}
+        run: ./gradlew githubPruneLocalBranches
+        env:
+          PRUNE_LOCAL_MODE: ${{ secrets.PRUNE_LOCAL_BRANCHES }}
+          PRUNE_LOCAL_DAYS: ${{ secrets.PRUNE_LOCAL_DAYS != '' && secrets.PRUNE_LOCAL_DAYS || '90' }}
+          MAIN_RESET_CONFIRM: ${{ secrets.MAIN_RESET_CONFIRM != '' && secrets.MAIN_RESET_CONFIRM || 'true' }}
+          FORCE_PUSH_CONFIRM: ${{ secrets.FORCE_PUSH_CONFIRM != '' && secrets.FORCE_PUSH_CONFIRM || 'true' }}
+          GH_SKIP_AUTH_CHECK: ${{ secrets.GH_SKIP_AUTH_CHECK != '' && secrets.GH_SKIP_AUTH_CHECK || 'true' }}
+          AUTO_RESOLVE_MANUAL: ${{ secrets.AUTO_RESOLVE_MANUAL != '' && secrets.AUTO_RESOLVE_MANUAL || 'true' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build audit log
+        if: always()
+        run: |
+          mkdir -p automation-audit
+          echo "Timestamp: $(date -u)" > automation-audit/audit.txt
+          echo "Triggered by: ${{ github.event_name }}" >> automation-audit/audit.txt
+          echo "Requested task: ${{ github.event.inputs.gradle_task }}" >> automation-audit/audit.txt
+          echo "MAIN_RESET_CONFIRM=${{ secrets.MAIN_RESET_CONFIRM != '' && secrets.MAIN_RESET_CONFIRM || 'true' }}" >> automation-audit/audit.txt
+          echo "FORCE_PUSH_CONFIRM=${{ secrets.FORCE_PUSH_CONFIRM != '' && secrets.FORCE_PUSH_CONFIRM || 'true' }}" >> automation-audit/audit.txt
+          echo "GH_SKIP_AUTH_CHECK=${{ secrets.GH_SKIP_AUTH_CHECK != '' && secrets.GH_SKIP_AUTH_CHECK || 'true' }}" >> automation-audit/audit.txt
+          echo "AUTO_RESOLVE_MANUAL=${{ secrets.AUTO_RESOLVE_MANUAL != '' && secrets.AUTO_RESOLVE_MANUAL || 'true' }}" >> automation-audit/audit.txt
+          echo "GITHUB_REF=${{ github.ref }}" >> automation-audit/audit.txt
+          echo "Recent merged PRs:" >> automation-audit/audit.txt
+          gh pr list --state merged --limit 20 --json number,title,mergedAt --jq '.[] | "#\(.number) \(.title) (merged: \(.mergedAt))"' >> automation-audit/audit.txt || true
+          echo "Open PRs summary:" >> automation-audit/audit.txt
+          gh pr list --state open --limit 50 --json number,title,mergeable,mergeStateStatus --jq '.[] | "#\(.number) \(.title) mergeable=\(.mergeable) status=\(.mergeStateStatus)"' >> automation-audit/audit.txt || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create audit log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-audit
+          path: automation-audit
+
+      - name: Report destructive actions
+        if: always()
+        run: |
+          if grep -qE "Deleting remote branch|Deleting local branch|Reset will drop|will be lost" automation-audit/audit.txt; then
+            TITLE="Automation alert: destructive actions"
+            echo "Destructive actions detected. Looking for existing automation-alert issue to comment on..."
+            EXISTING=$(gh issue list --label automation-alert --state open --json number -q '.[0].number' 2>/dev/null || true)
+            if [ -n "${EXISTING}" ]; then
+              echo "Commenting on existing issue #${EXISTING}"
+              gh issue comment "${EXISTING}" --body-file automation-audit/audit.txt || echo "Failed to comment on issue ${EXISTING}"
+            else
+              echo "Creating new issue with label automation-alert"
+              gh issue create --title "${TITLE}" --body-file automation-audit/audit.txt --label automation-alert || echo "Failed to create issue"
+            fi
+          else
+            echo "No destructive actions detected."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

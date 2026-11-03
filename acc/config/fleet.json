@@ -1,0 +1,44 @@
+{
+  "models": [
+    {
+      "provider": "ollama",
+      "name": "mixtral-8x22b",
+      "repo": "MaziyarPanahi/Mixtral-8x22B-Instruct-v0.1-GGUF",
+      "filePattern": "Mixtral-8x22B-Instruct-v0.1.Q4_K_M-*.gguf",
+      "tier": "ELITE",
+      "quant": "Q4_K_M",
+      "superpower": "MoE Master",
+      "isPrivate": false
+    },
+    {
+      "provider": "ollama",
+      "name": "command-r-plus",
+      "repo": "bartowski/c4ai-command-r-plus-08-2024-GGUF",
+      "filePattern": "c4ai-command-r-plus-08-2024-Q4_K_M/*",
+      "tier": "ELITE",
+      "quant": "Q4_K_M",
+      "superpower": "Tool-Use Expert",
+      "isPrivate": false
+    },
+    {
+      "provider": "ollama",
+      "name": "deepseek-v2.5",
+      "repo": "bartowski/DeepSeek-V2.5-GGUF",
+      "filePattern": "DeepSeek-V2.5-Q4_K_M.gguf",
+      "tier": "ELITE",
+      "quant": "Q4_K_M",
+      "superpower": "Coding Powerhouse",
+      "isPrivate": false
+    },
+    {
+      "provider": "ollama",
+      "name": "llama-3.1-70b",
+      "repo": "lmstudio-community/Meta-Llama-3.1-70B-Instruct-GGUF",
+      "filePattern": "Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf",
+      "tier": "STRONG",
+      "quant": "Q4_K_M",
+      "superpower": "General Intelligence",
+      "isPrivate": false
+    }
+  ]
+}

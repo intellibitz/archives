@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentMessage",
+  "description": "The primary communication packet between the Agent Brain and the Acc UI.",
+  "type": "object",
+  "properties": {
+    "agentName": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "IDLE",
+        "THINKING",
+        "EXECUTING",
+        "ERROR",
+        "DONE"
+      ]
+    },
+    "content": {
+      "type": "string"
+    },
+    "thoughts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timestamp": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "summary",
+          "timestamp"
+        ]
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "input": {
+            "type": "string"
+          },
+          "result": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "tool",
+          "input"
+        ]
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "agentName",
+    "status",
+    "content"
+  ]
+}

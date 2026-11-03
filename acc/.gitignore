@@ -1,0 +1,102 @@
+# AI Command Center (acc) - Professional Git Ignore
+
+# System & OS
+.DS_Store
+Thumbs.db
+*.log
+*.pid
+*.lock
+.initialized
+xcuserdata
+
+# IntelliJ / Android Studio / IDE
+.idea/
+*.iml
+.kotlin/
+.navigation/
+captures/
+Captures/
+
+# Build & Dependencies
+.gradle/
+**/build/
+/build/
+local.properties
+node_modules/
+kotlin-js-store/
+.artifacts/
+.externalNativeBuild
+.cxx
+
+# iOS Specific
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+
+# Data & Blobs (Large files stored locally)
+.cache/
+/.cache/
+downloads/
+optimizations/
+archives/
+data/
+/data/
+logs/
+/logs/
+registry/
+/registry/
+
+# Models & Manifests
+*.gguf
+*.part*
+*.bak
+Modelfile
+last_sync_sha
+user_params
+fleet.conf.local
+private_fleet.conf
+config/private_fleet.conf
+
+# Python / Virtual Environments
+.venv/
+/.venv/
+
+# Test environments
+/test_acc_environment/
+/test/
+/frontend/*/build/
+/gateway/build/
+gradle.properties
+
+# Local and user-specific configuration
+# Local gradle properties (do NOT commit secrets)
+gradle-local.properties
+*.local.properties
+local.properties
+
+# Environment files containing secrets
+.env
+.env.*
+.env.local
+
+# Editor / IDE
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Keystores, certificates and keys
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.crt
+*.key
+
+# Swap / temp files
+*.swp
+*.swo
+

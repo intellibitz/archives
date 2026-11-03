@@ -1,0 +1,7 @@
+# OLLAMA FLEET CONFIGURATION EXAMPLE
+# Format: name|repo|pattern|tier|quant|superpower|source
+
+MODELS=(
+    "phi3|microsoft/Phi-3-mini-4k-instruct-gguf|*Q4_K_M.gguf|FAST|Q4_K_M|Lightweight|hf://microsoft/Phi-3-mini-4k-instruct-gguf"
+    "mistral-nemo|bartowski/Mistral-Nemo-Instruct-v1-GGUF|Mistral-Nemo-Instruct-v1-Q4_K_M.gguf|STRONG|Q4_K_M|Balanced|hf://bartowski/Mistral-Nemo-Instruct-v1-GGUF"
+)

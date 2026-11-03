@@ -1,0 +1,59 @@
+name: "🐛 Bug Report"
+description: "Report a bug to help us improve acc"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: "Describe the bug"
+      description: "A clear and concise description of what the bug is."
+      placeholder: "Example: The monitoring service fails to connect to Ollama when..."
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: "Platform"
+      options:
+        - Linux
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Windows
+    validations:
+      required: true
+  - type: input
+    id: hardware-specs
+    attributes:
+      label: "Hardware Specs"
+      description: "Example: NVIDIA RTX 4090, 32GB RAM"
+    validations:
+      required: true
+  - type: input
+    id: java-version
+    attributes:
+      label: "Java Version"
+      description: "Result of `java -version`"
+      placeholder: "openjdk 21.0.x"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "How did you encounter this bug?"
+      placeholder: |
+        1. Launch acc-gateway.jar
+        2. Open dashboard
+        3. Click on 'X'
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs"
+      description: "Please paste any relevant logs from the terminal or `logs/` directory."
+      render: shell

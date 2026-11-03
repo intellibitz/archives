@@ -1,0 +1,21 @@
+model_list:
+  - model_name: ollama/phi3
+    litellm_params:
+      model: ollama/phi3
+      api_base: http://localhost:11434
+
+  # Example: Adding an existing vLLM engine
+  # - model_name: vllm/llama3
+  #   litellm_params:
+  #     model: openai/llama3
+  #     api_base: http://your-vllm-server:8000/v1
+
+  # Example: Adding an existing LocalAI engine
+  # - model_name: localai/gpt4
+  #   litellm_params:
+  #     model: openai/gpt-4
+  #     api_base: http://localhost:8333/v1
+
+litellm_settings:
+  drop_params: True
+  set_verbose: False

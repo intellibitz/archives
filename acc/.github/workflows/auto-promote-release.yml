@@ -1,0 +1,73 @@
+name: Auto-promote Test Releases to Production
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+  issues: write
+
+jobs:
+  promote:
+    name: Promote prerelease to production
+    runs-on: ubuntu-latest
+    if: github.event.release.prerelease == true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up gh
+        uses: actions/setup-gh@v2
+        # fallback: this action installs gh v2 which honors GITHUB_TOKEN
+
+      - name: Promote prerelease tag to production tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.release.tag_name }}"
+          echo "Found release tag: ${TAG}"
+
+          # Only promote tags that include -test.
+          if [[ "${TAG}" != *"-test."* ]]; then
+            echo "Tag does not look like a test prerelease. Skipping."
+            exit 0
+          fi
+
+          # Derive production tag by removing -test.* suffix
+          PROD_TAG=$(printf '%s' "${TAG}" | sed -E 's/-test\..*$//')
+          echo "Promoting ${TAG} -> ${PROD_TAG}"
+
+          # Fetch tags and get target commit SHA of the prerelease tag
+          git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}" || true
+          SHA=$(git rev-list -n 1 "refs/tags/${TAG}")
+          if [ -z "${SHA}" ]; then
+            echo "Failed to resolve SHA for tag ${TAG}. Exiting."; exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create prod tag pointing at the same commit and push
+          git tag "${PROD_TAG}" "${SHA}"
+          git push origin "refs/tags/${PROD_TAG}"
+
+          # Create release via gh (will attach no artifacts; release workflow should attach on tag push)
+          if command -v gh >/dev/null 2>&1; then
+            gh release create "${PROD_TAG}" --title "Release ${PROD_TAG}" --notes "Promoted from ${TAG}" || echo "Release create returned non-zero (it may already exist)."
+          else
+            echo "gh not installed; skipping gh release create."
+          fi
+
+      - name: Post-promotion audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promotion-info
+          path: |
+            <(echo "Promoted ${TAG} to ${PROD_TAG} on $(date -u)")

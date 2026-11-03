@@ -1,0 +1,19 @@
+# acc PRIVATE FLEET CONFIGURATION
+# This file is GIT-IGNORED. Keep your paid API keys and private models here.
+# Format: provider|name|repo|pattern|tier|quant|superpower|source
+
+PRIVATE_MODELS=(
+    # Example: Paid OpenAI GPT-4
+    "openai|gpt-4o|openai|none|ELITE|none|General Intelligence|https://api.openai.com/v1"
+
+    # Example: Paid Anthropic Claude
+    "anthropic|claude-3-5-sonnet|anthropic|none|ELITE|none|Coding Expert|https://api.anthropic.com/v1"
+
+    # Example: Private Local Model (Pro)
+    "ollama|private-fine-tune|your-private-repo/model|*Q8_0.gguf|STRONG|Q8_0|Domain Expert|hf://your-private-repo/model"
+)
+
+# Paid Tooling / API Keys
+# These can be used by the Proxy or Agents
+# OPENAI_API_KEY="sk-..."
+# ANTHROPIC_API_KEY="sk-ant-..."
