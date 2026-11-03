@@ -27,7 +27,7 @@ jobs:
           python3 scripts/sync_ai_connectors.py
 
       - name: Commit and Push Updated Landing Page
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore(ai-sync): auto-update dynamic AI connectors, GitHub stars & telemetry [skip ci]"
           branch: main
