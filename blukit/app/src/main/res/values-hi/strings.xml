@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">भेजें</string>
+    <string name="mod_block_title">उपयोगकर्ता को रिपोर्ट और ब्लॉक करें?</string>
+    <string name="mod_block_desc">क्या आप वाकई %1$s को रिपोर्ट और ब्लॉक करना चाहते हैं? यह इस उपयोगकर्ता के सभी भविष्य के संदेशों को रोक देगा।</string>
+    <string name="btn_block">रिपोर्ट और ब्लॉक करें</string>
+    <string name="btn_cancel">रद्द करें</string>
+</resources>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">Envoyer</string>
+    <string name="mod_block_title">Signaler et Bloquer l\'utilisateur ?</string>
+    <string name="mod_block_desc">Êtes-vous sûr de vouloir signaler et bloquer %1$s ? Cela empêchera tous les futurs messages de cet utilisateur.</string>
+    <string name="btn_block">Signaler et bloquer</string>
+    <string name="btn_cancel">Annuler</string>
+</resources>

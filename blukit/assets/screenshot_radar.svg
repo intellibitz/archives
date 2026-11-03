@@ -1,0 +1,29 @@
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1920" fill="black"/>
+  <!-- Radar Circles -->
+  <circle cx="540" cy="960" r="400" stroke="#FFB300" stroke-width="2" stroke-opacity="0.2"/>
+  <circle cx="540" cy="960" r="300" stroke="#FFB300" stroke-width="2" stroke-opacity="0.4"/>
+  <circle cx="540" cy="960" r="200" stroke="#FFB300" stroke-width="2" stroke-opacity="0.6"/>
+  <circle cx="540" cy="960" r="100" stroke="#FFB300" stroke-width="4"/>
+
+  <!-- ME Node -->
+  <circle cx="540" cy="960" r="40" fill="#FFB300"/>
+  <text x="540" y="965" fill="black" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">ME</text>
+
+  <!-- Peer Nodes -->
+  <g transform="translate(800, 700)">
+    <circle r="50" fill="#121212" stroke="#FFB300" stroke-width="2"/>
+    <text y="5" fill="white" font-family="sans-serif" font-size="40" text-anchor="middle">👤</text>
+    <text y="75" fill="white" font-family="sans-serif" font-size="18" text-anchor="middle">StadiumFan</text>
+  </g>
+
+  <g transform="translate(300, 1200)">
+    <circle r="50" fill="#121212" stroke="#FFB300" stroke-width="2"/>
+    <text y="5" fill="white" font-family="sans-serif" font-size="40" text-anchor="middle">👤</text>
+    <text y="75" fill="white" font-family="sans-serif" font-size="18" text-anchor="middle">Gate_B_User</text>
+  </g>
+
+  <!-- Top Bar Mock -->
+  <rect width="1080" height="150" fill="#121212"/>
+  <text x="540" y="90" fill="#FFB300" font-family="sans-serif" font-size="40" font-weight="bold" text-anchor="middle">RADAR DISCOVERY</text>
+</svg>

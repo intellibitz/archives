@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">送信</string>
+    <string name="mod_block_title">ユーザーを報告してブロックしますか？</string>
+    <string name="mod_block_desc">%1$sを報告してブロックしてもよろしいですか？これにより、このユーザーからの今後のメッセージがすべてブロックされます。</string>
+    <string name="btn_block">報告してブロック</string>
+    <string name="btn_cancel">キャンセル</string>
+</resources>

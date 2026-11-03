@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">ਭੇਜੋ</string>
+    <string name="mod_block_title">ਉਪਭੋਗਤਾ ਨੂੰ ਰਿਪੋਰਟ ਅਤੇ ਬਲਾਕ ਕਰੋ?</string>
+    <string name="mod_block_desc">ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਤੌਰ ਤੇ %1$s ਨੂੰ ਰਿਪੋਰਟ ਅਤੇ ਬਲਾਕ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ? ਇਹ ਇਸ ਉਪਭੋਗਤਾ ਦੇ ਭਵਿੱਖ ਦੇ ਸਾਰੇ ਸੁਨੇਹਿਆਂ ਨੂੰ ਰੋਕ ਦੇਵੇਗਾ।</string>
+    <string name="btn_block">ਰਿਪੋਰਟ ਅਤੇ ਬਲਾਕ ਕਰੋ</string>
+    <string name="btn_cancel">ਰੱਦ ਕਰੋ</string>
+</resources>

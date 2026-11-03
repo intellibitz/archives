@@ -1,0 +1,68 @@
+package cc.thevar.blukit.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+val BlukitPrimary = Color(0xFF0061A4)
+val BlukitOnPrimary = Color(0xFFFFFFFF)
+val BlukitPrimaryContainer = Color(0xFFD1E4FF)
+val BlukitOnPrimaryContainer = Color(0xFF001D36)
+
+val BlukitSecondary = Color(0xFF535F70)
+val BlukitOnSecondary = Color(0xFFFFFFFF)
+val BlukitSecondaryContainer = Color(0xFFD7E3F7)
+val BlukitOnSecondaryContainer = Color(0xFF101C2B)
+
+val BlukitTertiary = Color(0xFF6B5778)
+val BlukitOnTertiary = Color(0xFFFFFFFF)
+val BlukitTertiaryContainer = Color(0xFFF2DAFF)
+val BlukitOnTertiaryContainer = Color(0xFF251431)
+
+val BlukitDarkPrimary = Color(0xFF9ECAFF)
+val BlukitDarkOnPrimary = Color(0xFF003258)
+val BlukitDarkPrimaryContainer = Color(0xFF00497D)
+val BlukitDarkOnPrimaryContainer = Color(0xFFD1E4FF)
+
+val BlukitDarkSecondary = Color(0xFFBBC7DB)
+val BlukitDarkOnSecondary = Color(0xFF253140)
+val BlukitDarkSecondaryContainer = Color(0xFF3B4858)
+val BlukitDarkOnSecondaryContainer = Color(0xFFD7E3F7)
+
+val BlukitDarkTertiary = Color(0xFFD6BEE4)
+val BlukitDarkOnTertiary = Color(0xFF3B2948)
+val BlukitDarkTertiaryContainer = Color(0xFF523F5F)
+val BlukitDarkOnTertiaryContainer = Color(0xFFF2DAFF)
+
+// Blukit OLED Stealth Design System (Mandated by AGENTS.md)
+val StealthBlack = Color(0xFF030507) // Even deeper black for absolute OLED zero
+val StealthAmber = Color(0xFFFFB300) // High-contrast Amber
+val StealthRose = Color(0xFFFF4081)  // Rose accent
+val StealthSurface = Color(0xFF12171E) // Sharper separation from background
+val StealthSurfaceVariant = Color(0xFF1E242C) // Layered depth
+val StealthOutlineVariant = Color(0xFF2D333B) // High-contrast border/outline
+
+val StealthPrimary = StealthAmber
+val StealthOnPrimary = Color(0xFF000000)
+val StealthSecondary = StealthRose
+val StealthOnSecondary = Color(0xFFFFFFFF)
+val StealthError = Color(0xFFFF3D00) // More vibrant error red
+val StealthGray = Color(0xFF9BA4AD) // Lighter muted text (was 0xFF8B949E)
+
+// Blukit Design Tokens: Alpha
+const val StealthAlphaLow = 0.15f // Increased from 0.1
+const val StealthAlphaMedium = 0.4f // Increased from 0.3
+const val StealthAlphaHigh = 0.7f // Increased from 0.6
+const val StealthAlphaBorder = 0.25f // Increased from 0.15 for visibility
+const val StealthAlphaOverlay = 0.9f
+
+// Academic / Social Mode (Light Theme)
+val BlukitPaper = Color(0xFFF6F1E9) // Soft parchment
+val BlukitInk = Color(0xFF1A1A1A)   // High-contrast ink
+val BlukitAcademicBlue = Color(0xFF005A9E)
+val BlukitAcademicGold = Color(0xFFB8860B)
+
+// Atmospheric Trends
+val AssistantAcademic = Color(0xFF9575CD) // Soft Violet
+val AssistantTransit = Color(0xFF64B5F6)  // Soft Blue
+val AssistantSocial = Color(0xFFFF80AB)   // Soft Rose
+val AssistantFood = Color(0xFF81C784)     // Soft Green
+val AssistantAction = Color(0xFFE57373)   // Soft Red

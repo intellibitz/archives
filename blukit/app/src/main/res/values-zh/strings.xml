@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">发送</string>
+    <string name="mod_block_title">举报并屏蔽用户？</string>
+    <string name="mod_block_desc">您确定要举报并屏蔽 %1$s 吗？这将阻止该用户未来的所有消息。</string>
+    <string name="btn_block">举报并屏蔽</string>
+    <string name="btn_cancel">取消</string>
+</resources>

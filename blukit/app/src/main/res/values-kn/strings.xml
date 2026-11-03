@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">ಕಳುಹಿಸಿ</string>
+    <string name="mod_block_title">ಬಳಕೆದಾರರನ್ನು ವರದಿ ಮಾಡಿ ಮತ್ತು ನಿರ್ಬಂಧಿಸಬೇಕೆ?</string>
+    <string name="mod_block_desc">ನೀವು ಖಚಿತವಾಗಿ %1$s ರನ್ನು ವರದಿ ಮಾಡಲು ಮತ್ತು ನಿರ್ಬಂಧಿಸಲು ಬಯಸುವಿರಾ? ಇದು ಈ ಬಳಕೆದಾರರಿಂದ ಬರುವ ಮುಂದಿನ ಸಂದೇಶಗಳನ್ನು ತಡೆಯುತ್ತದೆ.</string>
+    <string name="btn_block">ವರದಿ ಮತ್ತು ನಿರ್ಬಂಧಿಸಿ</string>
+    <string name="btn_cancel">ರದ್ದುಗೊಳಿಸಿ</string>
+</resources>

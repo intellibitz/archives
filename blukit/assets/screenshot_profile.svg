@@ -1,0 +1,31 @@
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1920" fill="black"/>
+
+  <text x="540" y="200" fill="white" font-family="sans-serif" font-size="60" font-weight="bold" text-anchor="middle">Set Up Your Identity</text>
+
+  <!-- Avatar Large -->
+  <text x="540" y="500" fill="white" font-family="sans-serif" font-size="200" text-anchor="middle">🦊</text>
+
+  <!-- Emoji Row -->
+  <g transform="translate(540, 700)">
+    <text x="-200" y="0" fill="white" font-family="sans-serif" font-size="80" text-anchor="middle">👤</text>
+    <text x="-100" y="0" fill="white" font-family="sans-serif" font-size="80" text-anchor="middle">🐱</text>
+    <text x="0" y="0" fill="white" font-family="sans-serif" font-size="80" text-anchor="middle">🦊</text>
+    <text x="100" y="0" fill="white" font-family="sans-serif" font-size="80" text-anchor="middle">🦁</text>
+    <text x="200" y="0" fill="white" font-family="sans-serif" font-size="80" text-anchor="middle">🤖</text>
+  </g>
+
+  <!-- Nickname field mock -->
+  <rect x="100" y="900" width="880" height="120" rx="10" stroke="#FFB300" stroke-width="2"/>
+  <text x="130" y="975" fill="#FFB300" font-family="sans-serif" font-size="40">StealthUser</text>
+  <text x="130" y="880" fill="#FFB300" font-family="sans-serif" font-size="18">Nickname</text>
+
+  <!-- Stealth Mode Switch Mock -->
+  <text x="100" y="1150" fill="white" font-family="sans-serif" font-size="32">Stealth Theater Mode</text>
+  <rect x="850" y="1115" width="100" height="50" rx="25" fill="#FFB300"/>
+  <circle cx="925" cy="1140" r="20" fill="black"/>
+
+  <!-- Button Mock -->
+  <rect x="100" y="1700" width="880" height="120" rx="60" fill="#FFB300"/>
+  <text x="540" y="1775" fill="black" font-family="sans-serif" font-size="40" font-weight="bold" text-anchor="middle">START EXPLORING</text>
+</svg>

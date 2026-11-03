@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">పంపండి</string>
+    <string name="mod_block_title">యూజర్‌ను రిపోర్ట్ చేసి బ్లాక్ చేయాలా?</string>
+    <string name="mod_block_desc">మీరు ఖచ్చితంగా %1$sని రిపోర్ట్ చేసి బ్లాక్ చేయాలనుకుంటున్నారా? ఇది ఈ యూజర్ నుండి వచ్చే భవిష్యత్తు సందేశాలను నిరోధిస్తుంది.</string>
+    <string name="btn_block">రిపోర్ట్ &amp; బ్లాక్</string>
+    <string name="btn_cancel">రద్దు చేయి</string>
+</resources>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">إرسال</string>
+    <string name="mod_block_title">إبلاغ وحظر المستخدم؟</string>
+    <string name="mod_block_desc">هل أنت متأكد أنك تريد الإبلاغ عن %1$s وحظره؟ سيؤدي هذا إلى منع جميع الرسائل المستقبلية من هذا المستخدم.</string>
+    <string name="btn_block">إبلاغ وحظر</string>
+    <string name="btn_cancel">إلغاء</string>
+</resources>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blukit</string>
+    <string name="btn_send">Отправить</string>
+    <string name="mod_block_title">Пожаловаться и заблокировать?</string>
+    <string name="mod_block_desc">Вы уверены, что хотите пожаловаться на %1$s и заблокировать пользователя? Вы больше не будете получать сообщения от него.</string>
+    <string name="btn_block">Пожаловаться и заблокировать</string>
+    <string name="btn_cancel">Отмена</string>
+</resources>
